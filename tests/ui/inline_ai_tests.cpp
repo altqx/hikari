@@ -10,11 +10,13 @@
 #include "docking.h"
 #include "settings_store.h"
 
+#include <QDir>
 #include <QFile>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlExpression>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -212,6 +214,58 @@ private slots:
         QVERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.shown")).toBool());
     }
 
+    void customActionsFollowASeparatorAndAskingOnesEndInAnEllipsis()
+    {
+        QVERIFY(shell(QStringLiteral("aiActionsAction.trigger(), gridAiHotkeyMenu.visible")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("inlineAiRewrite")));
+        QCOMPARE(shell(QStringLiteral("gridAiHotkeyMenu.title")).toString(), QStringLiteral("AI actions"));
+        QVERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.itemAt(5).visible")).toBool());
+        QCOMPARE(item(QStringLiteral("inlineAiSettings"))->property("text").toString(), QStringLiteral("Edit actions"));
+        shell(QStringLiteral("gridAiHotkeyMenu.close()"));
+        QTRY_VERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.visible")).toBool());
+
+        inlineAi().setActions({QVariantMap{{QStringLiteral("name"), QStringLiteral("Make it formal")},
+                                           {QStringLiteral("instruction"), QStringLiteral("Formal register")}},
+                               QVariantMap{{QStringLiteral("name"), QStringLiteral("Explain the idiom")},
+                                           {QStringLiteral("ask"), true}}});
+        QVERIFY(shell(QStringLiteral("aiActionsAction.trigger(), gridAiHotkeyMenu.visible")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("inlineAiCustom1")));
+        QCOMPARE(shell(QStringLiteral("[5, 6, 7].map(i => gridAiHotkeyMenu.itemAt(i).objectName).join(' ')")).toString(),
+                 QStringLiteral("inlineAiCustomSeparator inlineAiCustom0 inlineAiCustom1"));
+        QVERIFY(shell(QStringLiteral("gridAiHotkeyMenu.itemAt(5).visible")).toBool());
+        QCOMPARE(item(QStringLiteral("inlineAiCustom0"))->property("text").toString(), QStringLiteral("Make it formal"));
+        QCOMPARE(item(QStringLiteral("inlineAiCustom1"))->property("text").toString(), QStringLiteral("Explain the idiom…"));
+        shell(QStringLiteral("gridAiHotkeyMenu.close()"));
+    }
+
+    void aiActionsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window()->resize(1400, 860);
+        inlineAi().setActions({QVariantMap{{QStringLiteral("name"), QStringLiteral("Make it formal")},
+                                           {QStringLiteral("instruction"), QStringLiteral("Formal register")}},
+                               QVariantMap{{QStringLiteral("name"), QStringLiteral("Explain the idiom")},
+                                           {QStringLiteral("ask"), true}}});
+        selectAll();
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const char *theme : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(theme));
+            QTest::qWait(300);
+            QVERIFY(shell(QStringLiteral("aiActionsAction.trigger(), gridAiHotkeyMenu.visible")).toBool());
+            QTRY_VERIFY(item(QStringLiteral("inlineAiCustom1")));
+            QTest::qWait(300);
+            const QRect frame = window()->frameGeometry();
+            QVERIFY(window()->screen()->grabWindow(0, frame.x(), frame.y(), frame.width(), frame.height())
+                        .save(out + QStringLiteral("/cx7-ai-actions-") + QLatin1String(theme) + QStringLiteral(".png")));
+            shell(QStringLiteral("gridAiHotkeyMenu.close()"));
+            QTRY_VERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.visible")).toBool());
+        }
+    }
+
     void anAgentCliAloneLeavesTheActionsOff()
     {
         QVERIFY(application->agent()->ready());
@@ -228,7 +282,7 @@ private slots:
                                  "inlineAiTranslateTo", "inlineAiRepeat"})
             QVERIFY2(!item(QString::fromLatin1(name))->isEnabled(), name);
         QCOMPARE(item(QStringLiteral("inlineAiSettings"))->property("text").toString(),
-                 QStringLiteral("Add a model in Settings › AI…"));
+                 QStringLiteral("Add a model in Settings › AI"));
         shell(QStringLiteral("gridAiHotkeyMenu.close()"));
         QVERIFY(!shell(QStringLiteral("repeatAiActionAction.enabled")).toBool());
     }

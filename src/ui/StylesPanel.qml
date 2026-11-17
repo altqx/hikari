@@ -397,7 +397,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             visible: tools.folded
             iconRole: "menu-more"
-            text: qsTr("More")
+            text: qsTr("More options")
             focusPolicy: Qt.NoFocus
             onClicked: moreMenu.popup(more, 0, more.height)
         }

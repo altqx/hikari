@@ -304,7 +304,7 @@ Pane {
             IconToolButton {
                 objectName: "automationRerun"
                 iconRole: "rerun-macro"
-                text: qsTr("Rerun last macro")
+                text: qsTr("Run the last macro again")
                 enabled: root.automation !== null && root.automation.canRerun
                 onClicked: root.automation.rerunLast()
             }
@@ -1058,7 +1058,8 @@ Pane {
                     id: scriptMenuButton
                     objectName: "scriptMenu_" + scriptItem.row.index
                     iconRole: "panel-menu"
-                    text: qsTr("%1 options").arg(root.scriptTitle(scriptItem.script))
+                    text: qsTranslate("HikariSub.Workspace", "More options")
+                    Accessible.description: root.scriptTitle(scriptItem.script)
                     onClicked: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
                     MenuKey.onRequested: scriptMenu.openFor(scriptItem.script, scriptMenuButton)
                 }
@@ -1473,7 +1474,8 @@ Pane {
                         objectName: "entryMenu_" + entryItem.entry.nameSpace
                         visible: entryItem.installed
                         iconRole: "panel-menu"
-                        text: qsTr("%1 options").arg(entryItem.entry.name)
+                        text: qsTranslate("HikariSub.Workspace", "More options")
+                        Accessible.description: entryItem.entry.name
                         onClicked: {
                             root.chosen = entryItem.entry.nameSpace
                             recommendedMenu.openFor(entryItem.entry, entryMenuButton)

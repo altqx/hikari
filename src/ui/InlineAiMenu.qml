@@ -12,7 +12,7 @@ ShellMenu {
     signal chosen(var ask)
     signal settingsRequested()
     signal repeatRequested()
-    title: qsTr("AI")
+    title: qsTr("AI actions")
     iconRole: "ai-assistant"
     shown: !!controller && controller.on
     readonly property var customActions: controller ? controller.actions : []
@@ -55,6 +55,12 @@ ShellMenu {
         enabled: !!menu.ready.translator
         onTriggered: menu.chosen({action: "translate", choose: true})
     }
+    MenuSeparator {
+        id: customSeparator
+        objectName: "inlineAiCustomSeparator"
+        visible: menu.customActions.length > 0
+        height: visible ? implicitHeight : 0
+    }
     Instantiator {
         model: menu.customActions
         delegate: ShellMenuItem {
@@ -62,17 +68,23 @@ ShellMenu {
             required property int index
             objectName: "inlineAiCustom" + index
             iconRole: "ai-assistant"
-            text: modelData.name
+            text: modelData.ask ? qsTr("%1…").arg(modelData.name) : modelData.name
             help: modelData.instruction || ""
             enabled: !!menu.ready[modelData.role || "chat"]
             onTriggered: menu.chosen({action: "custom", custom: index, askEach: !!modelData.ask,
                                       instruction: modelData.ask ? "" : (modelData.instruction || "")})
         }
-        onObjectAdded: (index, object) => menu.insertItem(menu.customStart + index, object)
+        onObjectAdded: (index, object) => menu.insertItem(menu.customStart() + index, object)
         onObjectRemoved: (index, object) => menu.removeItem(object)
     }
+    function customStart() {
+        for (let i = 0; i < count; ++i) {
+            if (itemAt(i) === customSeparator)
+                return i + 1
+        }
+        return count
+    }
     MenuSeparator {}
-    readonly property int customStart: 6
     ShellMenuItem {
         objectName: "inlineAiRepeat"
         command: "GLOBAL_REPEAT_AI_ACTION"
@@ -85,7 +97,7 @@ ShellMenu {
     ShellMenuItem {
         objectName: "inlineAiSettings"
         iconRole: "settings"
-        text: menu.ready.any ? qsTr("Edit actions…") : qsTr("Add a model in Settings › AI…")
+        text: menu.ready.any ? qsTr("Edit actions") : qsTr("Add a model in Settings › AI")
         onTriggered: menu.settingsRequested()
     }
 }

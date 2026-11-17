@@ -56,6 +56,7 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     Q_PROPERTY(bool canRerun READ canRerun NOTIFY progressChanged)
     Q_PROPERTY(bool canRepeat READ canRepeat NOTIFY progressChanged)
     Q_PROPERTY(QString repeatText READ repeatText NOTIFY progressChanged)
+    Q_PROPERTY(QString repeatMacro READ repeatMacro NOTIFY progressChanged)
     // A run that applied but logged template problems.
     Q_PROPERTY(bool keepLog READ keepLog NOTIFY progressChanged)
     // "notice", "running", then "applied", "problems", "cancelled" or "failed" until dismissCard()
@@ -210,6 +211,7 @@ public:
     bool canRerun() const { return m_last.has_value() && !running(); }
     bool canRepeat() const { return m_repeat.has_value() && !running(); }
     QString repeatText() const;
+    QString repeatMacro() const { return m_repeat ? QString::fromStdString(m_repeat->macro) : QString(); }
     bool keepLog() const { return m_keepLog; }
     QString cardState() const { return m_cardState; }
     QString cardText() const { return m_cardText; }

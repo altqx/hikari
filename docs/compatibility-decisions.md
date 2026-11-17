@@ -46,6 +46,10 @@ A failing `include()` reports `Error loading Lua include "<name>":` or `Error ru
 
 `aegisub.util.deep_copy` makes a table that refers to itself refer to the copy, as Aegisub 3.5 does. It used to point the copy back at the original. [FA4 #561](https://github.com/altqx/hikari/issues/561).
 
+## CX7-untagged-karaoke-times
+
+A Line without karaoke tags is one syllable timed from 0 to the Line's duration, in Lua macros (`aegisub.parse_karaoke_data`, `line.kara`), the karaoke templaters and node effects, as Aegisub 3.5's `parse_karaoke_data` does. beta.3 gave that syllable the Line's absolute start and end times. [#1174](https://github.com/altqx/hikari/issues/1174), owner Q558.
+
 ## XD1-karaoke-marks
 
 A templater Apply's save is no longer byte for byte Aegisub 3.2.2's. Each generated Line and its karaoke Line get a `_hikari_kara_from` or `_hikari_kara_source` entry in `[Aegisub Extradata]`, so a reopened file still knows which karaoke Line each Line came from. There's no setting to turn this off. Aegisub 3.5.1 keeps the entries through its own load and save. Apart from them, the output is still 3.2.2's. [XD1 #659](https://github.com/altqx/hikari/issues/659), owner decision 2026-11-03.
@@ -164,7 +168,7 @@ Video › Tracking does natively what Aegisub-Motion 1.0.9, 0x.DeriveTrack, arch
 - **D8, Linear with karaoke.** It works. Aegisub-Motion fails with "attempt to compare number with nil".
 - **D9, selection.** Apply selects the new Lines, and Revert selects the restored Lines. Aegisub-Motion returns no selection, so the deleted Lines stay selected after its Revert.
 - **D10, fixed order.** The added tags and the callbacks run in a fixed order. Aegisub-Motion runs them in Lua `pairs()` order: tag order varies between runs, and five cases differ in their values (rect clips can drop the rotation, Absolute moves a clip by another frame's offset).
-- **D11, one Power-Pin command.** Copy Power-Pin track from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
+- **D11, one Power-Pin command.** Copy Power-Pin data from lines uses each Line's saved plane, else its tags' quad. arch.DerivePerspTrack has two macros, From Outer Quad and From Tags.
 - **D12, frame rate.** The two copy commands write the video's frame rate. The scripts write 23.976.
 - **D13, alphas.** With Bake transforms on, the Style's `\1a` `\3a` `\4a` (or `\alpha&H00&`) are added only when the Line has a fade to bake. Aegisub-Motion adds them to every Line.
 
@@ -296,6 +300,10 @@ In karaOK mode, `char`, `lchar`, `$ci`, `$slen`, `$llen` and `$len` count graphe
 
 Q161's seventh defect, text before the first `\k` shifting the character-to-syllable map, can't happen in HikariSub: that text belongs to syllable 1 for upstream and the built-in alike (corpus `karaok/leading-text.ass`), so it is not a departure.
 
+## CX7-karaok-furichar-positions
+
+Each furigana character of a `furichar` template sits above its kanji, as a whole `furi` reading does: `$top`, `$middle`, `$bottom` and `$y` come from the base Line's top. Upstream never marked the characters as furigana, so they took the base Line's own positions and each reading landed on its kanji. Corpus: `tests/backends/karaoke-corpus/karaok/departures/furichar-positions.ass`. [#1176](https://github.com/altqx/hikari/issues/1176), owner Q559.
+
 ## TH5d1-stock-additions
 
 In 3.2.2 mode, karaOK's additions that don't clash with 3.2.2's syntax still work. Each one replaces a 3.2.2 warning or error:
@@ -361,7 +369,7 @@ A stock KE3 preset inserted into a karaOK Document has its Effects translated: `
 
 ## TH5d3-karaok-preset-departures
 
-The karaOK presets give upstream karaOK's bytes (with upstream's `ln/kara.lua`) except where they reach a defect HikariSub already fixed. Word pop and Word wipe on Lines with non-ASCII text reach TH5c-karaok-word-positions: upstream found the word's syllables by bytes and gave the last word the Line's absolute times. Letter cascade, Letter shimmer, Line gradient and Thai fade on Thai Lines reach TH5c-karaok-graphemes: upstream split `กิ` and `น้ำ` into code points. Their goldens come from the built-in. [TH5d3 #833](https://github.com/altqx/hikari/issues/833). Thai support by Jibrill.
+The karaOK presets give upstream karaOK's bytes (with upstream's `ln/kara.lua`) except where they reach a defect HikariSub already fixed. Word pop and Word wipe on Lines with non-ASCII text reach TH5c-karaok-word-positions: upstream found the word's syllables by bytes and gave the last word the Line's absolute times. Letter cascade, Letter shimmer, Line gradient and Thai fade on Thai Lines reach TH5c-karaok-graphemes: upstream split `กิ` and `น้ำ` into code points. Furigana rise on the furigana Line reaches CX7-karaok-furichar-positions. Their goldens come from the built-in. [TH5d3 #833](https://github.com/altqx/hikari/issues/833). Thai support by Jibrill.
 
 ## TH5d3-editor-follows-mode
 
@@ -387,3 +395,7 @@ Subtitles › Timing helpers and the Timing postprocessor's Assistant tab do nat
 ## AU16-automation-folder-reset
 
 The release that ships the native karaoke templater (0.1.0-beta.4) resets the user automation folder once per user folder. Legacy and Aegisub never move a user's scripts. Old copies could register the native templater's macro names, hide the shipped Include libraries or clash with native features, so the whole folder moves rather than the parts we know about. `<user folder>/automation` and `<user folder>/config` (where DependencyControl and scripts keep their records) move to `automation-backup-<yyyy-MM-dd>` beside them, with `-2`, `-3`… when that name is taken. An empty automation folder is left in their place. Settings, the trusted folders and the shipped Autoload and Include are never touched. A folder holding only seeded files still as bundled is emptied without a backup or popup, since the bundle has them all. A failed move changes nothing and is tried again at the next start. `.automation-reset` in the user folder records that it ran. The popup can reinstall the scripts DependencyControl had installed, at their feeds' current releases, and lists those now built in. [AU16 #850](https://github.com/altqx/hikari/issues/850), owner decisions Q184, Q185, Q188, Q401 and Q402.
+
+## 1007-relaunch-shell-only
+
+An elevated setup that relaunches HikariSub after an update (`/UPDATE /RELAUNCH` for all users, or a start asked for during the update) starts it only through the desktop's own shell, so it runs as the desktop user and is never elevated. When the shell can't start it, the setup starts nothing and writes why to `Updates\setup-<copy>.log`. An interactive setup then says "HikariSub is installed. Start it from the Start menu." Legacy 0.0.1 used StdUtils `ExecShellAsUser`, which then started HikariSub elevated. Both the Qt setup and legacy's setup now do this. [#918](https://github.com/altqx/hikari/issues/918) (Qt, #993), [#1007](https://github.com/altqx/hikari/issues/1007) (legacy), owner decision 2026-11-16 (Q560).

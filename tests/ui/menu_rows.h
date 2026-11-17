@@ -25,4 +25,9 @@ inline QStringList shown(QObject *menu)
     return out;
 }
 
+inline bool isRadio(const QObject *row)
+{
+    return row && QString::fromLatin1(row->metaObject()->className()).startsWith(QLatin1String("MenuRadioItem"));
+}
+
 }

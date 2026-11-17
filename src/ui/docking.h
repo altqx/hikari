@@ -137,6 +137,9 @@ public:
     Q_INVOKABLE bool hasPlace(const QString &uniqueName) const;
     Q_INVOKABLE QQuickItem *toolbar(const QString &uniqueName) const;
     Q_INVOKABLE void requestMenu(const QString &uniqueName, QQuickItem *anchor);
+    Q_INVOKABLE QStringList titleBarPanels(QObject *titleBarView) const;
+    /// False when nothing handles closeRequested, so the caller closes the panels itself.
+    Q_INVOKABLE bool requestClose(const QStringList &uniqueNames);
     Q_INVOKABLE bool toggleFloating(const QString &uniqueName);
     Q_INVOKABLE QRect placeInLayout(const QString &uniqueName) const;
     Q_INVOKABLE QString dockRightOf(const QString &uniqueName) const;
@@ -154,6 +157,7 @@ signals:
     void headersChanged();
     void systemMoveRequested(QWindow *window);
     void menuRequested(const QString &uniqueName, QQuickItem *anchor);
+    void closeRequested(const QStringList &uniqueNames);
     void openMenuChanged();
     void windowSystemTitlesChanged();
     void layoutLockedChanged();

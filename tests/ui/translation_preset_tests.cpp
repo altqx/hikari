@@ -1,4 +1,5 @@
 #include "hikari/app/application.h"
+#include "hikari/application/hotkeys.h"
 
 #include "docking.h"
 #include "line_editor_controller.h"
@@ -652,6 +653,12 @@ private slots:
         QVERIFY(!item("originalTextButtons")->isVisible());
         auto *menu = item<QObject>("originalTextMoreMenu");
         QCOMPARE(menu->property("count").toInt(), 6);
+        QCOMPARE(item("originalTextMore")->property("text").toString(), QStringLiteral("More options"));
+        QCOMPARE(item("originalTextMore")->property("focusPolicy").toInt(), int(Qt::TabFocus));
+        auto &hotkeys = application->hotkeys();
+        hotkeys.gestureMap(application::hotkeyIdOf("EDITBOX_PASTE_ALL_TO_TRANSLATION"), QStringLiteral("Paste all"),
+                           QStringLiteral("Ctrl-Alt-J"), 2, QStringLiteral("cancel"));
+        QTRY_COMPARE(item<QObject>("originalPasteAllItem")->property("keysText").toString(), QStringLiteral("Ctrl+Alt+J"));
         stop();
     }
 

@@ -268,4 +268,18 @@ describe("AgentSessions with external agents", () => {
         expect(() => sessions.open({ sessionId: "b", agent: "codex" as never, model }))
             .toThrow(new RpcError(ErrorCode.invalidParams, "This sidecar can't run codex"));
     });
+
+    test("an agent's session lists its models, and a provider's session lists none", async () => {
+        const sessions = new AgentSessions(() => new ToolSet({ call: () => Promise.resolve(undefined as never) }),
+            () => Promise.reject(new Error("no provider")), () => {}, undefined, {
+                claude: () => ({ prompt: () => Promise.resolve({ stopReason: "end_turn" }),
+                    steer: () => Promise.resolve({ taken: false }), cancel: () => {},
+                    models: () => Promise.resolve([{ id: "sonnet", name: "Sonnet" }]) }),
+            });
+        sessions.open({ sessionId: "a", agent: "claude", model: { providerId: "", model: "" } });
+        expect(await sessions.models("a")).toEqual([{ id: "sonnet", name: "Sonnet" }]);
+        sessions.open({ sessionId: "p", model: { providerId: "or", model: "m" } });
+        expect(() => sessions.models("p")).toThrow(new RpcError(ErrorCode.invalidParams, "This session lists no agent models"));
+        expect(() => sessions.models("gone")).toThrow(RpcError);
+    });
 });

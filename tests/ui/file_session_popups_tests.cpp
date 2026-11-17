@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 #include "hikari/app/matroska_controller.h"
 #include "docking.h"
+#include "qtest_parts.h"
 #include "theme.h"
 
 #include <QDateTime>
@@ -693,5 +694,5 @@ private slots:
     }
 };
 
-QTEST_MAIN(FileSessionPopupsTests)
+HIKARI_QTEST_MAIN_IN_PARTS(FileSessionPopupsTests)
 #include "file_session_popups_tests.moc"

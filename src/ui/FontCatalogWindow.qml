@@ -387,7 +387,7 @@ DialogWindow {
                     objectName: "fontCatalogTiers"
                     visible: window.catalogs.hasProject
                     iconRole: "panel-menu"
-                    text: qsTr("Catalogue tiers")
+                    text: qsTr("More options")
                     enabled: window.chosen.length > 0
                     onClicked: tierMenu.popup(tierButton, 0, tierButton.height)
                 }
@@ -434,6 +434,8 @@ DialogWindow {
                     Keys.onUpPressed: window.stepCatalog(-1)
                     Keys.onDownPressed: window.stepCatalog(1)
                     Accessible.name: qsTr("Catalogues")
+                    MenuKey.enabled: window.catalogs.hasProject && window.chosenRow >= 0
+                    MenuKey.onRequested: tierMenu.popup(currentItem, 0, currentItem.height)
                     ScrollBar.vertical: ScrollBar {}
                     delegate: Column {
                         id: catalogSlot

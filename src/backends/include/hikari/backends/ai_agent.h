@@ -193,8 +193,6 @@ struct AgentThread {
     /// The soft cap in US dollars; 0 means none.
     double cap = 0;
     std::set<std::string> allowed;
-    /// The globe; the thread searches only while Settings › AI lets AI search the web too.
-    bool webSearch = true;
     /// The Project folder of the window it was started in, UTF-8; its skills join the user's. Empty: none.
     std::string project;
     std::optional<AgentTask> task;
@@ -297,12 +295,21 @@ public:
     void remove(const std::string &id);
     void setMode(const std::string &id, AgentMode mode);
     void setModel(const std::string &id, application::ai::ModelRef model);
-    void setWebSearch(const std::string &id, bool on);
-    bool searches(const AgentThread &thread) const;
+    /// Every thread searches the web while Settings › AI lets AI search it.
+    bool searches() const;
     /// Tabs the user attached with @, besides the editing target.
     void setAttached(const std::string &id, std::vector<application::DocumentId> documents);
     /// The model a thread's next turn runs on: its own, else the chat model.
     std::optional<application::ai::ModelRef> modelOf(const AgentThread &thread) const;
+
+    struct AgentModel {
+        std::string id;
+        std::string name;
+    };
+    using AgentModelsDone = std::function<void(std::optional<std::vector<AgentModel>>)>;
+    /// Starts `agent` through the sidecar and the broker to ask which models it offers, then stops it. Answers
+    /// nullopt when the agent isn't offered, refuses, fails or takes longer than `timeoutMs`.
+    void listAgentModels(const std::string &agent, AgentModelsDone done, int timeoutMs = 30'000);
 
     /// Starts a turn with `parts` (protocol Parts: text, and images for attachments), or queues it while one runs.
     void send(const std::string &id, std::string text, api::Json extraParts = api::Json::array());
@@ -313,6 +320,8 @@ public:
     /// Sends the queued message into the running turn at its next tool call.
     void steer(const std::string &id);
     void stop(const std::string &id);
+    /// Stops every turn and drops every session on `agent` after its sign-out; each thread says so.
+    void endAgent(const std::string &agent);
     /// Sends the interrupted turn's message again.
     void retry(const std::string &id);
     /// Compacts what the thread replays to the model; while a turn runs, it waits for the turn to end.
@@ -373,6 +382,12 @@ private:
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,
                  std::string reason, AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
+    struct ProposedEdits {
+        std::optional<application::DocumentId> document;
+        api::Json rows;
+        bool stale = false;
+    };
+    ProposedEdits readEdits(AgentThread &thread, const api::Json &params);
     void openProposal(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
                       std::function<void(std::function<void()>)> onWithdraw);
     void openScript(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
@@ -391,7 +406,7 @@ private:
     void addSources(AgentThread &thread, Run *run, const api::Json &update);
     void searchFailed(AgentThread &thread, Run *run, const api::Json &update);
     void stopFor(AgentThread &thread, const std::string &notice);
-    void closeAsks(const std::string &thread, const std::string &why);
+    void closeAsks(const std::string &thread, const std::string &why, const std::string &withdrawnFor);
     void push(AgentThread &thread, api::Json item);
     void touch(AgentThread &thread);
     void sessionsLost();

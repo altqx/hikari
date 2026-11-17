@@ -5,7 +5,7 @@ A native version of arch1t3cht's Note Browser 1.3.6, whose notes live in the sub
 ## Where it opens
 
 - Subtitles › QC notes… (5241, no default key) and View › Panels › QC notes. The dock id is `QcNotes` (panel registry 12). No built-in layout holds it; it first opens to the right of the Grid.
-- Next QC note (5242), Previous QC note (5243) and Add QC note (5254) work from anywhere and have no default keys. Add QC note… is also in the Grid's context menu, at that line's start.
+- Next QC note (5242), Previous QC note (5243) and Add QC note… (5254) work from anywhere and have no default keys. Add QC note… is also in the Grid's context menu, in the group with Translation matching…, at that line's start.
 
 ## Storage
 
@@ -41,7 +41,7 @@ Lines with notes carry a flag in the number column, which widens while any line 
 
 ## Import and export
 
-- The ⋯ menu: Import notes file…, Import notes from the clipboard, Export notes…, Mark all as not done, Remove all notes…. A file dropped on the panel is imported, and the empty panel offers Import notes file… and Paste notes (disabled when the clipboard has no notes).
+- The ⋯ menu: Import notes file…, Import notes from the clipboard…, Export notes…, Mark all as not done | Delete all notes… (after a question whose button is “Delete all”). A file dropped on the panel is imported, and the empty panel offers Import notes file… and Import from the clipboard (disabled when the clipboard has no notes).
 - Import reads Note Browser's format (a note starts with `h:mm:ss` or `m:ss`, fractions kept; `[Section]` lines group the notes after them; notes before the first section go into General) and mpvQC files (their category becomes the section). When the file already has notes, a question offers Add (the default, skipping notes with the same time, section and text) or Replace. The result says "Imported N notes.", how many were already there, and how many have no line.
 - Export notes… writes Note Browser's format: Include done notes (off) and Only the chosen section.
 

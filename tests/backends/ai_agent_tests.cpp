@@ -574,6 +574,59 @@ TEST_F(AgentThreadsTest, AThreadOnClaudeOpensItsSessionOnTheAgentWithoutAProvide
     EXPECT_EQ(notice(plain), "noSidecar");
 }
 
+TEST_F(AgentThreadsTest, AChosenAgentModelReachesItsSessionAndTheAgentsDefaultPassesNone)
+{
+    threads = makeThreads(true);
+    const std::string id = threads->create();
+    const auto model = [](const Json &sent) { return at(*sent.find("model"), "model"); };
+    threads->setModel(id, {"agent:claude", "opus"});
+    threads->send(id, "a");
+    ASSERT_TRUE(idle(id));
+    ASSERT_EQ(receivedAs("session/new").size(), 1u);
+    EXPECT_EQ(model(receivedAs("session/new").back()), "opus");
+    EXPECT_EQ(model(receivedAs("session/prompt").back()), "opus");
+
+    threads->setModel(id, {"agent:claude", ""});
+    threads->send(id, "b");
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(receivedAs("session/new").size(), 1u);
+    EXPECT_EQ(model(receivedAs("session/prompt").back()), "");
+
+    threads->setModel(id, {"agent:codex", ""});
+    threads->send(id, "c");
+    ASSERT_TRUE(idle(id));
+    ASSERT_EQ(receivedAs("session/new").size(), 2u);
+    EXPECT_EQ(at(receivedAs("session/new").back(), "agent"), "codex");
+}
+
+TEST_F(AgentThreadsTest, AnAgentListsItsModelsInAProbeSessionThatClosesAndAFailureListsNone)
+{
+    threads = makeThreads(true);
+    using Listed = std::optional<std::vector<AgentThreads::AgentModel>>;
+    const auto list = [&](const std::string &agent, int timeoutMs = 30'000) {
+        std::optional<Listed> out;
+        threads->listAgentModels(agent, [&](Listed models) { out = std::move(models); }, timeoutMs);
+        EXPECT_TRUE(waitFor([&] { return out.has_value(); }));
+        return out.value_or(Listed());
+    };
+    const Listed claude = list("claude");
+    ASSERT_TRUE(claude);
+    ASSERT_EQ(claude->size(), 2u);
+    EXPECT_EQ((*claude)[1].id, "opus");
+    EXPECT_EQ((*claude)[1].name, "Opus");
+    const auto opened = receivedAs("session/new");
+    ASSERT_EQ(opened.size(), 1u);
+    EXPECT_EQ(at(opened[0], "sessionId"), "models:claude");
+    EXPECT_EQ(at(opened[0], "agent"), "claude");
+    EXPECT_TRUE(waitFor([&] { return !receivedAs("_hikari/session.close").empty(); }));
+
+    EXPECT_FALSE(list("codex"));
+    EXPECT_FALSE(list("hang", 100));
+    refusedAgent = "acp:x";
+    EXPECT_FALSE(list("acp:x"));
+    EXPECT_EQ(receivedAs("session/new").size(), 3u);
+}
+
 TEST_F(AgentThreadsTest, AThreadOnAnAgentThisSystemWontStartSaysWhyAndOpensNoSession)
 {
     threads = makeThreads(true);
@@ -593,6 +646,37 @@ TEST_F(AgentThreadsTest, AThreadOnAnAgentThisSystemWontStartSaysWhyAndOpensNoSes
     threads->send(id, "Fix the typo");
     ASSERT_TRUE(idle(id));
     EXPECT_EQ(receivedAs("session/new").size(), 1u);
+}
+
+TEST_F(AgentThreadsTest, SigningOutOfAnAgentStopsItsTurnsAndEndsItsSessionsButLeavesOtherAgentsAlone)
+{
+    const std::string idle = threads->create();
+    threads->setModel(idle, {"agent:codex", ""});
+    threads->send(idle, "Hello");
+    ASSERT_TRUE(this->idle(idle));
+    const std::string claude = threads->create();
+    threads->setModel(claude, {"agent:claude", ""});
+    threads->send(claude, "Hello");
+    ASSERT_TRUE(this->idle(claude));
+    const std::string running = withMode(AgentMode::Manual);
+    threads->setModel(running, {"agent:codex", ""});
+    threads->send(running, script(Json::array({call("commands.run", Json::object({{"command", "GLOBAL_UNDO"}}))})));
+    openAsk();
+
+    threads->endAgent("codex");
+    ASSERT_TRUE(this->idle(running));
+    EXPECT_EQ(notice(running), "signedOut");
+    EXPECT_EQ(at(items(running, "ask")[0], "status"), "withdrawn");
+    EXPECT_EQ(at(items(running, "ask")[0], "withdrawnFor"), "signedOut");
+    EXPECT_TRUE(threads->asks().empty());
+    EXPECT_EQ(receivedAs("session/cancel").size(), 1u);
+    EXPECT_EQ(notice(idle), "signedOut");
+    EXPECT_TRUE(items(claude, "notice").empty());
+
+    const std::size_t opened = receivedAs("session/new").size();
+    threads->send(idle, "Hello again");
+    ASSERT_TRUE(this->idle(idle));
+    EXPECT_EQ(receivedAs("session/new").size(), opened + 1);
 }
 
 TEST_F(AgentThreadsTest, FullAccessRunsAWriteIntoTheReviewAndShowsTheChange)
@@ -632,6 +716,27 @@ TEST_F(AgentThreadsTest, ManualAsksForOtherWritesUntilAllowedInTheThread)
     ASSERT_EQ(asks.size(), 1u);
     EXPECT_EQ(at(asks[0], "status"), "allowedInThread");
     EXPECT_TRUE(thread(id).allowed.contains("commands.run:GLOBAL_SAVE_SUBS"));
+    for (const Json &answer : receivedAs("answer"))
+        EXPECT_TRUE(answer.find("result")) << answer.dump();
+}
+
+TEST_F(AgentThreadsTest, AutoWithoutAJudgeModelAsksTheUserAsManualDoesAndSaysWhy)
+{
+    threads = makeThreads(true);
+    const std::string id = threads->create();
+    ASSERT_EQ(thread(id).mode, AgentMode::Auto);
+    threads->setModel(id, {"agent:claude", ""});
+    threads->send(id, script(Json::array({call("commands.run", Json::object({{"command", "GLOBAL_SAVE_SUBS"}}))})));
+    const std::uint64_t ask = openAsk();
+    ASSERT_NE(ask, 0u);
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::Ask);
+    const auto asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 1u);
+    EXPECT_EQ(at(asks[0], "type"), "ask");
+    EXPECT_EQ(at(asks[0], "reason"), "Auto has no judge model without a provider, so it asks you.");
+    threads->answer(ask, Answer::AllowOnce);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(at(items(id, "ask")[0], "status"), "allowed");
     for (const Json &answer : receivedAs("answer"))
         EXPECT_TRUE(answer.find("result")) << answer.dump();
 }
@@ -768,6 +873,37 @@ TEST_F(AgentThreadsTest, AnEscalatingJudgeAsksTheUserWithItsReason)
     threads->answer(ask, Answer::AllowOnce);
     ASSERT_TRUE(idle(id));
     EXPECT_TRUE(thread(id).allowed.empty());
+}
+
+TEST_F(AgentThreadsTest, AnAskCarriesWhatTheCardNeedsToSayItInPlainWords)
+{
+    ASSERT_TRUE(providers->assign(app::Role::Judge, {"or", "escalate"}));
+    const std::string id = withMode(AgentMode::Auto);
+    const std::u8string before = fake.target()->document().lines()[0]->text;
+    threads->send(id, script(Json::array({apply("Hi"), call("settings.set", Json::object({{"setting", "spelling.language"},
+                                                                                         {"value", "en_GB"}}))})));
+    std::uint64_t ask = openAsk();
+    auto asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 1u);
+    EXPECT_EQ(at(asks[0], "area"), "subtitles");
+    EXPECT_FALSE(at(asks[0], "summary").empty());
+    EXPECT_EQ(at(asks[0], "title"), "a.ass");
+    const Json &row = asks[0].find("rows")->asArray().at(0);
+    EXPECT_EQ(at(row, "change"), "edited");
+    EXPECT_EQ(at(row, "before"), std::string(before.begin(), before.end()));
+    EXPECT_EQ(at(row, "after"), "Hi");
+    EXPECT_EQ(*row.find("row"), Json(1));
+    threads->answer(ask, Answer::AllowOnce);
+
+    ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != ask; }));
+    asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 2u);
+    EXPECT_EQ(at(asks[1], "area"), "setting");
+    EXPECT_EQ(at(asks[1], "setting"), "spelling.language");
+    EXPECT_EQ(at(asks[1], "value"), "en_GB");
+    EXPECT_FALSE(asks[1].find("rows"));
+    threads->answer(threads->asks().begin()->first, Answer::Deny);
+    ASSERT_TRUE(idle(id));
 }
 
 TEST_F(AgentThreadsTest, TheAlwaysAskListAsksEvenInFullAccessAndCantBeAllowedForTheThread)
@@ -1106,6 +1242,7 @@ TEST_F(AgentThreadsTest, StopWithdrawsTheOpenAskAndEndsTheTurn)
     ASSERT_TRUE(idle(id));
     EXPECT_TRUE(threads->asks().empty());
     EXPECT_EQ(at(items(id, "ask")[0], "status"), "withdrawn");
+    EXPECT_EQ(at(items(id, "ask")[0], "withdrawnFor"), "stopped");
     EXPECT_EQ(notice(id), "stopped");
     EXPECT_EQ(receivedAs("session/cancel").size(), 1u);
 }
@@ -1219,7 +1356,7 @@ TEST_F(AgentThreadsTest, AReopenedThreadReplaysItsHistoryIntoANewSession)
     EXPECT_FALSE(threads->thread(id));
 }
 
-TEST_F(AgentThreadsTest, AThreadSearchesWhileSettingsAndItsGlobeBothSaySoAndKeepsItsGlobe)
+TEST_F(AgentThreadsTest, EveryThreadFollowsTheWebSearchSettingFromItsNextMessage)
 {
     const auto searched = [&](std::string_view method) {
         const auto sent = receivedAs(method);
@@ -1228,20 +1365,21 @@ TEST_F(AgentThreadsTest, AThreadSearchesWhileSettingsAndItsGlobeBothSaySoAndKeep
     };
     requests->setWebSearch(true, std::nullopt);
     const std::string id = threads->create();
-    EXPECT_TRUE(thread(id).webSearch);
     threads->send(id, "a");
     ASSERT_TRUE(idle(id));
     EXPECT_TRUE(searched("session/new"));
     EXPECT_TRUE(searched("session/prompt"));
-    threads->setWebSearch(id, false);
+    requests->setWebSearch(false, std::nullopt);
     threads->send(id, "b");
     ASSERT_TRUE(idle(id));
     EXPECT_FALSE(searched("session/prompt"));
-    threads = makeThreads();
-    EXPECT_FALSE(thread(id).webSearch);
-    threads->setWebSearch(id, true);
-    requests->setWebSearch(false, std::nullopt);
+    requests->setWebSearch(true, std::nullopt);
     threads->send(id, "c");
+    ASSERT_TRUE(idle(id));
+    EXPECT_TRUE(searched("session/prompt"));
+    threads = makeThreads();
+    requests->setWebSearch(false, std::nullopt);
+    threads->send(id, "d");
     ASSERT_TRUE(idle(id));
     EXPECT_FALSE(searched("session/new"));
     EXPECT_FALSE(searched("session/prompt"));

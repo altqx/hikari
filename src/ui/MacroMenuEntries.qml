@@ -9,6 +9,7 @@ QtObject {
     required property QtObject after
     property var macros: []
     property bool enabled: true
+    property var keys: null
     // Entries name their place with `titles` (a list), else with `name` split at "/".
     property string itemPrefix: "macro_"
     property string menuPrefix: "macroMenu_"
@@ -21,6 +22,7 @@ QtObject {
             required property var macro
             objectName: entries.itemPrefix + (macro.id ?? macro.name)
             enabled: entries.enabled
+            shortcutText: entries.keys ? entries.keys(macro) : ""
             onTriggered: entries.triggered(macro)
         }
     }

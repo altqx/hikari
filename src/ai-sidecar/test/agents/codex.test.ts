@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { whileTurnRuns } from "../../src/agent/session";
-import { CodexSession } from "../../src/agents/codex";
+import { CodexSession, redacted } from "../../src/agents/codex";
 import { McpServer } from "../../src/mcp/server";
 import type { SessionUpdate } from "../../src/protocol";
 import { HikariApi, sessionCalls } from "../../src/sidecar";
@@ -13,6 +13,7 @@ import { Skills } from "../../src/skills/skills";
 import type { OperationName } from "../../src/tools/api.gen";
 import type { HikariCalls } from "../../src/tools/toolset";
 import { kMySkill, mySkillAnswers } from "../skills/my_skill";
+import { RpcError } from "../../src/rpc";
 import { qtLink } from "./qt_link";
 
 const kFake = join(import.meta.dir, "..", "fixtures", "fake-codex.ts");
@@ -28,13 +29,14 @@ afterEach(() => {
 const kJoined = "You are Hikari AI.\n\nInstructions from the user's AGENTS.md:\n\nUse Oxford commas.\n\n" +
     "Instructions from this Project's AGENTS.md:\n\nKeep honorifics.";
 
-function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.", child?: ReturnType<typeof qtLink>) {
+function harness(answers: Partial<Record<OperationName, unknown>> = {}, system = "Be brief.", child?: ReturnType<typeof qtLink>,
+    model = "") {
     const log = join(mkdtempSync(join(tmpdir(), "fake-codex-")), "log");
     const calls: { operation: string; params: unknown }[] = [];
     const updates: SessionUpdate[] = [];
     const spawned: string[] = [];
     let session: CodexSession | undefined;
-    const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model: "" }, system,
+    const params = { sessionId: "t1", agent: "codex" as const, model: { providerId: "", model }, system,
         ...(child ? { task: { parent: "p1", taskId: "k1", scope: { document: 1, lines: [1] } } } : {}) };
     const fake: HikariCalls = {
         call: (operation, p) => {
@@ -58,7 +60,7 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
             spawned.push(id);
             return spawn(process.execPath, [kFake, "app-server", "-c", `mcp_servers.hikari.url="${channel.url}mcp"`,
                 "-c", 'mcp_servers.hikari.bearer_token_env_var="HIKARI_MCP_TOKEN"'],
-            { env: { ...process.env, HIKARI_MCP_TOKEN: kToken, FAKE_CODEX_LOG: log }, stdio: ["pipe", "pipe", "inherit"] });
+            { env: { ...process.env, HIKARI_MCP_TOKEN: kToken, FAKE_CODEX_LOG: log }, stdio: ["pipe", "pipe", "pipe"] });
         },
         kindOf: (tool) => (tool === "document_apply" ? "edit" : "read"),
         send: (update) => updates.push(update),
@@ -72,6 +74,45 @@ function harness(answers: Partial<Record<OperationName, unknown>> = {}, system =
 }
 
 describe("Codex through its app-server", () => {
+    test("it lists the models Codex offers across pages, without hidden ones", async () => {
+        const h = harness();
+        expect(await h.session.models()).toEqual([{ id: "gpt-fake", name: "GPT Fake" },
+            { id: "gpt-fake-mini", name: "GPT Fake Mini" }]);
+        h.session.close();
+        expect(h.logged("model/list")).toEqual([{ includeHidden: false, cursor: null },
+            { includeHidden: false, cursor: "page-2" }]);
+    }, 30_000);
+
+    test("the agent's default sends no model, and a chosen one starts the thread with it", async () => {
+        const plain = harness();
+        await plain.session.prompt({ sessionId: "t1", prompt: plain.script({ reply: "hi" }) });
+        plain.session.close();
+        expect(plain.logged("thread/start")).toEqual([{ developerInstructions: "Be brief." }]);
+        expect((plain.logged("turn/start")[0] as Record<string, unknown>).model).toBeUndefined();
+        const chosen = harness({}, "Be brief.", undefined, "gpt-fake-mini");
+        await chosen.session.prompt({ sessionId: "t1", prompt: chosen.script({ reply: "hi" }) });
+        chosen.session.close();
+        expect(chosen.logged("thread/start")).toEqual([{ model: "gpt-fake-mini", developerInstructions: "Be brief." }]);
+        expect((chosen.logged("turn/start")[0] as Record<string, unknown>).model).toBeUndefined();
+    }, 30_000);
+
+    test("a model chosen mid-thread goes on the next turn, and the agent's default sends Codex's default", async () => {
+        const h = harness();
+        const turn = (reply: string, model?: string) => {
+            if (model !== undefined)
+                h.session.useModel(model);
+            return h.session.prompt({ sessionId: "t1", prompt: h.script({ reply }) });
+        };
+        await turn("one");
+        await turn("two", "gpt-fake-mini");
+        await turn("three", "gpt-fake-mini");
+        await turn("four", "");
+        h.session.close();
+        expect(h.logged("turn/start").map((p) => (p as Record<string, unknown>).model))
+            .toEqual([undefined, "gpt-fake-mini", undefined, "gpt-fake"]);
+        expect(h.spawned).toHaveLength(1);
+    }, 30_000);
+
     test("an edit task runs on Hikari's tools over the session's channel", async () => {
         const h = harness({ "lines.find": { revision: 3, total: 1, lines: [{ id: 1, text: "Helo" }] },
             "document.apply": { revision: 4 } });
@@ -155,6 +196,38 @@ describe("Codex through its app-server", () => {
         expect(h.spawned).toHaveLength(2);
         expect(h.logged("thread/resume")).toEqual([{ threadId: "thread-1", developerInstructions: "Be brief." }]);
     }, 30_000);
+
+    test("a failed turn carries Codex's own message and kind, and only the log gets its redacted stderr", async () => {
+        const h = harness();
+        const logged: string[] = [];
+        const error = console.error;
+        console.error = (...args: unknown[]) => void logged.push(args.join(" "));
+        try {
+            const failed = await h.session.prompt({ sessionId: "t1", prompt: h.script({ fail: {
+                message: "You've hit your usage limit.", codexErrorInfo: "usageLimitExceeded",
+                stderr: `ERROR stream failed: authorization: Bearer ${"s".repeat(48)} url=https://chatgpt.com/backend-api?token=abc` } }) })
+                .catch((e: unknown) => e);
+            expect(failed).toBeInstanceOf(RpcError);
+            expect((failed as RpcError).message).toBe("You've hit your usage limit.");
+            expect((failed as RpcError).data).toEqual({ kind: "rateLimited", httpStatus: 0, detail: "You've hit your usage limit." });
+        } finally {
+            console.error = error;
+            h.session.close();
+        }
+        const text = logged.join("\n");
+        expect(text).toContain("Codex turn failed: You've hit your usage limit.");
+        expect(text).toContain("ERROR stream failed");
+        expect(text).not.toContain("s".repeat(48));
+        expect(text).not.toContain("token=abc");
+    }, 30_000);
+
+    test("redaction keeps the words and drops tokens, auth headers, cookies, JWTs and URL queries", () => {
+        expect(redacted("Authorization: Bearer abc.def")).toBe("Authorization: Bearer <redacted>");
+        expect(redacted('cookie=session=1; other "refresh_token":"r1"')).toBe('cookie=<redacted>; other "refresh_token":<redacted>');
+        expect(redacted("id eyJhbGciOi.eyJzdWIiOi.c2ln end")).toBe("id <redacted> end");
+        expect(redacted("GET https://h.example/p?code=1&state=2 done")).toBe("GET https://h.example/p?<redacted> done");
+        expect(redacted("C:\\Users\\winix\\AppData\\Roaming\\HikariSub\\ai\\agents\\codex\\home")).toContain("codex");
+    });
 
     test("a built-in file change is refused, and the thread keeps its AGENTS.md text after Codex restarts", async () => {
         const h = harness({}, kJoined);

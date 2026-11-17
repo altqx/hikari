@@ -13,14 +13,13 @@ ShellMenu {
     onAboutToShow: rows = video.chapters()
     Instantiator {
         model: menu.rows
-        delegate: ShellMenuItem {
+        delegate: MenuRadioItem {
             required property var modelData
             required property int index
             objectName: "videoChapter" + index
-            text: modelData.label + "  " + modelData.time
-            checkable: true
+            text: modelData.label
+            detailText: modelData.time
             checked: modelData.checked
-            keepsMenuOpen: false
             onTriggered: menu.video.seekChapter(index)
         }
         onObjectAdded: (index, object) => menu.insertItem(index, object)

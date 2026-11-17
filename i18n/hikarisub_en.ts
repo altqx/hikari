@@ -11,6 +11,20 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>+%n more</source>
+        <translation>
+            <numerusform>+%n more</numerusform>
+            <numerusform>+%n more</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more attached file(s)</source>
+        <translation>
+            <numerusform>%n more attached file</numerusform>
+            <numerusform>%n more attached files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Show %n more</source>
         <translation>
             <numerusform>Show %n more</numerusform>
@@ -36,6 +50,13 @@
         <translation>
             <numerusform>Show the %n line</numerusform>
             <numerusform>Show all %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Change %n line(s)</source>
+        <translation>
+            <numerusform>Change %n line</numerusform>
+            <numerusform>Change %n lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -988,10 +1009,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
-            <numerusform>Remove the %n QC note from this file?</numerusform>
-            <numerusform>Remove all %n QC notes from this file?</numerusform>
+            <numerusform>Delete the %n QC note from this file?</numerusform>
+            <numerusform>Delete all %n QC notes from this file?</numerusform>
         </translation>
     </message>
     <message numerus="yes">

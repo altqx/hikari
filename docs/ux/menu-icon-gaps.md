@@ -145,7 +145,7 @@ LE5 ([#230](https://github.com/altqx/hikari/issues/230)) replaced the Manage tag
 
 ## Items left without an icon
 
-- **Check items** (checkable): Last session's two startup choices, the Grid's filtering switches, filters and hidden columns, the comparison criteria, the Spellchecker's languages, the tag list's options, the layout presets, streams and chapters, the font catalogs, the reference tray's occurrences, a visual tool's choices, the document tabs in the tab menu. Their check mark stands in the icon's place, as in MuseScore 4's menus. Some check items that had an icon keep it (Save subtitles using the video name, Spellchecker).
+- **Check items** (checkable): Last session's three startup choices (radios), the Grid's filtering switches, filters and hidden columns, the comparison criteria, the Spellchecker's languages, the tag list's options, the layout presets, streams and chapters, the font catalogs, the reference tray's occurrences, a visual tool's choices, the document tabs in the tab menu. Their check mark stands in the icon's place, as in MuseScore 4's menus. Some check items that had an icon keep it (Name new files after the video, Spellchecker).
 - **Entries named by their data**, under a submenu that has the icon: recent subtitles, videos, keyframes and audio, and the empty list's "None"; the font + menus' "No catalogs yet" (PU3); the macros of the loaded scripts and the submenus a "/" in their names opens (AS1); the sort keys under Sort all lines and Sort selected lines; the panels under View › Panels; the spelling suggestions; the DirectShow filters under Filters.
 - **Menus themselves**: the menu bar's titles and the context menus that open on their own.
 
@@ -153,7 +153,7 @@ LE5 ([#230](https://github.com/altqx/hikari/issues/230)) replaced the Manage tag
 
 - **WS3 [#217](https://github.com/altqx/hikari/issues/217)** removes the View arrangements (GLOBAL_VIEW_*, roles view-all, view-video-subs, view-audio-subs, view-only-video, view-only-subs) and Enable / Disable editor. IC1 draws nothing for them. WS3 drops the view-* roles or marks them as not placed. The editor role stays: the Settings Editor page and the video menu's Open editor use it. WS3's new Save layout as… and Manage layouts… items need icons. layout-preset, layout-reset and layout-restore are there for its menu.
 - **LE2 [#227](https://github.com/altqx/hikari/issues/227)** adds a checkable Times/Frames item to the video panel's menu, and **GR3 [#236](https://github.com/altqx/hikari/issues/236)** adds a checkable auto-hide toggle under Hide columns. Check items need no icon. **VF1 [#288](https://github.com/altqx/hikari/issues/288)** adds the Seek on and Then play submenus after it, with video-to-start-time and play-line; their choices are check items.
-- **AV1 [#238](https://github.com/altqx/hikari/issues/238)**'s speaker button and device menu can take audio-device (a loudspeaker, drawn for Settings › Audio output). Its "Audio settings…" item needs an icon: settings-audio.
+- **AV1 [#238](https://github.com/altqx/hikari/issues/238)**'s speaker button and device menu can take audio-device (a loudspeaker, drawn for Settings › Audio output). Its "Audio settings" item needs an icon: settings-audio.
 - **PF1 [#225](https://github.com/altqx/hikari/issues/225)** places the Options icons below. The manifest marks them `pending: "PF1 #225"`.
 
 ## Options: the primary options of each page

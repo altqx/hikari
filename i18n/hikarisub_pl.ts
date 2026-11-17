@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>Menu wątku</translation>
+        <translation type="vanished">Menu wątku</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -165,11 +165,11 @@
     </message>
     <message>
         <source>%1 · active tab</source>
-        <translation>%1 · aktywna karta</translation>
+        <translation type="vanished">%1 · aktywna karta</translation>
     </message>
     <message>
         <source>Ask, or type @ to attach, / for commands</source>
-        <translation>Zapytaj albo wpisz @, aby dołączyć, / dla poleceń</translation>
+        <translation type="vanished">Zapytaj albo wpisz @, aby dołączyć, / dla poleceń</translation>
     </message>
     <message>
         <source>Add a provider first</source>
@@ -181,27 +181,27 @@
     </message>
     <message>
         <source>Attach</source>
-        <translation>Dołącz</translation>
+        <translation type="vanished">Dołącz</translation>
     </message>
     <message>
         <source>Search the web</source>
-        <translation>Wyszukaj w sieci</translation>
+        <translation type="vanished">Wyszukaj w sieci</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>Ten dostawca nie potrafi sam wyszukiwać w sieci. Wybierz usługę wyszukiwania w Ustawienia › AI › Wyszukiwanie w sieci.</translation>
+        <translation type="vanished">Ten dostawca nie potrafi sam wyszukiwać w sieci. Wybierz usługę wyszukiwania w Ustawienia › AI › Wyszukiwanie w sieci.</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>Wyszukiwanie w sieci: włączone w tym wątku</translation>
+        <translation type="vanished">Wyszukiwanie w sieci: włączone w tym wątku</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>Wyszukiwanie w sieci: wyłączone w tym wątku</translation>
+        <translation type="vanished">Wyszukiwanie w sieci: wyłączone w tym wątku</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>Zmiana w trakcie wątku kosztuje jedno chybienie pamięci podręcznej w Anthropic.</translation>
+        <translation type="vanished">Zmiana w trakcie wątku kosztuje jedno chybienie pamięci podręcznej w Anthropic.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -256,6 +256,14 @@
         <translation>zakres: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>Wybierz model</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>Wyślij</translation>
     </message>
@@ -273,11 +281,11 @@
     </message>
     <message>
         <source>Delete this thread?</source>
-        <translation>Usunąć ten wątek?</translation>
+        <translation type="vanished">Usunąć ten wątek?</translation>
     </message>
     <message>
         <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
-        <translation>Rozmowa zostanie usunięta. Wprowadzone w niej zmiany zostają w napisach i w przeglądzie.</translation>
+        <translation type="vanished">Rozmowa zostanie usunięta. Wprowadzone w niej zmiany zostają w napisach i w przeglądzie.</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -288,8 +296,16 @@
         <translation>Zmień tryb</translation>
     </message>
     <message>
+        <source>Agent default</source>
+        <translation>Domyślny model agenta</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>Wczytywanie modeli…</translation>
+    </message>
+    <message>
         <source>Settings › AI…</source>
-        <translation>Ustawienia › AI…</translation>
+        <translation type="vanished">Ustawienia › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -305,7 +321,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>Domyślny dla nowych wątków…</translation>
+        <translation type="vanished">Domyślny dla nowych wątków…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -389,15 +405,15 @@
     </message>
     <message>
         <source>Judge asks you</source>
-        <translation>Sędzia pyta Ciebie</translation>
+        <translation type="vanished">Sędzia pyta Ciebie</translation>
     </message>
     <message>
         <source>Allow %1?</source>
-        <translation>Zezwolić na %1?</translation>
+        <translation type="vanished">Zezwolić na %1?</translation>
     </message>
     <message>
         <source>Run %1?</source>
-        <translation>Uruchomić %1?</translation>
+        <translation type="vanished">Uruchomić %1?</translation>
     </message>
     <message>
         <source>asks in every mode</source>
@@ -437,7 +453,27 @@
     </message>
     <message>
         <source>Deny and tell the agent…</source>
-        <translation>Odmów i powiedz agentowi…</translation>
+        <translation type="vanished">Odmów i powiedz agentowi…</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>Wycofano: agent przestał czekać na odpowiedź.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>Wycofano: tura skończyła się przed odpowiedzią.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>Wycofano: zatrzymano turę.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>Wycofano: wylogowano z Codex.</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>Wycofano: limit kosztów zatrzymał turę.</translation>
     </message>
     <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
@@ -520,10 +556,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Don’t install and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Installing %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -552,8 +584,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>Wylogowano z Codex. Ta sesja się zakończyła.</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>Komponent AI jest gotowy</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>Pobieranie komponentu AI: %1 z %2 MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>Komponent AI jest gotowy. Wyślij wiadomość ponownie.</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>Nie udało się pobrać komponentu AI. Sprawdź połączenie i spróbuj ponownie.</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>Agenci potrzebują komponentu AI, który HikariSub pobiera jeden raz.</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>Pobierz komponent AI</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -660,10 +720,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Don’t run and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Running %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -690,6 +746,130 @@
     <message>
         <source>Open</source>
         <translation type="unfinished">Otwórz</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tell the agent instead…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No threads match “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>active tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>+%n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more attached file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach a file, / for commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>Usuń wątek…</translation>
+    </message>
+    <message>
+        <source>Delete “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its messages are deleted. Changes it made stay in your subtitles and in the review.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>Domyślny dla nowych wątków</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the subtitles?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use a plugin?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use %1?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow this action?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set “%1” to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change line %1 to “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a line to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Change %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>%1 asks to run this Lua script</source>
@@ -769,7 +949,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
+        <translation type="vanished">HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
@@ -845,7 +1025,7 @@
     </message>
     <message>
         <source>Decline and tell the agent…</source>
-        <translation>Odrzuć i powiedz agentowi…</translation>
+        <translation type="vanished">Odrzuć i powiedz agentowi…</translation>
     </message>
     <message>
         <source>Sent back to the agent: %1</source>
@@ -889,10 +1069,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -988,8 +1164,12 @@
         <translation>Urządzenie wyjściowe</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>Ustawienia audio</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>Ustawienia audio…</translation>
+        <translation type="vanished">Ustawienia audio…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1033,7 +1213,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>Odtwórz 500 ms po czasie początkowym</translation>
+        <translation type="vanished">Odtwórz 500 ms po czasie początkowym</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1073,7 +1253,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>Włącz / Wyłącz automatyczne dzielenie sylab</translation>
+        <translation type="vanished">Włącz / Wyłącz automatyczne dzielenie sylab</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1081,7 +1261,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>Automatyczne przewijanie do aktywnej linijki</translation>
+        <translation type="vanished">Automatyczne przewijanie do aktywnej linijki</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1106,7 +1286,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>Odtwórz 500 ms przed czasem początkowym</translation>
+        <translation type="vanished">Odtwórz 500 ms przed czasem początkowym</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1114,7 +1294,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>Odtwórz 500 ms przed czasem końcowym</translation>
+        <translation type="vanished">Odtwórz 500 ms przed czasem końcowym</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1122,7 +1302,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>Odtwórz 500 ms po czasie końcowym</translation>
+        <translation type="vanished">Odtwórz 500 ms po czasie końcowym</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1218,11 +1398,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>Tryb przebiegu fali</translation>
+        <translation type="vanished">Tryb przebiegu fali</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>Tryb spektrum</translation>
+        <translation type="vanished">Tryb spektrum</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1230,7 +1410,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>Synchronizuj kursory wideo i audio</translation>
+        <translation type="vanished">Synchronizuj kursory wideo i audio</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1238,7 +1418,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>Więcej opcji audio</translation>
+        <translation type="vanished">Więcej opcji audio</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1307,6 +1487,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Speech spectrum</source>
         <translation>Spektrum mowy</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -1533,7 +1717,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>Odpowiedzi i presety</translation>
+        <translation type="vanished">Odpowiedzi i presety</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -2029,7 +2213,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>Opcje: %1</translation>
+        <translation type="vanished">Opcje: %1</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -2685,6 +2869,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Open backup folder</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>Uruchom ponownie ostatnie makro</translation>
     </message>
 </context>
 <context>
@@ -3700,39 +3888,39 @@ Urządzenie wyjściowe: %2</translation>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation>Lewo-dół</translation>
+        <translation type="vanished">Lewo-dół</translation>
     </message>
     <message>
         <source>Bottom-centre</source>
-        <translation>Środek-dół</translation>
+        <translation type="vanished">Środek-dół</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation>Prawo-dół</translation>
+        <translation type="vanished">Prawo-dół</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation>Lewo-środek</translation>
+        <translation type="vanished">Lewo-środek</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation>Środek</translation>
+        <translation type="vanished">Środek</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation>Prawo-środek</translation>
+        <translation type="vanished">Prawo-środek</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation>Lewo-góra</translation>
+        <translation type="vanished">Lewo-góra</translation>
     </message>
     <message>
         <source>Top-centre</source>
-        <translation>Środek-góra</translation>
+        <translation type="vanished">Środek-góra</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation>Prawo-góra</translation>
+        <translation type="vanished">Prawo-góra</translation>
     </message>
     <message>
         <source>Text position</source>
@@ -3875,6 +4063,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Słowo “%1” nie zostało dodane do słownika.</translation>
     </message>
     <message>
+        <source>Check spelling as you type</source>
+        <translation>Sprawdzaj pisownię podczas pisania</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>Edytor linijki</translation>
     </message>
@@ -3923,8 +4115,12 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wklej zaznaczony tekst</translation>
     </message>
     <message>
+        <source>Add a tag button…</source>
+        <translation>Dodaj przycisk tagu…</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
-        <translation>Dodaj przycisk tagu</translation>
+        <translation type="vanished">Dodaj przycisk tagu</translation>
     </message>
     <message>
         <source>Edit…</source>
@@ -3944,7 +4140,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>Sprawdzaj pisownię</translation>
+        <translation type="vanished">Sprawdzaj pisownię</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -4183,6 +4379,10 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Move to the trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the trash…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4940,8 +5140,8 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zmień nazwę</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5338,10 +5538,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Style editor sample</source>
         <translation>Próbka edytora stylu</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>Zarządzaj katalogami</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -6339,6 +6535,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Według łamań wierszy</translation>
     </message>
     <message>
+        <source>Typesetting</source>
+        <translation>Typesetting</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>Interpoluj między wierszami…</translation>
     </message>
@@ -7022,7 +7222,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Shift+kliknięcie ustawia skrót</translation>
     </message>
     <message>
-        <source>AI actions…</source>
+        <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7167,11 +7367,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>Odtwórz przed znacznikiem</translation>
+        <translation type="vanished">Odtwórz przed znacznikiem</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>Odtwórz po znaczniku</translation>
+        <translation type="vanished">Odtwórz po znaczniku</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7743,11 +7943,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>Otwórz napisy</translation>
+        <translation type="vanished">Otwórz napisy</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>Otwórz wideo</translation>
+        <translation type="vanished">Otwórz wideo</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7835,19 +8035,19 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>Odtwórz pierwsze 500 ms</translation>
+        <translation type="vanished">Odtwórz pierwsze 500 ms</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>Odtwórz ostatnie 500 ms</translation>
+        <translation type="vanished">Odtwórz ostatnie 500 ms</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>Odtwórz 500 ms przed</translation>
+        <translation type="vanished">Odtwórz 500 ms przed</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>Odtwórz 500 ms po</translation>
+        <translation type="vanished">Odtwórz 500 ms po</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7939,7 +8139,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>Zmień proporcje obrazu</translation>
+        <translation type="vanished">Zmień proporcje obrazu</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8259,11 +8459,47 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Add QC note</source>
-        <translation>Dodaj notatkę QC</translation>
+        <translation type="vanished">Dodaj notatkę QC</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
         <translation>Śledzenie perspektywy…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>Odtwórz przed znacznikiem</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>Odtwórz po znaczniku</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>Odtwórz pierwsze 500 ms</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>Odtwórz ostatnie 500 ms</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>Odtwórz 500 ms przed początkiem</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>Odtwórz 500 ms po końcu</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>Otwórz napisy…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>Otwórz wideo…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -8478,6 +8714,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Cykl \fsp wstecz</translation>
     </message>
     <message>
+        <source>Add QC note…</source>
+        <translation>Dodaj notatkę QC…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>Przenieś zakładkę do nowego okna</translation>
     </message>
@@ -8665,6 +8905,162 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Split lines every N frames or seconds…</source>
         <translation>Dziel linijki co N klatek lub sekund…</translation>
     </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>Importuj napisy z MKV…</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>Ustaw nowy FPS…</translation>
+    </message>
+    <message>
+        <source>Report an issue…</source>
+        <translation>Zgłoś problem…</translation>
+    </message>
+    <message>
+        <source>Load script…</source>
+        <translation>Wczytaj skrypt…</translation>
+    </message>
+    <message>
+        <source>Shift times…</source>
+        <translation>Przesuń czasy…</translation>
+    </message>
+    <message>
+        <source>Replace…</source>
+        <translation>Zamień…</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>Ukryj tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>Otwórz klatki kluczowe…</translation>
+    </message>
+    <message>
+        <source>Sort all lines by style</source>
+        <translation>Sortuj wszystkie linijki według stylu</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by style</source>
+        <translation>Sortuj zaznaczone linijki według stylu</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor…</source>
+        <translation>Postprocesor timingu…</translation>
+    </message>
+    <message>
+        <source>Resample subtitles…</source>
+        <translation>Zmień rozdzielczość napisów…</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>Zamknij zakładkę</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>Przejdź do następnej klatki</translation>
+    </message>
+    <message>
+        <source>Open audio…</source>
+        <translation>Otwórz audio…</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>Przejdź do poprzedniej klatki</translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation>Zapisz wszystko</translation>
+    </message>
+    <message>
+        <source>Save translation…</source>
+        <translation>Zapisz tłumaczenie…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>Nazywaj nowe pliki jak wideo</translation>
+    </message>
+    <message>
+        <source>Find…</source>
+        <translation>Znajdź…</translation>
+    </message>
+    <message>
+        <source>Select lines…</source>
+        <translation>Zaznacz linijki…</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>Ustaw znacznik audio na czas wideo</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>Ustaw czas końcowy z wideo</translation>
+    </message>
+    <message>
+        <source>Set start time from video</source>
+        <translation>Ustaw czas początkowy z wideo</translation>
+    </message>
+    <message>
+        <source>Export as…</source>
+        <translation>Eksportuj jako…</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>Zastosuj zaznaczenie audio i zakończ tam poprzednią linijkę</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>Otwórz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>Zapisz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>Szczegóły wideo</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Zastosuj dane Power-Pin…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>Kopiuj dane Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>Notatki QC</translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation>Pokaż w panelu Przegląd</translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation>Eksplorator</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>Wczytaj sesję z pliku…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>Zapisz sesję do pliku…</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>Usuń stare autozapisy…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>Otwórz atrapę wideo…</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>Uruchom ponownie ostatnie makro</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.InlineAi</name>
@@ -8698,7 +9094,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>AI</source>
-        <translation type="unfinished">AI</translation>
+        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -8733,11 +9129,15 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit actions…</source>
+        <source>%1…</source>
+        <translation>%1…</translation>
+    </message>
+    <message>
+        <source>Edit actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add a model in Settings › AI…</source>
+        <source>Add a model in Settings › AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9509,6 +9909,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Accept all suggestions</source>
         <translation>Akceptuj wszystkie sugestie</translation>
+    </message>
+    <message>
+        <source>Check karaoke</source>
+        <translation>Sprawdź karaoke</translation>
     </message>
 </context>
 <context>
@@ -10343,6 +10747,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Open</source>
         <translation>Otwórz</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>Otwórz %1</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -11700,6 +12108,490 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Where to save</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;Open subtitles…</source>
+        <translation>&amp;Otwórz napisy…</translation>
+    </message>
+    <message>
+        <source>&amp;Close tab</source>
+        <translation>&amp;Zamknij zakładkę</translation>
+    </message>
+    <message>
+        <source>Save a&amp;ll</source>
+        <translation>Zapisz &amp;wszystko</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation…</source>
+        <translation>Zapisz &amp;tłumaczenie…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>Nazywaj nowe pliki jak wideo</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>Usuń stare autozapisy…</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>Wczytaj sesję z pliku…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>Zapisz sesję do pliku…</translation>
+    </message>
+    <message>
+        <source>Setti&amp;ngs</source>
+        <translation>&amp;Ustawienia</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines…</source>
+        <translation>Zaznacz &amp;linijki…</translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation>Przyklej początek do poprzedniej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation>Przyklej początek do następnej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation>Przyklej koniec do poprzedniej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation>Przyklej koniec do następnej klatki kluczowej</translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation>Przesuń początek o klatkę wcześniej</translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation>Przesuń początek o klatkę później</translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation>Przesuń koniec o klatkę wcześniej</translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation>Przesuń koniec o klatkę później</translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation>Przedłuż poprzednią linijkę do tego początku</translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation>Przedłuż następną linijkę do tego końca</translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
+        <translation>Przyjmij sugestię asystenta timingu</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes</source>
+        <translation>Notatki &amp;QC</translation>
+    </message>
+    <message>
+        <source>Sc&amp;ript properties</source>
+        <translation>Właściwości &amp;skryptu</translation>
+    </message>
+    <message>
+        <source>&amp;Font collector</source>
+        <translation>&amp;Kolekcjoner czcionek</translation>
+    </message>
+    <message>
+        <source>R&amp;esample subtitles…</source>
+        <translation>Zmień &amp;rozdzielczość napisów…</translation>
+    </message>
+    <message>
+        <source>Check spellin&amp;g</source>
+        <translation>Sprawdź &amp;pisownię</translation>
+    </message>
+    <message>
+        <source>Check &amp;karaoke</source>
+        <translation>Sprawdź &amp;karaoke</translation>
+    </message>
+    <message>
+        <source>Kanji t&amp;imer</source>
+        <translation>&amp;Timer kanji</translation>
+    </message>
+    <message>
+        <source>Open &amp;keyframes…</source>
+        <translation>Otwórz &amp;klatki kluczowe…</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>Otwórz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>Zapisz kody czasowe…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>Otwórz atrapę wideo…</translation>
+    </message>
+    <message>
+        <source>Align to &amp;video…</source>
+        <translation>Dopasuj do &amp;wideo…</translation>
+    </message>
+    <message>
+        <source>Set &amp;start time from video</source>
+        <translation>Ustaw czas &amp;początkowy z wideo</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>Ustaw czas końcowy z wideo</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>Zastosuj dane Power-Pin…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>Kopiuj dane Power-Pin z linijek</translation>
+    </message>
+    <message>
+        <source>&amp;Play or pause</source>
+        <translation>&amp;Odtwórz lub wstrzymaj</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>Szczegóły wideo</translation>
+    </message>
+    <message>
+        <source>&amp;Open audio…</source>
+        <translation>&amp;Otwórz audio…</translation>
+    </message>
+    <message>
+        <source>Open audio from &amp;video</source>
+        <translation>Otwórz audio z &amp;wideo</translation>
+    </message>
+    <message>
+        <source>&amp;Close audio</source>
+        <translation>&amp;Zamknij audio</translation>
+    </message>
+    <message>
+        <source>&amp;Reload audio</source>
+        <translation>&amp;Wczytaj ponownie audio</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>Ustaw znacznik audio na czas wideo</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>Zastosuj zaznaczenie audio i zakończ tam poprzednią linijkę</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>Uruchom ponownie ostatnie makro</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins</source>
+        <translation>W&amp;tyczki</translation>
+    </message>
+    <message>
+        <source>Getting &amp;started</source>
+        <translation>Pierwsze &amp;kroki</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue…</source>
+        <translation>&amp;Zgłoś problem…</translation>
+    </message>
+    <message>
+        <source>Only in Translation mode</source>
+        <translation>Tylko w trybie tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Opens a subtitle file</source>
+        <translation>Otwiera plik napisów</translation>
+    </message>
+    <message>
+        <source>Opens a video file</source>
+        <translation>Otwiera plik wideo</translation>
+    </message>
+    <message>
+        <source>Opens a folder as a project</source>
+        <translation>Otwiera folder jako projekt</translation>
+    </message>
+    <message>
+        <source>Lists the subtitle files opened lately</source>
+        <translation>Wyświetla ostatnio otwierane pliki napisów</translation>
+    </message>
+    <message>
+        <source>&amp;Recently opened subtitles</source>
+        <translation>&amp;Ostatnio otwarte napisy</translation>
+    </message>
+    <message>
+        <source>Opens %1</source>
+        <translation>Otwiera %1</translation>
+    </message>
+    <message>
+        <source>Saves the document</source>
+        <translation>Zapisuje dokument</translation>
+    </message>
+    <message>
+        <source>Saves the document under a new name or format</source>
+        <translation>Zapisuje dokument pod nową nazwą lub w innym formacie</translation>
+    </message>
+    <message>
+        <source>Saves every open document</source>
+        <translation>Zapisuje wszystkie otwarte dokumenty</translation>
+    </message>
+    <message>
+        <source>Saves the translation as a new file</source>
+        <translation>Zapisuje tłumaczenie jako nowy plik</translation>
+    </message>
+    <message>
+        <source>Names new files after the video</source>
+        <translation>Nadaje nowym plikom nazwę wideo</translation>
+    </message>
+    <message>
+        <source>Deletes autosaves older than a date you choose</source>
+        <translation>Usuwa autozapisy starsze niż wybrana data</translation>
+    </message>
+    <message>
+        <source>Loads or saves the open files as a session</source>
+        <translation>Wczytuje lub zapisuje otwarte pliki jako sesję</translation>
+    </message>
+    <message>
+        <source>At startup</source>
+        <translation>Przy starcie</translation>
+    </message>
+    <message>
+        <source>Starts with no files open</source>
+        <translation>Uruchamia program bez otwartych plików</translation>
+    </message>
+    <message>
+        <source>Don’t load the last session</source>
+        <translation>Nie wczytuj ostatniej sesji</translation>
+    </message>
+    <message>
+        <source>Asks whether to load the last session at startup</source>
+        <translation>Pyta przy starcie, czy wczytać ostatnią sesję</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>Pytaj</translation>
+    </message>
+    <message>
+        <source>Loads the last session at startup</source>
+        <translation>Wczytuje ostatnią sesję przy starcie</translation>
+    </message>
+    <message>
+        <source>Load the last session</source>
+        <translation>Wczytaj ostatnią sesję</translation>
+    </message>
+    <message>
+        <source>Empties the editor and starts a new document</source>
+        <translation>Czyści edytor i zaczyna nowy dokument</translation>
+    </message>
+    <message>
+        <source>Closes the current tab</source>
+        <translation>Zamyka bieżącą zakładkę</translation>
+    </message>
+    <message>
+        <source>Closes this window’s tabs and its project</source>
+        <translation>Zamyka zakładki tego okna i jego projekt</translation>
+    </message>
+    <message>
+        <source>Opens Settings</source>
+        <translation>Otwiera Ustawienia</translation>
+    </message>
+    <message>
+        <source>Closes this window; closing the last window exits the program</source>
+        <translation>Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Exits the program</source>
+        <translation>Kończy działanie programu</translation>
+    </message>
+    <message>
+        <source>Undoes the last change</source>
+        <translation>Cofa ostatnią zmianę</translation>
+    </message>
+    <message>
+        <source>Redoes the last undone change</source>
+        <translation>Ponawia ostatnio cofniętą zmianę</translation>
+    </message>
+    <message>
+        <source>Undoes every change since the last save</source>
+        <translation>Cofa wszystkie zmiany od ostatniego zapisu</translation>
+    </message>
+    <message>
+        <source>Shows the list of changes</source>
+        <translation>Pokazuje listę zmian</translation>
+    </message>
+    <message>
+        <source>Sorts every line in the document</source>
+        <translation>Sortuje wszystkie linijki w dokumencie</translation>
+    </message>
+    <message>
+        <source>Sor&amp;t all lines</source>
+        <translation>Sor&amp;tuj wszystkie linijki</translation>
+    </message>
+    <message>
+        <source>Sorts the selected lines</source>
+        <translation>Sortuje zaznaczone linijki</translation>
+    </message>
+    <message>
+        <source>Sort s&amp;elected lines</source>
+        <translation>Sortuj &amp;zaznaczone linijki</translation>
+    </message>
+    <message>
+        <source>Shows the Shift times panel</source>
+        <translation>Pokazuje panel Przesuwanie czasów</translation>
+    </message>
+    <message>
+        <source>Timing &amp;helpers</source>
+        <translation>&amp;Narzędzia timingu</translation>
+    </message>
+    <message>
+        <source>Opens Style manager for the active line’s style</source>
+        <translation>Otwiera Menedżer stylów dla stylu aktywnej linijki</translation>
+    </message>
+    <message>
+        <source>Collects the fonts the document uses into a folder or archive</source>
+        <translation>Zbiera czcionki używane w dokumencie do folderu lub archiwum</translation>
+    </message>
+    <message>
+        <source>Resamples the document to a new script resolution</source>
+        <translation>Przelicza dokument na nową rozdzielczość skryptu</translation>
+    </message>
+    <message>
+        <source>Set FP&amp;S</source>
+        <translation>Ustaw FP&amp;S</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub fol&amp;ds to line groups</source>
+        <translation>Konwertuj &amp;zwinięcia Aegisub na grupy linijek</translation>
+    </message>
+    <message>
+        <source>No Aegisub folds in this file</source>
+        <translation>Ten plik nie ma zwinięć Aegisub</translation>
+    </message>
+    <message>
+        <source>Opens the Spellchecker panel</source>
+        <translation>Otwiera panel Sprawdzanie pisowni</translation>
+    </message>
+    <message>
+        <source>&amp;Open video…</source>
+        <translation>&amp;Otwórz wideo…</translation>
+    </message>
+    <message>
+        <source>Opens a keyframes file</source>
+        <translation>Otwiera plik klatek kluczowych</translation>
+    </message>
+    <message>
+        <source>Opens a VFR timecodes v1, v2 or v4 file</source>
+        <translation>Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
+    </message>
+    <message>
+        <source>Saves the timecodes as a VFR v2 file</source>
+        <translation>Zapisuje kody czasowe jako plik VFR v2</translation>
+    </message>
+    <message>
+        <source>Closes the open timecodes file</source>
+        <translation>Zamyka otwarty plik kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Goes one frame back</source>
+        <translation>Przechodzi o jedną klatkę w tył</translation>
+    </message>
+    <message>
+        <source>Goes one frame forward</source>
+        <translation>Przechodzi o jedną klatkę w przód</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ start to the video frame’s time</source>
+        <translation>Ustawia początek zaznaczonych linijek na czas klatki wideo</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ end to the video frame’s time</source>
+        <translation>Ustawia koniec zaznaczonych linijek na czas klatki wideo</translation>
+    </message>
+    <message>
+        <source>Open a video first</source>
+        <translation>Najpierw otwórz wideo</translation>
+    </message>
+    <message>
+        <source>&amp;Full screen</source>
+        <translation>&amp;Pełny ekran</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
+        <source>Opens an audio file</source>
+        <translation>Otwiera plik audio</translation>
+    </message>
+    <message>
+        <source>Lists the audio files opened lately</source>
+        <translation>Wyświetla ostatnio otwierane pliki audio</translation>
+    </message>
+    <message>
+        <source>Closes the audio</source>
+        <translation>Zamyka audio</translation>
+    </message>
+    <message>
+        <source>Loads an Automation script from a file</source>
+        <translation>Wczytuje skrypt automatyzacji z pliku</translation>
+    </message>
+    <message>
+        <source>Loads the autoload folder’s scripts again</source>
+        <translation>Ponownie wczytuje skrypty z folderu autoload</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again, showing its dialogs</source>
+        <translation>Uruchamia ponownie ostatnie makro, pokazując jego okna dialogowe</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again with the same answers, without its dialogs when they are unchanged</source>
+        <translation>Uruchamia ponownie ostatnie makro z tymi samymi odpowiedziami, bez jego okien dialogowych, jeśli się nie zmieniły</translation>
+    </message>
+    <message>
+        <source>Installs, turns on and off, and uninstalls plugins</source>
+        <translation>Instaluje, włącza, wyłącza i odinstalowuje wtyczki</translation>
+    </message>
+    <message>
+        <source>Switches, saves and locks the window’s layout</source>
+        <translation>Przełącza, zapisuje i blokuje układ okna</translation>
+    </message>
+    <message>
+        <source>Shows, floats or closes each panel</source>
+        <translation>Pokazuje, odczepia lub zamyka każdy panel</translation>
+    </message>
+    <message>
+        <source>Moves the focused panel to another place in the window</source>
+        <translation>Przenosi aktywny panel w inne miejsce okna</translation>
+    </message>
+    <message>
+        <source>Shows or hides the Log</source>
+        <translation>Pokazuje lub ukrywa Dziennik</translation>
+    </message>
+    <message>
+        <source>Open a file first</source>
+        <translation>Najpierw otwórz plik</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the Grid</source>
+        <translation>Pokazuje lub ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>Ukryj tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the line editor</source>
+        <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -11878,7 +12770,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished">Z presetu</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12172,10 +13064,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12279,6 +13167,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">Zastosuj do zaznaczonych linijek</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12519,6 +13411,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15578,7 +16474,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>Model</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>
@@ -16745,8 +17641,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, z %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>O wtyczce %1…</translation>
+        <source>About %1</source>
+        <translation>O wtyczce %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -16956,6 +17852,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Względem</translation>
     </message>
     <message>
+        <source>Align</source>
+        <translation>Wyrównaj</translation>
+    </message>
+    <message>
+        <source>Left edges</source>
+        <translation>Lewe krawędzie</translation>
+    </message>
+    <message>
+        <source>Centres</source>
+        <translation>Środki</translation>
+    </message>
+    <message>
+        <source>Right edges</source>
+        <translation>Prawe krawędzie</translation>
+    </message>
+    <message>
+        <source>Top edges</source>
+        <translation>Górne krawędzie</translation>
+    </message>
+    <message>
+        <source>Middles</source>
+        <translation>Środki w pionie</translation>
+    </message>
+    <message>
+        <source>Bottom edges</source>
+        <translation>Dolne krawędzie</translation>
+    </message>
+    <message>
+        <source>Distribute</source>
+        <translation>Rozłóż</translation>
+    </message>
+    <message>
+        <source>Horizontally</source>
+        <translation>Poziomo</translation>
+    </message>
+    <message>
+        <source>Vertically</source>
+        <translation>Pionowo</translation>
+    </message>
+    <message>
         <source>The active line</source>
         <translation type="vanished">Aktywnego wiersza</translation>
     </message>
@@ -16973,35 +17909,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Align left edges</source>
-        <translation>Wyrównaj lewe krawędzie</translation>
+        <translation type="vanished">Wyrównaj lewe krawędzie</translation>
     </message>
     <message>
         <source>Align centres</source>
-        <translation>Wyrównaj środki</translation>
+        <translation type="vanished">Wyrównaj środki</translation>
     </message>
     <message>
         <source>Align right edges</source>
-        <translation>Wyrównaj prawe krawędzie</translation>
+        <translation type="vanished">Wyrównaj prawe krawędzie</translation>
     </message>
     <message>
         <source>Align top edges</source>
-        <translation>Wyrównaj górne krawędzie</translation>
+        <translation type="vanished">Wyrównaj górne krawędzie</translation>
     </message>
     <message>
         <source>Align middles</source>
-        <translation>Wyrównaj środki w pionie</translation>
+        <translation type="vanished">Wyrównaj środki w pionie</translation>
     </message>
     <message>
         <source>Align bottom edges</source>
-        <translation>Wyrównaj dolne krawędzie</translation>
+        <translation type="vanished">Wyrównaj dolne krawędzie</translation>
     </message>
     <message>
         <source>Distribute horizontally</source>
-        <translation>Rozłóż poziomo</translation>
+        <translation type="vanished">Rozłóż poziomo</translation>
     </message>
     <message>
         <source>Distribute vertically</source>
-        <translation>Rozłóż pionowo</translation>
+        <translation type="vanished">Rozłóż pionowo</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -17266,8 +18202,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Importuj plik notatek…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>Importuj notatki ze schowka</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>Importuj notatki ze schowka…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17278,7 +18214,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Oznacz wszystkie jako niegotowe</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>Usuń wszystkie notatki…</translation>
     </message>
     <message>
@@ -17378,11 +18314,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Nie można odczytać %1: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>Usuń wszystkie notatki</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>Usunąć %n notatkę QC z tego pliku?</numerusform>
             <numerusform>Usunąć wszystkie %n notatki QC z tego pliku?</numerusform>
@@ -17394,7 +18330,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Cofnięcie je przywróci.</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>Usuń wszystkie</translation>
     </message>
     <message>
@@ -17506,8 +18442,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Notatki QC można przechowywać tylko w plikach ASS i SSA. Zapisz ten plik jako ASS, aby dodać notatki.</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>Wklej notatki</translation>
+        <source>Import from the clipboard</source>
+        <translation>Importuj ze schowka</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -18343,6 +19279,38 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Sub-agents: %1</source>
         <translation>Podagenci: %1</translation>
+    </message>
+    <message>
+        <source>Keeps or undoes the AI’s changes</source>
+        <translation>Zachowuje lub cofa zmiany AI</translation>
+    </message>
+    <message>
+        <source>Keeps the AI’s change to this line</source>
+        <translation>Zachowuje zmianę AI w tej linijce</translation>
+    </message>
+    <message>
+        <source>Undoes the AI’s change to this line</source>
+        <translation>Cofa zmianę AI w tej linijce</translation>
+    </message>
+    <message>
+        <source>Goes to the next line with an AI change</source>
+        <translation>Przechodzi do następnej linijki ze zmianą AI</translation>
+    </message>
+    <message>
+        <source>Goes to the previous line with an AI change</source>
+        <translation>Przechodzi do poprzedniej linijki ze zmianą AI</translation>
+    </message>
+    <message>
+        <source>Keeps every waiting AI change</source>
+        <translation>Zachowuje wszystkie oczekujące zmiany AI</translation>
+    </message>
+    <message>
+        <source>Undoes every waiting AI change</source>
+        <translation>Cofa wszystkie oczekujące zmiany AI</translation>
+    </message>
+    <message>
+        <source>Shows the Review panel</source>
+        <translation>Pokazuje panel Przegląd</translation>
     </message>
 </context>
 <context>
@@ -19818,6 +20786,14 @@ ponieważ została zmieniona.</translation>
         <translation>Ustawienia gramatyki…</translation>
     </message>
     <message>
+        <source>Add “%1” to project dictionary</source>
+        <translation>Dodaj “%1” do słownika projektu</translation>
+    </message>
+    <message>
+        <source>Add “%1” to my dictionary</source>
+        <translation>Dodaj “%1” do mojego słownika</translation>
+    </message>
+    <message>
         <source>Grammar · %1</source>
         <translation>Gramatyka · %1</translation>
     </message>
@@ -19832,14 +20808,6 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Add “%1” to dictionary</source>
         <translation>Dodaj “%1” do słownika</translation>
-    </message>
-    <message>
-        <source>This project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to project dictionary</source>
@@ -20632,24 +21600,16 @@ ponieważ została zmieniona.</translation>
         <translation>Przenieś w górę</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>Przenieś w górę (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>Przenieś w dół</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>Przenieś w dół (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>Wczytaj z pliku…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>Więcej</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20685,10 +21645,6 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21569,7 +22525,7 @@ Usunięte style:
     </message>
     <message>
         <source>Tag list options</source>
-        <translation>Opcje listy tagów</translation>
+        <translation type="vanished">Opcje listy tagów</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -23565,7 +24521,7 @@ Usunięte style:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>Polecenia presetów</translation>
+        <translation type="vanished">Polecenia presetów</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -24202,6 +25158,10 @@ Usunięte style:
         <source>Extend</source>
         <translation>Przedłuż</translation>
     </message>
+    <message>
+        <source>Apply Power-Pin data</source>
+        <translation>Zastosuj dane Power-Pin</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -24323,7 +25283,7 @@ Usunięte style:
     </message>
     <message>
         <source>More</source>
-        <translation>Więcej</translation>
+        <translation type="vanished">Więcej</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -24452,6 +25412,14 @@ Usunięte style:
     <message>
         <source>Formatting</source>
         <translation>Formatowanie</translation>
+    </message>
+    <message>
+        <source>Tra&amp;nslation mode</source>
+        <translation>Tryb &amp;tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Shows and saves the original text and the translation of each line</source>
+        <translation>Wyświetla i zapisuje tekst oryginalny i tłumaczenie każdej linijki</translation>
     </message>
 </context>
 <context>
@@ -24798,12 +25766,16 @@ Usunięte style:
         <translation>Koszt renderowania</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>Wyłącz pełny ekran</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>
@@ -26932,8 +27904,8 @@ nie działają na komentarzach</translation>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>Opcje: %1</translation>
+        <source>More options</source>
+        <translation>Więcej opcji</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -27036,12 +28008,12 @@ nie działają na komentarzach</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">Przesuń w lewo</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">Przesuń w prawo</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -27268,8 +28240,8 @@ nie działają na komentarzach</translation>
         <translation>Resetuj ten układ</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>Zarządzaj układami…</translation>
+        <source>Manage layouts</source>
+        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -27310,10 +28282,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>Zarządzaj układami</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -27380,12 +28348,8 @@ nie działają na komentarzach</translation>
         <translation>Nie można użyć: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>Zmień nazwę (F2)</translation>
+        <source>Rename</source>
+        <translation>Zmień nazwę</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -27402,6 +28366,26 @@ nie działają na komentarzach</translation>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout is locked</source>
+        <translation>Układ jest zablokowany</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s left</source>
+        <translation>Pokazuje lub ukrywa pasek boczny po lewej stronie okna</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s right</source>
+        <translation>Pokazuje lub ukrywa pasek boczny po prawej stronie okna</translation>
+    </message>
+    <message>
+        <source>Swaps the panels of the left and right side bars</source>
+        <translation>Zamienia panele lewego i prawego paska bocznego</translation>
+    </message>
+    <message>
+        <source>Puts the side bars back as they started</source>
+        <translation>Przywraca paski boczne do stanu początkowego</translation>
     </message>
 </context>
 <context>

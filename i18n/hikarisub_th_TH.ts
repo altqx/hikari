@@ -73,7 +73,7 @@
     </message>
     <message>
         <source>Thread menu</source>
-        <translation>เมนูเธรด</translation>
+        <translation type="vanished">เมนูเธรด</translation>
     </message>
     <message>
         <source>Add a provider to use the agent</source>
@@ -165,11 +165,11 @@
     </message>
     <message>
         <source>%1 · active tab</source>
-        <translation>%1 · แท็บที่ใช้งานอยู่</translation>
+        <translation type="vanished">%1 · แท็บที่ใช้งานอยู่</translation>
     </message>
     <message>
         <source>Ask, or type @ to attach, / for commands</source>
-        <translation>ถาม หรือพิมพ์ @ เพื่อแนบ / สำหรับคำสั่ง</translation>
+        <translation type="vanished">ถาม หรือพิมพ์ @ เพื่อแนบ / สำหรับคำสั่ง</translation>
     </message>
     <message>
         <source>Add a provider first</source>
@@ -181,27 +181,27 @@
     </message>
     <message>
         <source>Attach</source>
-        <translation>แนบ</translation>
+        <translation type="vanished">แนบ</translation>
     </message>
     <message>
         <source>Search the web</source>
-        <translation>ค้นหาเว็บ</translation>
+        <translation type="vanished">ค้นหาเว็บ</translation>
     </message>
     <message>
         <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation>ผู้ให้บริการนี้ค้นหาเว็บเองไม่ได้ เลือกบริการค้นหาในการตั้งค่า › AI › การค้นหาเว็บ</translation>
+        <translation type="vanished">ผู้ให้บริการนี้ค้นหาเว็บเองไม่ได้ เลือกบริการค้นหาในการตั้งค่า › AI › การค้นหาเว็บ</translation>
     </message>
     <message>
         <source>Search the web: on for this thread</source>
-        <translation>ค้นหาเว็บ: เปิดสำหรับเธรดนี้</translation>
+        <translation type="vanished">ค้นหาเว็บ: เปิดสำหรับเธรดนี้</translation>
     </message>
     <message>
         <source>Search the web: off for this thread</source>
-        <translation>ค้นหาเว็บ: ปิดสำหรับเธรดนี้</translation>
+        <translation type="vanished">ค้นหาเว็บ: ปิดสำหรับเธรดนี้</translation>
     </message>
     <message>
         <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation>การเปลี่ยนระหว่างเธรดทำให้แคชพลาดหนึ่งครั้งบน Anthropic</translation>
+        <translation type="vanished">การเปลี่ยนระหว่างเธรดทำให้แคชพลาดหนึ่งครั้งบน Anthropic</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -254,6 +254,14 @@
         <translation>ขอบเขต: %1</translation>
     </message>
     <message>
+        <source>Choose a model</source>
+        <translation>เลือกโมเดล</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>โมเดล</translation>
+    </message>
+    <message>
         <source>Send</source>
         <translation>ส่ง</translation>
     </message>
@@ -271,11 +279,11 @@
     </message>
     <message>
         <source>Delete this thread?</source>
-        <translation>ลบเธรดนี้ไหม</translation>
+        <translation type="vanished">ลบเธรดนี้ไหม</translation>
     </message>
     <message>
         <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
-        <translation>บทสนทนาจะถูกลบ แต่การเปลี่ยนแปลงที่ทำไว้ยังคงอยู่ในคำบรรยายและในการตรวจทาน</translation>
+        <translation type="vanished">บทสนทนาจะถูกลบ แต่การเปลี่ยนแปลงที่ทำไว้ยังคงอยู่ในคำบรรยายและในการตรวจทาน</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -286,8 +294,16 @@
         <translation>เปลี่ยนโหมด</translation>
     </message>
     <message>
+        <source>Agent default</source>
+        <translation>ค่าเริ่มต้นของเอเจนต์</translation>
+    </message>
+    <message>
+        <source>Loading models…</source>
+        <translation>กำลังโหลดโมเดล…</translation>
+    </message>
+    <message>
         <source>Settings › AI…</source>
-        <translation>การตั้งค่า › AI…</translation>
+        <translation type="vanished">การตั้งค่า › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -303,7 +319,7 @@
     </message>
     <message>
         <source>Default for new threads…</source>
-        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
+        <translation type="vanished">ค่าเริ่มต้นสำหรับเธรดใหม่…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -385,15 +401,15 @@
     </message>
     <message>
         <source>Judge asks you</source>
-        <translation>ผู้ตัดสินถามคุณ</translation>
+        <translation type="vanished">ผู้ตัดสินถามคุณ</translation>
     </message>
     <message>
         <source>Allow %1?</source>
-        <translation>อนุญาต %1 ไหม</translation>
+        <translation type="vanished">อนุญาต %1 ไหม</translation>
     </message>
     <message>
         <source>Run %1?</source>
-        <translation>เรียกใช้ %1 ไหม</translation>
+        <translation type="vanished">เรียกใช้ %1 ไหม</translation>
     </message>
     <message>
         <source>asks in every mode</source>
@@ -433,7 +449,27 @@
     </message>
     <message>
         <source>Deny and tell the agent…</source>
-        <translation>ปฏิเสธและบอกเอเจนต์…</translation>
+        <translation type="vanished">ปฏิเสธและบอกเอเจนต์…</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the agent stopped waiting for your answer.</source>
+        <translation>ถอนแล้ว: เอเจนต์หยุดรอคำตอบของคุณ</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the turn ended before you answered.</source>
+        <translation>ถอนแล้ว: รอบนี้จบก่อนที่คุณจะตอบ</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you stopped the turn.</source>
+        <translation>ถอนแล้ว: คุณหยุดรอบนี้</translation>
+    </message>
+    <message>
+        <source>Withdrawn: you signed out of Codex.</source>
+        <translation>ถอนแล้ว: คุณออกจากระบบ Codex</translation>
+    </message>
+    <message>
+        <source>Withdrawn: the cost cap stopped the turn.</source>
+        <translation>ถอนแล้ว: เพดานค่าใช้จ่ายหยุดรอบนี้</translation>
     </message>
     <message>
         <source>The signing key changed. The installed copy was signed by key %1, and this one by key %2. Install it only if you trust that the author changed keys.</source>
@@ -514,10 +550,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Don’t install and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Installing %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -546,8 +578,36 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Signed out of Codex. This session ended.</source>
+        <translation>ออกจากระบบ Codex แล้ว เซสชันนี้สิ้นสุดแล้ว</translation>
+    </message>
+    <message>
+        <source>AI component is ready</source>
+        <translation>คอมโพเนนต์ AI พร้อมแล้ว</translation>
+    </message>
+    <message>
+        <source>Getting the AI component: %1 of %2 MB</source>
+        <translation>กำลังรับคอมโพเนนต์ AI: %1 จาก %2 MB</translation>
+    </message>
+    <message>
+        <source>The AI component is ready. Send your message again.</source>
+        <translation>คอมโพเนนต์ AI พร้อมแล้ว ส่งข้อความของคุณอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>The AI component didn’t download. Check your connection and try again.</source>
+        <translation>ดาวน์โหลดคอมโพเนนต์ AI ไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Agents need the AI component, which HikariSub downloads once.</source>
+        <translation>เอเจนต์ต้องใช้คอมโพเนนต์ AI ซึ่ง HikariSub ดาวน์โหลดเพียงครั้งเดียว</translation>
+    </message>
+    <message>
         <source>Not offered: HikariSub can’t open a private tools channel for it on this system.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get the AI component</source>
+        <translation>รับคอมโพเนนต์ AI</translation>
     </message>
     <message numerus="yes">
         <source>%n sub-agent(s)</source>
@@ -646,10 +706,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Don’t run and tell the agent…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Running %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -676,6 +732,124 @@
     <message>
         <source>Open</source>
         <translation type="unfinished">เปิด</translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tell the agent instead…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No threads match “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compact thread</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>active tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>+%n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more attached file(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ask, or type @ to attach a file, / for commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Attach a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete thread…</source>
+        <translation>ลบเธรด…</translation>
+    </message>
+    <message>
+        <source>Delete “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its messages are deleted. Changes it made stay in your subtitles and in the review.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings › AI</source>
+        <translation>การตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>Default for new threads</source>
+        <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the subtitles?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use a plugin?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use %1?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allow this action?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set “%1” to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change line %1 to “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change a line to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Change %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>%1 asks to run this Lua script</source>
@@ -755,7 +929,7 @@
     </message>
     <message>
         <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation>HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
+        <translation type="vanished">HikariSub ยังดาวน์โหลดคอมโพเนนต์ AI อยู่ หรือเริ่มคอมโพเนนต์ไม่ได้</translation>
     </message>
     <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
@@ -831,7 +1005,7 @@
     </message>
     <message>
         <source>Decline and tell the agent…</source>
-        <translation>ปฏิเสธและบอกเอเจนต์…</translation>
+        <translation type="vanished">ปฏิเสธและบอกเอเจนต์…</translation>
     </message>
     <message>
         <source>Sent back to the agent: %1</source>
@@ -869,10 +1043,6 @@
     </message>
     <message>
         <source>%1 of %2 tokens. Automatic compaction is off in Settings › AI.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Compact conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -968,8 +1138,12 @@
         <translation>อุปกรณ์เอาต์พุต</translation>
     </message>
     <message>
+        <source>Audio settings</source>
+        <translation>การตั้งค่าเสียง</translation>
+    </message>
+    <message>
         <source>Audio settings…</source>
-        <translation>การตั้งค่าเสียง…</translation>
+        <translation type="vanished">การตั้งค่าเสียง…</translation>
     </message>
     <message>
         <source>Link the volume and stretch sliders</source>
@@ -1013,7 +1187,7 @@
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -1053,7 +1227,7 @@
     </message>
     <message>
         <source>Enable / Disable automatic splitting of syllables</source>
-        <translation>เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
+        <translation type="vanished">เปิดหรือปิดการแบ่งพยางค์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Auto-scroll</source>
@@ -1061,7 +1235,7 @@
     </message>
     <message>
         <source>Auto-scroll to the active line</source>
-        <translation>เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
+        <translation type="vanished">เลื่อนอัตโนมัติไปยังบรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1086,7 +1260,7 @@
     </message>
     <message>
         <source>Play 500 ms before the start time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาเริ่มต้น</translation>
     </message>
     <message>
         <source>Play the first 500 ms</source>
@@ -1094,7 +1268,7 @@
     </message>
     <message>
         <source>Play 500 ms before the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีก่อนเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play the last 500 ms</source>
@@ -1102,7 +1276,7 @@
     </message>
     <message>
         <source>Play 500 ms after the end time</source>
-        <translation>เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
+        <translation type="vanished">เล่นเสียง 500 มิลลิวินาทีหลังเวลาสิ้นสุด</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1198,11 +1372,11 @@
     </message>
     <message>
         <source>Waveform mode</source>
-        <translation>โหมดรูปคลื่น</translation>
+        <translation type="vanished">โหมดรูปคลื่น</translation>
     </message>
     <message>
         <source>Spectrum mode</source>
-        <translation>โหมดสเปกตรัม</translation>
+        <translation type="vanished">โหมดสเปกตรัม</translation>
     </message>
     <message>
         <source>Sync with video</source>
@@ -1210,7 +1384,7 @@
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
-        <translation>ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
+        <translation type="vanished">ซิงค์เคอร์เซอร์วิดีโอและเสียง</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -1218,7 +1392,7 @@
     </message>
     <message>
         <source>More audio options</source>
-        <translation>ตัวเลือกเสียงเพิ่มเติม</translation>
+        <translation type="vanished">ตัวเลือกเสียงเพิ่มเติม</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1287,6 +1461,10 @@ Output device: %2</source>
     <message>
         <source>Speech spectrum</source>
         <translation>สเปกตรัมเสียงพูด</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Zoom and volume sliders</source>
@@ -1513,7 +1691,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Answers and presets</source>
-        <translation>คำตอบและพรีเซ็ต</translation>
+        <translation type="vanished">คำตอบและพรีเซ็ต</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -1997,7 +2175,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>%1 options</source>
-        <translation>ตัวเลือก %1</translation>
+        <translation type="vanished">ตัวเลือก %1</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -2643,6 +2821,10 @@ Output device: %2</source>
     <message>
         <source>Open backup folder</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
     </message>
 </context>
 <context>
@@ -3628,39 +3810,39 @@ Output device: %2</source>
     <name>HikariSub.Editor</name>
     <message>
         <source>Bottom-left</source>
-        <translation>ล่างซ้าย</translation>
+        <translation type="vanished">ล่างซ้าย</translation>
     </message>
     <message>
         <source>Bottom-centre</source>
-        <translation>ล่างกึ่งกลาง</translation>
+        <translation type="vanished">ล่างกึ่งกลาง</translation>
     </message>
     <message>
         <source>Bottom-right</source>
-        <translation>ล่างขวา</translation>
+        <translation type="vanished">ล่างขวา</translation>
     </message>
     <message>
         <source>Middle-left</source>
-        <translation>กึ่งกลางซ้าย</translation>
+        <translation type="vanished">กึ่งกลางซ้าย</translation>
     </message>
     <message>
         <source>Centre</source>
-        <translation>กลาง</translation>
+        <translation type="vanished">กลาง</translation>
     </message>
     <message>
         <source>Middle-right</source>
-        <translation>กึ่งกลางขวา</translation>
+        <translation type="vanished">กึ่งกลางขวา</translation>
     </message>
     <message>
         <source>Top-left</source>
-        <translation>บนซ้าย</translation>
+        <translation type="vanished">บนซ้าย</translation>
     </message>
     <message>
         <source>Top-centre</source>
-        <translation>บนกึ่งกลาง</translation>
+        <translation type="vanished">บนกึ่งกลาง</translation>
     </message>
     <message>
         <source>Top-right</source>
-        <translation>บนขวา</translation>
+        <translation type="vanished">บนขวา</translation>
     </message>
     <message>
         <source>Text position</source>
@@ -3803,6 +3985,10 @@ Output device: %2</source>
         <translation>ไม่ได้เพิ่มคำว่า “%1” ลงในพจนานุกรม</translation>
     </message>
     <message>
+        <source>Check spelling as you type</source>
+        <translation>ตรวจการสะกดขณะพิมพ์</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>ตัวแก้ไขบรรทัด</translation>
     </message>
@@ -3851,8 +4037,12 @@ Output device: %2</source>
         <translation>วางข้อความที่เลือก</translation>
     </message>
     <message>
+        <source>Add a tag button…</source>
+        <translation>เพิ่มปุ่มแท็ก…</translation>
+    </message>
+    <message>
         <source>Add a tag button</source>
-        <translation>เพิ่มปุ่มแท็ก</translation>
+        <translation type="vanished">เพิ่มปุ่มแท็ก</translation>
     </message>
     <message>
         <source>Edit…</source>
@@ -3872,7 +4062,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>ตรวจการสะกด</translation>
+        <translation type="vanished">ตรวจการสะกด</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -4111,6 +4301,10 @@ Output device: %2</source>
     </message>
     <message>
         <source>Move to the trash</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to the trash…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4848,8 +5042,8 @@ Output device: %2</source>
         <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
-        <source>Catalogue tiers</source>
-        <translation type="unfinished"></translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Load from a file</source>
@@ -5238,10 +5432,6 @@ Output device: %2</source>
     <message>
         <source>Style editor sample</source>
         <translation>ตัวอย่างในตัวแก้ไขสไตล์</translation>
-    </message>
-    <message>
-        <source>Manage catalogues</source>
-        <translation>จัดการแคตตาล็อก</translation>
     </message>
     <message>
         <source>No catalogues yet</source>
@@ -6233,6 +6423,10 @@ Failed to copy %2 fonts.</source>
         <translation>ตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
         <source>Interpolate across lines…</source>
         <translation>ประมาณค่าระหว่างบรรทัด…</translation>
     </message>
@@ -6896,7 +7090,7 @@ Failed to copy %2 fonts.</source>
         <translation>Shift+คลิกเพื่อกำหนดปุ่มลัด</translation>
     </message>
     <message>
-        <source>AI actions…</source>
+        <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7041,11 +7235,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play before the marker</source>
-        <translation>เล่นก่อนเครื่องหมาย</translation>
+        <translation type="vanished">เล่นก่อนเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play after the marker</source>
-        <translation>เล่นหลังเครื่องหมาย</translation>
+        <translation type="vanished">เล่นหลังเครื่องหมาย</translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -7617,11 +7811,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitles</source>
-        <translation>เปิดคำบรรยาย</translation>
+        <translation type="vanished">เปิดคำบรรยาย</translation>
     </message>
     <message>
         <source>Open video</source>
-        <translation>เปิดวิดีโอ</translation>
+        <translation type="vanished">เปิดวิดีโอ</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7709,19 +7903,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play first 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีแรก</translation>
     </message>
     <message>
         <source>Play last 500 ms</source>
-        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีสุดท้าย</translation>
     </message>
     <message>
         <source>Play 500 ms before</source>
-        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
     </message>
     <message>
         <source>Play 500 ms after</source>
-        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+        <translation type="vanished">เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -7813,7 +8007,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Change aspect ratio</source>
-        <translation>เปลี่ยนอัตราส่วนภาพ</translation>
+        <translation type="vanished">เปลี่ยนอัตราส่วนภาพ</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8133,11 +8327,47 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Add QC note</source>
-        <translation>เพิ่มโน้ต QC</translation>
+        <translation type="vanished">เพิ่มโน้ต QC</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
         <translation>การติดตามเพอร์สเปกทีฟ…</translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation>เล่นก่อนเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation>เล่นหลังเครื่องหมาย</translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีแรก</translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation>เล่น 500 มิลลิวินาทีสุดท้าย</translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation>เล่น 500 มิลลิวินาทีก่อนจุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Open subtitles…</source>
+        <translation>เปิดคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation>เปิดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -8352,6 +8582,10 @@ Failed to copy %2 fonts.</source>
         <translation>วนรอบ \fsp ย้อนกลับ</translation>
     </message>
     <message>
+        <source>Add QC note…</source>
+        <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
         <source>Move tab to new window</source>
         <translation>ย้ายแท็บไปหน้าต่างใหม่</translation>
     </message>
@@ -8539,6 +8773,162 @@ Failed to copy %2 fonts.</source>
         <source>Split lines every N frames or seconds…</source>
         <translation>แบ่งบรรทัดทุก N เฟรมหรือวินาที…</translation>
     </message>
+    <message>
+        <source>Import subtitles from MKV…</source>
+        <translation>นำเข้าคำบรรยายจาก MKV…</translation>
+    </message>
+    <message>
+        <source>Set new FPS…</source>
+        <translation>กำหนดค่า FPS ใหม่…</translation>
+    </message>
+    <message>
+        <source>Report an issue…</source>
+        <translation>รายงานปัญหา…</translation>
+    </message>
+    <message>
+        <source>Load script…</source>
+        <translation>โหลดสคริปต์…</translation>
+    </message>
+    <message>
+        <source>Shift times…</source>
+        <translation>เลื่อนเวลา…</translation>
+    </message>
+    <message>
+        <source>Replace…</source>
+        <translation>แทนที่…</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>ซ่อนแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Open keyframes…</source>
+        <translation>เปิดคีย์เฟรม…</translation>
+    </message>
+    <message>
+        <source>Sort all lines by style</source>
+        <translation>จัดเรียงทุกบรรทัดตามสไตล์</translation>
+    </message>
+    <message>
+        <source>Sort selected lines by style</source>
+        <translation>จัดเรียงบรรทัดที่เลือกตามสไตล์</translation>
+    </message>
+    <message>
+        <source>Timing postprocessor…</source>
+        <translation>โพสต์โปรเซสเซอร์การจัดเวลา…</translation>
+    </message>
+    <message>
+        <source>Resample subtitles…</source>
+        <translation>เปลี่ยนความละเอียดของคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation>ปิดแท็บ</translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation>ไปยังเฟรมถัดไป</translation>
+    </message>
+    <message>
+        <source>Open audio…</source>
+        <translation>เปิดเสียง…</translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation>ไปยังเฟรมก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation>บันทึกทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Save translation…</source>
+        <translation>บันทึกการแปล…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>ตั้งชื่อไฟล์ใหม่ตามวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Find…</source>
+        <translation>ค้นหา…</translation>
+    </message>
+    <message>
+        <source>Select lines…</source>
+        <translation>เลือกบรรทัด…</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>กำหนดเวลาสิ้นสุดจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Set start time from video</source>
+        <translation>กำหนดเวลาเริ่มต้นจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Export as…</source>
+        <translation>ส่งออกเป็น…</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>ใช้ส่วนที่เลือกของเสียงและจบบรรทัดก่อนหน้าที่จุดนั้น</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>เปิดไทม์โค้ด…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>บันทึกไทม์โค้ด…</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>รายละเอียดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>ใช้ข้อมูล Power-Pin…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>คัดลอกข้อมูล Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>QC notes</source>
+        <translation>โน้ต QC</translation>
+    </message>
+    <message>
+        <source>Show in Review panel</source>
+        <translation>แสดงในแผงตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Explorer</source>
+        <translation>ตัวสำรวจ</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>โหลดเซสชันจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>บันทึกเซสชันเป็นไฟล์…</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>ลบไฟล์บันทึกอัตโนมัติเก่า…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>เปิดวิดีโอจำลอง…</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.InlineAi</name>
@@ -8570,7 +8960,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>AI</source>
-        <translation type="unfinished">AI</translation>
+        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -8603,11 +8993,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Edit actions…</source>
+        <source>%1…</source>
+        <translation>%1…</translation>
+    </message>
+    <message>
+        <source>Edit actions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add a model in Settings › AI…</source>
+        <source>Add a model in Settings › AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9335,6 +9729,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Accept all suggestions</source>
         <translation>ยอมรับคำแนะนำทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Check karaoke</source>
+        <translation>ตรวจคาราโอเกะ</translation>
     </message>
 </context>
 <context>
@@ -10151,6 +10549,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open</source>
         <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Open %1</source>
+        <translation>เปิด %1</translation>
     </message>
     <message>
         <source>Remove subtitles from the editor</source>
@@ -11498,6 +11900,490 @@ Failed to copy %2 fonts.</source>
         <source>Where to save</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;Open subtitles…</source>
+        <translation>&amp;เปิดคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>&amp;Close tab</source>
+        <translation>&amp;ปิดแท็บ</translation>
+    </message>
+    <message>
+        <source>Save a&amp;ll</source>
+        <translation>บันทึก&amp;ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Save &amp;translation…</source>
+        <translation>บันทึก&amp;การแปล…</translation>
+    </message>
+    <message>
+        <source>Name new files after the video</source>
+        <translation>ตั้งชื่อไฟล์ใหม่ตามวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves…</source>
+        <translation>ลบไฟล์บันทึกอัตโนมัติเก่า…</translation>
+    </message>
+    <message>
+        <source>Load session from file…</source>
+        <translation>โหลดเซสชันจากไฟล์…</translation>
+    </message>
+    <message>
+        <source>Save session to file…</source>
+        <translation>บันทึกเซสชันเป็นไฟล์…</translation>
+    </message>
+    <message>
+        <source>Setti&amp;ngs</source>
+        <translation>&amp;การตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Select &amp;lines…</source>
+        <translation>เลือก&amp;บรรทัด…</translation>
+    </message>
+    <message>
+        <source>Snap start to the previous keyframe</source>
+        <translation>ปรับเวลาเริ่มต้นให้ตรงกับคีย์เฟรมก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Snap start to the next keyframe</source>
+        <translation>ปรับเวลาเริ่มต้นให้ตรงกับคีย์เฟรมถัดไป</translation>
+    </message>
+    <message>
+        <source>Snap end to the previous keyframe</source>
+        <translation>ปรับเวลาสิ้นสุดให้ตรงกับคีย์เฟรมก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Snap end to the next keyframe</source>
+        <translation>ปรับเวลาสิ้นสุดให้ตรงกับคีย์เฟรมถัดไป</translation>
+    </message>
+    <message>
+        <source>Move start one frame earlier</source>
+        <translation>เลื่อนเวลาเริ่มต้นเร็วขึ้นหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Move start one frame later</source>
+        <translation>เลื่อนเวลาเริ่มต้นช้าลงหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Move end one frame earlier</source>
+        <translation>เลื่อนเวลาสิ้นสุดเร็วขึ้นหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Move end one frame later</source>
+        <translation>เลื่อนเวลาสิ้นสุดช้าลงหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Extend the previous line to this start</source>
+        <translation>ขยายบรรทัดก่อนหน้าไปถึงเวลาเริ่มต้นนี้</translation>
+    </message>
+    <message>
+        <source>Extend the next line to this end</source>
+        <translation>ขยายบรรทัดถัดไปมาถึงเวลาสิ้นสุดนี้</translation>
+    </message>
+    <message>
+        <source>Accept the timing assistant’s suggestion</source>
+        <translation>ยอมรับคำแนะนำของผู้ช่วยจัดเวลา</translation>
+    </message>
+    <message>
+        <source>&amp;QC notes</source>
+        <translation>โน้ต &amp;QC</translation>
+    </message>
+    <message>
+        <source>Sc&amp;ript properties</source>
+        <translation>&amp;คุณสมบัติของสคริปต์</translation>
+    </message>
+    <message>
+        <source>&amp;Font collector</source>
+        <translation>ตัวรวบรวม&amp;แบบอักษร</translation>
+    </message>
+    <message>
+        <source>R&amp;esample subtitles…</source>
+        <translation>เปลี่ยน&amp;ความละเอียดของคำบรรยาย…</translation>
+    </message>
+    <message>
+        <source>Check spellin&amp;g</source>
+        <translation>ตรวจการ&amp;สะกด</translation>
+    </message>
+    <message>
+        <source>Check &amp;karaoke</source>
+        <translation>ตรวจ&amp;คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Kanji t&amp;imer</source>
+        <translation>ตัวจัดเวลา&amp;คันจิ</translation>
+    </message>
+    <message>
+        <source>Open &amp;keyframes…</source>
+        <translation>เปิด&amp;คีย์เฟรม…</translation>
+    </message>
+    <message>
+        <source>Open timecodes…</source>
+        <translation>เปิดไทม์โค้ด…</translation>
+    </message>
+    <message>
+        <source>Save timecodes…</source>
+        <translation>บันทึกไทม์โค้ด…</translation>
+    </message>
+    <message>
+        <source>Open dummy video…</source>
+        <translation>เปิดวิดีโอจำลอง…</translation>
+    </message>
+    <message>
+        <source>Align to &amp;video…</source>
+        <translation>จัดให้ตรงกับ&amp;วิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Set &amp;start time from video</source>
+        <translation>กำหนดเวลา&amp;เริ่มต้นจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Set end time from video</source>
+        <translation>กำหนดเวลาสิ้นสุดจากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Apply Power-Pin data…</source>
+        <translation>ใช้ข้อมูล Power-Pin…</translation>
+    </message>
+    <message>
+        <source>Copy Power-Pin data from lines</source>
+        <translation>คัดลอกข้อมูล Power-Pin จากบรรทัด</translation>
+    </message>
+    <message>
+        <source>&amp;Play or pause</source>
+        <translation>&amp;เล่นหรือหยุดชั่วคราว</translation>
+    </message>
+    <message>
+        <source>Video details</source>
+        <translation>รายละเอียดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>&amp;Open audio…</source>
+        <translation>&amp;เปิดเสียง…</translation>
+    </message>
+    <message>
+        <source>Open audio from &amp;video</source>
+        <translation>เปิดเสียงจาก&amp;วิดีโอ</translation>
+    </message>
+    <message>
+        <source>&amp;Close audio</source>
+        <translation>&amp;นำเสียงออก</translation>
+    </message>
+    <message>
+        <source>&amp;Reload audio</source>
+        <translation>&amp;โหลดเสียงใหม่</translation>
+    </message>
+    <message>
+        <source>Set audio mark to video time</source>
+        <translation>เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Apply the audio selection and end the previous line there</source>
+        <translation>ใช้ส่วนที่เลือกของเสียงและจบบรรทัดก่อนหน้าที่จุดนั้น</translation>
+    </message>
+    <message>
+        <source>Run the last macro again</source>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Pl&amp;ugins</source>
+        <translation>&amp;ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Getting &amp;started</source>
+        <translation>&amp;เริ่มต้นใช้งาน</translation>
+    </message>
+    <message>
+        <source>&amp;Report an issue…</source>
+        <translation>&amp;รายงานปัญหา…</translation>
+    </message>
+    <message>
+        <source>Only in Translation mode</source>
+        <translation>เฉพาะในโหมดการแปล</translation>
+    </message>
+    <message>
+        <source>Opens a subtitle file</source>
+        <translation>เปิดไฟล์คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Opens a video file</source>
+        <translation>เปิดไฟล์วิดีโอ</translation>
+    </message>
+    <message>
+        <source>Opens a folder as a project</source>
+        <translation>เปิดโฟลเดอร์เป็นโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Lists the subtitle files opened lately</source>
+        <translation>แสดงรายการไฟล์คำบรรยายที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>&amp;Recently opened subtitles</source>
+        <translation>คำบรรยายที่เพิ่ง&amp;เปิด</translation>
+    </message>
+    <message>
+        <source>Opens %1</source>
+        <translation>เปิด %1</translation>
+    </message>
+    <message>
+        <source>Saves the document</source>
+        <translation>บันทึกเอกสาร</translation>
+    </message>
+    <message>
+        <source>Saves the document under a new name or format</source>
+        <translation>บันทึกเอกสารด้วยชื่อหรือรูปแบบใหม่</translation>
+    </message>
+    <message>
+        <source>Saves every open document</source>
+        <translation>บันทึกเอกสารที่เปิดอยู่ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Saves the translation as a new file</source>
+        <translation>บันทึกการแปลเป็นไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Names new files after the video</source>
+        <translation>ตั้งชื่อไฟล์ใหม่ตามชื่อวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Deletes autosaves older than a date you choose</source>
+        <translation>ลบไฟล์บันทึกอัตโนมัติที่เก่ากว่าวันที่ที่คุณเลือก</translation>
+    </message>
+    <message>
+        <source>Loads or saves the open files as a session</source>
+        <translation>โหลดหรือบันทึกไฟล์ที่เปิดอยู่เป็นเซสชัน</translation>
+    </message>
+    <message>
+        <source>At startup</source>
+        <translation>เมื่อเริ่มโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Starts with no files open</source>
+        <translation>เริ่มโดยไม่เปิดไฟล์ใด</translation>
+    </message>
+    <message>
+        <source>Don’t load the last session</source>
+        <translation>ไม่โหลดเซสชันล่าสุด</translation>
+    </message>
+    <message>
+        <source>Asks whether to load the last session at startup</source>
+        <translation>ถามว่าจะโหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
+    </message>
+    <message>
+        <source>Ask</source>
+        <translation>ถาม</translation>
+    </message>
+    <message>
+        <source>Loads the last session at startup</source>
+        <translation>โหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Load the last session</source>
+        <translation>โหลดเซสชันล่าสุด</translation>
+    </message>
+    <message>
+        <source>Empties the editor and starts a new document</source>
+        <translation>ล้างตัวแก้ไขและเริ่มเอกสารใหม่</translation>
+    </message>
+    <message>
+        <source>Closes the current tab</source>
+        <translation>ปิดแท็บปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Closes this window’s tabs and its project</source>
+        <translation>ปิดแท็บของหน้าต่างนี้และโปรเจกต์ของหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Opens Settings</source>
+        <translation>เปิดการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Closes this window; closing the last window exits the program</source>
+        <translation>ปิดหน้าต่างนี้ การปิดหน้าต่างสุดท้ายจะออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Exits the program</source>
+        <translation>ออกจากโปรแกรม</translation>
+    </message>
+    <message>
+        <source>Undoes the last change</source>
+        <translation>เลิกทำการเปลี่ยนแปลงล่าสุด</translation>
+    </message>
+    <message>
+        <source>Redoes the last undone change</source>
+        <translation>ทำซ้ำการเปลี่ยนแปลงที่เพิ่งเลิกทำ</translation>
+    </message>
+    <message>
+        <source>Undoes every change since the last save</source>
+        <translation>เลิกทำการเปลี่ยนแปลงทั้งหมดตั้งแต่บันทึกครั้งล่าสุด</translation>
+    </message>
+    <message>
+        <source>Shows the list of changes</source>
+        <translation>แสดงรายการการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Sorts every line in the document</source>
+        <translation>จัดเรียงทุกบรรทัดในเอกสาร</translation>
+    </message>
+    <message>
+        <source>Sor&amp;t all lines</source>
+        <translation>จัดเ&amp;รียงทุกบรรทัด</translation>
+    </message>
+    <message>
+        <source>Sorts the selected lines</source>
+        <translation>จัดเรียงบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>Sort s&amp;elected lines</source>
+        <translation>จัดเรียงบรรทัดที่&amp;เลือก</translation>
+    </message>
+    <message>
+        <source>Shows the Shift times panel</source>
+        <translation>แสดงแผงเลื่อนเวลา</translation>
+    </message>
+    <message>
+        <source>Timing &amp;helpers</source>
+        <translation>เครื่องมือ&amp;ช่วยจัดเวลา</translation>
+    </message>
+    <message>
+        <source>Opens Style manager for the active line’s style</source>
+        <translation>เปิดตัวจัดการสไตล์สำหรับสไตล์ของบรรทัดที่ใช้งานอยู่</translation>
+    </message>
+    <message>
+        <source>Collects the fonts the document uses into a folder or archive</source>
+        <translation>รวบรวมแบบอักษรที่เอกสารใช้ไว้ในโฟลเดอร์หรือไฟล์บีบอัด</translation>
+    </message>
+    <message>
+        <source>Resamples the document to a new script resolution</source>
+        <translation>เปลี่ยนเอกสารเป็นความละเอียดสคริปต์ใหม่</translation>
+    </message>
+    <message>
+        <source>Set FP&amp;S</source>
+        <translation>กำหนดค่า FP&amp;S</translation>
+    </message>
+    <message>
+        <source>Convert Aegisub fol&amp;ds to line groups</source>
+        <translation>แปลง&amp;ส่วนยุบของ Aegisub เป็นกลุ่มบรรทัด</translation>
+    </message>
+    <message>
+        <source>No Aegisub folds in this file</source>
+        <translation>ไฟล์นี้ไม่มีส่วนยุบของ Aegisub</translation>
+    </message>
+    <message>
+        <source>Opens the Spellchecker panel</source>
+        <translation>เปิดแผงตัวตรวจการสะกด</translation>
+    </message>
+    <message>
+        <source>&amp;Open video…</source>
+        <translation>&amp;เปิดวิดีโอ…</translation>
+    </message>
+    <message>
+        <source>Opens a keyframes file</source>
+        <translation>เปิดไฟล์คีย์เฟรม</translation>
+    </message>
+    <message>
+        <source>Opens a VFR timecodes v1, v2 or v4 file</source>
+        <translation>เปิดไฟล์ไทม์โค้ด VFR v1, v2 หรือ v4</translation>
+    </message>
+    <message>
+        <source>Saves the timecodes as a VFR v2 file</source>
+        <translation>บันทึกไทม์โค้ดเป็นไฟล์ VFR v2</translation>
+    </message>
+    <message>
+        <source>Closes the open timecodes file</source>
+        <translation>ปิดไฟล์ไทม์โค้ดที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Goes one frame back</source>
+        <translation>ถอยหลังหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Goes one frame forward</source>
+        <translation>ไปข้างหน้าหนึ่งเฟรม</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ start to the video frame’s time</source>
+        <translation>กำหนดเวลาเริ่มต้นของบรรทัดที่เลือกเป็นเวลาของเฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Sets the selected lines’ end to the video frame’s time</source>
+        <translation>กำหนดเวลาสิ้นสุดของบรรทัดที่เลือกเป็นเวลาของเฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open a video first</source>
+        <translation>เปิดวิดีโอก่อน</translation>
+    </message>
+    <message>
+        <source>&amp;Full screen</source>
+        <translation>เต็ม&amp;หน้าจอ</translation>
+    </message>
+    <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
+        <source>Opens an audio file</source>
+        <translation>เปิดไฟล์เสียง</translation>
+    </message>
+    <message>
+        <source>Lists the audio files opened lately</source>
+        <translation>แสดงรายการไฟล์เสียงที่เพิ่งเปิด</translation>
+    </message>
+    <message>
+        <source>Closes the audio</source>
+        <translation>ปิดไฟล์เสียง</translation>
+    </message>
+    <message>
+        <source>Loads an Automation script from a file</source>
+        <translation>โหลดสคริปต์อัตโนมัติจากไฟล์</translation>
+    </message>
+    <message>
+        <source>Loads the autoload folder’s scripts again</source>
+        <translation>โหลดสคริปต์ในโฟลเดอร์โหลดอัตโนมัติอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again, showing its dialogs</source>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้งโดยแสดงกล่องโต้ตอบ</translation>
+    </message>
+    <message>
+        <source>Runs the last macro again with the same answers, without its dialogs when they are unchanged</source>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้งด้วยคำตอบเดิม โดยไม่แสดงกล่องโต้ตอบที่ไม่มีการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Installs, turns on and off, and uninstalls plugins</source>
+        <translation>ติดตั้ง เปิดหรือปิด และถอนการติดตั้งปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Switches, saves and locks the window’s layout</source>
+        <translation>สลับ บันทึก และล็อกเค้าโครงของหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Shows, floats or closes each panel</source>
+        <translation>แสดง ทำให้ลอย หรือปิดแต่ละแผง</translation>
+    </message>
+    <message>
+        <source>Moves the focused panel to another place in the window</source>
+        <translation>ย้ายแผงที่โฟกัสอยู่ไปยังตำแหน่งอื่นในหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Shows or hides the Log</source>
+        <translation>แสดงหรือซ่อนล็อก</translation>
+    </message>
+    <message>
+        <source>Open a file first</source>
+        <translation>เปิดไฟล์ก่อน</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the Grid</source>
+        <translation>แสดงหรือซ่อนแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Hide tags in the Grid</source>
+        <translation>ซ่อนแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Shows or hides tags in the line editor</source>
+        <translation>แสดงหรือซ่อนแท็กในตัวแก้ไขบรรทัด</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -11670,7 +12556,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">จากพรีเซ็ต</translation>
     </message>
     <message>
-        <source>From the library…</source>
+        <source>From the library</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11954,10 +12840,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Graph menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Target: selected lines</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12057,6 +12939,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Apply to the selected lines</source>
         <translation type="unfinished">นำไปใช้กับบรรทัดที่เลือก</translation>
+    </message>
+    <message>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Only the lines selected in “Source lines” are regenerated; the others keep their output.</source>
@@ -12297,6 +13183,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Each syllable’s letters are cut into thin horizontal stripes, which fade in as it is sung.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For karaoke lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -15336,7 +16226,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Model</source>
-        <translation type="unfinished"></translation>
+        <translation>โมเดล</translation>
     </message>
     <message>
         <source>Ask each time, starting from this instruction</source>
@@ -16495,8 +17385,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 จาก %2</translation>
     </message>
     <message>
-        <source>About %1…</source>
-        <translation>เกี่ยวกับ %1…</translation>
+        <source>About %1</source>
+        <translation>เกี่ยวกับ %1</translation>
     </message>
     <message>
         <source>%1 rolled back to %2</source>
@@ -16706,6 +17596,46 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ้างอิงกับ</translation>
     </message>
     <message>
+        <source>Align</source>
+        <translation>จัดแนว</translation>
+    </message>
+    <message>
+        <source>Left edges</source>
+        <translation>ขอบซ้าย</translation>
+    </message>
+    <message>
+        <source>Centres</source>
+        <translation>กึ่งกลางแนวนอน</translation>
+    </message>
+    <message>
+        <source>Right edges</source>
+        <translation>ขอบขวา</translation>
+    </message>
+    <message>
+        <source>Top edges</source>
+        <translation>ขอบบน</translation>
+    </message>
+    <message>
+        <source>Middles</source>
+        <translation>กึ่งกลางแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Bottom edges</source>
+        <translation>ขอบล่าง</translation>
+    </message>
+    <message>
+        <source>Distribute</source>
+        <translation>กระจาย</translation>
+    </message>
+    <message>
+        <source>Horizontally</source>
+        <translation>แนวนอน</translation>
+    </message>
+    <message>
+        <source>Vertically</source>
+        <translation>แนวตั้ง</translation>
+    </message>
+    <message>
         <source>The active line</source>
         <translation type="vanished">บรรทัดที่ใช้งาน</translation>
     </message>
@@ -16723,35 +17653,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Align left edges</source>
-        <translation>จัดขอบซ้าย</translation>
+        <translation type="vanished">จัดขอบซ้าย</translation>
     </message>
     <message>
         <source>Align centres</source>
-        <translation>จัดกึ่งกลางแนวนอน</translation>
+        <translation type="vanished">จัดกึ่งกลางแนวนอน</translation>
     </message>
     <message>
         <source>Align right edges</source>
-        <translation>จัดขอบขวา</translation>
+        <translation type="vanished">จัดขอบขวา</translation>
     </message>
     <message>
         <source>Align top edges</source>
-        <translation>จัดขอบบน</translation>
+        <translation type="vanished">จัดขอบบน</translation>
     </message>
     <message>
         <source>Align middles</source>
-        <translation>จัดกึ่งกลางแนวตั้ง</translation>
+        <translation type="vanished">จัดกึ่งกลางแนวตั้ง</translation>
     </message>
     <message>
         <source>Align bottom edges</source>
-        <translation>จัดขอบล่าง</translation>
+        <translation type="vanished">จัดขอบล่าง</translation>
     </message>
     <message>
         <source>Distribute horizontally</source>
-        <translation>กระจายแนวนอน</translation>
+        <translation type="vanished">กระจายแนวนอน</translation>
     </message>
     <message>
         <source>Distribute vertically</source>
-        <translation>กระจายแนวตั้ง</translation>
+        <translation type="vanished">กระจายแนวตั้ง</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -17016,8 +17946,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นำเข้าไฟล์โน้ต…</translation>
     </message>
     <message>
-        <source>Import notes from the clipboard</source>
-        <translation>นำเข้าโน้ตจากคลิปบอร์ด</translation>
+        <source>Import notes from the clipboard…</source>
+        <translation>นำเข้าโน้ตจากคลิปบอร์ด…</translation>
     </message>
     <message>
         <source>Export notes…</source>
@@ -17028,7 +17958,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ทำเครื่องหมายทั้งหมดว่ายังไม่เสร็จ</translation>
     </message>
     <message>
-        <source>Remove all notes…</source>
+        <source>Delete all notes…</source>
         <translation>ลบโน้ตทั้งหมด…</translation>
     </message>
     <message>
@@ -17112,11 +18042,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ่าน %1 ไม่ได้: %2</translation>
     </message>
     <message>
-        <source>Remove all notes</source>
+        <source>Delete all notes</source>
         <translation>ลบโน้ตทั้งหมด</translation>
     </message>
     <message numerus="yes">
-        <source>Remove all %n QC note(s) from this file?</source>
+        <source>Delete all %n QC note(s) from this file?</source>
         <translation>
             <numerusform>ลบโน้ต QC ทั้ง %n รายการออกจากไฟล์นี้หรือไม่</numerusform>
         </translation>
@@ -17126,7 +18056,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เลิกทำเพื่อนำกลับมาได้</translation>
     </message>
     <message>
-        <source>Remove all</source>
+        <source>Delete all</source>
         <translation>ลบทั้งหมด</translation>
     </message>
     <message>
@@ -17232,8 +18162,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เฉพาะไฟล์ ASS และ SSA เท่านั้นที่เก็บโน้ต QC ได้ บันทึกไฟล์นี้เป็น ASS เพื่อเพิ่มโน้ต</translation>
     </message>
     <message>
-        <source>Paste notes</source>
-        <translation>วางโน้ต</translation>
+        <source>Import from the clipboard</source>
+        <translation>นำเข้าจากคลิปบอร์ด</translation>
     </message>
     <message>
         <source>Notes start with a time: 3:24 - …
@@ -18041,6 +18971,38 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Sub-agents: %1</source>
         <translation>เอเจนต์ย่อย: %1</translation>
+    </message>
+    <message>
+        <source>Keeps or undoes the AI’s changes</source>
+        <translation>คงไว้หรือเลิกทำการเปลี่ยนแปลงของ AI</translation>
+    </message>
+    <message>
+        <source>Keeps the AI’s change to this line</source>
+        <translation>คงการเปลี่ยนแปลงของ AI ในบรรทัดนี้ไว้</translation>
+    </message>
+    <message>
+        <source>Undoes the AI’s change to this line</source>
+        <translation>เลิกทำการเปลี่ยนแปลงของ AI ในบรรทัดนี้</translation>
+    </message>
+    <message>
+        <source>Goes to the next line with an AI change</source>
+        <translation>ไปยังบรรทัดถัดไปที่มีการเปลี่ยนแปลงของ AI</translation>
+    </message>
+    <message>
+        <source>Goes to the previous line with an AI change</source>
+        <translation>ไปยังบรรทัดก่อนหน้าที่มีการเปลี่ยนแปลงของ AI</translation>
+    </message>
+    <message>
+        <source>Keeps every waiting AI change</source>
+        <translation>คงการเปลี่ยนแปลงของ AI ที่รออยู่ทั้งหมดไว้</translation>
+    </message>
+    <message>
+        <source>Undoes every waiting AI change</source>
+        <translation>เลิกทำการเปลี่ยนแปลงของ AI ที่รออยู่ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Shows the Review panel</source>
+        <translation>แสดงแผงตรวจทาน</translation>
     </message>
 </context>
 <context>
@@ -19488,6 +20450,14 @@ because it was edited.</source>
         <translation>การตั้งค่าไวยากรณ์…</translation>
     </message>
     <message>
+        <source>Add “%1” to project dictionary</source>
+        <translation>เพิ่ม “%1” ไปยังพจนานุกรมโปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Add “%1” to my dictionary</source>
+        <translation>เพิ่ม “%1” ไปยังพจนานุกรมของฉัน</translation>
+    </message>
+    <message>
         <source>Grammar · %1</source>
         <translation>ไวยากรณ์ · %1</translation>
     </message>
@@ -19502,14 +20472,6 @@ because it was edited.</source>
     <message>
         <source>Add “%1” to dictionary</source>
         <translation>เพิ่ม “%1” ไปยังพจนานุกรม</translation>
-    </message>
-    <message>
-        <source>This project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to project dictionary</source>
@@ -20284,24 +21246,16 @@ because it was edited.</source>
         <translation>ย้ายขึ้น</translation>
     </message>
     <message>
-        <source>Move up (Alt+Up)</source>
-        <translation>ย้ายขึ้น (Alt+Up)</translation>
-    </message>
-    <message>
         <source>Move down</source>
         <translation>ย้ายลง</translation>
-    </message>
-    <message>
-        <source>Move down (Alt+Down)</source>
-        <translation>ย้ายลง (Alt+Down)</translation>
     </message>
     <message>
         <source>Load from a file…</source>
         <translation>โหลดจากไฟล์…</translation>
     </message>
     <message>
-        <source>More</source>
-        <translation>เพิ่มเติม</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Move to top</source>
@@ -20337,10 +21291,6 @@ because it was edited.</source>
     </message>
     <message>
         <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalogue tiers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21215,7 +22165,7 @@ Styles deleted:
     </message>
     <message>
         <source>Tag list options</source>
-        <translation>ตัวเลือกรายการแท็ก</translation>
+        <translation type="vanished">ตัวเลือกรายการแท็ก</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -23169,7 +24119,7 @@ Styles deleted:
     </message>
     <message>
         <source>Preset commands</source>
-        <translation>คำสั่งพรีเซ็ต</translation>
+        <translation type="vanished">คำสั่งพรีเซ็ต</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -23778,6 +24728,10 @@ Styles deleted:
         <source>Extend</source>
         <translation>ขยาย</translation>
     </message>
+    <message>
+        <source>Apply Power-Pin data</source>
+        <translation>ใช้ข้อมูล Power-Pin</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -23899,7 +24853,7 @@ Styles deleted:
     </message>
     <message>
         <source>More</source>
-        <translation>เพิ่มเติม</translation>
+        <translation type="vanished">เพิ่มเติม</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -24028,6 +24982,14 @@ Styles deleted:
     <message>
         <source>Formatting</source>
         <translation>การจัดรูปแบบ</translation>
+    </message>
+    <message>
+        <source>Tra&amp;nslation mode</source>
+        <translation>โหมด&amp;การแปล</translation>
+    </message>
+    <message>
+        <source>Shows and saves the original text and the translation of each line</source>
+        <translation>แสดงและบันทึกข้อความต้นฉบับและคำแปลของแต่ละบรรทัด</translation>
     </message>
 </context>
 <context>
@@ -24374,12 +25336,16 @@ Styles deleted:
         <translation>ต้นทุนการเรนเดอร์</translation>
     </message>
     <message>
+        <source>Change aspect ratio…</source>
+        <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
         <source>Exit full screen</source>
         <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Escape</source>
-        <translation>Escape</translation>
+        <translation type="vanished">Escape</translation>
     </message>
     <message>
         <source>Full screen</source>
@@ -26484,8 +27450,8 @@ do not work on comments</source>
 <context>
     <name>HikariSub.Workspace</name>
     <message>
-        <source>%1 options</source>
-        <translation>ตัวเลือกของ %1</translation>
+        <source>More options</source>
+        <translation>ตัวเลือกเพิ่มเติม</translation>
     </message>
     <message>
         <source>Panels</source>
@@ -26588,12 +27554,12 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move left</source>
-        <translation type="unfinished">ย้ายไปทางซ้าย</translation>
+        <source>Move left in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Move right</source>
-        <translation type="unfinished">ย้ายไปทางขวา</translation>
+        <source>Move right in the side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reset side bars</source>
@@ -26820,8 +27786,8 @@ do not work on comments</source>
         <translation>รีเซ็ตเค้าโครงนี้</translation>
     </message>
     <message>
-        <source>Manage layouts…</source>
-        <translation>จัดการเค้าโครง…</translation>
+        <source>Manage layouts</source>
+        <translation>จัดการเค้าโครง</translation>
     </message>
     <message>
         <source>Save layout as</source>
@@ -26862,10 +27828,6 @@ do not work on comments</source>
     <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
-    </message>
-    <message>
-        <source>Manage layouts</source>
-        <translation>จัดการเค้าโครง</translation>
     </message>
     <message>
         <source>Delete layout</source>
@@ -26932,12 +27894,8 @@ do not work on comments</source>
         <translation>ใช้ไม่ได้: %1</translation>
     </message>
     <message>
-        <source>Layout tiers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename (F2)</source>
-        <translation>เปลี่ยนชื่อ (F2)</translation>
+        <source>Rename</source>
+        <translation>เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -26954,6 +27912,26 @@ do not work on comments</source>
     <message>
         <source>Drag a panel here</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layout is locked</source>
+        <translation>เค้าโครงถูกล็อกอยู่</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s left</source>
+        <translation>แสดงหรือซ่อนแถบด้านข้างทางซ้ายของหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Shows or hides the side bar on the window’s right</source>
+        <translation>แสดงหรือซ่อนแถบด้านข้างทางขวาของหน้าต่าง</translation>
+    </message>
+    <message>
+        <source>Swaps the panels of the left and right side bars</source>
+        <translation>สลับแผงของแถบด้านข้างซ้ายและขวา</translation>
+    </message>
+    <message>
+        <source>Puts the side bars back as they started</source>
+        <translation>คืนแถบด้านข้างกลับเป็นแบบเริ่มต้น</translation>
     </message>
 </context>
 <context>

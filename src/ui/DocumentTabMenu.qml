@@ -159,8 +159,11 @@ ShellMenu {
             onObjectRemoved: (index, object) => switchMenu.removeItem(object)
         }
     }
-    MenuSeparator {}
-    ShellMenuItem {
+    MenuSeparator {
+        visible: tabMenu.onTab
+        height: visible ? implicitHeight : 0
+    }
+    TabRow {
         objectName: "tabMenuMoveToNewWindow"
         iconRole: "tab-to-new-window"
         text: qsTr("Move tab to new window")
@@ -172,6 +175,7 @@ ShellMenu {
         id: moveToWindowMenu
         app: tabMenu.app
         shellWindow: tabMenu.shellWindow
+        shown: tabMenu.onTab
     }
     MenuSeparator {}
     TabRow {

@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <map>
 #include <set>
 #include <string_view>
 
@@ -59,6 +60,7 @@ constexpr std::array kCodexClientMethods = {
     "model/list", "account/read", "account/rateLimits/read", "getAuthStatus", "mcpServerStatus/list",
 };
 constexpr std::array kCodexThreadMethods = {"thread/start", "thread/resume", "thread/fork"};
+constexpr std::string_view kAcpSetConfigOption = "session/set_config_option";
 constexpr std::array kAcpClientMethods = {"initialize", "session/new", "session/load", "session/prompt", "session/cancel"};
 constexpr std::array kAcpToolPrefixes = {"mcp__hikari__", "hikari_", "hikari.", "hikari/", "hikari:"};
 constexpr const char *kAcpServer = "hikari";
@@ -188,6 +190,14 @@ public:
         if (!method)
             return {};
         const std::string name = method->isString() ? method->asString() : std::string();
+        if (name == kAcpSetConfigOption) {
+            if (!id)
+                return {};
+            if (!setsAModel(message.find("params")))
+                return {{}, {line(acpError(*id, "Hikari lets the AI set only the agent's model, to one it lists"))}};
+            m_configReplies.insert(id->dump());
+            return {{line(message)}, {}};
+        }
         if (!listed(kAcpClientMethods, name)) {
             if (!id)
                 return {};
@@ -202,6 +212,8 @@ public:
             p["clientCapabilities"] = api::Json::object(
                 {{"fs", api::Json::object({{"readTextFile", false}, {"writeTextFile", false}})}, {"terminal", false}});
         } else if (name == "session/new" || name == "session/load") {
+            if (id)
+                m_configReplies.insert(id->dump());
             p["cwd"] = QDir::toNativeSeparators(m_channel.work).toStdString();
             p["mcpServers"] = api::Json::array({server()});
             std::erase_if(p.asObject(), [](const api::Json::Member &m) { return m.key == "additionalDirectories"; });
@@ -219,10 +231,17 @@ public:
         if (!method) {
             if (id && id->dump() == m_initialize)
                 m_http = takesHttp(*parsed);
+            if (const api::Json *result = parsed->find("result"); id && m_configReplies.erase(id->dump()) && result)
+                learnModels(result->find("configOptions"));
             return {{}, {text}};
         }
-        if (!id)
+        if (!id) {
+            const api::Json *params = parsed->find("params");
+            const api::Json *update = params ? params->find("update") : nullptr;
+            if (update && update->find("sessionUpdate") && *update->find("sessionUpdate") == api::Json("config_option_update"))
+                learnModels(update->find("configOptions"));
             return {{}, {text}};
+        }
         const std::string name = method->isString() ? method->asString() : std::string();
         if (name != "session/request_permission")
             return {{line(acpError(*id, "HikariSub doesn't offer " + name))}, {}};
@@ -288,9 +307,47 @@ private:
                          {{"name", kMcpTokenVariable}, {"value", m_channel.token.toStdString()}})})}});
     }
 
+    void learnModels(const api::Json *options)
+    {
+        if (!options || !options->isArray())
+            return;
+        m_models.clear();
+        for (const api::Json &option : options->asArray()) {
+            const api::Json *configId = option.find("id");
+            const api::Json *category = option.find("category");
+            const api::Json *type = option.find("type");
+            if (!configId || !configId->isString() || !category || *category != api::Json("model") || !type ||
+                *type != api::Json("select"))
+                continue;
+            std::set<std::string> &values = m_models[configId->asString()];
+            const auto add = [&](const api::Json *list, const auto &self) -> void {
+                if (!list || !list->isArray())
+                    return;
+                for (const api::Json &entry : list->asArray()) {
+                    if (const api::Json *value = entry.find("value"); value && value->isString())
+                        values.insert(value->asString());
+                    self(entry.find("options"), self);
+                }
+            };
+            add(option.find("options"), add);
+        }
+    }
+
+    bool setsAModel(const api::Json *params) const
+    {
+        const api::Json *configId = params ? params->find("configId") : nullptr;
+        const api::Json *value = params ? params->find("value") : nullptr;
+        if (!configId || !configId->isString() || !value || !value->isString())
+            return false;
+        const auto option = m_models.find(configId->asString());
+        return option != m_models.end() && option->second.contains(value->asString());
+    }
+
     AcpChannel m_channel;
     std::string m_initialize;
     bool m_http = false;
+    std::set<std::string> m_configReplies;
+    std::map<std::string, std::set<std::string>> m_models;
 };
 
 }
@@ -881,6 +938,20 @@ void AgentBroker::exited(std::uint64_t id, int code)
     if (m_notify)
         m_notify(kAgentExit, api::Json::object({{"process", id}, {"code", code}}));
     running->process.release()->deleteLater();
+}
+
+void AgentBroker::killAgent(const std::string &agent)
+{
+    std::vector<std::uint64_t> ids;
+    for (const auto &[id, running] : m_running)
+        if (running->agent == agent)
+            ids.push_back(id);
+    for (const std::uint64_t id : ids) {
+        if (const auto it = m_running.find(id); it != m_running.end()) {
+            it->second->kill();
+            exited(id, -1);
+        }
+    }
 }
 
 void AgentBroker::killAll()

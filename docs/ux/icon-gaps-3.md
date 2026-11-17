@@ -9,7 +9,7 @@ Left without an icon, as IC1 and IC2 decided: check items, entries named by thei
 | Role | Place | Verdict |
 | --- | --- | --- |
 | open-timecodes, recent-timecodes, save-timecodes, close-timecodes | Video › Timecodes | redrawn: the ruler filled only the top half of the box; it is now a ruler body with uneven ticks, cut at its lower right for the family's badge |
-| video-details | Video › Video details… | redrawn: the open-video film frame with an info badge the size of the set's other badges (the old one reached the box's edge) |
+| video-details | Video › Video details | redrawn: the open-video film frame with an info badge the size of the set's other badges (the old one reached the box's edge) |
 | tab-close-others | Document tab menu: Close other tabs | redrawn: the kept tab with a cross on each side |
 | tab-close-right | Document tab menu: Close tabs to the right | redrawn: the kept tab with a cross on its right only; the arrow over the cross was too busy at 16 px |
 | convert-folds | Grid › Line group: Convert Aegisub folds to line groups | redrawn: the fold's bracket beside make-tree's group; the old one read as the letters "LE" |
@@ -62,12 +62,11 @@ The manifest marks these `pending` until their card places them.
 | tab-to-window | MW2 #630 | Move tab to window ▸ (5222; the windows are entries named by data) |
 | qc-notes | FA20 #577 | View › QC notes (panel 12), Subtitles › QC notes… (5241): the approved mockup's flag |
 | qc-done-reset | FA20 #577 | QC notes: Mark all as not done |
-| node-library | NE2 #424 | the graph menu's From the library… |
-| compact | AI21 #725 | Compact conversation (the thread's ⋯ menu, the 97% offer) |
+| node-library | NE2 #424 | the graph menu's From the library |
+| compact | AI21 #725 | Compact thread (the thread's ⋯ menu, the 97% offer) |
 | review-panel | AI2 #430 | View › Review panel, Show Review panel |
 | web-search | AI23 #742 | Let AI search the web, the composer's web toggle |
 | update | AI24 #744 | Update now for the sidecar and an agent's CLI |
-| network | PL5 #417 | Let plugins connect to the internet; MK1 #667's Turn off offline mode |
 | plugin-sandbox | PL7 #419 | a plugin whose helper runs in the OS sandbox |
 
 Reused for the open cards, no new role:
@@ -77,7 +76,7 @@ Reused for the open cards, no new role:
 | Reopen last tabs | PJ2 #770 | last-session |
 | Explorer: Open in a new tab; Show in folder; Move to trash; Rename; Project settings | PJ4 #772 | tab-new; show-in-folder; delete; edit (as every Rename); settings |
 | File › Quit | MW5 #629 | exit |
-| QC notes: Next, Previous; Add note; Import notes file…; from the clipboard; Export notes…; Remove all notes… | FA20 #577 | chevron-right, chevron-left; add; import; edit-paste; export; clear |
+| QC notes: Next, Previous; Add note; Import notes file…; from the clipboard; Export notes…; Delete all notes… | FA20 #577 | chevron-right, chevron-left; add; import; edit-paste; export; clear |
 | Node effects: Add node, New graph; Fit; Disconnect; Save to the library | NE2 #424 | add; zoom-reset; remove; save-as (as Save as preset…) |
 | Agent panel; New thread; Threads; Rename; Export as Markdown…; Delete; Stop, Stop all | AI7 #435, AI22 #730 | ai-assistant; add; history; edit; export; delete; media-stop |
 | Retry the turn, a failed compaction's Retry | AI7 #435, AI21 #725 | refresh (as the session bar's Retry) |

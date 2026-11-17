@@ -2,7 +2,7 @@ Line editor text
 Line editor text > -
 Line editor text > Ignore this rule
 Line editor text > Add “” to dictionary
-Line editor text > Add to my dictionary
+Line editor text > Add “” to my dictionary
 Line editor text > -
 Line editor text > Undo
 Line editor text > Redo
@@ -30,24 +30,25 @@ Line editor text > Change case > -
 Line editor text > Change case > Full-width [GLOBAL_TEXT_FULL_WIDTH]
 Line editor text > Change case > Half-width [GLOBAL_TEXT_HALF_WIDTH]
 Line editor text > Swap dialogue alternatives [GLOBAL_SWAP_DIALOGUE_ALTERNATIVES]
+Line editor text > Remove tags… [GLOBAL_REMOVE_TAGS]
 Line editor text > -
 Line editor text > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
-Line editor text > Remove tags… [GLOBAL_REMOVE_TAGS]
 Line editor text > Phantom >
 Line editor text > Phantom > Keep the start aligned [GLOBAL_PHANTOM_KEEP_START]
 Line editor text > Phantom > Keep the end aligned [GLOBAL_PHANTOM_KEEP_END]
 Line editor text > -
-Line editor text > AI >
-Line editor text > AI > Rewrite…
-Line editor text > AI > Shorten to 15 CPS
-Line editor text > AI > Fix spelling and grammar
-Line editor text > AI > Translate to English
-Line editor text > AI > Translate to…
-Line editor text > AI > -
-Line editor text > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
-Line editor text > AI > Add a model in Settings › AI…
+Line editor text > AI actions >
+Line editor text > AI actions > Rewrite…
+Line editor text > AI actions > Shorten to 15 CPS
+Line editor text > AI actions > Fix spelling and grammar
+Line editor text > AI actions > Translate to English
+Line editor text > AI actions > Translate to…
+Line editor text > AI actions > -
+Line editor text > AI actions > -
+Line editor text > AI actions > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Line editor text > AI actions > Add a model in Settings › AI
 Line editor text > -
-Line editor text > Check spelling
+Line editor text > Check spelling as you type
 Text field
 Text field > Undo
 Text field > Redo
@@ -59,6 +60,10 @@ Text field > Delete
 Text field > -
 Text field > Select all
 Grid
+Grid > Keep AI change [GLOBAL_KEEP_AI_CHANGE]
+Grid > Undo AI change [GLOBAL_UNDO_AI_CHANGE]
+Grid > Next AI change [GLOBAL_NEXT_AI_CHANGE]
+Grid > Show in Review panel [GLOBAL_SHOW_AI_REVIEW]
 Grid > -
 Grid > Insert >
 Grid > Insert > Before [GRID_INSERT_BEFORE]
@@ -69,9 +74,6 @@ Grid > Insert > After, at video time [GRID_INSERT_AFTER_VIDEO]
 Grid > Insert > Before, at video frame time [GRID_INSERT_BEFORE_WITH_VIDEO_FRAME]
 Grid > Insert > After, at video frame time [GRID_INSERT_AFTER_WITH_VIDEO_FRAME]
 Grid > Duplicate 1 line(s) [GRID_DUPLICATE_LINES]
-Grid > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
-Grid > Build layers with the last values [GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT]
-Grid > Typesetting graph… [GLOBAL_TYPESETTING_GRAPH]
 Grid > Cut [GRID_CUT]
 Grid > Copy [GRID_COPY]
 Grid > Paste [GRID_PASTE]
@@ -80,15 +82,6 @@ Grid > Paste special > Copy columns [GRID_COPY_COLUMNS]
 Grid > Paste special > Paste columns [GRID_PASTE_COLUMNS]
 Grid > Paste special > -
 Grid > Paste special > Paste translation from a file… [GRID_PASTE_TRANSLATION]
-Grid > AI >
-Grid > AI > Rewrite…
-Grid > AI > Shorten to 15 CPS
-Grid > AI > Fix spelling and grammar
-Grid > AI > Translate to English
-Grid > AI > Translate to…
-Grid > AI > -
-Grid > AI > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
-Grid > AI > Add a model in Settings › AI…
 Grid > -
 Grid > Join >
 Grid > Join > Join [GRID_JOIN_LINES]
@@ -105,8 +98,6 @@ Grid > Split > By wraps [GRID_SPLIT_BY_WRAPS]
 Grid > Split > At tag blocks [GRID_SPLIT_AT_TAG_BLOCKS]
 Grid > Split > -
 Grid > Split > Every N frames or seconds… [GRID_SPLIT_EVERY_N]
-Grid > Remove tags… [GLOBAL_REMOVE_TAGS]
-Grid > Interpolate across lines… [GLOBAL_INTERPOLATE_LINES]
 Grid > Swap lines [GRID_SWAP_LINES]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
@@ -130,7 +121,17 @@ Grid > Change case > -
 Grid > Change case > Full-width [GLOBAL_TEXT_FULL_WIDTH]
 Grid > Change case > Half-width [GLOBAL_TEXT_HALF_WIDTH]
 Grid > Swap dialogue alternatives [GLOBAL_SWAP_DIALOGUE_ALTERNATIVES]
+Grid > Remove tags… [GLOBAL_REMOVE_TAGS]
 Grid > -
+Grid > Typesetting >
+Grid > Typesetting > Blur and glow layers… [GLOBAL_BLUR_AND_GLOW_LAYERS]
+Grid > Typesetting > Build layers with the last values [GLOBAL_BLUR_AND_GLOW_LAYERS_REPEAT]
+Grid > Typesetting > Typesetting graph… [GLOBAL_TYPESETTING_GRAPH]
+Grid > Typesetting > -
+Grid > Typesetting > Interpolate across lines… [GLOBAL_INTERPOLATE_LINES]
+Grid > Typesetting > -
+Grid > Typesetting > Position to margins [GLOBAL_POSITION_TO_MARGINS]
+Grid > Typesetting > Margins to position [GLOBAL_MARGINS_TO_POSITION]
 Grid > Change alignment, keep position >
 Grid > Change alignment, keep position > Top left (\an7) [GLOBAL_ALIGNMENT_KEEP_POSITION_AN7]
 Grid > Change alignment, keep position > Top centre (\an8) [GLOBAL_ALIGNMENT_KEEP_POSITION_AN8]
@@ -145,27 +146,35 @@ Grid > Align and distribute >
 Grid > Align and distribute > Active line
 Grid > Align and distribute > Video frame
 Grid > Align and distribute > -
-Grid > Align and distribute > Align left edges [GLOBAL_ALIGN_LEFT_EDGES]
-Grid > Align and distribute > Align centres [GLOBAL_ALIGN_CENTRES]
-Grid > Align and distribute > Align right edges [GLOBAL_ALIGN_RIGHT_EDGES]
+Grid > Align and distribute > Left edges [GLOBAL_ALIGN_LEFT_EDGES]
+Grid > Align and distribute > Centres [GLOBAL_ALIGN_CENTRES]
+Grid > Align and distribute > Right edges [GLOBAL_ALIGN_RIGHT_EDGES]
 Grid > Align and distribute > -
-Grid > Align and distribute > Align top edges [GLOBAL_ALIGN_TOP_EDGES]
-Grid > Align and distribute > Align middles [GLOBAL_ALIGN_MIDDLES]
-Grid > Align and distribute > Align bottom edges [GLOBAL_ALIGN_BOTTOM_EDGES]
+Grid > Align and distribute > Top edges [GLOBAL_ALIGN_TOP_EDGES]
+Grid > Align and distribute > Middles [GLOBAL_ALIGN_MIDDLES]
+Grid > Align and distribute > Bottom edges [GLOBAL_ALIGN_BOTTOM_EDGES]
 Grid > Align and distribute > -
-Grid > Align and distribute > Distribute horizontally [GLOBAL_DISTRIBUTE_HORIZONTALLY]
-Grid > Align and distribute > Distribute vertically [GLOBAL_DISTRIBUTE_VERTICALLY]
-Grid > Position to margins [GLOBAL_POSITION_TO_MARGINS]
-Grid > Margins to position [GLOBAL_MARGINS_TO_POSITION]
+Grid > Align and distribute > Horizontally [GLOBAL_DISTRIBUTE_HORIZONTALLY]
+Grid > Align and distribute > Vertically [GLOBAL_DISTRIBUTE_VERTICALLY]
+Grid > -
+Grid > AI actions >
+Grid > AI actions > Rewrite…
+Grid > AI actions > Shorten to 15 CPS
+Grid > AI actions > Fix spelling and grammar
+Grid > AI actions > Translate to English
+Grid > AI actions > Translate to…
+Grid > AI actions > -
+Grid > AI actions > -
+Grid > AI actions > Repeat last AI action [GLOBAL_REPEAT_AI_ACTION]
+Grid > AI actions > Add a model in Settings › AI
 Grid > -
 Grid > Select lines visible on video [GRID_SELECT_VISIBLE_LINES]
 Grid > Show subtitles preview [GRID_SHOW_PREVIEW]
 Grid > Translation matching… [GRID_TRANSLATION_DIALOG]
+Grid > Add QC note… [GLOBAL_ADD_QC_NOTE]
 Grid > -
 Grid > Delete text [GLOBAL_REMOVE_TEXT]
 Grid > Delete 1 line(s) [GLOBAL_REMOVE_LINES]
-Grid > -
-Grid > Add QC note… [GLOBAL_ADD_QC_NOTE]
 Grid header
 Grid header > Layer [GRID_HIDE_LAYER]
 Grid header > Start time [GRID_HIDE_START]
@@ -220,8 +229,9 @@ Video > Full screen bar >
 Video > Full screen bar > Show when the pointer moves
 Video > Full screen bar > Always show
 Video > Full screen bar > Never show
-Video > Change aspect ratio [VIDEO_ASPECT_RATIO]
+Video > Change aspect ratio… [VIDEO_ASPECT_RATIO]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
+Video > Filters >
 Video > -
 Video > Unload video [VIDEO_DELETE_FILE]
 Full-screen video
@@ -255,8 +265,9 @@ Full-screen video > Full screen bar >
 Full-screen video > Full screen bar > Show when the pointer moves
 Full-screen video > Full screen bar > Always show
 Full-screen video > Full screen bar > Never show
-Full-screen video > Change aspect ratio [VIDEO_ASPECT_RATIO]
+Full-screen video > Change aspect ratio… [VIDEO_ASPECT_RATIO]
 Full-screen video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
+Full-screen video > Filters >
 Full-screen video > -
 Full-screen video > Unload video [VIDEO_DELETE_FILE]
 Grid panel options
@@ -296,8 +307,8 @@ Grid panel options > Move panel…
 Grid panel options > Move to the left side bar
 Grid panel options > Move to the right side bar
 Grid panel options > Move out of the side bar
-Grid panel options > Move left
-Grid panel options > Move right
+Grid panel options > Move left in the side bar
+Grid panel options > Move right in the side bar
 Grid panel options > Move tab left
 Grid panel options > Move tab right
 Grid panel options > Float
@@ -350,6 +361,11 @@ Automation macro > Run
 Automation macro > -
 Automation macro > Set shortcut…
 Automation macro > Clear shortcut
+Automation script
+Automation script > Reload
+Automation script > Edit script
+Automation script > -
+Automation script > Unload
 Automation recommended script
 Automation recommended script > Show in Scripts
 Automation recommended script > Open project page
@@ -387,9 +403,117 @@ Explorer row
 Explorer row > Open in a new tab
 Explorer row > Open in this tab
 Explorer row > -
-Explorer row > New subtitle file here
-Explorer row > Rename
-Explorer row > Move to the trash
-Explorer row > -
 Explorer row > Show in folder
 Explorer row > Copy path
+Explorer row > -
+Explorer row > New subtitle file here
+Explorer row > Rename
+Explorer row > -
+Explorer row > Move to the trash…
+Panel options (Line editor)
+Panel options (Line editor) > Show times
+Panel options (Line editor) > Show frames
+Panel options (Line editor) > -
+Panel options (Line editor) > Move panel…
+Panel options (Line editor) > Move tab left
+Panel options (Line editor) > Move tab right
+Panel options (Line editor) > Float
+Panel options (Line editor) > -
+Panel options (Line editor) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Line editor) > -
+Panel options (Line editor) > Close
+Panel options (Video)
+Panel options (Video) > Move video to the selected line >
+Panel options (Video) > Move video to the selected line > Double-clicking a line (always on)
+Panel options (Video) > Move video to the selected line > Every line change
+Panel options (Video) > Move video to the selected line > Clicking a line or editing when paused
+Panel options (Video) > Move video to the selected line > Clicking a line or editing
+Panel options (Video) > Move video to the selected line > Editing line when paused
+Panel options (Video) > Move video to the selected line > Editing
+Panel options (Video) > After moving, play >
+Panel options (Video) > After moving, play > Nothing
+Panel options (Video) > After moving, play > Audio to the line end time
+Panel options (Video) > After moving, play > Video and audio to the line end time
+Panel options (Video) > After moving, play > Video and audio to the next line start time
+Panel options (Video) > -
+Panel options (Video) > Move panel…
+Panel options (Video) > Float
+Panel options (Video) > -
+Panel options (Video) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Video) > -
+Panel options (Video) > Close
+Panel options (Reference)
+Panel options (Reference) > Compare with reference
+Panel options (Reference) > -
+Panel options (Reference) > Move panel…
+Panel options (Reference) > Move to the left side bar
+Panel options (Reference) > Move to the right side bar
+Panel options (Reference) > Float
+Panel options (Reference) > -
+Panel options (Reference) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Reference) > -
+Panel options (Reference) > Close
+Panel options (Automation)
+Panel options (Automation) > Load script…
+Panel options (Automation) > Refresh autoload scripts
+Panel options (Automation) > Shortcuts in Settings…
+Panel options (Automation) > -
+Panel options (Automation) > Clear runs
+Panel options (Automation) > -
+Panel options (Automation) > Move panel…
+Panel options (Automation) > Move to the left side bar
+Panel options (Automation) > Move to the right side bar
+Panel options (Automation) > Float
+Panel options (Automation) > -
+Panel options (Automation) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Automation) > -
+Panel options (Automation) > Close
+Panel options (Spellchecker)
+Panel options (Spellchecker) > Ignore comments
+Panel options (Spellchecker) > Ignore words in capitals
+Panel options (Spellchecker) > Words added to dictionary…
+Panel options (Spellchecker) > -
+Panel options (Spellchecker) > Move panel…
+Panel options (Spellchecker) > Move to the left side bar
+Panel options (Spellchecker) > Move to the right side bar
+Panel options (Spellchecker) > Dock
+Panel options (Spellchecker) > -
+Panel options (Spellchecker) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Spellchecker) > -
+Panel options (Spellchecker) > Close
+Panel options (QC notes)
+Panel options (QC notes) > Import notes file…
+Panel options (QC notes) > Import notes from the clipboard…
+Panel options (QC notes) > Export notes…
+Panel options (QC notes) > Mark all as not done
+Panel options (QC notes) > -
+Panel options (QC notes) > Delete all notes…
+Panel options (QC notes) > -
+Panel options (QC notes) > Move panel…
+Panel options (QC notes) > Move to the left side bar
+Panel options (QC notes) > Move to the right side bar
+Panel options (QC notes) > Dock
+Panel options (QC notes) > -
+Panel options (QC notes) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (QC notes) > -
+Panel options (QC notes) > Close
+Panel options (Explorer)
+Panel options (Explorer) > New subtitle file
+Panel options (Explorer) > Refresh
+Panel options (Explorer) > Group by name
+Panel options (Explorer) > Show all files
+Panel options (Explorer) > -
+Panel options (Explorer) > Move panel…
+Panel options (Explorer) > Move to the left side bar
+Panel options (Explorer) > Move to the right side bar
+Panel options (Explorer) > Float
+Panel options (Explorer) > -
+Panel options (Explorer) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Explorer) > -
+Panel options (Explorer) > Close
+Document tab bar
+Document tab bar > New tab
+Document tab bar > Save all
+Document tab bar > Switch to >
+Document tab bar > -
+Document tab bar > Close all tabs

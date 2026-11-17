@@ -378,6 +378,14 @@ int main(int argc, char **argv)
                 send(Json::object({{"jsonrpc", "2.0"}, {"id", *id}, {"error", *error}}));
             else
                 respond(*id, answer.find("result") ? *answer.find("result") : Json());
+        } else if (name == "_hikari/session.models") {
+            const std::string session = arg.find("sessionId")->asString();
+            if (session == "models:claude")
+                respond(*id, Json::object({{"models", Json::array({Json::object({{"id", "sonnet"}, {"name", "Sonnet"}}),
+                                                                   Json::object({{"id", "opus"}, {"name", "Opus"}})})}}));
+            else if (session != "models:hang")
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", *id},
+                                   {"error", Json::object({{"code", -32000}, {"message", "signed out"}})}}));
         } else if (name == "_hikari/session.close") {
             turns.erase(arg.find("sessionId")->asString());
             respond(*id, nullptr);

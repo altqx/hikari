@@ -3,6 +3,7 @@ import {
     prefixChars, summaryMessage, summaryRequest, TokenCount, withStubs,
 } from "./compaction";
 import {
+    type AgentModelInfo,
     type CompactedUpdate,
     ErrorCode,
     Method,
@@ -417,10 +418,14 @@ export class AgentSession {
 
 export interface Session {
     prompt(params: SessionPromptParams): Promise<SessionPromptResult>;
+    /** The model the next turn runs on; "" is the agent's own default. */
+    useModel?(model: string): void;
     steer(params: SessionSteerParams): Promise<SessionSteerResult>;
     cancel(): void;
     close?(): void;
     compact?(params: SessionCompactParams): Promise<SessionCompactResult>;
+    /** The models an external agent offers, starting it if it isn't running. */
+    models?(): Promise<AgentModelInfo[]>;
     /** False once the user stopped the turn, or when none runs: an agent's late calls then change nothing. */
     takesToolCalls?(): boolean;
 }
@@ -471,7 +476,10 @@ export class AgentSessions {
     }
 
     prompt(params: SessionPromptParams): Promise<SessionPromptResult> {
-        return this.session(params.sessionId).prompt(params);
+        const session = this.session(params.sessionId);
+        if (params.model)
+            session.useModel?.(params.model.model);
+        return session.prompt(params);
     }
 
     steer(params: SessionSteerParams): Promise<SessionSteerResult> {
@@ -483,6 +491,13 @@ export class AgentSessions {
         if (!session.compact)
             throw new RpcError(ErrorCode.invalidParams, "This agent compacts its own conversation");
         return session.compact(params);
+    }
+
+    models(sessionId: string): Promise<AgentModelInfo[]> {
+        const session = this.session(sessionId);
+        if (!session.models)
+            throw new RpcError(ErrorCode.invalidParams, "This session lists no agent models");
+        return session.models();
     }
 
     cancel(sessionId: string): void {

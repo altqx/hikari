@@ -11,7 +11,7 @@ ShellMenu {
     property point at
     property var recent: ({ subtitles: [], videos: [] })
     property string itemPrefix: "videoMenu"
-    property int monitors: 1
+    property int monitors: 0
     readonly property bool fullscreen: shell.videoView.fullscreen
     signal openVideoRequested()
     signal openSubtitlesRequested()
@@ -22,7 +22,7 @@ ShellMenu {
     property var chapters: []
     onAboutToShow: {
         recent = shell.videoView.recentFiles()
-        monitors = shell.videoFullscreen.monitorCount()
+        monitors = shell.videoFullscreen.monitorEntries()
         filters = shell.app.playerFilters()
         streams = shell.video.hasVideo ? shell.video.streams() : []
         chapters = shell.video.hasVideo ? shell.video.chapters() : []
@@ -98,17 +98,21 @@ ShellMenu {
         objectName: videoMenu.itemPrefix + "FullScreenOn"
         iconRole: "monitor"
         title: qsTr("Full screen on")
-        shown: videoMenu.monitors > 1
+        shown: videoMenu.monitors > 0
         enabled: videoMenu.shell.video.hasVideo
         Instantiator {
-            model: Math.max(0, videoMenu.monitors - 1)
-            delegate: ShellMenuItem {
+            model: videoMenu.monitors
+            delegate: MenuRadioItem {
                 required property int index
-                iconRole: "monitor"
-                objectName: videoMenu.itemPrefix + "Monitor" + (index + 1)
+                readonly property bool current: videoMenu.fullscreen && videoMenu.shell.videoFullscreen.monitor === index
+                objectName: videoMenu.itemPrefix + "Monitor" + index
                 //: A monitor in the Full screen on submenu; %1 is its number
-                text: qsTr("Monitor %1").arg(index + 2)
-                onTriggered: videoMenu.shell.videoFullscreen.showOn(index + 1)
+                text: qsTr("Monitor %1").arg(index + 1)
+                checked: current
+                onTriggered: {
+                    checked = Qt.binding(() => current)
+                    videoMenu.shell.videoFullscreen.showOnScreen(index)
+                }
             }
             onObjectAdded: (index, object) => monitorsMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => monitorsMenu.removeItem(object)
@@ -140,15 +144,27 @@ ShellMenu {
         objectName: videoMenu.itemPrefix + "Recent"
         iconRole: "recent-subtitles"
         title: qsTr("Recently opened")
-        shown: videoMenu.fullscreen
+        readonly property bool hasSubtitles: videoMenu.recent.subtitles.length > 0
+        readonly property bool hasVideos: videoMenu.recent.videos.length > 0
+        shown: videoMenu.fullscreen && (hasSubtitles || hasVideos)
         MenuHeading {
             id: recentSubtitlesHeading
+            objectName: videoMenu.itemPrefix + "RecentSubtitlesHeading"
             text: qsTr("Subtitles")
+            visible: recentMenu.hasSubtitles
+            height: visible ? implicitHeight : 0
         }
-        MenuSeparator {}
+        MenuSeparator {
+            objectName: videoMenu.itemPrefix + "RecentSeparator"
+            visible: recentMenu.hasSubtitles && recentMenu.hasVideos
+            height: visible ? implicitHeight : 0
+        }
         MenuHeading {
             id: recentVideosHeading
+            objectName: videoMenu.itemPrefix + "RecentVideosHeading"
             text: qsTr("Videos")
+            visible: recentMenu.hasVideos
+            height: visible ? implicitHeight : 0
         }
         Instantiator {
             model: videoMenu.recent.subtitles
@@ -309,7 +325,7 @@ ShellMenu {
         iconRole: "aspect-ratio"
         objectName: videoMenu.itemPrefix + "AspectRatio"
         command: "VIDEO_ASPECT_RATIO"
-        text: qsTr("Change aspect ratio")
+        text: qsTr("Change aspect ratio…")
         onTriggered: if (!videoMenu.gesture("VIDEO_ASPECT_RATIO")) videoMenu.aspectRatioRequested()
     }
     ShellMenuItem {
@@ -326,14 +342,14 @@ ShellMenu {
         delegate: ShellMenu {
             id: filtersMenu
             iconRole: "video-filters"
-            objectName: "videoMenuFilters"
+            objectName: videoMenu.itemPrefix + "Filters"
             title: qsTr("Filters")
             Instantiator {
                 model: videoMenu.filters
                 delegate: ShellMenuItem {
                     required property var modelData
                     required property int index
-                    objectName: "videoMenuFilter" + index
+                    objectName: videoMenu.itemPrefix + "Filter" + index
                     text: modelData.name
                     enabled: modelData.enabled
                     onTriggered: {

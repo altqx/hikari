@@ -181,7 +181,11 @@ hikari_add_spix_test(hikari_ui_clipboard_workflow SOURCES clipboard_workflow.cpp
 hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_audio_timing_workflow SOURCES audio_timing_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
-hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popups_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popups_tests.cpp LIBRARIES hikari_composition
+    PARTS bars bars2=aFileGoneAfterItsBarKeepsTheBar)
+target_include_directories(hikari_ui_file_session_popups_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+set_tests_properties(hikari_ui_file_session_popups_tests.bars.offscreen
+    hikari_ui_file_session_popups_tests.bars2.offscreen PROPERTIES PROCESSORS 2)
 hikari_add_qttest(hikari_ui_cold_start_tests SOURCES cold_start_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_grammar_tests SOURCES grammar_ui_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_grammar_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}")
@@ -255,7 +259,9 @@ target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 hikari_add_qttest(hikari_ui_template_editor_shell_tests SOURCES template_editor_shell_tests.cpp
-    LIBRARIES hikari_composition)
+    LIBRARIES hikari_composition
+    PARTS editing previews=aFileRunsNoCodeUntilTheUserPreviewsIt)
+target_include_directories(hikari_ui_template_editor_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_template_editor_shell_tests PRIVATE
     HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
 add_dependencies(hikari_ui_template_editor_shell_tests hikari_lua_helper hikari_automation_stage)
@@ -357,7 +363,9 @@ target_include_directories(hikari_ui_saved_layouts_tests PRIVATE "${PROJECT_SOUR
 target_compile_definitions(hikari_ui_saved_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_saved_layouts_tests hikari_media_helper hikari_media_fixtures)
-hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition
+    PARTS options buttons=tagButtonMovesFollowTheLayoutDirection)
+target_include_directories(hikari_ui_line_editor_options_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
 target_include_directories(hikari_ui_update_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_link_libraries(hikari_ui_update_checker_tests PRIVATE Hikari::sodium)
@@ -390,18 +398,25 @@ add_dependencies(hikari_ui_analytics_session_tests hikari_media_helper hikari_me
     hikari_automation_stage)
 hikari_add_qttest(hikari_ui_api_host_tests SOURCES api_host_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
 hikari_add_qttest(hikari_ui_agent_panel_tests SOURCES agent_panel_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
+    LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
+    PARTS panel proposals=aProposalTakesTheFocusFromThePanelButNotFromTheComposer
+          timeline=compactionShowsTheMeterTheDividerTheOfferAndAFailure
+          models=theModelButtonNamesTheModelTheNextMessageUses
+          popups=theComposerGrowsToSixLinesThenScrollsAndTheTimelineKeepsItsRoom)
 target_compile_definitions(hikari_ui_agent_panel_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_agent_panel_tests hikari_fake_ai_sidecar)
-target_include_directories(hikari_ui_agent_panel_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_include_directories(hikari_ui_agent_panel_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support"
+    "${PROJECT_SOURCE_DIR}/tests/backends")
 hikari_add_qttest(hikari_ui_inline_ai_tests SOURCES inline_ai_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets Qt6::QuickTest)
 target_compile_definitions(hikari_ui_inline_ai_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_inline_ai_tests hikari_fake_ai_sidecar)
-find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS CorePrivate)
+hikari_add_gtest(hikari_ui_setting_labels_tests SOURCES setting_labels_tests.cpp LIBRARIES hikari_ui LABELS ui)
+target_compile_definitions(hikari_ui_setting_labels_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_features_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
@@ -459,6 +474,7 @@ target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DI
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_preset_tiers_tests SOURCES preset_tiers_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_shell_menu_placement_tests SOURCES shell_menu_placement_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_explorer_model_tests SOURCES explorer_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
