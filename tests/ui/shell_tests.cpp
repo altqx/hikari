@@ -15783,6 +15783,7 @@ private slots:
         QTRY_VERIFY(!item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
         const QString resaved = dir.filePath(QStringLiteral("kf-close-saved.ass"));
         QVERIFY(application->saveAs(resaved));
+        QTRY_VERIFY_WITH_TIMEOUT(QFileInfo::exists(resaved), 20000);
         QFile written(resaved);
         QVERIFY(written.open(QIODevice::ReadOnly));
         QVERIFY(!written.readAll().contains("Keyframes File"));
@@ -15806,6 +15807,7 @@ private slots:
                     return int(i);
             return -1;
         };
+        QTest::mouseMove(window, kOverNoPanel);
         item("editingGrid")->forceActiveFocus();
         QTRY_VERIFY(item("editingGrid")->hasActiveFocus());
         const int start = activeRow();
