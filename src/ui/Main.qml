@@ -7641,7 +7641,7 @@ ApplicationWindow {
                     }
                     Keys.onShortcutOverride: event => {
                         event.accepted = clipboardKey(event) || root.hotkeys.actionFor(1, event.key, event.modifiers) !== ""
-                                         || grid.foldsWith(event.key, event.modifiers) || root.timingKey(event, false) !== ""
+                                         || grid.foldsWith(event.key, event.modifiers)
                     }
                     Keys.onPressed: event => {
                         if (clipboardKey(event)) {
@@ -7655,10 +7655,8 @@ ApplicationWindow {
                             return
                         }
                         const action = root.hotkeys.actionFor(1, event.key, event.modifiers)
-                        if (action === "") {
-                            root.runTimingKey(event, false)
+                        if (action === "")
                             return
-                        }
                         root.runGridHotkey(action)
                         event.accepted = true
                     }

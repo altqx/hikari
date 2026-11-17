@@ -94,7 +94,7 @@ A dummy video can be up to 100000 pixels on each side, as in Aegisub 3.5. The sm
 
 ## PT-timing-keys
 
-Settings › Audio › "Timing keys work in every panel" (Never, In the Timing layout, Always; In the Timing layout by default) is HikariSub's version of Aegisub's Medusa timing keys. When it applies, the audio panel's shortcuts also work in the grid, the video and the line editor. Unlike Aegisub, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel's meaning, and in a text box only shortcuts with Ctrl, Alt or Meta take part (coordinator, 2026-11-17). Switching layouts never changes the setting. [PT #1212](https://github.com/altqx/hikari/issues/1212).
+Settings › Audio › "Timing keys work in every panel" (Never, In the Timing layout, Always; In the Timing layout by default) is HikariSub's version of Aegisub's Medusa timing keys. When it applies, the audio panel's shortcuts also work in the video and the line editor. The grid already takes every audio shortcut but the five primary ones (Enter and the arrows), as legacy does, whatever the setting. Unlike Aegisub, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel's meaning, and in a text box only shortcuts with Ctrl, Alt or Meta take part (coordinator, 2026-11-17). Switching layouts never changes the setting. [PT #1212](https://github.com/altqx/hikari/issues/1212).
 
 ## PT-keyframes-close
 

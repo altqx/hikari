@@ -15812,31 +15812,31 @@ private slots:
                     return int(i);
             return -1;
         };
+        QVERIFY(lines.size() >= 2);
+        application->selectLine(lines[1]->id.value);
+        QTRY_COMPARE(activeRow(), 1);
         QTest::mouseMove(window, kOverNoPanel);
         QTest::qWait(200);
-        item("editingGrid")->forceActiveFocus();
-        QTRY_VERIFY(item("editingGrid")->hasActiveFocus());
-        const int start = activeRow();
-        QVERIFY(start >= 0 && start + 1 < int(lines.size()));
+        auto *video = item("videoPanel");
+        const auto pressInVideo = [&](Qt::Key key) {
+            video->forceActiveFocus();
+            QTRY_VERIFY(video->hasActiveFocus());
+            QTest::keyClick(window, key);
+        };
 
         settings.set("audio.timingKeysEverywhere", 0);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
-        QTest::keyClick(window, Qt::Key_X);
-        QCOMPARE(activeRow(), start);
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
         settings.set("audio.timingKeysEverywhere", 1);
         QVERIFY(application->workspaceLayout().preset() != QStringLiteral("Timing"));
-        QVERIFY(item("editingGrid")->hasActiveFocus());
-        QTest::keyClick(window, Qt::Key_X);
-        QCOMPARE(activeRow(), start);
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
 
         settings.set("audio.timingKeysEverywhere", 2);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
-        QTest::keyClick(window, Qt::Key_X);
-        QTRY_COMPARE(activeRow(), start + 1);
-        QVERIFY(item("editingGrid")->hasActiveFocus());
-        QTest::keyClick(window, Qt::Key_Up);
-        QTRY_COMPARE(activeRow(), start);
-        QVERIFY(!audio.playing());
+        pressInVideo(Qt::Key_Z);
+        QTRY_COMPARE(activeRow(), 0);
+        pressInVideo(Qt::Key_Right);
+        QCOMPARE(activeRow(), 0);
         audio.closeAudio();
     }
 
