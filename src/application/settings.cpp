@@ -38,10 +38,12 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
     "translation.translator",        "translation.reviewer",         "ai.exclude",
     "translation.sourceLanguage",    "translation.targetLanguage",   "export.format",
-    "explorer.exclude",
+    "explorer.exclude",              "privacy.discordProject",       "privacy.discordShow",
+    "privacy.discordDetails",        "privacy.discordState",
 };
 // Projectable ids whose Project value waits for trust.
-constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
+constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer", "privacy.discordShow",
+                                          "privacy.discordDetails", "privacy.discordState"};
 
 bool listed(std::span<const std::string_view> rules, std::string_view id)
 {
@@ -354,6 +356,25 @@ std::vector<SettingDefinition> &definitions()
         {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordPresence", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordFileName", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordMode", "", Bool, Profile, Mapped, false, true},
+        {"privacy.discordModeIcon", "", Bool, Profile, Mapped, false, true},
+        {"privacy.discordProjectName", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordActivities", "", StringList, Profile, Mapped, false,
+         std::vector<std::string>{"watching", "effects", "styling", "spelling", "reviewing", "exporting"}},
+        {"privacy.discordText", "", String, Profile, Mapped, false, std::string("standard")},
+        {"privacy.discordDetails", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordState", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordPlugin", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordTime", "", String, Profile, Mapped, false, std::string("started")},
+        {"privacy.discordIdle", "", String, Profile, Mapped, false, std::string("idle")},
+        {"privacy.discordIdleMinutes", "", Int, Profile, Mapped, false, std::int64_t{10}},
+        {"privacy.discordIdleBackground", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordGetButton", "", Bool, Profile, Mapped, false, true},
+        {"privacy.discordLink", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordLinkLabel", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordLinkUrl", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordProject", "", String, Profile, Mapped, false, std::string("yours")},
+        {"privacy.discordShow", "", String, Profile, Mapped, false, std::string()},
         // The star prompt's counters: lastDay is an ISO date, snoozedUntil seconds since the epoch.
         {"starPrompt.days", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"starPrompt.lastDay", "", String, Profile, Mapped, false, std::string()},

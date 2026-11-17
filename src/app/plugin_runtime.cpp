@@ -358,6 +358,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     raw->caller = api::Caller{"plugin:" + id, raw->manifest.name, raw->manifest.permissions.allDocuments.has_value()};
     raw->caller.vcsRead = raw->manifest.permissions.vcsRead.has_value();
     raw->caller.programs = raw->manifest.permissions.programs.has_value();
+    raw->caller.presence = raw->manifest.permissions.presence.has_value();
     raw->files = PluginFiles::Plugin{id, raw->caller.id, raw->manifest.permissions.files};
     auto load = [this, raw] {
         protocol::LoadRequest request;
@@ -825,6 +826,24 @@ bool PluginRuntime::busy(const QString &pluginId) const
 {
     const PluginProcess *running = process(pluginId);
     return running && running->busy();
+}
+
+QSet<QString> PluginRuntime::runningIds() const
+{
+    QSet<QString> ids;
+    for (const auto &[id, plugin] : m_plugins)
+        ids.insert(QString::fromStdString(id));
+    return ids;
+}
+
+QVariantList PluginRuntime::presencePlugins() const
+{
+    QVariantList found;
+    for (const auto &[id, plugin] : m_plugins)
+        if (plugin->manifest.permissions.presence)
+            found << QVariantMap{{QStringLiteral("id"), QString::fromStdString(id)},
+                                 {QStringLiteral("name"), QString::fromStdString(plugin->manifest.name)}};
+    return found;
 }
 
 }

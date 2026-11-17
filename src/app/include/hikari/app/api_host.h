@@ -77,6 +77,7 @@ public:
         application::RowMarks *marks = nullptr;
         application::VcsPort *vcs = nullptr;
         api::ProgramHost *programs = nullptr;
+        api::PresenceHost *presence = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;

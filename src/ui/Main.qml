@@ -8252,6 +8252,7 @@ ApplicationWindow {
                 id: qcNotesPanel
                 objectName: "qcNotesPanel"
                 dockName: root.engineName("QcNotes")
+                onActiveFocusChanged: root.app.presenceActivity(root.shellWindow, "reviewing", activeFocus)
                 minimumBodySize: qcNotesTool.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.QcNotes", "QC notes")
