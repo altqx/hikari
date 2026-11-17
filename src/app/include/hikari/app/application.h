@@ -189,6 +189,8 @@ public:
         QString luaHelper;
         // Empty: next to the application, else the build tree's.
         QString pluginHelper;
+        // How long a plugin's command, event or timer callback runs before its "still working" card shows.
+        int pluginStillWorkingMs = 10'000;
         QString automationDir;
         // Empty: automationDir.
         QString userAutomationDir;

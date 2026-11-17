@@ -2,6 +2,7 @@ File
 File > Open subtitles… [GLOBAL_OPEN_SUBS]
 File > Open video… [GLOBAL_OPEN_VIDEO]
 File > Open folder… [GLOBAL_OPEN_FOLDER]
+File > Quick Open… [GLOBAL_QUICK_OPEN]
 File > Recently opened subtitles >
 File > Recently opened subtitles > None
 File > -
@@ -203,6 +204,8 @@ Automation > Plugins [GLOBAL_PLUGINS]
 Automation > -
 Automation > -
 View
+View > Command palette… [GLOBAL_COMMAND_PALETTE]
+View > -
 View > Layout >
 View > Layout > Editing
 View > Layout > Timing

@@ -900,6 +900,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.marketplaceNetwork);
     PluginRuntime::Wiring pluginWiring{pluginHelperPath(options.pluginHelper), options.plugins, &m_apiHost->api(), m_log.get(),
                                        [this] { return m_localisation ? m_localisation->language() : QString(); }};
+    pluginWiring.limits.stillWorkingMs = options.pluginStillWorkingMs;
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
     pluginWiring.project = [this] { return activeProject(); };
     pluginWiring.sandbox = true;

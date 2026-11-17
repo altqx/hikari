@@ -8788,6 +8788,18 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Quick Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command palette…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear command history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -12161,6 +12173,10 @@ Failed to copy %2 fonts.</source>
         <translation>ஒரு கோப்புறையைத் திட்டப்பணியாகத் திறக்கிறது</translation>
     </message>
     <message>
+        <source>Finds a recent or project file, a command, a line, a time, a style or a panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Lists the subtitle files opened lately</source>
         <translation>அண்மையில் திறந்த வசனக் கோப்புகளைப் பட்டியலிடுகிறது</translation>
     </message>
@@ -12399,6 +12415,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Installs, turns on and off, and uninstalls plugins</source>
         <translation>செருகுநிரல்களை நிறுவுகிறது, இயக்குகிறது அல்லது முடக்குகிறது, நிறுவல் நீக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Finds and runs any command by its name</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Switches, saves and locks the window’s layout</source>
@@ -17452,7 +17472,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>It ran for more than %n second(s).</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>அது %n வினாடிக்கு மேல் இயங்கியது.</numerusform>
             <numerusform>அது %n வினாடிகளுக்கு மேல் இயங்கியது.</numerusform>
         </translation>
@@ -17487,7 +17507,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>செருகுநிரல் %n வினாடிக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
             <numerusform>செருகுநிரல் %n வினாடிகளுக்கு மேல் இயங்கியதால் HikariSub அதை நிறுத்தியது. அதன் அடுத்த கட்டளை அதை மீண்டும் தொடங்கும்.</numerusform>
         </translation>
@@ -17659,6 +17679,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>இதன் பலகம் “%1” ஐ ஏற்ற முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>Works in the background while HikariSub is open: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is still working</source>
+        <extracomment>A plugin&apos;s command or event has run for more than 10 seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A timer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The plugin is stopped. Start it again in its details.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -18354,6 +18395,202 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>சேமி</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QuickPick</name>
+    <message>
+        <source>Quick Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command palette…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear command history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unavailable: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>picked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>not picked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run a command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to a line by number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to a time or a frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply a style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show a panel or switch the layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>List these searches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Project files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open a folder as a project to search its files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not available here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a line number, 1 to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Not a line: %1. This document has %n lines.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try 3:40 or a frame number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to %1 (frame %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames need a video.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No line shows at %1 or after it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the line at %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Enter applies “%1” to %n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift+Enter selects its %n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Panels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layouts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the name of a command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search files by name. Type ? for the other searches.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n commands</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n files</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n results</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -21052,6 +21289,22 @@ because it was edited.</source>
     <message>
         <source>Video file name</source>
         <translation>வீடியோ கோப்பு பெயர்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Plugins working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

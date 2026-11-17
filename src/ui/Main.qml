@@ -2951,6 +2951,21 @@ ApplicationWindow {
             }
         }
         Action {
+            id: quickOpenAction
+            text: qsTranslate("HikariSub.QuickPick", "Quick Open…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_QUICK_OPEN")) quickOpen.open("")
+        }
+        Action {
+            id: commandPaletteAction
+            text: qsTranslate("HikariSub.QuickPick", "Command palette…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_COMMAND_PALETTE")) quickOpen.open(">")
+        }
+        Action {
+            id: clearCommandHistoryAction
+            text: qsTranslate("HikariSub.QuickPick", "Clear command history")
+            onTriggered: root.app.settings.setValue("recent.commands", [])
+        }
+        Action {
             id: showExplorerAction
             text: qsTranslate("HikariSub.Explorer", "Explorer")
             checkable: true
@@ -3046,6 +3061,13 @@ ApplicationWindow {
                         iconRole: "open-project"
                         objectName: "openFolderMenuItem"
                         action: openFolderAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_QUICK_OPEN"
+                        help: qsTr("Finds a recent or project file, a command, a line, a time, a style or a panel")
+                        iconRole: "quick-open"
+                        objectName: "quickOpenMenuItem"
+                        action: quickOpenAction
                     }
                     ShellMenu {
                         help: qsTr("Lists the subtitle files opened lately")
@@ -4240,6 +4262,14 @@ ApplicationWindow {
             title: qsTr("Vie&w")
             onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
+                ShellMenuItem {
+                    command: "GLOBAL_COMMAND_PALETTE"
+                    help: qsTr("Finds and runs any command by its name")
+                    iconRole: "command-palette"
+                    objectName: "commandPaletteMenuItem"
+                    action: commandPaletteAction
+                }
+                MenuSeparator {}
                 LayoutMenu {
                     id: viewLayoutMenu
                     objectName: "viewLayoutMenu"
@@ -8799,6 +8829,7 @@ ApplicationWindow {
         reviewText: root.review.on && root.review.waiting > 0
                     ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", root.review.waiting) : ""
         onReviewClicked: root.showPanel(reviewDock)
+        pluginRuntime: root.app.pluginRuntime
     }
     function currentTab() {
         const tabs = root.app.tabs
@@ -10511,10 +10542,22 @@ ApplicationWindow {
         }
     }
 
+    QuickOpen {
+        id: quickOpen
+        objectName: "quickOpen"
+        shell: root
+        explorer: explorerModel
+        hangFrom: (titleBar.visible ? titleBar.height : 0) + 8
+    }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]
-        if (!target)
-            return null
+        if (!target) {
+            if (!run)
+                return { enabled: true, reason: "" }
+            const ran = root.byKey(() => root.globalHotkey(symbol))
+            root.app.apiHost.commandRan(symbol, ran)
+            return ran
+        }
         if (!run)
             return { enabled: target.enabled, reason: "" }
         if (!target.enabled)
@@ -10826,6 +10869,8 @@ ApplicationWindow {
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesAction, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorAction,
         GLOBAL_SHOW_QC_NOTES: showQcNotesAction, GLOBAL_SHOW_EXPLORER: showExplorerAction,
+        GLOBAL_QUICK_OPEN: quickOpenAction, GLOBAL_COMMAND_PALETTE: commandPaletteAction,
+        GLOBAL_CLEAR_COMMAND_HISTORY: clearCommandHistoryAction,
         GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeAction,
         GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeAction,
         GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeAction,
