@@ -376,6 +376,33 @@ public:
     std::optional<application::VcsFailure> problem;
 };
 
+class FakeSettingsWindow final : public SettingsHost {
+public:
+    std::string title(std::string_view setting) const override
+    {
+        return setting == "grid.copyColumns" ? "Columns to copy" : "";
+    }
+    std::vector<PluginSettingState> pluginSettings() const override { return states; }
+    std::optional<std::string> setPluginSetting(std::string_view plugin, std::string_view setting,
+                                                const Json &value) override
+    {
+        for (PluginSettingState &state : states)
+            if (state.plugin == plugin && state.setting == setting) {
+                if (state.type == "boolean" && !value.isBool())
+                    return "Not a boolean.";
+                state.value = value;
+                return std::nullopt;
+            }
+        return "No such setting.";
+    }
+    void open(std::string_view setting, bool project) override { opened.emplace_back(setting, project); }
+
+    std::vector<PluginSettingState> states{
+        {"org.example.word-count", "countSpaces", "Count spaces", "boolean", true, Json(false), Json(true)},
+        {"org.example.word-count", "token", "Token", "secret", false, Json(), Json()}};
+    std::vector<std::pair<std::string, bool>> opened;
+};
+
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
 public:
     FakeHost()
@@ -406,6 +433,7 @@ public:
     SkillTiers skills{std::filesystem::path()};
     FakeAutomation automation;
     FakeTranslation translation;
+    FakeSettingsWindow settingsWindow;
     Host host()
     {
         return Host{
@@ -428,6 +456,7 @@ public:
             .keyframes = &keyframes,
             .marks = &marks,
             .vcs = &vcs,
+            .settingsWindow = &settingsWindow,
         };
     }
 
