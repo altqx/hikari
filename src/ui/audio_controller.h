@@ -289,6 +289,7 @@ public:
     const application::AudioTiming &timing() const { return m_timing; }
     bool tapBusy() const { return m_tapState == TapTapping; }
     Q_INVOKABLE void commit();
+    Q_INVOKABLE void commitWithDefaultTiming();
     Q_INVOKABLE void nextLine();
     Q_INVOKABLE void previousLine();
     Q_INVOKABLE void goToSelection();

@@ -80,7 +80,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
         EXPECT_FALSE(ids().contains(std::string(a.symbol))) << a.symbol;
         EXPECT_TRUE(std::ranges::none_of(ids(), [&](const auto &l) { return l.second == a.id; })) << a.symbol;
         const bool editor = std::string_view(a.symbol).starts_with("EDITBOX_");
-        const bool audio = a.id >= 1028 && a.id <= 1034;
+        const bool audio = a.id >= 1028 && a.id <= 1035;
         EXPECT_EQ(hotkeyType(a.id), editor                         ? EditorHotkey
                                     : a.id >= 2021 && a.id <= 2044 ? VideoHotkey
                                     : audio                        ? AudioHotkey
@@ -103,6 +103,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("AUDIO_SPEED_UP"), 1032);
     EXPECT_EQ(hotkeyIdOf("AUDIO_GOTO_START"), 1033);
     EXPECT_EQ(hotkeyIdOf("AUDIO_GOTO_END"), 1034);
+    EXPECT_EQ(hotkeyIdOf("AUDIO_COMMIT_DEFAULT"), 1035);
     for (const auto &tool : kToolCommands)
         EXPECT_EQ(hotkeyIdOf(tool.symbol), tool.id) << tool.symbol;
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CHECK_KARAOKE"), 5172);

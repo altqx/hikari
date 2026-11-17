@@ -97,6 +97,7 @@ constexpr OptionsBinding kBindings[] = {
     {"audio.cacheFilesLimit", Number, Audio, 0, 10000},
     {"audio.leadInValue", Number, Audio, 0, 10000},
     {"audio.leadOutValue", Number, Audio, 0, 10000},
+    {"audio.defaultDuration", Number, Audio, 100, 60000},
     {"automation.scriptResolutionFromVideo", Check, Video},
     {"grid.autoHideColumns", Check, Grid},
     {"audio.outputDevice", OutputDevice, Audio},

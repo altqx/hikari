@@ -968,6 +968,8 @@ icon("audio-device", "Audio output", [], ["settings-dialog"],
      rect(3.5, 1.5, 9, 13, 1) + circle(8, 10, 2.5) + accent(dot(8, 5, 1.25)))
 icon("audio-delay", "Audio delay", [], ["settings-dialog"],
      stroke("M1.5 7v2M3.5 5v6M5.5 6v4M7.5 4.5v7") + clock_badge())
+icon("audio-commit-default", "Default line duration", [], ["settings-dialog"],
+     stroke("M1.5 6.5l2.5 2.5 5-5.5") + accent(stroke("M1.5 12.5h13M1.5 11v3M14.5 11v3")))
 icon("theme", "Theme", [], ["settings-dialog"],
      stroke("M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z") + accent(stroke("M11.5 1.5v2M10.5 2.5h2")))
 icon("accent-colour", "Accent color", [], ["settings-dialog"],

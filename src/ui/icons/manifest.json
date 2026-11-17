@@ -3783,6 +3783,17 @@
    ]
   },
   {
+   "role": "audio-commit-default",
+   "file": "audio-commit-default.svg",
+   "label": "Default line duration",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
    "role": "theme",
    "file": "theme.svg",
    "label": "Theme",
