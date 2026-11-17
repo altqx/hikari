@@ -149,15 +149,6 @@ std::optional<std::string> restrictedQml(const Json &json)
     return std::nullopt;
 }
 
-std::vector<std::string> strings(const Json *list)
-{
-    std::vector<std::string> out;
-    if (list)
-        for (const Json &item : list->asArray())
-            out.push_back(item.asString());
-    return out;
-}
-
 ProgramRun programRun(const Json &run)
 {
     ProgramRun out;
