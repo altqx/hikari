@@ -19,6 +19,7 @@ namespace {
 // MUST KILL: float/double mix kept so magnitudes match HikariSub legacy to the bit
 constexpr float kPi = 3.1415926535897932384626433832795f;
 constexpr double kDecibelRange = 60;
+constexpr double kPaletteSteps = 128;
 
 template <unsigned M, unsigned N, unsigned B, unsigned A> struct SinCosSeries {
     static double value() { return 1 - (A * kPi / B) * (A * kPi / B) / M / (M + 1) * SinCosSeries<M + 2, N, B, A>::value(); }
@@ -333,7 +334,7 @@ void AudioSpectrum::render(const DisplayAudio &audio, std::int64_t range_start, 
     const bool decibels = m_curve != SpectrumCurve::Linear;
     auto decibelIntensity = [&](float value) {
         const double r = value * upscale / maxpower;
-        return r > 0 ? int(256 * (1 + 20 * std::log10(r) / kDecibelRange)) : 0;
+        return r > 0 ? int(kPaletteSteps * (1 + 20 * std::log10(r) / kDecibelRange)) : 0;
     };
     auto logBand = [&](int y) { return std::pow(double(maxband), double(y) / imgheight); };
 

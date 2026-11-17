@@ -83,7 +83,7 @@ std::vector<std::uint8_t> expectedImage(const DisplayAudio &audio, std::int64_t 
                 maxval = std::max(maxval, line[std::size_t(b)]);
             const double r = maxval * upscale / 8388608;
             const int level = curve == SpectrumCurve::Linear ? int(256 * (maxval * upscale) / 8388608)
-                              : r > 0                         ? int(256 * (1 + 20 * std::log10(r) / 60))
+                              : r > 0                         ? int(128 * (1 + 20 * std::log10(r) / 60))
                                                               : 0;
             const int intensity = std::clamp(level, 0, 255);
             std::uint8_t *p = image.data() + (std::size_t(h - y - 1) * w + x) * 4;
