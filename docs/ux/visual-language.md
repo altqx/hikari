@@ -363,7 +363,9 @@ Dock chrome (headers, tab bars) keeps MuseScore 4's form under D3 ([#207](https:
 - the transport buttons (previous frame, play/pause, next frame, play line, stop), 24 × 24 tool buttons, 2 apart;
 - the timecode in the 20-unit monospace role, in `text` (direction C's);
 - the frame number in `muted` monospace ("frame 5146 / 15116");
-- at the trailing end: volume, its slider, and the zoom ("37 %").
+- at the trailing end: the zoom readout ("Fit", "200 %"), then volume and its slider.
+
+The time is also the Jump to field, and the row's content and behaviour are in [video-controls.md](video-controls.md) (#1206).
 
 The seek slider spans the panel above the row. The crosshair's position and Copy video position keep their place at the end of the row (VT1). The visual tool's inspector bar sits below it when a tool other than the crosshair is on.
 
@@ -378,9 +380,9 @@ The strip is always on black, in every theme. Its text and icons are `#EEF0F2` (
 2. Three groups:
    - leading: the active Line's number in `muted` and its text, elided;
    - centred: the transport buttons and, after them, the timecode in 20-unit monospace;
-   - trailing: Typesetting mode, volume and Leave full screen.
+   - trailing: the zoom readout, Typeset, volume and Leave full screen.
 
-Buttons are 34 × 34 with 20-unit glyphs, unboxed, the same glyphs as the panel's. Hover is white at 12 %. While a tool other than the crosshair is on, the inspector bar is a third row above the seek bar (FS1's `inspectorSlot`). The strip shows and hides as FS1 says. [#1208](https://github.com/altqx/hikari/issues/1208) (full-screen typesetting mode) and [#1206](https://github.com/altqx/hikari/issues/1206) (transport row) get their boards in this direction when the coordinator schedules them.
+Buttons are 34 × 34 with 20-unit glyphs, unboxed, the same glyphs as the panel's. Hover is white at 12 %. This strip is Simple mode's ([#1207](https://github.com/altqx/hikari/issues/1207)): the visual tools and their inspector move to the typesetting mode. The strip shows and hides as #1207 says. Full-screen typesetting ([#1208](https://github.com/altqx/hikari/issues/1208)) has its own layout, in [full-screen-typesetting.md](full-screen-typesetting.md).
 
 ## The resolution question
 
