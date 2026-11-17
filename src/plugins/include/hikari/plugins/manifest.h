@@ -94,6 +94,13 @@ struct Program {
     Confinement confinement = Confinement::Container;
 };
 
+struct McpServer {
+    std::string id;
+    std::string title;
+    std::string description;
+    std::string program;
+};
+
 // "linux-x64", "windows-arm64", …: the platform key of the computer HikariSub runs on.
 std::string_view thisPlatform();
 
@@ -124,6 +131,7 @@ struct Manifest {
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
     std::vector<Program> programs;
+    std::vector<McpServer> mcpServers;
 
     bool hasQmlPanels() const;
     const Program *program(std::string_view id) const;
@@ -164,11 +172,12 @@ struct PermissionIncrease {
     bool runPrograms = false;
     // Programs that are new, gain network, or move to lowIntegrity.
     std::vector<std::string> programs;
+    std::vector<std::string> mcpServers;
 
     bool any() const
     {
         return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background ||
-               runPrograms || !programs.empty();
+               runPrograms || !programs.empty() || !mcpServers.empty();
     }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);

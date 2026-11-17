@@ -2346,25 +2346,40 @@ ScrollView {
                             Layout.fillWidth: true
                             Label { text: serverRow.modelData.name; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
                             Label {
-                                text: serverRow.modelData.transport === "http" ? serverRow.modelData.url : serverRow.modelData.command
-                                font.family: page.codeFontFamily
+                                text: serverRow.modelData.plugin ? qsTr("From a plugin, in its sandbox")
+                                      : serverRow.modelData.transport === "http" ? serverRow.modelData.url : serverRow.modelData.command
+                                font.family: serverRow.modelData.plugin ? Qt.application.font.family : page.codeFontFamily
                                 color: Theme.muted
                                 elide: Text.ElideMiddle
                                 Layout.fillWidth: true
                             }
                         }
                         StatusDot {
+                            visible: serverRow.modelData.on
                             status: serverRow.modelData.state === "ready" ? "ok" : serverRow.modelData.state === "failed" ? "failed" : ""
                         }
                         Label {
                             objectName: "aiMcpServerStatus"
+                            visible: serverRow.modelData.on
                             text: page.mcpStatusText(serverRow.modelData)
                             color: serverRow.modelData.state === "failed" ? Theme.danger : Theme.muted
                             elide: Text.ElideRight
                             Layout.maximumWidth: 260
                         }
+                        Switch {
+                            objectName: "aiMcpServerOn"
+                            visible: serverRow.modelData.plugin
+                            text: checked ? qsTr("On") : qsTr("Off")
+                            Accessible.name: serverRow.modelData.name
+                            checked: serverRow.modelData.on
+                            onToggled: {
+                                page.mcpServers.setOn(serverRow.modelData.id, checked)
+                                checked = Qt.binding(() => serverRow.modelData.on)
+                            }
+                        }
                         IconToolButton {
                             objectName: "aiMcpServerEdit"
+                            visible: !serverRow.modelData.plugin
                             iconRole: "edit"
                             text: qsTr("Edit")
                             enabled: page.mcpEditing === ""
@@ -2372,6 +2387,7 @@ ScrollView {
                         }
                         IconToolButton {
                             objectName: "aiMcpServerDelete"
+                            visible: !serverRow.modelData.plugin
                             iconRole: "delete"
                             text: qsTr("Delete")
                             onClicked: page.askDeleteMcpServer(serverRow.modelData)
@@ -2379,14 +2395,14 @@ ScrollView {
                     }
                     CheckBox {
                         objectName: "aiMcpServerTrust"
-                        visible: page.mcpEditing !== serverRow.modelData.id
+                        visible: page.mcpEditing !== serverRow.modelData.id && serverRow.modelData.on
                         checked: serverRow.modelData.trusted
                         text: qsTr("Trust what it says about its tools")
                         Layout.leftMargin: 12
                         onToggled: page.mcpServers.setTrusted(serverRow.modelData.id, checked)
                     }
                     Repeater {
-                        model: page.mcpEditing !== serverRow.modelData.id ? serverRow.modelData.tools : []
+                        model: page.mcpEditing !== serverRow.modelData.id && serverRow.modelData.on ? serverRow.modelData.tools : []
                         delegate: Loader {
                             id: toolRow
                             required property var modelData

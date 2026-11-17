@@ -934,7 +934,8 @@ end)
 - **In Settings › AI › MCP servers** it shows as `<title> (<plugin>)`, off until the user turns it on. The user can't edit its command; its environment comes from the plugin's settings through `${setting:<id>}`.
 - **Its tools** follow the [MCP rules](ai-mcp-clients.md), with trust off by default.
 - **Sandboxed.** It runs in the sandbox as a program, unlike a server the user adds.
-- **When it goes.** Turning the plugin off or uninstalling it removes the server from every thread.
+- **When it goes.** Turning the plugin off or uninstalling it removes the server from every thread. Uninstalling also forgets that the user turned it on.
+- **How Qt runs it:** [plugin servers](ai-mcp-clients.md#plugin-servers).
 
 ### Formats
 
