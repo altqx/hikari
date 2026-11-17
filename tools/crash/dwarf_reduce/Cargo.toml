@@ -1,0 +1,17 @@
+[package]
+name = "dwarf-reduce"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Keeps only the DWARF that PostHog's symbolicator reads"
+
+[dependencies]
+gimli = { version = "=0.34.0", default-features = false, features = ["read", "std"] }
+memmap2 = "0.9.12"
+object = { version = "=0.39.1", default-features = false, features = ["read_core", "elf", "std"] }
+
+[dev-dependencies]
+symbolic = { version = "=13.9.0", default-features = false, features = ["debuginfo", "symcache"] }
+
+[profile.release]
+debug = false
