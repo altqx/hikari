@@ -311,6 +311,16 @@ std::optional<Value> valueOf(const TagView &v)
     return n ? std::optional<Value>(Value{*n, 0, 0, 0}) : std::nullopt;
 }
 
+std::string formatFloat(double value)
+{
+    std::string text = printf1("%.15f", value);
+    while (text.ends_with('0'))
+        text.pop_back();
+    if (text.ends_with('.'))
+        text.pop_back();
+    return text;
+}
+
 std::string formatValue(Kind k, const Value &v)
 {
     const std::string name = "\\" + std::string(outName(k));
@@ -322,7 +332,7 @@ std::string formatValue(Kind k, const Value &v)
         return name + "&H" + formatHex(v[0]) + "&";
     if (k == Kind::RectClip || k == Kind::RectIClip)
         return name + "(" + formatLua(v[0]) + "," + formatLua(v[1]) + "," + formatLua(v[2]) + "," + formatLua(v[3]) + ")";
-    return name + formatG(v[0]);
+    return name + formatFloat(v[0]);
 }
 
 std::optional<Value> styleValue(Kind k, const Props &p, double resX, double resY)
