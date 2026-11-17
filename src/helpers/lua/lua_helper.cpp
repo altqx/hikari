@@ -1008,10 +1008,14 @@ using hikari::application::MacroInfoLine;
 using hikari::application::MacroResult;
 using hikari::application::MacroSnapshot;
 using hikari::application::MacroStyleLine;
+using hikari::application::MacroUndoStep;
 
 struct Staged {
     MacroSnapshot lists;
     bool canModify = true;
+    bool canSetUndo = false;
+    bool modifiedSinceUndoPoint = false;
+    std::vector<MacroUndoStep> undoSteps;
     std::string report; // aegisub.hikari.report
     int size() const
     {
@@ -1035,6 +1039,7 @@ void checkAllowModify(lua_State *L)
 {
     if (!g_subs->canModify)
         luaL_error(L, "You cannot modify read-only subtitles");
+    g_subs->modifiedSinceUndoPoint = true;
 }
 
 std::string field(const MacroStyleLine &s, std::size_t i)
@@ -1641,9 +1646,18 @@ void installHikari(lua_State *L)
     lua_setfield(L, -2, "hikari");
 }
 
-int setUndoPoint(lua_State *)
+int setUndoPoint(lua_State *L)
 {
-    return 0; // a stub: changes nothing
+    if (!g_subs || !g_subs->canSetUndo)
+        return luaL_error(L, "Attempt to set an undo point in a context where it makes no sense to do so.");
+    checkLive(L);
+    std::string description = checkString(L, 1);
+    if (!g_subs->modifiedSinceUndoPoint)
+        return 0;
+    const auto &l = g_subs->lists;
+    g_subs->undoSteps.push_back({std::move(description), l.info, l.styles, l.dialogues});
+    g_subs->modifiedSinceUndoPoint = false;
+    return 0;
 }
 
 // A cancelled run raises the cancellation.
@@ -2517,10 +2531,17 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
         lua_rawseti(L, -2, static_cast<int>(i) + 1);
     }
     lua_pushinteger(L, staged.lists.active);
+    staged.canSetUndo = true;
     const int status = lua_pcall(L, 3, 2, -5);
+    staged.canSetUndo = false;
     if (status == 0) {
         // The macro returns (selected rows, active row).
         MacroResult result;
+        if (!staged.modifiedSinceUndoPoint && !staged.undoSteps.empty()) {
+            result.undoDescription = std::move(staged.undoSteps.back().description);
+            staged.undoSteps.pop_back();
+        }
+        result.undoSteps = std::move(staged.undoSteps);
         result.info = std::move(staged.lists.info);
         result.styles = std::move(staged.lists.styles);
         result.dialogues = std::move(staged.lists.dialogues);
