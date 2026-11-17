@@ -383,7 +383,7 @@ It takes no parameters (`{"type": "object", "additionalProperties": false}`). `d
 
 ### Quick picks and input boxes
 
-#1236. These are plugin services, like `panels.*` and `dialogs.*`: the helper's `Ui` service carries them, and program plugins call them by name over JSON-RPC. They aren't registry operations, so they have no read/write mark and no `reference-v1.json` entry, and AI and MCP callers can't reach them. They need no permission, and open only while the plugin answers the user, as [Quick picks and input boxes](plugins.md#quick-picks-and-input-boxes) says; elsewhere they answer `refused` with reason `not_user_initiated`. Opening one closes any other in that window, which answers as cancelled.
+#1236. These are plugin services, like `panels.*` and `dialogs.*`: the helper's `Ui` service carries them, and program plugins call them by name over JSON-RPC. They aren't registry operations, so they have no read/write mark and no `reference-v1.json` entry, and AI and MCP callers can't reach them. They need no permission, and open only while the plugin answers something the user started, as [Quick picks and input boxes](plugins.md#quick-picks-and-input-boxes) says; elsewhere they answer `refused` with reason `not_user_initiated`. Opening one closes any other in that window, which answers as cancelled.
 
 | Service | What it does |
 | --- | --- |
@@ -392,6 +392,9 @@ It takes no parameters (`{"type": "object", "additionalProperties": false}`). `d
 | `quick_pick.open` | Shows a live quick pick and answers its id at once; its events go to the plugin. |
 | `quick_pick.update` | Changes an open quick pick. |
 | `quick_pick.close` | Closes an open quick pick. |
+| `input_box.open` | Shows a live input box and answers its id at once; its events go to the plugin. |
+| `input_box.update` | Changes an open input box, with a message of a severity or a pending check. |
+| `input_box.close` | Closes an open input box. |
 
 #### `quick_pick.ask`
 
@@ -406,6 +409,7 @@ It takes no parameters (`{"type": "object", "additionalProperties": false}`). `d
   "keep_order": {"type": "boolean", "description": "Keep the given order instead of sorting matches best first."},
   "step": {"type": "object", "properties": {"current": {"type": "integer", "minimum": 1}, "total": {"type": "integer", "minimum": 1}},
     "required": ["current", "total"], "additionalProperties": false},
+  "back": {"type": "boolean", "description": "Back in the title row, for a step after the first."},
   "buttons": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/QuickPickButton"}, "description": "Icon buttons in the title row."}},
  "required": ["items"], "additionalProperties": false}
 ```
@@ -414,7 +418,8 @@ It takes no parameters (`{"type": "object", "additionalProperties": false}`). `d
 {"type": "object", "properties": {
   "cancelled": {"type": "boolean"},
   "items": {"type": "array", "items": {"type": "string"}, "description": "The picked ids in list order; absent when cancelled."},
-  "button": {"type": "string", "description": "A title button the user pressed instead of picking; cancelled is then true."}},
+  "button": {"type": "string", "description": "A title button the user pressed instead of picking; cancelled is then true."},
+  "back": {"type": "boolean", "description": "true when the user pressed Back; cancelled is then true."}},
  "required": ["cancelled"], "additionalProperties": false}
 ```
 
@@ -438,18 +443,44 @@ Item ids are unique in the list, and separators have none. With `many`, Enter wi
     "max_length": {"type": "integer", "minimum": 1, "maximum": 10000}},
    "required": ["message"], "additionalProperties": false},
   "step": {"type": "object", "properties": {"current": {"type": "integer", "minimum": 1}, "total": {"type": "integer", "minimum": 1}},
-    "required": ["current", "total"], "additionalProperties": false}},
+    "required": ["current", "total"], "additionalProperties": false},
+  "back": {"type": "boolean"}},
  "additionalProperties": false}
 ```
 
 ```json
 {"type": "object", "properties": {
   "cancelled": {"type": "boolean"},
-  "value": {"type": "string", "description": "Absent when cancelled."}},
+  "value": {"type": "string", "description": "Absent when cancelled."},
+  "back": {"type": "boolean", "description": "true when the user pressed Back; cancelled is then true."}},
  "required": ["cancelled"], "additionalProperties": false}
 ```
 
-A `pattern` that isn't a valid expression answers `invalid_params`.
+A `pattern` that isn't a valid expression answers `invalid_params`. A `validation` failure is always an error; levels and slow checks need `input_box.open`.
+
+#### `input_box.open`, `input_box.update` and `input_box.close`
+
+`input_box.open` takes `input_box.ask`'s parameters and answers `{"box": "b1"}` (`{"type": "string", "pattern": "^b[0-9]{1,9}$"}`). `input_box.update` takes `{box}`, any field `open` takes, and:
+
+```json
+"message": {"oneOf": [{"type": "null"}, {"type": "object", "properties": {
+  "severity": {"enum": ["error", "warning", "info"]},
+  "text": {"type": "string", "minLength": 1, "maxLength": 300}},
+ "required": ["severity", "text"], "additionalProperties": false}], "description": "Shown under the box; null clears it. An error blocks Enter."},
+"busy": {"type": "boolean", "description": "A check is pending: Enter waits for it."}
+```
+
+`input_box.close` takes `{box}`. Both answer `{box}`, and a box that has closed answers `not_found`. A plugin has at most one open, apart from its quick pick. Its events reach `hikari.input_box.on`, or a program plugin's `input_box` request:
+
+```json
+{"type": "object", "properties": {
+  "kind": {"enum": ["value", "accept", "back", "hide"]},
+  "box": {"type": "string"},
+  "value": {"type": "string"}},
+ "required": ["kind", "box"], "additionalProperties": false}
+```
+
+`value` and `accept` come with `value`. An `accept` comes only when the message isn't an error and `busy` is false. Waiting `value` events merge, so only the newest arrives.
 
 #### `quick_pick.open`, `quick_pick.update` and `quick_pick.close`
 
@@ -467,7 +498,7 @@ Its events reach the plugin's `hikari.quick_pick.on` handler, or a program plugi
 
 ```json
 {"type": "object", "properties": {
-  "kind": {"enum": ["value", "active", "accept", "button", "hide"]},
+  "kind": {"enum": ["value", "active", "accept", "button", "back", "hide"]},
   "pick": {"type": "string"},
   "value": {"type": "string"},
   "item": {"type": "string"},
@@ -490,6 +521,7 @@ Its events reach the plugin's `hikari.quick_pick.on` handler, or a program plugi
   "icon": {"type": "string", "maxLength": 68, "pattern": "^(own:)?[a-z0-9]+(-[a-z0-9]+)*$"},
   "picked": {"type": "boolean", "description": "Checked at the start, with many."},
   "always_show": {"type": "boolean", "description": "Kept whatever the filter."},
+  "disabled": {"type": "string", "minLength": 1, "maxLength": 200, "description": "Why the item can't be picked; it shows greyed with this reason."},
   "buttons": {"type": "array", "maxItems": 2, "items": {"$ref": "#/$defs/QuickPickButton"}}},
  "required": ["label"], "additionalProperties": false},
 "QuickPickButton": {"type": "object", "properties": {

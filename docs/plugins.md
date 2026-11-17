@@ -635,11 +635,13 @@ A command whose conditions fail is disabled in every menu and the palette, and i
 
 **When a plugin may open one.** Only while it answers the user:
 
-- a command (`context.via` other than `ai`);
+- a command the user started: from a menu item, a key, the palette or a status item (`context.via` other than `api` and `ai`);
 - a `click` or `button` event in its own panel or dialog;
-- a status item's click.
+- a job one of those began, while it runs.
 
-Anywhere else, such as a timer, an event or an AI tool, the call answers `refused` with reason `not_user_initiated`, so no popup takes the focus unasked. One quick pick or input box shows at a time in a window. Opening another closes the shown one, which then answers as cancelled.
+Anywhere else, such as a timer, an event, another plugin's `plugins.run` or an AI tool, the call answers `refused` with reason `not_user_initiated`, so no popup takes the focus unasked. One quick pick or input box shows at a time in a window. Opening another closes the shown one, which then answers as cancelled.
+
+**What every popup shows.** The title row always starts with the plugin's name, then `title`. All text is plain: HikariSub never reads markup in it. A popup closes, answering as cancelled, when its plugin stops.
 
 **Ask for a pick.** `hikari.quick_pick.ask(spec)` is [`quick_pick.ask`](api.md#quick_pickask): it shows the list and waits.
 
@@ -656,13 +658,19 @@ local picked = hikari.quick_pick.ask{
 if picked then print(picked[1]) end
 ```
 
-- **Items.** At most 10000, each `{id, label, description, detail, icon, picked, always_show, buttons}`. A `kind = "separator"` item is a heading with only a `label`. `icon` is an icon role or `own:<id>`. `buttons` are up to 2 icon buttons `{id, icon, tooltip}`, shown on the active row.
+- **Items.** At most 10000, each `{id, label, description, detail, icon, picked, always_show, disabled, buttons}`. `disabled` is the reason an item can't be picked: it shows greyed with that reason and Enter skips it. A `kind = "separator"` item is a group heading with only a `label`. `icon` is an icon role or `own:<id>`. `buttons` are up to 2 icon buttons `{id, icon, tooltip}`, shown on the active row.
 - **Filtering.** The user's typing filters the list as they type, with the palette's fuzzy match on `label`, and on `description` and `detail` when `match_on` names them. Matches sort best first unless `keep_order = true`. `always_show` items stay whatever is typed. `value` fills the box at the start.
 - **Picking several.** `many = true` shows a check box per item, starting from `picked`. Enter takes every checked item.
-- **The answer.** A list of the picked ids, in list order, or `nil` when the user pressed Esc, clicked outside, or another popup took the place. The operation answers `{cancelled = true}` then.
-- **Steps.** `step = {current, total}` shows "2 / 3" for a flow of several popups.
+- **The answer.** A list of the picked ids, in list order, or `nil` when the user pressed Esc, clicked outside, moved the focus away, or another popup took the place. The operation answers `{cancelled = true}` then.
+- **Steps.** `step = {current, total}` shows "2 / 3" for a flow of several popups. `back = true` adds Back to the title row. Pressing it, or Alt+Left, answers `nil, "back"` (`{cancelled = true, back = true}`), so the flow can show the step before.
 
-**Ask for text.** `hikari.input_box.ask(spec)` is [`input_box.ask`](api.md#input_boxask). `spec` is `{title, prompt, placeholder, value, selection, password, validation}`. `selection` is `{from, to}` in `value`. `password = true` shows dots. `validation = {pattern, message, min_length, max_length}` is checked as the user types: while it fails, `message` shows under the box and Enter does nothing. It returns the text, or `nil` when cancelled.
+**Ask for text.** `hikari.input_box.ask(spec)` is [`input_box.ask`](api.md#input_boxask). `spec` is `{title, prompt, placeholder, value, selection, password, validation}`. `selection` is `{from, to}` in `value`. `password = true` shows dots. `validation = {pattern, message, min_length, max_length}` is checked as the user types: while it fails, `message` shows under the box as an error and Enter does nothing. `step` and `back` work as for a quick pick. It returns the text, or `nil` when cancelled (with `"back"` second after Back).
+
+**A live input box.** For checks that take time or have levels, `hikari.input_box.open(spec)` is [`input_box.open`](api.md#input_boxopen-input_boxupdate-and-input_boxclose). It takes `ask`'s spec and returns an id, and its events reach `hikari.input_box.on(box, fn)`: `value` `{value}` as the user types (only the newest waits), `accept` `{value}`, `back` and `hide`.
+
+- **Messages.** `hikari.input_box.update(box, {message = {severity, text}, busy})` shows a message under the box. `severity` is `error`, `warning` or `info`, drawn in `danger`, `warning` and `muted`. `message = hikari.null` clears it.
+- **Enter.** While the message is an error, Enter does nothing. While `busy` is true, a check is pending: Enter waits and sends `accept` once `busy` turns false without an error.
+- **Closing.** The box stays open after `accept` until the plugin calls `hikari.input_box.close(box)`, so it can refuse the value and say why.
 
 **A live quick pick.** For a list that changes as the user types, such as a search over a glossary, `hikari.quick_pick.open(spec)` is [`quick_pick.open`](api.md#quick_pickopen-quick_pickupdate-and-quick_pickclose). It shows the list and returns its id at once.
 
@@ -685,6 +693,7 @@ end)
   - `active` `{item}`.
   - `accept` `{items}`.
   - `button` `{button, item}`.
+  - `back`, with `back = true`.
   - `hide`. The list is gone for good, by Esc, a click outside, another popup or `close`.
 - **Lifetime.** The list stays open after `accept` until the plugin closes it, so a flow can go on. It closes when the plugin stops. While it is open, the plugin's handler may run as long as it needs, and the list shows `busy` only when the plugin says so.
 
@@ -802,13 +811,13 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
   | `command` | `{command, args, via}` | What the command gives back, or `null`. `via` is `menu`, `key`, `palette`, `status`, `api` or `ai`. |
   | `event` | `{name, data}` | `null`, for each event it subscribed to. |
   | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
-| `quick_pick` | `{pick, event}` | `null`, for an [open quick pick](#quick-picks-and-input-boxes)'s events. |
+| `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
   | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
   | `export`, `import` | As for [Lua formats](#formats) | The bytes, or the Lines. |
   | `shutdown` | `{}` | `null`, after which HikariSub sends the notification `exit` and closes stdin. It ends the program 5 seconds later. |
 
 - **The program calls HikariSub:**
-  - **Operations.** Every [Hikari API](api.md) operation is a method of its own name with its own params, such as `{"jsonrpc": "2.0", "id": 7, "method": "lines.list", "params": {}}`. So are the plugin services: `panels.*`, `dialogs.*`, `quick_pick.*`, `input_box.ask`, `files.*`, `net.fetch`, `job.begin`, `job.progress` and `job.cancelled`.
+  - **Operations.** Every [Hikari API](api.md) operation is a method of its own name with its own params, such as `{"jsonrpc": "2.0", "id": 7, "method": "lines.list", "params": {}}`. So are the plugin services: `panels.*`, `dialogs.*`, `quick_pick.*`, `input_box.*`, `files.*`, `net.fetch`, `job.begin`, `job.progress` and `job.cancelled`.
   - **What Lua's members do.** `hikari/notify` `{text, level}`, `hikari/settings.get` `{id}`, `hikari/settings.set` `{id, value}`, `hikari/subscribe` `{events}`, `hikari/unsubscribe` `{events}`, `hikari/edit.begin` `{document, name}` and `hikari/edit.end` `{}`. The last two take and give back the app-wide edit turn that `hikari.document.edit` holds. Every step the program commits between them is one undo step, "<plugin name>: <name>", as `document.group_begin` makes. The turn also ends when the request from HikariSub it was taken in is answered.
 - **Errors.** A Hikari API error comes back as `{"code": -32000, "message", "data": {"code": "not_granted", "data": {…}}}`. An unknown method is `-32601`, and parameters that break the schema are `-32602` with `data.pointer`.
 - **Other output.** stderr goes to the Log panel.

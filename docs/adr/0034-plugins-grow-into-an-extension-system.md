@@ -99,8 +99,8 @@ Each plugin's settings also get a page under Settings › Plugins. Settings may 
 
 The owner added a VS Code-style command palette (Ctrl+Shift+P), Quick Open (Ctrl+P) and one quick-pick list and input box, on [#1236](https://github.com/altqx/hikari/issues/1236). Plugins open the same popups:
 
-- **Services, not operations.** `quick_pick.ask`, `input_box.ask`, `quick_pick.open`, `quick_pick.update` and `quick_pick.close` are plugin services like `dialogs.*`, modelled on VS Code's `showQuickPick`, `showInputBox` and `createQuickPick`. They need no permission, and AI and MCP callers can't reach them.
-- **Only when the user asked.** A plugin opens one only while it answers a command, a click in its own panel or dialog, or a status item. A timer, an event or an AI tool can't take the focus with one.
+- **Services, not operations.** `quick_pick.ask`, `quick_pick.open`, `quick_pick.update`, `quick_pick.close`, `input_box.ask`, `input_box.open`, `input_box.update` and `input_box.close` are plugin services like `dialogs.*`, modelled on VS Code's `showQuickPick`, `showInputBox` and `createQuickPick`. They need no permission, and AI and MCP callers can't reach them.
+- **Only when the user asked.** A plugin opens one only while it answers something the user started: a command from a menu, a key, the palette or a status item, a click in its own panel or dialog, or a job one of those began. A timer, an event or an AI tool can't take the focus with one. The title row always names the plugin, all text is plain, and a popup closes when its plugin stops.
 - **The palette** lists every plugin command as "<plugin>: <title>" with its `description`, unless the command sets `palette: false`, and runs it with `via: "palette"`. Its look and Quick Open's prefixes are #1236's UX spec. Plugins add no Quick Open prefixes in API 1.
 
 ## Panels
