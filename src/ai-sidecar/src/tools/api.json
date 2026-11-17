@@ -481,6 +481,9 @@
           "type": "integer"
         },
         {
+          "type": "number"
+        },
+        {
           "type": "string"
         },
         {
@@ -1370,7 +1373,7 @@
     {
       "name": "settings.list",
       "access": "read",
-      "summary": "Settings with their type, scope, default and current value.",
+      "summary": "Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>.",
       "since": 1,
       "params": {
         "type": "object",
@@ -1397,6 +1400,7 @@
                   "enum": [
                     "boolean",
                     "integer",
+                    "number",
                     "string",
                     "stringList"
                   ]
@@ -1413,6 +1417,18 @@
                 },
                 "value": {
                   "$ref": "#/$defs/SettingValue"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name the Settings window shows, in the UI language."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "app, or the id of the plugin whose setting it is."
+                },
+                "projectable": {
+                  "type": "boolean",
+                  "description": "Whether a Project can override it on the Project tab."
                 }
               },
               "required": [
@@ -1642,6 +1658,42 @@
           "open",
           "floating",
           "focused"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "settings.open",
+      "access": "write",
+      "summary": "Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "setting": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,200}$",
+            "description": "A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>."
+          },
+          "scope": {
+            "enum": [
+              "yours",
+              "project"
+            ],
+            "description": "The tab; yours when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "opened": {
+            "const": true
+          }
+        },
+        "required": [
+          "opened"
         ],
         "additionalProperties": false
       }

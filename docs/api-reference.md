@@ -17,12 +17,13 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `api.version` | read | 1 | The API version: it grows by one with each release that adds to the API. |
 | `commands.list` | read | 1 | The commands of menus, toolbars and shortcuts, with their enabled state and keys. |
 | `panels.list` | read | 1 | The workspace panels and whether each is open, floating or focused. |
-| `settings.list` | read | 1 | Settings with their type, scope, default and current value. |
+| `settings.list` | read | 1 | Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>. |
 | `settings.get` | read | 1 | The current values of the settings named. |
 | `commands.run` | write | 1 | Runs an enabled command as its menu item, toolbar button or shortcut would. |
 | `panels.open` | write | 1 | Opens a panel where the layout keeps it. |
 | `panels.close` | write | 1 | Closes a panel. |
 | `panels.focus` | write | 1 | Opens a panel if needed and gives it the keyboard focus. |
+| `settings.open` | write | 1 | Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting. |
 | `settings.set` | write | 1 | Changes a setting; the value must have the setting's type. |
 | `document.apply` | write | 1 | Applies edits prepared against a revision as one undo step; a stale revision changes nothing. |
 | `selection.set` | write | 1 | Selects Lines and makes one active, as a click in the Grid would; never an undo step. |
@@ -343,7 +344,7 @@ The workspace panels and whether each is open, floating or focused.
 
 Read. Since version 1.
 
-Settings with their type, scope, default and current value.
+Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>.
 
 **Parameters**
 
@@ -357,10 +358,13 @@ Settings with their type, scope, default and current value.
 | --- | --- | --- | --- |
 | `settings` | array of objects | yes |  |
 | `settings[].setting` | string | yes |  |
-| `settings[].type` | one of `boolean`, `integer`, `string` or `stringList` | yes |  |
+| `settings[].type` | one of `boolean`, `integer`, `number`, `string` or `stringList` | yes |  |
 | `settings[].scope` | one of `profile`, `collections` or `workspace` | yes |  |
 | `settings[].default` | [SettingValue](#settingvalue) | yes |  |
 | `settings[].value` | [SettingValue](#settingvalue) | yes |  |
+| `settings[].title` | string |  | The name the Settings window shows, in the UI language. |
+| `settings[].source` | string |  | app, or the id of the plugin whose setting it is. |
+| `settings[].projectable` | boolean |  | Whether a Project can override it on the Project tab. |
 
 ### `settings.get`
 
@@ -464,6 +468,25 @@ Opens a panel if needed and gives it the keyboard focus.
 | `open` | boolean | yes |  |
 | `floating` | boolean | yes |  |
 | `focused` | boolean | yes |  |
+
+### `settings.open`
+
+Write. Since version 1.
+
+Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `setting` | string |  | A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>. `pattern`: `"^[A-Za-z0-9_.-]{1,200}$"`. |
+| `scope` | one of `yours` or `project` |  | The tab; yours when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `opened` | `true` | yes |  |
 
 ### `settings.set`
 
@@ -2315,7 +2338,7 @@ One of:
 
 ### SettingValue
 
-Type: boolean, integer, string or array of string.
+Type: boolean, integer, number, string or array of string.
 
 ### NodePort
 
