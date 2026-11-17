@@ -309,13 +309,11 @@ FocusScope {
             visible: !list.visible
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.margins: 12
+            Layout.margins: 8
             spacing: 8
-            Item { Layout.fillHeight: true }
             Label {
                 text: panel.hasProject ? qsTr("No files to show here.") : qsTr("Open a folder as a project to see its files here.")
                 wrapMode: Text.Wrap
-                horizontalAlignment: Text.AlignHCenter
                 color: Theme.muted
                 Layout.fillWidth: true
             }
@@ -324,7 +322,6 @@ FocusScope {
                 visible: !panel.hasProject
                 iconRole: "open-project"
                 text: qsTr("Open folder…")
-                Layout.alignment: Qt.AlignHCenter
                 onClicked: panel.openFolder()
             }
             IconTextButton {
@@ -332,7 +329,6 @@ FocusScope {
                 visible: panel.hasProject && !panel.model.allFiles
                 iconRole: "show-all-files"
                 text: qsTr("Show all files")
-                Layout.alignment: Qt.AlignHCenter
                 onClicked: panel.model.allFiles = true
             }
             Item { Layout.fillHeight: true }

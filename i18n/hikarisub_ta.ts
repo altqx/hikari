@@ -21779,10 +21779,6 @@ Styles deleted:
         <translation>பாணிகள்</translation>
     </message>
     <message>
-        <source>Styles: %1</source>
-        <translation>பாணிகள்: %1</translation>
-    </message>
-    <message>
         <source>Delete unused styles</source>
         <translation>பயன்படுத்தப்படாத பாணிகளை நீக்கு</translation>
     </message>

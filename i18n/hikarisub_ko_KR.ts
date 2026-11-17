@@ -21594,10 +21594,6 @@ Styles deleted:
         <translation>스타일</translation>
     </message>
     <message>
-        <source>Styles: %1</source>
-        <translation>스타일: %1</translation>
-    </message>
-    <message>
         <source>Delete unused styles</source>
         <translation>사용하지 않는 스타일 삭제</translation>
     </message>

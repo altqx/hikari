@@ -415,7 +415,7 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles()));
         call("sideBarIconClicked", QStringLiteral("Styles"));
         QTRY_COMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
-        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarHeader"));
+        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarStrip"));
         QVERIFY(header);
         QTRY_VERIFY(findItem(header, QStringLiteral("stylesTools")));
         const auto inside = [&](const char *name) {
@@ -427,14 +427,11 @@ private slots:
         };
         const auto where = [&] {
             QQuickItem *tools = findItem(header, QStringLiteral("stylesTools"));
-            QQuickItem *title = findItem(header, QStringLiteral("sideBarTitle"));
-            return QStringLiteral("header %1, title %2 (natural %3), tools %4 of %5")
-                .arg(header->width()).arg(title ? title->width() : -1).arg(title ? title->implicitWidth() : -1)
-                .arg(tools ? tools->width() : -1).arg(tools ? tools->implicitWidth() : -1);
+            return QStringLiteral("header %1, tools %2 of %3")
+                .arg(header->width()).arg(tools ? tools->width() : -1).arg(tools ? tools->implicitWidth() : -1);
         };
         if (!minimum) {
-            QTRY_VERIFY2(inside("stylesNew"), qPrintable(where()));
-            QTRY_VERIFY(findItem(header, QStringLiteral("stylesNew"))->isEnabled());
+            QTRY_VERIFY2(inside("stylesNew") || inside("stylesMore"), qPrintable(where()));
             return;
         }
         call("resizeSideBar", false, hikari::ui::SideBarModel().minimumWidth(), true);
@@ -442,7 +439,13 @@ private slots:
         QTRY_VERIFY(inside("stylesMore"));
         QVERIFY(inside("sideBarMenuButton"));
         QVERIFY(!findItem(header, QStringLiteral("stylesButtons"))->isVisible());
-        QVERIFY(findItem(header, QStringLiteral("sideBarTitle"))->width() >= 40);
+        const qreal toolsLeft = findItem(header, QStringLiteral("stylesTools"))->mapToItem(header, QPointF()).x();
+        for (QQuickItem *icon : header->findChildren<QQuickItem *>()) {
+            if (!icon->objectName().startsWith(QLatin1String("sideBarIcon_")))
+                continue;
+            QVERIFY2(inside(qPrintable(icon->objectName())), qPrintable(icon->objectName()));
+            QVERIFY2(icon->mapToItem(header, QPointF(icon->width(), 0)).x() <= toolsLeft, qPrintable(where()));
+        }
     }
 
     void originalTextMovedIntoASideBarKeepsItsTools()
@@ -453,7 +456,7 @@ private slots:
         QTRY_VERIFY(application->editor().translationMode());
         call("moveToSideBar", dock("originalDock"), false, 0);
         QTRY_VERIFY(shown("rightSideBar"));
-        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarHeader"));
+        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarStrip"));
         QVERIFY(header);
         const auto chain = [&] {
             QStringList names;

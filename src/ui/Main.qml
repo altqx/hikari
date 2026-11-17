@@ -8457,8 +8457,7 @@ ApplicationWindow {
                 dockName: root.engineName("Styles")
                 minimumBodySize: Qt.size(180, 120)
                 anchors.fill: parent
-                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Styles", "Styles: %1").arg(shell.editingTitle)
-                                              : qsTranslate("HikariSub.Styles", "Styles")
+                title: qsTranslate("HikariSub.Styles", "Styles")
                 accessibleName: qsTranslate("HikariSub.Styles", "Styles")
                 StylesPanel {
                     id: stylesTool
