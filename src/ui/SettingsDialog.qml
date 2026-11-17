@@ -138,11 +138,12 @@ DialogWindow {
         if (setting.startsWith("appearance."))
             Theme.preview(values)
     }
-    function pickThemeColour(setting, colour, anchor, name) {
+    function pickThemeColour(theme, role, colour, anchor, name) {
         themeColourPopover.openFor(anchor, themeColourTarget, () => {
-            const now = values[setting] ?? colour
-            themeColourTarget.setting = setting
-            themeColourTarget.before = now
+            const now = colour
+            themeColourTarget.theme = theme
+            themeColourTarget.role = role
+            themeColourTarget.before = values["appearance.colours"] ?? []
             colourPicker.opened("settings")
             const c = colourPicker.htmlColour(now)
             return { r: c.r, g: c.g, b: c.b, a: 0 }
@@ -1375,6 +1376,16 @@ DialogWindow {
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
+                        SettingsRow {
+                            iconRole: "hotkeys"
+                            text: qsTr("Timing keys work in every panel")
+                            SettingChoice {
+                                setting: "audio.timingKeysEverywhere"
+                                model: [qsTr("Never"), qsTr("In the Timing layout"), qsTr("Always")]
+                                Accessible.name: qsTr("Timing keys work in every panel")
+                            }
+                        }
+                        SettingNote { text: qsTr("The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.") }
                         SettingCheck { setting: "audio.playMono"; text: qsTr("Play in mono") }
                         SettingNote { text: qsTr("Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.") }
                     }
@@ -1933,15 +1944,17 @@ DialogWindow {
 
     QtObject {
         id: themeColourTarget
-        property string setting: ""
-        property string before: ""
+        property string theme: ""
+        property string role: ""
+        property var before: []
         function changeColour(c) {
-            dialog.put(setting, dialog.colourPicker.htmlText(c))
+            dialog.put("appearance.colours", Theme.withUserColour(dialog.values["appearance.colours"] ?? [], theme, role,
+                                                                  dialog.colourPicker.htmlText(c)))
             return true
         }
         function endDialog(accepted) {
             if (!accepted)
-                dialog.put(setting, before)
+                dialog.put("appearance.colours", before)
         }
     }
     ColourPopover {

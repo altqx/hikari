@@ -11,7 +11,8 @@ ColumnLayout {
     objectName: "pluginJobCards"
     property var runtime: null
     readonly property var jobs: runtime ? runtime.jobs : []
-    readonly property bool shown: jobs.length > 0
+    readonly property var stillWorking: runtime ? runtime.working.filter(w => w.stillWorking) : []
+    readonly property bool shown: jobs.length > 0 || stillWorking.length > 0
     visible: shown
     spacing: 8
 
@@ -161,6 +162,68 @@ ColumnLayout {
                         enabled: !card.job.cancelling
                         text: card.job.cancelling ? qsTr("Cancelling…") : qsTr("Cancel")
                         onClicked: cards.runtime.cancelJob(card.job.plugin)
+                    }
+                }
+            }
+        }
+    }
+
+    Repeater {
+        model: cards.stillWorking
+        FocusScope {
+            id: workingCard
+            required property var modelData
+            objectName: "pluginStillWorking_" + modelData.plugin
+            Layout.fillWidth: true
+            implicitWidth: 360
+            implicitHeight: workingBody.implicitHeight + 18
+            Accessible.role: Accessible.Grouping
+            Accessible.name: workingTitle.text
+
+            PopoverBackground { anchors.fill: parent }
+            ColumnLayout {
+                id: workingBody
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.leftMargin: 12
+                anchors.rightMargin: 8
+                anchors.topMargin: 10
+                spacing: 6
+                RowLayout {
+                    spacing: 10
+                    Layout.fillWidth: true
+                    Icon {
+                        iconRole: "run-busy"
+                        accentColor: IconTheme.accent
+                    }
+                    Label {
+                        id: workingTitle
+                        objectName: "pluginStillWorkingTitle"
+                        //: A plugin's command or event has run for more than 10 seconds
+                        text: qsTr("%1 is still working").arg(workingCard.modelData.name)
+                        textFormat: Text.PlainText
+                        font.weight: Font.DemiBold
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                }
+                RowLayout {
+                    spacing: 6
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 26
+                    Label {
+                        text: workingCard.modelData.what
+                        textFormat: Text.PlainText
+                        color: Theme.muted
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                    DangerButton {
+                        objectName: "pluginStillWorkingStop"
+                        text: qsTr("Stop")
+                        Accessible.description: workingTitle.text
+                        onClicked: cards.runtime.forceStop(workingCard.modelData.plugin)
                     }
                 }
             }

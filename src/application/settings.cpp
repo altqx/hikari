@@ -112,6 +112,7 @@ std::vector<SettingDefinition> &definitions()
         {"scriptProperties.updateOn", "ASS_PROPERTIES_UPDATE_ON", Bool, Profile, Mapped, false, false},
         {"scriptProperties.askForChange", "ASS_PROPERTIES_ASK_FOR_CHANGE", Bool, Profile, Mapped, false, false},
         {"recent.audio", "AUDIO_RECENT_FILES", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"recent.commands", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.loadingMethod", "AUTOMATION_LOADING_METHOD", Int, Profile, Mapped, false, std::int64_t{0}},
         {"automation.oldScriptsCompatibility", "AUTOMATION_OLD_SCRIPTS_COMPATIBILITY", Bool, Profile, Mapped, false, false},
         {"automation.lastScript", "AUTOMATION_RECENT_FILES", String, Profile, Mapped, false, std::string()},
@@ -273,17 +274,17 @@ std::vector<SettingDefinition> &definitions()
         // Hotkeys.txt / AudioHotkeys.txt lines; unset: the defaults.
         {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // theme: "light", "dark", "highContrastWhite" or "highContrastBlack"; colours "#RRGGBB".
+        // A theme id: "light", "dark", "highContrastWhite", "highContrastBlack" or "plugin:<plugin id>/<theme id>".
         {"appearance.theme", "", String, Profile, Mapped, false, std::string("dark")},
         {"appearance.followSystem", "", Bool, Profile, Mapped, false, true},
-        {"appearance.lightAccent", "", String, Profile, Mapped, false, std::string("green")},
-        {"appearance.darkAccent", "", String, Profile, Mapped, false, std::string("green")},
-        {"appearance.highContrastWhite.accent", "", String, Profile, Mapped, false, std::string("#0037B3")},
-        {"appearance.highContrastWhite.text", "", String, Profile, Mapped, false, std::string("#000000")},
-        {"appearance.highContrastWhite.border", "", String, Profile, Mapped, false, std::string("#000000")},
-        {"appearance.highContrastBlack.accent", "", String, Profile, Mapped, false, std::string("#FFFF00")},
-        {"appearance.highContrastBlack.text", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
-        {"appearance.highContrastBlack.border", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
+        {"appearance.lightTheme", "", String, Profile, Mapped, false, std::string("light")},
+        {"appearance.darkTheme", "", String, Profile, Mapped, false, std::string("dark")},
+        {"appearance.highContrastLightTheme", "", String, Profile, Mapped, false, std::string("highContrastWhite")},
+        {"appearance.highContrastDarkTheme", "", String, Profile, Mapped, false, std::string("highContrastBlack")},
+        // "<theme id>=<accent choice id>" rows.
+        {"appearance.accents", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // "<theme id>/<role>=#RRGGBB" rows.
+        {"appearance.colours", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // "system", "custom" or "auto" (the system's on tiling window managers).
         {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
         // "start" or "end": the first side bar's edge in reading order (ADR 0032).
@@ -311,6 +312,7 @@ std::vector<SettingDefinition> &definitions()
         {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
         // PortAudio output only: general playback keeps the file's channels.
         {"audio.playMono", "", Bool, Profile, Mapped, false, false},
+        {"audio.timingKeysEverywhere", "", Int, Profile, Mapped, false, std::int64_t{1}},
         // An AUDIO_HOTKEY symbol.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
         // Controls the row shows: "playAround", the plays, "autoCommit", "nextCommit",
@@ -529,6 +531,29 @@ std::span<const RenamedSetting> renamedSettings()
 {
     static constexpr RenamedSetting renamed[] = {{"automation.trustedFolders", "trust.folders"}};
     return renamed;
+}
+
+std::span<const FoldedSetting> foldedSettings()
+{
+    static constexpr FoldedSetting folded[] = {
+        {"appearance.lightAccent", "appearance.accents", "light"},
+        {"appearance.darkAccent", "appearance.accents", "dark"},
+        {"appearance.highContrastWhite.accent", "appearance.colours", "highContrastWhite/accent"},
+        {"appearance.highContrastWhite.text", "appearance.colours", "highContrastWhite/text"},
+        {"appearance.highContrastWhite.border", "appearance.colours", "highContrastWhite/line"},
+        {"appearance.highContrastBlack.accent", "appearance.colours", "highContrastBlack/accent"},
+        {"appearance.highContrastBlack.text", "appearance.colours", "highContrastBlack/text"},
+        {"appearance.highContrastBlack.border", "appearance.colours", "highContrastBlack/line"},
+    };
+    return folded;
+}
+
+std::vector<std::string> foldInto(std::vector<std::string> list, const FoldedSetting &folded, std::string_view value)
+{
+    const std::string key = std::string(folded.entryKey) + '=';
+    if (!value.empty() && std::ranges::none_of(list, [&key](const std::string &e) { return e.starts_with(key); }))
+        list.push_back(key + std::string(value));
+    return list;
 }
 
 std::span<const std::string_view> retiredSettings()

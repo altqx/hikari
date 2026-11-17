@@ -172,6 +172,7 @@ constexpr OptionsBinding kBindings[] = {
     {"editing.cycleValues.alpha", Text, Editing},
     {"editing.cycleValues.an", Text, Editing},
     {"editing.cycleValues.fsp", Text, Editing},
+    {"audio.timingKeysEverywhere", IndexChoice, Audio, 0, 0, 3},
     {"video.fullscreenBarPosition", IndexChoice, Video, 0, 0, 2},
     {"video.fullscreenBar", IndexChoice, Video, 0, 0, 3},
     {"video.fullscreenHidePointer", Check, Video},

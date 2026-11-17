@@ -74,7 +74,7 @@ std::expected<Package, std::string> readPackage(const QString &path)
             if (auto manifest = plugins::parseManifest(std::string_view(text.constData(), std::size_t(text.size())),
                                                        std::numeric_limits<std::int64_t>::max())) {
                 main = manifest->main;
-                for (const plugins::Contribution &c : manifest->commands)
+                for (const plugins::Command &c : manifest->commands)
                     out.commands.push_back(c.title);
             }
         out.files.push_back({utf8(entry.filePath), text.toStdString()});

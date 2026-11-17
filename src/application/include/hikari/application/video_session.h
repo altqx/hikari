@@ -144,6 +144,7 @@ public:
     const std::vector<int> &keyframes() const { return m_keyframes; }
     // Replaces the video's own until the next video opens.
     void setKeyframes(std::vector<int> frames);
+    void restoreVideoKeyframes() { m_keyframes = m_videoKeyframes; }
     // Frame times that replace the video's own for everything but decoding, kept with or without
     // a video until replaced; nullopt goes back to the video's.
     void setFrameTimes(std::optional<AegisubFrameTimes> times);
@@ -270,6 +271,7 @@ private:
     bool startPlayback(std::int64_t fromUs);
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
     std::vector<int> m_keyframes;
+    std::vector<int> m_videoKeyframes;
     bool m_hasAudio = false;
     int m_audioTrack = -1;
     int m_audioOrdinal = -1; // the track among the audio tracks (the general player's numbering)
