@@ -848,19 +848,20 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
   | Method | Params | Answer |
   | --- | --- | --- |
   | `initialize` | `{protocol: 1, api: 1, plugin: {id, version}, locale, settings}` | `{}` once it is ready. A program that doesn't answer in 30 seconds didn't start. |
-  | `command` | `{command, args, via}` | What the command gives back, or `null`. `via` is `menu`, `key`, `palette`, `status`, `api` or `ai`. |
+  | `command` | `{command, args}` | `null`, or what the command gives back. `args` is `null` for a command the user runs. |
   | `event` | `{name, data}` | `null`, for each event it subscribed to. |
   | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
 | `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
   | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
   | `export`, `import` | As for [Lua formats](#formats) | The bytes, or the Lines. |
-  | `shutdown` | `{}` | `null`, after which HikariSub sends the notification `exit` and closes stdin. It ends the program 5 seconds later. |
+  | `shutdown` | `{}` | `null`. HikariSub then sends the notification `exit` and closes stdin, and ends the program 5 seconds later. It sends these when the plugin is turned off, updated or removed; Force stop ends the program at once. |
 
 - **The program calls HikariSub:**
   - **Operations.** Every [Hikari API](api.md) operation is a method of its own name with its own params, such as `{"jsonrpc": "2.0", "id": 7, "method": "lines.list", "params": {}}`. So are the plugin services: `panels.*`, `dialogs.*`, `quick_pick.*`, `input_box.*`, `files.*`, `net.fetch`, `job.begin`, `job.progress` and `job.cancelled`.
-  - **What Lua's members do.** `hikari/notify` `{text, level}`, `hikari/settings.get` `{id}`, `hikari/settings.set` `{id, value}`, `hikari/subscribe` `{events}`, `hikari/unsubscribe` `{events}`, `hikari/edit.begin` `{document, name}` and `hikari/edit.end` `{}`. The last two take and give back the app-wide edit turn that `hikari.document.edit` holds. Every step the program commits between them is one undo step, "<plugin name>: <name>", as `document.group_begin` makes. The turn also ends when the request from HikariSub it was taken in is answered.
+  - **What Lua's members do.** `hikari/notify` `{text, level}`, `hikari/settings.get` `{id}`, `hikari/settings.set` `{id, value}`, `hikari/subscribe` `{events}`, `hikari/unsubscribe` `{events}`, `hikari/edit.begin` `{name}` and `hikari/edit.end` `{}`. The last two take and give back the app-wide edit turn that `hikari.document.edit` holds. Every step the program commits between them is one undo step, "<plugin name>: <name>", as `document.group_begin` makes. The turn also ends when the request from HikariSub it was taken in is answered.
 - **Errors.** A Hikari API error comes back as `{"code": -32000, "message", "data": {"code": "not_granted", "data": {…}}}`. An unknown method is `-32601`, and parameters that break the schema are `-32602` with `data.pointer`.
-- **Other output.** stderr goes to the Log panel.
+- **Other output.** stderr goes to the Log panel, at most 20 lines a minute. Anything on stdout that isn't a JSON-RPC message stops the program, as a crash does, and its next command starts it again.
+- **Its sandbox.** The `main` program runs as any [program](#programs) does, with the same profile, folders and network. A program plugin whose program is still downloading starts once the download is checked.
 - **Types.** #1231's TypeScript types cover the protocol, and a sample program plugin in TypeScript (built into one file with `bun build --compile`) proves it.
 
 ### Language features and problems

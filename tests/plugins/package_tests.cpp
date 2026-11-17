@@ -173,6 +173,29 @@ TEST(PluginPackage, APackageBuiltForOnePlatformMayHold256Megabytes)
               Kind::TooLarge);
 }
 
+TEST(PluginPackage, APackageWithoutMainOpens)
+{
+    const std::string manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "authors": ["Ana"]})";
+    const auto opened = openPackage({{"hikari-plugin.json", bytes(manifest)}}, 1);
+    ASSERT_TRUE(opened);
+    EXPECT_TRUE(opened->manifest.main.empty());
+}
+
+TEST(PluginPackage, AProgramPluginNeedsItsProgramForThisComputer)
+{
+    const std::string other = thisPlatform() == "linux-x64" ? "windows-x64" : "linux-x64";
+    auto manifest = [](const std::string &platform) {
+        return R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "authors": ["Ana"],
+            "main": {"program": "core"}, "permissions": {"programs": "Is the plugin"},
+            "contributes": {"programs": [{"id": "core", "title": "Core", "api": true, "platforms": {")" + platform +
+               R"(": {"path": "bin/core"}}}]}})";
+    };
+    EXPECT_TRUE(openPackage({{"hikari-plugin.json", bytes(manifest(std::string(thisPlatform())))}, {"bin/core", bytes("x")}}, 1));
+    const PackageProblem elsewhere = problem({{"hikari-plugin.json", bytes(manifest(other))}, {"bin/core", bytes("x")}});
+    EXPECT_EQ(elsewhere.kind, Kind::MainProgramUnavailable);
+    EXPECT_EQ(elsewhere.path, "Core");
+}
+
 TEST(PluginPackage, ABundledProgramForThisComputerMustBeInThePackage)
 {
     const PackageProblem missing = problem(withPrograms({{"bin/other/tool", bytes("y")}}));

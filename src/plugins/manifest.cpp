@@ -288,7 +288,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     m.name = text(json, "name");
     m.version = text(json, "version");
     m.api = json.find("api")->asInt();
-    m.main = text(json, "main");
+    if (const Json *main = json.find("main"); main && main->isObject())
+        m.mainProgram = text(*main, "program");
+    else
+        m.main = text(json, "main");
     m.tier = text(json, "tier") == "unrestricted" ? Tier::Unrestricted : Tier::Restricted;
     for (const Json &author : json.find("authors")->asArray())
         m.authors.push_back(author.asString());
@@ -338,6 +341,13 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (std::size_t i = 0; i < m.programs.size(); ++i)
         if (auto problem = badProgram(m, i))
             return std::unexpected(*problem);
+    if (!m.mainProgram.empty()) {
+        const Program *program = m.program(m.mainProgram);
+        if (!program)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "names no program in contributes.programs", 0});
+        if (!program->api)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "the main program needs \"api\": true", 0});
+    }
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;

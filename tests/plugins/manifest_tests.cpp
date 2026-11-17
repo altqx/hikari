@@ -422,6 +422,30 @@ TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun
     EXPECT_TRUE(parse(json));
 }
 
+TEST(PluginManifest, MainIsALuaFileAProgramOrNothing)
+{
+    Json json = minimal();
+    std::erase_if(json.asObject(), [](const Json::Member &m) { return m.key == "main"; });
+    const auto none = parse(json);
+    ASSERT_TRUE(none) << none.error().at << " " << none.error().detail;
+    EXPECT_TRUE(none->main.empty());
+    EXPECT_TRUE(none->mainProgram.empty());
+
+    json["permissions"] = *Json::parse(R"({"programs": "Is the plugin"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "core", "title": "Core", "api": true,
+        "platforms": {"linux-x64": {"path": "bin/core"}}}, {"id": "lsp", "title": "LSP", "platforms": {"linux-x64": {"path": "bin/lsp"}}}]})");
+    json["main"] = *Json::parse(R"({"program": "core"})");
+    const auto program = parse(json);
+    ASSERT_TRUE(program) << program.error().at << " " << program.error().detail;
+    EXPECT_EQ(program->mainProgram, "core");
+    EXPECT_TRUE(program->main.empty());
+
+    json["main"] = *Json::parse(R"({"program": "nope"})");
+    EXPECT_EQ(problem(json).at, "/main/program");
+    json["main"] = *Json::parse(R"({"program": "lsp"})");
+    EXPECT_EQ(problem(json).detail, "the main program needs \"api\": true");
+}
+
 TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
 {
     Manifest current;
