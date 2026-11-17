@@ -735,7 +735,7 @@ private slots:
         start();
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("Tahoma"));
         QCOMPARE(QGuiApplication::font().pointSize(), 10);
-        const auto statusSize = [](qreal points) { return std::max(points * 10 / 13, 8.0); };
+        const auto statusSize = [](qreal points) { return std::max(points * 11 / 13, 8.0); };
         auto *label = item("selectionStatus");
         QVERIFY(label);
         QTRY_COMPARE(label->property("font").value<QFont>().pointSizeF(), statusSize(10));

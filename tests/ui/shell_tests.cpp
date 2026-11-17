@@ -1493,7 +1493,7 @@ private slots:
         QVERIFY(frame);
         QTRY_VERIFY(frame->custom());
         QVERIFY(window->flags().testFlag(Qt::FramelessWindowHint));
-        QTRY_COMPARE(qRound(bar->height()), 32);
+        QTRY_COMPARE(qRound(bar->height()), 36);
         QQuickItem *icon = visualItem("titleBarAppIcon");
         auto *menus = visualItem("appMenus");
         QQuickItem *switcher = visualItem("layoutSwitcher");
@@ -1655,7 +1655,7 @@ private slots:
         settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
         QTRY_VERIFY(!frame->custom());
         QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
-        QTRY_COMPARE(qRound(bar->height()), 27);
+        QTRY_COMPARE(qRound(bar->height()), 30);
         for (QQuickItem *i : {icon, title, minimize, maximize, close})
             QVERIFY2(!i->isVisible(), qPrintable(i->objectName()));
         QVERIFY(menus->isVisible() && switcher->isVisible());
