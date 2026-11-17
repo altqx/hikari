@@ -15462,6 +15462,20 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Snapping to the adjacent keyframe"));
         auto *menu = item<QObject>("snapStartToNextKeyframeItem");
         QVERIFY(menu && menu->property("enabled").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SNAP_TO_SCENE"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 10}));
+        QCOMPARE(session->history().back().name, std::string("Snapping to the scene"));
+        auto *scene = item<QObject>("snapToSceneItem");
+        QVERIFY(scene && scene->property("enabled").toBool());
+
+        const auto below = frames(1);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_END_LATER_SHIFT_FOLLOWING"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 11}));
+        QCOMPARE(frames(1), (Frames{below.first + 1, below.second + 1}));
+        QCOMPARE(session->history().back().name, std::string("Moving the end by frames"));
     }
 
     void theTimingLayoutOpensThePostprocessorWithItsPreset()
@@ -19359,6 +19373,7 @@ private slots:
               {"audio.markPlayTime", nullptr},
               {"audio.leadInValue", nullptr},
               {"audio.leadOutValue", nullptr},
+              {"audio.defaultDuration", nullptr},
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
               {"audio.dontPlayWhenLineChanges", "Don’t play after changing the line"},
               {"audio.autoFocus", "Focus the panel under the pointer"},
@@ -22769,6 +22784,40 @@ private slots:
         runFromMore("audioMoreGotoEnd", 80000);
         dock->setProperty("isFloating", false);
         QTRY_VERIFY(item("audioPanel")->window() == window);
+    }
+
+    void audioCommitGivesTheNextLineTheDefaultTiming()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "pt-default-timing.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:09.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto times = [&](int i) {
+            const auto &l = *session->document().lines()[static_cast<std::size_t>(i)];
+            return std::pair(int(l.start.value.microseconds() / 1000), int(l.end.value.microseconds() / 1000));
+        };
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("audio.defaultDuration"), 2000);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("audio.defaultDuration"), 5000); });
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(audio.marks().startMs, 1000);
+
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_COMMIT_DEFAULT")));
+        QTRY_COMPARE(audio.marks().startMs, 2000);
+        QCOMPARE(audio.marks().endMs, 4000);
+        QCOMPARE(times(1), std::pair(2000, 4000));
+        QCOMPARE(times(0), std::pair(1000, 2000));
+
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_COMMIT_DEFAULT")));
+        QTRY_COMPARE(int(session->document().lines().size()), 3);
+        QCOMPARE(times(2), std::pair(4000, 6000));
+        QCOMPARE(audio.marks().startMs, 4000);
     }
 
     void audioPanelRowFoldsItsControls()

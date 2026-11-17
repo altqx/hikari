@@ -887,9 +887,10 @@ public:
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
     Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    Q_INVOKABLE bool snapToScene();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);
-    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool nudgeEdge(bool end, int steps, bool shiftFollowing = false);
     Q_INVOKABLE bool extendNeighbour(bool next);
     // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
     // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,

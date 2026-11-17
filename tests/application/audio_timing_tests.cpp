@@ -485,6 +485,16 @@ TEST_F(CommitTest, OnTheLastLineTheAppendedLineNamesTheOneStep)
     EXPECT_EQ(session.document().lines().size(), 5u);
 }
 
+TEST_F(CommitTest, TheAppendedLineRunsForTheDefaultDuration)
+{
+    select({c}, c);
+    AudioCommitRequest request{6500, 8500, true, true};
+    request.appendDurationMs = 2000;
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(ms(line(3).start.value), 8500);
+    EXPECT_EQ(ms(line(3).end.value), 10500);
+}
+
 TEST_F(CommitTest, TheAppendedLineCopiesTheLineAtTheShownRowCountWithHiddenLines)
 {
     hidden = {b};

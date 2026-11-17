@@ -152,6 +152,7 @@ constexpr OptionsBinding kBindings[] = {
     {"video.untaggedMatrixWarning", Check, Video},
     {"video.hdrWarning", Check, Video},
     {"audio.playMono", Check, Audio},
+    {"audio.defaultDuration", Number, Audio, 100, 60000},
     {"plugins.network", Check, Updates},
     {"ai.webSearch", Check, Ai},
     {"ai.searchService", Text, Ai},
