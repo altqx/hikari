@@ -269,6 +269,7 @@ constexpr HotkeyAction kActions[] = {
         {"AUDIO_SPEED_UP", 1032},
         {"AUDIO_GOTO_START", 1033},
         {"AUDIO_GOTO_END", 1034},
+        {"AUDIO_COMMIT_DEFAULT", 1035},
         {"GLOBAL_TRANSLATION_MODE", 5171},
         {"EDITBOX_PLACE_RUN_1", 3020},
         {"EDITBOX_PLACE_RUN_2", 3021},
@@ -396,6 +397,9 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_EXTEND_NEXT_TO_END", 5331},
         {"GLOBAL_TIMING_ASSISTANT", 5332},
         {"GLOBAL_TIMING_ASSISTANT_ACCEPT", 5333},
+        {"GLOBAL_SNAP_TO_SCENE", 5346},
+        {"GLOBAL_END_LATER_SHIFT_FOLLOWING", 5347},
+        {"GLOBAL_END_EARLIER_SHIFT_FOLLOWING", 5348},
         {"GLOBAL_ALIGNMENT_KEEP_POSITION_AN1", 5285},
         {"GLOBAL_ALIGNMENT_KEEP_POSITION_AN2", 5286},
         {"GLOBAL_ALIGNMENT_KEEP_POSITION_AN3", 5287},
@@ -434,6 +438,11 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_TOGGLE_RIGHT_SIDE_BAR", 5340},
         {"GLOBAL_SWAP_SIDE_BARS", 5341},
         {"GLOBAL_AUTOMATION_RERUN_LAST_MACRO", 5342},
+        {"GLOBAL_QUICK_OPEN", 5343},
+        {"GLOBAL_COMMAND_PALETTE", 5344},
+        {"GLOBAL_CLEAR_COMMAND_HISTORY", 5345},
+        {"GLOBAL_SAVE_KEYFRAMES", 5350},
+        {"GLOBAL_CLOSE_KEYFRAMES", 5351},
 };
 
 struct NameRow {
@@ -669,6 +678,7 @@ constexpr NameRow kNames[] = {
         {1032, "Faster"},
         {1033, "Go to selection start"},
         {1034, "Go to selection end"},
+        {1035, "Commit and use the default timing for the next line"},
         {5171, "Translation mode"},
         {3020, "Place run 1"},
         {3021, "Place run 2"},
@@ -796,6 +806,9 @@ constexpr NameRow kNames[] = {
         {5331, "Extend the next line to this end"},
         {5332, "Timing assistant"},
         {5333, "Accept the timing assistant’s suggestion"},
+        {5346, "Snap to the scene"},
+        {5347, "Lengthen and shift what follows"},
+        {5348, "Shorten and shift what follows"},
         {5285, "Change alignment to bottom left (\\an1), keep position"},
         {5286, "Change alignment to bottom centre (\\an2), keep position"},
         {5287, "Change alignment to bottom right (\\an3), keep position"},
@@ -838,6 +851,11 @@ constexpr NameRow kNames[] = {
         {5106, "Delete old autosaves…"},
         {5103, "Open dummy video…"},
         {5342, "Run the last macro again"},
+        {5343, "Quick Open…"},
+        {5344, "Command palette…"},
+        {5345, "Clear command history"},
+        {5350, "Save keyframes…"},
+        {5351, "Close keyframes"},
 };
 
 struct DefaultRow {
@@ -853,6 +871,8 @@ constexpr DefaultRow kMainDefaults[] = {
         {5030, GlobalHotkey, "Shift times…", "Ctrl-I"},
         {5026, GlobalHotkey, "Style manager", "Ctrl-M"},
         {5101, GlobalHotkey, "Open video…", "Ctrl-Shift-O"},
+        {5343, GlobalHotkey, "Quick Open…", "Ctrl-P"},
+        {5344, GlobalHotkey, "Command palette…", "Ctrl-Shift-P"},
         {5009, GlobalHotkey, "Find…", "Ctrl-F"},
         {5010, GlobalHotkey, "Replace…", "Ctrl-H"},
         {5006, GlobalHotkey, "Undo", "Ctrl-Z"},

@@ -707,6 +707,11 @@
         "muted"
       ],
       "description": "A theme role, so the mark follows the theme and high contrast."
+    },
+    "ProgramProcess": {
+      "type": "string",
+      "pattern": "^p[0-9]{1,9}$",
+      "description": "A started program, such as p1."
     }
   },
   "operations": [
@@ -6281,6 +6286,209 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "programs.run",
+      "access": "write",
+      "summary": "Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "string",
+              "maxLength": 32768
+            },
+            "description": "${file:N} becomes the path of files[N], which the program may then open."
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string",
+              "description": "A file or folder handle the plugin holds."
+            },
+            "description": "Read-only unless the handle is writable."
+          },
+          "stdin": {
+            "type": "string",
+            "maxLength": 16777216
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ],
+            "description": "Of stdin, stdout and stderr; utf8 when omitted."
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 86400000,
+            "description": "Milliseconds; 60000 when omitted."
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          }
+        },
+        "required": [
+          "exitCode",
+          "stdout",
+          "stderr",
+          "encoding"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.start",
+      "access": "write",
+      "summary": "Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "string",
+              "maxLength": 32768
+            }
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string"
+            }
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ],
+            "description": "Of what program.output carries and programs.send takes."
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.send",
+      "access": "write",
+      "summary": "Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "data": {
+            "type": "string",
+            "maxLength": 16777216
+          },
+          "close": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.stop",
+      "access": "write",
+      "summary": "Ends a started program and its children. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "events": [
@@ -6323,6 +6531,67 @@
           "document",
           "revision",
           "step"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "program.output",
+      "summary": "A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "stream": {
+            "enum": [
+              "stdout",
+              "stderr"
+            ]
+          },
+          "data": {
+            "type": "string"
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          }
+        },
+        "required": [
+          "process",
+          "stream",
+          "data",
+          "encoding"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "program.exited",
+      "summary": "A started program ended. Only its plugin hears it.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "exitCode": {
+            "type": "integer"
+          },
+          "stopped": {
+            "type": "boolean",
+            "description": "true when programs.stop or the plugin's end stopped it."
+          }
+        },
+        "required": [
+          "process",
+          "exitCode",
+          "stopped"
         ],
         "additionalProperties": false
       }

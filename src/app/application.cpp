@@ -727,6 +727,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
     m_renderer.countCost(m_settings->boolean("video.renderCost"));
     ui::theme::useSettings(m_settings.get());
+    for (const QString &problem : ui::theme::loadProblems())
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Options", "Themes"),
+                      QCoreApplication::translate("HikariSub.Options", "A built-in theme could not be read, so Dark is shown."),
+                      problem);
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
@@ -771,6 +775,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
         options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
     m_git = std::make_unique<backends::GitReader>();
+    m_pluginPrograms = std::make_unique<PluginPrograms>();
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -807,7 +812,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks, m_git.get()});
+        &m_rowMarks, m_git.get(), m_pluginPrograms.get()});
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
@@ -906,6 +911,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     pluginWiring.marks = &m_rowMarks;
+    pluginWiring.programs = m_pluginPrograms.get();
+#ifdef Q_OS_WIN
+    pluginWiring.lowRightsHelper = QCoreApplication::applicationDirPath() + QStringLiteral("/hikarisub-confine.exe");
+#endif
     pluginWiring.documentTitle = [this](application::DocumentId document) {
         const std::string *title = m_workspace.title(document);
         return title ? QString::fromStdString(*title) : QString();
@@ -1795,7 +1804,9 @@ bool Application::commitAudioTimes(const application::AudioCommitRequest &reques
         return false;
     const bool before = std::exchange(m_audioCommitting, true);
     editor().timesFromAudio(request.startMs, request.endMs, request.duration);
-    const auto outcome = application::commitAudioTimes(*session, request, shownLines());
+    auto timed = request;
+    timed.appendDurationMs = static_cast<int>(m_settings->integer("audio.defaultDuration"));
+    const auto outcome = application::commitAudioTimes(*session, timed, shownLines());
     if (request.save)
         editor().audioSent();
     editor().reloadFromSession();
@@ -4643,8 +4654,11 @@ bool Application::shiftTranslation(int mode)
 QString Application::openKeyframes(const QUrl &file)
 {
     const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
-    if (const auto target = m_workspace.editingTarget())
+    if (const auto target = m_workspace.editingTarget()) {
         m_tabMedia[target->value].keyframes = QDir::toNativeSeparators(path);
+        m_tabMedia[target->value].keyframesDropped = false;
+    }
+    emit keyframesChanged();
     auto &video = activeMedia().video->session();
     if (video.state() != application::VideoSession::State::Ready) {
         if (QString problem; keyframesWithoutVideo(path, problem))
@@ -7403,14 +7417,15 @@ bool validAppearance(std::string_view id, const QVariant &value)
     if (id == ui::windowframe::kTitleBarSetting)
         return QStringList{QStringLiteral("auto"), QStringLiteral("system"), QStringLiteral("custom")}.contains(value.toString());
     if (id == ui::theme::kThemeSetting)
-        return ui::theme::codeFromName(value.toString()).has_value();
+        return ui::theme::find(value.toString()) != nullptr;
     if (id == ui::theme::kFollowSystemSetting)
         return value.typeId() == QMetaType::Bool;
-    if (id == ui::theme::kLightAccentSetting || id == ui::theme::kDarkAccentSetting) {
-        const bool dark = id == ui::theme::kDarkAccentSetting;
-        return ui::theme::accent(dark, value.toString()).key == value.toString();
-    }
-    return application::parseSettingColour(value.toString().toStdString()).has_value();
+    for (std::size_t i = 0; i < ui::theme::kPairSettings.size(); ++i)
+        if (id == ui::theme::kPairSettings[i])
+            return ui::theme::find(value.toString()) && ui::theme::typeOf(value.toString()) == ui::theme::Type(i);
+    if (id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting)
+        return value.canConvert<QStringList>();
+    return false;
 }
 }
 
@@ -7426,9 +7441,12 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         resetAllSettings();
     for (const auto id : appearanceSettings()) {
         const auto found = values.constFind(qs(id));
-        if (found == values.cend() || !validAppearance(id, *found) || *found == m_settings->value(qs(id)))
+        if (found == values.cend() || !validAppearance(id, *found))
             continue;
-        m_settings->setValue(qs(id), *found);
+        const bool list = id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting;
+        const QVariant value = list ? QVariant(found->toStringList()) : *found;
+        if (value != m_settings->value(qs(id)))
+            m_settings->setValue(qs(id), value);
     }
     if (const auto hidden = values.constFind(QStringLiteral("notices.hiddenQuestions")); hidden != values.cend()) {
         const QStringList list = hidden->toStringList();

@@ -455,7 +455,7 @@ Redirects are followed up to 5 times, each checked the same way. HikariSub sends
 
 ## Git
 
-A plugin can't run programs, so HikariSub runs git for it, read-only. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
+HikariSub runs git for a plugin, read-only, so the plugin needs no [program](#programs) of its own for it. The manifest asks with `"vcs.read": "<reason>"`, and the install question, the plugin manager and the marketplace show it as "Read the branches, tags and history of the git repository holding your subtitle files: <reason>". Every plugin that asks gets it on the same terms; AI and MCP callers never do.
 
 ```lua
 local refs = hikari.vcs.refs({ limit = 20 })
@@ -982,6 +982,7 @@ end)
   - **Projectable.** Never: `projectable` is always `false`.
   - **The field** shows dots, with Show and Clear. `hikari.settings.get` returns the text, or `nil` when unset. Uninstalling the plugin removes it.
   - **No keychain.** On a system with no keychain, setting one fails with "No system keychain to keep it in".
+  - **Until #1230** wires the keychain, `hikari.settings.get` returns `nil` for a secret and `hikari.settings.set` refuses it with "“<id>” is kept in the system keychain". A value in `plugins.json` or a Project is never read, and an update that turns a setting into a secret drops its kept value.
 
 **Ids and links** (Q644). A plugin setting's id outside the plugin is `plugin.<plugin id>.<setting id>`. The link `hikarisub://settings/<id>` opens the Settings window at a setting, HikariSub's own (`hikarisub://settings/appearance.theme`) or a plugin's. `?scope=project` opens it on the Project tab.
 

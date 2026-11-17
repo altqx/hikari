@@ -312,6 +312,22 @@ TEST_F(PluginInstaller, SettingsSurviveAnUpdateWhileTheyStillFit)
               Json::object({{"count", 3}, {"mode", "slow"}}));
 }
 
+TEST_F(PluginInstaller, ASecretNeverLandsInTheRegistry)
+{
+    using hikari::api::Json;
+    const std::string_view asText =
+        R"(, "contributes": {"settings": [{"id": "token", "title": "Token", "type": "string", "default": ""}]})";
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", nullptr, asText)), false));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "token", Json("plain")));
+    const std::string_view asSecret =
+        R"(, "contributes": {"settings": [{"id": "token", "title": "Token", "type": "secret"}]})";
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", nullptr, asSecret)), false));
+    EXPECT_EQ(installed().settings, Json::object());
+    EXPECT_EQ(installer.setSetting("com.example.hello", "token", Json("s3cret")).error(),
+              "“token” is kept in the system keychain");
+    EXPECT_EQ(installed().settings, Json::object());
+}
+
 TEST_F(PluginInstaller, AnUnreadableRegistryStopsEverything)
 {
     touch(folders().registry);

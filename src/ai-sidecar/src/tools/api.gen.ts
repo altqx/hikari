@@ -191,6 +191,9 @@ export type DialogAnswer = unknown | unknown;
 /** A theme role, so the mark follows the theme and high contrast. */
 export type MarkColour = "accent" | "warning" | "danger" | "success" | "muted";
 
+/** A started program, such as p1. */
+export type ProgramProcess = string;
+
 /** The open Documents, in tab order, with the protected reference last. */
 export type DocumentsListParams = Record<string, never>;
 
@@ -1733,6 +1736,60 @@ export type MarksListResult = {
     })[];
 };
 
+/** Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only. */
+export type ProgramsRunParams = {
+    program: string;
+    /** ${file:N} becomes the path of files[N], which the program may then open. */
+    args?: string[];
+    /** Read-only unless the handle is writable. */
+    files?: string[];
+    stdin?: string;
+    /** Of stdin, stdout and stderr; utf8 when omitted. */
+    encoding?: "utf8" | "base64";
+    /** Milliseconds; 60000 when omitted. */
+    timeout?: number;
+};
+
+export type ProgramsRunResult = {
+    exitCode: number;
+    stdout: string;
+    stderr: string;
+    encoding: "utf8" | "base64";
+};
+
+/** Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only. */
+export type ProgramsStartParams = {
+    program: string;
+    args?: string[];
+    files?: string[];
+    /** Of what program.output carries and programs.send takes. */
+    encoding?: "utf8" | "base64";
+};
+
+export type ProgramsStartResult = {
+    process: ProgramProcess;
+};
+
+/** Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only. */
+export type ProgramsSendParams = {
+    process: ProgramProcess;
+    data?: string;
+    close?: boolean;
+};
+
+export type ProgramsSendResult = {
+    process: ProgramProcess;
+};
+
+/** Ends a started program and its children. Plugins with the programs permission only. */
+export type ProgramsStopParams = {
+    process: ProgramProcess;
+};
+
+export type ProgramsStopResult = {
+    process: ProgramProcess;
+};
+
 /** The window the user works in opened or closed a Project, or the user moved to a window with another one. */
 export type ProjectChangedEvent = {
     project: Project;
@@ -1744,6 +1801,22 @@ export type DocumentChangedEvent = {
     revision: Revision;
     /** The History step now current. */
     step: string;
+};
+
+/** A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged. */
+export type ProgramOutputEvent = {
+    process: ProgramProcess;
+    stream: "stdout" | "stderr";
+    data: string;
+    encoding: "utf8" | "base64";
+};
+
+/** A started program ended. Only its plugin hears it. */
+export type ProgramExitedEvent = {
+    process: ProgramProcess;
+    exitCode: number;
+    /** true when programs.stop or the plugin's end stopped it. */
+    stopped: boolean;
 };
 
 /** A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed. */
@@ -1880,6 +1953,10 @@ export interface Operations {
     "marks.set": { access: "write"; params: MarksSetParams; result: MarksSetResult };
     "marks.clear": { access: "write"; params: MarksClearParams; result: MarksClearResult };
     "marks.list": { access: "read"; params: MarksListParams; result: MarksListResult };
+    "programs.run": { access: "write"; params: ProgramsRunParams; result: ProgramsRunResult };
+    "programs.start": { access: "write"; params: ProgramsStartParams; result: ProgramsStartResult };
+    "programs.send": { access: "write"; params: ProgramsSendParams; result: ProgramsSendResult };
+    "programs.stop": { access: "write"; params: ProgramsStopParams; result: ProgramsStopResult };
 }
 
 export type OperationName = keyof Operations;
@@ -1887,6 +1964,8 @@ export type OperationName = keyof Operations;
 export interface Events {
     "project.changed": ProjectChangedEvent;
     "document.changed": DocumentChangedEvent;
+    "program.output": ProgramOutputEvent;
+    "program.exited": ProgramExitedEvent;
     "document.saved": DocumentSavedEvent;
     "selection.changed": SelectionChangedEvent;
     "documents.changed": DocumentsChangedEvent;

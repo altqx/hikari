@@ -152,6 +152,7 @@ constexpr OptionsBinding kBindings[] = {
     {"video.untaggedMatrixWarning", Check, Video},
     {"video.hdrWarning", Check, Video},
     {"audio.playMono", Check, Audio},
+    {"audio.defaultDuration", Number, Audio, 100, 60000},
     {"plugins.network", Check, Updates},
     {"ai.webSearch", Check, Ai},
     {"ai.searchService", Text, Ai},
@@ -172,6 +173,7 @@ constexpr OptionsBinding kBindings[] = {
     {"editing.cycleValues.alpha", Text, Editing},
     {"editing.cycleValues.an", Text, Editing},
     {"editing.cycleValues.fsp", Text, Editing},
+    {"audio.timingKeysEverywhere", IndexChoice, Audio, 0, 0, 3},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

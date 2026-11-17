@@ -75,7 +75,7 @@ TEST(ApiRegistry, EveryEventIsWellFormed)
     }
     EXPECT_EQ(names, (std::set<std::string>{"document.changed", "document.saved", "selection.changed",
                                             "documents.changed", "panel.changed", "command.ran", "project.changed",
-                                            "macro.ran"}));
+                                            "macro.ran", "program.output", "program.exited"}));
 }
 
 class ApiScripts : public ::testing::Test {

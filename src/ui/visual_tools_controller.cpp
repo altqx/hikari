@@ -1,5 +1,7 @@
 #include "visual_tools_controller.h"
 
+#include "theme.h"
+
 #include "hikari/application/visual_all_tags.h"
 
 #include "command_names.h"
@@ -72,6 +74,13 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
             emit overlayChanged();
         }
     });
+    const auto followTheme = [this] {
+        const auto &content = theme::current().content;
+        setHandleColours({content.handle.rgba(), content.handleSelected.rgba(), content.handleBorder.rgba()});
+        emit overlayChanged();
+    };
+    followTheme();
+    theme::onChanged(this, followTheme);
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
         if (id == QStringLiteral("video.visualWarningsOff"))
             emit changed();

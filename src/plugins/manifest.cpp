@@ -46,9 +46,10 @@ std::string text(const Json &object, std::string_view key)
 std::vector<std::string> strings(const Json *list)
 {
     std::vector<std::string> out;
-    if (list)
+    if (list && list->isArray())
         for (const Json &item : list->asArray())
-            out.push_back(item.asString());
+            if (item.isString())
+                out.push_back(item.asString());
     return out;
 }
 
@@ -56,8 +57,11 @@ std::vector<Command> commands(const Json *list)
 {
     std::vector<Command> out;
     if (list)
-        for (const Json &item : list->asArray())
-            out.push_back({text(item, "id"), text(item, "title"), text(item, "icon"), strings(item.find("when"))});
+        for (const Json &item : list->asArray()) {
+            const Json *palette = item.find("palette");
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "icon"), strings(item.find("when")),
+                           text(item, "description"), !palette || !palette->isBool() || palette->asBool()});
+        }
     return out;
 }
 
@@ -209,6 +213,57 @@ std::optional<std::string> restrictedQml(const Json &json)
     return std::nullopt;
 }
 
+ProgramRun programRun(const Json &run)
+{
+    ProgramRun out;
+    out.path = text(run, "path");
+    if (const Json *download = run.find("download"))
+        out.download = ProgramDownload{text(*download, "url"), text(*download, "sha256"), download->find("size")->asInt(),
+                                       text(*download, "archive"), text(*download, "entry")};
+    out.args = strings(run.find("args"));
+    if (const Json *env = run.find("env"))
+        for (const auto &[name, value] : env->asObject())
+            out.env.emplace_back(name, value.asString());
+    return out;
+}
+
+std::vector<Program> programs(const Json *list)
+{
+    std::vector<Program> out;
+    if (!list)
+        return out;
+    for (const Json &item : list->asArray()) {
+        Program p{text(item, "id"), text(item, "title"), {}, false, false, Confinement::Container};
+        for (const auto &[platform, run] : item.find("platforms")->asObject())
+            p.platforms.emplace(platform, programRun(run));
+        const Json *network = item.find("network");
+        p.network = network && network->asBool();
+        const Json *api = item.find("api");
+        p.api = api && api->asBool();
+        p.confinement = text(item, "confinement") == "lowIntegrity" ? Confinement::LowIntegrity : Confinement::Container;
+        out.push_back(std::move(p));
+    }
+    return out;
+}
+
+std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
+{
+    const Program &program = m.programs[index];
+    const std::string at = "/contributes/programs/" + std::to_string(index) + "/platforms/";
+    for (const auto &[platform, run] : program.platforms) {
+        if (run.download && run.download->archive.empty() != run.download->entry.empty())
+            return ManifestProblem{Kind::Schema, at + platform + "/download",
+                                   "archive and entry come together, or neither", 0};
+        for (std::size_t i = 0; i < run.args.size(); ++i)
+            for (const Setting &setting : m.settings) {
+                if (setting.secret() && run.args[i].find("${setting:" + setting.id + "}") != std::string::npos)
+                    return ManifestProblem{Kind::Schema, at + platform + "/args/" + std::to_string(i),
+                                           "a secret setting may be named in env only", 0};
+            }
+    }
+    return std::nullopt;
+}
+
 template <typename Items>
 std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
 {
@@ -219,11 +274,32 @@ std::optional<ManifestProblem> repeated(const Items &items, const std::string &a
     return std::nullopt;
 }
 
+SettingType settingType(std::string_view type)
+{
+    static constexpr std::pair<std::string_view, SettingType> kTypes[]{
+        {"boolean", SettingType::Boolean}, {"integer", SettingType::Integer}, {"number", SettingType::Number},
+        {"string", SettingType::String},   {"choice", SettingType::Choice},   {"list", SettingType::List},
+        {"secret", SettingType::Secret}};
+    const auto found = std::ranges::find(kTypes, type, &std::pair<std::string_view, SettingType>::first);
+    return found == std::end(kTypes) ? SettingType::String : found->second;
+}
+
+std::size_t listLimit(const Setting &setting)
+{
+    const Json *limit = setting.definition.find("maxItems");
+    return limit && limit->isInt() ? static_cast<std::size_t>(limit->asInt()) : 256;
+}
+
 std::optional<ManifestProblem> badDefault(const Setting &setting, std::size_t index)
 {
     const Json &d = setting.definition;
-    const Json &value = *d.find("default");
+    const Json *fallback = d.find("default");
+    if (!fallback)
+        return std::nullopt;
+    const Json &value = *fallback;
     const std::string at = "/contributes/settings/" + std::to_string(index) + "/default";
+    if (setting.type == SettingType::List && value.asArray().size() > listLimit(setting))
+        return ManifestProblem{Kind::BadDefault, at, "more than maxItems", 0};
     if (const Json *options = d.find("options")) {
         const auto &list = options->asArray();
         if (std::find(list.begin(), list.end(), value) == list.end())
@@ -326,14 +402,16 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.keybindings = keybindings(contributes->find("keybindings"));
         if (const Json *settings = contributes->find("settings"))
             for (const Json &s : settings->asArray())
-                m.settings.push_back({text(s, "id"), text(s, "title"), s});
+                m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
         m.nodes = nodes(contributes->find("nodes"));
+        m.programs = programs(contributes->find("programs"));
     }
 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
                          repeated(m.commands, "/contributes/commands"), repeated(m.panels, "/contributes/panels"),
                          repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes"),
-                         repeated(m.statusItems, "/contributes/statusItems"), badReferences(m)})
+                         repeated(m.statusItems, "/contributes/statusItems"), badReferences(m),
+                         repeated(m.programs, "/contributes/programs")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
@@ -346,9 +424,43 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (std::size_t i = 0; i < m.nodes.size(); ++i)
         if (auto problem = badNode(m.nodes[i], i))
             return std::unexpected(*problem);
+    if (!m.programs.empty() && !m.permissions.programs)
+        return std::unexpected(ManifestProblem{Kind::Schema, "/permissions/programs", "programs need permissions.programs", 0});
+    for (std::size_t i = 0; i < m.programs.size(); ++i)
+        if (auto problem = badProgram(m, i))
+            return std::unexpected(*problem);
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
+}
+
+Json Setting::fallback() const
+{
+    const Json *value = secret() ? nullptr : definition.find("default");
+    return value ? *value : Json();
+}
+
+std::string_view thisPlatform()
+{
+#if defined(_WIN32) && (defined(_M_ARM64) || defined(__aarch64__))
+    return "windows-arm64";
+#elif defined(_WIN32)
+    return "windows-x64";
+#elif defined(__APPLE__) && defined(__aarch64__)
+    return "macos-arm64";
+#elif defined(__APPLE__)
+    return "macos-x64";
+#elif defined(__aarch64__)
+    return "linux-arm64";
+#else
+    return "linux-x64";
+#endif
+}
+
+const Program *Manifest::program(std::string_view id) const
+{
+    const auto it = std::ranges::find(programs, id, &Program::id);
+    return it == programs.end() ? nullptr : &*it;
 }
 
 bool Manifest::hasQmlPanels() const
@@ -363,6 +475,13 @@ PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &n
     more.allDocuments = next.permissions.allDocuments && !current.permissions.allDocuments;
     more.vcsRead = next.permissions.vcsRead && !current.permissions.vcsRead;
     more.background = next.permissions.background && !current.permissions.background;
+    more.runPrograms = next.permissions.programs && !current.permissions.programs;
+    for (const Program &program : next.programs) {
+        const Program *had = current.program(program.id);
+        const bool lowIntegrity = program.confinement == Confinement::LowIntegrity;
+        if (!had || (program.network && !had->network) || (lowIntegrity && had->confinement != Confinement::LowIntegrity))
+            more.programs.push_back(program.id);
+    }
     for (const std::string &host : next.permissions.networkHosts)
         if (std::ranges::find(current.permissions.networkHosts, host) == current.permissions.networkHosts.end())
             more.networkHosts.push_back(host);
@@ -390,6 +509,8 @@ Permissions readPermissions(const Json &permissions)
         out.vcsRead = vcs->asString();
     if (const Json *background = permissions.find("background"); background && background->isString())
         out.background = background->asString();
+    if (const Json *programs = permissions.find("programs"); programs && programs->isString())
+        out.programs = programs->asString();
     for (const Json &f : list(permissions.find("files"))) {
         const Json *writable = f.find("writable");
         out.files.push_back({text(f, "id"), text(f, "title"), writable && writable->isBool() && writable->asBool(),
@@ -415,16 +536,33 @@ int compareVersions(std::string_view a, std::string_view b)
 std::optional<std::string> settingRefusal(const Setting &setting, const Json &value)
 {
     const Json &d = setting.definition;
-    const std::string type = text(d, "type");
     const std::string name = "\xE2\x80\x9C" + setting.id + "\xE2\x80\x9D";
-    if (type == "boolean" && !value.isBool())
-        return name + " takes true or false";
-    if (type == "integer" && !value.isInt())
-        return name + " takes a whole number";
-    if (type == "number" && !value.isNumber())
-        return name + " takes a number";
-    if ((type == "string" || type == "choice") && !value.isString())
-        return name + " takes text";
+    switch (setting.type) {
+    case SettingType::Boolean:
+        if (!value.isBool())
+            return name + " takes true or false";
+        break;
+    case SettingType::Integer:
+        if (!value.isInt())
+            return name + " takes a whole number";
+        break;
+    case SettingType::Number:
+        if (!value.isNumber())
+            return name + " takes a number";
+        break;
+    case SettingType::String:
+    case SettingType::Choice:
+    case SettingType::Secret:
+        if (!value.isString())
+            return name + " takes text";
+        break;
+    case SettingType::List:
+        if (!value.isArray() || !std::ranges::all_of(value.asArray(), [](const Json &item) { return item.isString(); }))
+            return name + " takes a list of text";
+        if (value.asArray().size() > listLimit(setting))
+            return name + " takes at most " + std::to_string(listLimit(setting)) + " items";
+        break;
+    }
     if (const Json *options = d.find("options")) {
         const auto &list = options->asArray();
         if (std::find(list.begin(), list.end(), value) == list.end()) {
@@ -445,8 +583,8 @@ Json settingValues(const Manifest &manifest, const Json &stored)
 {
     Json out = Json::object();
     for (const Setting &setting : manifest.settings) {
-        const Json *value = stored.find(setting.id);
-        out[setting.id] = value && !settingRefusal(setting, *value) ? *value : *setting.definition.find("default");
+        const Json *value = setting.secret() ? nullptr : stored.find(setting.id);
+        out[setting.id] = value && !settingRefusal(setting, *value) ? *value : setting.fallback();
     }
     return out;
 }

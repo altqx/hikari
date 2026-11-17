@@ -86,7 +86,7 @@ private slots:
             QGuiApplication::setPalette(palette);
         });
         ui::theme::useSettings(&store);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
 
         QWindow main;
         QQuickWindow dialog;
@@ -113,7 +113,7 @@ private slots:
         };
         store.setValue(kFollow, false);
         store.setValue(kTheme, QStringLiteral("light"));
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         expect(false, "Light chosen");
         store.setValue(kTheme, QStringLiteral("highContrastBlack"));
         expect(true, "High contrast black chosen");
@@ -126,7 +126,7 @@ private slots:
         store.setValue(kTheme, QStringLiteral("dark"));
         store.setValue(kFollow, true);
         ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         expect(false, "the system light");
         ui::theme::forceSystemScheme(Qt::ColorScheme::Dark);
         expect(true, "the system dark");
@@ -194,7 +194,7 @@ private slots:
         QTest::qWait(100);
         expect(true, "after an application palette change");
         store.setValue(kFollow, true);
-        expect(ui::theme::isDark(ui::theme::current().code), "following the system");
+        expect(hikari::themes::isDark(ui::theme::current().type), "following the system");
 
         store.setValue(kFollow, false);
         store.setValue(kTheme, QStringLiteral("dark"));

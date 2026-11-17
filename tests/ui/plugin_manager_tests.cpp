@@ -189,6 +189,23 @@ private slots:
         QCOMPARE(only(manager).value(QStringLiteral("permissions")).toStringList().size(), 2);
     }
 
+    void theInstallQuestionNamesProgramsAndWhatTheyReach()
+    {
+        hikari::plugins::Permissions permissions;
+        permissions.programs = "It checks grammar.";
+        std::vector<hikari::plugins::Program> programs{
+            {"ltex", "LTeX", {}, true, false, hikari::plugins::Confinement::LowIntegrity},
+            {"lint", "Lint", {}, false, false, hikari::plugins::Confinement::Container}};
+        QCOMPARE(hikari::app::permissionLines(false, permissions, false, programs),
+                 (QStringList{QStringLiteral("Runs programs that come with it: LTeX, Lint: It checks grammar."),
+                              QStringLiteral("Connects to the internet"), QStringLiteral("Can read your files")}));
+        programs.pop_back();
+        programs[0].network = false;
+        programs[0].confinement = hikari::plugins::Confinement::Container;
+        QCOMPARE(hikari::app::permissionLines(false, permissions, false, programs),
+                 QStringList{QStringLiteral("Runs programs that come with it: LTeX: It checks grammar.")});
+    }
+
     void detailsListWhatAPluginAsksForAddsAndKeeps()
     {
         PluginManager manager(folders());
