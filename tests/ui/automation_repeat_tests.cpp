@@ -598,7 +598,7 @@ private slots:
             auto *dialog = made.value<QObject *>();
             QVERIFY(dialog);
             QVERIFY(QMetaObject::invokeMethod(dialog, "openDialog", Q_ARG(QVariant, QStringLiteral("automation")),
-                                              Q_ARG(QVariant, QVariant())));
+                                              Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
             QTRY_VERIFY(dialog->property("visible").toBool());
             auto *group = qobject_cast<QQuickItem *>(dialog->findChild<QObject *>(QStringLiteral("settingsScriptDialogsGroup")));
             QVERIFY(group);
