@@ -7,7 +7,7 @@ Item {
     id: quick
     required property var shell
     required property ExplorerModel explorer
-    property real top: 8
+    property real hangFrom: 8
     readonly property alias popup: pick
     readonly property string mode: parsed.mode
     readonly property var parsed: quick.parse(pick.text)
@@ -356,7 +356,7 @@ Item {
 
     QuickPick {
         id: pick
-        top: quick.top
+        hangFrom: quick.hangFrom
         accessibleName: quick.mode === "commands" ? qsTr("Command palette") : qsTr("Quick Open")
         placeholder: quick.mode === "commands" ? qsTr("Type the name of a command")
                                                : qsTr("Search files by name. Type ? for the other searches.")

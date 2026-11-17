@@ -10546,7 +10546,7 @@ ApplicationWindow {
         objectName: "quickOpen"
         shell: root
         explorer: explorerModel
-        top: (titleBar.visible ? titleBar.height : 0) + 8
+        hangFrom: (titleBar.visible ? titleBar.height : 0) + 8
     }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]

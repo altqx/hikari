@@ -16,7 +16,7 @@ Popup {
     property string accessibleName: title
     property string countText: ""
     property bool busy: false
-    property real top: 8
+    property real hangFrom: 8
     property alias text: field.text
     readonly property alias list: list
     readonly property QuickPickModel model: QuickPickModel {
@@ -61,7 +61,7 @@ Popup {
 
     parent: Overlay.overlay
     x: Math.round((parent ? parent.width - width : 0) / 2)
-    y: top
+    y: hangFrom
     width: Math.max(360, Math.min(600, (parent ? parent.width : 600) - 48))
     padding: 6
     modal: false
