@@ -111,6 +111,27 @@ std::expected<void, CommandRefusal> snapToAdjacentKeyframe(EditSession &session,
     return apply(session, "Snapping to the adjacent keyframe", times);
 }
 
+std::expected<void, CommandRefusal> snapToScene(EditSession &session, const LegacyTimebase &timebase,
+                                                std::span<const int> keyframes, int videoFrame)
+{
+    commitPending(session);
+    const auto sorted = sortedKeyframes(keyframes);
+    if (sorted.empty())
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto &selected = session.selection().selected;
+    std::map<core::LineId, Retime> times;
+    for (const auto *l : linesOf(session)) {
+        if (!selected.contains(l->id))
+            continue;
+        const int frame = selected.size() < 2 ? videoFrame : timebase.frameAt(msOf(l->start.value));
+        const auto at = std::upper_bound(sorted.begin(), sorted.end(), frame);
+        const int first = at == sorted.begin() ? 0 : *(at - 1);
+        const int after = at == sorted.end() ? std::max(timebase.frameCount(), first + 1) : *at;
+        times[l->id] = Retime{frameStart(timebase, first), frameStart(timebase, after)};
+    }
+    return apply(session, "Snapping to the scene", times);
+}
+
 std::expected<void, CommandRefusal> changeLead(EditSession &session, const LegacyTimebase &timebase, TimingEdge edge,
                                                bool add, int amountMs)
 {

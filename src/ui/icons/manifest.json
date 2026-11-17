@@ -5338,6 +5338,17 @@
    ]
   },
   {
+   "role": "snap-to-scene",
+   "file": "snap-to-scene.svg",
+   "label": "Snap to scene",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:timing"
+   ]
+  },
+  {
    "role": "snap-start-to-previous-keyframe",
    "file": "snap-start-to-previous-keyframe.svg",
    "label": "Snap start to previous keyframe",

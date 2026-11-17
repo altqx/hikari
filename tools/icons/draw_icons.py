@@ -1354,6 +1354,8 @@ icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS, "text-field-menu"],
 icon("layers-repeat", "Repeat blur and glow layers", [], [GRIDMENU, SUBS],
      solid("M6 1.5l4.5 2.5L6 6.5 1.5 4z") + stroke("M1.5 6.5l4.5 2.5 2.5-1.25M1.5 9l4.5 2.5 1.5-.75") + REPEAT_BADGE)
 
+icon("snap-to-scene", "Snap to scene", [], [TIMING],
+     diamond(3, 8, 2.25) + diamond(13, 8, 2.25) + accent(stroke("M6 5.5h4v5H6z")))
 icon("snap-start-to-previous-keyframe", "Snap start to previous keyframe", [], [TIMING],
      KEY_DIAMOND_L + START_EDGE_R + ARROW_TO_LEFT)
 icon("snap-start-to-next-keyframe", "Snap start to next keyframe", [], [TIMING],

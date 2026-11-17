@@ -145,6 +145,50 @@ TEST_P(TimingHelpers, AnEdgeWithNoKeyframeThatWayChangesNothingAndRecordsNoStep)
     EXPECT_EQ(frames(1), (F{310, 400}));
 }
 
+TEST_P(TimingHelpers, SnapToSceneSetsOneLineToTheSceneAroundTheVideoFrame)
+{
+    load(standard);
+    select({1}, 1);
+    const auto before = steps();
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 140));
+    EXPECT_EQ(steps(), before + 1);
+    EXPECT_EQ(frames(1), (F{130, 200}));
+    EXPECT_EQ(frames(0), (F{24, 72}));
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 96));
+    EXPECT_EQ(frames(1), (F{96, 130}));
+}
+
+TEST_P(TimingHelpers, SnapToSceneSnapsEachSelectedLineToTheSceneHoldingItsStart)
+{
+    load(standard);
+    select({0, 1, 3}, 1);
+    const auto before = steps();
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 5));
+    EXPECT_EQ(steps(), before + 1);
+    EXPECT_EQ(frames(0), (F{0, 48}));
+    EXPECT_EQ(frames(1), (F{96, 130}));
+    EXPECT_EQ(frames(3), (F{130, 200}));
+}
+
+TEST_P(TimingHelpers, SnapToSceneRunsToTheVideoEndAfterTheLastKeyframe)
+{
+    load({{310, 400}});
+    select({0}, 0);
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 350));
+    EXPECT_EQ(startMs(0), startOf(300));
+    EXPECT_EQ(endMs(0), startOf(tb().frameCount()));
+}
+
+TEST_P(TimingHelpers, SnapToSceneNeedsKeyframesAndRecordsNoStepWhenNothingMoves)
+{
+    load({{130, 200}});
+    select({0}, 0);
+    const auto before = steps();
+    EXPECT_FALSE(snapToScene(*session, tb(), {}, 140));
+    EXPECT_FALSE(snapToScene(*session, tb(), keyframes, 140));
+    EXPECT_EQ(steps(), before);
+}
+
 TEST_P(TimingHelpers, LeadInStopsAtThePreviousUncommentedEndAndAtZero)
 {
     load(standard);

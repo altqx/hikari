@@ -1240,6 +1240,7 @@ ApplicationWindow {
     function runTimingHelper(symbol) {
         const app = root.app
         const helpers = {
+            GLOBAL_SNAP_TO_SCENE: () => app.snapToScene(),
             GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(false, false),
             GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: () => app.snapToAdjacentKeyframe(false, true),
             GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(true, false),
@@ -2486,6 +2487,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
         }
         Action {
+            id: snapToSceneAction
+            text: qsTr("Snap to the scene")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
+        }
+        Action {
             id: snapStartToPreviousKeyframeAction
             text: qsTr("Snap start to the previous keyframe")
             enabled: root.video.hasVideo && root.shell.hasEditingTarget
@@ -3479,6 +3486,14 @@ ApplicationWindow {
                     objectName: "timingHelpersMenu"
                     title: qsTr("Timing &helpers")
                     iconRole: "timing-helpers"
+                    ShellMenuItem {
+                        command: "GLOBAL_SNAP_TO_SCENE"
+                        help: qsTr("Sets each selected line to the keyframes around it: one line takes the scene at the video frame, several lines each take the scene of their own start")
+                        iconRole: "snap-to-scene"
+                        objectName: "snapToSceneItem"
+                        action: snapToSceneAction
+                    }
+                    MenuSeparator {}
                     ShellMenuItem {
                         command: "GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"
                         help: qsTr("Moves the start of each selected line to the keyframe before it")
@@ -7834,6 +7849,14 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                             }
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_SNAP_TO_SCENE"
+                            iconRole: "snap-to-scene"
+                            objectName: "gridSnapToScene"
+                            text: qsTranslate("HikariSub.Grid", "Snap to the scene")
+                            enabled: root.video.hasVideo
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
+                        }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
                             command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
@@ -10826,6 +10849,7 @@ ApplicationWindow {
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesAction, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorAction,
         GLOBAL_SHOW_QC_NOTES: showQcNotesAction, GLOBAL_SHOW_EXPLORER: showExplorerAction,
+        GLOBAL_SNAP_TO_SCENE: snapToSceneAction,
         GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeAction,
         GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeAction,
         GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeAction,

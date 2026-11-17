@@ -60,6 +60,20 @@ bool Application::snapToAdjacentKeyframe(bool end, bool next)
     return done;
 }
 
+bool Application::snapToScene()
+{
+    auto *session = targetSession();
+    if (!session || !exactTimebase())
+        return false;
+    const auto &video = activeMedia().video->session();
+    const bool done = application::snapToScene(*session, video.legacyTimebase(), video.keyframes(),
+                                               video.reportedFrame().value_or(0))
+                          .has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
 bool Application::changeLead(bool end, bool add)
 {
     auto *session = targetSession();

@@ -15459,6 +15459,13 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Snapping to the adjacent keyframe"));
         auto *menu = item<QObject>("snapStartToNextKeyframeItem");
         QVERIFY(menu && menu->property("enabled").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SNAP_TO_SCENE"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 10}));
+        QCOMPARE(session->history().back().name, std::string("Snapping to the scene"));
+        auto *scene = item<QObject>("snapToSceneItem");
+        QVERIFY(scene && scene->property("enabled").toBool());
     }
 
     void theTimingLayoutOpensThePostprocessorWithItsPreset()

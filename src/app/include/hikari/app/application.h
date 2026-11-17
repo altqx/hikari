@@ -872,6 +872,7 @@ public:
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
     Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    Q_INVOKABLE bool snapToScene();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);
     Q_INVOKABLE bool nudgeEdge(bool end, int frames);

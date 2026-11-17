@@ -25,6 +25,12 @@ std::expected<void, CommandRefusal> snapToAdjacentKeyframe(EditSession &session,
                                                            std::span<const int> keyframes, TimingEdge edge,
                                                            TimingToward toward);
 
+// A scene runs from a keyframe (or frame 0) up to the next keyframe (or the
+// video's end). One selected Line takes the scene holding `videoFrame`; with
+// several, each takes the scene holding its own start.
+std::expected<void, CommandRefusal> snapToScene(EditSession &session, const LegacyTimebase &timebase,
+                                                std::span<const int> keyframes, int videoFrame);
+
 // Adding moves each selected Line's start earlier (end later) by `amountMs`,
 // stopping at the previous (next) uncommented Line's end (start) and at 0.
 // Removing does the reverse and keeps at least one frame.
