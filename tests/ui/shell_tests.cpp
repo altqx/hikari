@@ -118,6 +118,7 @@
 #include <QtQml/qqmlextensionplugin.h>
 #include <QElapsedTimer>
 #include <QFontDatabase>
+#include <QtQuickTest/quicktest.h>
 #include <QtTest>
 
 #ifndef _WIN32
@@ -14037,6 +14038,7 @@ private slots:
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
         auto *replace = spellItem("spellReplace");
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         const QPoint centre = replace->mapToScene(QPointF(replace->width() / 2, replace->height() / 2)).toPoint();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, centre);
         QCoreApplication::processEvents();
@@ -14097,11 +14099,12 @@ private slots:
         };
         QTRY_VERIFY(suggestion(QStringLiteral("world")));
         auto *world = suggestion(QStringLiteral("world"));
-        const QPoint at = world->mapToScene(QPointF(world->width() / 2, world->height() / 2)).toPoint();
 
         auto *field = item("lineText");
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
+        QVERIFY(QQuickTest::qWaitForPolish(window));
+        const QPoint at = world->mapToScene(QPointF(world->width() / 2, world->height() / 2)).toPoint();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
         QCoreApplication::processEvents();
         QTRY_VERIFY(panel->property("activeFocus").toBool());
