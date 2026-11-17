@@ -18563,7 +18563,7 @@ Linijki [Sekcja] je grupują.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Not a line: %1. This Document has %n lines.</source>
+        <source>Not a line: %1. This document has %n lines.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>

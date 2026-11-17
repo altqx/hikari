@@ -212,7 +212,7 @@ private slots:
         QTRY_COMPARE(popup()->property("foot").toString(), QStringLiteral("Type a line number, 1 to 3."));
         type(QStringLiteral("9"));
         QTRY_COMPARE(popup()->property("emptyText").toString(),
-                     QStringLiteral("Not a line: 9. This Document has 3 lines."));
+                     QStringLiteral("Not a line: 9. This document has 3 lines."));
         QTest::keyClick(window, Qt::Key_Backspace);
         type(QStringLiteral("2"));
         QTRY_COMPARE(model()->count(), 1);

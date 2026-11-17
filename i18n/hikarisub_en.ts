@@ -1040,52 +1040,52 @@
 <context>
     <name>HikariSub.QuickPick</name>
     <message numerus="yes">
-        <source>Not a line: %1. This Document has %n lines.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <source>Not a line: %1. This document has %n lines.</source>
+        <translation>
+            <numerusform>Not a line: %1. This document has %n line.</numerusform>
+            <numerusform>Not a line: %1. This document has %n lines.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Enter applies “%1” to %n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Enter applies “%1” to %n line</numerusform>
+            <numerusform>Enter applies “%1” to %n lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Shift+Enter selects its %n lines</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Shift+Enter selects its %n line</numerusform>
+            <numerusform>Shift+Enter selects its %n lines</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n commands</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n command</numerusform>
+            <numerusform>%n commands</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n files</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n results</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n result</numerusform>
+            <numerusform>%n results</numerusform>
         </translation>
     </message>
 </context>

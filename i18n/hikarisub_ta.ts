@@ -18423,7 +18423,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Not a line: %1. This Document has %n lines.</source>
+        <source>Not a line: %1. This document has %n lines.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>

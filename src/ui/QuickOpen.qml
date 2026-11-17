@@ -28,6 +28,9 @@ Item {
                                         audio: "file-audio", keyframes: "file-keyframes", timecodes: "file-timecodes",
                                         fonts: "tag-font", chapters: "chapters", other: "file-other" })
     readonly property var mediaKinds: ["video", "audio", "keyframes", "timecodes"]
+    readonly property var presetNames: [QT_TRANSLATE_NOOP("HikariSub.Workspace", "Editing"),
+        QT_TRANSLATE_NOOP("HikariSub.Workspace", "Timing"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Translation"),
+        QT_TRANSLATE_NOOP("HikariSub.Workspace", "Typesetting"), QT_TRANSLATE_NOOP("HikariSub.Workspace", "Karaoke")]
 
     function parse(text) {
         for (const p of quick.prefixes) {
@@ -209,7 +212,7 @@ Item {
         }
         const n = /^\d+$/.test(rest) ? Number(rest) : NaN
         if (!(n >= 1 && n <= total)) {
-            quick.emptyText = qsTr("Not a line: %1. This Document has %n lines.", "", total).arg(rest)
+            quick.emptyText = qsTr("Not a line: %1. This document has %n lines.", "", total).arg(rest)
             return
         }
         const line = quick.api("lines.list", { offset: n - 1, limit: 1, fields: ["start", "text"] }).lines[0]
@@ -242,7 +245,7 @@ Item {
             return
         }
         if (target.frame !== undefined) {
-            pick.model.items = [{ id: "frame", label: qsTr("Go to %1 (frame %2)").arg(quick.timeText(target.time)).arg(target.frame),
+            pick.model.items = [{ id: "frame", label: qsTr("Go to %1 (frame %2)").arg(quick.timeText(target.time), target.frame),
                                   frame: target.frame }]
             return
         }
@@ -291,7 +294,7 @@ Item {
             items.push({ id: "plugin:" + row.dock, label: row.title, description: row.pluginName, group: qsTr("Panels"),
                          pluginDock: row.dock })
         const layouts = quick.shell.workspaceLayout
-        for (const name of ["Editing", "Timing", "Translation", "Typesetting", "Karaoke"])
+        for (const name of quick.presetNames)
             items.push({ id: "preset:" + name, label: qsTranslate("HikariSub.Workspace", name), group: qsTr("Layouts"),
                          preset: name, disabled: layouts.locked ? quick.shell.lockReason : "" })
         for (const saved of layouts.savedLayouts)
