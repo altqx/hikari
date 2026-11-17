@@ -101,6 +101,7 @@ TEST_F(PluginInstaller, AnUnsignedPackageInstallsUnverified)
     EXPECT_EQ(entry.version, "1.0.0");
     EXPECT_TRUE(entry.enabled);
     EXPECT_FALSE(entry.key);
+    EXPECT_EQ(entry.installed, 1);
 }
 
 TEST_F(PluginInstaller, ASignedPackagePinsItsKey)

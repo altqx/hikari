@@ -211,6 +211,7 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         return failed("cannot create", m_folders.data / manifest.id, error);
 
     InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object(), review.source};
+    entry.installed = 1;
     for (const auto &[id, plugin] : *registry)
         entry.installed = std::max(entry.installed, plugin.installed + 1);
     if (existing != registry->end()) {
