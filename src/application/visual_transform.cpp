@@ -1270,8 +1270,8 @@ PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
     out.polygons.push_back({{{pend.x - diffUnits.x * 12 * u, pend.y - diffUnits.y * 12 * u},
                              {pend.x + halfbase.x, pend.y + halfbase.y},
                              {pend.x - halfbase.x, pend.y - halfbase.y}},
-                            kHandleFill,
-                            kHandleBorder});
+                            out.handles.fill,
+                            out.handles.border});
     return pend;
 }
 
@@ -1328,8 +1328,8 @@ void drawRect(Overlay &out, PointF pos, bool selected, float size)
                              {pos.x + size, pos.y - size},
                              {pos.x + size, pos.y + size},
                              {pos.x - size, pos.y + size}},
-                            selected ? kHandleSelectedFill : kHandleFill,
-                            kHandleBorder});
+                            selected ? out.handles.selectedFill : out.handles.fill,
+                            out.handles.border});
 }
 
 }
