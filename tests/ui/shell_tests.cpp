@@ -8608,24 +8608,36 @@ private slots:
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
     }
 
-    void everyPanelsMenuButtonStaysInTheDockingArea_data()
+    void everyArrangementFitsTheDockingArea_data()
     {
         QTest::addColumn<QString>("arrangement");
         QTest::addColumn<QSize>("size");
+        QTest::addColumn<bool>("sideBarsOff");
         for (const char *name : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke", "NodeEffects"})
             for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
-                QTest::addRow("%s %dx%d", name, size.width(), size.height()) << QString::fromLatin1(name) << size;
+                for (const bool off : {false, true})
+                    QTest::addRow("%s %dx%d%s", name, size.width(), size.height(), off ? " side bars off" : "")
+                        << QString::fromLatin1(name) << size << off;
     }
 
-    void everyPanelsMenuButtonStaysInTheDockingArea()
+    void everyArrangementFitsTheDockingArea()
     {
         QFETCH(QString, arrangement);
         QFETCH(QSize, size);
+        QFETCH(bool, sideBarsOff);
         window->resize(size);
         QTRY_COMPARE(window->size(), size);
         QObject *root = engine->rootObjects().first();
         QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
         QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        if (sideBarsOff) {
+            for (const bool left : {true, false}) {
+                const char *shown = left ? "leftSideBarShown" : "rightSideBarShown";
+                if (root->property(shown).toBool())
+                    QVERIFY(QMetaObject::invokeMethod(root, "toggleSideBar", Q_ARG(QVariant, left)));
+                QTRY_VERIFY(!root->property(shown).toBool());
+            }
+        }
         QVERIFY(application->openFile(episode));
         if (arrangement == QLatin1String("Translation"))
             QVERIFY(application->turnOnTranslationMode());
@@ -8633,6 +8645,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(root, "setNodeEffects", Q_ARG(QVariant, true)));
         else
             QVERIFY(application->workspaceLayout().applyPreset(arrangement));
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         QVERIFY(application->openReference(original));
         for (const char *name : {"referenceDock", "spellDock", "logDock"}) {
             auto *dock = item<QObject>(name);
@@ -8644,6 +8657,7 @@ private slots:
         QStringList docked;
         QStringList unreachable;
         const auto reach = [&] {
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             docked.clear();
             unreachable.clear();
             const QRectF areaRect = area->mapRectToScene(QRectF(0, 0, area->width(), area->height()));
@@ -8655,8 +8669,29 @@ private slots:
                     continue;
                 const QString panel = dock->property("uniqueName").toString();
                 docked << panel;
-                if (!headerAndMenuButtonInside(dock, areaRect))
-                    unreachable << panel;
+                if (!headerAndMenuButtonInside(dock, areaRect)) {
+                    const auto r = [](QQuickItem *it) {
+                        if (!it)
+                            return QStringLiteral("none");
+                        const QRectF g = it->mapRectToScene(QRectF(0, 0, it->width(), it->height()));
+                        return QStringLiteral("%1x%2+%3+%4%5").arg(g.width()).arg(g.height()).arg(g.x()).arg(g.y())
+                            .arg(it->isVisible() ? QString() : QStringLiteral(" hidden"));
+                    };
+                    QQuickItem *h = dockHeader(panel);
+                    QQuickItem *t = tabTitled(dock->property("title").toString());
+                    QQuickItem *bar = t;
+                    while (bar && bar->objectName() != QLatin1String("dockHeader"))
+                        bar = bar->parentItem();
+                    if (t && bar)
+                        unreachable << QStringLiteral("{bar current %1 count %2 slot %3 tabs %4 width %5; tab cutOff %6 selected %7}")
+                                           .arg(bar->property("currentTitle").toString()).arg(bar->property("count").toInt())
+                                           .arg(bar->property("slotWidth").toReal()).arg(bar->property("naturalTabsWidth").toReal())
+                                           .arg(bar->width()).arg(t->property("cutOff").toBool()).arg(t->property("selected").toBool());
+                    unreachable << QStringLiteral("%1 [tab %2, header %3, menu %4, area %5x%6+%7+%8]").arg(panel)
+                                       .arg(r(tabTitled(dock->property("title").toString()))).arg(r(h))
+                                       .arg(r(h ? findItem(h, QStringLiteral("dockMenuButton")) : nullptr))
+                                       .arg(areaRect.width()).arg(areaRect.height()).arg(areaRect.x()).arg(areaRect.y());
+                }
             }
             return unreachable.isEmpty();
         };
@@ -8667,12 +8702,17 @@ private slots:
                               .arg(least.width()).arg(least.height());
             for (const QString &panel : std::as_const(docked)) {
                 const QRect place = docking->placeInLayout(panel);
-                out += QStringLiteral(" %1 %2x%3+%4+%5;").arg(panel).arg(place.width()).arg(place.height()).arg(place.x()).arg(place.y());
+                const QSize panelLeast = docking->minimumSize(panel);
+                out += QStringLiteral(" %1 %2x%3+%4+%5 (minimum %6x%7);").arg(panel).arg(place.width()).arg(place.height())
+                           .arg(place.x()).arg(place.y()).arg(panelLeast.width()).arg(panelLeast.height());
             }
             return out;
         };
         QTRY_VERIFY2(reach(), qPrintable(unreachable.join(u", ") + QLatin1Char('\n') + places()));
         QVERIFY2(docked.contains(QStringLiteral("Spellchecker")) && docked.size() >= 4, qPrintable(docked.join(u", ")));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        const QSize least = docking->layoutMinimumSize(area->property("uniqueName").toString());
+        QVERIFY2(least.width() <= qCeil(area->width()) && least.height() <= qCeil(area->height()), qPrintable(places()));
     }
 
     void panelMenusReadInTheOrderTheyShow()
@@ -28024,11 +28064,10 @@ private slots:
                 ++headers;
                 auto *strip = findItem(bar, QStringLiteral("dockHeaderStrip"));
                 QVERIFY(strip);
-                const bool titleMode = bar->property("titleMode").toBool();
-                QCOMPARE(strip->property("color").value<QColor>(), titleMode ? roles.field : roles.raised);
-                if (!titleMode)
-                    QCOMPARE(findItem(bar->property("currentTab").value<QQuickItem *>(), QStringLiteral("dockTabBackground"))
-                                 ->property("color").value<QColor>(), roles.field);
+                QCOMPARE(strip->property("color").value<QColor>(), roles.panel);
+                if (!bar->property("titleMode").toBool())
+                    QCOMPARE(findItem(bar->property("currentTab").value<QQuickItem *>(), QStringLiteral("dockTabUnderline"))
+                                 ->property("color").value<QColor>(), roles.accent);
             }
             QVERIFY(headers >= 4);
             const auto windows = root->findChildren<QQuickWindow *>();

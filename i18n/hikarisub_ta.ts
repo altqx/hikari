@@ -21800,7 +21800,7 @@ Styles deleted:
     </message>
     <message>
         <source>Styles: %1</source>
-        <translation>பாணிகள்: %1</translation>
+        <translation type="vanished">பாணிகள்: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>

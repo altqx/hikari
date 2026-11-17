@@ -21621,7 +21621,7 @@ Styles deleted:
     </message>
     <message>
         <source>Styles: %1</source>
-        <translation>สไตล์: %1</translation>
+        <translation type="vanished">สไตล์: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>

@@ -21979,7 +21979,7 @@ Usunięte style:
     </message>
     <message>
         <source>Styles: %1</source>
-        <translation>Style: %1</translation>
+        <translation type="vanished">Style: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>
