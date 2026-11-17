@@ -200,17 +200,20 @@
           }
         },
         "themes": {
-          "description": "Colour themes for Settings > Appearance; their id is plugin:<plugin id>/<id>.",
+          "description": "Colour themes for Settings > Appearance, at the same level as the built-in ones; their id is plugin:<plugin id>/<id>.",
           "type": "array",
           "maxItems": 32,
           "items": {
             "type": "object",
-            "required": ["id", "title", "appearance", "path"],
+            "required": ["id", "title", "type", "path"],
             "additionalProperties": false,
             "properties": {
               "id": {"$ref": "#/$defs/LocalId"},
               "title": {"$ref": "#/$defs/Title"},
-              "appearance": {"enum": ["light", "dark"]},
+              "type": {
+                "description": "The theme file's own type, repeated so the theme can be listed without reading it.",
+                "enum": ["light", "dark", "highContrastLight", "highContrastDark"]
+              },
               "path": {
                 "description": "A theme file in the package, checked against hikari-theme.schema.json.",
                 "$ref": "#/$defs/JsonPath"

@@ -523,7 +523,7 @@ Beyond the schema, HikariSub refuses a manifest where:
   - A file the manifest names isn't in the package, with the case matching. Bundled program `path`s count only for this platform, since a [per-platform package](#programs) holds only its own.
   - A program's bundled `path` for this platform isn't in the package.
   - An icon-theme folder misses a role.
-  - A theme fails its schema or the [contrast check](#themes-and-icons).
+  - A theme fails its schema or the [contrast check](#themes-and-icons), or its entry's `type` differs from its file's.
   - A content file fails its own reader.
 - **A value is out of range.**
   - A format has neither `import` nor `export`.
@@ -546,29 +546,68 @@ A new download URL or hash for an existing program is not more, since the signed
 
 ### Themes and icons
 
-**Colour themes** (#1222). Each `contributes.themes` entry is `{id, title, appearance, path}`. `appearance` is `light` or `dark`, and `path` is a JSON file in the package that follows [`hikari-theme.schema.json`](schemas/hikari-theme.schema.json).
+**Colour themes** (#1222, Q672–Q683). The four built-in themes and plugin themes are the same thing: a JSON file that follows [`hikari-theme.schema.json`](schemas/hikari-theme.schema.json), read by one loader and held to one contrast check. Each `contributes.themes` entry is `{id, title, type, path}`, where `path` is the theme file in the package and `type` repeats the file's own `type`, so the theme can be listed without reading it. An entry whose `type` differs from its file's is refused.
 
-- **What a theme sets.** It must set every role:
-  - the 15 interface roles of the [visual language](ux/visual-language.md);
+- **Built-in themes.** Light, Dark, High contrast white and High contrast black are theme files in the app's resources, with the ids `light`, `dark`, `highContrastWhite` and `highContrastBlack`. Their values are Quiet's, from [ADR 0033](adr/0033-quiet-visual-language.md) and the [visual language](ux/visual-language.md), `hover` and `pressed` included. A build test runs the schema and the contrast check on them. If one can't be read or fails, HikariSub shows a compiled-in Dark and says why in the Log. Built-in themes don't appear in the plugin manager.
+- **Types.** `type` is `light`, `dark`, `highContrastLight` or `highContrastDark`. The built-in high-contrast themes are `highContrastLight` (white) and `highContrastDark` (black).
+- **What a theme sets.** These keys are required:
+  - the interface roles `background`, `panel`, `raised`, `field`, `text`, `muted`, `line`, `disabled`, `accent`, `select`, `danger`, `warning` and `success`, plus `control` in a light or dark theme;
   - `spellcheck` and `grammar`;
-  - the Grid's `alternate`, `warning`, `comment` and five `comparison` colours;
+  - the Grid's `alternate`, `warning`, `comment`, five `comparison` colours, and the `labels` of the Line-number column for `normal`, `modified`, `saved` and `doubtful` Lines;
   - the line editor's 12 `syntax` colours;
   - the 8 node `ports`;
-  - 20 `audio` display colours;
-  - 5 `visualTools` colours.
-- **What a theme doesn't set.** `focus`, `hover`, `pressed` and the selection colours of the compare view and the audio display follow from `text` and `accent`, as for the built-ins. Interface roles are opaque `#RRGGBB`. The Grid, audio and visual-tool colours may add alpha (`#RRGGBBAA`).
-- **The contrast check.** HikariSub checks a theme at install, and registry CI checks it at listing, against the floors `hikari_ui_theme_tests` holds the built-ins to. A theme below any floor is refused with the role pair and the ratio it measured:
-  - `text`, `muted`, `danger`, `warning` and `accent` reach 4.5:1 against `background`, `panel`, `raised` and `field`, and so does `success` in a dark theme (a light theme's `success` is exempt, as built-in Light's is);
-  - `focus`, `disabled` and `control` reach 3:1;
-  - `onAccent` on `accent` and `text` on `select` reach 4.5:1;
-  - `disabled` against `text` reaches 2:1;
-  - `spellcheck` and `grammar` reach 3:1 on `field`;
-  - the waveform reaches 3:1 on the audio background, the timescale text 4.5:1 on its background, and the cursor 3:1.
-- **Choosing one.** A plugin theme's id is `plugin:<plugin id>/<theme id>`, and `appearance.theme` takes it. While Follow system theme is on, two new settings, `appearance.lightTheme` (`light` by default) and `appearance.darkTheme` (`dark` by default), say which theme each side shows. The Appearance page lists plugin themes after the built-ins, with the plugin's name. A plugin theme brings its own accent, so the accent presets are hidden while it shows.
-- **High contrast.** The two high-contrast themes stay built-in, and no plugin theme can replace them or be high contrast.
-- **When a theme goes.** When the plugin is turned off, uninstalled or revoked, a window showing its theme falls back to the built-in of the same appearance.
+  - 19 `audio` display colours;
+  - the `visualTools` handle colours: `handle`, `handleSelected` and `handleBorder`.
 
-**Icon themes** (#1222). Each `contributes.iconThemes` entry is `{id, title, path}`, where `path` is a package folder holding `<role>.svg` for every role in `src/ui/icons/manifest.json`. Settings › Appearance › Icons picks one, as `appearance.iconTheme` (`hikarisub` by default, or `plugin:<plugin id>/<theme id>`). Each SVG:
+  The video background and the other on-video marks (guides, crosshairs, masks) stay fixed. Interface roles are opaque `#RRGGBB`, except `hover` and `pressed`. Every other colour may add alpha (`#RRGGBBAA`).
+- **What a theme may leave out** (Q676). Each of these is worked out from other colours when it's missing:
+
+  | Key | When left out |
+  | --- | --- |
+  | `roles.focus` | `text` |
+  | `roles.hover` | `text` at 5 % in a light theme, 6 % in dark, 8 % in `highContrastLight`, 12 % in `highContrastDark` |
+  | `roles.pressed` | `text` at twice `hover`'s alpha |
+  | `roles.control` | `line`; only a high-contrast theme may leave it out |
+  | `roles.onAccent`, an accent choice's `onAccent` | black or white, whichever contrasts more with the accent |
+  | `content.syntax.default` | `text` |
+  | `content.grid.comparisonSelection` | `accent` at alpha 75 |
+  | `content.audio.selectionBackground` | `accent` at alpha 55 |
+  | `content.audio.selectionModified` | `selectionBackground` |
+  | `content.audio.waveformSelected` | `accent` |
+
+  A theme may set any of them, and then its own value is checked like the rest.
+- **Accent choices** (Q674). `accents` lists 2 to 16 named choices, each `{id, title, accent, onAccent, select}`. One choice must equal the theme's `accent`, `onAccent` and `select` roles, and that one is the default. Built-in Light and Dark carry today's seven: `red`, `orange`, `gold`, `green` (the default), `blue`, `purple` and `pink`. A theme without `accents` hides the accent picker. The user's pick is stored per theme in `appearance.accents`, a list of `<theme id>=<choice id>` entries. It replaces `appearance.lightAccent` and `appearance.darkAccent`, whose values move to the `light` and `dark` entries. A pick whose choice is gone falls back to the default.
+- **Colours the user may change** (Q675). `userColours` lists up to 6 interface roles that Settings › Appearance › UI colours lets the user change on this theme. Built-in High contrast white and High contrast black list `accent`, `text` and `line`, as today. No other colour can be changed, and a theme without `userColours` shows no UI colours section. The user's colours are stored in `appearance.colours`, a list of `<theme id>/<role>=#RRGGBB` entries split at the last `/`. It replaces the six `appearance.highContrastWhite.*` and `appearance.highContrastBlack.*` settings, whose `border` becomes `line`. Colours the theme leaves out are worked out from the user's colours, so a changed `accent` brings its own `onAccent`. The user's colours aren't held to the contrast check: they're chosen for the user's own eyes.
+- **The contrast check.** HikariSub checks every theme as it loads it: plugin themes at install, built-in themes in the build test. Registry CI checks plugin themes at listing. A theme below any floor is refused with the role pair and the ratio it measured. Each accent choice is checked as if it were the theme's accent. "Surfaces" are `background`, `panel`, `raised` and `field`.
+
+  | Check | Light and dark | High contrast |
+  | --- | --- | --- |
+  | `text`, `muted`, `danger`, `warning` and `accent` on surfaces | 4.5:1 | 7:1 |
+  | `success` on surfaces | 4.5:1, except in a `light` theme, as built-in Light's | 7:1 |
+  | `line` on surfaces | none | 7:1 |
+  | `focus`, `disabled` and `control` on surfaces | 3:1 | 3:1 |
+  | `onAccent` on `accent`, `text` on `select` | 4.5:1 | 7:1 |
+  | `disabled` against `text` | 2:1 | 2:1 |
+  | `spellcheck` on `field`, `panel` and the Grid's `alternate`; `grammar` on `field` | 3:1 | 3:1 |
+  | The waveform on the audio background | 3:1, except in a `dark` theme, as built-in Dark's | 4.5:1 |
+  | The cursor on the audio background | 3:1, except in a `dark` theme | 3:1 |
+  | The timescale text on its background | 4.5:1, except in a `dark` theme | 4.5:1 |
+
+  A plugin may ship a high-contrast theme if it passes the high-contrast column (Q673).
+- **Titles.** A theme's title and its accent choices' titles are translatable text through [#1239](https://github.com/altqx/hikari/issues/1239), for built-in and plugin themes alike.
+- **Choosing one.** A plugin theme's id is `plugin:<plugin id>/<theme id>`. Settings › Appearance lists themes by type, the built-ins first and plugin themes after them with the plugin's name. `appearance.theme` is the theme shown while Follow system theme is off. Four settings say which theme each side shows while it's on, and each takes only themes of its type:
+
+  | Setting | Type | Default |
+  | --- | --- | --- |
+  | `appearance.lightTheme` | `light` | `light` |
+  | `appearance.darkTheme` | `dark` | `dark` |
+  | `appearance.highContrastLightTheme` | `highContrastLight` | `highContrastWhite` |
+  | `appearance.highContrastDarkTheme` | `highContrastDark` | `highContrastBlack` |
+
+  While Follow system theme is on, the system's light or dark scheme picks the side. Whether the high-contrast pair or the ordinary pair is used comes from the chosen theme's type. Following never turns high contrast on or off; it moves between the two members of a pair, as it does today. Choosing a theme also makes it its type's member of the pair. If its side is not the system's, Follow system theme turns off, as choosing a theme by hand does today.
+- **When a theme goes.** When the plugin is turned off, uninstalled or revoked, a window showing one of its themes falls back to the built-in of the same type, and a pair setting that named it goes back to its default. Its `appearance.accents` and `appearance.colours` entries stay, so they come back with the theme.
+
+**Icon themes** (#1222). Each `contributes.iconThemes` entry is `{id, title, path}`, where `path` is a package folder holding `<role>.svg` for every role in `src/ui/icons/manifest.json`. Settings › Appearance › Icons picks one, as `appearance.iconTheme` (`hikarisub` by default, or `plugin:<plugin id>/<theme id>`). HikariSub's own icons are the icon theme `hikarisub` in the app's resources (Q680). The same loader reads it, and like the built-in colour themes it isn't in the plugin manager. Each SVG:
 
 - keeps the [SVG rules](#media-and-readme);
 - has a `viewBox` of `0 0 16 16`;
@@ -966,6 +1005,8 @@ end)
 - **Reloading.** When a file in the folder changes, HikariSub waits 300 ms, checks the manifest and package rules again, and restarts the plugin, keeping its data, settings and grants.
 - **Permissions.** A dev plugin gets the install question once. A reload that asks for more asks again.
 - **Errors** show in its details and the Log panel, like any plugin's.
+
+**Save a copy as a theme plugin…** (Q681). In the dev tools, this writes the theme being shown, built-in or a plugin's, as a new plugin folder: a `hikari-plugin.json` with one `contributes.themes` entry and the theme file with every key set, worked-out colours included. The folder is then loaded as a dev plugin.
 
 **The test harness.** `hikarisub --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>]` runs headless, prints each failed step, and exits with 0 when every step passed and 1 otherwise. Each line of the script is one step:
 

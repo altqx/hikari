@@ -5,7 +5,7 @@ amends: 0022, 0028, 0029
 
 # Plugins grow into an extension system
 
-On 2026-11-17 altqx decided that HikariSub plugins grow toward VS Code and Zed extensions: language servers, themes, more places for commands, background work, outside programs and more. The decisions are Q589–Q610 on tracking [#1209](https://github.com/altqx/hikari/issues/1209), in two rounds after the [extension systems research](../research/extension-systems.md). The design card is [#1221](https://github.com/altqx/hikari/issues/1221). The code cards are [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231), all on beta.5 (Q610).
+On 2026-11-17 altqx decided that HikariSub plugins grow toward VS Code and Zed extensions: language servers, themes, more places for commands, background work, outside programs and more. The decisions are Q589–Q610 on tracking [#1209](https://github.com/altqx/hikari/issues/1209), in two rounds after the [extension systems research](../research/extension-systems.md). Later rounds settled popups and settings (Q628–Q671) and themes (Q672–Q683). The design card is [#1221](https://github.com/altqx/hikari/issues/1221). The code cards are [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231), all on beta.5 (Q610).
 
 The contract is in [plugins.md](../plugins.md#extensions), [api.md](../api.md#extension-operations), the [manifest schema](../schemas/hikari-plugin.schema.json) and the [theme schema](../schemas/hikari-theme.schema.json). Where this record and those pages differ, the pages win on detail and this record on intent.
 
@@ -29,8 +29,15 @@ A package may also have programs without `main`, such as a language server alone
 
 ## Themes and icons
 
-- **Colour themes** (Q595). `contributes.themes` gives `light` or `dark` themes that set every colour role: the 15 interface roles, the Grid, the line editor's syntax, node ports, the audio display and the visual tools' handles. Each theme file is checked against the published theme schema. A contrast check against K2's floors runs at install and in registry CI, and a theme that fails isn't installed. They join the built-ins in Settings › Appearance. The two high-contrast themes stay built-in and can't be replaced; a plugin theme can't be high contrast. This reverses "no per-colour editing" only for whole themes: the user still edits no single colour.
-- **Icon themes** (Q607). `contributes.iconThemes` replaces HikariSub's interface icons. A theme must cover every icon role the installing HikariSub has. Each SVG keeps the package SVG rules and the 16-unit icon grid, uses only `currentColor` and the `accent` layer, and is reviewed against the grid at listing. A role added in a later HikariSub falls back to the built-in icon.
+- **Colour themes** (Q595, Q672–Q683). The built-in themes become data, as VS Code ships its own themes as built-in extensions:
+  - **One format.** Light, Dark, High contrast white and High contrast black are theme files in the app's resources, with their ids unchanged (Q679). They use the same loader, published theme schema and contrast check as `contributes.themes`. A build test checks them, and a compiled-in Dark is shown only when a file can't be read (Q672). Quiet's values from [ADR 0033](0033-quiet-visual-language.md), `hover` and `pressed` included, land as those four files in #1205's theme layer card (Q682). The built-ins don't appear in the plugin manager (Q681).
+  - **Four types** (Q673). A theme is `light`, `dark`, `highContrastLight` or `highContrastDark`. A plugin may ship a high-contrast theme if it passes the high-contrast floors, 7:1 for text. This reverses Q595's "high contrast stays built-in". The built-in high-contrast themes stay the defaults for high contrast, and Follow system theme still moves only within a pair, never in or out of high contrast.
+  - **What a theme sets.** Every colour role: the interface roles, the Grid with its label colours, the line editor's syntax, node ports, the audio display and the visual tools' handles (Q677). The video background and the other on-video marks stay fixed. Colours worked out from others (focus, hover, pressed, control in high contrast, the text on the accent, the syntax default and the selection colours) are optional, each with a documented rule (Q676).
+  - **Accent choices** (Q674). A theme may list named accent choices. Light and Dark carry today's seven, and a theme with none hides the accent picker. The pick is stored per theme.
+  - **Colours the user may change** (Q675). A theme declares which roles the user may change; the built-in high-contrast themes declare accent, text and line, as today. There is still no general per-colour editing.
+  - **Checks.** A theme that fails its schema or its contrast floors isn't installed, and registry CI runs the same check at listing.
+  - **Titles** of themes and accent choices are translatable text through [#1239](https://github.com/altqx/hikari/issues/1239) (Q678).
+- **Icon themes** (Q607). `contributes.iconThemes` replaces HikariSub's interface icons. HikariSub's own icons are the icon theme `hikarisub`, read by the same loader (Q680). A theme must cover every icon role the installing HikariSub has. Each SVG keeps the package SVG rules and the 16-unit icon grid, uses only `currentColor` and the `accent` layer, and is reviewed against the grid at listing. A role added in a later HikariSub falls back to the built-in icon.
 - **Plugins' own icons.** `contributes.icons` gives a plugin icons for its commands, panels and status items, named `own:<id>`.
 
 ## Content packs
@@ -135,7 +142,7 @@ Q603:
 The split on #1209 stands. Its order changes in two places: formats move up because #1218 waits on them, and settings come before programs because programs read secret settings.
 
 1. #1221, this design.
-2. #1222, data-only packages, themes and icons.
+2. #1222, data-only packages, themes and icons. It shares the theme loader with #1205's theme layer card, which turns the built-in themes into files.
 3. #1223, content packs. It runs beside the next cards once #1222 lands.
 4. #1224, menus, status items and shortcuts.
 5. #1225, limits and background plugins.
