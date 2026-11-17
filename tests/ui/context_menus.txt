@@ -41,6 +41,7 @@ Line editor text > AI actions >
 Line editor text > AI actions > Rewrite…
 Line editor text > AI actions > Shorten to 15 CPS
 Line editor text > AI actions > Fix spelling and grammar
+Line editor text > AI actions > Suggest synonyms >
 Line editor text > AI actions > Translate to English
 Line editor text > AI actions > Translate to…
 Line editor text > AI actions > -
@@ -161,6 +162,7 @@ Grid > AI actions >
 Grid > AI actions > Rewrite…
 Grid > AI actions > Shorten to 15 CPS
 Grid > AI actions > Fix spelling and grammar
+Grid > AI actions > Suggest synonyms >
 Grid > AI actions > Translate to English
 Grid > AI actions > Translate to…
 Grid > AI actions > -
