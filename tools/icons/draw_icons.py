@@ -123,12 +123,50 @@ def video_film(right=8, bottom=8.5, divider=10):
             + stroke("M4.5 2.5V10M8.5 2.5V%s" % q(divider)) + stroke("M1.5 5h3M1.5 7.5h3M11.5 5h-3M11.5 7.5h-3"))
 
 
-def note(x=6.5, y=11.5, top=2.5, flag=(4, 1.5)):
-    """An eighth note: a tilted oval head left of the stem at x, around height y, the stem up to top."""
-    head = "M%s %sC%s %s %s %s %s %sC%s %s %s %s %s %sC%s %s %s %s %s %sC%s %s %s %s %s %sz" % tuple(q(v) for v in (
-        x + .25, y - .75, x + .25, y + .5, x - 1.25, y + 2, x - 2.75, y + 2, x - 3.5, y + 2, x - 4, y + 1.5, x - 4, y + 1,
-        x - 4, y - .25, x - 2.5, y - 1.75, x - 1, y - 1.75, x - .25, y - 1.75, x + .25, y - 1.25, x + .25, y - .75))
-    return stroke("M%s %sV%sl%s %s" % (q(x), q(y - .75), q(top), q(flag[0]), q(flag[1]))) + fill(head)
+NOTE_OUTLINE = (
+    ("M", (97.173, 322.156)),
+    ("C", (132.927, 323.03), (164.444, 310.579), (181.654, 291.351)),
+    ("C", (187.765, 284.506), (191.728, 276.419), (192.49, 274.824)),
+    ("C", (192.938, 273.875), (193.315, 272.869), (193.639, 271.827)),
+    ("L", (238.807, 123.003)),
+    ("C", (241.485, 114.221), (248.798, 112.461), (254.785, 119.426)),
+    ("C", (259.414, 124.818), (264.391, 130.933), (269.444, 137.73)),
+    ("C", (290.267, 165.698), (291.946, 202.49), (280.841, 232.169)),
+    ("C", (269.729, 261.836), (248.73, 270.215), (255.466, 279.605)),
+    ("C", (262.223, 289.023), (288.692, 265.631), (305.919, 237.812)),
+    ("C", (323.131, 209.988), (325.055, 163.458), (309.522, 125.367)),
+    ("C", (293.982, 87.268), (271.352, 62.775), (267.036, 42.9)),
+    ("C", (266.767, 41.628), (266.491, 40.377), (266.215, 39.163)),
+    ("C", (265.762, 37.103), (265.946, 33.589), (266.644, 31.326)),
+    ("L", (267.886, 27.221)),
+    ("C", (271.277, 16.075), (264.996, 4.299), (253.828, 0.914)),
+    ("C", (242.687, -2.47), (230.913, 3.828), (227.531, 14.966)),
+    ("L", (172.77, 195.409)),
+    ("C", (170.097, 204.193), (161.886, 206.89), (153.628, 202.903)),
+    ("C", (138.472, 195.578), (120.18, 191.086), (100.392, 190.6)),
+    ("C", (47.005, 189.289), (3.015, 217.686), (2.125, 254.026)),
+    ("C", (1.235, 290.35), (43.784, 320.862), (97.173, 322.156)),
+    ("Z",),
+)
+
+
+def note(x, y, size):
+    """A filled eighth note in a size-unit square with its top left at x, y."""
+    s = size / 322.199
+    out, last = [], None
+    for segment in NOTE_OUTLINE:
+        if segment[0] == "Z":
+            out.append("z")
+            continue
+        points = ["%s %s" % (q(x + px * s), q(y + py * s)) for px, py in segment[1:]]
+        if segment[0] == "M":
+            out.append("M" + points[0])
+        elif any(p != last for p in points):
+            out.append(segment[0] + " ".join(points))
+        else:
+            continue
+        last = points[-1]
+    return fill("".join(out))
 
 
 def magnifier(cx=6.5, cy=6.5, r=4.5, handle=4.5):
@@ -343,11 +381,11 @@ icon("show-toolbar", "Full screen bar", [], [FULLSCREEN],
      layout(stroke("M1.5 9.5h13"), frect(3.5, 10.75, 2, 1.5, 0.25), frect(7, 10.75, 2, 1.5, 0.25),
             frect(10.5, 10.75, 2, 1.5, 0.25)))
 
-icon("open-audio", "Open audio", ["OpenAudio.png"], [AUDIO, "explorer"], note(6.5) + plus_badge())
-icon("recent-audio", "Recently opened audio", ["RecentAudio.png"], [AUDIO], note(6.5) + clock_badge())
+icon("open-audio", "Open audio", ["OpenAudio.png"], [AUDIO, "explorer"], note(.75, 1, 10) + plus_badge())
+icon("recent-audio", "Recently opened audio", ["RecentAudio.png"], [AUDIO], note(.75, 1, 10) + clock_badge())
 icon("audio-from-video", "Open audio from video", ["OpenAudioFromVideo.png"], [AUDIO],
-     video_film() + accent(note(13.5, 12.5, 4.5, (1.5, .5))))
-icon("close-audio", "Close audio", ["CloseAudio.png"], [AUDIO], note(6.5) + cross_badge())
+     video_film() + accent(note(8.5, 8, 6.5)))
+icon("close-audio", "Close audio", ["CloseAudio.png"], [AUDIO], note(.75, 1, 10) + cross_badge())
 
 icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX],
      solid("M7.5 3.5v9L2 8z") + solid("M14 3.5v9L8.5 8z"))
@@ -788,7 +826,7 @@ icon("problem", "Problem", [], [TEMPLATEPANEL],
 
 icon("dummy-video", "Open dummy video", [], [VIDEO], video_film() + accent(frect(10, 10, 4.5, 4.5, 0.5)))
 icon("video-streams", "Streams", [], [VIDEO, VIDEOMENU],
-     stroke("M1.5 3.5h6M1.5 7h6M1.5 10.5h3") + accent(note(10.5)))
+     stroke("M1.5 3.5h6M1.5 7h6M1.5 10.5h3") + accent(note(5.5, 4, 9.5)))
 icon("chapters", "Chapters", [], [VIDEO, VIDEOMENU, "explorer"],
      stroke("M1.5 13.5h13M3.5 13.5v-2M12.5 13.5v-2") + accent(stroke("M6.5 13.5v-10h5l-1.5 2 1.5 2h-5")))
 icon("video-details", "Video details", [], ["menu:video"],
@@ -984,7 +1022,7 @@ icon("subtitles-copy", "Copy subtitles to clipboard", [], ["video-context-menu"]
      + accent(stroke("M4.5 9.5h4M5.5 11.5h2")))
 icon("reload-video", "Reload video", [], ["menu:video"],
      video_film() + RELOAD_BADGE)
-icon("reload-audio", "Reload audio", [], ["menu:audio"], note(6.5) + RELOAD_BADGE)
+icon("reload-audio", "Reload audio", [], ["menu:audio"], note(.75, 1, 10) + RELOAD_BADGE)
 icon("screenshot", "Add the screenshot", [], ["report-issue"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13")
      + accent(stroke("M4.5 9V7.5H6M11.5 9V7.5H10M4.5 10v1.5H6M11.5 10v1.5H10")))
@@ -1123,7 +1161,7 @@ icon("file-folder", "Folder", [], ["explorer"], FOLDER)
 icon("file-subtitles", "Subtitle file", [], ["explorer"], page() + accent(stroke("M5.5 9.5h5M5.5 11.5h3.5")))
 icon("file-video", "Video file", [], ["explorer"],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M4.5 2.5v11M11.5 2.5v11") + accent(stroke("M7 6l2.5 2L7 10z")))
-icon("file-audio", "Audio file", [], ["explorer"], note(9.5))
+icon("file-audio", "Audio file", [], ["explorer"], note(1.5, 1.5, 13))
 icon("file-keyframes", "Keyframes file", [], ["explorer"], diamond(8, 8, 5.5) + accent(dot(8, 8, 1.25)))
 icon("file-timecodes", "Timecodes file", [], ["explorer"],
      stroke("M13.5 11.5h-11a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1z")
@@ -1417,8 +1455,7 @@ icon("interpolate-lines", "Interpolate across Lines", [], [GRIDMENU],
      + accent(stroke("M1.5 5.5h7M1.5 9.5h10")), mirror=True)
 icon("import-lyrics", "Import lyrics", [], [FILE],
      page(True) + stroke("M5.5 7.5h4.5M5.5 10h2")
-     + accent(fill("M13.5 12.75c0 .75-.75 1.5-1.75 1.5s-1.5-.5-1.5-1 .75-1.5 1.75-1.5 1.5.25 1.5 1z"),
-              stroke("M13.5 12.75V9c.5.75 1.5 1 1.5 2.25")))
+     + accent(note(9, 8.5, 6)))
 
 icon("builtin-script", "Built in", [], ["automation-manager"],
      SCRIPT_CUT + accent(rect(10.5, 10.5, 3, 3, .5), stroke("M11.25 9v1.5M12.75 9v1.5M11.25 13.5V15M12.75 13.5V15"
