@@ -121,7 +121,7 @@ describe("the tool catalogue", () => {
         const names = kOwn.entries.map((e) => e.tool.name);
         expect(kOwn.entries.find((e) => e.tool.name === "automation_macros")!.group).toBe("automation");
         for (const name of ["automation_run_macro", "vcs_refs", "vcs_show", "marks_set", "marks_clear", "marks_list",
-            "video_frames", "programs_run", "programs_start", "programs_send", "programs_stop"])
+            "presence_set_text", "video_frames", "programs_run", "programs_start", "programs_send", "programs_stop"])
             expect(names).not.toContain(name);
     });
 

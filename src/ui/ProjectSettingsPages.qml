@@ -25,7 +25,8 @@ RowLayout {
         {id: "subtitleProperties", name: qsTranslate("HikariSub.Options", "Script properties"), iconRole: "script-properties"},
         {id: "translation", name: qsTranslate("HikariSub.Translation", "Translation"), iconRole: "translation-mode"},
         {id: "export", name: qsTranslate("HikariSub.Export", "Export"), iconRole: "export"},
-        {id: "ai", name: qsTranslate("HikariSub.Options", "AI"), iconRole: "ai-assistant"}
+        {id: "ai", name: qsTranslate("HikariSub.Options", "AI"), iconRole: "ai-assistant"},
+        {id: "updates", name: qsTranslate("HikariSub.Options", "Updates and privacy"), iconRole: "check-updates"}
     ]
     readonly property var scriptFields: [
         {id: "title", name: qsTranslate("HikariSub.ScriptProperties", "Title")},
@@ -421,6 +422,7 @@ RowLayout {
                 app: project.app
                 shellWindow: project.shellWindow
             }
+            DiscordProjectSection { project: project }
         }
     }
 }

@@ -177,6 +177,7 @@ void KanjiTimerController::open()
 void KanjiTimerController::close()
 {
     m_open = false;
+    emit changed();
 }
 
 void KanjiTimerController::documentEdited()
