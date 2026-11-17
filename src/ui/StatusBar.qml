@@ -83,6 +83,7 @@ Rectangle {
             id: pluginsWorking
             objectName: "statusPluginsWorking"
             visible: bar.workingPlugins.length > 0
+            focusPolicy: Qt.NoFocus
             padding: 0
             Layout.fillHeight: true
             //: The status bar's busy icon: how many background plugins are working
