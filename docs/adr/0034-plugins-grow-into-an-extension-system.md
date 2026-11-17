@@ -5,7 +5,7 @@ amends: 0022, 0028, 0029
 
 # Plugins grow into an extension system
 
-On 2026-11-17 altqx decided that HikariSub plugins grow toward VS Code and Zed extensions: language servers, themes, more places for commands, background work, outside programs and more. The decisions are Q589–Q610 on tracking [#1209](https://github.com/altqx/hikari/issues/1209), in two rounds after the [extension systems research](../research/extension-systems.md). Later rounds settled popups and settings (Q628–Q671) and themes (Q672–Q683). The design card is [#1221](https://github.com/altqx/hikari/issues/1221). The code cards are [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231), all on beta.5 (Q610).
+On 2026-11-17 altqx decided that HikariSub plugins grow toward VS Code and Zed extensions: language servers, themes, more places for commands, background work, outside programs and more. The decisions are Q589–Q610 on tracking [#1209](https://github.com/altqx/hikari/issues/1209), in two rounds after the [extension systems research](../research/extension-systems.md). Later rounds settled popups and settings (Q628–Q671) and themes (Q672–Q683). Q693 on the Discord presence card [#1245](https://github.com/altqx/hikari/issues/1245) added plugin presence text. The design card is [#1221](https://github.com/altqx/hikari/issues/1221). The code cards are [#1222](https://github.com/altqx/hikari/issues/1222)–[#1231](https://github.com/altqx/hikari/issues/1231), all on beta.5 (Q610).
 
 The contract is in [plugins.md](../plugins.md#extensions), [api.md](../api.md#extension-operations), the [manifest schema](../schemas/hikari-plugin.schema.json) and the [theme schema](../schemas/hikari-theme.schema.json). Where this record and those pages differ, the pages win on detail and this record on intent.
 
@@ -111,6 +111,14 @@ The owner added a VS Code-style command palette (Ctrl+Shift+P), Quick Open (Ctrl
 - **Only when the user asked.** A plugin opens one only while it answers something the user started: a command from a menu, a key, the palette or a status item, a click in its own panel or dialog, or a job one of those began. A timer, an event or an AI tool can't take the focus with one. The title row always names the plugin, all text is plain, and a popup closes when its plugin stops.
 - **The palette** lists every plugin command by its title, with its menu path as the description and its `description` as the tooltip, unless the command sets `palette: false`. It runs commands with `via: "palette"`. Its look and Quick Open's prefixes are #1236's UX spec, PR #1237. Plugins add no Quick Open prefixes in API 1.
 
+## Discord status text
+
+Q693 (#1245):
+
+- **One operation.** `presence.set_text {text}`, in Lua `hikari.presence.set_text(text)`, behind a new `presence` permission whose install line reads "Set text in your Discord status: <reason>". Empty text or `nil` clears it. It stays open to every plugin that holds the permission.
+- **Small and plain.** Plain text of at most 64 characters, sent only while presence is on and within the existing limit of one update every 4 seconds.
+- **The user places it.** The text shows only where the user puts `{plugin}` in their own presence text, and only from the one plugin picked in Settings › Discord (`privacy.discordPlugin`). A plugin can't change anything else in the status.
+
 ## Panels
 
 Q602: panels stay the widget tree, plus QML panels for full trust. There are no web views.
@@ -130,7 +138,7 @@ Q603:
   - "Plugin first" counts these too, so a feature that needs only them is a plugin.
   - The package section gains data-only and program packages.
   - QC notes still stay native; they become one source in the problems list.
-- **[ADR 0028](0028-the-plugin-marketplace.md).** More permissions go back to us: Run programs, background, a program's network, low integrity, a program added and an MCP server added. Registry CI also:
+- **[ADR 0028](0028-the-plugin-marketplace.md).** More permissions go back to us: Run programs, background, Discord status text, a program's network, low integrity, a program added and an MCP server added. Registry CI also:
   - checks every platform's package;
   - downloads each declared program and checks its hash and size;
   - runs the theme contrast check;
@@ -152,6 +160,7 @@ The split on #1209 stands. Its order changes in two places: formats move up beca
 9. #1227, language features and the problems list. Its LSP half needs #1226.
 10. #1228, AI tools and MCP servers. MCP servers need #1226.
 11. #1236, the command palette and popups, after its UX spec. Its plugin services follow #1224.
-12. #1231, developer tools. Each earlier card adds its own guide page; this card adds the harness, dev plugins and type hints.
+12. #1245's code card adds `presence.set_text` with the `{plugin}` placeholder.
+13. #1231, developer tools. Each earlier card adds its own guide page; this card adds the harness, dev plugins and type hints.
 
 Each card updates `tests/api/reference-v1.json`, `api.json`, `docs/plugins.md`, `docs/api-reference.md` and the manifest schema as it lands. The manifest schema already holds every key, so a card that finds a key wrong changes the schema and this record together.

@@ -126,6 +126,10 @@
         "background": {
           "description": "Start with HikariSub and work while no command runs, with timers. The value is the reason shown to the user.",
           "$ref": "#/$defs/Reason"
+        },
+        "presence": {
+          "description": "Set the text that {plugin} shows in the user's Discord status (presence.set_text). The value is the reason shown to the user.",
+          "$ref": "#/$defs/Reason"
         }
       }
     },

@@ -150,8 +150,9 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `plugins.run` | write | all | Gains `args` and gives the command's `result`. | #1228 |
 | `settings.open` | write | all | Opens the Settings window at a setting, on the Yours or Project tab. | #1238 |
 | `settings.list`, `settings.get` | read | all | Gain `title`, `source` and `projectable`, and list plugins' settings too. | #1238 |
+| `presence.set_text` | write | plugins | Sets or clears the caller's text for `{plugin}` in the user's Discord status. | #1245 |
 
-"Plugins" means every plugin, Lua or program; AI and MCP callers get `not_granted`. `programs.*` need the plugin's `programs` permission. While a plugin runs as a `read` [AI tool](plugins.md#ai-tools-and-mcp-servers), each of its write operations, and the services `net.fetch`, `files.write` and `hikari/settings.set`, answer `refused` with reason `read_tool`.
+"Plugins" means every plugin, Lua or program; AI and MCP callers get `not_granted`. `programs.*` need the plugin's `programs` permission, and `presence.set_text` its `presence` permission. While a plugin runs as a `read` [AI tool](plugins.md#ai-tools-and-mcp-servers), each of its write operations, and the services `net.fetch`, `files.write` and `hikari/settings.set`, answer `refused` with reason `read_tool`.
 
 | Event | When | Card |
 | --- | --- | --- |
@@ -408,6 +409,18 @@ Each setting in their results gains three optional fields:
 ```
 
 They also list each running plugin's settings, as `plugin.<plugin id>.<setting id>` with that plugin as `source`. A `secret` setting is listed without its value, and `settings.get` and `settings.set` refuse it with reason `private` for every caller; its plugin reads it with `hikari.settings.get`. For AI callers, `settings.set` of a `plugin.` setting joins the always-ask list beside `plugins.*` (#1228 amends [ai-agent.md](ai-agent.md)).
+
+### `presence.set_text`
+
+Write. Plugins only, with the `presence` permission. Sets the caller's text, which shows only where the user's own Discord presence text has `{plugin}` and only while the user picked this plugin and presence is on ([Discord status text](plugins.md#discord-status-text)). Empty text clears it. HikariSub still sends presence at most once every 4 seconds, so only the newest text in that gap goes out.
+
+```json
+{"type": "object", "properties": {
+  "text": {"type": "string", "maxLength": 64, "pattern": "^[^\\u0000-\\u001F\\u007F]*$", "description": "Plain text; empty clears it."}},
+ "required": ["text"], "additionalProperties": false}
+```
+
+Result: `{"type": "object", "additionalProperties": false}`.
 
 ### Quick picks and input boxes
 

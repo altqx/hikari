@@ -495,6 +495,7 @@ A data-only package never starts a helper. It may hold only `themes`, `iconTheme
 | `main` | A `.lua` file, or `{"program": "<id>"}`. Optional now. |
 | `permissions.programs` | The reason for running the plugin's programs. Needed when `programs` isn't empty. Shown as **Run programs**: "Runs programs that come with it: <titles>: <reason>". |
 | `permissions.background` | The reason for working in the background. Shown as "Works in the background while HikariSub is open: <reason>". |
+| `permissions.presence` | The reason for setting text in the user's Discord status. Shown as "Set text in your Discord status: <reason>". See [Discord status text](#discord-status-text). |
 | `contributes.commands[]` | Gains `description` (one line for the command palette and the AI), `icon`, `when` and `palette` (`false` keeps it out of the [command palette](#the-command-palette)). The description is in the next row's terms. A handler is now `fn(args, context)`: `args` is the table a caller passed (`{}` from a menu or key), `context.via` is `menu`, `key`, `palette`, `status`, `api` or `ai`, and what it returns is the command's result. |
 | `contributes.panels[]` | Gains `icon`, shown on the panel's tab and in a side bar. |
 | `contributes.themes`, `iconThemes`, `icons` | [Themes and icons](#themes-and-icons). |
@@ -511,7 +512,7 @@ Beyond the schema, HikariSub refuses a manifest where:
 - **A reference doesn't resolve.** A `menus`, `keybindings`, `statusItems` or `aiTools` entry names a command that `contributes.commands` doesn't declare. A `languageServers`, `mcpServers` or `main` entry names a program that `contributes.programs` doesn't declare. An `own:` icon names an id that `contributes.icons` doesn't declare.
 - **An id repeats.** Ids are unique within each new list: `themes`, `iconThemes`, `icons`, `styles`, `karaokePresets`, `graphs`, `snippets`, `layouts`, `statusItems`, `programs`, `languageServers`, `mcpServers` and `formats`. So are a dictionary's `language`, a command's `aiTools` entry, and a `menus` entry's command within one `location`.
 - **A kind is broken.**
-  - A data-only package or a program package holds something that needs code: `commands`, `panels`, `menus`, `statusItems`, `keybindings`, `providers`, `aiTools`, `formats` or `permissions.background`.
+  - A data-only package or a program package holds something that needs code: `commands`, `panels`, `menus`, `statusItems`, `keybindings`, `providers`, `aiTools`, `formats`, `permissions.background` or `permissions.presence`.
   - A data-only package has `settings` or `permissions`.
   - A program plugin or a program package is `unrestricted`. `tier` concerns only a Lua `main`: programs always run sandboxed, and only a Full trust Lua plugin ships QML panels.
   - A program package has `settings` without a language server or MCP server that reads them.
@@ -536,7 +537,7 @@ Beyond the schema, HikariSub refuses a manifest where:
 
 **Asking for more.** An update also [asks for more](#updates-roll-back-and-revocation), and is held, when it:
 
-- adds `permissions.programs` or `permissions.background`;
+- adds `permissions.programs`, `permissions.background` or `permissions.presence`;
 - adds a program;
 - gives a program `network`;
 - moves a program to `lowIntegrity`;
@@ -992,6 +993,17 @@ end)
 **Changes.** A change from Settings, the plugin manager or a Project sends `plugin_settings.changed` to the plugin.
 
 **Not in 0.1.0** (Q649). Named profiles, managed or policy settings, settings sync and per-language settings stay out ([#1240](https://github.com/altqx/hikari/issues/1240)–[#1243](https://github.com/altqx/hikari/issues/1243)), and the manifest has no key for them. Translatable plugin text is [#1239](https://github.com/altqx/hikari/issues/1239).
+
+### Discord status text
+
+#1245 (Q693). A plugin with `permissions.presence` can put a short text in the user's Discord status, such as the episode a team's tracker knows.
+
+- **Setting it.** `hikari.presence.set_text(text)` in Lua, [`presence.set_text`](api.md#presenceset_text) `{text}` from a program plugin. Empty text or `nil` clears it. Errors come back as for any call.
+- **Plain text.** At most 64 characters, with no line breaks or other control characters, or the call is `invalid_params`. HikariSub shows it as written, never as Markdown or a link.
+- **Where it shows.** Only where the user's own presence text (My own text in Settings › Discord) has the placeholder `{plugin}`, and only from the one plugin picked in Settings › Discord › Text from plugin. That is the setting `privacy.discordPlugin`, a plugin id, empty by default, and its list offers the installed plugins that hold the permission. Anywhere else `{plugin}` stays empty, as `{file}` does while its switch is off.
+- **When it's sent.** Only while presence is on. Text from a plugin that isn't picked, or set while presence is off, is kept but goes nowhere, and the call still succeeds. HikariSub sends presence at most once every 4 seconds, as today, so only the newest text in that gap goes out; calling more often isn't an error.
+- **How long it stays.** Until the plugin sets or clears it, or is turned off, uninstalled or revoked. It isn't kept when HikariSub quits.
+- **Refusals.** Without the permission the call is `not_granted`. AI and MCP callers get `not_granted`. While the plugin runs as a `read` [AI tool](#ai-tools-and-mcp-servers) it's refused with reason `read_tool`, as its other writes are.
 
 ### Developer tools
 
