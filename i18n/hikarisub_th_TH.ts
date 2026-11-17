@@ -1851,7 +1851,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="vanished">เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
     </message>
     <message>
         <source>%1 cancelled</source>
@@ -7555,7 +7555,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load subtitles from an MKV file</source>
-        <translation type="vanished">โหลดคำบรรยายจากไฟล์ MKV</translation>
+        <translation>โหลดคำบรรยายจากไฟล์ MKV</translation>
     </message>
     <message>
         <source>Swap lines</source>
@@ -7563,7 +7563,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set new FPS</source>
-        <translation type="vanished">กำหนดค่า FPS ใหม่</translation>
+        <translation>กำหนดค่า FPS ใหม่</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -7603,7 +7603,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Report an issue</source>
-        <translation type="vanished">รายงานปัญหา</translation>
+        <translation>รายงานปัญหา</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -7611,7 +7611,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load script</source>
-        <translation type="vanished">โหลดสคริปต์</translation>
+        <translation>โหลดสคริปต์</translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
@@ -7619,7 +7619,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Time shift window</source>
-        <translation type="vanished">หน้าต่างเลื่อนเวลา</translation>
+        <translation>หน้าต่างเลื่อนเวลา</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -7627,7 +7627,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Find and replace</source>
-        <translation type="vanished">ค้นหาและแทนที่</translation>
+        <translation>ค้นหาและแทนที่</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -7643,7 +7643,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="vanished">ซ่อนแท็ก</translation>
+        <translation>ซ่อนแท็ก</translation>
     </message>
     <message>
         <source>History</source>
@@ -7659,7 +7659,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open keyframes</source>
-        <translation type="vanished">เปิดคีย์เฟรม</translation>
+        <translation>เปิดคีย์เฟรม</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -7679,7 +7679,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Sort all lines by styles</source>
-        <translation type="vanished">จัดเรียงทุกบรรทัดตามสไตล์</translation>
+        <translation>จัดเรียงทุกบรรทัดตามสไตล์</translation>
     </message>
     <message>
         <source>Sort all lines by actor</source>
@@ -7711,7 +7711,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Sort selected lines by styles</source>
-        <translation type="vanished">จัดเรียงบรรทัดที่เลือกตามสไตล์</translation>
+        <translation>จัดเรียงบรรทัดที่เลือกตามสไตล์</translation>
     </message>
     <message>
         <source>Sort selected lines by actor</source>
@@ -7739,7 +7739,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Timing postprocessor panel</source>
-        <translation type="vanished">แผงโพสต์โปรเซสเซอร์การจัดเวลา</translation>
+        <translation>แผงโพสต์โปรเซสเซอร์การจัดเวลา</translation>
     </message>
     <message>
         <source>Timing postprocessor with the last values</source>
@@ -7755,7 +7755,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Resample subtitles</source>
-        <translation type="vanished">เปลี่ยนความละเอียดของคำบรรยาย</translation>
+        <translation>เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -7779,7 +7779,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Close current tab</source>
-        <translation type="vanished">ปิดแท็บปัจจุบัน</translation>
+        <translation>ปิดแท็บปัจจุบัน</translation>
     </message>
     <message>
         <source>Clean styles of ASS file</source>
@@ -7799,7 +7799,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Next frame</source>
-        <translation type="vanished">เฟรมถัดไป</translation>
+        <translation>เฟรมถัดไป</translation>
     </message>
     <message>
         <source>Next tab</source>
@@ -7807,7 +7807,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open audio</source>
-        <translation type="vanished">เปิดเสียง</translation>
+        <translation>เปิดเสียง</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -7827,7 +7827,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation type="vanished">เฟรมก่อนหน้า</translation>
+        <translation>เฟรมก่อนหน้า</translation>
     </message>
     <message>
         <source>Previous tab</source>
@@ -7855,7 +7855,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation type="vanished">บันทึกคำบรรยายทั้งหมด</translation>
+        <translation>บันทึกคำบรรยายทั้งหมด</translation>
     </message>
     <message>
         <source>Save</source>
@@ -7863,15 +7863,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save translation</source>
-        <translation type="vanished">บันทึกการแปล</translation>
+        <translation>บันทึกการแปล</translation>
     </message>
     <message>
         <source>Save subtitles using the video name</source>
-        <translation type="vanished">บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
+        <translation>บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation type="vanished">ค้นหา</translation>
+        <translation>ค้นหา</translation>
     </message>
     <message>
         <source>Select line at current video position</source>
@@ -7879,7 +7879,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select lines</source>
-        <translation type="vanished">เลือกบรรทัด</translation>
+        <translation>เลือกบรรทัด</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -7887,15 +7887,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set audio marker to video time</source>
-        <translation type="vanished">เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
+        <translation>เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation type="vanished">แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
+        <translation>แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation type="vanished">แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
+        <translation>แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -8239,11 +8239,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Export as</source>
-        <translation type="vanished">ส่งออกเป็น</translation>
+        <translation>ส่งออกเป็น</translation>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
     </message>
     <message>
         <source>Shift selected lines by frames: start at video</source>
@@ -8295,7 +8295,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Video details…</source>
-        <translation type="vanished">รายละเอียดวิดีโอ…</translation>
+        <translation>รายละเอียดวิดีโอ…</translation>
     </message>
     <message>
         <source>Convert Aegisub folds to line groups</source>
@@ -8303,11 +8303,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open timecodes</source>
-        <translation type="vanished">เปิดไทม์โค้ด</translation>
+        <translation>เปิดไทม์โค้ด</translation>
     </message>
     <message>
         <source>Save timecodes</source>
-        <translation type="vanished">บันทึกไทม์โค้ด</translation>
+        <translation>บันทึกไทม์โค้ด</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -8315,7 +8315,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>QC notes panel</source>
-        <translation type="vanished">แผงโน้ต QC</translation>
+        <translation>แผงโน้ต QC</translation>
     </message>
     <message>
         <source>Next QC note</source>
@@ -8331,7 +8331,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Perspective tracking…</source>
-        <translation type="vanished">การติดตามเพอร์สเปกทีฟ…</translation>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
         <source>Play before the mark</source>
@@ -8383,7 +8383,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
     </message>
     <message>
         <source>Extend tracked lines…</source>
@@ -8626,6 +8626,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Review panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Agent panel</source>
         <translation>แผงเอเจนต์</translation>
     </message>
@@ -8707,6 +8711,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Accept the timing assistant’s suggestion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Explorer panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9404,7 +9412,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Karaoke check</source>
-        <translation type="vanished">ตรวจคาราโอเกะ</translation>
+        <translation>ตรวจคาราโอเกะ</translation>
     </message>
     <message>
         <source>No karaoke problems found</source>
@@ -10038,11 +10046,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Open…</source>
-        <translation type="vanished">&amp;เปิด…</translation>
+        <translation>&amp;เปิด…</translation>
     </message>
     <message>
         <source>Recently opened &amp;subtitles</source>
-        <translation type="vanished">คำบรรยายที่เพิ่งเ&amp;ปิด</translation>
+        <translation>คำบรรยายที่เพิ่งเ&amp;ปิด</translation>
     </message>
     <message>
         <source>None</source>
@@ -10050,11 +10058,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Remove subtitles from the &amp;editor</source>
-        <translation type="vanished">นำคำบรรยายออกจากตัวแก้ไ&amp;ข</translation>
+        <translation>นำคำบรรยายออกจากตัวแก้ไ&amp;ข</translation>
     </message>
     <message>
         <source>&amp;Close</source>
-        <translation type="vanished">&amp;ปิด</translation>
+        <translation>&amp;ปิด</translation>
     </message>
     <message>
         <source>&amp;Save</source>
@@ -10062,7 +10070,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save &amp;all</source>
-        <translation type="vanished">บันทึก&amp;ทั้งหมด</translation>
+        <translation>บันทึก&amp;ทั้งหมด</translation>
     </message>
     <message>
         <source>Save &amp;as…</source>
@@ -10070,11 +10078,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save &amp;translation</source>
-        <translation type="vanished">บันทึก&amp;การแปล</translation>
+        <translation>บันทึก&amp;การแปล</translation>
     </message>
     <message>
         <source>Save subtitles using the video name</source>
-        <translation type="vanished">บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
+        <translation>บันทึกคำบรรยายด้วยชื่อวิดีโอ</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -10082,7 +10090,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Remove temporary files</source>
-        <translation type="vanished">ลบไฟล์ชั่วคราว</translation>
+        <translation>ลบไฟล์ชั่วคราว</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -10098,19 +10106,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save session to file</source>
-        <translation type="vanished">บันทึกเซสชันเป็นไฟล์</translation>
+        <translation>บันทึกเซสชันเป็นไฟล์</translation>
     </message>
     <message>
         <source>Ask whether to load the last session at program startup</source>
-        <translation type="vanished">ถามว่าจะโหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
+        <translation>ถามว่าจะโหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
     </message>
     <message>
         <source>Load last session after program start</source>
-        <translation type="vanished">โหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรม</translation>
+        <translation>โหลดเซสชันล่าสุดเมื่อเริ่มโปรแกรม</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
-        <translation type="vanished">&amp;การตั้งค่า</translation>
+        <translation>&amp;การตั้งค่า</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
@@ -10130,11 +10138,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>So&amp;rt all lines</source>
-        <translation type="vanished">จัดเ&amp;รียงทุกบรรทัด</translation>
+        <translation>จัดเ&amp;รียงทุกบรรทัด</translation>
     </message>
     <message>
         <source>So&amp;rt selected lines</source>
-        <translation type="vanished">จัดเ&amp;รียงบรรทัดที่เลือก</translation>
+        <translation>จัดเ&amp;รียงบรรทัดที่เลือก</translation>
     </message>
     <message>
         <source>Undo to last save</source>
@@ -10146,7 +10154,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Select &amp;lines</source>
-        <translation type="vanished">เลือก&amp;บรรทัด</translation>
+        <translation>เลือก&amp;บรรทัด</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -10182,7 +10190,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="vanished">เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้ง</translation>
     </message>
     <message>
         <source>&amp;Video</source>
@@ -10194,11 +10202,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation type="vanished">เฟรมก่อนหน้า</translation>
+        <translation>เฟรมก่อนหน้า</translation>
     </message>
     <message>
         <source>Next frame</source>
-        <translation type="vanished">เฟรมถัดไป</translation>
+        <translation>เฟรมถัดไป</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -10206,7 +10214,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Play or pause</source>
-        <translation type="vanished">เล่นหรือหยุดชั่วคราว</translation>
+        <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -10238,11 +10246,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation type="vanished">แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
+        <translation>แทรกเวลาเริ่มต้นจากวิดีโอ</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation type="vanished">แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
+        <translation>แทรกเวลาสิ้นสุดจากวิดีโอ</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -10250,7 +10258,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set audio marker to video time</source>
-        <translation type="vanished">เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
+        <translation>เลื่อนเครื่องหมายเสียงให้ตรงกับเวลาวิดีโอ</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -10278,11 +10286,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open audio from video</source>
-        <translation type="vanished">เปิดเสียงจากวิดีโอ</translation>
+        <translation>เปิดเสียงจากวิดีโอ</translation>
     </message>
     <message>
         <source>Close audio</source>
-        <translation type="vanished">นำเสียงออก</translation>
+        <translation>นำเสียงออก</translation>
     </message>
     <message>
         <source>Vie&amp;w</source>
@@ -10346,7 +10354,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Restore the previous layout</source>
-        <translation type="vanished">คืนค่าเค้าโครงก่อนหน้า</translation>
+        <translation>คืนค่าเค้าโครงก่อนหน้า</translation>
     </message>
     <message>
         <source>&amp;Subtitles</source>
@@ -10386,19 +10394,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Script properties</source>
-        <translation type="vanished">คุณสมบัติของสคริปต์</translation>
+        <translation>คุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Font collector</source>
-        <translation type="vanished">ตัวรวบรวมแบบอักษร</translation>
+        <translation>ตัวรวบรวมแบบอักษร</translation>
     </message>
     <message>
         <source>Resample subtitles</source>
-        <translation type="vanished">เปลี่ยนความละเอียดของคำบรรยาย</translation>
+        <translation>เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation type="vanished">ตรวจการสะกด</translation>
+        <translation>ตรวจการสะกด</translation>
     </message>
     <message>
         <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
@@ -10410,11 +10418,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Install, turn on and off, and uninstall plugins</source>
-        <translation type="vanished">ติดตั้ง เปิดหรือปิด และถอนการติดตั้งปลั๊กอิน</translation>
+        <translation>ติดตั้ง เปิดหรือปิด และถอนการติดตั้งปลั๊กอิน</translation>
     </message>
     <message>
         <source>Pl&amp;ugins…</source>
-        <translation type="vanished">&amp;ปลั๊กอิน…</translation>
+        <translation>&amp;ปลั๊กอิน…</translation>
     </message>
     <message>
         <source>Remove from the layout</source>
@@ -10422,7 +10430,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation type="vanished">ซ่อนแท็ก</translation>
+        <translation>ซ่อนแท็ก</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -10430,7 +10438,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Report an issue</source>
-        <translation type="vanished">&amp;รายงานปัญหา</translation>
+        <translation>&amp;รายงานปัญหา</translation>
     </message>
     <message>
         <source>Check for &amp;updates</source>
@@ -10536,11 +10544,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open subtitle file</source>
-        <translation type="vanished">เปิดไฟล์คำบรรยาย</translation>
+        <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
         <source>Open a folder as a project</source>
-        <translation type="vanished">เปิดโฟลเดอร์เป็นโปรเจกต์</translation>
+        <translation>เปิดโฟลเดอร์เป็นโปรเจกต์</translation>
     </message>
     <message>
         <source>Open &amp;folder…</source>
@@ -10548,11 +10556,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Recently opened subtitles</source>
-        <translation type="vanished">คำบรรยายที่เพิ่งเปิด</translation>
+        <translation>คำบรรยายที่เพิ่งเปิด</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation type="vanished">เปิด</translation>
+        <translation>เปิด</translation>
     </message>
     <message>
         <source>Open %1</source>
@@ -10564,7 +10572,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Close this window’s tabs and its project</source>
-        <translation type="vanished">ปิดแท็บของหน้าต่างนี้และโปรเจกต์ของหน้าต่าง</translation>
+        <translation>ปิดแท็บของหน้าต่างนี้และโปรเจกต์ของหน้าต่าง</translation>
     </message>
     <message>
         <source>Close pro&amp;ject</source>
@@ -10572,7 +10580,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens video file</source>
-        <translation type="vanished">เปิดไฟล์วิดีโอ</translation>
+        <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
     <message>
         <source>Imports a subtitle track from a Matroska file</source>
@@ -10592,15 +10600,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save current file</source>
-        <translation type="vanished">บันทึกไฟล์ปัจจุบัน</translation>
+        <translation>บันทึกไฟล์ปัจจุบัน</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation type="vanished">บันทึกคำบรรยายทั้งหมด</translation>
+        <translation>บันทึกคำบรรยายทั้งหมด</translation>
     </message>
     <message>
         <source>Save as</source>
-        <translation type="vanished">บันทึกเป็น</translation>
+        <translation>บันทึกเป็น</translation>
     </message>
     <message>
         <source>Writes a copy of the document in another format</source>
@@ -10612,7 +10620,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save translation</source>
-        <translation type="vanished">บันทึกการแปล</translation>
+        <translation>บันทึกการแปล</translation>
     </message>
     <message>
         <source>Opens the selected autosave from the list</source>
@@ -10620,11 +10628,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens the temporary file removal window</source>
-        <translation type="vanished">เปิดหน้าต่างลบไฟล์ชั่วคราว</translation>
+        <translation>เปิดหน้าต่างลบไฟล์ชั่วคราว</translation>
     </message>
     <message>
         <source>Last session options</source>
-        <translation type="vanished">ตัวเลือกเซสชันสุดท้าย</translation>
+        <translation>ตัวเลือกเซสชันสุดท้าย</translation>
     </message>
     <message>
         <source>Loads previously loaded files</source>
@@ -10640,19 +10648,19 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Asks whether to load previously loaded files at program startup</source>
-        <translation type="vanished">ถามว่าจะโหลดไฟล์ที่เปิดล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
+        <translation>ถามว่าจะโหลดไฟล์ที่เปิดล่าสุดเมื่อเริ่มโปรแกรมหรือไม่</translation>
     </message>
     <message>
         <source>Loads previously loaded files at program startup</source>
-        <translation type="vanished">โหลดไฟล์ที่เปิดไว้ก่อนหน้าเมื่อเริ่มโปรแกรม</translation>
+        <translation>โหลดไฟล์ที่เปิดไว้ก่อนหน้าเมื่อเริ่มโปรแกรม</translation>
     </message>
     <message>
         <source>Program settings</source>
-        <translation type="vanished">การตั้งค่าโปรแกรม</translation>
+        <translation>การตั้งค่าโปรแกรม</translation>
     </message>
     <message>
         <source>Close this window; closing the last window exits the program</source>
-        <translation type="vanished">ปิดหน้าต่างนี้ การปิดหน้าต่างสุดท้ายจะออกจากโปรแกรม</translation>
+        <translation>ปิดหน้าต่างนี้ การปิดหน้าต่างสุดท้ายจะออกจากโปรแกรม</translation>
     </message>
     <message>
         <source>Close &amp;window</source>
@@ -10660,23 +10668,23 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Exit the program</source>
-        <translation type="vanished">ออกจากโปรแกรม</translation>
+        <translation>ออกจากโปรแกรม</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation type="vanished">เลิกทำ</translation>
+        <translation>เลิกทำ</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation type="vanished">ทำซ้ำ</translation>
+        <translation>ทำซ้ำ</translation>
     </message>
     <message>
         <source>Sorts all lines in ASS file</source>
-        <translation type="vanished">จัดเรียงบรรทัดคำบรรยายทั้งหมดในไฟล์ ASS</translation>
+        <translation>จัดเรียงบรรทัดคำบรรยายทั้งหมดในไฟล์ ASS</translation>
     </message>
     <message>
         <source>Sorts selected lines in ASS file</source>
-        <translation type="vanished">จัดเรียงบรรทัดคำบรรยาย ASS ที่เลือก</translation>
+        <translation>จัดเรียงบรรทัดคำบรรยาย ASS ที่เลือก</translation>
     </message>
     <message>
         <source>History</source>
@@ -10687,7 +10695,15 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกบรรทัดตามนิพจน์</translation>
     </message>
     <message>
+        <source>Timing helpers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the start of each selected line to the keyframe before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start to previous keyframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10695,11 +10711,23 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Start to next keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>End to previous keyframe</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the end of each selected line to the keyframe after it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End to next keyframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10739,7 +10767,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Start one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the start of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start one frame later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10747,7 +10783,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>End one frame earlier</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Moves the end of each selected line one frame later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End one frame later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10755,7 +10799,15 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Extend previous line to this start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Starts the line after the active line where the active line ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extend next line to this end</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10768,6 +10820,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept assistant suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10796,7 +10852,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;QC notes…</source>
-        <translation type="vanished">โน้ต &amp;QC…</translation>
+        <translation>โน้ต &amp;QC…</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -10804,7 +10860,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Set FPS</source>
-        <translation type="vanished">กำหนดค่า FPS</translation>
+        <translation>กำหนดค่า FPS</translation>
     </message>
     <message>
         <source>Set new FPS…</source>
@@ -10816,11 +10872,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open a VFR timecodes v1, v2 or v4 file</source>
-        <translation type="vanished">เปิดไฟล์ไทม์โค้ด VFR v1, v2 หรือ v4</translation>
+        <translation>เปิดไฟล์ไทม์โค้ด VFR v1, v2 หรือ v4</translation>
     </message>
     <message>
         <source>Open timecodes</source>
-        <translation type="vanished">เปิดไทม์โค้ด</translation>
+        <translation>เปิดไทม์โค้ด</translation>
     </message>
     <message>
         <source>Recently opened timecodes</source>
@@ -10828,15 +10884,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Save a VFR timecodes v2 file</source>
-        <translation type="vanished">บันทึกเป็นไฟล์ไทม์โค้ด VFR v2</translation>
+        <translation>บันทึกเป็นไฟล์ไทม์โค้ด VFR v2</translation>
     </message>
     <message>
         <source>Save timecodes</source>
-        <translation type="vanished">บันทึกไทม์โค้ด</translation>
+        <translation>บันทึกไทม์โค้ด</translation>
     </message>
     <message>
         <source>Close the currently open timecodes file</source>
-        <translation type="vanished">ปิดไฟล์ไทม์โค้ดที่เปิดอยู่</translation>
+        <translation>ปิดไฟล์ไทม์โค้ดที่เปิดอยู่</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -10920,15 +10976,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
-        <translation type="vanished">เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
+        <translation>เปิดวิดีโอก่อน: ข้อมูลการติดตามเป็นรายเฟรม</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
-        <translation type="vanished">การติดตามเพอร์สเปกทีฟ…</translation>
+        <translation>การติดตามเพอร์สเปกทีฟ…</translation>
     </message>
     <message>
         <source>Video details…</source>
-        <translation type="vanished">รายละเอียดวิดีโอ…</translation>
+        <translation>รายละเอียดวิดีโอ…</translation>
     </message>
     <message>
         <source>Reload video</source>
@@ -10956,7 +11012,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
+        <translation>คัดลอกแทร็ก Power-Pin จากบรรทัด</translation>
     </message>
     <message>
         <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
@@ -10972,7 +11028,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Reload audio</source>
-        <translation type="vanished">โหลดเสียงใหม่</translation>
+        <translation>โหลดเสียงใหม่</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -10980,7 +11036,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
+        <translation>เชื่อมกับบรรทัดก่อนหน้าด้วยส่วนที่เลือกของเสียง</translation>
     </message>
     <message>
         <source>Untagged video</source>
@@ -11096,11 +11152,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Load script</source>
-        <translation type="vanished">โหลดสคริปต์</translation>
+        <translation>โหลดสคริปต์</translation>
     </message>
     <message>
         <source>Run the last macro again with the same answers, without its dialogs when they are unchanged</source>
-        <translation type="vanished">เรียกใช้แมโครล่าสุดอีกครั้งด้วยคำตอบเดิม โดยไม่แสดงกล่องโต้ตอบที่ไม่มีการเปลี่ยนแปลง</translation>
+        <translation>เรียกใช้แมโครล่าสุดอีกครั้งด้วยคำตอบเดิม โดยไม่แสดงกล่องโต้ตอบที่ไม่มีการเปลี่ยนแปลง</translation>
     </message>
     <message>
         <source>Repeat last run</source>
@@ -11136,7 +11192,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Opens audio file</source>
-        <translation type="vanished">เปิดไฟล์เสียง</translation>
+        <translation>เปิดไฟล์เสียง</translation>
     </message>
     <message>
         <source>Opens audio from video</source>
@@ -11148,7 +11204,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Kanji timer</source>
-        <translation type="vanished">ตัวจัดเวลาคันจิ</translation>
+        <translation>ตัวจัดเวลาคันจิ</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -11156,7 +11212,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Getting started</source>
-        <translation type="vanished">&amp;เริ่มต้นใช้งาน</translation>
+        <translation>&amp;เริ่มต้นใช้งาน</translation>
     </message>
     <message>
         <source>Opens the user guide in the default browser</source>
@@ -11196,15 +11252,15 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Closes audio</source>
-        <translation type="vanished">ปิดไฟล์เสียง</translation>
+        <translation>ปิดไฟล์เสียง</translation>
     </message>
     <message>
         <source>Shifting subtitle times</source>
-        <translation type="vanished">เลื่อนเวลาคำบรรยาย</translation>
+        <translation>เลื่อนเวลาคำบรรยาย</translation>
     </message>
     <message>
         <source>Is used to manage ASS styles</source>
-        <translation type="vanished">ใช้สำหรับจัดการสไตล์ ASS</translation>
+        <translation>ใช้สำหรับจัดการสไตล์ ASS</translation>
     </message>
     <message>
         <source>Opens Script properties</source>
@@ -11216,7 +11272,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Check karaoke</source>
-        <translation type="vanished">ตรวจคาราโอเกะ</translation>
+        <translation>ตรวจคาราโอเกะ</translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
@@ -11818,7 +11874,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Align to video…</source>
-        <translation type="vanished">จัดให้ตรงกับวิดีโอ…</translation>
+        <translation>จัดให้ตรงกับวิดีโอ…</translation>
     </message>
     <message>
         <source>Align to video</source>
@@ -18992,6 +19048,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Before turn %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -24505,7 +24565,7 @@ Styles deleted:
     </message>
     <message>
         <source>Perspective tracking</source>
-        <translation type="vanished">การติดตามเพอร์สเปกทีฟ</translation>
+        <translation>การติดตามเพอร์สเปกทีฟ</translation>
     </message>
     <message>
         <source>Power-Pin data</source>
@@ -24986,7 +25046,7 @@ Styles deleted:
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
-        <translation type="vanished">โหมดผู้แปลจะแสดงและบันทึกทั้งข้อความภาษาต่างประเทศและข้อความการแปล</translation>
+        <translation>โหมดผู้แปลจะแสดงและบันทึกทั้งข้อความภาษาต่างประเทศและข้อความการแปล</translation>
     </message>
     <message>
         <source>Paste translation</source>
@@ -25653,7 +25713,7 @@ Styles deleted:
     </message>
     <message>
         <source>Streams</source>
-        <translation type="vanished">สตรีม</translation>
+        <translation>สตรีม</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -27657,6 +27717,14 @@ do not work on comments</source>
     <message>
         <source>Panel</source>
         <translation>แผง</translation>
+    </message>
+    <message>
+        <source>Toggle left side bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Toggle right side bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Swap side bars</source>
