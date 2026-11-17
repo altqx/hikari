@@ -1036,6 +1036,6 @@ It builds on `tests/api/scripts/`. Dialogs answer from `{"answer": {…}}` steps
 
 - **`hikari.lua`.** A class for each type, and each operation's params and result. `hikari.call` has an overload per operation and `hikari.events.on` one per event, so the editor knows what `hikari.call("lines.list", …)` gives back. The other members of the global carry their own signatures, and `PluginStateTest.TheLuaTypeHintsDeclareEveryMemberOfTheHikariGlobal` fails when the helper's global and the file differ.
 - **`hikari.d.ts`.** An interface for each type and each operation's params and result. `Operations` and `Events` map names to them, and the protocol has `InitializeParams`, `HostRequests`, `PluginMethods`, `ProgramCalls`, `Request`, `Response` and the error codes.
-- **The sample.** [Word count](examples/word-count/) is a program plugin in TypeScript. The build compiles it with `bun build --compile`, type-checks it with `tsc` (`hikari_word_count_sample_types`), and `hikari_ui_program_plugin_tests` runs it as a plugin's main program.
+- **The sample.** [Word count](examples/word-count/) is a program plugin in TypeScript. In builds with the AI sidecar's Bun, `hikari_word_count_sample_types` type-checks it with the sidecar's `tsc`, and skips when that isn't installed. On Linux, `hikari_word_count_sample_build` compiles it with `bun build --compile`, and `hikari_ui_program_plugin_tests` runs it as a plugin's main program, skipping where it wasn't compiled.
 
 **The guide.** [plugin-guide.md](plugin-guide.md) gains a page for each capability above.

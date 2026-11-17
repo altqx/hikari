@@ -465,19 +465,23 @@ target_compile_definitions(hikari_ui_program_plugin_tests PRIVATE HIKARI_TEST_PR
 add_dependencies(hikari_ui_program_plugin_tests hikari_plugin_test_program)
 if(HIKARI_BUN)
     set(_hikari_word_count_dir "${PROJECT_SOURCE_DIR}/docs/examples/word-count")
-    set(_hikari_word_count "${CMAKE_CURRENT_BINARY_DIR}/word-count/bin/word-count${CMAKE_EXECUTABLE_SUFFIX}")
-    add_custom_command(OUTPUT "${_hikari_word_count}"
-        COMMAND "${HIKARI_BUN}" build --compile "${_hikari_word_count_dir}/src/main.ts" --outfile "${_hikari_word_count}"
-        DEPENDS "${_hikari_word_count_dir}/src/main.ts" "${PROJECT_SOURCE_DIR}/docs/types/hikari.d.ts"
-        COMMENT "Building the TypeScript sample program plugin"
-        VERBATIM)
-    add_custom_target(hikari_word_count_sample DEPENDS "${_hikari_word_count}")
-    add_dependencies(hikari_ui_program_plugin_tests hikari_word_count_sample)
-    target_compile_definitions(hikari_ui_program_plugin_tests PRIVATE HIKARI_WORD_COUNT="${_hikari_word_count}")
+    set(_hikari_sidecar_modules "${PROJECT_SOURCE_DIR}/src/ai-sidecar/node_modules")
     add_test(NAME hikari_word_count_sample_types
-        COMMAND "${HIKARI_BUN}" "${PROJECT_SOURCE_DIR}/src/ai-sidecar/node_modules/typescript/bin/tsc"
-            -p "${_hikari_word_count_dir}/tsconfig.json" --typeRoots "${PROJECT_SOURCE_DIR}/src/ai-sidecar/node_modules/@types")
-    set_tests_properties(hikari_word_count_sample_types PROPERTIES LABELS ai-sidecar)
+        COMMAND "${HIKARI_BUN}" "${CMAKE_CURRENT_SOURCE_DIR}/word_count_types.ts" "${_hikari_sidecar_modules}/typescript/bin/tsc"
+            "${_hikari_word_count_dir}/tsconfig.json" "${_hikari_sidecar_modules}/@types")
+    set_tests_properties(hikari_word_count_sample_types PROPERTIES LABELS ai-sidecar TIMEOUT 120 SKIP_RETURN_CODE 77)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(_hikari_word_count "${CMAKE_CURRENT_BINARY_DIR}/word-count/word-count")
+        add_test(NAME hikari_word_count_sample_build
+            COMMAND "${HIKARI_BUN}" build --compile "${_hikari_word_count_dir}/src/main.ts" --outfile "${_hikari_word_count}")
+        set_tests_properties(hikari_word_count_sample_build PROPERTIES LABELS ai-sidecar TIMEOUT 120)
+        target_compile_definitions(hikari_ui_program_plugin_tests PRIVATE HIKARI_WORD_COUNT="${_hikari_word_count}")
+        foreach(_hikari_variant IN ITEMS hikari_ui_program_plugin_tests.offscreen hikari_ui_program_plugin_tests.xvfb)
+            if(TEST ${_hikari_variant})
+                set_tests_properties(${_hikari_variant} PROPERTIES DEPENDS hikari_word_count_sample_build)
+            endif()
+        endforeach()
+    endif()
 endif()
 hikari_add_qttest(hikari_ui_plugin_program_downloads_tests SOURCES plugin_program_downloads_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB)

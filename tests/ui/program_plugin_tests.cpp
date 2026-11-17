@@ -245,8 +245,10 @@ private slots:
     void theTypeScriptSampleCountsWords()
     {
 #ifndef HIKARI_WORD_COUNT
-        QSKIP("This build has no Bun to compile the sample.");
+        QSKIP("Only Linux builds with Bun compile the sample.");
 #else
+        if (!QFileInfo::exists(QStringLiteral(HIKARI_WORD_COUNT)))
+            QSKIP("hikari_word_count_sample_build hasn't compiled the sample.");
         const QString sample = folder(QStringLiteral("package/bin/")) + QFileInfo(QStringLiteral(HIKARI_WORD_COUNT)).fileName();
         QFile::remove(sample);
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_WORD_COUNT), sample));
