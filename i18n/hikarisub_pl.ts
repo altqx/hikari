@@ -17582,7 +17582,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>It ran for more than %n second(s).</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>Działała dłużej niż %n sekundę.</numerusform>
             <numerusform>Działała dłużej niż %n sekundy.</numerusform>
             <numerusform>Działała dłużej niż %n sekund.</numerusform>
@@ -17618,7 +17618,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>Wtyczka działała dłużej niż %n sekundę, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
             <numerusform>Wtyczka działała dłużej niż %n sekundy, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
             <numerusform>Wtyczka działała dłużej niż %n sekund, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
@@ -17791,6 +17791,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
+    </message>
+    <message>
+        <source>Works in the background while HikariSub is open: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is still working</source>
+        <extracomment>A plugin&apos;s command or event has run for more than 10 seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A timer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The plugin is stopped. Start it again in its details.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -21231,6 +21252,23 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Video file name</source>
         <translation>Nazwa pliku wideo</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Plugins working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

@@ -929,20 +929,6 @@
 <context>
     <name>HikariSub.Plugins</name>
     <message numerus="yes">
-        <source>It ran for more than %n second(s).</source>
-        <translation>
-            <numerusform>It ran for more than %n second.</numerusform>
-            <numerusform>It ran for more than %n seconds.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation>
-            <numerusform>The plugin ran for more than %n second, so HikariSub stopped it. Its next command starts it again.</numerusform>
-            <numerusform>The plugin ran for more than %n seconds, so HikariSub stopped it. Its next command starts it again.</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>Marks %n line(s) in %1</source>
         <translation>
             <numerusform>Marks %n line in %1</numerusform>
@@ -1688,6 +1674,17 @@
         <translation>
             <numerusform>The tag takes %n value.</numerusform>
             <numerusform>The tag takes %n values.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.StatusBar</name>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation>
+            <numerusform>%n plugin working</numerusform>
+            <numerusform>%n plugins working</numerusform>
         </translation>
     </message>
 </context>

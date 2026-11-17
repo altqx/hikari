@@ -30,6 +30,7 @@ constexpr double kMaxExactInteger = 9007199254740992.0;
 
 const char kCommandsKey[] = "hikari.commands";
 const char kEventsKey[] = "hikari.events";
+const char kTimersKey[] = "hikari.timers";
 const char kLoadedKey[] = "hikari.loaded";
 const char kArrayKey[] = "hikari.array";
 const char kNull = 0;
@@ -50,6 +51,13 @@ void *allocate(void *budget, void *block, std::size_t oldSize, std::size_t newSi
     if (grown)
         b.used = b.used - held + newSize;
     return grown;
+}
+
+std::string sizeText(std::size_t bytes)
+{
+    if (bytes >= (std::size_t(1) << 30) && bytes % (std::size_t(1) << 30) == 0)
+        return std::to_string(bytes >> 30) + " GB";
+    return std::to_string(bytes >> 20) + " MB";
 }
 
 std::filesystem::path fromUtf8(const std::string &text)
@@ -432,6 +440,54 @@ int jobCall(lua_State *L)
     return request(L, Area::Job);
 }
 
+void keepTimer(lua_State *L, std::int64_t id, int function)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, kTimersKey);
+    lua_pushnumber(L, static_cast<lua_Number>(id));
+    if (function == 0)
+        lua_pushnil(L);
+    else
+        lua_pushvalue(L, function);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+}
+
+int startTimer(lua_State *L, const char *operation)
+{
+    const lua_Number ms = luaL_checknumber(L, 1);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+    const auto started = Access::host(L).request(Area::Timer, operation, Json::object({{"ms", ms}}));
+    if (!started)
+        return pushCallResult(L, started);
+    const Json *id = started->find("id");
+    if (!id || !id->isInt())
+        raise(L, "HikariSub gave the timer no id");
+    keepTimer(L, id->asInt(), 2);
+    lua_pushnumber(L, static_cast<lua_Number>(id->asInt()));
+    return 1;
+}
+
+int timerAfter(lua_State *L)
+{
+    return startTimer(L, "timer.after");
+}
+
+int timerEvery(lua_State *L)
+{
+    return startTimer(L, "timer.every");
+}
+
+int timerCancel(lua_State *L)
+{
+    const auto id = static_cast<std::int64_t>(luaL_checknumber(L, 1));
+    const auto cancelled = Access::host(L).request(Area::Timer, "timer.cancel", Json::object({{"id", id}}));
+    if (!cancelled)
+        return pushCallResult(L, cancelled);
+    keepTimer(L, id, 0);
+    lua_pushboolean(L, 1);
+    return 1;
+}
+
 void addHandler(lua_State *L, const std::string &name, int function)
 {
     lua_getfield(L, LUA_REGISTRYINDEX, kEventsKey);
@@ -673,7 +729,7 @@ std::expected<void, std::string> PluginState::open()
 
     luaL_newmetatable(L, kArrayKey);
     lua_pop(L, 1);
-    for (const char *key : {kCommandsKey, kEventsKey, kLoadedKey}) {
+    for (const char *key : {kCommandsKey, kEventsKey, kTimersKey, kLoadedKey}) {
         lua_newtable(L);
         lua_setfield(L, LUA_REGISTRYINDEX, key);
     }
@@ -702,6 +758,12 @@ std::expected<void, std::string> PluginState::open()
     lua_newtable(L);
     setFunction(L, this, "on", onEvent);
     lua_setfield(L, -2, "events");
+
+    lua_newtable(L);
+    setFunction(L, this, "after", timerAfter);
+    setFunction(L, this, "every", timerEvery);
+    setFunction(L, this, "cancel", timerCancel);
+    lua_setfield(L, -2, "timer");
 
     lua_newtable(L);
     setFunction(L, this, "get", getSetting);
@@ -769,7 +831,7 @@ std::expected<void, std::string> PluginState::protectedCall(int arguments, Host 
     m_host = nullptr;
     std::string message;
     if (status == LUA_ERRMEM)
-        message = "the plugin ran out of memory: it may hold " + std::to_string(m_budget.limit >> 20) + " MB";
+        message = "the plugin ran out of memory: it may hold " + sizeText(m_budget.limit);
     else if (status != 0)
         message = text(L, -1);
     lua_settop(L, base - 1);
@@ -855,6 +917,22 @@ std::expected<void, std::string> PluginState::dispatch(const std::string &event,
     }
     lua_pop(L, 1);
     return first;
+}
+
+std::expected<void, std::string> PluginState::fire(std::int64_t timer, bool last, Host &host)
+{
+    lua_State *L = m_lua;
+    lua_getfield(L, LUA_REGISTRYINDEX, kTimersKey);
+    lua_pushnumber(L, static_cast<lua_Number>(timer));
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
+    if (last)
+        keepTimer(L, timer, 0);
+    if (!lua_isfunction(L, -1)) {
+        lua_pop(L, 1);
+        return {};
+    }
+    return protectedCall(0, host);
 }
 
 }
