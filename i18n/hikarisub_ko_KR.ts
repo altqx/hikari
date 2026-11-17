@@ -72,10 +72,6 @@
         <translation>새 스레드</translation>
     </message>
     <message>
-        <source>Thread menu</source>
-        <translation type="vanished">스레드 메뉴</translation>
-    </message>
-    <message>
         <source>Add a provider to use the agent</source>
         <translation>에이전트를 쓰려면 공급자를 추가하세요</translation>
     </message>
@@ -164,44 +160,12 @@
         <translation>%1/%2</translation>
     </message>
     <message>
-        <source>%1 · active tab</source>
-        <translation type="vanished">%1 · 활성 탭</translation>
-    </message>
-    <message>
-        <source>Ask, or type @ to attach, / for commands</source>
-        <translation type="vanished">질문하거나 @로 첨부, /로 명령</translation>
-    </message>
-    <message>
         <source>Add a provider first</source>
         <translation>먼저 공급자를 추가하세요</translation>
     </message>
     <message>
         <source>Message</source>
         <translation>메시지</translation>
-    </message>
-    <message>
-        <source>Attach</source>
-        <translation type="vanished">첨부</translation>
-    </message>
-    <message>
-        <source>Search the web</source>
-        <translation type="vanished">웹 검색</translation>
-    </message>
-    <message>
-        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation type="vanished">이 공급자는 자체적으로 웹을 검색할 수 없습니다. 설정 › AI › 웹 검색에서 검색 서비스를 선택하세요.</translation>
-    </message>
-    <message>
-        <source>Search the web: on for this thread</source>
-        <translation type="vanished">웹 검색: 이 스레드에서 켜짐</translation>
-    </message>
-    <message>
-        <source>Search the web: off for this thread</source>
-        <translation type="vanished">웹 검색: 이 스레드에서 꺼짐</translation>
-    </message>
-    <message>
-        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation type="vanished">스레드 중간에 바꾸면 Anthropic에서 캐시 미스가 한 번 발생합니다.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -278,14 +242,6 @@
         <translation>스레드 삭제</translation>
     </message>
     <message>
-        <source>Delete this thread?</source>
-        <translation type="vanished">이 스레드를 삭제하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
-        <translation type="vanished">대화는 삭제됩니다. 대화에서 한 변경은 자막과 검토에 그대로 남습니다.</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>삭제</translation>
     </message>
@@ -302,10 +258,6 @@
         <translation>모델을 불러오는 중…</translation>
     </message>
     <message>
-        <source>Settings › AI…</source>
-        <translation type="vanished">설정 › AI…</translation>
-    </message>
-    <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
         <translation>각 자막 수정은 적용되기 전에 직접 승인하며, 다른 모든 변경도 마찬가지입니다. 읽기는 묻지 않습니다.</translation>
     </message>
@@ -316,10 +268,6 @@
     <message>
         <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
         <translation>항상 묻는 목록 외에는 묻지 않습니다. 편집은 바로 적용되며 실행 취소할 수 있습니다.</translation>
-    </message>
-    <message>
-        <source>Default for new threads…</source>
-        <translation type="vanished">새 스레드 기본값…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -400,18 +348,6 @@
         <translation>%1이(가) 묻습니다</translation>
     </message>
     <message>
-        <source>Judge asks you</source>
-        <translation type="vanished">판정자가 묻습니다</translation>
-    </message>
-    <message>
-        <source>Allow %1?</source>
-        <translation type="vanished">%1을(를) 허용하시겠습니까?</translation>
-    </message>
-    <message>
-        <source>Run %1?</source>
-        <translation type="vanished">%1을(를) 실행하시겠습니까?</translation>
-    </message>
-    <message>
         <source>asks in every mode</source>
         <translation>모든 모드에서 물음</translation>
     </message>
@@ -446,10 +382,6 @@
     <message>
         <source>Deny</source>
         <translation>거부</translation>
-    </message>
-    <message>
-        <source>Deny and tell the agent…</source>
-        <translation type="vanished">거부하고 에이전트에게 알리기…</translation>
     </message>
     <message>
         <source>Withdrawn: the agent stopped waiting for your answer.</source>
@@ -928,10 +860,6 @@
         <translation>턴이 중단되었으며 저절로 다시 실행되지 않습니다. 턴에서 한 변경은 검토에 남습니다.</translation>
     </message>
     <message>
-        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation type="vanished">HikariSub가 아직 AI 구성 요소를 받는 중이거나 구성 요소를 시작하지 못했습니다.</translation>
-    </message>
-    <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
         <translation>검색 서비스가 %1(으)로 응답했습니다. 웹 검색 없이 답변을 계속합니다.</translation>
     </message>
@@ -1002,10 +930,6 @@
     <message>
         <source>Decline</source>
         <translation>거절</translation>
-    </message>
-    <message>
-        <source>Decline and tell the agent…</source>
-        <translation type="vanished">거절하고 에이전트에게 알리기…</translation>
     </message>
     <message>
         <source>Sent back to the agent: %1</source>
@@ -1142,10 +1066,6 @@
         <translation>소리 설정</translation>
     </message>
     <message>
-        <source>Audio settings…</source>
-        <translation type="vanished">소리 설정…</translation>
-    </message>
-    <message>
         <source>Link the volume and stretch sliders</source>
         <translation>음량 슬라이더와 확대/축소 슬라이더 연결</translation>
     </message>
@@ -1186,10 +1106,6 @@
         <translation>재생 중지</translation>
     </message>
     <message>
-        <source>Play 500 ms after the start time</source>
-        <translation type="vanished">시작 후 0.5초 재생</translation>
-    </message>
-    <message>
         <source>Play to the end</source>
         <translation>끝까지 재생</translation>
     </message>
@@ -1226,16 +1142,8 @@
         <translation>자동 분할</translation>
     </message>
     <message>
-        <source>Enable / Disable automatic splitting of syllables</source>
-        <translation type="vanished">음절 자동 분할 활성화 / 비활성화</translation>
-    </message>
-    <message>
         <source>Auto-scroll</source>
         <translation>자동 스크롤</translation>
-    </message>
-    <message>
-        <source>Auto-scroll to the active line</source>
-        <translation type="vanished">활성 줄 자동 스크롤</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1259,24 +1167,12 @@
         <translation>시작 전 0.5초 재생</translation>
     </message>
     <message>
-        <source>Play 500 ms before the start time</source>
-        <translation type="vanished">시작 전 0.5초 재생</translation>
-    </message>
-    <message>
         <source>Play the first 500 ms</source>
         <translation>처음 0.5초 재생</translation>
     </message>
     <message>
-        <source>Play 500 ms before the end time</source>
-        <translation type="vanished">종료 전 0.5초 재생</translation>
-    </message>
-    <message>
         <source>Play the last 500 ms</source>
         <translation>마지막 0.5초 재생</translation>
-    </message>
-    <message>
-        <source>Play 500 ms after the end time</source>
-        <translation type="vanished">종료 후 0.5초 재생</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1371,28 +1267,12 @@
         <translation>파형</translation>
     </message>
     <message>
-        <source>Waveform mode</source>
-        <translation type="vanished">파형 모드</translation>
-    </message>
-    <message>
-        <source>Spectrum mode</source>
-        <translation type="vanished">스펙트럼 모드</translation>
-    </message>
-    <message>
         <source>Sync with video</source>
         <translation>영상과 동기화</translation>
     </message>
     <message>
-        <source>Sync the video and audio cursors</source>
-        <translation type="vanished">영상 커서와 소리 커서 동기화</translation>
-    </message>
-    <message>
         <source>Speech</source>
         <translation>음성</translation>
-    </message>
-    <message>
-        <source>More audio options</source>
-        <translation type="vanished">소리 옵션 더 보기</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1690,10 +1570,6 @@ Output device: %2</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>Answers and presets</source>
-        <translation type="vanished">답변 및 프리셋</translation>
-    </message>
-    <message>
         <source>Last used</source>
         <translation>마지막 사용 값</translation>
     </message>
@@ -1848,10 +1724,6 @@ Output device: %2</source>
     <message>
         <source>Filter macros</source>
         <translation>매크로 필터</translation>
-    </message>
-    <message>
-        <source>Rerun last macro</source>
-        <translation type="vanished">마지막 매크로 다시 실행</translation>
     </message>
     <message>
         <source>%1 cancelled</source>
@@ -2172,10 +2044,6 @@ Output device: %2</source>
     <message>
         <source>Stopped</source>
         <translation>중지됨</translation>
-    </message>
-    <message>
-        <source>%1 options</source>
-        <translation type="vanished">%1 설정</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -3371,10 +3239,6 @@ Output device: %2</source>
         <translation>단어별 타이밍 가사 (*.lrc *.krc *.qrc *.ttml)</translation>
     </message>
     <message>
-        <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation type="vanished">단어별 타이밍 가사 (*.lrc *.ttml)</translation>
-    </message>
-    <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
         <translation>YouTube 시간 지정 텍스트(*.ytt *.srv3)</translation>
     </message>
@@ -3809,42 +3673,6 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Editor</name>
     <message>
-        <source>Bottom-left</source>
-        <translation type="vanished">왼쪽 아래</translation>
-    </message>
-    <message>
-        <source>Bottom-centre</source>
-        <translation type="vanished">중앙 아래</translation>
-    </message>
-    <message>
-        <source>Bottom-right</source>
-        <translation type="vanished">오른쪽 아래</translation>
-    </message>
-    <message>
-        <source>Middle-left</source>
-        <translation type="vanished">왼쪽 중앙</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation type="vanished">중앙</translation>
-    </message>
-    <message>
-        <source>Middle-right</source>
-        <translation type="vanished">오른쪽 중앙</translation>
-    </message>
-    <message>
-        <source>Top-left</source>
-        <translation type="vanished">왼쪽 위</translation>
-    </message>
-    <message>
-        <source>Top-centre</source>
-        <translation type="vanished">중앙 위</translation>
-    </message>
-    <message>
-        <source>Top-right</source>
-        <translation type="vanished">오른쪽 위</translation>
-    </message>
-    <message>
         <source>Text position</source>
         <translation>글자 위치</translation>
     </message>
@@ -4041,10 +3869,6 @@ Output device: %2</source>
         <translation>태그 버튼 추가…</translation>
     </message>
     <message>
-        <source>Add a tag button</source>
-        <translation type="vanished">태그 버튼 추가</translation>
-    </message>
-    <message>
         <source>Edit…</source>
         <translation>편집…</translation>
     </message>
@@ -4059,10 +3883,6 @@ Output device: %2</source>
     <message>
         <source>Remove</source>
         <translation>제거</translation>
-    </message>
-    <message>
-        <source>Check spelling</source>
-        <translation type="vanished">철자 검사</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -6646,10 +6466,6 @@ Failed to copy %2 fonts.</source>
         <translation>이 태그만</translation>
     </message>
     <message>
-        <source>These tags:</source>
-        <translation type="vanished">다음 태그:</translation>
-    </message>
-    <message>
         <source>changed</source>
         <translation>변경됨</translation>
     </message>
@@ -7234,14 +7050,6 @@ Failed to copy %2 fonts.</source>
         <translation>오른쪽으로 스크롤</translation>
     </message>
     <message>
-        <source>Play before the marker</source>
-        <translation type="vanished">표시선 이전 재생</translation>
-    </message>
-    <message>
-        <source>Play after the marker</source>
-        <translation type="vanished">표시선 이후 재생</translation>
-    </message>
-    <message>
         <source>Play to the end</source>
         <translation>끝까지 재생</translation>
     </message>
@@ -7554,16 +7362,8 @@ Failed to copy %2 fonts.</source>
         <translation>구분 열 붙여 넣기</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV file</source>
-        <translation type="vanished">MKV 파일에서 자막 불러오기</translation>
-    </message>
-    <message>
         <source>Swap lines</source>
         <translation>줄 서로 바꾸기</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation type="vanished">새 프레임 속도 설정</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -7602,32 +7402,16 @@ Failed to copy %2 fonts.</source>
         <translation>프로그램 정보</translation>
     </message>
     <message>
-        <source>Report an issue</source>
-        <translation type="vanished">문제 보고</translation>
-    </message>
-    <message>
         <source>Open audio from video</source>
         <translation>영상에서 소리 열기</translation>
-    </message>
-    <message>
-        <source>Load script</source>
-        <translation type="vanished">스크립트 불러오기</translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
         <translation>자동 불러오기 스크립트 새로 고침</translation>
     </message>
     <message>
-        <source>Time shift window</source>
-        <translation type="vanished">시간 이동 창</translation>
-    </message>
-    <message>
         <source>Close audio</source>
         <translation>소리 닫기</translation>
-    </message>
-    <message>
-        <source>Find and replace</source>
-        <translation type="vanished">찾아서 바꾸기</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -7642,10 +7426,6 @@ Failed to copy %2 fonts.</source>
         <translation>만든 사람들</translation>
     </message>
     <message>
-        <source>Hide tags</source>
-        <translation type="vanished">태그 숨김</translation>
-    </message>
-    <message>
         <source>History</source>
         <translation>기록</translation>
     </message>
@@ -7656,10 +7436,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Merge with next line</source>
         <translation>다음 줄과 병합</translation>
-    </message>
-    <message>
-        <source>Open keyframes</source>
-        <translation type="vanished">키 프레임 열기</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -7676,10 +7452,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Sort all lines by end time</source>
         <translation>모든 줄 정렬 / 종료 시간</translation>
-    </message>
-    <message>
-        <source>Sort all lines by styles</source>
-        <translation type="vanished">모든 줄 정렬 / 스타일</translation>
     </message>
     <message>
         <source>Sort all lines by actor</source>
@@ -7710,10 +7482,6 @@ Failed to copy %2 fonts.</source>
         <translation>선택한 줄 정렬 / 종료 시간</translation>
     </message>
     <message>
-        <source>Sort selected lines by styles</source>
-        <translation type="vanished">선택한 줄 정렬 / 스타일</translation>
-    </message>
-    <message>
         <source>Sort selected lines by actor</source>
         <translation>선택한 줄 정렬 / 배우</translation>
     </message>
@@ -7738,10 +7506,6 @@ Failed to copy %2 fonts.</source>
         <translation>마지막 값으로 시간 이동</translation>
     </message>
     <message>
-        <source>Timing postprocessor panel</source>
-        <translation type="vanished">타이밍 후처리기 패널</translation>
-    </message>
-    <message>
         <source>Timing postprocessor with the last values</source>
         <translation>마지막 값으로 타이밍 후처리기 실행</translation>
     </message>
@@ -7752,10 +7516,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Go to next keyframe</source>
         <translation>다음 키 프레임</translation>
-    </message>
-    <message>
-        <source>Resample subtitles</source>
-        <translation type="vanished">자막 해상도 변경</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -7778,10 +7538,6 @@ Failed to copy %2 fonts.</source>
         <translation>새 탭 열기</translation>
     </message>
     <message>
-        <source>Close current tab</source>
-        <translation type="vanished">현재 탭 닫기</translation>
-    </message>
-    <message>
         <source>Clean styles of ASS file</source>
         <translation>ASS 파일 스타일 정리</translation>
     </message>
@@ -7798,24 +7554,8 @@ Failed to copy %2 fonts.</source>
         <translation>마지막 작업 열기</translation>
     </message>
     <message>
-        <source>Next frame</source>
-        <translation type="vanished">다음 프레임</translation>
-    </message>
-    <message>
         <source>Next tab</source>
         <translation>다음 탭</translation>
-    </message>
-    <message>
-        <source>Open audio</source>
-        <translation type="vanished">소리 파일 열기</translation>
-    </message>
-    <message>
-        <source>Open subtitles</source>
-        <translation type="vanished">자막 열기</translation>
-    </message>
-    <message>
-        <source>Open video</source>
-        <translation type="vanished">영상 파일 열기</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7824,10 +7564,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Play active line</source>
         <translation>활성 줄 재생</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation type="vanished">이전 프레임</translation>
     </message>
     <message>
         <source>Previous tab</source>
@@ -7854,68 +7590,20 @@ Failed to copy %2 fonts.</source>
         <translation>글자 삭제</translation>
     </message>
     <message>
-        <source>Save all subtitles</source>
-        <translation type="vanished">자막 모두 저장</translation>
-    </message>
-    <message>
         <source>Save</source>
         <translation>저장</translation>
-    </message>
-    <message>
-        <source>Save translation</source>
-        <translation type="vanished">번역본 저장</translation>
-    </message>
-    <message>
-        <source>Save subtitles using the video name</source>
-        <translation type="vanished">영상과 같은 이름으로 자막 저장</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation type="vanished">찾기</translation>
     </message>
     <message>
         <source>Select line at current video position</source>
         <translation>현재 영상 위치의 줄 선택</translation>
     </message>
     <message>
-        <source>Select lines</source>
-        <translation type="vanished">줄 선택</translation>
-    </message>
-    <message>
         <source>Set audio position to video time</source>
         <translation>소리 위치를 영상 시간으로 설정</translation>
     </message>
     <message>
-        <source>Set audio marker to video time</source>
-        <translation type="vanished">소리 표시선을 영상 시간으로 설정</translation>
-    </message>
-    <message>
-        <source>Insert end time from video</source>
-        <translation type="vanished">영상에서 종료 시간 넣기</translation>
-    </message>
-    <message>
-        <source>Insert start time from video</source>
-        <translation type="vanished">영상에서 시작 시간 넣기</translation>
-    </message>
-    <message>
         <source>Settings</source>
         <translation>설정</translation>
-    </message>
-    <message>
-        <source>Play first 500 ms</source>
-        <translation type="vanished">처음 500 ms 재생</translation>
-    </message>
-    <message>
-        <source>Play last 500 ms</source>
-        <translation type="vanished">마지막 500 ms 재생</translation>
-    </message>
-    <message>
-        <source>Play 500 ms before</source>
-        <translation type="vanished">시작 전 500 ms 재생</translation>
-    </message>
-    <message>
-        <source>Play 500 ms after</source>
-        <translation type="vanished">종료 후 500 ms 재생</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -8004,10 +7692,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Next file</source>
         <translation>다음 파일</translation>
-    </message>
-    <message>
-        <source>Change aspect ratio</source>
-        <translation type="vanished">가로 세로 비율 변경</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8238,14 +7922,6 @@ Failed to copy %2 fonts.</source>
         <translation>시작하기</translation>
     </message>
     <message>
-        <source>Export as</source>
-        <translation type="vanished">다른 형식으로 내보내기</translation>
-    </message>
-    <message>
-        <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">소리 선택 영역으로 이전 줄과 잇기</translation>
-    </message>
-    <message>
         <source>Shift selected lines by frames: start at video</source>
         <translation>선택한 줄을 프레임 단위로 이동: 시작을 영상에</translation>
     </message>
@@ -8294,28 +7970,12 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Video details…</source>
-        <translation type="vanished">영상 정보…</translation>
-    </message>
-    <message>
         <source>Convert Aegisub folds to line groups</source>
         <translation>Aegisub 접기를 줄 그룹으로 변환</translation>
     </message>
     <message>
-        <source>Open timecodes</source>
-        <translation type="vanished">타임코드 열기</translation>
-    </message>
-    <message>
-        <source>Save timecodes</source>
-        <translation type="vanished">타임코드 저장</translation>
-    </message>
-    <message>
         <source>Close timecodes</source>
         <translation>타임코드 닫기</translation>
-    </message>
-    <message>
-        <source>QC notes panel</source>
-        <translation type="vanished">QC 메모 패널</translation>
     </message>
     <message>
         <source>Next QC note</source>
@@ -8324,14 +7984,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Previous QC note</source>
         <translation>이전 QC 메모</translation>
-    </message>
-    <message>
-        <source>Add QC note</source>
-        <translation type="vanished">QC 메모 추가</translation>
-    </message>
-    <message>
-        <source>Perspective tracking…</source>
-        <translation type="vanished">원근 추적…</translation>
     </message>
     <message>
         <source>Play before the mark</source>
@@ -8380,10 +8032,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Copy motion data from lines</source>
         <translation>줄에서 모션 데이터 복사</translation>
-    </message>
-    <message>
-        <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">줄에서 Power-Pin 트랙 복사</translation>
     </message>
     <message>
         <source>Extend tracked lines…</source>
@@ -8963,10 +8611,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>AI</source>
-        <translation type="obsolete">AI</translation>
-    </message>
-    <message>
         <source>Rewrite…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9401,10 +9045,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Syllable outside the line</source>
         <translation>줄 밖의 음절</translation>
-    </message>
-    <message>
-        <source>Karaoke check</source>
-        <translation type="vanished">노래방 검사</translation>
     </message>
     <message>
         <source>No karaoke problems found</source>
@@ -10037,52 +9677,20 @@ Failed to copy %2 fonts.</source>
         <translation>파일[&amp;F]</translation>
     </message>
     <message>
-        <source>&amp;Open…</source>
-        <translation type="vanished">열기…[&amp;O]</translation>
-    </message>
-    <message>
-        <source>Recently opened &amp;subtitles</source>
-        <translation type="vanished">열었던 자막[&amp;S]</translation>
-    </message>
-    <message>
         <source>None</source>
         <translation>없음</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the &amp;editor</source>
-        <translation type="vanished">편집기에서 자막 제거[&amp;E]</translation>
-    </message>
-    <message>
-        <source>&amp;Close</source>
-        <translation type="vanished">닫기[&amp;C]</translation>
     </message>
     <message>
         <source>&amp;Save</source>
         <translation>저장[&amp;S]</translation>
     </message>
     <message>
-        <source>Save &amp;all</source>
-        <translation type="vanished">모두 저장[&amp;A]</translation>
-    </message>
-    <message>
         <source>Save &amp;as…</source>
         <translation>다른 이름으로 저장…[&amp;A]</translation>
     </message>
     <message>
-        <source>Save &amp;translation</source>
-        <translation type="vanished">번역본 저장[&amp;T]</translation>
-    </message>
-    <message>
-        <source>Save subtitles using the video name</source>
-        <translation type="vanished">영상과 같은 이름으로 자막 저장</translation>
-    </message>
-    <message>
         <source>Open autosave…</source>
         <translation>자동 저장 파일 열기…</translation>
-    </message>
-    <message>
-        <source>Remove temporary files</source>
-        <translation type="vanished">임시 파일 삭제</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -10095,22 +9703,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Load session from file</source>
         <translation>파일에서 세션 불러오기</translation>
-    </message>
-    <message>
-        <source>Save session to file</source>
-        <translation type="vanished">파일로 세션 저장</translation>
-    </message>
-    <message>
-        <source>Ask whether to load the last session at program startup</source>
-        <translation type="vanished">프로그램 실행 시 마지막 작업 물어보기</translation>
-    </message>
-    <message>
-        <source>Load last session after program start</source>
-        <translation type="vanished">마지막 작업 항상 열기</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation type="vanished">설정[&amp;S]</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
@@ -10129,24 +9721,12 @@ Failed to copy %2 fonts.</source>
         <translation>다시 실행[&amp;R]</translation>
     </message>
     <message>
-        <source>So&amp;rt all lines</source>
-        <translation type="vanished">모든 줄 정렬[&amp;R]</translation>
-    </message>
-    <message>
-        <source>So&amp;rt selected lines</source>
-        <translation type="vanished">선택 줄 정렬[&amp;R]</translation>
-    </message>
-    <message>
         <source>Undo to last save</source>
         <translation>마지막 저장으로 돌리기</translation>
     </message>
     <message>
         <source>&amp;History</source>
         <translation>기록[&amp;H]</translation>
-    </message>
-    <message>
-        <source>Select &amp;lines</source>
-        <translation type="vanished">줄 선택[&amp;L]</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -10181,10 +9761,6 @@ Failed to copy %2 fonts.</source>
         <translation>자동 불러오기 스크립트 새로 고침</translation>
     </message>
     <message>
-        <source>Rerun last macro</source>
-        <translation type="vanished">마지막 매크로 다시 실행</translation>
-    </message>
-    <message>
         <source>&amp;Video</source>
         <translation>영상[&amp;V]</translation>
     </message>
@@ -10193,20 +9769,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상 파일 열기…[&amp;V]</translation>
     </message>
     <message>
-        <source>Previous frame</source>
-        <translation type="vanished">이전 프레임</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation type="vanished">다음 프레임</translation>
-    </message>
-    <message>
         <source>Go to end time of line</source>
         <translation>종료 시간으로</translation>
-    </message>
-    <message>
-        <source>Play or pause</source>
-        <translation type="vanished">재생 또는 일시 정지</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -10237,20 +9801,8 @@ Failed to copy %2 fonts.</source>
         <translation>더미 영상 열기</translation>
     </message>
     <message>
-        <source>Insert start time from video</source>
-        <translation type="vanished">영상에서 시작 시간 넣기</translation>
-    </message>
-    <message>
-        <source>Insert end time from video</source>
-        <translation type="vanished">영상에서 종료 시간 넣기</translation>
-    </message>
-    <message>
         <source>Set audio position to video time</source>
         <translation>소리 위치를 영상 시간으로 설정</translation>
-    </message>
-    <message>
-        <source>Set audio marker to video time</source>
-        <translation type="vanished">소리 표시선을 영상 시간으로 설정</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -10275,14 +9827,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Recently opened audio</source>
         <translation>열었던 소리</translation>
-    </message>
-    <message>
-        <source>Open audio from video</source>
-        <translation type="vanished">영상에서 소리 열기</translation>
-    </message>
-    <message>
-        <source>Close audio</source>
-        <translation type="vanished">소리 닫기</translation>
     </message>
     <message>
         <source>Vie&amp;w</source>
@@ -10345,10 +9889,6 @@ Failed to copy %2 fonts.</source>
         <translation>파일 형식과 아이디어를 가져온 곳</translation>
     </message>
     <message>
-        <source>Restore the previous layout</source>
-        <translation type="vanished">이전 레이아웃 복원</translation>
-    </message>
-    <message>
         <source>&amp;Subtitles</source>
         <translation>자막[&amp;S]</translation>
     </message>
@@ -10385,22 +9925,6 @@ Failed to copy %2 fonts.</source>
         <translation>스타일 관리[&amp;M]</translation>
     </message>
     <message>
-        <source>Script properties</source>
-        <translation type="vanished">스크립트 속성</translation>
-    </message>
-    <message>
-        <source>Font collector</source>
-        <translation type="vanished">글꼴 수집기</translation>
-    </message>
-    <message>
-        <source>Resample subtitles</source>
-        <translation type="vanished">자막 해상도 변경</translation>
-    </message>
-    <message>
-        <source>Check spelling</source>
-        <translation type="vanished">철자 검사</translation>
-    </message>
-    <message>
         <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
         <translation>선택한 각 줄의 시간이 지정된 %1를 같은 속도로 줄의 시작부터 끝까지 이어 갑니다</translation>
     </message>
@@ -10409,28 +9933,12 @@ Failed to copy %2 fonts.</source>
         <translation>줄 전체로 %1 외삽</translation>
     </message>
     <message>
-        <source>Install, turn on and off, and uninstall plugins</source>
-        <translation type="vanished">플러그인 설치, 켜기/끄기, 설치 제거</translation>
-    </message>
-    <message>
-        <source>Pl&amp;ugins…</source>
-        <translation type="vanished">플러그인…[&amp;U]</translation>
-    </message>
-    <message>
         <source>Remove from the layout</source>
         <translation>레이아웃에서 제거</translation>
     </message>
     <message>
-        <source>Hide tags</source>
-        <translation type="vanished">태그 숨김</translation>
-    </message>
-    <message>
         <source>&amp;Help</source>
         <translation>도움말[&amp;H]</translation>
-    </message>
-    <message>
-        <source>&amp;Report an issue</source>
-        <translation type="vanished">문제 보고[&amp;R]</translation>
     </message>
     <message>
         <source>Check for &amp;updates</source>
@@ -10535,24 +10043,8 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open subtitle file</source>
-        <translation type="vanished">자막 파일 열기</translation>
-    </message>
-    <message>
-        <source>Open a folder as a project</source>
-        <translation type="vanished">폴더를 프로젝트로 열기</translation>
-    </message>
-    <message>
         <source>Open &amp;folder…</source>
         <translation>폴더 열기…[&amp;F]</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation type="vanished">열었던 자막</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation type="vanished">열기</translation>
     </message>
     <message>
         <source>Open %1</source>
@@ -10563,16 +10055,8 @@ Failed to copy %2 fonts.</source>
         <translation>모든 자막을 삭제하고 &quot;새 자막&quot;으로 만들기</translation>
     </message>
     <message>
-        <source>Close this window’s tabs and its project</source>
-        <translation type="vanished">이 창의 탭과 프로젝트 닫기</translation>
-    </message>
-    <message>
         <source>Close pro&amp;ject</source>
         <translation>프로젝트 닫기[&amp;J]</translation>
-    </message>
-    <message>
-        <source>Opens video file</source>
-        <translation type="vanished">영상 파일 열기</translation>
     </message>
     <message>
         <source>Imports a subtitle track from a Matroska file</source>
@@ -10591,18 +10075,6 @@ Failed to copy %2 fonts.</source>
         <translation>가사 가져오기…</translation>
     </message>
     <message>
-        <source>Save current file</source>
-        <translation type="vanished">현재 파일 저장</translation>
-    </message>
-    <message>
-        <source>Save all subtitles</source>
-        <translation type="vanished">자막 모두 저장</translation>
-    </message>
-    <message>
-        <source>Save as</source>
-        <translation type="vanished">다른 이름으로 저장</translation>
-    </message>
-    <message>
         <source>Writes a copy of the document in another format</source>
         <translation>문서의 사본을 다른 형식으로 씁니다</translation>
     </message>
@@ -10611,20 +10083,8 @@ Failed to copy %2 fonts.</source>
         <translation>다른 형식으로 내보내기…[&amp;E]</translation>
     </message>
     <message>
-        <source>Save translation</source>
-        <translation type="vanished">번역 저장</translation>
-    </message>
-    <message>
         <source>Opens the selected autosave from the list</source>
         <translation>자동 저장 목록 열기</translation>
-    </message>
-    <message>
-        <source>Opens the temporary file removal window</source>
-        <translation type="vanished">임시 파일 제거 창 열기</translation>
-    </message>
-    <message>
-        <source>Last session options</source>
-        <translation type="vanished">마지막 작업 설정</translation>
     </message>
     <message>
         <source>Loads previously loaded files</source>
@@ -10639,44 +10099,8 @@ Failed to copy %2 fonts.</source>
         <translation>파일로 세션 저장</translation>
     </message>
     <message>
-        <source>Asks whether to load previously loaded files at program startup</source>
-        <translation type="vanished">프로그램을 시작할 때 최근에 읽은 파일을 불러올지 묻습니다</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files at program startup</source>
-        <translation type="vanished">프로그램 시작 후 마지막 세션 로드</translation>
-    </message>
-    <message>
-        <source>Program settings</source>
-        <translation type="vanished">프로그램 설정</translation>
-    </message>
-    <message>
-        <source>Close this window; closing the last window exits the program</source>
-        <translation type="vanished">이 창을 닫습니다. 마지막 창을 닫으면 프로그램이 종료됩니다</translation>
-    </message>
-    <message>
         <source>Close &amp;window</source>
         <translation>창 닫기[&amp;W]</translation>
-    </message>
-    <message>
-        <source>Exit the program</source>
-        <translation type="vanished">프로그램 종료</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation type="vanished">실행 취소</translation>
-    </message>
-    <message>
-        <source>Redo</source>
-        <translation type="vanished">다시 실행</translation>
-    </message>
-    <message>
-        <source>Sorts all lines in ASS file</source>
-        <translation type="vanished">모든 줄 정렬 / ASS 파일</translation>
-    </message>
-    <message>
-        <source>Sorts selected lines in ASS file</source>
-        <translation type="vanished">선택 줄 정렬 / ASS 파일</translation>
     </message>
     <message>
         <source>History</source>
@@ -10795,16 +10219,8 @@ Failed to copy %2 fonts.</source>
         <translation>QC 검토 메모를 파일에 저장하고 메모가 가리키는 줄을 표시합니다</translation>
     </message>
     <message>
-        <source>&amp;QC notes…</source>
-        <translation type="vanished">QC 메모(&amp;Q)…</translation>
-    </message>
-    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>자막 시간의 프레임 속도를 바꿉니다</translation>
-    </message>
-    <message>
-        <source>Set FPS</source>
-        <translation type="vanished">프레임 속도 설정</translation>
     </message>
     <message>
         <source>Set new FPS…</source>
@@ -10815,28 +10231,8 @@ Failed to copy %2 fonts.</source>
         <translation>영상에서 프레임 속도 설정</translation>
     </message>
     <message>
-        <source>Open a VFR timecodes v1, v2 or v4 file</source>
-        <translation type="vanished">VFR 타임코드 v1, v2, v4 파일을 엽니다</translation>
-    </message>
-    <message>
-        <source>Open timecodes</source>
-        <translation type="vanished">타임코드 열기</translation>
-    </message>
-    <message>
         <source>Recently opened timecodes</source>
         <translation>열었던 타임코드</translation>
-    </message>
-    <message>
-        <source>Save a VFR timecodes v2 file</source>
-        <translation type="vanished">VFR 타임코드 v2 파일로 저장합니다</translation>
-    </message>
-    <message>
-        <source>Save timecodes</source>
-        <translation type="vanished">타임코드 저장</translation>
-    </message>
-    <message>
-        <source>Close the currently open timecodes file</source>
-        <translation type="vanished">지금 열린 타임코드 파일을 닫습니다</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -10919,18 +10315,6 @@ Failed to copy %2 fonts.</source>
         <translation>색상 추적</translation>
     </message>
     <message>
-        <source>Open a video first: tracking data is per frame.</source>
-        <translation type="vanished">먼저 영상을 여세요: 추적 데이터는 프레임 단위입니다.</translation>
-    </message>
-    <message>
-        <source>Perspective tracking…</source>
-        <translation type="vanished">원근 추적…</translation>
-    </message>
-    <message>
-        <source>Video details…</source>
-        <translation type="vanished">영상 정보…</translation>
-    </message>
-    <message>
         <source>Reload video</source>
         <translation>영상 다시 불러오기</translation>
     </message>
@@ -10955,10 +10339,6 @@ Failed to copy %2 fonts.</source>
         <translation>선택한 줄의 원근 평면을 Power-Pin 데이터로 복사하여 프레임마다 사각형을 하나씩 만듭니다</translation>
     </message>
     <message>
-        <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">줄에서 Power-Pin 트랙 복사</translation>
-    </message>
-    <message>
         <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
         <translation>프레임 단위로 나뉜 선택한 줄의 움직임을 근사하여 프레임을 더 이어 갑니다</translation>
     </message>
@@ -10971,16 +10351,8 @@ Failed to copy %2 fonts.</source>
         <translation>렌더링 비용</translation>
     </message>
     <message>
-        <source>Reload audio</source>
-        <translation type="vanished">소리 다시 불러오기</translation>
-    </message>
-    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>활성 줄에 소리 선택 영역을 적용하고, 이전 줄은 선택 영역이 시작하는 곳에서 끝냅니다</translation>
-    </message>
-    <message>
-        <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">소리 선택 영역으로 이전 줄과 잇기</translation>
     </message>
     <message>
         <source>Untagged video</source>
@@ -11095,14 +10467,6 @@ Failed to copy %2 fonts.</source>
         <translation>프레임 안에서 시간 가운데 맞추기</translation>
     </message>
     <message>
-        <source>Load script</source>
-        <translation type="vanished">스크립트 불러오기</translation>
-    </message>
-    <message>
-        <source>Run the last macro again with the same answers, without its dialogs when they are unchanged</source>
-        <translation type="vanished">바뀌지 않은 대화 상자는 건너뛰고 마지막 매크로를 같은 답변으로 다시 실행합니다</translation>
-    </message>
-    <message>
         <source>Repeat last run</source>
         <translation>마지막 실행 반복</translation>
     </message>
@@ -11135,10 +10499,6 @@ Failed to copy %2 fonts.</source>
         <translation>영상을 재생하거나 일시 정지합니다</translation>
     </message>
     <message>
-        <source>Opens audio file</source>
-        <translation type="vanished">소리 파일 열기</translation>
-    </message>
-    <message>
         <source>Opens audio from video</source>
         <translation>영상에서 소리 열기</translation>
     </message>
@@ -11147,16 +10507,8 @@ Failed to copy %2 fonts.</source>
         <translation>로마자 줄의 노래방 타이밍을 해당 한자 줄에 복사합니다</translation>
     </message>
     <message>
-        <source>Kanji timer</source>
-        <translation type="vanished">한자 타이머</translation>
-    </message>
-    <message>
         <source>Walks through the settings most people change first</source>
         <translation>대부분의 사용자가 먼저 바꾸는 설정을 차례로 안내합니다</translation>
-    </message>
-    <message>
-        <source>&amp;Getting started</source>
-        <translation type="vanished">시작하기[&amp;G]</translation>
     </message>
     <message>
         <source>Opens the user guide in the default browser</source>
@@ -11195,28 +10547,12 @@ Failed to copy %2 fonts.</source>
         <translation>업데이트 설치</translation>
     </message>
     <message>
-        <source>Closes audio</source>
-        <translation type="vanished">소리 닫기</translation>
-    </message>
-    <message>
-        <source>Shifting subtitle times</source>
-        <translation type="vanished">자막 시간 이동</translation>
-    </message>
-    <message>
-        <source>Is used to manage ASS styles</source>
-        <translation type="vanished">ASS 스타일 관리창을 엽니다</translation>
-    </message>
-    <message>
         <source>Opens Script properties</source>
         <translation>스크립트 속성을 엽니다</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
         <translation>모든 줄의 노래방 음절을 검사합니다</translation>
-    </message>
-    <message>
-        <source>Check karaoke</source>
-        <translation type="vanished">노래방 검사</translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
@@ -11815,10 +11151,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Times the active line to the frames around the video’s frame where a picked point keeps its colour</source>
         <translation>선택한 지점이 색을 유지하는, 영상 프레임 주변의 프레임에 맞춰 활성 줄의 시간을 정합니다</translation>
-    </message>
-    <message>
-        <source>Align to video…</source>
-        <translation type="vanished">영상에 맞추기…</translation>
     </message>
     <message>
         <source>Align to video</source>
@@ -13928,10 +13260,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>스크립트 속성</translation>
     </message>
     <message>
-        <source>Language (program restart required)</source>
-        <translation type="vanished">현지화 (프로그램 재시작 후 적용)</translation>
-    </message>
-    <message>
         <source>Appearance</source>
         <translation>모양</translation>
     </message>
@@ -14850,14 +14178,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>마지막 답변 지우기…</translation>
     </message>
     <message>
-        <source>Trusted script folders</source>
-        <translation type="vanished">신뢰하는 스크립트 폴더</translation>
-    </message>
-    <message>
-        <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation type="vanished">자막 파일에 지정된 스크립트가 이 폴더 중 하나에 있으면 묻지 않고 불러옵니다.</translation>
-    </message>
-    <message>
         <source>No trusted folders</source>
         <translation>신뢰하는 폴더 없음</translation>
     </message>
@@ -15048,14 +14368,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Include the file name</source>
         <translation>파일 이름 포함</translation>
-    </message>
-    <message>
-        <source>Suggest starring HikariSub on GitHub</source>
-        <translation type="vanished">GitHub에서 HikariSub에 별표 주기 제안</translation>
-    </message>
-    <message>
-        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation type="vanished">HikariSub를 여러 날 사용한 뒤 최대 두 번만 표시됩니다. 횟수는 이 컴퓨터에만 저장됩니다.</translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>
@@ -16341,10 +15653,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>요청은 추가한 공급자에게만 갑니다. 이 시스템에서는 AI 구성 요소가 샌드박스에서 실행되지 않습니다.</translation>
     </message>
     <message>
-        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation type="vanished">요청은 추가한 공급자에게만 갑니다. 운영 체제는 아직 AI 구성 요소를 샌드박스에서 실행하지 않습니다.</translation>
-    </message>
-    <message>
         <source>Web search</source>
         <translation>웹 검색</translation>
     </message>
@@ -16483,10 +15791,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Values for %1, in order</source>
         <translation>%1 값, 순서대로</translation>
-    </message>
-    <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
-        <translation type="vanished">각 순환 명령은 선택한 줄의 시작 블록에 있는 태그를 다음 값으로 바꿉니다. 거꾸로 순환은 반대 방향으로 바꿉니다.</translation>
     </message>
     <message>
         <source>Delete MCP server</source>
@@ -17034,10 +16338,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>설치된 플러그인</translation>
     </message>
     <message>
-        <source>Enabled</source>
-        <translation type="vanished">사용</translation>
-    </message>
-    <message>
         <source>Unverified, signed by key %1</source>
         <translation>검증되지 않음, 키 %1(으)로 서명됨</translation>
     </message>
@@ -17344,12 +16644,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>플러그인이 설치되어 있지 않거나, 꺼져 있거나, 더 이상 이 명령이 없습니다</translation>
     </message>
-    <message numerus="yes">
-        <source>It ran for more than %n second(s).</source>
-        <translation type="vanished">
-            <numerusform>%n초 넘게 실행되었습니다.</numerusform>
-        </translation>
-    </message>
     <message>
         <source>It stopped unexpectedly.</source>
         <translation>예기치 않게 중지되었습니다.</translation>
@@ -17377,12 +16671,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its %1 handler failed: %2</source>
         <translation>플러그인의 %1 처리기가 실패했습니다: %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation type="vanished">
-            <numerusform>플러그인이 %n초 넘게 실행되어 HikariSub가 중지했습니다. 다음 명령을 실행하면 다시 시작됩니다.</numerusform>
-        </translation>
     </message>
     <message>
         <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
@@ -17673,52 +16961,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>세로로</translation>
     </message>
     <message>
-        <source>The active line</source>
-        <translation type="vanished">활성 줄</translation>
-    </message>
-    <message>
-        <source>The video frame</source>
-        <translation type="vanished">비디오 프레임</translation>
-    </message>
-    <message>
         <source>Active line</source>
         <translation>활성 줄</translation>
     </message>
     <message>
         <source>Video frame</source>
         <translation>비디오 프레임</translation>
-    </message>
-    <message>
-        <source>Align left edges</source>
-        <translation type="vanished">왼쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align centres</source>
-        <translation type="vanished">가로 가운데 맞추기</translation>
-    </message>
-    <message>
-        <source>Align right edges</source>
-        <translation type="vanished">오른쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation type="vanished">위쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation type="vanished">세로 가운데 맞추기</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation type="vanished">아래쪽 가장자리 맞추기</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation type="vanished">가로로 균등 분배</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation type="vanished">세로로 균등 분배</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -22401,10 +21649,6 @@ Styles deleted:
         <translation>\frx 및 \fry 태그의 Z 좌표</translation>
     </message>
     <message>
-        <source>Tag list options</source>
-        <translation type="vanished">태그 목록 옵션</translation>
-    </message>
-    <message>
         <source>Tag list</source>
         <translation>태그 목록</translation>
     </message>
@@ -24355,10 +23599,6 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Preset commands</source>
-        <translation type="vanished">프리셋 명령</translation>
-    </message>
-    <message>
         <source>Save as preset…</source>
         <translation>프리셋으로 저장…</translation>
     </message>
@@ -24590,10 +23830,6 @@ Styles deleted:
     <message>
         <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
         <translation>추적할 수 없는 줄이 있습니다: 텍스트를 측정할 수 없거나 평면이 줄을 뒤집습니다.</translation>
-    </message>
-    <message>
-        <source>Perspective tracking</source>
-        <translation type="vanished">원근 추적</translation>
     </message>
     <message>
         <source>Power-Pin data</source>
@@ -25073,10 +24309,6 @@ Styles deleted:
         <translation>원문 태그: 번역문에 원문의 태그를 적용</translation>
     </message>
     <message>
-        <source>Translator mode displays and saves both foreign text and translation text</source>
-        <translation type="vanished">번역 모드는 원문과 번역문을 모두 표시하고 저장합니다</translation>
-    </message>
-    <message>
         <source>Paste translation</source>
         <translation>번역 붙여넣기</translation>
     </message>
@@ -25087,10 +24319,6 @@ Styles deleted:
     <message>
         <source>Translation needs an ASS file: plain text cannot store it.</source>
         <translation>번역에는 ASS 파일이 필요합니다. 일반 텍스트에는 저장할 수 없습니다.</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation type="vanished">더 보기</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -25581,10 +24809,6 @@ Styles deleted:
         <translation>전체 화면 종료</translation>
     </message>
     <message>
-        <source>Escape</source>
-        <translation type="vanished">Esc</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>전체 화면</translation>
     </message>
@@ -25738,10 +24962,6 @@ Styles deleted:
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
-    </message>
-    <message>
-        <source>Streams</source>
-        <translation type="vanished">스트림</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -26063,10 +25283,6 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the timecodes file %1</source>
         <translation>타임코드 파일 %1을(를) 저장할 수 없습니다</translation>
-    </message>
-    <message>
-        <source>Timecodes file not found: %1</source>
-        <translation type="vanished">타임코드 파일을 찾을 수 없습니다: %1</translation>
     </message>
     <message>
         <source>Video details</source>
