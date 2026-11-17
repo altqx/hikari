@@ -113,7 +113,7 @@ DialogWindow {
     // A setting link: opens the window at the row, never changing a value.
     function openSetting(setting, project) {
         openDialog()
-        query = ""
+        searchField.text = ""
         landingNote = ""
         const projectOk = project && hasProject && (setting.length === 0 || isProjectable(setting))
         if (project && !projectOk)
@@ -123,7 +123,7 @@ DialogWindow {
         if (setting.length === 0)
             return
         if (!rowItem(setting) && !SettingsCatalogue.sectionOf(setting).length && !pluginRows.some(r => r.setting === setting)) {
-            landingNote = qsTr("No setting “%1”.").arg(setting)
+            searchField.text = setting
             return
         }
         Qt.callLater(() => dialog.land(setting))

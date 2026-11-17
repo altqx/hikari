@@ -43,10 +43,12 @@ std::optional<SettingLink> parseSettingLink(std::string_view link)
             return std::nullopt;
         out.setting = std::string(rest.substr(1));
     }
-    if (query == "scope=project")
-        out.project = true;
-    else if (!query.empty() && query != "scope=yours")
-        return std::nullopt;
+    while (!query.empty()) {
+        const auto end = query.find('&');
+        if (query.substr(0, end) == "scope=project")
+            out.project = true;
+        query = end == std::string_view::npos ? std::string_view() : query.substr(end + 1);
+    }
     return out;
 }
 
