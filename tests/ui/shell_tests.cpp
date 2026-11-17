@@ -4762,7 +4762,7 @@ private slots:
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
         QTRY_VERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.autosave-0.toml")).contains("C={\r\n}\r\n"));
-        QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
+        QTRY_COMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
         QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
         QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
 
@@ -4999,7 +4999,7 @@ private slots:
         for (int i = 0; i < 4; ++i) {
             QVERIFY(catalogs.addCatalog(QLatin1String(names[i])));
             QTRY_VERIFY(copy(files[i]).contains(QByteArray(names[i]) + "={\r\n}\r\n"));
-            QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
+            QTRY_COMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
         }
         QVERIFY(copy(1).contains("X={") && !copy(1).contains("Y={"));
         QVERIFY(copy(2).contains("Y={") && !copy(2).contains("Z={"));
