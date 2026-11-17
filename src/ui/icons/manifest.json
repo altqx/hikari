@@ -345,6 +345,28 @@
    ]
   },
   {
+   "role": "save-keyframes",
+   "file": "save-keyframes.svg",
+   "label": "Save keyframes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "close-keyframes",
+   "file": "close-keyframes.svg",
+   "label": "Close keyframes",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
    "role": "recent-keyframes",
    "file": "recent-keyframes.svg",
    "label": "Recently opened keyframes",

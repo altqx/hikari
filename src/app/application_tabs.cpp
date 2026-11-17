@@ -321,7 +321,7 @@ void Application::setUpFileArrangements()
 {
     m_files->setProjectGarbageSource(
         [this](application::DocumentId document, const application::DestinationKey &destination) {
-            return timecodesGarbage(document, destination);
+            return mediaFileGarbage(document, destination);
         });
     m_files->setLayoutSource([this](application::DocumentId document) -> std::optional<std::u8string> {
         if (!m_settings->boolean(kLayoutInFile))

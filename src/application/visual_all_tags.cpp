@@ -1725,7 +1725,7 @@ void AllTagsTool::drawSlider(Overlay &out, const VisualHost &host, const Slider 
 
 Overlay AllTagsTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     if (m_legacySliders) {
         for (int i = 0; i < m_actualTag.numOfValues && i < 4; i++)
