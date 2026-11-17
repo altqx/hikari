@@ -15798,7 +15798,12 @@ private slots:
         audio.openDummy();
         QVERIFY(audio.ready());
         auto &settings = *application->settingsStore();
-        auto restore = qScopeGuard([&] { settings.set("audio.timingKeysEverywhere", 1); });
+        const bool followed = settings.boolean("audio.autoFocus");
+        settings.set("audio.autoFocus", false);
+        auto restore = qScopeGuard([&] {
+            settings.set("audio.timingKeysEverywhere", 1);
+            settings.set("audio.autoFocus", followed);
+        });
         auto *session = application->files().session(*application->workspace().editingTarget());
         const auto lines = session->document().lines();
         const auto activeRow = [&] {
