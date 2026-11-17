@@ -463,7 +463,7 @@ void PluginProcess::fire(std::int64_t id)
         return;
     if (m_state != State::Ready || m_queue.size() >= m_limits.maxQueued)
         return;
-    m_queue.push_back(Unit{Unit::Kind::Timer, {}, {}, {}, id, last});
+    m_queue.push_back(Unit{.kind = Unit::Kind::Timer, .timer = id, .last = last});
     next();
 }
 
@@ -518,8 +518,7 @@ void PluginProcess::stopHelper(StopReason reason)
     m_watchdog.stop();
     m_stillWorking = false;
     endJob();
-    failPending(reason == StopReason::TimeLimit ? QStringLiteral("the plugin ran past its time limit and was stopped")
-                                                : QStringLiteral("the plugin was stopped"));
+    failPending(QStringLiteral("the plugin was stopped"));
     m_openServices = 0;
     m_state = State::Stopped;
     dropHelper(true);

@@ -123,9 +123,9 @@ private:
         std::string name;
         std::string json;
         std::string key; // Event: the coalesce key; Export: the options; Import: the file name
+        FormatDone done;
         std::int64_t timer = 0;
         bool last = false;
-        FormatDone done;
     };
     struct Timer {
         std::unique_ptr<QTimer> clock;

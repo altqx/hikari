@@ -528,7 +528,7 @@ TEST_F(PluginProcessTest, FormatCallsThatGoWrongSayWhy)
 hikari.formats.exporter("csv", function() return 42 end)
 hikari.formats.exporter("bin", function() return "\255" end)
 hikari.formats.exporter("spin", function() while true do end end)
-)"), PluginProcess::Limits{.timeLimitMs = 300});
+)"));
     FormatResult number, notText, missing, spin;
     ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", number.done()));
     ASSERT_TRUE(p->exportDocument("bin", "{}", "{}", notText.done()));
@@ -538,8 +538,11 @@ hikari.formats.exporter("spin", function() while true do end end)
     EXPECT_EQ(notText.value->error(), QStringLiteral("the exporter's file isn't UTF-8 text; return it with \"base64\""));
     EXPECT_TRUE(missing.value->error().startsWith(QStringLiteral("format “csv” has no importer")));
     ASSERT_TRUE(p->exportDocument("spin", "{}", "{}", spin.done()));
+    waitFor([] { return false; }, 300);
+    EXPECT_FALSE(spin.value.has_value());
+    p->forceStop();
     ASSERT_TRUE(waitFor([&] { return spin.value.has_value(); }));
-    EXPECT_EQ(spin.value->error(), QStringLiteral("the plugin ran past its time limit and was stopped"));
+    EXPECT_EQ(spin.value->error(), QStringLiteral("the plugin was stopped"));
 }
 
 TEST_F(PluginProcessTest, OnlyDeclaredFormatsTakeAHandler)
