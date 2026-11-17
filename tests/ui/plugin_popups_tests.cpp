@@ -147,7 +147,7 @@ private slots:
         QTest::newRow("same id twice") << "quick_pick.ask" << R"({"items": [{"id": "a", "label": "A"}, {"id": "a", "label": "B"}]})";
         QTest::newRow("item without id") << "quick_pick.ask" << R"({"items": [{"label": "A"}]})";
         QTest::newRow("separator with id") << "quick_pick.ask" << R"({"items": [{"kind": "separator", "id": "s", "label": "S"}]})";
-        QTest::newRow("bad pattern") << "input_box.ask" << R"({"validation": {"pattern": "(", "message": "No"}})";
+        QTest::newRow("bad pattern") << "input_box.ask" << R"({"validation": {"pattern": "a{2,1}", "message": "No"}})";
         QTest::newRow("selection backwards") << "input_box.ask" << R"({"value": "abc", "selection": {"from": 2, "to": 1}})";
         QTest::newRow("bad severity") << "input_box.update" << R"({"box": "b1", "message": {"severity": "loud", "text": "x"}})";
     }
