@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-26.04
     container:
       image: fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a9f4f1ff2f9c2798e5045d80
-    timeout-minutes: 120
+    timeout-minutes: 150
     steps:
       - name: Declared host prerequisites
         run: |
