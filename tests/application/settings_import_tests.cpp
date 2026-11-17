@@ -145,6 +145,8 @@ std::vector<const PlanRow *> rowsKeyed(const Plan &plan, std::string_view key)
 
 std::string sampleRaw(const SettingDefinition &def)
 {
+    if (def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON")
+        return "true";
     switch (def.type) {
     case SettingType::Bool:
         return std::get<bool>(def.defaultValue) ? "false" : "true";
@@ -243,7 +245,10 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
             EXPECT_EQ(it->second, SettingValue(!std::get<bool>(def.defaultValue))) << def.id;
             break;
         case SettingType::Int:
-            EXPECT_EQ(it->second, SettingValue(std::get<std::int64_t>(def.defaultValue) + 7)) << def.id;
+            EXPECT_EQ(it->second, SettingValue(def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON"
+                                                   ? std::int64_t{1}
+                                                   : std::get<std::int64_t>(def.defaultValue) + 7))
+                << def.id;
             break;
         case SettingType::String:
             EXPECT_EQ(it->second, SettingValue(std::get<std::string>(def.defaultValue) + "x")) << def.id;
