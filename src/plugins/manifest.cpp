@@ -192,9 +192,7 @@ std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
                                    "archive and entry come together, or neither", 0};
         for (std::size_t i = 0; i < run.args.size(); ++i)
             for (const Setting &setting : m.settings) {
-                const Json *type = setting.definition.find("type");
-                if (type && type->isString() && type->asString() == "secret" &&
-                    run.args[i].find("${setting:" + setting.id + "}") != std::string::npos)
+                if (setting.secret() && run.args[i].find("${setting:" + setting.id + "}") != std::string::npos)
                     return ManifestProblem{Kind::Schema, at + platform + "/args/" + std::to_string(i),
                                            "a secret setting may be named in env only", 0};
             }
@@ -212,11 +210,32 @@ std::optional<ManifestProblem> repeated(const Items &items, const std::string &a
     return std::nullopt;
 }
 
+SettingType settingType(std::string_view type)
+{
+    static constexpr std::pair<std::string_view, SettingType> kTypes[]{
+        {"boolean", SettingType::Boolean}, {"integer", SettingType::Integer}, {"number", SettingType::Number},
+        {"string", SettingType::String},   {"choice", SettingType::Choice},   {"list", SettingType::List},
+        {"secret", SettingType::Secret}};
+    const auto found = std::ranges::find(kTypes, type, &std::pair<std::string_view, SettingType>::first);
+    return found == std::end(kTypes) ? SettingType::String : found->second;
+}
+
+std::size_t listLimit(const Setting &setting)
+{
+    const Json *limit = setting.definition.find("maxItems");
+    return limit && limit->isInt() ? static_cast<std::size_t>(limit->asInt()) : 256;
+}
+
 std::optional<ManifestProblem> badDefault(const Setting &setting, std::size_t index)
 {
     const Json &d = setting.definition;
-    const Json &value = *d.find("default");
+    const Json *fallback = d.find("default");
+    if (!fallback)
+        return std::nullopt;
+    const Json &value = *fallback;
     const std::string at = "/contributes/settings/" + std::to_string(index) + "/default";
+    if (setting.type == SettingType::List && value.asArray().size() > listLimit(setting))
+        return ManifestProblem{Kind::BadDefault, at, "more than maxItems", 0};
     if (const Json *options = d.find("options")) {
         const auto &list = options->asArray();
         if (std::find(list.begin(), list.end(), value) == list.end())
@@ -316,7 +335,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.panels = panels(contributes->find("panels"));
         if (const Json *settings = contributes->find("settings"))
             for (const Json &s : settings->asArray())
-                m.settings.push_back({text(s, "id"), text(s, "title"), s});
+                m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
         m.nodes = nodes(contributes->find("nodes"));
         m.programs = programs(contributes->find("programs"));
     }
@@ -345,6 +364,12 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
+}
+
+Json Setting::fallback() const
+{
+    const Json *value = secret() ? nullptr : definition.find("default");
+    return value ? *value : Json();
 }
 
 std::string_view thisPlatform()
@@ -443,16 +468,33 @@ int compareVersions(std::string_view a, std::string_view b)
 std::optional<std::string> settingRefusal(const Setting &setting, const Json &value)
 {
     const Json &d = setting.definition;
-    const std::string type = text(d, "type");
     const std::string name = "\xE2\x80\x9C" + setting.id + "\xE2\x80\x9D";
-    if (type == "boolean" && !value.isBool())
-        return name + " takes true or false";
-    if (type == "integer" && !value.isInt())
-        return name + " takes a whole number";
-    if (type == "number" && !value.isNumber())
-        return name + " takes a number";
-    if ((type == "string" || type == "choice") && !value.isString())
-        return name + " takes text";
+    switch (setting.type) {
+    case SettingType::Boolean:
+        if (!value.isBool())
+            return name + " takes true or false";
+        break;
+    case SettingType::Integer:
+        if (!value.isInt())
+            return name + " takes a whole number";
+        break;
+    case SettingType::Number:
+        if (!value.isNumber())
+            return name + " takes a number";
+        break;
+    case SettingType::String:
+    case SettingType::Choice:
+    case SettingType::Secret:
+        if (!value.isString())
+            return name + " takes text";
+        break;
+    case SettingType::List:
+        if (!value.isArray() || !std::ranges::all_of(value.asArray(), [](const Json &item) { return item.isString(); }))
+            return name + " takes a list of text";
+        if (value.asArray().size() > listLimit(setting))
+            return name + " takes at most " + std::to_string(listLimit(setting)) + " items";
+        break;
+    }
     if (const Json *options = d.find("options")) {
         const auto &list = options->asArray();
         if (std::find(list.begin(), list.end(), value) == list.end()) {
@@ -473,8 +515,8 @@ Json settingValues(const Manifest &manifest, const Json &stored)
 {
     Json out = Json::object();
     for (const Setting &setting : manifest.settings) {
-        const Json *value = stored.find(setting.id);
-        out[setting.id] = value && !settingRefusal(setting, *value) ? *value : *setting.definition.find("default");
+        const Json *value = setting.secret() ? nullptr : stored.find(setting.id);
+        out[setting.id] = value && !settingRefusal(setting, *value) ? *value : setting.fallback();
     }
     return out;
 }

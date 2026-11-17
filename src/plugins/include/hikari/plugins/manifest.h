@@ -52,10 +52,18 @@ struct Panel {
     std::string qml; // a package path: a QML panel; empty: a declarative one
 };
 
+enum class SettingType { Boolean, Integer, Number, String, Choice, List, Secret };
+
 struct Setting {
     std::string id;
     std::string title;
-    api::Json definition; // the manifest's object, with type and default
+    api::Json definition; // the manifest's object
+    SettingType type = SettingType::String;
+
+    // A Secret lives in the system keychain, never in plugins.json or a Project, and has no default.
+    bool secret() const { return type == SettingType::Secret; }
+    // The manifest's default; null for a Secret.
+    api::Json fallback() const;
 };
 
 struct NodePort {
@@ -149,7 +157,8 @@ Permissions readPermissions(const api::Json &permissions);
 
 // Why `value` doesn't fit the setting's type, options or bounds (English), or nothing when it does.
 std::optional<std::string> settingRefusal(const Setting &setting, const api::Json &value);
-// Every declared setting: the stored value when it still fits, else the default.
+// Every declared setting: the stored value when it still fits, else the default. A Secret is null here;
+// its value comes from the keychain only.
 api::Json settingValues(const Manifest &manifest, const api::Json &stored);
 
 // Semantic-version order; build metadata is ignored. Both must be valid versions.
