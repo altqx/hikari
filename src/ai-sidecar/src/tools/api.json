@@ -5411,6 +5411,31 @@
       }
     },
     {
+      "name": "presence.set_text",
+      "access": "write",
+      "summary": "Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
+            "description": "Plain text; empty clears it."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "karaoke.syllables",
       "access": "read",
       "summary": "A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.",

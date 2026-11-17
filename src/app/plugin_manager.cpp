@@ -270,6 +270,8 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
         added << !more.networkHosts.empty();
     if (next.permissions.vcsRead)
         added << more.vcsRead;
+    if (next.permissions.presence)
+        added << more.presence;
     for (const plugins::FileGrantRequest &request : next.permissions.files)
         added << (std::ranges::find(more.files, request.id) != more.files.end());
     const QStringList lines = permissionLines(next);
@@ -300,6 +302,8 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
         lines << QCoreApplication::translate("HikariSub.Plugins",
                                              "Read the branches, tags and history of the git repository holding your subtitle files: %1")
                      .arg(text(*p.vcsRead));
+    if (p.presence)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Set text in your Discord status: %1").arg(text(*p.presence));
     for (const plugins::FileGrantRequest &f : p.files)
         lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
                              : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))

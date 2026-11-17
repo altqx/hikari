@@ -31,6 +31,7 @@ void addProjectOperations(Registry &registry);
 void addKaraokeOperations(Registry &registry);
 void addMarkOperations(Registry &registry);
 void addVcsOperations(Registry &registry);
+void addPresenceOperations(Registry &registry);
 void addEvents(Registry &registry);
 Json projectJson(const Host &host);
 

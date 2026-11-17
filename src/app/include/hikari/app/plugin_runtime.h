@@ -13,6 +13,7 @@
 
 #include <QNetworkAccessManager>
 #include <QObject>
+#include <QSet>
 #include <QTimer>
 #include <QVariantList>
 
@@ -117,6 +118,9 @@ public:
     backends::PluginProcess *process(const QString &pluginId) const;
     // Running a command or an event right now.
     bool busy(const QString &pluginId) const;
+    QSet<QString> runningIds() const;
+    // {id, name} of each running plugin whose manifest asks for presence.
+    QVariantList presencePlugins() const;
 
 signals:
     void commandsChanged();

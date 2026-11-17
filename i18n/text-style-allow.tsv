@@ -62,3 +62,11 @@ HikariSub.Hotkeys	Change case to Sentence case	title-case	Sentence case is the c
 HikariSub.Text	Title Case	title-case	the Change case menu shows each case style in that style
 HikariSub.Video	The clipboard holds no After Effects tracking data.	title-case	After Effects is the product’s name
 HikariSub.Video	After Effects data, %n frames, from the clipboard	title-case	After Effects is the product’s name
+HikariSub.Options	The mode	leading-the	row label from docs/ux/discord-presence.md (Q685); the rows read as items under What shows
+HikariSub.Options	The file name	leading-the	row label from docs/ux/discord-presence.md (Q685); the rows read as items under What shows
+HikariSub.Options	The project’s name	leading-the	row label from docs/ux/discord-presence.md (Q685); the rows read as items under What shows
+HikariSub.Options	The mode’s icon	leading-the	row label from docs/ux/discord-presence.md (Q685); the rows read as items under What shows
+HikariSub.Discord	In the Editing layout, or when no other mode applies	title-case	names the Editing layout
+HikariSub.Discord	In the Typesetting layout, and in full-screen typesetting	title-case	names the Typesetting layout
+HikariSub.Discord	In the Karaoke layout	title-case	names the Karaoke layout
+HikariSub.Discord	While Simple mode is open	title-case	names Simple mode (#1207)

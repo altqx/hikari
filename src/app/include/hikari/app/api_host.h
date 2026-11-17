@@ -75,6 +75,7 @@ public:
             setKeyframes;
         application::RowMarks *marks = nullptr;
         application::VcsPort *vcs = nullptr;
+        api::PresenceHost *presence = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;

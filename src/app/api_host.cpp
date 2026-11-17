@@ -49,6 +49,7 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .keyframes = this,
           .marks = m_wiring.marks,
           .vcs = m_wiring.vcs,
+          .presence = m_wiring.presence,
       }),
       m_seenProject(project())
 {
