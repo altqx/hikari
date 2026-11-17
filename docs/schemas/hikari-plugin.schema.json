@@ -799,17 +799,30 @@
             "title": {"$ref": "#/$defs/Title"},
             "type": {"const": "boolean"},
             "default": {"type": "boolean"},
-            "description": {"type": "string", "minLength": 1, "maxLength": 500},
+            "description": {
+              "description": "Plain text under the title.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "keywords": {
+              "description": "More words the Settings search matches.",
+              "type": "array",
+              "maxItems": 16,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "deprecated": {
+              "description": "Why the setting is going; Settings hides it unless its value isn't the default, and then shows this.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
             "group": {
-              "description": "Settings of one group share a heading, groups in order of their first setting.",
+              "description": "Settings of one group share a heading on the plugin's page, groups in order of their first setting.",
               "$ref": "#/$defs/Title"
             },
             "order": {"type": "integer", "minimum": 0, "maximum": 9999},
-            "scope": {
-              "description": "user: a Project can't override it.",
-              "enum": ["user", "project"],
-              "default": "project"
-            }
+            "projectable": {"description": "false: a Project can't override it.", "type": "boolean", "default": true}
           }
         },
         {
@@ -823,17 +836,30 @@
             "default": {"type": "integer"},
             "minimum": {"type": "integer"},
             "maximum": {"type": "integer"},
-            "description": {"type": "string", "minLength": 1, "maxLength": 500},
+            "description": {
+              "description": "Plain text under the title.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "keywords": {
+              "description": "More words the Settings search matches.",
+              "type": "array",
+              "maxItems": 16,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "deprecated": {
+              "description": "Why the setting is going; Settings hides it unless its value isn't the default, and then shows this.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
             "group": {
-              "description": "Settings of one group share a heading, groups in order of their first setting.",
+              "description": "Settings of one group share a heading on the plugin's page, groups in order of their first setting.",
               "$ref": "#/$defs/Title"
             },
             "order": {"type": "integer", "minimum": 0, "maximum": 9999},
-            "scope": {
-              "description": "user: a Project can't override it.",
-              "enum": ["user", "project"],
-              "default": "project"
-            }
+            "projectable": {"description": "false: a Project can't override it.", "type": "boolean", "default": true}
           }
         },
         {
@@ -847,17 +873,30 @@
             "default": {"type": "number"},
             "minimum": {"type": "number"},
             "maximum": {"type": "number"},
-            "description": {"type": "string", "minLength": 1, "maxLength": 500},
+            "description": {
+              "description": "Plain text under the title.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "keywords": {
+              "description": "More words the Settings search matches.",
+              "type": "array",
+              "maxItems": 16,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "deprecated": {
+              "description": "Why the setting is going; Settings hides it unless its value isn't the default, and then shows this.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
             "group": {
-              "description": "Settings of one group share a heading, groups in order of their first setting.",
+              "description": "Settings of one group share a heading on the plugin's page, groups in order of their first setting.",
               "$ref": "#/$defs/Title"
             },
             "order": {"type": "integer", "minimum": 0, "maximum": 9999},
-            "scope": {
-              "description": "user: a Project can't override it.",
-              "enum": ["user", "project"],
-              "default": "project"
-            }
+            "projectable": {"description": "false: a Project can't override it.", "type": "boolean", "default": true}
           }
         },
         {
@@ -869,17 +908,31 @@
             "title": {"$ref": "#/$defs/Title"},
             "type": {"const": "string"},
             "default": {"type": "string", "maxLength": 1000},
-            "description": {"type": "string", "minLength": 1, "maxLength": 500},
+            "multiline": {"description": "Edited in a box of several lines.", "type": "boolean", "default": false},
+            "description": {
+              "description": "Plain text under the title.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "keywords": {
+              "description": "More words the Settings search matches.",
+              "type": "array",
+              "maxItems": 16,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "deprecated": {
+              "description": "Why the setting is going; Settings hides it unless its value isn't the default, and then shows this.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
             "group": {
-              "description": "Settings of one group share a heading, groups in order of their first setting.",
+              "description": "Settings of one group share a heading on the plugin's page, groups in order of their first setting.",
               "$ref": "#/$defs/Title"
             },
             "order": {"type": "integer", "minimum": 0, "maximum": 9999},
-            "scope": {
-              "description": "user: a Project can't override it.",
-              "enum": ["user", "project"],
-              "default": "project"
-            }
+            "projectable": {"description": "false: a Project can't override it.", "type": "boolean", "default": true}
           }
         },
         {
@@ -892,17 +945,30 @@
             "type": {"const": "choice"},
             "options": {"type": "array", "minItems": 1, "maxItems": 64, "items": {"$ref": "#/$defs/Title"}},
             "default": {"$ref": "#/$defs/Title"},
-            "description": {"type": "string", "minLength": 1, "maxLength": 500},
+            "description": {
+              "description": "Plain text under the title.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "keywords": {
+              "description": "More words the Settings search matches.",
+              "type": "array",
+              "maxItems": 16,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "deprecated": {
+              "description": "Why the setting is going; Settings hides it unless its value isn't the default, and then shows this.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
             "group": {
-              "description": "Settings of one group share a heading, groups in order of their first setting.",
+              "description": "Settings of one group share a heading on the plugin's page, groups in order of their first setting.",
               "$ref": "#/$defs/Title"
             },
             "order": {"type": "integer", "minimum": 0, "maximum": 9999},
-            "scope": {
-              "description": "user: a Project can't override it.",
-              "enum": ["user", "project"],
-              "default": "project"
-            }
+            "projectable": {"description": "false: a Project can't override it.", "type": "boolean", "default": true}
           }
         },
         {
@@ -915,17 +981,30 @@
             "type": {"const": "list"},
             "default": {"type": "array", "maxItems": 256, "items": {"type": "string", "maxLength": 1000}},
             "maxItems": {"type": "integer", "minimum": 1, "maximum": 256},
-            "description": {"type": "string", "minLength": 1, "maxLength": 500},
+            "description": {
+              "description": "Plain text under the title.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "keywords": {
+              "description": "More words the Settings search matches.",
+              "type": "array",
+              "maxItems": 16,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "deprecated": {
+              "description": "Why the setting is going; Settings hides it unless its value isn't the default, and then shows this.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
             "group": {
-              "description": "Settings of one group share a heading, groups in order of their first setting.",
+              "description": "Settings of one group share a heading on the plugin's page, groups in order of their first setting.",
               "$ref": "#/$defs/Title"
             },
             "order": {"type": "integer", "minimum": 0, "maximum": 9999},
-            "scope": {
-              "description": "user: a Project can't override it.",
-              "enum": ["user", "project"],
-              "default": "project"
-            }
+            "projectable": {"description": "false: a Project can't override it.", "type": "boolean", "default": true}
           }
         },
         {
@@ -936,13 +1015,30 @@
             "id": {"$ref": "#/$defs/LocalId"},
             "title": {"$ref": "#/$defs/Title"},
             "type": {"const": "secret"},
-            "description": {"type": "string", "minLength": 1, "maxLength": 500},
+            "description": {
+              "description": "Plain text under the title.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "keywords": {
+              "description": "More words the Settings search matches.",
+              "type": "array",
+              "maxItems": 16,
+              "items": {"type": "string", "minLength": 1, "maxLength": 50}
+            },
+            "deprecated": {
+              "description": "Why the setting is going; Settings hides it unless its value isn't the default, and then shows this.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
             "group": {
-              "description": "Settings of one group share a heading, groups in order of their first setting.",
+              "description": "Settings of one group share a heading on the plugin's page, groups in order of their first setting.",
               "$ref": "#/$defs/Title"
             },
             "order": {"type": "integer", "minimum": 0, "maximum": 9999},
-            "scope": {"description": "Always user: a secret stays in the system keychain.", "const": "user"}
+            "projectable": {"description": "Always false: a secret stays in the system keychain.", "const": false}
           }
         }
       ]

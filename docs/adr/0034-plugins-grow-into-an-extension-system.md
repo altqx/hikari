@@ -84,16 +84,17 @@ Q600: `contributes.formats` adds subtitle formats, export first. For an export, 
 
 ## Settings
 
-**Provisional.** The owner is deciding one unified Settings window for the app's, Projects' and plugins' settings. Until then, the setting fields below, `scope`, grouping and where plugin settings show may change. `secret` settings and `${setting:<id>}` in programs stand.
+Q601, then Q638–Q649 for one unified Settings window, like VS Code's (#1238; research in `~/Work/hikari-wt/wave9/research/unified-settings.md`). The window applies changes at once, and its tabs are Yours and Project. For plugins:
 
-Q601: plugin settings gain:
-
-- a `description`, a `group` and an `order`;
-- `list` settings (an array of strings);
-- `secret` settings, kept in the system keychain the way AI provider keys are, never in `plugins.json` or a Project;
-- a `scope`: `user` settings can't be overridden by a Project.
-
-Each plugin's settings also get a page under Settings › Plugins. Settings may fill a program's arguments and environment, so a token reaches an MCP server without being written down.
+- **Fields** (Q601, Q641). A setting gains a plain-text `description`, `keywords` for search, `deprecated`, a `group` and an `order`. `string` gains `multiline`. A `choice` takes `{value, title}` options, so the saved value is never the shown text. There are no Markdown descriptions, `tags`, `policy` or `when`.
+- **More types.** `list` is an array of strings. `secret` is kept in the system keychain the way AI provider keys are, never in `plugins.json` or a Project.
+- **Projects.** `projectable: false` keeps a setting out of a Project's reach. A secret is never projectable.
+- **One place** (Q643). Plugin settings show only under Settings › Plugins › <plugin name>. No manifest key places them elsewhere, and HikariSub's page ids never become API.
+- **Links** (Q644). `hikarisub://settings/<id>`, with `plugin.<plugin id>.<setting id>` for a plugin's setting and `?scope=project` for the Project tab, only opens the window and shows the setting.
+- **API** (Q645, Q646). `settings.open {setting, scope}` does what a link does. `settings.list` and `settings.get` gain `title`, `source` and `projectable`, and list plugins' settings.
+- **Programs.** Settings may fill a program's environment, so a token reaches an MCP server without being written down.
+- **Not yet.** Translatable plugin text ships in API 1 before stable, on its own card, [#1239](https://github.com/altqx/hikari/issues/1239), not designed here (Q642). Named profiles, managed or policy settings, settings sync and per-language settings stay out of 0.1.0 (#1240–#1243), and no manifest key hints at them (Q649).
+- **One exception to "the schema holds every key".** The `{value, title}` choice options change the schema file in #1230, together with the code and tests that read today's list of titles.
 
 ## Quick picks, input boxes and the command palette
 
@@ -101,7 +102,7 @@ The owner added a VS Code-style command palette (Ctrl+Shift+P), Quick Open (Ctrl
 
 - **Services, not operations.** `quick_pick.ask`, `quick_pick.open`, `quick_pick.update`, `quick_pick.close`, `input_box.ask`, `input_box.open`, `input_box.update` and `input_box.close` are plugin services like `dialogs.*`, modelled on VS Code's `showQuickPick`, `showInputBox` and `createQuickPick`. They need no permission, and AI and MCP callers can't reach them.
 - **Only when the user asked.** A plugin opens one only while it answers something the user started: a command from a menu, a key, the palette or a status item, a click in its own panel or dialog, or a job one of those began. A timer, an event or an AI tool can't take the focus with one. The title row always names the plugin, all text is plain, and a popup closes when its plugin stops.
-- **The palette** lists every plugin command as "<plugin>: <title>" with its `description`, unless the command sets `palette: false`, and runs it with `via: "palette"`. Its look and Quick Open's prefixes are #1236's UX spec. Plugins add no Quick Open prefixes in API 1.
+- **The palette** lists every plugin command by its title, with its menu path as the description and its `description` as the tooltip, unless the command sets `palette: false`. It runs commands with `via: "palette"`. Its look and Quick Open's prefixes are #1236's UX spec, PR #1237. Plugins add no Quick Open prefixes in API 1.
 
 ## Panels
 
@@ -139,7 +140,7 @@ The split on #1209 stands. Its order changes in two places: formats move up beca
 4. #1224, menus, status items and shortcuts.
 5. #1225, limits and background plugins.
 6. #1229, formats.
-7. #1230, settings.
+7. #1230, plugin settings, in the unified Settings window that #1238 builds.
 8. #1226, programs and program plugins.
 9. #1227, language features and the problems list. Its LSP half needs #1226.
 10. #1228, AI tools and MCP servers. MCP servers need #1226.

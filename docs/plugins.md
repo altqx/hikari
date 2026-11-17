@@ -504,7 +504,7 @@ A data-only package never starts a helper. It may hold only `themes`, `iconTheme
 | `contributes.languageServers`, `providers` | [Language features](#language-features-and-problems). |
 | `contributes.aiTools`, `mcpServers` | [AI tools and MCP servers](#ai-tools-and-mcp-servers). |
 | `contributes.formats` | [Formats](#formats). |
-| `contributes.settings[]` | Gains `description`, `group`, `order`, `scope`, and the types `list` and `secret`. See [Settings](#settings-grown). |
+| `contributes.settings[]` | Gains `description`, `keywords`, `deprecated`, `group`, `order` and `projectable`; `string` gains `multiline`, `choice` takes `{value, title}` options, and the types `list` and `secret` are new. See [Settings](#settings-grown). |
 
 Beyond the schema, HikariSub refuses a manifest where:
 
@@ -641,7 +641,7 @@ A command whose conditions fail is disabled in every menu and the palette, and i
 
 Anywhere else, such as a timer, an event, another plugin's `plugins.run` or an AI tool, the call answers `refused` with reason `not_user_initiated`, so no popup takes the focus unasked. One quick pick or input box shows at a time in a window. Opening another closes the shown one, which then answers as cancelled.
 
-**What every popup shows.** The title row always starts with the plugin's name, then `title`. All text is plain: HikariSub never reads markup in it. A popup closes, answering as cancelled, when its plugin stops.
+**What every popup shows.** A plugin's popup always has its title row, with `title` (when given) and the plugin's name at the trailing end, so it never looks like HikariSub's own. All text is plain: HikariSub never reads markup in it. A popup closes, answering as cancelled, when its plugin stops.
 
 **Ask for a pick.** `hikari.quick_pick.ask(spec)` is [`quick_pick.ask`](api.md#quick_pickask): it shows the list and waits.
 
@@ -702,8 +702,8 @@ end)
 The palette itself is #1236's, in the command palette spec (`docs/ux/command-palette.md`, [#1236](https://github.com/altqx/hikari/issues/1236)). For plugins:
 
 - **What it lists.** Every command of a plugin that is on in that window, unless the command has `"palette": false`.
-- **How a row reads.** "<plugin name>: <title>", with `description` under it, the command's `icon` and its shortcut. The row also names where the command sits in the menus: Automation › <plugin>, and any [menu placement](#menus-status-items-and-shortcuts).
-- **Search.** It matches the title, the plugin's name and `description`.
+- **How a row reads.** The command's `title`, with its `icon` and shortcut. Its description is its menu path, "Automation › <plugin>" (its Automation submenu, not a [menu placement](#menus-status-items-and-shortcuts)). The command's own `description` is the row's tooltip and accessible description.
+- **Search.** It matches the title, then the menu path, so typing the plugin's name finds its commands.
 - **Conditions.** A command whose `when` fails stays listed, greyed, with the same reason `commands.list` gives.
 - **Running it.** Choosing it runs the command with `args = {}` and `context.via = "palette"`. A command that then needs input asks with `hikari.quick_pick.ask` or `hikari.input_box.ask`, which the palette's own popup hands over to.
 - **Quick Open.** Plugins add no Quick Open prefixes or result sources in API 1.
@@ -918,25 +918,41 @@ end)
 
 ### Settings, grown
 
-#1230. **Provisional:** the owner is deciding one unified Settings window ([ADR 0034](adr/0034-plugins-grow-into-an-extension-system.md#settings)), so the fields, `scope`, grouping and the Settings page below may change. `secret` and `${setting:<id>}` stand.
+#1230, with the unified Settings window of #1238 (owner Q638–Q649). HikariSub has one Settings window, like VS Code's, for its own settings, a Project's and every plugin's. It applies each change at once, with Reset on each row and no OK, Cancel or Apply. Its two tabs are **Yours** and **Project**.
 
-Every setting may add:
+**Where plugin settings show** (Q643). Only under Settings › Plugins › <plugin name>, one page per plugin with settings, in the window's search and contents tree. A manifest can't place a setting anywhere else, and HikariSub's own page ids are never API. The plugin manager's Settings opens that page.
+
+**Every setting may add:**
 
 | Field | Meaning |
 | --- | --- |
-| `description` | Up to 500 characters under the title. |
-| `group` | A heading. Groups show in the order of their first setting. |
+| `description` | Up to 500 characters of plain text under the title. |
+| `keywords` | Up to 16 more words the Settings search matches. |
+| `deprecated` | Why the setting is going, up to 300 characters. Settings hides it unless its value isn't the default, and then shows this under it. `hikari.settings.get` still reads it. |
+| `group` | A heading on the plugin's page. Groups show in the order of their first setting. |
 | `order` | 0 to 9999. Settings sort by it, then by manifest order. |
-| `scope` | `project` (the default): a trusted Project may override it. `user`: a Project can't. |
+| `projectable` | `true` (the default): a trusted Project may override it on the Project tab. `false`: only Yours holds it. |
 
+**Types:**
+
+- **`string`** gains `multiline`, a box of several lines.
+- **`choice`**'s options become `{value, title}` (Q641): `value` is what is saved and what `hikari.settings.get` returns, a lowercase id that is never shown, and `title` is what the drop-down shows. `default` names a value. A translated or renamed title then never changes the saved value. The schema file still holds today's list of titles until #1230 changes the schema, `manifest.cpp`'s default check and their tests together. #1230 also moves the official plugins' manifests over.
 - **`list`** is an array of strings, edited as rows with Add and Remove, with `default` and `maxItems` (256 at most).
 - **`secret`** has no default.
   - **Where it's kept.** In the system keychain under the service `HikariSub` as `plugin/<plugin id>/<setting id>`: QtKeychain on Linux, and the DPAPI key store on Windows, as for AI provider keys ([AI providers](ai-providers.md)). Never in `plugins.json` or a Project.
-  - **Scope.** It is always `user`.
+  - **Projectable.** Never: `projectable` is always `false`.
   - **The field** shows dots, with Show and Clear. `hikari.settings.get` returns the text, or `nil` when unset. Uninstalling the plugin removes it.
   - **No keychain.** On a system with no keychain, setting one fails with "No system keychain to keep it in".
-- **In Settings.** Each plugin with settings gets a page under Settings › Plugins, named after it, with the same form as the plugin manager's. The plugin manager's Settings opens that page.
-- **Changes.** A change from either place, or from a Project, sends `plugin_settings.changed` to the plugin.
+
+**Ids and links** (Q644). A plugin setting's id outside the plugin is `plugin.<plugin id>.<setting id>`. The link `hikarisub://settings/<id>` opens the Settings window at a setting, HikariSub's own (`hikarisub://settings/appearance.theme`) or a plugin's. `?scope=project` opens it on the Project tab.
+
+- **The only form.** The id fits `^[A-Za-z0-9_.-]{1,200}$`, and `scope=project` is the only parameter. Like the [install link](#installing-from-the-website), HikariSub ignores anything else and notes it in the `hikari.links` log.
+- **What it does.** It only opens the window and shows the setting, never changes one. An id Settings doesn't know opens the window with the id in its search. A Project scope without a trusted Project opens the Project tab with its "Trust this folder" note.
+- **From a plugin**, [`settings.open`](api.md#settingsopen) does the same.
+
+**Changes.** A change from Settings, the plugin manager or a Project sends `plugin_settings.changed` to the plugin.
+
+**Not in 0.1.0** (Q649). Named profiles, managed or policy settings, settings sync and per-language settings stay out ([#1240](https://github.com/altqx/hikari/issues/1240)–[#1243](https://github.com/altqx/hikari/issues/1243)), and the manifest has no key for them. Translatable plugin text is [#1239](https://github.com/altqx/hikari/issues/1239).
 
 ### Developer tools
 

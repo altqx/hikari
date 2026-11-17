@@ -148,6 +148,8 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `programs.stop` | write | plugins | Ends a started program. | #1226 |
 | `formats.list` | read | all | The subtitle formats HikariSub can open and export, built-in and from plugins. | #1229 |
 | `plugins.run` | write | all | Gains `args` and gives the command's `result`. | #1228 |
+| `settings.open` | write | all | Opens the Settings window at a setting, on the Yours or Project tab. | #1238 |
+| `settings.list`, `settings.get` | read | all | Gain `title`, `source` and `projectable`, and list plugins' settings too. | #1238 |
 
 "Plugins" means every plugin, Lua or program; AI and MCP callers get `not_granted`. `programs.*` need the plugin's `programs` permission. While a plugin runs as a `read` [AI tool](plugins.md#ai-tools-and-mcp-servers), each of its write operations, and the services `net.fetch`, `files.write` and `hikari/settings.set`, answer `refused` with reason `read_tool`.
 
@@ -380,6 +382,32 @@ It takes no parameters (`{"type": "object", "additionalProperties": false}`). `d
 ### `plugins.run`, grown
 
 `plugins.run` gains the optional parameter `args` (`{"type": "object"}`), which reaches the command's handler, and the optional result field `result`, what the handler returned. It stays on the AI's always-ask list. An [AI tool](plugins.md#ai-tools-and-mcp-servers) call goes through its own gate instead, which checks `args` against the tool's `parameters` and `result` against its `result`.
+
+### `settings.open`
+
+Write, as `panels.open` is. Every caller. It does what the link `hikarisub://settings/<id>` does ([Settings](plugins.md#settings-grown)): opens the Settings window in the shell window used last and shows the setting, or the window alone without `setting`. It changes no setting. There is no page or query parameter: HikariSub's page ids are never API.
+
+```json
+{"type": "object", "properties": {
+  "setting": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,200}$",
+    "description": "A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>."},
+  "scope": {"enum": ["yours", "project"], "description": "The tab; yours when omitted."}},
+ "additionalProperties": false}
+```
+
+Result: `{"type": "object", "properties": {"opened": {"const": true}}, "required": ["opened"], "additionalProperties": false}`. An id `settings.list` doesn't give answers `not_found`, and an AI caller naming a `privacy.*` or `recent.*` setting gets `refused` with reason `private`. `project` without a trusted Project still opens the Project tab, with its note.
+
+### `settings.list` and `settings.get`, grown
+
+Each setting in their results gains three optional fields:
+
+```json
+"title": {"type": "string", "description": "The name the Settings window shows, in the UI language."},
+"source": {"type": "string", "description": "app, or the id of the plugin whose setting it is."},
+"projectable": {"type": "boolean", "description": "Whether a Project can override it on the Project tab."}
+```
+
+They also list each running plugin's settings, as `plugin.<plugin id>.<setting id>` with that plugin as `source`. A `secret` setting is listed without its value, and `settings.get` and `settings.set` refuse it with reason `private` for every caller; its plugin reads it with `hikari.settings.get`. For AI callers, `settings.set` of a `plugin.` setting joins the always-ask list beside `plugins.*` (#1228 amends [ai-agent.md](ai-agent.md)).
 
 ### Quick picks and input boxes
 
