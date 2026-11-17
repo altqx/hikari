@@ -71,8 +71,10 @@ class SavedLayoutsTest : public QObject {
 
     QString settingsFile() const { return dir.filePath(QStringLiteral("settings.toml")); }
     QString layoutsFile() const { return dir.filePath(QStringLiteral("layouts.json")); }
-    QJsonObject layoutEnvelope() const
+    QJsonObject layoutEnvelope()
     {
+        if (application)
+            application->workspaceLayout().fileWrites().finishWrites();
         return QJsonDocument::fromJson(readAll(dir.filePath(QStringLiteral("layout.json")))).object();
     }
     void start()
