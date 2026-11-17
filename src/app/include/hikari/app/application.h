@@ -535,8 +535,9 @@ public:
     Q_INVOKABLE QString applyShift(const QString &tool);
     // What applyShift would do: {problem (empty when it can run), changed, total, amount (ms, or frames
     // when byFrames), targetMs (the video or audio mark time, -1 without), rows: [{line (1-based),
-    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "snappedStart",
-    // "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed, snapped}}.
+    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "overlapClosed",
+    // "snappedStart", "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed,
+    // overlapClosed, snapped}}.
     Q_INVOKABLE QVariantMap shiftPreview(const QString &tool, int shellWindow);
     Q_INVOKABLE bool hasKeyframes() const;
     // 0: none. Ids are never reused.
@@ -890,6 +891,10 @@ public:
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
     Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    // Writes the audio from the earliest selected start to the latest selected
+    // end as a mono 16-bit WAV; the problem, or empty when saved.
+    Q_INVOKABLE QString saveSelectedAudio(const QUrl &file);
+    Q_INVOKABLE bool canSaveSelectedAudio();
     Q_INVOKABLE bool snapToScene();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);

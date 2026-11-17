@@ -15374,6 +15374,15 @@ private slots:
         QTRY_VERIFY(item("ppGapsNeed")->isVisible());
         QTRY_COMPARE(item("postprocessorPreviewStatus")->property("text").toString(), QStringLiteral("No line changes"));
         QVERIFY(!item("postprocessorApply")->property("enabled").toBool());
+
+        auto &shift = application->shiftTimesSettings();
+        auto dropPreset = qScopeGuard([&] { shift.deletePreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")); });
+        setShift("maxOverlap", 200);
+        QTRY_VERIFY(!item("ppGapsNeed")->isVisible());
+        QVERIFY(shift.savePreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")));
+        setShift("maxOverlap", 0);
+        QVERIFY(shift.applyPreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")));
+        QCOMPARE(shift.settings().maxOverlap, 200);
         application->editor().discard();
     }
 
@@ -19388,6 +19397,7 @@ private slots:
               {"audio.drawKeyframes", "Show keyframes"},
               {"audio.lineBoundariesThickness", nullptr},
               {"audio.inactiveLinesDisplayMode", nullptr},
+              {"audio.spectrumCurve", nullptr},
               {"audio.snapToKeyframes", "Snap to keyframes"},
               {"audio.snapToOtherLines", "Snap to other lines"},
               {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
@@ -22581,6 +22591,7 @@ private slots:
         QVERIFY(audio.autoScroll());
         QVERIFY(!audio.spectrumOn());
         QVERIFY(!audio.spectrumNonLinear());
+        QCOMPARE(audio.spectrumCurve(), 0);
         audio.openDummy();
         QVERIFY(audio.ready());
         QVERIFY(item("audioZoom")->isVisible());
@@ -23013,7 +23024,7 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(item("audioMoreGotoEnd")->isVisible());
-        for (const char *twice : {"audioMoreSpeechSpectrum", "audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
+        for (const char *twice : {"audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
                                   "audioMoreLineTiming", "audioMoreExtraGoto"})
             QVERIFY2(!item(twice)->isVisible(), twice);
         closeMore();
@@ -23047,13 +23058,18 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreAutoScroll")->isVisible());
         QVERIFY(item("audioMoreSyncVideo")->isVisible());
-        QVERIFY(item("audioMoreSpeechSpectrum")->isVisible());
+        QVERIFY(named("audioMoreFrequencyCurve")->property("shown").toBool());
+        QCOMPARE(named("audioMoreFrequencyCurveLinear")->property("checked").toBool(), audio.spectrumCurve() == 0);
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
         QVERIFY(!named("audioMoreTapOptions")->property("shown").toBool());
         QVERIFY(!item("audioMoreKaraokeSplitAtCursor")->isVisible());
         QVERIFY(!item("audioMoreKaraokeKf")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreFrequencyCurveLogarithmic"), "triggered"));
+        QCOMPARE(audio.spectrumCurve(), 2);
+        QVERIFY(named("audioMoreFrequencyCurveLogarithmic")->property("checked").toBool());
+        audio.setSpectrumCurve(0);
         closeMore();
         auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
         QVERIFY(moreAutoScroll->property("checked").toBool());
@@ -23678,11 +23694,22 @@ private slots:
         QVERIFY(lit > 0);
 
         audio.setSpectrumNonLinear(true);
-        QVERIFY(settings.boolean("audio.spectrumNonLinearOn"));
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 1);
+        QCOMPARE(audio.spectrumCurve(), 1);
         const auto speech = audio.spectrumImage();
         QVERIFY(speech != picture);
         QVERIFY(speech->bgra != picture->bgra);
         QCOMPARE(audio.spectrum()->transformedLines(), lines);
+
+        audio.setSpectrumCurve(2);
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 2);
+        QVERIFY(!audio.spectrumNonLinear());
+        const auto logarithmic = audio.spectrumImage();
+        QVERIFY(logarithmic->bgra != speech->bgra);
+        QVERIFY(logarithmic->bgra != picture->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines);
+        audio.setSpectrumCurve(1);
+        QVERIFY(audio.spectrumNonLinear());
 
         audio.setVerticalZoom(100);
         QVERIFY(audio.spectrumImage()->bgra != speech->bgra);
@@ -23710,6 +23737,30 @@ private slots:
         for (int peak : audio.columns().peak)
             QCOMPARE(peak, audio.view().height() / 2);
         QVERIFY(application->recentAudio().isEmpty());
+    }
+
+    void saveAudioOfSelectedLines()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        QVERIFY(!application->canSaveSelectedAudio());
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(application->canSaveSelectedAudio());
+        const QString path = dir.filePath(QStringLiteral("clip.wav"));
+        QCOMPARE(application->saveSelectedAudio(QUrl::fromLocalFile(path)), QString());
+        QFile wav(path);
+        QVERIFY(wav.open(QIODevice::ReadOnly));
+        const QByteArray bytes = wav.readAll();
+        QCOMPARE(bytes.left(4), QByteArray("RIFF"));
+        QCOMPARE(bytes.mid(8, 4), QByteArray("WAVE"));
+        const std::int64_t rate = audio.box().audio()->sampleRate();
+        const std::int64_t samples = std::int64_t{audio.selectionEnd() - audio.selectionStart()} * rate / 1000;
+        QCOMPARE(bytes.size(), 44 + 2 * samples);
+        QVERIFY(named("saveSelectedAudioDialog"));
+        audio.closeAudio();
+        QVERIFY(!application->canSaveSelectedAudio());
+        QVERIFY(!application->saveSelectedAudio(QUrl::fromLocalFile(path)).isEmpty());
     }
 
     void audioTimingByMouseAndKeys()

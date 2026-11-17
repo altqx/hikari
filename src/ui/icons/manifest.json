@@ -763,6 +763,18 @@
    ]
   },
   {
+   "role": "save-audio",
+   "file": "save-audio.svg",
+   "label": "Save audio of selected lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:audio",
+    "grid-menu"
+   ]
+  },
+  {
    "role": "audio-previous-line",
    "file": "audio-previous-line.svg",
    "label": "Previous line",
