@@ -2,6 +2,7 @@
 
 #include "video_presenter.h"
 
+#include "hikari/application/jump_target.h"
 #include "hikari/application/video_details.h"
 
 #include <QCoreApplication>
@@ -436,6 +437,36 @@ bool VideoController::showFrameAt(int frame)
     if (!hasVideo())
         return false;
     return m_session.seekFrame(frame);
+}
+
+QVariantMap VideoController::jumpTarget(const QString &text) const
+{
+    const auto target = application::parseJumpTarget(text.toStdString());
+    if (!target)
+        return {};
+    static constexpr const char *kKinds[] = {"time", "frame", "timeStep", "frameStep"};
+    QVariantMap out{{QStringLiteral("kind"), QString::fromLatin1(kKinds[int(target->kind)])},
+                    {QStringLiteral("value"), qint64(target->value)}};
+    if (!hasVideo())
+        return out;
+    const auto timeOf = [this](std::int64_t frame) -> std::int64_t {
+        const auto start = m_session.frameStart(int(frame));
+        return start ? start->microseconds() / 1000 : 0;
+    };
+    const auto frameAt = [this, &timeOf](std::int64_t ms) -> std::int64_t {
+        const auto time = core::DocumentTime::fromMilliseconds(ms);
+        if (!time)
+            return 0;
+        const auto after = m_session.frameAtOrAfter(*time);
+        if (!after)
+            return frameCount() - 1;
+        return *after > 0 && timeOf(*after) > ms ? *after - 1 : *after;
+    };
+    const application::JumpClock clock{frameCount(), m_session.reportedFrame().value_or(0), frameAt, timeOf};
+    const std::int64_t frame = application::jumpFrame(*target, clock);
+    out.insert(QStringLiteral("frame"), qint64(frame));
+    out.insert(QStringLiteral("time"), qint64(timeOf(frame)));
+    return out;
 }
 
 void VideoController::seekBarMoved(int frame, bool held)

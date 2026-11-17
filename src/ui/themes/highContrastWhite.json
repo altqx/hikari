@@ -1,0 +1,96 @@
+{
+  "$schema": "https://hikarisub.altqx.com/schemas/hikari-theme.schema.json",
+  "type": "highContrastLight",
+  "roles": {
+    "background": "#FFFFFF",
+    "panel": "#FFFFFF",
+    "raised": "#EBEBEB",
+    "field": "#FFFFFF",
+    "text": "#000000",
+    "muted": "#1A1A1A",
+    "line": "#000000",
+    "disabled": "#6E6E6E",
+    "accent": "#0037B3",
+    "select": "#C9DAF8",
+    "danger": "#A00000",
+    "warning": "#6B4500",
+    "success": "#005A00"
+  },
+  "userColours": [
+    "accent",
+    "text",
+    "line"
+  ],
+  "content": {
+    "spellcheck": "#C00000",
+    "grammar": "#0000C8",
+    "grid": {
+      "alternate": "#FFFFFF",
+      "warning": "#FFC0C0",
+      "comment": "#F2E2B0",
+      "comparison": [
+        "#C000C0",
+        "#FFD0D0",
+        "#E0E0E0",
+        "#D0D0FF",
+        "#D0E8FF"
+      ],
+      "labels": {
+        "normal": "#9C9C9C",
+        "modified": "#B0ADD8",
+        "saved": "#BFBFBF",
+        "doubtful": "#925B1F"
+      }
+    },
+    "syntax": {
+      "curlyBraces": "#7A3E00",
+      "operators": "#005A9E",
+      "names": "#005A9E",
+      "values": "#006400",
+      "splitAndDrawings": "#595959",
+      "templateVariables": "#6B5E00",
+      "templateCodeMarks": "#B00000",
+      "templateFunctions": "#005A9E",
+      "templateKeywords": "#5B2DA8",
+      "templateStrings": "#00663A",
+      "drawingX": "#00695C",
+      "drawingY": "#9C0060"
+    },
+    "ports": {
+      "units": "#000000",
+      "tags": "#000000",
+      "number": "#000000",
+      "text": "#000000",
+      "colour": "#000000",
+      "point": "#000000",
+      "bool": "#000000",
+      "drawing": "#000000"
+    },
+    "audio": {
+      "background": "#FFFFFF",
+      "lineStart": "#C00000",
+      "lineEnd": "#C00000",
+      "inactiveBoundary": "#007A3D",
+      "cursor": "#8000C0",
+      "secondBoundaries": "#00000060",
+      "keyframe": "#000000",
+      "inactiveBackground": "#00000022",
+      "waveform": "#303030",
+      "waveformInactive": "#8C8C8C",
+      "waveformModified": "#C00000",
+      "timescaleBackground": "#FFFFFF",
+      "timescaleText": "#000000",
+      "spectrumBackground": "#FFFFFF",
+      "spectrumEcho": "#0050C8",
+      "spectrumInner": "#000000",
+      "lineBoundaryMark": "#000000",
+      "syllableBoundaries": "#000000",
+      "syllableText": "#FFFFFF"
+    },
+    "visualTools": {
+      "handle": "#121150AA",
+      "handleSelected": "#FCE6B1AA",
+      "handleBorder": "#BB0000"
+    }
+  }
+}

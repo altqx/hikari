@@ -314,6 +314,9 @@ icon("history", "History", ["History.png"], [EDIT, "history-panel"],
 icon("find-replace", "Find and replace", ["FindReplace.png"], [EDIT, "search-tool"],
      magnifier(6, 6, 4, 2) + accent(stroke("M8.5 12.5h6M12.5 10.5l2 2-2 2")), mirror=True)
 icon("search", "Find", ["Search.png"], [EDIT, "search-tool"], magnifier(6.5, 6.5, 4.5, 4))
+icon("quick-open", "Quick Open", [], [FILE, "quick-pick"], page(True) + accent(magnifier(11, 11, 2.5, 1.75)))
+icon("command-palette", "Command palette", [], [VIEW, "quick-pick"],
+     rect(1.5, 2.5, 13, 11, 1) + accent(stroke("M4.5 6l2 2-2 2")) + stroke("M8.5 10h3"), mirror=True)
 icon("sort", "Sort lines", ["Sort.png"], [EDIT, "style-manager"],
      stroke("M1.5 4.5h7M1.5 8h5M1.5 11.5h3") + accent(stroke("M12 2.5v11M9.5 11l2.5 2.5 2.5-2.5")), mirror=True)
 icon("sort-selected", "Sort selected lines", ["SortSel.png"], [EDIT],

@@ -18,9 +18,9 @@ The PNGs are opaque 8-bit sRGB, with no alpha and no gAMA, cHRM, iCCP or sRGB ch
 
 - The art fills the whole window. The hair runs off the right and bottom edges.
 - The "HikariSub" wordmark is part of the art, as outlined paths, at the bottom-left. Its baseline is at y 214 logical.
-- The launcher draws the version under the wordmark in Segoe UI 12 px, in the theme's muted colour (#A5B1BD dark, #526170 light), left-aligned at x 32 with its baseline at y 238. That area is plain sky.
+- The launcher draws the version under the wordmark in Segoe UI 12 px, in the theme's muted colour (#A0A8B2 dark, #56616C light), left-aligned at x 32 with its baseline at y 238. That area is plain sky.
 - The launcher's 3 px progress bar (y 267–270) covers the bottom of the hair.
-- The top-left of both variants is the theme background (#171B20 dark, #E5E9EC light).
+- The top-left of both variants is Compact Studio's theme background (#171B20 dark, #E5E9EC light). The art moves to Quiet's (#181B20, #EEF0F3) with the chrome area of #1205.
 
 ## How it was made
 

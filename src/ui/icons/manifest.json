@@ -236,6 +236,30 @@
    ]
   },
   {
+   "role": "quick-open",
+   "file": "quick-open.svg",
+   "label": "Quick Open",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file",
+    "quick-pick"
+   ]
+  },
+  {
+   "role": "command-palette",
+   "file": "command-palette.svg",
+   "label": "Command palette",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "quick-pick"
+   ]
+  },
+  {
    "role": "sort",
    "file": "sort.svg",
    "label": "Sort lines",
