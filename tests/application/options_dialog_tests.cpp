@@ -338,7 +338,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     ASSERT_NE(findSetting("ai.searchService"), nullptr);
     EXPECT_EQ(std::get<std::string>(findSetting("ai.searchService")->defaultValue), "");
     for (std::size_t i = 0; const char *id : {"ai.mcp.server", "ai.mcp.http", "ai.mcp.skills"}) {
-        const auto &mcp = all[std::size(kLegacy) + 58 + i++];
+        const auto &mcp = all[std::size(kLegacy) + 59 + i++];
         EXPECT_EQ(mcp.setting, id);
         EXPECT_EQ(mcp.control, OptionsControl::Check);
         EXPECT_EQ(mcp.page, OptionsPage::Ai);
@@ -356,7 +356,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
                                                          std::pair{"ai.agent.dailyCapCents", OptionsControl::Number},
                                                          std::pair{"ai.agent.costMeter", OptionsControl::Check},
                                                          std::pair{"ai.agent.autoCompact", OptionsControl::Check}}) {
-        const auto &agent = all[std::size(kLegacy) + 62 + i++];
+        const auto &agent = all[std::size(kLegacy) + 63 + i++];
         EXPECT_EQ(agent.setting, id);
         EXPECT_EQ(agent.control, control) << id;
         EXPECT_EQ(agent.page, OptionsPage::Ai) << id;
@@ -367,7 +367,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(std::get<std::int64_t>(findSetting("ai.agent.dailyCapCents")->defaultValue), 1000);
     EXPECT_EQ(findOptionsBinding("ai.agent.fullAccessWarned"), nullptr);
     for (std::size_t i = 0; const char *tag : {"blur", "bord", "shad", "alpha", "an", "fsp"}) {
-        const auto &cycle = all[std::size(kLegacy) + 69 + i++];
+        const auto &cycle = all[std::size(kLegacy) + 70 + i++];
         EXPECT_EQ(cycle.setting, std::string("editing.cycleValues.") + tag);
         EXPECT_EQ(cycle.control, OptionsControl::Text) << tag;
         EXPECT_EQ(cycle.page, OptionsPage::Editing) << tag;
