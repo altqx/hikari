@@ -199,7 +199,7 @@ private slots:
         manifest.write(R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "main": "main.lua",
             "authors": ["Ana", "Bo"], "icon": "icon.png",
             "permissions": {"documents.all": "It checks every tab.", "vcs.read": "It marks Lines changed since a tag.",
-                            "presence": "It shows the episode."},
+                            "background": "It checks the feed.", "presence": "It shows the episode."},
             "contributes": {"commands": [{"id": "greet", "title": "Say hello"}],
                             "panels": [{"id": "notes", "title": "Notes"}],
                             "settings": [{"id": "count", "title": "Count", "type": "integer", "default": 1, "maximum": 5}]}})");
@@ -211,10 +211,11 @@ private slots:
         QCOMPARE(row.value(QStringLiteral("adds")).toStringList(),
                  (QStringList{QStringLiteral("Command: Say hello"), QStringLiteral("Panel: Notes")}));
         const QStringList permissions = row.value(QStringLiteral("permissions")).toStringList();
-        QCOMPARE(permissions.size(), 3);
+        QCOMPARE(permissions.size(), 4);
         QVERIFY(permissions.first().contains(QStringLiteral("It checks every tab.")));
         QCOMPARE(permissions.at(1), QStringLiteral("Read the branches, tags and history of the git repository holding your "
                                                    "subtitle files: It marks Lines changed since a tag."));
+        QCOMPARE(permissions.at(2), QStringLiteral("Works in the background while HikariSub is open: It checks the feed."));
         QCOMPARE(permissions.last(), QStringLiteral("Set text in your Discord status: It shows the episode."));
         QUrl opened;
         const auto routes = hikari::backends::desktop::replaceRoutes({[&](const QUrl &url) { opened = url; return true; }, {}, {}});

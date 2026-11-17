@@ -33,6 +33,7 @@ public:
         case Area::Files: return envelope(protocol::Service::Files, operation, params);
         case Area::Net: return envelope(protocol::Service::Net, operation, params);
         case Area::Job: return envelope(protocol::Service::Job, operation, params);
+        case Area::Timer: return envelope(protocol::Service::Timer, operation, params);
         case Area::Ui: break;
         }
         return envelope(protocol::Service::Ui, operation, params);
@@ -165,6 +166,14 @@ int main()
         const auto command = static_cast<protocol::Command>(in.i32());
         if (command == protocol::Command::Load)
             return load(in, r);
+        if (command == protocol::Command::Timer && g_state) {
+            const std::int64_t timer = in.i64();
+            const bool last = in.u8() != 0;
+            if (!in.ok() || !in.atEnd())
+                return r.terminal(Outcome::InvalidInput);
+            ServiceHost host(r);
+            return finish(r, g_state->fire(timer, last, host));
+        }
         if (command != protocol::Command::Run || !g_state)
             return r.terminal(Outcome::Unsupported);
         const std::string id = in.str();

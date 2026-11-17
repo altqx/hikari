@@ -62,7 +62,8 @@ TEST(PluginManifest, EveryFieldReads)
     json["permissions"] = *Json::parse(R"({"documents.all": "Compares scripts",
         "network": {"hosts": ["api.example.com"], "reason": "Looks words up"},
         "files": [{"id": "fonts", "title": "Fonts", "writable": true, "reason": "Reads fonts"}],
-        "vcs.read": "Marks Lines changed since a tag", "presence": "Shows the episode the tracker knows"})");
+        "vcs.read": "Marks Lines changed since a tag", "background": "Checks the feed",
+        "presence": "Shows the episode the tracker knows"})");
     json["contributes"] = *Json::parse(R"({"commands": [{"id": "greet", "title": "Greet"}],
         "panels": [{"id": "board", "title": "Board"}, {"id": "notes", "title": "Notes", "area": "bottom"}],
         "settings": [{"id": "loud", "title": "Loud", "type": "boolean", "default": false},
@@ -78,6 +79,7 @@ TEST(PluginManifest, EveryFieldReads)
     ASSERT_EQ(m->permissions.files.size(), 1u);
     EXPECT_TRUE(m->permissions.files[0].writable);
     EXPECT_EQ(m->permissions.vcsRead, "Marks Lines changed since a tag");
+    EXPECT_EQ(m->permissions.background, "Checks the feed");
     EXPECT_EQ(m->permissions.presence, "Shows the episode the tracker knows");
     ASSERT_EQ(m->commands.size(), 1u);
     EXPECT_EQ(m->commands[0].title, "Greet");
@@ -327,9 +329,10 @@ TEST(PluginManifest, ListedPermissionsOfTheWrongShapeAreLeftOut)
 {
     const Permissions p = readPermissions(*Json::parse(
         R"({"documents.all": 1, "network": {"hosts": ["api.example.com", 2], "reason": "Looks words up"},
-            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}], "vcs.read": true})"));
+            "files": [{"id": "fonts", "title": "Fonts", "writable": "yes", "reason": 3}], "vcs.read": true, "background": false})"));
     EXPECT_FALSE(p.allDocuments);
     EXPECT_FALSE(p.vcsRead);
+    EXPECT_FALSE(p.background);
     EXPECT_EQ(p.networkHosts, std::vector<std::string>{"api.example.com"});
     EXPECT_EQ(p.networkReason, "Looks words up");
     ASSERT_EQ(p.files.size(), 1u);
@@ -354,6 +357,7 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     more.tier = Tier::Unrestricted;
     more.permissions.allDocuments = "Compares scripts";
     more.permissions.vcsRead = "Marks changed Lines";
+    more.permissions.background = "Checks the feed";
     more.permissions.presence = "Shows the episode";
     more.permissions.networkHosts = {"api.example.com", "cdn.example.com"};
     more.permissions.files = {{"fonts", "Fonts", true, "r"}, {"out", "Out", true, "r"}, {"logs", "Logs", false, "r"}};
@@ -362,6 +366,7 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     EXPECT_TRUE(increase.unrestricted);
     EXPECT_TRUE(increase.allDocuments);
     EXPECT_TRUE(increase.vcsRead);
+    EXPECT_TRUE(increase.background);
     EXPECT_TRUE(increase.presence);
     EXPECT_EQ(increase.networkHosts, std::vector<std::string>{"cdn.example.com"});
     EXPECT_EQ(increase.files, (std::vector<std::string>{"fonts", "logs"}));

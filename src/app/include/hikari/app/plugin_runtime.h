@@ -38,6 +38,10 @@ class PluginRuntime : public QObject {
     Q_PROPERTY(QVariantList commands READ commands NOTIFY commandsChanged)
     // Commands running as jobs, newest first: {plugin, name, title, fraction (< 0: unknown), text, cancelling, stuck}.
     Q_PROPERTY(QVariantList jobs READ jobs NOTIFY jobsChanged)
+    // Plugins at work worth showing, by plugin name: {plugin, name, what, background, stillWorking}. stillWorking: a
+    // load, command, event or timer callback past 10 seconds that isn't a job. A background plugin is listed while a
+    // timer callback or a job runs too.
+    Q_PROPERTY(QVariantList working READ working NOTIFY workingChanged)
     Q_PROPERTY(int marksRevision READ marksRevision NOTIFY marksChanged)
     Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
     // Restricted plugins run in an operating-system sandbox here.
@@ -53,7 +57,7 @@ public:
         ui::LogController *log = nullptr;
         std::function<QString()> language; // "" for English
         backends::PluginProcess::Limits limits;
-        std::size_t memoryLimit = 256u << 20;
+        std::size_t memoryLimit = std::size_t(2) << 30;
         // How long a plugin waits for another plugin's edit before it is told HikariSub is busy.
         int transactionWaitMs = 5000;
         // How long a cancelled job may run on before Stop is offered.
@@ -95,7 +99,10 @@ public:
     // False when no running plugin has the command.
     Q_INVOKABLE bool run(const QString &commandId);
     Q_INVOKABLE void forceStop(const QString &pluginId);
+    // As forceStop, but a background plugin then stays stopped until restart or the next HikariSub start.
+    Q_INVOKABLE void stopWorking(const QString &pluginId);
     QVariantList jobs() const;
+    QVariantList working() const { return m_working; }
     // Asks the plugin's job to stop; when it hasn't 5 seconds later, the job is stuck and Stop is offered.
     Q_INVOKABLE void cancelJob(const QString &pluginId);
     // Per Document the plugin marks Lines in: {document, file, count}.
@@ -126,6 +133,7 @@ signals:
     void commandsChanged();
     void windowsChanged();
     void jobsChanged();
+    void workingChanged();
     void marksChanged();
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
@@ -137,6 +145,7 @@ private:
                backends::PluginProcess::ServiceReply reply);
     void unsubscribe(Running &plugin);
     void relist();
+    std::vector<const Running *> byName() const;
     void lock(Running &plugin, backends::PluginProcess::ServiceReply reply);
     void unlock(Running &plugin);
     void releaseLock(Running &plugin);
@@ -175,6 +184,8 @@ private:
     std::vector<Job> m_jobs;
     int m_marksRevision = 0;
     void endJob(const std::string &plugin);
+    void rework();
+    QVariantList m_working;
     int m_windowsRevision = 0;
 };
 

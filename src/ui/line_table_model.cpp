@@ -278,14 +278,12 @@ int LineTableModel::labelSlot(int state)
 
 LineTableModel::LabelColours LineTableModel::themeLabelColours(bool dark)
 {
-    if (dark)
-        return {QColor(0x2F, 0x31, 0x36), QColor(0x32, 0x2F, 0x4E), QColor(0x20, 0x22, 0x25), QColor(0x92, 0x5B, 0x1F)};
-    return {QColor(0x9C, 0x9C, 0x9C), QColor(0xB0, 0xAD, 0xD8), QColor(0xBF, 0xBF, 0xBF), QColor(0x92, 0x5B, 0x1F)};
+    return theme::content(dark ? theme::Code::Dark : theme::Code::Light, {}).gridLabels;
 }
 
 LineTableModel::LabelColours LineTableModel::themeLabelColours()
 {
-    return themeLabelColours(theme::isDark(theme::current().code));
+    return theme::current().content.gridLabels;
 }
 
 void LineTableModel::setLabelColours(const LabelColours &colours)

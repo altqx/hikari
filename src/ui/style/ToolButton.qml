@@ -1,17 +1,18 @@
 import QtQuick
 import QtQuick.Controls.Fusion as F
-import QtQuick.Controls.Fusion.impl as FI
 
 F.ToolButton {
     id: control
-    background: FI.ButtonPanel {
-        implicitWidth: 20
-        implicitHeight: 20
-        control: control
-        visible: control.down || control.checked || control.highlighted || control.visualFocus
-            || (enabled && control.hovered)
-        border.color: !control.enabled ? control.palette.mid
-            : highlighted ? F.Fusion.highlightedOutline(control.palette) : (StyleColours.themed ? StyleColours.control : control.palette.mid)
+    background: Rectangle {
+        implicitWidth: 24
+        implicitHeight: 24
+        radius: 4
+        color: !StyleColours.themed ? (control.down || control.checked ? control.palette.mid
+                                       : control.hovered ? control.palette.midlight : "transparent")
+            : control.checked && control.enabled ? StyleColours.select : "transparent"
+        border.width: StyleColours.highContrast && control.enabled && (control.checked || control.hovered) ? 1 : 0
+        border.color: control.checked ? StyleColours.accent : StyleColours.line
+        StateOverlay { control: control; pressed: control.down }
         FocusFrame { control: control; shown: control.visualFocus }
     }
 }

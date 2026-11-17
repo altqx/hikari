@@ -1881,7 +1881,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation>Uruchom ponownie ostatnie makro</translation>
+        <translation type="vanished">Uruchom ponownie ostatnie makro</translation>
     </message>
     <message>
         <source>%1 cancelled</source>
@@ -7775,7 +7775,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Load subtitles from an MKV file</source>
-        <translation>Wczytaj napisy z pliku MKV</translation>
+        <translation type="vanished">Wczytaj napisy z pliku MKV</translation>
     </message>
     <message>
         <source>Swap lines</source>
@@ -7783,7 +7783,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Set new FPS</source>
-        <translation>Ustaw nowy FPS</translation>
+        <translation type="vanished">Ustaw nowy FPS</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -7823,7 +7823,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Report an issue</source>
-        <translation>Zgłoś problem</translation>
+        <translation type="vanished">Zgłoś problem</translation>
     </message>
     <message>
         <source>Open audio from video</source>
@@ -7831,7 +7831,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Load script</source>
-        <translation>Wczytaj skrypt</translation>
+        <translation type="vanished">Wczytaj skrypt</translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
@@ -7839,7 +7839,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Time shift window</source>
-        <translation>Okno przesuwania czasów</translation>
+        <translation type="vanished">Okno przesuwania czasów</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -7847,7 +7847,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Find and replace</source>
-        <translation>Znajdź i zamień</translation>
+        <translation type="vanished">Znajdź i zamień</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -7863,7 +7863,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>Ukryj tagi</translation>
+        <translation type="vanished">Ukryj tagi</translation>
     </message>
     <message>
         <source>History</source>
@@ -7879,7 +7879,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open keyframes</source>
-        <translation>Otwórz klatki kluczowe</translation>
+        <translation type="vanished">Otwórz klatki kluczowe</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -7899,7 +7899,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Sort all lines by styles</source>
-        <translation>Sortuj wszystkie linijki według stylów</translation>
+        <translation type="vanished">Sortuj wszystkie linijki według stylów</translation>
     </message>
     <message>
         <source>Sort all lines by actor</source>
@@ -7931,7 +7931,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Sort selected lines by styles</source>
-        <translation>Sortuj zaznaczone linijki według stylów</translation>
+        <translation type="vanished">Sortuj zaznaczone linijki według stylów</translation>
     </message>
     <message>
         <source>Sort selected lines by actor</source>
@@ -7959,7 +7959,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Timing postprocessor panel</source>
-        <translation>Panel postprocesora timingu</translation>
+        <translation type="vanished">Panel postprocesora timingu</translation>
     </message>
     <message>
         <source>Timing postprocessor with the last values</source>
@@ -7975,7 +7975,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Resample subtitles</source>
-        <translation>Zmień rozdzielczość napisów</translation>
+        <translation type="vanished">Zmień rozdzielczość napisów</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -7999,7 +7999,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Close current tab</source>
-        <translation>Zamknij bieżącą zakładkę</translation>
+        <translation type="vanished">Zamknij bieżącą zakładkę</translation>
     </message>
     <message>
         <source>Clean styles of ASS file</source>
@@ -8019,7 +8019,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Next frame</source>
-        <translation>Klatka w przód</translation>
+        <translation type="vanished">Klatka w przód</translation>
     </message>
     <message>
         <source>Next tab</source>
@@ -8027,7 +8027,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open audio</source>
-        <translation>Otwórz audio</translation>
+        <translation type="vanished">Otwórz audio</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -8047,7 +8047,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation>Klatka w tył</translation>
+        <translation type="vanished">Klatka w tył</translation>
     </message>
     <message>
         <source>Previous tab</source>
@@ -8075,7 +8075,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation>Zapisz wszystkie napisy</translation>
+        <translation type="vanished">Zapisz wszystkie napisy</translation>
     </message>
     <message>
         <source>Save</source>
@@ -8083,15 +8083,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save translation</source>
-        <translation>Zapisz tłumaczenie</translation>
+        <translation type="vanished">Zapisz tłumaczenie</translation>
     </message>
     <message>
         <source>Save subtitles using the video name</source>
-        <translation>Zapisuj napisy z nazwą wideo</translation>
+        <translation type="vanished">Zapisuj napisy z nazwą wideo</translation>
     </message>
     <message>
         <source>Find</source>
-        <translation>Znajdź</translation>
+        <translation type="vanished">Znajdź</translation>
     </message>
     <message>
         <source>Select line at current video position</source>
@@ -8099,7 +8099,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Select lines</source>
-        <translation>Zaznacz linijki</translation>
+        <translation type="vanished">Zaznacz linijki</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -8107,15 +8107,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Set audio marker to video time</source>
-        <translation>Ustaw znacznik audio na czas wideo</translation>
+        <translation type="vanished">Ustaw znacznik audio na czas wideo</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation>Wstaw czas końcowy z wideo</translation>
+        <translation type="vanished">Wstaw czas końcowy z wideo</translation>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation>Wstaw czas początkowy z wideo</translation>
+        <translation type="vanished">Wstaw czas początkowy z wideo</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -8459,11 +8459,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Export as</source>
-        <translation>Eksportuj jako</translation>
+        <translation type="vanished">Eksportuj jako</translation>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
-        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+        <translation type="vanished">Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
     <message>
         <source>Shift selected lines by frames: start at video</source>
@@ -8515,7 +8515,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Video details…</source>
-        <translation>Szczegóły wideo…</translation>
+        <translation type="vanished">Szczegóły wideo…</translation>
     </message>
     <message>
         <source>Convert Aegisub folds to line groups</source>
@@ -8523,11 +8523,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open timecodes</source>
-        <translation>Otwórz kody czasowe</translation>
+        <translation type="vanished">Otwórz kody czasowe</translation>
     </message>
     <message>
         <source>Save timecodes</source>
-        <translation>Zapisz kody czasowe</translation>
+        <translation type="vanished">Zapisz kody czasowe</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -8535,7 +8535,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>QC notes panel</source>
-        <translation>Panel notatek QC</translation>
+        <translation type="vanished">Panel notatek QC</translation>
     </message>
     <message>
         <source>Next QC note</source>
@@ -8551,7 +8551,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
-        <translation>Śledzenie perspektywy…</translation>
+        <translation type="vanished">Śledzenie perspektywy…</translation>
     </message>
     <message>
         <source>Play before the mark</source>
@@ -8603,7 +8603,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Copy Power-Pin track from lines</source>
-        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+        <translation type="vanished">Kopiuj ścieżkę Power-Pin z linijek</translation>
     </message>
     <message>
         <source>Extend tracked lines…</source>
@@ -8846,10 +8846,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Review panel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Agent panel</source>
         <translation>Panel agenta</translation>
     </message>
@@ -8931,10 +8927,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Accept the timing assistant’s suggestion</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Explorer panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9664,7 +9656,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Karaoke check</source>
-        <translation>Sprawdzanie karaoke</translation>
+        <translation type="vanished">Sprawdzanie karaoke</translation>
     </message>
     <message>
         <source>No karaoke problems found</source>
@@ -10318,11 +10310,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>&amp;Open…</source>
-        <translation>&amp;Otwórz…</translation>
+        <translation type="vanished">&amp;Otwórz…</translation>
     </message>
     <message>
         <source>Recently opened &amp;subtitles</source>
-        <translation>Ostatnio otwa&amp;rte napisy</translation>
+        <translation type="vanished">Ostatnio otwa&amp;rte napisy</translation>
     </message>
     <message>
         <source>None</source>
@@ -10330,11 +10322,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Remove subtitles from the &amp;editor</source>
-        <translation>Usuń napisy z e&amp;dytora</translation>
+        <translation type="vanished">Usuń napisy z e&amp;dytora</translation>
     </message>
     <message>
         <source>&amp;Close</source>
-        <translation>&amp;Zamknij</translation>
+        <translation type="vanished">&amp;Zamknij</translation>
     </message>
     <message>
         <source>&amp;Save</source>
@@ -10342,7 +10334,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save &amp;all</source>
-        <translation>Zapisz &amp;wszystko</translation>
+        <translation type="vanished">Zapisz &amp;wszystko</translation>
     </message>
     <message>
         <source>Save &amp;as…</source>
@@ -10350,11 +10342,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save &amp;translation</source>
-        <translation>Zapisz &amp;tłumaczenie</translation>
+        <translation type="vanished">Zapisz &amp;tłumaczenie</translation>
     </message>
     <message>
         <source>Save subtitles using the video name</source>
-        <translation>Zapisuj napisy z nazwą wideo</translation>
+        <translation type="vanished">Zapisuj napisy z nazwą wideo</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -10362,7 +10354,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
-        <translation>Usuń pliki tymczasowe</translation>
+        <translation type="vanished">Usuń pliki tymczasowe</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -10378,19 +10370,19 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save session to file</source>
-        <translation>Zapisz sesję do pliku</translation>
+        <translation type="vanished">Zapisz sesję do pliku</translation>
     </message>
     <message>
         <source>Ask whether to load the last session at program startup</source>
-        <translation>Pytaj o wczytanie ostatniej sesji przy starcie programu</translation>
+        <translation type="vanished">Pytaj o wczytanie ostatniej sesji przy starcie programu</translation>
     </message>
     <message>
         <source>Load last session after program start</source>
-        <translation>Wczytuj ostatnią sesję przy starcie programu</translation>
+        <translation type="vanished">Wczytuj ostatnią sesję przy starcie programu</translation>
     </message>
     <message>
         <source>&amp;Settings</source>
-        <translation>&amp;Ustawienia</translation>
+        <translation type="vanished">&amp;Ustawienia</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
@@ -10410,11 +10402,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>So&amp;rt all lines</source>
-        <translation>Sort&amp;uj wszystkie linijki</translation>
+        <translation type="vanished">Sort&amp;uj wszystkie linijki</translation>
     </message>
     <message>
         <source>So&amp;rt selected lines</source>
-        <translation>Sortu&amp;j zaznaczone linijki</translation>
+        <translation type="vanished">Sortu&amp;j zaznaczone linijki</translation>
     </message>
     <message>
         <source>Undo to last save</source>
@@ -10426,7 +10418,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Select &amp;lines</source>
-        <translation>Zaznacz &amp;linijki</translation>
+        <translation type="vanished">Zaznacz &amp;linijki</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -10462,7 +10454,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation>Uruchom ponownie ostatnie makro</translation>
+        <translation type="vanished">Uruchom ponownie ostatnie makro</translation>
     </message>
     <message>
         <source>&amp;Video</source>
@@ -10474,11 +10466,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Previous frame</source>
-        <translation>Klatka w tył</translation>
+        <translation type="vanished">Klatka w tył</translation>
     </message>
     <message>
         <source>Next frame</source>
-        <translation>Klatka w przód</translation>
+        <translation type="vanished">Klatka w przód</translation>
     </message>
     <message>
         <source>Go to end time of line</source>
@@ -10486,7 +10478,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Play or pause</source>
-        <translation>Odtwórz lub wstrzymaj</translation>
+        <translation type="vanished">Odtwórz lub wstrzymaj</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -10518,11 +10510,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Insert start time from video</source>
-        <translation>Wstaw czas początkowy z wideo</translation>
+        <translation type="vanished">Wstaw czas początkowy z wideo</translation>
     </message>
     <message>
         <source>Insert end time from video</source>
-        <translation>Wstaw czas końcowy z wideo</translation>
+        <translation type="vanished">Wstaw czas końcowy z wideo</translation>
     </message>
     <message>
         <source>Set audio position to video time</source>
@@ -10530,7 +10522,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Set audio marker to video time</source>
-        <translation>Ustaw znacznik audio na czas wideo</translation>
+        <translation type="vanished">Ustaw znacznik audio na czas wideo</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -10558,11 +10550,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open audio from video</source>
-        <translation>Otwórz audio z wideo</translation>
+        <translation type="vanished">Otwórz audio z wideo</translation>
     </message>
     <message>
         <source>Close audio</source>
-        <translation>Zamknij audio</translation>
+        <translation type="vanished">Zamknij audio</translation>
     </message>
     <message>
         <source>Vie&amp;w</source>
@@ -10626,7 +10618,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
-        <translation>Przywróć poprzedni układ</translation>
+        <translation type="vanished">Przywróć poprzedni układ</translation>
     </message>
     <message>
         <source>&amp;Subtitles</source>
@@ -10666,19 +10658,19 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Script properties</source>
-        <translation>Właściwości skryptu</translation>
+        <translation type="vanished">Właściwości skryptu</translation>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>Kolekcjoner czcionek</translation>
+        <translation type="vanished">Kolekcjoner czcionek</translation>
     </message>
     <message>
         <source>Resample subtitles</source>
-        <translation>Zmień rozdzielczość napisów</translation>
+        <translation type="vanished">Zmień rozdzielczość napisów</translation>
     </message>
     <message>
         <source>Check spelling</source>
-        <translation>Sprawdź pisownię</translation>
+        <translation type="vanished">Sprawdź pisownię</translation>
     </message>
     <message>
         <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
@@ -10690,11 +10682,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Install, turn on and off, and uninstall plugins</source>
-        <translation>Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
+        <translation type="vanished">Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
     </message>
     <message>
         <source>Pl&amp;ugins…</source>
-        <translation>W&amp;tyczki…</translation>
+        <translation type="vanished">W&amp;tyczki…</translation>
     </message>
     <message>
         <source>Remove from the layout</source>
@@ -10702,7 +10694,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Hide tags</source>
-        <translation>Ukryj tagi</translation>
+        <translation type="vanished">Ukryj tagi</translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -10710,7 +10702,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>&amp;Report an issue</source>
-        <translation>&amp;Zgłoś problem</translation>
+        <translation type="vanished">&amp;Zgłoś problem</translation>
     </message>
     <message>
         <source>Check for &amp;updates</source>
@@ -10818,11 +10810,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open subtitle file</source>
-        <translation>Otwórz plik napisów</translation>
+        <translation type="vanished">Otwórz plik napisów</translation>
     </message>
     <message>
         <source>Open a folder as a project</source>
-        <translation>Otwórz folder jako projekt</translation>
+        <translation type="vanished">Otwórz folder jako projekt</translation>
     </message>
     <message>
         <source>Open &amp;folder…</source>
@@ -10830,11 +10822,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Recently opened subtitles</source>
-        <translation>Ostatnio otwarte napisy</translation>
+        <translation type="vanished">Ostatnio otwarte napisy</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Otwórz</translation>
+        <translation type="vanished">Otwórz</translation>
     </message>
     <message>
         <source>Open %1</source>
@@ -10846,7 +10838,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Close this window’s tabs and its project</source>
-        <translation>Zamknij zakładki tego okna i jego projekt</translation>
+        <translation type="vanished">Zamknij zakładki tego okna i jego projekt</translation>
     </message>
     <message>
         <source>Close pro&amp;ject</source>
@@ -10854,7 +10846,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Opens video file</source>
-        <translation>Otwiera plik wideo</translation>
+        <translation type="vanished">Otwiera plik wideo</translation>
     </message>
     <message>
         <source>Imports a subtitle track from a Matroska file</source>
@@ -10874,15 +10866,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save current file</source>
-        <translation>Zapisz aktualny plik</translation>
+        <translation type="vanished">Zapisz aktualny plik</translation>
     </message>
     <message>
         <source>Save all subtitles</source>
-        <translation>Zapisz wszystkie napisy</translation>
+        <translation type="vanished">Zapisz wszystkie napisy</translation>
     </message>
     <message>
         <source>Save as</source>
-        <translation>Zapisz jako</translation>
+        <translation type="vanished">Zapisz jako</translation>
     </message>
     <message>
         <source>Writes a copy of the document in another format</source>
@@ -10894,7 +10886,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save translation</source>
-        <translation>Zapisz tłumaczenie</translation>
+        <translation type="vanished">Zapisz tłumaczenie</translation>
     </message>
     <message>
         <source>Opens the selected autosave from the list</source>
@@ -10902,11 +10894,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Opens the temporary file removal window</source>
-        <translation>Otwiera okno usuwania plików tymczasowych</translation>
+        <translation type="vanished">Otwiera okno usuwania plików tymczasowych</translation>
     </message>
     <message>
         <source>Last session options</source>
-        <translation>Opcje ostatniej sesji</translation>
+        <translation type="vanished">Opcje ostatniej sesji</translation>
     </message>
     <message>
         <source>Loads previously loaded files</source>
@@ -10922,19 +10914,19 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Asks whether to load previously loaded files at program startup</source>
-        <translation>Pyta, czy wczytać ostatnio otwarte pliki przy starcie programu</translation>
+        <translation type="vanished">Pyta, czy wczytać ostatnio otwarte pliki przy starcie programu</translation>
     </message>
     <message>
         <source>Loads previously loaded files at program startup</source>
-        <translation>Wczytuje ostatnio otwarte pliki przy starcie programu</translation>
+        <translation type="vanished">Wczytuje ostatnio otwarte pliki przy starcie programu</translation>
     </message>
     <message>
         <source>Program settings</source>
-        <translation>Ustawienia programu</translation>
+        <translation type="vanished">Ustawienia programu</translation>
     </message>
     <message>
         <source>Close this window; closing the last window exits the program</source>
-        <translation>Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
+        <translation type="vanished">Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
     </message>
     <message>
         <source>Close &amp;window</source>
@@ -10942,23 +10934,23 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Exit the program</source>
-        <translation>Zakończ działanie programu</translation>
+        <translation type="vanished">Zakończ działanie programu</translation>
     </message>
     <message>
         <source>Undo</source>
-        <translation>Cofnij</translation>
+        <translation type="vanished">Cofnij</translation>
     </message>
     <message>
         <source>Redo</source>
-        <translation>Ponów</translation>
+        <translation type="vanished">Ponów</translation>
     </message>
     <message>
         <source>Sorts all lines in ASS file</source>
-        <translation>Sortuje wszystkie linijki w pliku ASS</translation>
+        <translation type="vanished">Sortuje wszystkie linijki w pliku ASS</translation>
     </message>
     <message>
         <source>Sorts selected lines in ASS file</source>
-        <translation>Sortuje zaznaczone linijki w pliku ASS</translation>
+        <translation type="vanished">Sortuje zaznaczone linijki w pliku ASS</translation>
     </message>
     <message>
         <source>History</source>
@@ -10969,15 +10961,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zaznacza linijki według wyrażeń</translation>
     </message>
     <message>
-        <source>Timing helpers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Moves the start of each selected line to the keyframe before it</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start to previous keyframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10985,23 +10969,11 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Start to next keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Moves the end of each selected line to the keyframe before it, staying after its start</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>End to previous keyframe</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Moves the end of each selected line to the keyframe after it</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End to next keyframe</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11041,15 +11013,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Start one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Moves the start of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start one frame later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11057,15 +11021,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>End one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Moves the end of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>End one frame later</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11073,15 +11029,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Extend previous line to this start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Starts the line after the active line where the active line ends</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Extend next line to this end</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11094,10 +11042,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Applies the timing assistant’s suggestion to the active line and goes to the next one</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Accept assistant suggestion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11126,7 +11070,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>&amp;QC notes…</source>
-        <translation>Notatki &amp;QC…</translation>
+        <translation type="vanished">Notatki &amp;QC…</translation>
     </message>
     <message>
         <source>Changes the frame rate of the subtitle times</source>
@@ -11134,7 +11078,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Set FPS</source>
-        <translation>Ustaw FPS</translation>
+        <translation type="vanished">Ustaw FPS</translation>
     </message>
     <message>
         <source>Set new FPS…</source>
@@ -11146,11 +11090,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open a VFR timecodes v1, v2 or v4 file</source>
-        <translation>Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
+        <translation type="vanished">Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
     </message>
     <message>
         <source>Open timecodes</source>
-        <translation>Otwórz kody czasowe</translation>
+        <translation type="vanished">Otwórz kody czasowe</translation>
     </message>
     <message>
         <source>Recently opened timecodes</source>
@@ -11158,15 +11102,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Save a VFR timecodes v2 file</source>
-        <translation>Zapisuje plik kodów czasowych VFR v2</translation>
+        <translation type="vanished">Zapisuje plik kodów czasowych VFR v2</translation>
     </message>
     <message>
         <source>Save timecodes</source>
-        <translation>Zapisz kody czasowe</translation>
+        <translation type="vanished">Zapisz kody czasowe</translation>
     </message>
     <message>
         <source>Close the currently open timecodes file</source>
-        <translation>Zamyka otwarty plik kodów czasowych</translation>
+        <translation type="vanished">Zamyka otwarty plik kodów czasowych</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -11250,15 +11194,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open a video first: tracking data is per frame.</source>
-        <translation>Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
+        <translation type="vanished">Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
     </message>
     <message>
         <source>Perspective tracking…</source>
-        <translation>Śledzenie perspektywy…</translation>
+        <translation type="vanished">Śledzenie perspektywy…</translation>
     </message>
     <message>
         <source>Video details…</source>
-        <translation>Szczegóły wideo…</translation>
+        <translation type="vanished">Szczegóły wideo…</translation>
     </message>
     <message>
         <source>Reload video</source>
@@ -11286,7 +11230,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Copy Power-Pin track from lines</source>
-        <translation>Kopiuj ścieżkę Power-Pin z linijek</translation>
+        <translation type="vanished">Kopiuj ścieżkę Power-Pin z linijek</translation>
     </message>
     <message>
         <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
@@ -11302,7 +11246,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Reload audio</source>
-        <translation>Wczytaj ponownie audio</translation>
+        <translation type="vanished">Wczytaj ponownie audio</translation>
     </message>
     <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
@@ -11310,7 +11254,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Join with previous line using the audio selection</source>
-        <translation>Połącz z poprzednią linijką według zaznaczenia audio</translation>
+        <translation type="vanished">Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
     <message>
         <source>Untagged video</source>
@@ -11426,11 +11370,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Load script</source>
-        <translation>Wczytaj skrypt</translation>
+        <translation type="vanished">Wczytaj skrypt</translation>
     </message>
     <message>
         <source>Run the last macro again with the same answers, without its dialogs when they are unchanged</source>
-        <translation>Uruchamia ponownie ostatnie makro z tymi samymi odpowiedziami, bez jego okien dialogowych, jeśli się nie zmieniły</translation>
+        <translation type="vanished">Uruchamia ponownie ostatnie makro z tymi samymi odpowiedziami, bez jego okien dialogowych, jeśli się nie zmieniły</translation>
     </message>
     <message>
         <source>Repeat last run</source>
@@ -11466,7 +11410,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Opens audio file</source>
-        <translation>Otwiera plik audio</translation>
+        <translation type="vanished">Otwiera plik audio</translation>
     </message>
     <message>
         <source>Opens audio from video</source>
@@ -11478,7 +11422,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Kanji timer</source>
-        <translation>Timer kanji</translation>
+        <translation type="vanished">Timer kanji</translation>
     </message>
     <message>
         <source>Walks through the settings most people change first</source>
@@ -11486,7 +11430,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>&amp;Getting started</source>
-        <translation>Pierwsze &amp;kroki</translation>
+        <translation type="vanished">Pierwsze &amp;kroki</translation>
     </message>
     <message>
         <source>Opens the user guide in the default browser</source>
@@ -11526,15 +11470,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Closes audio</source>
-        <translation>Zamyka audio</translation>
+        <translation type="vanished">Zamyka audio</translation>
     </message>
     <message>
         <source>Shifting subtitle times</source>
-        <translation>Przesuwanie czasów napisów</translation>
+        <translation type="vanished">Przesuwanie czasów napisów</translation>
     </message>
     <message>
         <source>Is used to manage ASS styles</source>
-        <translation>Służy do zarządzania stylami ASS</translation>
+        <translation type="vanished">Służy do zarządzania stylami ASS</translation>
     </message>
     <message>
         <source>Opens Script properties</source>
@@ -11546,7 +11490,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Check karaoke</source>
-        <translation>Sprawdź karaoke</translation>
+        <translation type="vanished">Sprawdź karaoke</translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
@@ -12158,7 +12102,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Align to video…</source>
-        <translation>Dopasuj do wideo…</translation>
+        <translation type="vanished">Dopasuj do wideo…</translation>
     </message>
     <message>
         <source>Align to video</source>
@@ -15664,6 +15608,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Różowy</translation>
     </message>
     <message>
+        <source>Themes</source>
+        <translation>Motywy</translation>
+    </message>
+    <message>
+        <source>A built-in theme could not be read, so Dark is shown.</source>
+        <translation>Nie udało się odczytać wbudowanego motywu, więc jest wyświetlany motyw Ciemny.</translation>
+    </message>
+    <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
         <translation>Umieść pliki .dic i .aff w folderze “Dictionary”</translation>
     </message>
@@ -15715,6 +15667,50 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Border colour</source>
         <translation>Kolor obwódki</translation>
+    </message>
+    <message>
+        <source>Background</source>
+        <translation>Tło</translation>
+    </message>
+    <message>
+        <source>Panels</source>
+        <translation>Panele</translation>
+    </message>
+    <message>
+        <source>Buttons and headers</source>
+        <translation>Przyciski i nagłówki</translation>
+    </message>
+    <message>
+        <source>Fields</source>
+        <translation>Pola</translation>
+    </message>
+    <message>
+        <source>Secondary text</source>
+        <translation>Tekst pomocniczy</translation>
+    </message>
+    <message>
+        <source>Control outlines</source>
+        <translation>Obrysy kontrolek</translation>
+    </message>
+    <message>
+        <source>Disabled text</source>
+        <translation>Tekst nieaktywny</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>Zaznaczenie</translation>
+    </message>
+    <message>
+        <source>Errors</source>
+        <translation>Błędy</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>Ostrzeżenia</translation>
+    </message>
+    <message>
+        <source>Success</source>
+        <translation>Powodzenie</translation>
     </message>
     <message>
         <source>Always send crash reports</source>
@@ -17842,7 +17838,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>It ran for more than %n second(s).</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>Działała dłużej niż %n sekundę.</numerusform>
             <numerusform>Działała dłużej niż %n sekundy.</numerusform>
             <numerusform>Działała dłużej niż %n sekund.</numerusform>
@@ -17878,7 +17874,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>Wtyczka działała dłużej niż %n sekundę, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
             <numerusform>Wtyczka działała dłużej niż %n sekundy, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
             <numerusform>Wtyczka działała dłużej niż %n sekund, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
@@ -18051,6 +18047,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its panel “%1” couldn’t load: %2</source>
         <translation>Nie udało się wczytać jej panelu „%1”: %2</translation>
+    </message>
+    <message>
+        <source>Works in the background while HikariSub is open: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is still working</source>
+        <extracomment>A plugin&apos;s command or event has run for more than 10 seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A timer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The plugin is stopped. Start it again in its details.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -19434,10 +19451,6 @@ Linijki [Sekcja] je grupują.</translation>
     </message>
     <message>
         <source>Undo all</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show panel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21527,6 +21540,23 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Video file name</source>
         <translation>Nazwa pliku wideo</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Plugins working</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -25064,7 +25094,7 @@ Usunięte style:
     </message>
     <message>
         <source>Perspective tracking</source>
-        <translation>Śledzenie perspektywy</translation>
+        <translation type="vanished">Śledzenie perspektywy</translation>
     </message>
     <message>
         <source>Power-Pin data</source>
@@ -25563,7 +25593,7 @@ Usunięte style:
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
-        <translation>Tryb tłumacza wyświetla i zapisuje zarówno tekst obcojęzyczny, jak i tekst tłumaczenia</translation>
+        <translation type="vanished">Tryb tłumacza wyświetla i zapisuje zarówno tekst obcojęzyczny, jak i tekst tłumaczenia</translation>
     </message>
     <message>
         <source>Paste translation</source>
@@ -26230,7 +26260,7 @@ Usunięte style:
     </message>
     <message>
         <source>Streams</source>
-        <translation>Strumienie</translation>
+        <translation type="vanished">Strumienie</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -28258,14 +28288,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>Panel</source>
         <translation>Panel</translation>
-    </message>
-    <message>
-        <source>Toggle left side bar</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Toggle right side bar</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Swap side bars</source>
