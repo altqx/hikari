@@ -104,6 +104,8 @@ std::optional<Mode> modeOfLine(std::string_view value);
 // The mode line's value when it names a mode; otherwise karaOK when a template or code Line uses karaOK-only
 // syntax, and Stock when none does.
 Mode modeOf(std::optional<std::string_view> modeLine, const std::vector<SubsEntry> &subs);
+// None when the Document has neither a mode line nor a template or code Line.
+std::optional<Mode> decidedMode(const core::Document &document);
 // `withoutTemplates` when the Document has neither a mode line nor a template or code Line.
 Mode documentMode(const core::Document &document, Mode withoutTemplates = Mode::Stock);
 // karaOK for a Document File › New made, until a mode line or a template or code Line decides.

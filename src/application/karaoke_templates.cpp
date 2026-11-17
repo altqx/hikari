@@ -289,7 +289,7 @@ struct Match {
 };
 
 // The next "$name" at or after `from` (0-based), the name being [%a_]+.
-std::optional<Match> nextVariable(const std::string &s, std::size_t from)
+std::optional<Match> nextVariable(std::string_view s, std::size_t from)
 {
     for (std::size_t i = from; i + 1 < s.size(); ++i)
         if (s[i] == '$' && isVariableChar(s[i + 1])) {
@@ -315,9 +315,9 @@ bool mentions(std::string_view text, std::string_view name)
     return false;
 }
 
-bool karaOKOnly(const SubsEntry &l)
+bool karaOKOnly(std::string_view effect, std::string_view text)
 {
-    const auto [head, mods] = headtail(l.effect);
+    const auto [head, mods] = headtail(effect);
     const std::string fx = lower(head);
     if (fx != "template" && fx != "code")
         return false;
@@ -329,14 +329,14 @@ bool karaOKOnly(const SubsEntry &l)
                              : (m == "word" || m == "char" || m == "furichar"))
             return true;
     }
-    if (l.text.find("k_retime(") != std::string::npos)
+    if (text.find("k_retime(") != std::string_view::npos)
         return true;
     for (const std::string_view name : {"tenv.word", "tenv.char", "tenv.syll", "tenv.basechar"})
-        if (mentions(l.text, name))
+        if (mentions(text, name))
             return true;
     if (fx == "template")
-        for (std::size_t from = 0; const auto m = nextVariable(l.text, from); from = m->end) {
-            const std::string name = lower(std::string_view(l.text).substr(m->at + 1, m->end - m->at - 1));
+        for (std::size_t from = 0; const auto m = nextVariable(text, from); from = m->end) {
+            const std::string name = lower(text.substr(m->at + 1, m->end - m->at - 1));
             if (name == "ci" || name == "slen" || name == "llen" || name == "len")
                 return true;
         }
@@ -444,30 +444,38 @@ Mode modeOf(std::optional<std::string_view> modeLine, const std::vector<SubsEntr
     if (const auto set = modeLine.and_then(modeOfLine))
         return *set;
     for (const SubsEntry &l : subs)
-        if (l.dialogue && l.comment && karaOKOnly(l))
+        if (l.dialogue && l.comment && karaOKOnly(l.effect, l.text))
             return Mode::KaraOK;
     return Mode::Stock;
 }
 
+std::optional<Mode> decidedMode(const core::Document &document)
+{
+    const auto chars = [](std::u8string_view s) {
+        return std::string_view(reinterpret_cast<const char *>(s.data()), s.size());
+    };
+    const auto modeLine = document.scriptInfo(std::u8string(kModeKey.begin(), kModeKey.end()));
+    if (modeLine)
+        if (const auto set = modeOfLine(chars(*modeLine)))
+            return set;
+    bool decided = modeLine.has_value();
+    bool karaOK = false;
+    for (const core::LineRecord *l : document.lines()) {
+        if (!l->comment)
+            continue;
+        decided = decided || templateKindOf(*l).has_value();
+        karaOK = karaOK || karaOKOnly(chars(l->effect), chars(l->text));
+        if (decided && karaOK)
+            return Mode::KaraOK;
+    }
+    if (!decided)
+        return std::nullopt;
+    return karaOK ? Mode::KaraOK : Mode::Stock;
+}
+
 Mode documentMode(const core::Document &document, Mode withoutTemplates)
 {
-    const auto narrow = [](std::u8string_view s) { return std::string(s.begin(), s.end()); };
-    const std::u8string key(kModeKey.begin(), kModeKey.end());
-    const auto value = document.scriptInfo(key);
-    const std::optional<std::string> modeLine = value ? std::optional(narrow(*value)) : std::nullopt;
-    std::vector<SubsEntry> entries;
-    for (const core::LineRecord *l : document.lines())
-        entries.push_back({.dialogue = true,
-                           .comment = l->comment,
-                           .layer = static_cast<int>(l->layer.value),
-                           .effect = narrow(l->effect),
-                           .text = narrow(l->text),
-                           .style = narrow(l->style)});
-    if (!modeLine && std::ranges::none_of(document.lines(), [](const core::LineRecord *l) {
-            return templateKindOf(*l).has_value();
-        }))
-        return withoutTemplates;
-    return modeOf(modeLine, entries);
+    return decidedMode(document).value_or(withoutTemplates);
 }
 
 Mode documentMode(const EditSession &session)
