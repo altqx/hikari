@@ -173,7 +173,7 @@ Item {
         relinkDialog.title = qsTr("Find “%1”").arg(entry.path.replace(/^.*[\\/]/, ""))
         relinkDialog.nameFilters = [({
             subtitles: qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
-            video: qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"),
+            video: qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)"),
             audio: qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.opus *.mp3 *.mp4 *.m4a *.mka *.mkv *.webm *.avi)",
             keyframes: qsTr("Keyframes file (*.txt *.pass *.stats *.log)"),
             timecodes: qsTr("Timecodes file (*.txt)")

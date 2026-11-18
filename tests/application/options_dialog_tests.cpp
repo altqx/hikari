@@ -383,8 +383,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->min, 1);
     EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->max, 120);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 95);
-    const auto &hostApi = all[std::size(kLegacy) + 93];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 96);
+    const auto &hostApi = all[std::size(kLegacy) + 94];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -395,7 +395,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 93);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 94);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -409,6 +409,9 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     }
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->min, 2);
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->max, 1000000);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->min, 5);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->max, 3600);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->page, OptionsPage::General);
     EXPECT_EQ(findOptionsBinding("audio.delay")->min, -50000000);
     EXPECT_EQ(findOptionsBinding("program.tabTextMaxChars")->min, 20);
     EXPECT_EQ(findOptionsBinding("automation.loadingMethod")->entries, 4);

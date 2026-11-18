@@ -14668,6 +14668,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>AI</translation>
     </message>
     <message>
+        <source>Autosave every</source>
+        <translation>Autozapis co</translation>
+    </message>
+    <message>
+        <source>seconds</source>
+        <translation>sekund</translation>
+    </message>
+    <message>
+        <source>Seconds from a change to its autosave. Range from 5 to 3600</source>
+        <translation>Sekundy od zmiany do jej autozapisu. Zakres od 5 do 3600</translation>
+    </message>
+    <message>
         <source>Trusted folders</source>
         <translation>Zaufane foldery</translation>
     </message>
@@ -19308,6 +19320,18 @@ Linijki [Sekcja] je grupują.</translation>
         <translation>Edycja</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation>Więcej</translation>
+    </message>
+    <message>
+        <source>Synch point</source>
+        <translation>Punkt synchronizacji</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>Szczegóły aktualizacji</translation>
+    </message>
+    <message>
         <source>Resolution</source>
         <translation>Rozdzielczość</translation>
     </message>
@@ -20193,8 +20217,8 @@ ponieważ została zmieniona.</translation>
         <translation>Napisy (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -25620,6 +25644,10 @@ Usunięte style:
         <translation>Następny plik</translation>
     </message>
     <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+    </message>
+    <message>
         <source>Choose keyframes file</source>
         <translation>Wybierz plik klatek kluczowych</translation>
     </message>
@@ -25634,10 +25662,6 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
-    </message>
-    <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
