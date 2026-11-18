@@ -358,7 +358,7 @@ private slots:
         QCOMPARE(inlineAi().maxCps(), 15);
         QVERIFY(!inlineAi().start({{QStringLiteral("action"), QStringLiteral("shorten")}}, false));
 
-        application->settingsStore()->set(QStringLiteral("grid.cpsWarning"), 8);
+        application->settingsStore()->set("grid.cpsWarning", 8);
         QCOMPARE(changed.count(), 1);
         QCOMPARE(inlineAi().maxCps(), 8);
         QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("shorten")}}, false));
