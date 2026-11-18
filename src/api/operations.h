@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/api/api.h"
+#include "hikari/api/base64.h"
 #include "hikari/application/node_graph.h"
 
 #include <string_view>
@@ -26,6 +27,7 @@ void addTranslationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
 void addEffectsOperations(Registry &registry);
 void addPluginOperations(Registry &registry);
+void addFormatOperations(Registry &registry);
 void addTypesetOperations(Registry &registry);
 void addProjectOperations(Registry &registry);
 void addKaraokeOperations(Registry &registry);
@@ -38,10 +40,6 @@ Json projectJson(const Host &host);
 
 void addOperation(Registry &registry, Access access, std::string name, std::string summary, std::string_view params,
                   std::string_view result, Handler handler, int since = 1);
-
-std::string base64(std::string_view bytes);
-// nullopt: not base64.
-std::optional<std::string> fromBase64(std::string_view text);
 
 struct Target {
     application::DocumentId id;

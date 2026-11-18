@@ -112,6 +112,79 @@ TEST_F(Files, OpenEditSaveReopen)
     EXPECT_EQ(service.session(again)->document().lines()[0]->text, u8"edited");
 }
 
+TEST_F(Files, ADeferredSaveWritesTheBytesWhenTheyComeAndKnowsThemAfterwards)
+{
+    const auto doc = open("/a.ass");
+    std::optional<BytesReady> ready;
+    service.setDeferredEncoder([&](DocumentId id, const DestinationKey &destination) -> std::optional<DeferredBytes> {
+        if (id != doc || destination.value != "/a.stl")
+            return std::nullopt;
+        return [&](BytesReady r) { ready = std::move(r); };
+    });
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"edited"));
+    auto plan = service.prepareSave(doc, DestinationKey{"/a.stl"});
+    ASSERT_TRUE(plan);
+    EXPECT_TRUE(plan->deferred);
+    ASSERT_TRUE(service.startSave(std::move(*plan)));
+    ASSERT_TRUE(ready);
+    EXPECT_TRUE(writer.started.empty());
+    (*ready)(bytesOf("STL"));
+    ASSERT_EQ(writer.started.size(), 1u);
+    EXPECT_EQ(text(writer.started[0].bytes), "STL");
+    finish(WriteOutcome::Written);
+    EXPECT_FALSE(service.session(doc)->isDirty());
+    EXPECT_EQ(service.destination(doc)->value, "/a.stl");
+
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"again"));
+    plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    ASSERT_TRUE(service.startSave(std::move(*plan))) << "the file on disk is the bytes the plugin gave";
+}
+
+TEST_F(Files, ADeferredSaveWithoutBytesFailsAsAWriteWould)
+{
+    const auto doc = open("/a.ass");
+    std::vector<WriteOutcome> reported;
+    WriteCoordinator watched{writer, [&](const WriteResult &r) {
+                                 reported.push_back(r.outcome);
+                                 files->onWriteResult(r);
+                             }};
+    DocumentFiles other{disk, watched};
+    files = &other;
+    auto staged = other.stageOpen({"/a.ass"});
+    ASSERT_TRUE(staged);
+    const DocumentId id = *other.activate(std::move(*staged));
+    other.setDeferredEncoder([](DocumentId, const DestinationKey &) -> std::optional<DeferredBytes> {
+        return [](BytesReady r) { r(std::nullopt); };
+    });
+    ASSERT_TRUE(other.session(id)->editDraftText(other.session(id)->document().lines().at(0)->id, u8"edited"));
+    auto plan = other.prepareSave(id);
+    ASSERT_TRUE(plan);
+    ASSERT_TRUE(other.startSave(std::move(*plan)));
+    EXPECT_EQ(reported, std::vector<WriteOutcome>{WriteOutcome::Failed});
+    EXPECT_EQ(other.lastSave(id)->outcome, WriteOutcome::Failed);
+    EXPECT_TRUE(other.session(id)->isDirty());
+    EXPECT_TRUE(writer.started.empty());
+    (void)doc;
+}
+
+TEST_F(Files, ADocumentBuiltFromAFileKnowsTheFilesOwnBytes)
+{
+    disk.files["/a.stl"] = bytesOf("STL bytes");
+    auto staged = service.stageOpen({"/a.ass"});
+    ASSERT_TRUE(staged);
+    staged->destination = {"/a.stl"};
+    staged->fileBytes = bytesOf("STL bytes");
+    const DocumentId doc = *service.activate(std::move(*staged));
+    service.setDeferredEncoder([](DocumentId, const DestinationKey &) -> std::optional<DeferredBytes> {
+        return [](BytesReady r) { r(bytesOf("STL 2")); };
+    });
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"edited"));
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    EXPECT_TRUE(service.startSave(std::move(*plan)));
+}
+
 TEST_F(Files, FailedOpensKeepExistingWork)
 {
     const auto doc = open("/a.ass");

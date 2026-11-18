@@ -1,5 +1,5 @@
 # The Hikari API: typed, versioned operations over the application. No Qt.
-add_library(hikari_api STATIC schema.cpp api.cpp definitions.cpp document_operations.cpp
+add_library(hikari_api STATIC base64.cpp format_operations.cpp schema.cpp api.cpp definitions.cpp document_operations.cpp
     application_operations.cpp write_operations.cpp events.cpp media_operations.cpp file_operations.cpp
     skill_operations.cpp automation_operations.cpp effects_operations.cpp plugin_operations.cpp folder.cpp folder_skills.cpp skill_check.cpp project_operations.cpp
     translation_operations.cpp reference.cpp reference_markdown.cpp typeset_operations.cpp karaoke_operations.cpp marks_operations.cpp vcs_operations.cpp program_operations.cpp presence_operations.cpp undo_groups.cpp)

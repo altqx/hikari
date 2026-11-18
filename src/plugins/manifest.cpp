@@ -110,6 +110,23 @@ std::vector<NodeContribution> nodes(const Json *list)
     return out;
 }
 
+std::vector<FormatContribution> formats(const Json *list)
+{
+    std::vector<FormatContribution> out;
+    if (list && list->isArray())
+        for (const Json &item : list->asArray()) {
+            FormatContribution format{text(item, "id"), text(item, "title"), {}, false, false};
+            for (const Json &extension : item.find("extensions")->asArray())
+                format.extensions.push_back(extension.asString());
+            const Json *imports = item.find("import");
+            const Json *exports = item.find("export");
+            format.imports = imports && imports->asBool();
+            format.exports = exports && exports->asBool();
+            out.push_back(std::move(format));
+        }
+    return out;
+}
+
 bool fitsPort(const Json &value, std::string_view type)
 {
     if (type == "Number" || type == "Time" || type == "Alpha")
@@ -346,6 +363,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
             for (const Json &s : settings->asArray())
                 m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
         m.nodes = nodes(contributes->find("nodes"));
+        m.formats = formats(contributes->find("formats"));
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.programs = programs(contributes->find("programs"));
@@ -354,7 +372,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
                          repeated(m.commands, "/contributes/commands"), repeated(m.panels, "/contributes/panels"),
                          repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes"),
-                         repeated(m.programs, "/contributes/programs"), repeated(m.styles, "/contributes/styles"),
+                         repeated(m.formats, "/contributes/formats"), repeated(m.programs, "/contributes/programs"),
+                         repeated(m.styles, "/contributes/styles"),
                          repeated(m.karaokePresets, "/contributes/karaokePresets")})
         if (problem)
             return std::unexpected(*problem);
