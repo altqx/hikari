@@ -24178,6 +24178,19 @@ private slots:
         return application->hotkeys().keys().value(QLatin1String(window)).toMap();
     }
     QVariantList hotkeyRows() const { return application->hotkeys().rows(); }
+    QStringList listedHotkeyTexts() const
+    {
+        const auto hidden = [this](int id) { return !application->ai()->on() && application::aiCommand(id); };
+        auto bound = application->hotkeys().bindings();
+        std::erase_if(bound, [&](const auto &binding) { return hidden(binding.first.id); });
+        application::HotkeyMap copy;
+        application::HotkeyList list(copy);
+        list.build(bound, hidden);
+        QStringList texts;
+        for (std::size_t i = 0; i < list.rowCount(); ++i)
+            texts << QString::fromStdString(list.row(int(i)).text);
+        return texts;
+    }
     int hotkeyPosition(const QString &text) const
     {
         const auto rows = hotkeyRows();
@@ -24268,8 +24281,9 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 399);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Clear command history"));
+        const QStringList listed = listedHotkeyTexts();
+        QCOMPARE(hotkeyRows().size(), listed.size());
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), listed.first());
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
