@@ -7,6 +7,7 @@
 #include <optional>
 
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -382,9 +383,20 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     }
     EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->min, 1);
     EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->max, 120);
+    for (std::size_t i = 0; const auto &[id, max, fallback] : {std::tuple{"grid.cpsWarning", 100, 15}, std::tuple{"grid.cpsError", 100, 30},
+                                                               std::tuple{"grid.lineLength", 1000, 43},
+                                                               std::tuple{"grid.maxLines", 20, 2}}) {
+        const auto &limit = all[std::size(kLegacy) + 93 + i++];
+        EXPECT_EQ(limit.setting, id);
+        EXPECT_EQ(limit.control, OptionsControl::Number) << id;
+        EXPECT_EQ(limit.page, OptionsPage::Grid) << id;
+        EXPECT_EQ(limit.min, 1) << id;
+        EXPECT_EQ(limit.max, max) << id;
+        EXPECT_EQ(std::get<std::int64_t>(findSetting(id)->defaultValue), fallback) << id;
+    }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 95);
-    const auto &hostApi = all[std::size(kLegacy) + 93];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 99);
+    const auto &hostApi = all[std::size(kLegacy) + 97];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -395,7 +407,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 93);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 97);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

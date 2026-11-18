@@ -3837,14 +3837,6 @@ Output device: %2</source>
         <translation>혼합</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>각 줄의 글자 수. 43자 이하, 최대 2줄로 유지하십시오.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>초당 문자 수. 15자 이하로 유지하십시오.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>시간 표시</translation>
     </message>
@@ -4259,6 +4251,16 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>태그는 역슬래시로 시작합니다. 예: \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14010,6 +14012,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>초당 문자 수 계산에 공백과 문장 부호 포함</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>분할</translation>
     </message>
@@ -19000,6 +19030,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Rendering</source>
         <translation>렌더링</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save</source>

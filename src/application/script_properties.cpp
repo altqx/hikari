@@ -1,6 +1,8 @@
 #include "hikari/application/script_properties.h"
 
+#include <algorithm>
 #include <cstdlib>
+#include <iterator>
 #include <set>
 
 namespace hikari::application {
@@ -71,8 +73,8 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
                                                           const ScriptPropertiesEdits &edits, bool link)
 {
     const auto &doc = session.document();
-    std::vector<std::pair<u8, u8>> writes;
-    auto put = [&](const char8_t *key, u8 value) { writes.emplace_back(key, std::move(value)); };
+    std::vector<ScriptInfoWrite> writes;
+    auto put = [&](const char8_t *key, u8 value) { writes.push_back({key, std::move(value)}); };
     {
         const int x = toInt(doc.scriptInfo(u8"PlayResX")), y = toInt(doc.scriptInfo(u8"PlayResY"));
         const auto [fx, fy] = assRes(doc);
@@ -139,12 +141,14 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
     const u8 border = edited.scaledBorderAndShadow ? u8"yes" : u8"no";
     if (doc.scriptInfo(u8"ScaledBorderAndShadow").value_or(u8()) != border)
         put(u8"ScaledBorderAndShadow", border);
-    std::erase_if(writes, [&](const auto &w) { return doc.scriptInfo(w.first) == w.second; });
+    if (edits.readingLimits)
+        std::ranges::move(readingLimitsInfo(edited.readingLimits), std::back_inserter(writes));
+    std::erase_if(writes, [&](const ScriptInfoWrite &w) { return doc.scriptInfo(w.key) == w.value; });
     if (writes.empty())
         return {};
     const auto ran = session.run(Command{"Changing the subtitle header", session.revision(), {}, [&](core::Document &d) {
-                                             for (const auto &[key, value] : writes)
-                                                 if (!d.setScriptInfo(key, value))
+                                             for (const auto &w : writes)
+                                                 if (w.value ? !d.setScriptInfo(w.key, *w.value) : !d.removeScriptInfo(w.key))
                                                      return false;
                                              return true;
                                          }});

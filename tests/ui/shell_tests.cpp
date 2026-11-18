@@ -9225,6 +9225,53 @@ private slots:
         application->editor().discard();
     }
 
+    void scriptPropertiesGiveTheFileItsOwnReadingLimits()
+    {
+        QVERIFY(application->openFile(writeStyled("limits.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,much too fast here\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *cps = item<QObject>("cpsCounter");
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
+        auto *root = engine->rootObjects().first();
+        QVariant opened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
+        QTRY_VERIFY(dialog && dialog->property("visible").toBool());
+        auto *useMine = dialogItem("scriptPropertiesDialog", "propUseMyLimits");
+        auto *warning = dialogItem("scriptPropertiesDialog", "propCpsWarning");
+        QVERIFY(useMine->property("checked").toBool());
+        QVERIFY(!warning->isEnabled());
+        QCOMPARE(warning->property("value").toInt(), 15);
+        QVERIFY(QMetaObject::invokeMethod(useMine, "click"));
+        QVERIFY(warning->isEnabled());
+        warning->setProperty("value", 12);
+        QVERIFY(QMetaObject::invokeMethod(warning, "valueModified"));
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        const auto &d = session->document();
+        QCOMPARE(d.scriptInfo(u8"Hikari CPS Warning"), std::optional<std::u8string>(u8"12"));
+        QCOMPARE(d.scriptInfo(u8"Hikari CPS Error"), std::optional<std::u8string>(u8"30"));
+        QCOMPARE(d.scriptInfo(u8"Hikari Line Length"), std::optional<std::u8string>(u8"43"));
+        QCOMPARE(d.scriptInfo(u8"Hikari Max Lines"), std::optional<std::u8string>(u8"2"));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/12"));
+        QVERIFY(application->editor().cpsWarning());
+
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(!useMine->property("checked").toBool());
+        QCOMPARE(warning->property("value").toInt(), 12);
+        QVERIFY(QMetaObject::invokeMethod(useMine, "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QVERIFY(!session->document().scriptInfo(u8"Hikari CPS Warning"));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
+        application->editor().discard();
+    }
+
     void styleManagerEditsStylesAndTheCatalog()
     {
         const QString path = dir.filePath(QStringLiteral("styles.ass"));
@@ -19362,6 +19409,10 @@ private slots:
               {"grid.autoHideColumns", "Hide empty columns"},
               {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
               {"grid.calcSpacesAndPunctuationForCps", "Count spaces and punctuation for CPS"},
+              {"grid.cpsWarning", nullptr},
+              {"grid.cpsError", nullptr},
+              {"grid.lineLength", nullptr},
+              {"grid.maxLines", nullptr},
               {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr},
@@ -35645,6 +35696,18 @@ private slots:
         QTRY_VERIFY(application->editor().charsWarning());
         QTRY_VERIFY(item("charsCounterWarning")->isVisible());
         application->editor().discard();
+
+        application->settingsStore()->setValue(QStringLiteral("grid.cpsWarning"), 10);
+        application->settingsStore()->setValue(QStringLiteral("grid.cpsError"), 14);
+        application->settingsStore()->setValue(QStringLiteral("grid.lineLength"), 8);
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/10"));
+        QCOMPARE(chars->property("text").toString(), QStringLiteral("5/10/8"));
+        QVERIFY(application->editor().cpsError());
+        QVERIFY(application->editor().charsWarning());
+        QTRY_COMPARE(item("cpsCounterValue")->property("color").value<QColor>(), ui::theme::current().roles.danger);
+        for (const char *id : {"grid.cpsWarning", "grid.cpsError", "grid.lineLength"})
+            application->settingsStore()->reset(QLatin1String(id));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
     }
 
     void squeezeTheLineEditor()

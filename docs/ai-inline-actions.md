@@ -23,13 +23,13 @@ One-shot AI actions on the Lines you chose, with no agent thread ([AI8 #436](htt
 | Action | Role | Asks |
 | --- | --- | --- |
 | Rewrite… | Chat | An instruction, with the last 5 as chips |
-| Shorten to 15 CPS | Chat | Nothing; sends only the Lines over 15 CPS |
+| Shorten to <CPS warning> CPS | Chat | Nothing; sends only the Lines over the CPS warning |
 | Fix spelling and grammar | Reviewer | Nothing |
 | Translate to <language> | Translator | Nothing; the language is the Project's target language, else **Translate to** in Settings. Both Translate actions send the Project's source language when it has one |
 | Translate to… | Translator | A language |
 | Your actions | Their own role | Nothing, or their instruction when **Ask each time** is on |
 
-Each role falls back to Chat. Every action changes only the Text, except Translate in Translation mode, which writes the Translated text. Both Translate actions run the [translation pipeline](ai-translation.md) as one request, not one request per Line. 15 CPS is the limit the Grid and the Line editor already use; there is no setting for it.
+Each role falls back to Chat. Every action changes only the Text, except Translate in Translation mode, which writes the Translated text. Both Translate actions run the [translation pipeline](ai-translation.md) as one request, not one request per Line. The CPS warning is the [reading limit](ux/grid-operations.md#reading-limits) the Grid and the Line editor use, so a subtitle file's own limit applies.
 
 ## What is sent
 

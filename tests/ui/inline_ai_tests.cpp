@@ -350,6 +350,20 @@ private slots:
         QVERIFY(!QFile::exists(at(QStringLiteral("honya/GLOSSARY.md"))));
     }
 
+    void shortenSendsTheLinesOverTheCpsWarningSetting()
+    {
+        setMode("manual");
+        selectAll();
+        QSignalSpy changed(&inlineAi(), &app::InlineAiController::maxCpsChanged);
+        QCOMPARE(inlineAi().maxCps(), 15);
+        QVERIFY(!inlineAi().start({{QStringLiteral("action"), QStringLiteral("shorten")}}, false));
+
+        application->settingsStore()->set("grid.cpsWarning", 8);
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(inlineAi().maxCps(), 8);
+        QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("shorten")}}, false));
+        QTRY_COMPARE(inlineAi().results().size(), 1);
+    }
     void translateInTranslationModeWritesTheTranslationAndMarksLinesThatNeedReview()
     {
         setMode("auto");
