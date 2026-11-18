@@ -22,7 +22,7 @@ void add(std::vector<application::PluginContentFile> &into, const std::vector<pl
 
 plugins::ContentFileChecks contentFileChecks()
 {
-    return {application::styleCatalogueProblem, application::karaokePresetProblem};
+    return {application::styleCatalogueProblem, application::karaokePresetProblem, application::graphProblem};
 }
 
 bool pluginContentShows(const plugins::InstalledPlugin &entry, const plugins::Manifest &manifest)
@@ -35,6 +35,7 @@ void addPluginContent(application::PluginContent &into, const std::string &id, c
 {
     add(into.styleCatalogues, manifest.styles, id, manifest, root);
     add(into.karaokePresets, manifest.karaokePresets, id, manifest, root);
+    add(into.graphs, manifest.graphs, id, manifest, root);
 }
 
 }

@@ -1366,6 +1366,7 @@ private:
     void makeViews(WindowViews &views, int shellWindow);
     void makeTemplateEditor(WindowViews &views, int shellWindow);
     void makeNodeEffects(WindowViews &views, int shellWindow);
+    void showPluginContent();
     void makeKanjiTimer(WindowViews &views, int shellWindow);
     void commitTemplates();
     void applyScriptInfoOnSave(application::DocumentId document);

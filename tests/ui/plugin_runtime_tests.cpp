@@ -826,7 +826,8 @@ private slots:
         write(folder + QStringLiteral("/hikari-plugin.json"),
               R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
                   "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})");
+                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
+                                  "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}]}})");
         write(folder + QStringLiteral("/main.lua"), "");
         const auto turn = [&](bool on) {
             m_registry[QStringLiteral("com.example.kit")] =
@@ -848,11 +849,14 @@ private slots:
                  QDir::cleanPath(folder + QStringLiteral("/styles/signs.sty")));
         QCOMPARE(content.karaokePresets.size(), 1u);
         QVERIFY(content.karaokePresets[0].title.empty());
+        QCOMPARE(content.graphs.size(), 1u);
+        QVERIFY(content.graphs[0].title == u8"Sparkle");
 
         turn(false);
         runtime.sync();
         QVERIFY(application::pluginContent().styleCatalogues.empty());
         QVERIFY(application::pluginContent().karaokePresets.empty());
+        QVERIFY(application::pluginContent().graphs.empty());
     }
 
     void theFirstPluginGuideRunsAtEveryStep()

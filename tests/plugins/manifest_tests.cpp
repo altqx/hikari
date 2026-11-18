@@ -313,7 +313,8 @@ TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
     Json json = minimal();
     json["contributes"] = *Json::parse(R"({
         "styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}, {"id": "pop", "path": "presets/pop.ass"}]})");
+        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}, {"id": "pop", "path": "presets/pop.ass"}],
+        "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}]})");
     const auto m = parse(json);
     ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
     ASSERT_EQ(m->styles.size(), 1u);
@@ -323,11 +324,16 @@ TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
     ASSERT_EQ(m->karaokePresets.size(), 2u);
     EXPECT_EQ(m->karaokePresets[1].path, "presets/pop.ass");
     EXPECT_TRUE(m->karaokePresets[1].title.empty());
+    ASSERT_EQ(m->graphs.size(), 1u);
+    EXPECT_EQ(m->graphs[0].title, "Sparkle");
+    EXPECT_EQ(m->graphs[0].path, "graphs/sparkle.json");
 
     json["contributes"] = *Json::parse(R"({"karaokePresets": [{"id": "glow", "path": "a.ass"}, {"id": "glow", "path": "b.ass"}]})");
     const ManifestProblem repeated = problem(json);
     EXPECT_EQ(repeated.kind, Kind::DuplicateId);
     EXPECT_EQ(repeated.at, "/contributes/karaokePresets/1/id");
+    json["contributes"] = *Json::parse(R"({"graphs": [{"id": "g", "title": "A", "path": "a.json"}, {"id": "g", "title": "B", "path": "b.json"}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/graphs/1/id");
     json["contributes"] = *Json::parse(R"({"styles": [{"id": "signs", "title": "Signs", "path": "signs.ass"}]})");
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }

@@ -39,6 +39,7 @@ using ContentFileCheck = std::function<std::optional<std::string>(std::span<cons
 struct ContentFileChecks {
     ContentFileCheck styleCatalogue;
     ContentFileCheck karaokePreset;
+    ContentFileCheck graph;
 };
 
 // Refuses more than kMaxPackageFiles files or kMaxPackageBytes unpacked, and any path that is

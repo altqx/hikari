@@ -20,6 +20,7 @@ struct PluginContentFile {
 struct PluginContent {
     std::vector<PluginContentFile> styleCatalogues;
     std::vector<PluginContentFile> karaokePresets;
+    std::vector<PluginContentFile> graphs;
 };
 
 void setPluginContent(PluginContent content);
@@ -28,5 +29,6 @@ PluginContent pluginContent();
 // Why a plugin's file can't be read as its built-in counterpart is (English, technical), or nothing.
 std::optional<std::string> styleCatalogueProblem(std::span<const std::byte> bytes);
 std::optional<std::string> karaokePresetProblem(std::span<const std::byte> bytes);
+std::optional<std::string> graphProblem(std::span<const std::byte> bytes);
 
 }

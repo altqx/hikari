@@ -274,7 +274,7 @@ Rectangle {
         }
         NodeLibraryMenu {
             controller: root.controller
-            enabled: root.controller.editable && root.controller.library.length > 0
+            enabled: root.controller.editable && (root.controller.library.length > 0 || root.controller.pluginLibrary.length > 0)
         }
         MenuSeparator {}
         ShellMenuItem {

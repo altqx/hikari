@@ -6,11 +6,13 @@
 #include "hikari/application/node_catalogue.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/application/node_graph_editing.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/typesetting_graphs.h"
 #include "hikari/core/ass_load.h"
 
 #include <QFile>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <cstring>
@@ -233,6 +235,44 @@ private slots:
         for (const QVariant &p : controller().presets())
             QVERIFY2(controller().graphNameProblem(p.toMap().value(QStringLiteral("title")).toString()).isEmpty(),
                      qPrintable(p.toMap().value(QStringLiteral("title")).toString()));
+    }
+
+    void aPluginsGraphsGroupByPluginAndAddAsOneStep()
+    {
+        QTemporaryDir dir;
+        const QByteArray json = QByteArray::fromStdString(application::graphJson(application::NodeGraph{}).dump());
+        QVERIFY(application::parseGraph(json.toStdString()));
+        const auto file = [&](const char *name) {
+            QFile f(dir.filePath(QLatin1String(name)));
+            if (f.open(QIODevice::WriteOnly))
+                f.write(json);
+            return std::filesystem::path(f.fileName().toStdU16String());
+        };
+        application::setPluginContent({.graphs = {{"com.example.kit", u8"Kit", u8"Signs", file("signs.json")},
+                                                  {"com.example.kit", u8"Kit", u8"Glow", file("glow.json")},
+                                                  {"com.example.more", u8"More", u8"Sparkle", file("sparkle.json")}}});
+        QSignalSpy changed(&controller(), &NodeEffectsController::libraryChanged);
+        controller().pluginContentChanged();
+        QCOMPARE(changed.count(), 1);
+        const QVariantList groups = controller().pluginLibrary();
+        QCOMPARE(groups.size(), 2);
+        QCOMPARE(groups[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Kit"));
+        const QVariantList kit = groups[0].toMap().value(QStringLiteral("graphs")).toList();
+        QCOMPARE(kit.size(), 2);
+        QCOMPARE(kit[1].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("Glow"));
+        QCOMPARE(groups[1].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("More"));
+
+        const QString signs = kit[0].toMap().value(QStringLiteral("file")).toString();
+        const std::size_t before = m_session->historySize();
+        QVERIFY(controller().addFromPlugin(signs));
+        QCOMPARE(m_session->historySize(), before + 1);
+        QCOMPARE(controller().name(), QStringLiteral("Signs"));
+        QVERIFY(controller().addFromPlugin(signs));
+        QCOMPARE(controller().name(), QStringLiteral("Signs 2"));
+        QVERIFY(!controller().addFromPlugin(dir.filePath(QStringLiteral("elsewhere.json"))));
+        application::setPluginContent({});
+        QVERIFY(!controller().addFromPlugin(signs));
+        QVERIFY(controller().pluginLibrary().isEmpty());
     }
 
     void renameAndDeleteAreUndoSteps()

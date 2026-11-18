@@ -934,6 +934,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
+    connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::showPluginContent);
+    QMetaObject::invokeMethod(this, &Application::showPluginContent, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
@@ -2128,6 +2130,13 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
             showVideoSubtitles();
     });
     connect(m_automation.get(), &AutomationShell::progressChanged, editor, [editor] { editor->refresh(); });
+}
+
+void Application::showPluginContent()
+{
+    for (WindowViews *views : allViews())
+        if (views->nodeEffects)
+            views->nodeEffects->pluginContentChanged();
 }
 
 void Application::makeNodeEffects(WindowViews &v, int shellWindow)
