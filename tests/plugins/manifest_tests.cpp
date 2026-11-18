@@ -64,7 +64,8 @@ TEST(PluginManifest, EveryFieldReads)
     json["permissions"] = *Json::parse(R"({"documents.all": "Compares scripts",
         "network": {"hosts": ["api.example.com"], "reason": "Looks words up"},
         "files": [{"id": "fonts", "title": "Fonts", "writable": true, "reason": "Reads fonts"}],
-        "vcs.read": "Marks Lines changed since a tag", "background": "Checks the feed"})");
+        "vcs.read": "Marks Lines changed since a tag", "background": "Checks the feed",
+        "presence": "Shows the episode the tracker knows"})");
     json["contributes"] = *Json::parse(R"({"commands": [{"id": "greet", "title": "Greet"}],
         "panels": [{"id": "board", "title": "Board"}, {"id": "notes", "title": "Notes", "area": "bottom"}],
         "settings": [{"id": "loud", "title": "Loud", "type": "boolean", "default": false},
@@ -81,6 +82,7 @@ TEST(PluginManifest, EveryFieldReads)
     EXPECT_TRUE(m->permissions.files[0].writable);
     EXPECT_EQ(m->permissions.vcsRead, "Marks Lines changed since a tag");
     EXPECT_EQ(m->permissions.background, "Checks the feed");
+    EXPECT_EQ(m->permissions.presence, "Shows the episode the tracker knows");
     ASSERT_EQ(m->commands.size(), 1u);
     EXPECT_EQ(m->commands[0].title, "Greet");
     ASSERT_EQ(m->panels.size(), 2u);
@@ -121,6 +123,42 @@ TEST(PluginManifest, APanelDocksInTheAreaItNames)
     const ManifestProblem p = problem(json);
     EXPECT_EQ(p.kind, Kind::Schema);
     EXPECT_EQ(p.at, "/contributes/panels/0/area");
+}
+
+TEST(PluginManifest, FormatsReadWithTheirExtensionsAndDirections)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"formats": [
+        {"id": "ebu-stl", "title": "EBU STL", "extensions": ["stl"], "import": true, "export": true},
+        {"id": "csv", "title": "CSV cues", "extensions": ["csv", "tsv"], "export": true}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().detail;
+    ASSERT_EQ(m->formats.size(), 2u);
+    EXPECT_EQ(m->formats[0].id, "ebu-stl");
+    EXPECT_EQ(m->formats[0].title, "EBU STL");
+    EXPECT_TRUE(m->formats[0].imports);
+    EXPECT_TRUE(m->formats[0].exports);
+    EXPECT_EQ(m->formats[1].extensions, (std::vector<std::string>{"csv", "tsv"}));
+    EXPECT_FALSE(m->formats[1].imports);
+}
+
+TEST(PluginManifest, AFormatNeedsADirectionAPlainExtensionAndAnIdOfItsOwn)
+{
+    const auto at = [](std::string_view formats) {
+        Json json = minimal();
+        json["contributes"] = *Json::parse(std::string(R"({"formats": )") + std::string(formats) + "}");
+        return problem(json);
+    };
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": ["a"]}])").at, "/contributes/formats/0");
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": ["a"], "import": false, "export": false}])").at,
+              "/contributes/formats/0");
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": [".stl"], "export": true}])").at,
+              "/contributes/formats/0/extensions/0");
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": [], "export": true}])").at, "/contributes/formats/0/extensions");
+    const ManifestProblem repeated = at(R"([{"id": "a", "title": "A", "extensions": ["a"], "export": true},
+                                            {"id": "a", "title": "B", "extensions": ["b"], "import": true}])");
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/formats/1/id");
 }
 
 TEST(PluginManifest, OnlyAFullTrustManifestShipsAQmlPanel)
@@ -308,6 +346,30 @@ TEST(PluginManifest, SecretAndListSettingsFollowTheirRules)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({
+        "styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
+        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}, {"id": "pop", "path": "presets/pop.ass"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->styles.size(), 1u);
+    EXPECT_EQ(m->styles[0].id, "signs");
+    EXPECT_EQ(m->styles[0].title, "Signs");
+    EXPECT_EQ(m->styles[0].path, "styles/signs.sty");
+    ASSERT_EQ(m->karaokePresets.size(), 2u);
+    EXPECT_EQ(m->karaokePresets[1].path, "presets/pop.ass");
+    EXPECT_TRUE(m->karaokePresets[1].title.empty());
+
+    json["contributes"] = *Json::parse(R"({"karaokePresets": [{"id": "glow", "path": "a.ass"}, {"id": "glow", "path": "b.ass"}]})");
+    const ManifestProblem repeated = problem(json);
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/karaokePresets/1/id");
+    json["contributes"] = *Json::parse(R"({"styles": [{"id": "signs", "title": "Signs", "path": "signs.ass"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
 TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
 {
     Json json = minimal();
@@ -417,6 +479,7 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     more.permissions.allDocuments = "Compares scripts";
     more.permissions.vcsRead = "Marks changed Lines";
     more.permissions.background = "Checks the feed";
+    more.permissions.presence = "Shows the episode";
     more.permissions.networkHosts = {"api.example.com", "cdn.example.com"};
     more.permissions.files = {{"fonts", "Fonts", true, "r"}, {"out", "Out", true, "r"}, {"logs", "Logs", false, "r"}};
     const PermissionIncrease increase = permissionIncrease(current, more);
@@ -425,6 +488,7 @@ TEST(PluginManifest, AnUpdateAsksForMoreOnlyWhenItAddsAPermission)
     EXPECT_TRUE(increase.allDocuments);
     EXPECT_TRUE(increase.vcsRead);
     EXPECT_TRUE(increase.background);
+    EXPECT_TRUE(increase.presence);
     EXPECT_EQ(increase.networkHosts, std::vector<std::string>{"cdn.example.com"});
     EXPECT_EQ(increase.files, (std::vector<std::string>{"fonts", "logs"}));
     EXPECT_FALSE(permissionIncrease(more, more).any());

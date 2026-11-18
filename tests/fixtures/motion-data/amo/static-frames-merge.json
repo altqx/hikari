@@ -2,7 +2,7 @@
     "apply": {
         "events": [
             {
-                "end": 4310,
+                "end": 4320,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
@@ -15,7 +15,7 @@
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(633.33,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },
             {
-                "end": 4350,
+                "end": 4360,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
@@ -23,7 +23,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4310,
+                "start": 4320,
                 "style": "Sign",
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(640,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },
@@ -36,7 +36,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4350,
+                "start": 4360,
                 "style": "Sign",
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(646.67,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },
@@ -67,7 +67,7 @@
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(660,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },
             {
-                "end": 4520,
+                "end": 4530,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
@@ -80,7 +80,7 @@
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(666.67,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },
             {
-                "end": 4560,
+                "end": 4570,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
@@ -88,12 +88,12 @@
                     }
                 },
                 "layer": 0,
-                "start": 4520,
+                "start": 4530,
                 "style": "Sign",
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(673.33,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },
             {
-                "end": 4600,
+                "end": 4610,
                 "extra": {
                     "a-mo": {
                         "originalText": "{\\pos(640,360)\\fscx120\\fscy80\\bord2.5\\shad1.5\\blur0.6\\frz10}Tracked {\\fscx90\\bord1\\xshad-2}sign",
@@ -101,7 +101,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4560,
+                "start": 4570,
                 "style": "Sign",
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(680,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },
@@ -114,7 +114,7 @@
                     }
                 },
                 "layer": 0,
-                "start": 4600,
+                "start": 4610,
                 "style": "Sign",
                 "text": "{\\1a&H00&\\3a&H00&\\4a&H80&\\blur0.6\\bord2.5\\frz10\\fscx120\\fscy80\\pos(686.67,360)\\shad1.5}Tracked {\\bord1\\fscx90\\xshad-2}sign"
             },

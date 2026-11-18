@@ -1,5 +1,5 @@
 local log, Math, tags
-version = '1.2.4'
+version = '1.2.5'
 
 haveDepCtrl, DependencyControl = pcall require, 'l0.DependencyControl'
 
@@ -15,7 +15,7 @@ if haveDepCtrl
 		{
 			{ 'a-mo.Log',  version: '1.0.0'  }
 			{ 'a-mo.Math', version: '1.0.0' }
-			{ 'a-mo.Tags', version: '1.3.3' }
+			{ 'a-mo.Tags', version: '1.3.6' }
 		}
 	}
 	log, Math, tags = version\requireModules!
@@ -93,8 +93,15 @@ class Transform
 		if @effectTags[tags.allTags.rectiClip]
 			@priorValues[tags.allTags.rectiClip] = { 0, 0, line.parentCollection.meta.PlayResX, line.parentCollection.meta.PlayResY }
 
-		i = 1
+		foundTransform = false
 		text\gsub "({.-})", ( tagBlock ) ->
+			return if foundTransform
+
+			placeholderIndex = tagBlock\find placeholder, 1, true
+			if placeholderIndex
+				tagBlock = tagBlock\sub 1, placeholderIndex - 1
+				foundTransform = true
+
 			for tag, _ in pairs @effectTags
 				if tag.affectedBy
 					newTagBlock = tagBlock\gsub ".-"..tag.pattern, ( value ) ->
@@ -109,9 +116,7 @@ class Transform
 					tagBlock\gsub tag.pattern, ( value ) ->
 						@priorValues[tag] = tag\convert value
 
-			i += 1
-			return nil,
-			@index
+			return nil
 
 	interpolate: ( line, text, placeholder, time ) =>
 		@collectPriorState line, text, placeholder

@@ -102,7 +102,7 @@ std::expected<Registry, std::string> Installer::registry() const
 std::expected<InstallReview, InstallRefusal> Installer::open(std::vector<PackageFile> files) const
 {
     using Kind = InstallRefusal::Kind;
-    auto package = openPackage(std::move(files), m_apiVersion);
+    auto package = openPackage(std::move(files), m_apiVersion, m_contentChecks);
     if (!package)
         return std::unexpected(InstallRefusal{Kind::Package, package.error(), {}, {}});
     auto registry = loadRegistry(m_folders.registry);
@@ -211,9 +211,9 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         return failed("cannot create", m_folders.data / manifest.id, error);
 
     InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object(), review.source};
-    entry.installed = 1;
     for (const auto &[id, plugin] : *registry)
-        entry.installed = std::max(entry.installed, plugin.installed + 1);
+        entry.installed = std::max(entry.installed, plugin.installed);
+    ++entry.installed;
     if (existing != registry->end()) {
         const InstalledPlugin &old = existing->second;
         entry.installed = old.installed;

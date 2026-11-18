@@ -146,13 +146,25 @@ ApplicationWindow {
             closeReview.review(rows)
     }
     function openSubtitles(path) {
-        const result = root.app.reviewOpen(path)
+        root.continueOpen(root.app.reviewOpen(path))
+    }
+    function openPluginSubtitles(path, format) {
+        root.continueOpen(root.app.reviewOpenAs(path, format))
+    }
+    function continueOpen(result) {
         if (!result.ok || result.done)
             return
         else if (result.rows.length === 0)
             root.app.finishClose()
         else
             closeReview.review(result.rows)
+    }
+    Connections {
+        target: root.app
+        function onPluginOpenReviewed(shellWindow, result) {
+            if (shellWindow === root.shellWindow)
+                root.continueOpen(result)
+        }
     }
     function openFromExplorer(path, newTab) {
         const open = root.app.tabOfFile(root.shellWindow, path)
@@ -2927,6 +2939,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
         }
         Action {
+            id: saveSelectedAudioAction
+            text: qsTr("Save audio of selected lines…")
+            enabled: root.audio.hasAudio && root.shell.selectedCount > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
+        }
+        Action {
             id: closeAudioAction
             text: qsTr("&Close audio")
             enabled: root.audio.hasAudio
@@ -4205,6 +4223,13 @@ ApplicationWindow {
                     iconRole: "close-audio"
                     objectName: "closeAudioMenuItem"
                     action: closeAudioAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                    help: qsTr("Saves the audio from the first selected line’s start to the last one’s end as a WAV file")
+                    iconRole: "save-audio"
+                    objectName: "saveSelectedAudioMenuItem"
+                    action: saveSelectedAudioAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
@@ -7103,17 +7128,39 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                FoldedToggle {
-                                    objectName: "audioMoreSpeechSpectrum"
+                                ShellMenu {
+                                    objectName: "audioMoreFrequencyCurve"
                                     iconRole: "spectrum-nonlinear"
-                                    text: qsTranslate("HikariSub.Audio", "Speech spectrum")
-                                    checked: root.audio.spectrumNonLinear
-                                    onToggled: {
-                                        root.audio.setSpectrumNonLinear(checked)
-                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
+                                    title: qsTranslate("HikariSub.Audio", "Frequency curve")
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLinear"
+                                        text: qsTranslate("HikariSub.Audio", "Linear")
+                                        checked: root.audio.spectrumCurve === 0
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 0)
+                                            root.audio.setSpectrumCurve(0)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveSpeech"
+                                        text: qsTranslate("HikariSub.Audio", "Speech")
+                                        checked: root.audio.spectrumCurve === 1
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 1)
+                                            root.audio.setSpectrumCurve(1)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLogarithmic"
+                                        text: qsTranslate("HikariSub.Audio", "Logarithmic")
+                                        checked: root.audio.spectrumCurve === 2
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 2)
+                                            root.audio.setSpectrumCurve(2)
+                                        }
                                     }
                                 }
-                                FoldedToggleSeparator {}
+                                MenuSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreGotoStart"
                                     iconRole: "audio-to-selection-start"
@@ -8000,6 +8047,14 @@ ApplicationWindow {
                             enabled: root.video.hasVideo
                             onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                            iconRole: "save-audio"
+                            objectName: "gridSaveSelectedAudio"
+                            text: qsTranslate("HikariSub.Grid", "Save audio of selected lines…")
+                            enabled: root.audio.hasAudio
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
+                        }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
                             command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
@@ -8259,6 +8314,7 @@ ApplicationWindow {
                 id: qcNotesPanel
                 objectName: "qcNotesPanel"
                 dockName: root.engineName("QcNotes")
+                onActiveFocusChanged: root.app.presenceActivity(root.shellWindow, "reviewing", activeFocus)
                 minimumBodySize: qcNotesTool.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.QcNotes", "QC notes")
@@ -8463,8 +8519,7 @@ ApplicationWindow {
                 dockName: root.engineName("Styles")
                 minimumBodySize: Qt.size(180, 120)
                 anchors.fill: parent
-                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Styles", "Styles: %1").arg(shell.editingTitle)
-                                              : qsTranslate("HikariSub.Styles", "Styles")
+                title: qsTranslate("HikariSub.Styles", "Styles")
                 accessibleName: qsTranslate("HikariSub.Styles", "Styles")
                 StylesPanel {
                     id: stylesTool
@@ -9601,20 +9656,27 @@ ApplicationWindow {
         id: openDialog
         objectName: "subtitlesOpenDialog"
         title: qsTranslate("HikariSub.Documents", "Open subtitles")
+        readonly property var builtInFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+                                               qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
+                                               qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
+                                               qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)")]
+        property var pluginFormats: []
         function show() {
             const folder = root.pickerFolder("subtitles")
             if (folder.length > 0)
                 currentFolder = folder
+            pluginFormats = root.app.pluginOpenFormats()
+            nameFilters = builtInFilters.concat(root.app.pluginOpenFilters(),
+                                                [qsTranslate("HikariSub.Documents", "All files (*)")])
             open()
         }
-        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
-                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
-                      qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
-                      qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
-                      qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
-            root.openChosenSubtitles(root.app.localPath(selectedFile))
+            const plugin = pluginFormats[selectedNameFilter.index - builtInFilters.length]
+            if (selectedNameFilter.index >= builtInFilters.length && plugin !== undefined)
+                root.openPluginSubtitles(root.app.localPath(selectedFile), plugin)
+            else
+                root.openChosenSubtitles(root.app.localPath(selectedFile))
         }
     }
 
@@ -9982,6 +10044,24 @@ ApplicationWindow {
         }
         function show() {
             currentFolder = root.startFolder("timecodes", root.app.timecodesDialogFolder())
+            open()
+        }
+    }
+    FileChooser {
+        id: saveSelectedAudioDialog
+        objectName: "saveSelectedAudioDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Audio", "Save audio of selected lines")
+        defaultSuffix: "wav"
+        nameFilters: [qsTranslate("HikariSub.Audio", "WAV audio (*.wav)")]
+        onAccepted: {
+            root.rememberPickerFolder("audioClip", selectedFile)
+            const problem = root.app.saveSelectedAudio(selectedFile)
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Audio", "Save audio of selected lines"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("audioClip", root.app.audioDialogFolder())
             open()
         }
     }
@@ -10996,7 +11076,7 @@ ApplicationWindow {
         GLOBAL_RELOAD_AUDIO: reloadAudioAction, GLOBAL_RELOAD_VIDEO: reloadVideoAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction,
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction, GLOBAL_SAVE_SELECTED_AUDIO: saveSelectedAudioAction,
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,

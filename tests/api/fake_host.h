@@ -235,6 +235,7 @@ public:
 class FakePlugins final : public PluginHost {
 public:
     std::vector<PluginState> plugins() const override { return installed; }
+    std::vector<FormatInfo> formats() const override { return pluginFormats; }
     std::optional<std::string> manifest(std::string_view plugin) const override
     {
         if (plugin != "org.example.word-count")
@@ -298,6 +299,7 @@ public:
     std::vector<PluginState> installed{PluginState{
         "org.example.word-count", "Word count", "0.1.0", "Counts words.", "file", false, true, false, false,
         {PluginCommand{"plugin.org.example.word-count.count", "Count words"}}}};
+    std::vector<FormatInfo> pluginFormats;
     PluginRun nextRun = PluginRun::Ran;
     bool fullTrust = false;
     std::vector<std::string> runs, vias, reviewed, installs;
@@ -460,6 +462,12 @@ public:
             api->selectionChanged(document);
         return true;
     }
+    std::optional<std::string> pluginFormat(application::DocumentId document) const override
+    {
+        const auto it = pluginFormats.find(document.value);
+        return it == pluginFormats.end() ? std::nullopt : std::optional(it->second);
+    }
+    std::map<std::uint64_t, std::string> pluginFormats;
     void committed(application::DocumentId document) override
     {
         ++commits;

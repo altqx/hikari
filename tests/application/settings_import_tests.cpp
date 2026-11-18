@@ -145,6 +145,8 @@ std::vector<const PlanRow *> rowsKeyed(const Plan &plan, std::string_view key)
 
 std::string sampleRaw(const SettingDefinition &def)
 {
+    if (def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON")
+        return "true";
     switch (def.type) {
     case SettingType::Bool:
         return std::get<bool>(def.defaultValue) ? "false" : "true";
@@ -243,7 +245,10 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
             EXPECT_EQ(it->second, SettingValue(!std::get<bool>(def.defaultValue))) << def.id;
             break;
         case SettingType::Int:
-            EXPECT_EQ(it->second, SettingValue(std::get<std::int64_t>(def.defaultValue) + 7)) << def.id;
+            EXPECT_EQ(it->second, SettingValue(def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON"
+                                                   ? std::int64_t{1}
+                                                   : std::get<std::int64_t>(def.defaultValue) + 7))
+                << def.id;
             break;
         case SettingType::String:
             EXPECT_EQ(it->second, SettingValue(std::get<std::string>(def.defaultValue) + "x")) << def.id;
@@ -345,7 +350,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 415);
+    EXPECT_EQ(bound, 416);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
@@ -448,6 +453,18 @@ TEST(SettingsImport, LaterRecordsAndTheAudioResetSupersede)
                                  linuxHost(), readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(reset, "superseded:Config/Config.txt:13").disposition, Disposition::Superseded);
     EXPECT_EQ(rowOf(reset, "setting:audio.volume").value, SettingValue(std::int64_t{20}));
+}
+
+TEST(SettingsImport, TheNonLinearSpectrumSwitchBecomesTheSpeechCurve)
+{
+    const Plan plan =
+        buildPlan({config(padding() + "AUDIO_SPECTRUM_NON_LINEAR_ON=true\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &curve = rowOf(plan, "setting:audio.spectrumCurve");
+    EXPECT_EQ(curve.disposition, Disposition::Change);
+    EXPECT_EQ(curve.value, SettingValue(std::int64_t{1}));
+    const Plan off =
+        buildPlan({config(padding() + "AUDIO_SPECTRUM_NON_LINEAR_ON=false\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(off, "setting:audio.spectrumCurve").value, SettingValue(std::int64_t{0}));
 }
 
 TEST(SettingsImport, MalformedValuesStayUnresolvedWithLegacysReading)

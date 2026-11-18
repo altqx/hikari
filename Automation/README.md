@@ -16,7 +16,7 @@ them; `git log` on this directory is the history from there on:
 | `TypesettingTools/ASSFoundation` | `8fbb4f4261ef` |
 | `TypesettingTools/Functional` | `5a28339d6d8b` |
 | `TypesettingTools/Yutils` | `364f8fa5a9d9` |
-| `TypesettingTools/Aegisub-Motion` | `a98331082f80` |
+| `TypesettingTools/Aegisub-Motion` (`src`, `Aegisub-Motion.moon`, `LICENSE`) | `ce44cf9131de` |
 | `TypesettingTools/SubInspector` | `a346959b24ec` |
 | `TypesettingTools/lyger-Aegisub-Scripts` (`modules/LibLyger.moon`) | `f07033106376` |
 | `torque/ffi-experiments` (`DMv0.4.0-rqffiv0.1.2`: BadMutex, PreciseTimer, DownloadManager, requireffi) | `691b128703ba` |
@@ -32,8 +32,12 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   `ffi.C.free`.
 - `automation/include/lyger/LibLyger.moon` declares `has_script_info` local
   before use.
-- The `a-mo/*.moon` modules carry the version numbers DependencyControl
-  substitutes into `##__X_VERSION__##` placeholders.
+- The `a-mo/*.moon` modules and `autoload/a-mo.Aegisub-Motion.moon` carry
+  the version numbers upstream's `VersionDetemplater.moon` writes into the
+  `##__X_VERSION__##` placeholders at that revision (Aegisub-Motion 1.1.2,
+  TrimHandler 1.2.4). Upstream's `LICENSE` is `include/a-mo/LICENSE`. Before
+  #1216 the copy was upstream `cecb70d5f` (2018-02-14, Aegisub-Motion 1.0.9),
+  although this table named `a98331082f80`.
 - DependencyControl's own files are the v0.9.1 release. The legacy package had
   mixed its 0.6.4 core with newer modules, which broke its feeds
   (DC1-depctrl-release). Twelve fixes are marked `HikariSub (DC1)`: the
@@ -53,11 +57,11 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   `FileCache` (marked `HikariSub (#500)`) names entries by the full SHA-1 of
   their key instead of a 7-hex prefix and returns an index only when the key
   stored in it matches, so one feed URL can't pose as another's cache entry.
-- `automation/include/moonscript.lua` is MoonScript 0.5.0, from
-  `TypesettingTools/Aegisub` `3c5b61429a49` (what arch1t3cht's Aegisub ships).
-  The released package's 0.3.0 cannot compile DependencyControl 0.9's
-  Toolbox; 0.7.0, at the revision above, rejects Aegisub-Motion's
-  `TrimHandler` (DC1-moonscript).
+- `automation/include/moonscript.lua` is MoonScript 0.7.0, from
+  `TypesettingTools/Aegisub` `43af875ea01e` (what Aegisub 3.5 ships). The
+  released package's 0.3.0 cannot compile DependencyControl 0.9's Toolbox.
+  Aegisub-Motion before `897cd7f6a` doesn't compile under 0.7.0
+  (DC1-moonscript), so it moved to the revision above together with it.
 - `automation/include/ln/kara.lua` is karaOK's `ln.kara`, by logarithm with
   petzku. Upstream states no licence; HikariSub's eight fixes, marked
   `HikariSub (TH5d2)`, are MIT (TH5d2-ln-kara in

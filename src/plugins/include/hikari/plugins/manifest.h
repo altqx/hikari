@@ -32,6 +32,7 @@ struct Permissions {
     std::optional<std::string> vcsRead; // the reason, when asked for
     std::optional<std::string> background; // the reason, when asked for
     std::optional<std::string> programs;   // the reason, when asked for
+    std::optional<std::string> presence; // the reason, when asked for
 };
 
 struct Command {
@@ -102,6 +103,14 @@ struct NodeContribution {
     std::vector<NodePort> inputs, outputs;
 };
 
+struct FormatContribution {
+    std::string id;
+    std::string title;
+    std::vector<std::string> extensions; // lower case, without the dot
+    bool imports = false;
+    bool exports = false;
+};
+
 struct ProgramDownload {
     std::string url;
     std::string sha256;
@@ -136,6 +145,13 @@ struct Screenshot {
     std::string caption;
 };
 
+// A content pack file, shown beside its built-in counterpart (docs/plugins.md, Content packs).
+struct ContentFile {
+    std::string id;
+    std::string title; // empty for a karaoke preset, whose file holds its title
+    std::string path;  // a package path
+};
+
 struct Manifest {
     std::string id;
     std::string name;
@@ -159,7 +175,10 @@ struct Manifest {
     std::vector<Keybinding> keybindings;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
+    std::vector<FormatContribution> formats;
     std::vector<Program> programs;
+    std::vector<ContentFile> styles;
+    std::vector<ContentFile> karaokePresets;
 
     bool hasQmlPanels() const;
     const Program *program(std::string_view id) const;
@@ -201,11 +220,12 @@ struct PermissionIncrease {
     bool runPrograms = false;
     // Programs that are new, gain network, or move to lowIntegrity.
     std::vector<std::string> programs;
+    bool presence = false;
 
     bool any() const
     {
         return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background ||
-               runPrograms || !programs.empty();
+               runPrograms || !programs.empty() || presence;
     }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);

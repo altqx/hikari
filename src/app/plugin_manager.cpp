@@ -1,5 +1,7 @@
 #include "hikari/app/plugin_manager.h"
 
+#include "hikari/app/plugin_content.h"
+
 #include "hikari/api/api.h"
 #include "hikari/backends/desktop_handoff.h"
 
@@ -143,6 +145,11 @@ QString packageMessage(const PackageProblem &problem)
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its panel file, %1.").arg(text(problem.path));
     case PackageProblem::Kind::QmlImport:
         return QCoreApplication::translate("HikariSub.Plugins", "%1 imports %2, which plugin panels can’t use.")
+            .arg(text(problem.path), text(problem.detail));
+    case PackageProblem::Kind::MissingContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its content file, %1.").arg(text(problem.path));
+    case PackageProblem::Kind::BadContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package’s content file %1 can’t be read: it %2.")
             .arg(text(problem.path), text(problem.detail));
     case PackageProblem::Kind::Manifest:
         break;
@@ -304,6 +311,8 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
         added << asksMore([](const plugins::Program &p) { return p.network; });
     if (std::ranges::any_of(next.programs, isLowIntegrity))
         added << asksMore(isLowIntegrity);
+    if (next.permissions.presence)
+        added << more.presence;
     for (const plugins::FileGrantRequest &request : next.permissions.files)
         added << (std::ranges::find(more.files, request.id) != more.files.end());
     const QStringList lines = permissionLines(next);
@@ -351,6 +360,8 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
         lines << QCoreApplication::translate("HikariSub.Plugins", "Connects to the internet");
     if (std::ranges::any_of(programs, isLowIntegrity))
         lines << QCoreApplication::translate("HikariSub.Plugins", "Can read your files");
+    if (p.presence)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Set text in your Discord status: %1").arg(text(*p.presence));
     for (const plugins::FileGrantRequest &f : p.files)
         lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
                              : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))
@@ -364,6 +375,8 @@ PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
         m_installer.emplace(plugins::PluginFolders{path(folders.plugins), path(folders.data), path(folders.cache),
                                                    path(folders.registry)},
                             api::kApiVersion);
+    if (m_installer)
+        m_installer->checkContentWith(contentFileChecks());
     refresh();
 }
 

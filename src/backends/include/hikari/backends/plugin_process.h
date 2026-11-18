@@ -14,6 +14,7 @@
 #include <QTimer>
 
 #include <deque>
+#include <expected>
 #include <map>
 #include <functional>
 #include <memory>
@@ -70,6 +71,12 @@ public:
     // failed to load or the queue is full.
     // `call` is the JSON {args, context} the handler gets.
     bool run(const std::string &command, const std::string &call);
+    // What a format call gives: the file's bytes for an export, the JSON {lines, styles, info} for an import;
+    // else the error to show. Called once, also when the helper stops first.
+    using FormatDone = std::function<void(std::expected<std::string, QString>)>;
+    // Queued and started as run is.
+    bool exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson, FormatDone done);
+    bool importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
     bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.
@@ -113,10 +120,11 @@ signals:
 
 private:
     struct Unit {
-        enum class Kind { Load, Command, Event, Timer } kind = Kind::Command;
+        enum class Kind { Load, Command, Event, Timer, Export, Import } kind = Kind::Command;
         std::string name;
         std::string json;
-        std::string key;
+        std::string key; // Event: the coalesce key; Export: the options; Import: the file name
+        FormatDone done;
         std::int64_t timer = 0;
         bool last = false;
     };
@@ -124,6 +132,8 @@ private:
         std::unique_ptr<QTimer> clock;
         bool repeat = false;
     };
+    bool enqueue(Unit unit);
+    void failPending(const QString &message);
     void startHelper();
     void next();
     void onEvent(std::expected<helper::Event, helper::HostError> event);

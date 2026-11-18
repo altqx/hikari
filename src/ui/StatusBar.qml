@@ -28,16 +28,7 @@ Rectangle {
     default property alias trailing: trailingItems.data
 
     // Qt.application.font is read once; a Label's font follows the program font live.
-    readonly property font statusFont: {
-        const base = fontSource.font
-        const f = Qt.font({family: base.family})
-        // A QML font's pointSize is QFont's pointSizeF.
-        if (base.pointSize > 0)
-            f.pointSize = Math.max(base.pointSize * 11 / 13, 8)
-        else
-            f.pixelSize = Math.max(Math.round(base.pixelSize * 11 / 13), 11)
-        return f
-    }
+    readonly property font statusFont: TypeRoles.sized(fontSource.font, 11, Font.Normal)
 
     implicitHeight: Math.max(Theme.statusBarHeight, row.implicitHeight)
     color: Theme.background
@@ -90,6 +81,7 @@ Rectangle {
             id: pluginsWorking
             objectName: "statusPluginsWorking"
             visible: bar.workingPlugins.length > 0
+            focusPolicy: Qt.NoFocus
             padding: 0
             Layout.fillHeight: true
             //: The status bar's busy icon: how many background plugins are working

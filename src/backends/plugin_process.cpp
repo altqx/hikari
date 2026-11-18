@@ -103,12 +103,12 @@ void PluginProcess::startHelper()
     auto loadFailure = [this](const QString &message) {
         m_state = State::LoadFailed;
         m_loadError = message;
-        m_queue.clear();
+        failPending(message);
         dropHelper(false);
         emit loadFailed(message);
     };
     connect(host, &HelperHost::ready, this, [this] {
-        m_queue.push_front(Unit{Unit::Kind::Load, {}, {}, {}});
+        m_queue.push_front(Unit{Unit::Kind::Load, {}, {}, {}, {}});
         next();
     });
     connect(host, &HelperHost::refused, this,
@@ -121,7 +121,7 @@ void PluginProcess::startHelper()
             return;
         }
         m_state = State::Stopped;
-        m_queue.clear();
+        failPending(QStringLiteral("hikari-plugin-helper stopped"));
         endJob();
         dropHelper(false);
         emit stopped(StopReason::Crashed);
@@ -129,16 +129,42 @@ void PluginProcess::startHelper()
     host->start();
 }
 
-bool PluginProcess::run(const std::string &command, const std::string &call)
+bool PluginProcess::enqueue(Unit unit)
 {
     if (m_state == State::LoadFailed || m_queue.size() >= m_limits.maxQueued)
         return false;
-    m_queue.push_back(Unit{Unit::Kind::Command, command, call, {}});
+    m_queue.push_back(std::move(unit));
     if (m_state == State::Idle || m_state == State::Stopped)
         startHelper();
     else
         next();
     return true;
+}
+
+bool PluginProcess::run(const std::string &command, const std::string &call)
+{
+    return enqueue(Unit{Unit::Kind::Command, command, call, {}, {}});
+}
+
+bool PluginProcess::exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson,
+                                   FormatDone done)
+{
+    return enqueue(Unit{Unit::Kind::Export, format, std::move(snapshotJson), std::move(optionsJson), std::move(done)});
+}
+
+bool PluginProcess::importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done)
+{
+    return enqueue(Unit{Unit::Kind::Import, format, std::move(bytes), std::move(fileName), std::move(done)});
+}
+
+void PluginProcess::failPending(const QString &message)
+{
+    std::deque<Unit> dropped = std::exchange(m_queue, {});
+    if (m_running)
+        dropped.push_front(std::move(*std::exchange(m_running, std::nullopt)));
+    for (Unit &unit : dropped)
+        if (unit.done)
+            unit.done(std::unexpected(message));
 }
 
 bool PluginProcess::deliver(const std::string &event, const std::string &json, const std::string &coalesceKey)
@@ -154,7 +180,7 @@ bool PluginProcess::deliver(const std::string &event, const std::string &json, c
     }
     if (m_queue.size() >= m_limits.maxQueued)
         return false;
-    m_queue.push_back(Unit{Unit::Kind::Event, event, json, coalesceKey});
+    m_queue.push_back(Unit{Unit::Kind::Event, event, json, coalesceKey, {}});
     next();
     return true;
 }
@@ -184,6 +210,15 @@ void PluginProcess::next()
         Writer w;
         w.i32(static_cast<std::int32_t>(plugin::Command::Timer)).i64(unit.timer).u8(unit.last ? 1 : 0);
         payload = w.take();
+    } else if (unit.kind == Unit::Kind::Export || unit.kind == Unit::Kind::Import) {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(unit.kind == Unit::Kind::Export ? plugin::Command::Export : plugin::Command::Import))
+            .str(unit.name)
+            .str(unit.json)
+            .str(unit.key);
+        payload = w.take();
+        unit.json.clear();
+        unit.json.shrink_to_fit();
     } else {
         Writer w;
         w.str(unit.name).str(unit.json);
@@ -228,8 +263,7 @@ void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> even
         m_stillWorking = false;
         endJob();
         const bool loading = m_running && m_running->kind == Unit::Kind::Load;
-        m_running.reset();
-        m_queue.clear();
+        failPending(QStringLiteral("hikari-plugin-helper stopped"));
         dropHelper(false);
         if (loading) {
             m_state = State::LoadFailed;
@@ -341,9 +375,11 @@ std::string PluginProcess::job(const std::string &operation, const std::string &
     if (operation == "job.cancelled")
         return result({{QStringLiteral("cancelled"), m_jobCancelled}});
     if (operation == "job.begin") {
-        if (!m_running ||
-            !(m_running->kind == Unit::Kind::Command || m_running->kind == Unit::Kind::Timer || userClick(*m_running)))
-            return refused("Only a command, a timer callback or a click in the plugin's own panel or dialog can become a job.");
+        if (!m_running || !(m_running->kind == Unit::Kind::Command || m_running->kind == Unit::Kind::Timer ||
+                            m_running->kind == Unit::Kind::Export || m_running->kind == Unit::Kind::Import ||
+                            userClick(*m_running)))
+            return refused(
+                "Only a command, a timer callback, a format call or a click in the plugin's own panel or dialog can become a job.");
         if (m_job)
             return refused("This is a job already.");
         m_job = true;
@@ -427,7 +463,7 @@ void PluginProcess::fire(std::int64_t id)
         return;
     if (m_state != State::Ready || m_queue.size() >= m_limits.maxQueued)
         return;
-    m_queue.push_back(Unit{Unit::Kind::Timer, {}, {}, {}, id, last});
+    m_queue.push_back(Unit{.kind = Unit::Kind::Timer, .timer = id, .last = last});
     next();
 }
 
@@ -451,7 +487,7 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
         if (!handled) {
             m_state = State::LoadFailed;
             m_loadError = message;
-            m_queue.clear();
+            failPending(message);
             dropHelper(true);
             emit loadFailed(message);
             return;
@@ -459,6 +495,11 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
         m_handled = std::move(*handled);
         m_state = State::Ready;
         emit loaded();
+    } else if (unit.done) {
+        if (outcome == Outcome::Ok)
+            unit.done(helper::textOf(payload));
+        else
+            unit.done(std::unexpected(message));
     } else if (outcome == Outcome::Ok) {
         if (unit.kind == Unit::Kind::Command)
             emit finished(name);
@@ -477,8 +518,7 @@ void PluginProcess::stopHelper(StopReason reason)
     m_watchdog.stop();
     m_stillWorking = false;
     endJob();
-    m_running.reset();
-    m_queue.clear();
+    failPending(QStringLiteral("the plugin was stopped"));
     m_openServices = 0;
     m_state = State::Stopped;
     dropHelper(true);

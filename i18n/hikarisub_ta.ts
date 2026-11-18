@@ -1531,6 +1531,38 @@ Output device: %2</source>
         <source>Apply</source>
         <translation>பயன்படுத்து</translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio and select lines with some length first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio is still loading.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio couldn’t be saved there.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -3154,12 +3186,100 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Discord</name>
     <message>
+        <source>Watching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spell-checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reviewing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exporting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>With the AI agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In HikariSub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Editing subtitles</source>
         <translation>வசனங்களைத் திருத்துகிறார்</translation>
     </message>
     <message>
         <source>Get HikariSub</source>
         <translation>HikariSub-ஐப் பெறுக</translation>
+    </message>
+    <message>
+        <source>In the Editing layout, or when no other mode applies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Timing layout, and in kanji timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Translation layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Typesetting layout, and in full-screen typesetting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Karaoke layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While Simple mode is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the node-effects mode or the Template editor is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the Style manager is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the Spellchecker panel is checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While QC notes has focus, or for 5 minutes after a QC note is added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While an export, Collect fonts or a muxing run is going</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While an agent turn runs in the current tab</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3707,6 +3827,42 @@ Output device: %2</source>
     <message>
         <source>Import</source>
         <translation>இறக்குமதி</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the plugin that writes this format isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the document couldn’t be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t save.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be read: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is larger than 48 MiB, so no plugin can open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t open this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4692,6 +4848,14 @@ Output device: %2</source>
     <message>
         <source>Close</source>
         <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t export this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t export.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6719,6 +6883,10 @@ Failed to copy %2 fonts.</source>
         <translation>சட்டகங்களுக்கு வீடியோ தேவை.</translation>
     </message>
     <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8652,6 +8820,10 @@ Failed to copy %2 fonts.</source>
         <translation>கடைசி குறுநிரலை மீண்டும் இயக்கு</translation>
     </message>
     <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Commit and use the default timing for the next line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10286,22 +10458,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Moves the start of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Ends the line before the active line where the active line starts</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11811,6 +11967,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>வரி திருத்தியில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the audio from the first selected line’s start to the last one’s end as a WAV file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to the scene</source>
@@ -14557,16 +14721,176 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>இந்த நகல் புதுப்பிப்புகளைத் தானே நிறுவாது: புதுப்பிப்புச் சாளரம் பதிவிறக்கப் பக்கத்தைத் திறக்கும்.</translation>
     </message>
     <message>
+        <source>The mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project’s name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>{%1} stays empty while %2 is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1/128</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show what I am doing in Discord</source>
         <translation>நான் செய்வதை Discord-இல் காட்டு</translation>
     </message>
     <message>
-        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
-        <translation>உங்கள் Discord நிலையில் வசனங்களைத் திருத்துகிறார், பயன்முறை மற்றும் எவ்வளவு நேரம் என்பது காட்டப்படும். காணொளி, உங்கள் வசனங்கள் அல்லது வரி எண்ணிக்கை ஒருபோதும் காட்டப்படாது.</translation>
+        <source>Your Discord status shows what you choose below. Never folders, your subtitles, the video or line counts.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Include the file name</source>
-        <translation>கோப்பின் பெயரைச் சேர்</translation>
+        <source>What shows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The mode follows your layout. While one of the activities below is going, it shows instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unticked activities show the layout’s mode. A layout you saved shows the mode of the layout it came from.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The mode’s icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details (first line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>State (second line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text from plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows only where you put {plugin} in your own text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Since HikariSub started</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Since the file opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle and away</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After no input for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minutes without input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show “Idle”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear the status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do the same while HikariSub is in the background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“Get HikariSub”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A link of your own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs an https:// address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is shown in Discord. Presence is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>12:34 elapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roughly how Discord shows it to people who can see your status. Buttons show to them, not to you.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>
@@ -16164,6 +16488,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Default line duration</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16247,6 +16583,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1, செருகுநிரல் பலகங்கள் பயன்படுத்த முடியாத %2 ஐ இறக்குகிறது.</translation>
     </message>
     <message>
+        <source>The package lacks its content file, %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package’s content file %1 can’t be read: it %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>தொகுப்பில் கையொப்பம் உள்ளது, ஆனால் அதைச் சரிபார்க்க publicKey எதையும் அதன் மேனிஃபெச்ட் குறிப்பிடவில்லை.</translation>
     </message>
@@ -16293,6 +16637,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
         <translation>உங்கள் வசனக் கோப்புகள் உள்ள git களஞ்சியத்தின் கிளைகள், குறிச்சொற்கள், வரலாற்றைப் படித்தல்: %1</translation>
+    </message>
+    <message>
+        <source>Set text in your Discord status: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
@@ -17535,6 +17883,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Creates the file and .hikari/.gitignore, which keeps it and project.local.toml out of git. Keys never reach Hikari AI or the model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide presence while this project is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this project’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details (first line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>State (second line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An empty line uses yours. Until you trust this folder, your own presence shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What shows stays yours: a project can’t show the file or project name.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -21162,6 +21546,10 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>From plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Copy to project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21179,6 +21567,14 @@ because it was edited.</source>
     </message>
     <message>
         <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This catalogue comes with a plugin, so it can’t be changed here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to my catalogues</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21460,6 +21856,11 @@ because it was edited.</source>
         <translation>ASS கோப்பைத் தேர்வுசெய்க</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s style catalogue in the Style manager: the catalogue&apos;s title, then the plugin&apos;s name.</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Copy of %1</source>
         <translation>நகல் %1</translation>
     </message>
@@ -21496,10 +21897,6 @@ Styles deleted:
     <message>
         <source>Styles</source>
         <translation>பாணிகள்</translation>
-    </message>
-    <message>
-        <source>Styles: %1</source>
-        <translation>பாணிகள்: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>
@@ -23155,6 +23552,11 @@ Styles deleted:
         <translation>karaskel இன் மாறிகள் உட்பட, எல்லா உலகளாவிய மாறிகளும்</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s karaoke preset in the Template editor: the preset&apos;s title, then the plugin&apos;s name.</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The templater stopped before it finished.</source>
         <translation>வார்ப்புரு இயக்கி முடிப்பதற்கு முன்பே நின்றுவிட்டது.</translation>
     </message>
@@ -24182,6 +24584,21 @@ Styles deleted:
     <message>
         <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join lines that overlap by up to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>overlap closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>

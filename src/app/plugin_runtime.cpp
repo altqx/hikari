@@ -1,5 +1,6 @@
 #include "hikari/app/plugin_runtime.h"
 
+#include "hikari/app/plugin_content.h"
 #include "hikari/app/plugin_nodes.h"
 
 #include "log_controller.h"
@@ -343,9 +344,11 @@ void PluginRuntime::sync()
     for (const auto &[window, project] : m_windows)
         onIn[window];
     std::map<std::string, plugins::Manifest> wanted;
+    std::vector<std::pair<std::int64_t, std::string>> order;
     std::vector<PluginUi::Plugin> installed;
     std::vector<application::PluginNode> nodes;
     std::map<std::string, std::string> unavailable;
+    application::PluginContent content;
     if (m_installer) {
         if (const auto registry = m_installer->registry())
             for (const auto &[id, entry] : *registry) {
@@ -366,6 +369,8 @@ void PluginRuntime::sync()
                 installed.push_back({id, manifest->name, runs, manifest->panels,
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
+                if (pluginContentShows(entry, *manifest))
+                    addPluginContent(content, id, *manifest, root);
                 if (!manifest->nodes.empty()) {
                     std::expected<std::vector<application::PluginNode>, std::string> own = std::unexpected(std::string());
                     if (pluginNodesRun(entry, *manifest))
@@ -379,8 +384,10 @@ void PluginRuntime::sync()
                                           ui::LogController::Error, qs(manifest->name));
                 }
                 m_installOrder[id] = entry.installed;
-                if (runs)
+                if (runs) {
+                    order.emplace_back(entry.installed, id);
                     wanted.emplace(id, std::move(*manifest));
+                }
             }
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
@@ -400,11 +407,54 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id))
             m_plugins.emplace(id, launch(id, std::move(manifest)));
+    std::ranges::sort(order);
+    m_installOrder.clear();
+    for (auto &[installed, id] : order)
+        m_installOrder.push_back(std::move(id));
     m_userOn = std::move(userOn);
     m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
+    application::setPluginContent(std::move(content));
     m_ui->setPlugins(std::move(installed));
     relist();
+}
+
+std::vector<PluginRuntime::Format> PluginRuntime::formats() const
+{
+    std::vector<Format> out;
+    for (const std::string &id : m_installOrder) {
+        const auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            continue;
+        const plugins::Manifest &m = it->second->manifest;
+        for (const auto &format : m.formats)
+            out.push_back({"plugin:" + id + "/" + format.id, id, m.name, format});
+    }
+    return out;
+}
+
+std::optional<PluginRuntime::Format> PluginRuntime::format(const std::string &id) const
+{
+    for (Format &f : formats())
+        if (f.id == id)
+            return std::move(f);
+    return std::nullopt;
+}
+
+bool PluginRuntime::exportDocument(const Format &format, const api::Json &snapshot, const api::Json &options,
+                                   PluginProcess::FormatDone done)
+{
+    const auto it = m_plugins.find(format.plugin);
+    return it != m_plugins.end() && format.format.exports &&
+           it->second->process->exportDocument(format.format.id, snapshot.dump(), options.dump(), std::move(done));
+}
+
+bool PluginRuntime::importFile(const Format &format, std::string bytes, const std::string &fileName,
+                               PluginProcess::FormatDone done)
+{
+    const auto it = m_plugins.find(format.plugin);
+    return it != m_plugins.end() && format.format.imports &&
+           it->second->process->importFile(format.format.id, std::move(bytes), fileName, std::move(done));
 }
 
 std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string &id, plugins::Manifest manifest)
@@ -416,6 +466,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     raw->caller = api::Caller{"plugin:" + id, raw->manifest.name, raw->manifest.permissions.allDocuments.has_value()};
     raw->caller.vcsRead = raw->manifest.permissions.vcsRead.has_value();
     raw->caller.programs = raw->manifest.permissions.programs.has_value();
+    raw->caller.presence = raw->manifest.permissions.presence.has_value();
     raw->files = PluginFiles::Plugin{id, raw->caller.id, raw->manifest.permissions.files};
     auto load = [this, raw] {
         protocol::LoadRequest request;
@@ -430,6 +481,12 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         request.settings = plugins::settingValues(m, storedSettings(raw->id)).dump();
         for (const auto &command : m.commands)
             request.commands.push_back(command.id);
+        for (const auto &format : m.formats) {
+            if (format.exports)
+                request.exporters.push_back(format.id);
+            if (format.imports)
+                request.importers.push_back(format.id);
+        }
         return request;
     };
     raw->process = std::make_unique<PluginProcess>(m_wiring.helperPath, load, m_wiring.limits);
@@ -1043,6 +1100,24 @@ bool PluginRuntime::busy(const QString &pluginId) const
 {
     const PluginProcess *running = process(pluginId);
     return running && running->busy();
+}
+
+QSet<QString> PluginRuntime::runningIds() const
+{
+    QSet<QString> ids;
+    for (const auto &[id, plugin] : m_plugins)
+        ids.insert(QString::fromStdString(id));
+    return ids;
+}
+
+QVariantList PluginRuntime::presencePlugins() const
+{
+    QVariantList found;
+    for (const auto &[id, plugin] : m_plugins)
+        if (plugin->manifest.permissions.presence)
+            found << QVariantMap{{QStringLiteral("id"), QString::fromStdString(id)},
+                                 {QStringLiteral("name"), QString::fromStdString(plugin->manifest.name)}};
+    return found;
 }
 
 }

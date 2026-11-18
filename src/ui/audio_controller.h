@@ -60,6 +60,7 @@ class AudioController : public QObject {
     Q_PROPERTY(bool autoScroll READ autoScroll NOTIFY boxControlsChanged)
     Q_PROPERTY(bool spectrumOn READ spectrumOn NOTIFY boxControlsChanged)
     Q_PROPERTY(bool spectrumNonLinear READ spectrumNonLinear NOTIFY boxControlsChanged)
+    Q_PROPERTY(int spectrumCurve READ spectrumCurve NOTIFY boxControlsChanged)
     Q_PROPERTY(double magnification READ magnification NOTIFY boxControlsChanged)
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
     Q_PROPERTY(bool cursorIsPlayback READ cursorIsPlayback NOTIFY cursorIsPlaybackChanged)
@@ -149,7 +150,8 @@ public:
     bool linked() const { return m_linked; }
     bool autoScroll() const { return m_autoScroll; }
     bool spectrumOn() const { return m_spectrumOn; }
-    bool spectrumNonLinear() const { return m_spectrumNonLinear; }
+    bool spectrumNonLinear() const { return m_spectrumCurve == int(application::SpectrumCurve::Speech); }
+    int spectrumCurve() const { return m_spectrumCurve; }
     Q_INVOKABLE void setHorizontalZoom(int position);
     Q_INVOKABLE void setVerticalZoom(int position);
     Q_INVOKABLE void setVolume(int position);
@@ -159,6 +161,8 @@ public:
     Q_INVOKABLE void setAutoScroll(bool on);
     Q_INVOKABLE void setSpectrumOn(bool on);
     Q_INVOKABLE void setSpectrumNonLinear(bool on);
+    // An application::SpectrumCurve.
+    Q_INVOKABLE void setSpectrumCurve(int curve);
     // MUST KILL: AUDIO_SCROLL_RIGHT runs scrollLeft and AUDIO_SCROLL_LEFT runs scrollRight
     Q_INVOKABLE void scrollLeft();
     Q_INVOKABLE void scrollRight();
@@ -405,7 +409,8 @@ private:
     } m_columnsKey;
     QPointer<SettingsStore> m_store;
     int m_horizontalZoom = 50, m_verticalZoom = 50, m_volume = 50;
-    bool m_linked = false, m_autoScroll = true, m_spectrumOn = false, m_spectrumNonLinear = false;
+    bool m_linked = false, m_autoScroll = true, m_spectrumOn = false;
+    int m_spectrumCurve = 0;
     std::unique_ptr<application::AudioSpectrum> m_spectrum;
     std::uint64_t m_spectrumSerial = 0;
     std::shared_ptr<const application::AudioImage> m_spectrumImage;
@@ -414,7 +419,7 @@ private:
         std::int64_t start = -1;
         int w = 0, h = 0, samples = 0, percent = 0;
         float scale = 0;
-        bool nonLinear = false;
+        int curve = 0;
         bool operator==(const SpectrumKey &) const = default;
     } m_spectrumKey;
     application::AudioTiming m_timing;

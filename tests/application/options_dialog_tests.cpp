@@ -374,9 +374,17 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         ASSERT_NE(findSetting(cycle.setting), nullptr) << tag;
     }
     EXPECT_EQ(std::get<std::string>(findSetting("editing.cycleValues.an")->defaultValue), "1, 2, 3, 4, 5, 6, 7, 8, 9");
+    for (std::size_t i = 0; const char *id : {"privacy.discordMode", "privacy.discordModeIcon", "privacy.discordProjectName", "privacy.discordText", "privacy.discordDetails", "privacy.discordState", "privacy.discordPlugin", "privacy.discordTime", "privacy.discordIdle", "privacy.discordIdleMinutes", "privacy.discordIdleBackground", "privacy.discordGetButton", "privacy.discordLink", "privacy.discordLinkLabel", "privacy.discordLinkUrl"}) {
+        const auto &discord = all[std::size(kLegacy) + 76 + i++];
+        EXPECT_EQ(discord.setting, id);
+        EXPECT_EQ(discord.page, OptionsPage::Updates) << id;
+        ASSERT_NE(findSetting(id), nullptr) << id;
+    }
+    EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->min, 1);
+    EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->max, 120);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 79);
-    const auto &hostApi = all[std::size(kLegacy) + 77];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 95);
+    const auto &hostApi = all[std::size(kLegacy) + 93];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -387,7 +395,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 77);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 93);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

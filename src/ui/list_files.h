@@ -5,6 +5,8 @@
 #include "hikari/application/owned_file.h"
 #include "hikari/application/shape_presets.h"
 
+#include "file_write_queue.h"
+
 #include <toml++/toml.hpp>
 
 #include <QString>
@@ -65,38 +67,67 @@ public:
                                           Report report = {});
     ~ListFile();
 
-    const QString &path() const { return m_path; }
-    const QString &legacyPath() const { return m_legacy; }
+    const QString &path() const { return m_disk.path; }
+    const QString &legacyPath() const { return m_disk.legacy; }
 
     void convert();
     std::optional<toml::array> read();
     enum class Write { Written, Waiting, Failed };
+    /// Waiting while the folder is locked (written later) and, with a queue, while the write is in the background.
     Write write(toml::array items);
+    /// Writes what is still waiting before returning.
     bool flush();
+    /// Later writes run on `queue`, which must outlive this file; `written` hears each one's result.
+    void writeInBackground(FileWriteQueue &queue, std::function<void(Write)> written);
 
     ListFile(QString path, QString legacy, const ListFormat &format, Convert convert, Report report);
 
 private:
-    std::optional<ParseFailure> parse(std::string_view text, toml::table &into) const;
-    toml::table merged(toml::array items, toml::table onDisk) const;
-    std::unique_ptr<QLockFile> lockFolder() const;
-    void convertLocked();
+    struct Disk {
+        QString path;
+        QString legacy;
+        const ListFormat *format;
+        Convert convert;
+        std::optional<ParseFailure> parse(std::string_view text, toml::table &into) const;
+        toml::table merged(toml::array items, toml::table onDisk) const;
+        std::unique_ptr<QLockFile> lockFolder() const;
+    };
+    struct State {
+        std::optional<toml::array> converted;
+        bool deferred = false;
+        // MUST KILL: writable false also makes read() return the defaults
+        bool writable = true;
+        bool reportedUnreadable = false;
+    };
+    struct Event {
+        enum Kind { Converted, Problem, Replaced } kind;
+        application::FileProblem problem;
+    };
+    struct Attempt {
+        toml::array items;
+        State state;
+        std::vector<Event> events;
+        Write result = Write::Failed;
+    };
+    static void convertLocked(const Disk &disk, State &state, std::vector<Event> &events);
+    static void attempt(const Disk &disk, Attempt &attempt);
     Write writePending();
+    Write finish(Attempt attempt);
+    void startInBackground();
+    void finishInBackground(Attempt attempt);
+    void waitForBackground();
+    void report(const std::vector<Event> &events);
     void retryLater();
-    void problem(application::FileProblem problem);
 
-    QString m_path;
-    QString m_legacy;
-    const ListFormat &m_format;
-    Convert m_convert;
+    Disk m_disk;
     Report m_report;
+    State m_state;
     std::optional<toml::array> m_pending;
-    std::optional<toml::array> m_converted;
-    bool m_deferred = false;
-    // MUST KILL: m_writable false also makes read() return the defaults
-    bool m_writable = true;
     bool m_retryQueued = false;
-    bool m_reportedUnreadable = false;
+    FileWriteQueue *m_queue = nullptr;
+    std::function<void(Write)> m_written;
+    bool m_inFlight = false;
+    bool m_writeHere = false;
 };
 
 }
