@@ -50,6 +50,7 @@ namespace lua = hikari::backends::lua;
 using hikari::application::DialogControl;
 using hikari::application::DialogRequest;
 using hikari::application::DialogResult;
+using hikari::application::ScriptFilter;
 using hikari::application::ScriptInfo;
 using hikari::application::ScriptMacro;
 
@@ -67,6 +68,7 @@ struct Script {
     int traceLevel = 3;
     ScriptInfo info;
     std::vector<int> features; // registry refs of {run, validate, isactive}
+    std::vector<int> filters;  // registry refs of {run, config}
 };
 
 Script g_script;
@@ -337,9 +339,23 @@ int registerMacro(lua_State *L)
     return 0;
 }
 
-int registerFilter(lua_State *)
+int registerFilter(lua_State *L)
 {
-    return 0; // no export filters
+    ScriptFilter filter;
+    filter.name = checkString(L, 1);
+    filter.description = stringOrEmpty(L, 2);
+    filter.priority = static_cast<int>(lua_tointeger(L, 3));
+    if (!lua_isfunction(L, 4))
+        return luaL_error(L, "The filter processing function must be a function");
+    filter.hasConfig = lua_isfunction(L, 5);
+    lua_createtable(L, 0, 2);
+    lua_pushvalue(L, 4);
+    lua_setfield(L, -2, "run");
+    lua_pushvalue(L, 5);
+    lua_setfield(L, -2, "config");
+    g_script.filters.push_back(luaL_ref(L, LUA_REGISTRYINDEX));
+    g_script.info.filters.push_back(std::move(filter));
+    return 0;
 }
 
 // A file the top level loads as Lua code (require or include) joins ScriptInfo::loadedFiles once, absolute and
@@ -668,6 +684,33 @@ void pushValue(lua_State *L, const hikari::application::DialogValue &v)
         lua_pushnil(L);
 }
 
+DialogRequest dialogOf(lua_State *L, int index)
+{
+    if (!lua_istable(L, index))
+        luaL_error(L, "Cannot create config dialog from something non-table");
+    DialogRequest request;
+    lua_pushvalue(L, index);
+    lua_pushnil(L);
+    while (lua_next(L, -2)) {
+        request.controls.push_back(decodeControl(L));
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+    return request;
+}
+
+void pushDialogValues(lua_State *L, const DialogRequest &request, std::vector<hikari::application::DialogValue> values)
+{
+    lua_createtable(L, 0, static_cast<int>(request.controls.size()));
+    for (std::size_t i = 0; i < request.controls.size(); ++i) {
+        const auto &control = request.controls[i];
+        if ((control.kind == "color" || control.kind == "coloralpha") && std::holds_alternative<std::string>(values[i]))
+            values[i] = hexOf(assColor(std::get<std::string>(values[i])), control.kind == "coloralpha");
+        pushValue(L, values[i]); // a label sets its name to nil
+        lua_setfield(L, -2, control.name.c_str());
+    }
+}
+
 int dialogDisplay(lua_State *L)
 {
     if (!g_responder)
@@ -677,17 +720,7 @@ int dialogDisplay(lua_State *L)
         lua_newtable(L);
     if (lua_gettop(L) > 3)
         lua_settop(L, 3);
-    if (!lua_istable(L, 1))
-        return luaL_error(L, "Cannot create config dialog from something non-table");
-
-    DialogRequest request;
-    lua_pushvalue(L, 1);
-    lua_pushnil(L);
-    while (lua_next(L, -2)) {
-        request.controls.push_back(decodeControl(L));
-        lua_pop(L, 1);
-    }
-    lua_pop(L, 1);
+    DialogRequest request = dialogOf(L, 1);
     if (lua_istable(L, 2)) {
         lua_pushvalue(L, 2);
         lua_pushnil(L);
@@ -742,15 +775,7 @@ int dialogDisplay(lua_State *L)
     else
         lua_pushstring(L, request.buttons[static_cast<std::size_t>(result->pressed)].c_str());
 
-    lua_createtable(L, 0, static_cast<int>(request.controls.size()));
-    for (std::size_t i = 0; i < request.controls.size(); ++i) {
-        const auto &control = request.controls[i];
-        if ((control.kind == "color" || control.kind == "coloralpha") &&
-            std::holds_alternative<std::string>(result->values[i]))
-            result->values[i] = hexOf(assColor(std::get<std::string>(result->values[i])), control.kind == "coloralpha");
-        pushValue(L, result->values[i]); // a label sets its name to nil
-        lua_setfield(L, -2, request.controls[i].name.c_str());
-    }
+    pushDialogValues(L, request, std::move(result->values));
     return 2;
 }
 
@@ -956,6 +981,7 @@ void load(Reader &in, Responder &r)
     auto fail = [&](const std::string &message) {
         g_script.info = {};
         g_script.features.clear();
+        g_script.filters.clear();
         lua_close(L);
         g_script.L = nullptr;
         r.terminal(Outcome::Failed, bytesOf(message));
@@ -2451,6 +2477,50 @@ void sendResult(Responder &r, const MacroResult &result)
     r.terminal(Outcome::Ok, std::move(bytes));
 }
 
+void beginRequest(lua_State *L, Staged &staged, Responder &r)
+{
+    g_subs = &staged;
+    g_responder = &r;
+    g_services = &r;
+    hikari::lua_host::beginRun(askOrThrow);
+    g_lastProgress = kNoProgress;
+    installSink(L);
+    lua_getglobal(L, "aegisub");
+    // These three stay in the aegisub table after the run.
+    lua_pushcfunction(L, parseKaraokeData);
+    lua_setfield(L, -2, "parse_karaoke_data");
+    lua_pushcfunction(L, frequencyPeaks);
+    lua_setfield(L, -2, "get_frequency_peaks");
+    lua_pushcfunction(L, setUndoPoint);
+    lua_setfield(L, -2, "set_undo_point");
+    lua_pop(L, 1);
+}
+
+void endRequest()
+{
+    g_subs = nullptr;
+    g_responder = nullptr;
+    g_services = nullptr;
+}
+
+void failRequestWithErrorAndHandlerOnTop(lua_State *L, Responder &r)
+{
+    const bool cancelled = lua_touserdata(L, -1) == &g_cancelTag;
+    const std::string message = cancelled ? std::string() : stringOrEmpty(L, -1);
+    lua_pop(L, 2);
+    removeSink(L);
+    endRequest();
+    r.terminal(cancelled ? Outcome::Cancelled : Outcome::Failed, bytesOf(message));
+}
+
+DialogRequest *g_configDialog = nullptr;
+
+int readConfigDialog(lua_State *L)
+{
+    *g_configDialog = dialogOf(L, 1);
+    return 0;
+}
+
 void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
 {
     const bool validateFirst = mode != RunMode::Run;
@@ -2467,21 +2537,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     Staged staged;
     staged.canModify = snapshot->canModify;
     staged.lists = std::move(*snapshot);
-    g_subs = &staged;
-    g_responder = &r;
-    g_services = &r;
-    hikari::lua_host::beginRun(askOrThrow);
-    g_lastProgress = kNoProgress;
-    installSink(L);
-    lua_getglobal(L, "aegisub");
-    // These three stay in the aegisub table after the run.
-    lua_pushcfunction(L, parseKaraokeData);
-    lua_setfield(L, -2, "parse_karaoke_data");
-    lua_pushcfunction(L, frequencyPeaks);
-    lua_setfield(L, -2, "get_frequency_peaks");
-    lua_pushcfunction(L, setUndoPoint);
-    lua_setfield(L, -2, "set_undo_point");
-    lua_pop(L, 1);
+    beginRequest(L, staged, r);
     if (validateFirst) {
         // Validation runs without a progress sink.
         removeSink(L);
@@ -2492,17 +2548,13 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
             MacroResult result;
             result.valid = false;
             result.validationError = std::move(error);
-            g_subs = nullptr;
-            g_responder = nullptr;
-            g_services = nullptr;
+            endRequest();
             return sendResult(r, result);
         }
         if (mode == RunMode::Validate) {
             // Valid; what validation staged is dropped, the lists stay empty.
             MacroResult result;
-            g_subs = nullptr;
-            g_responder = nullptr;
-            g_services = nullptr;
+            endRequest();
             return sendResult(r, result);
         }
         installSink(L);
@@ -2560,19 +2612,108 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
         }
         lua_pop(L, 3);
         removeSink(L);
-        g_subs = nullptr;
-        g_responder = nullptr;
-        g_services = nullptr;
+        endRequest();
         return sendResult(r, result);
     }
-    const bool cancelled = lua_touserdata(L, -1) == &g_cancelTag;
-    const std::string message = cancelled ? std::string() : stringOrEmpty(L, -1);
-    lua_pop(L, 2);
+    failRequestWithErrorAndHandlerOnTop(L, r);
+}
+
+std::optional<std::int32_t> filterIndex(Reader &in, Responder &r)
+{
+    const std::int32_t index = in.i32();
+    if (!g_script.L) {
+        r.terminal(Outcome::Failed, bytesOf("no script is loaded"));
+        return std::nullopt;
+    }
+    if (!in.ok() || index < 0 || static_cast<std::size_t>(index) >= g_script.filters.size()) {
+        r.terminal(Outcome::InvalidInput, bytesOf("no such filter"));
+        return std::nullopt;
+    }
+    return index;
+}
+
+void pushFilterFunction(lua_State *L, std::int32_t index, const char *name)
+{
+    lua_pushcfunction(L, addStackTrace);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.filters[static_cast<std::size_t>(index)]);
+    lua_getfield(L, -1, name);
+    lua_remove(L, -2);
+}
+
+void runFilter(Reader &in, Responder &r, std::size_t payloadSize)
+{
+    const auto index = filterIndex(in, r);
+    if (!index)
+        return;
+    const auto settings = lua::decodeDialogRequest(in.bytes());
+    auto snapshot = lua::decodeSnapshot(in, payloadSize);
+    if (!in.ok() || !settings || !snapshot)
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed RunFilter"));
+    lua_State *L = g_script.L;
+    Staged staged;
+    staged.lists = std::move(*snapshot);
+    beginRequest(L, staged, r);
+    {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(lua::ProgressEvent::Started));
+        r.progress(w.take());
+    }
+    pushFilterFunction(L, *index, "run");
+    pushSubtitles(L);
+    pushDialogValues(L, *settings, hikari::application::initialDialogResult(*settings).values);
+    if (lua_pcall(L, 2, 0, -4) != 0)
+        return failRequestWithErrorAndHandlerOnTop(L, r);
+    lua_pop(L, 1);
     removeSink(L);
-    g_subs = nullptr;
-    g_responder = nullptr;
-    g_services = nullptr;
-    r.terminal(cancelled ? Outcome::Cancelled : Outcome::Failed, bytesOf(message));
+    endRequest();
+    MacroResult result;
+    result.info = std::move(staged.lists.info);
+    result.styles = std::move(staged.lists.styles);
+    result.dialogues = std::move(staged.lists.dialogues);
+    result.report = std::move(staged.report);
+    sendResult(r, result);
+}
+
+// Aegisub hands the config function an empty table for the stored options.
+void filterConfig(Reader &in, Responder &r, std::size_t payloadSize)
+{
+    const auto index = filterIndex(in, r);
+    if (!index)
+        return;
+    auto snapshot = lua::decodeSnapshot(in, payloadSize);
+    if (!in.ok() || !snapshot)
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed FilterConfig"));
+    lua_State *L = g_script.L;
+    Staged staged;
+    staged.canModify = false;
+    staged.lists = std::move(*snapshot);
+    beginRequest(L, staged, r);
+    pushFilterFunction(L, *index, "config");
+    if (!lua_isfunction(L, -1)) {
+        lua_pop(L, 2);
+        removeSink(L);
+        endRequest();
+        return r.terminal(Outcome::Ok, lua::encodeDialogRequest({}));
+    }
+    pushSubtitles(L);
+    lua_newtable(L);
+    if (lua_pcall(L, 2, 1, -4) != 0) {
+        lua_pushfstring(L, "Runtime error in Lua config dialog function:\n%s", lua_tostring(L, -1));
+        lua_replace(L, -2);
+        return failRequestWithErrorAndHandlerOnTop(L, r);
+    }
+    DialogRequest request;
+    g_configDialog = &request;
+    lua_pushcfunction(L, readConfigDialog);
+    lua_insert(L, -2);
+    const int status = lua_pcall(L, 1, 0, -3);
+    g_configDialog = nullptr;
+    if (status != 0)
+        return failRequestWithErrorAndHandlerOnTop(L, r);
+    lua_pop(L, 1);
+    removeSink(L);
+    endRequest();
+    r.terminal(Outcome::Ok, lua::encodeDialogRequest(request));
 }
 
 }
@@ -2714,6 +2855,10 @@ int main()
             return run(in, r, request.payload.size(), RunMode::Validate);
         case lua::Command::RunNodes:
             return hikari::lua_nodes::run(in, r, request.payload.size());
+        case lua::Command::RunFilter:
+            return runFilter(in, r, request.payload.size());
+        case lua::Command::FilterConfig:
+            return filterConfig(in, r, request.payload.size());
         }
         r.terminal(Outcome::Unsupported);
     });
