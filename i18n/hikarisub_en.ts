@@ -293,9 +293,9 @@
     <name>HikariSub.Editor</name>
     <message numerus="yes">
         <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n line.</numerusform>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n lines.</numerusform>
         </translation>
     </message>
 </context>
