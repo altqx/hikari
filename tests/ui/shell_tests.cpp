@@ -9225,6 +9225,46 @@ private slots:
         application->editor().discard();
     }
 
+    void scriptPropertiesMoreHoldsSynchPointAndUpdateDetails()
+    {
+        const QString path = dir.filePath(QStringLiteral("synched.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTitle: Show\nPlayResX: 640\nPlayResY: 360\nSynch Point: Opening song\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        QVariant opened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QVERIFY(opened.toBool());
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
+                    dialog->property("visible").toBool());
+        QVERIFY(dialogItem("scriptPropertiesDialog", "propMore")->property("expanded").toBool());
+        QCOMPARE(dialogItem("scriptPropertiesDialog", "propSynchPoint")->property("text").toString(), QStringLiteral("Opening song"));
+        auto *details = dialogItem("scriptPropertiesDialog", "propUpdateDetails");
+        details->setProperty("text", QStringLiteral("Fixed the signs"));
+        QVERIFY(QMetaObject::invokeMethod(details, "textEdited"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->document().scriptInfo(u8"Update Details"), std::optional<std::u8string>(u8"Fixed the signs"));
+        QCOMPARE(session->document().scriptInfo(u8"Synch Point"), std::optional<std::u8string>(u8"Opening song"));
+
+        QVERIFY(application->applyScriptProperties({{QStringLiteral("title"), QStringLiteral("Show")}},
+                                                   {{QStringLiteral("synchPoint"), true}, {QStringLiteral("updateDetails"), true}},
+                                                   false));
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(!dialogItem("scriptPropertiesDialog", "propMore")->property("expanded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        application->editor().discard();
+    }
+
     void styleManagerEditsStylesAndTheCatalog()
     {
         const QString path = dir.filePath(QStringLiteral("styles.ass"));
