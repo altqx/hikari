@@ -25,9 +25,10 @@ inline constexpr ReadBy kReadBy = ReadBy::Windows;
 inline constexpr ReadBy kReadBy = ReadBy::Linux;
 #endif
 
-enum class SourceKind { Config, AudioConfig, Hotkeys, AudioHotkeys, Rules, UserDictionary, Dictionary };
+enum class SourceKind { Config, AudioConfig, Hotkeys, AudioHotkeys, Rules, UserDictionary, Dictionary, AegisubHotkeys };
 
-// A file under a HikariSub legacy root, the folder of its executable.
+// A file under a HikariSub legacy root, the folder of its executable, or under
+// an Aegisub settings folder (hotkey.json).
 struct KnownSource {
     SourceKind kind;
     std::string_view path; // relative to the root, '/' separated
@@ -104,6 +105,30 @@ struct HotkeyFile {
 };
 // `windows`: read the build number as the Windows build did (hotkeyLabelNumber).
 HotkeyFile readHotkeyFile(std::string_view text, bool windows = kReadBy == ReadBy::Windows);
+
+// Aegisub's hotkey.json: {"<context>": {"<command>": ["Ctrl-S", ...]}}, or 3.1's
+// {"modifiers": [...], "key": "S"} objects in place of the strings.
+struct AegisubHotkey {
+    std::string context;
+    std::string command;
+    std::string keys; // as Aegisub writes them, "Ctrl-Shift-S"
+};
+struct AegisubHotkeyFile {
+    std::vector<AegisubHotkey> hotkeys; // in file order
+    bool oldForm = false;               // 3.1's objects
+    std::string error;                  // "" when read
+};
+AegisubHotkeyFile readAegisubHotkeyFile(std::string_view text);
+// HikariSub's accelerator for Aegisub's key text; "" when HikariSub has no such key.
+std::string accelOfAegisubKeys(std::string_view keys);
+struct AegisubCommand {
+    std::string_view command;
+    std::string_view symbol; // "" when nothing here runs it
+    std::string_view reason; // why it is not imported, when symbol is ""
+};
+std::span<const AegisubCommand> aegisubCommands();
+// The window an Aegisub context binds `id` in; -1 for a context HikariSub has no panel for.
+int aegisubWindow(std::string_view context, int id);
 
 struct ConfigAlias {
     std::string_view from;

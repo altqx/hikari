@@ -5922,6 +5922,10 @@ Failed to copy %2 fonts.</source>
         <translation>이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>이전 설정 가져오기</translation>
     </message>
@@ -5936,6 +5940,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>처음부터 설정</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6032,14 +6040,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>큰 영상 화면에 시각 도구와 스타일 패널을 함께 둡니다.</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>나중에: 설정 › 일반 › 이전 버전 설정 가져오기…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub의 기본값으로 시작합니다. 나중에 설정 › 일반 › 이전 버전 설정 가져오기…로 가져올 수도 있습니다.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -8134,10 +8134,6 @@ Failed to copy %2 fonts.</source>
         <translation>페이드 찾기…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>이전 버전 설정 가져오기…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8192,6 +8188,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>가로 세로 비율 변경…</translation>
+    </message>
+    <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -13880,6 +13880,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>사용자 폴더 열기</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>태그 숨김</translation>
     </message>
@@ -14508,10 +14512,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>이전 버전 설정 가져오기…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -20120,10 +20120,6 @@ because it was edited.</source>
         <translation>스냅샷을 쓸 수 없음</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>이전 버전 설정 가져오기</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>충돌</translation>
     </message>
@@ -20148,20 +20144,8 @@ because it was edited.</source>
         <translation>마지막 가져오기 전의 설정으로 되돌리시겠습니까?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>HikariSub을 다음에 시작할 때 적용됩니다. 이전 버전 설치본은 변경되지 않습니다.</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>그 뒤에 변경한 다음 설정도 함께 되돌아갑니다: %1. 이전 버전 설치본은 변경되지 않습니다.</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>취소</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>이전 버전 설치 폴더 선택</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20196,10 +20180,6 @@ because it was edited.</source>
         <translation>가져오기</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>설치본</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>검토</translation>
     </message>
@@ -20208,20 +20188,36 @@ because it was edited.</source>
         <translation>3단계 중 %1단계: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>가져올 이전 버전 설치본 선택</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>이 컴퓨터에서 찾은 HikariSub 0.0.x 설치본입니다. 설치본의 내용은 변경되지 않습니다.</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>이전 버전 설치본</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>이전 버전 설치본을 찾지 못했습니다. 설치 폴더를 선택하십시오.</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20248,8 +20244,8 @@ because it was edited.</source>
         <translation>가져올 항목 검토</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>충돌은 이전 버전 설치본에서 현재와 다르게 지정된 설정입니다. 제안된 선택이 체크되어 있으니, 현재 값을 유지할 항목은 체크를 해제하십시오.</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20352,8 +20348,8 @@ because it was edited.</source>
         <translation>변경 %2개 중 가져올 항목 %1개, 변경 없음 %3개, 미해결 %4개, 제외 %5개, 폐지 %6개</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>프로그램 옆에서 이전 버전 설정을 찾지 못했습니다. 이전 버전 설치 폴더를 선택하십시오.</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>

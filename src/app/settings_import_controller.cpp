@@ -135,7 +135,7 @@ void SettingsImportController::discover(const QStringList &candidates)
                                                                       : candidates);
     emit rootsChanged();
     setStatus(m_roots.isEmpty() ? QCoreApplication::translate("HikariSub.SettingsImport",
-                                                              "No legacy settings were found beside the program. Choose the folder of a legacy installation.")
+                                                              "Nothing to import was found. Choose a folder.")
                                 : QString());
 }
 
