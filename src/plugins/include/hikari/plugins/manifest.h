@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <expected>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -30,6 +31,8 @@ struct Permissions {
     std::vector<FileGrantRequest> files;
     std::optional<std::string> vcsRead; // the reason, when asked for
     std::optional<std::string> background; // the reason, when asked for
+    std::optional<std::string> programs;   // the reason, when asked for
+    std::optional<std::string> presence; // the reason, when asked for
 };
 
 struct Command {
@@ -50,10 +53,18 @@ struct Panel {
     std::string qml; // a package path: a QML panel; empty: a declarative one
 };
 
+enum class SettingType { Boolean, Integer, Number, String, Choice, List, Secret };
+
 struct Setting {
     std::string id;
     std::string title;
-    api::Json definition; // the manifest's object, with type and default
+    api::Json definition; // the manifest's object
+    SettingType type = SettingType::String;
+
+    // A Secret lives in the system keychain, never in plugins.json or a Project, and has no default.
+    bool secret() const { return type == SettingType::Secret; }
+    // The manifest's default; null for a Secret.
+    api::Json fallback() const;
 };
 
 struct NodePort {
@@ -70,9 +81,53 @@ struct NodeContribution {
     std::vector<NodePort> inputs, outputs;
 };
 
+struct FormatContribution {
+    std::string id;
+    std::string title;
+    std::vector<std::string> extensions; // lower case, without the dot
+    bool imports = false;
+    bool exports = false;
+};
+
+struct ProgramDownload {
+    std::string url;
+    std::string sha256;
+    std::int64_t size = 0;
+    std::string archive; // "zip", "tar.gz", or empty for the program itself
+    std::string entry;   // with archive: the program's path inside it
+};
+
+struct ProgramRun {
+    std::string path; // bundled: a package path; empty when downloaded
+    std::optional<ProgramDownload> download;
+    std::vector<std::string> args;
+    std::vector<std::pair<std::string, std::string>> env;
+};
+
+enum class Confinement { Container, LowIntegrity };
+
+struct Program {
+    std::string id;
+    std::string title;
+    std::map<std::string, ProgramRun> platforms; // by "linux-x64", "windows-x64", …
+    bool network = false;
+    bool api = false;
+    Confinement confinement = Confinement::Container;
+};
+
+// "linux-x64", "windows-arm64", …: the platform key of the computer HikariSub runs on.
+std::string_view thisPlatform();
+
 struct Screenshot {
     std::string path;
     std::string caption;
+};
+
+// A content pack file, shown beside its built-in counterpart (docs/plugins.md, Content packs).
+struct ContentFile {
+    std::string id;
+    std::string title; // empty for a karaoke preset, whose file holds its title
+    std::string path;  // a package path
 };
 
 struct Manifest {
@@ -95,8 +150,13 @@ struct Manifest {
     std::vector<Panel> panels;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
+    std::vector<FormatContribution> formats;
+    std::vector<Program> programs;
+    std::vector<ContentFile> styles;
+    std::vector<ContentFile> karaokePresets;
 
     bool hasQmlPanels() const;
+    const Program *program(std::string_view id) const;
 };
 
 // The published JSON Schema, docs/schemas/hikari-plugin.schema.json.
@@ -116,7 +176,8 @@ Permissions readPermissions(const api::Json &permissions);
 
 // Why `value` doesn't fit the setting's type, options or bounds (English), or nothing when it does.
 std::optional<std::string> settingRefusal(const Setting &setting, const api::Json &value);
-// Every declared setting: the stored value when it still fits, else the default.
+// Every declared setting: the stored value when it still fits, else the default. A Secret is null here;
+// its value comes from the keychain only.
 api::Json settingValues(const Manifest &manifest, const api::Json &stored);
 
 // Semantic-version order; build metadata is ignored. Both must be valid versions.
@@ -131,10 +192,15 @@ struct PermissionIncrease {
     std::vector<std::string> files; // file request ids
     bool vcsRead = false;
     bool background = false;
+    bool runPrograms = false;
+    // Programs that are new, gain network, or move to lowIntegrity.
+    std::vector<std::string> programs;
+    bool presence = false;
 
     bool any() const
     {
-        return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background;
+        return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background ||
+               runPrograms || !programs.empty() || presence;
     }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);

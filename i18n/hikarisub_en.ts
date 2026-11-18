@@ -1538,6 +1538,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation>
+            <numerusform>%n overlap closed</numerusform>
+            <numerusform>%n overlaps closed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n snapped</source>
         <translation>
             <numerusform>%n snapped</numerusform>

@@ -7,6 +7,10 @@
 //         command ids that have handlers; Failed carries the error text. A helper loads once.
 //   Run:  str command id, as the manifest declares it. Terminal Ok, or Failed with the error text.
 //   Timer: i64 timer id, u8 last (the timer won't fire again). Runs its callback; Terminal as Run.
+//   Export: str format id, str JSON snapshot, str JSON options. Terminal Ok carries the file's bytes;
+//         Failed carries the error text.
+//   Import: str format id, bytes of the file, str file name. Terminal Ok carries str JSON
+//         {lines, styles, info}; Failed carries the error text.
 // Events carry str name and str JSON data. Each handler for the name runs in turn; Terminal Ok,
 // or Failed with the first error text.
 // Service payloads start with an i32 Service. HikariSub answers Ok unless the request has ended:
@@ -34,7 +38,7 @@ namespace hikari::backends::plugin {
 inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-plugin-helper";
 
-enum class Command : std::int32_t { Load = 1, Run = 2, Timer = 3 };
+enum class Command : std::int32_t { Load = 1, Run = 2, Timer = 3, Export = 4, Import = 5 };
 enum class Service : std::int32_t { Call = 1, Notify = 2, SetSetting = 3, Subscribe = 4, Lock = 5, Unlock = 6, Ui = 7, Files = 8, Net = 9, Job = 10, Timer = 11 };
 enum class Level : std::int32_t { Info = 0, Warning = 1, Error = 2 };
 enum class Tier : std::int32_t { Restricted = 0, Unrestricted = 1 };
@@ -49,6 +53,8 @@ struct LoadRequest {
     std::string locale;   // the UI language, as "pt_BR"
     std::string settings; // a JSON object: every declared setting's current value
     std::vector<std::string> commands; // the declared command ids
+    std::vector<std::string> exporters; // the declared format ids with export
+    std::vector<std::string> importers; // the declared format ids with import
 };
 
 std::vector<std::byte> encodeLoad(const LoadRequest &load);

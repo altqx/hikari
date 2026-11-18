@@ -21,19 +21,10 @@ Rectangle {
     default property alias trailing: trailingItems.data
 
     // Qt.application.font is read once; a Label's font follows the program font live.
-    readonly property font statusFont: {
-        const base = fontSource.font
-        const f = Qt.font({family: base.family})
-        // A QML font's pointSize is QFont's pointSizeF.
-        if (base.pointSize > 0)
-            f.pointSize = Math.max(base.pointSize * 10 / 13, 8)
-        else
-            f.pixelSize = Math.max(Math.round(base.pixelSize * 10 / 13), 11)
-        return f
-    }
+    readonly property font statusFont: TypeRoles.sized(fontSource.font, 11, Font.Normal)
 
-    implicitHeight: row.implicitHeight + 14
-    color: palette.window
+    implicitHeight: Math.max(Theme.statusBarHeight, row.implicitHeight)
+    color: Theme.background
     Accessible.role: Accessible.StatusBar
     Accessible.name: qsTr("Status bar")
 
@@ -45,7 +36,7 @@ Rectangle {
     Rectangle {
         anchors { left: parent.left; right: parent.right; top: parent.top }
         height: 1
-        color: bar.palette.mid
+        color: Theme.line
     }
 
     component Field: Label {
@@ -55,7 +46,7 @@ Rectangle {
         property bool warning: false
         visible: stretch > 0 || text.length > 0
         font: bar.statusFont
-        color: warning ? bar.warningColour : bar.palette.windowText
+        color: warning ? bar.warningColour : Theme.muted
         elide: Text.ElideRight
         maximumLineCount: 1
         verticalAlignment: Text.AlignVCenter
@@ -77,14 +68,13 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 12
-        anchors.topMargin: 7
-        anchors.bottomMargin: 7
-        spacing: 14
+        spacing: 16
 
         ToolButton {
             id: pluginsWorking
             objectName: "statusPluginsWorking"
             visible: bar.workingPlugins.length > 0
+            focusPolicy: Qt.NoFocus
             padding: 0
             Layout.fillHeight: true
             //: The status bar's busy icon: how many background plugins are working

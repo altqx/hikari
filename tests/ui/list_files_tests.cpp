@@ -2,9 +2,12 @@
 #include "toml_file.h"
 
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QLockFile>
 #include <QTemporaryDir>
+#include <QThread>
+#include <QTimer>
 #include <QtTest>
 
 using namespace hikari;
@@ -451,6 +454,69 @@ private slots:
         QVERIFY(reports.replaced[0].keptAs == pathOf(path + QStringLiteral(".broken")));
         QCOMPARE(readAll(path + QStringLiteral(".broken")), QByteArray("version = 2\n"));
         QCOMPARE(*open(dir, list)->read(), catalogs);
+    }
+
+    void aBackgroundWriteMergesWithoutStallingTheEventLoop()
+    {
+        const List list = listOf(Kind::FontCatalogs);
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        QVERIFY(QFile::copy(list.fixture, dir.filePath(QLatin1String(list.legacy))));
+        ui::FileWriteQueue queue;
+        auto file = open(dir, list);
+        const auto items = file->read();
+        QVERIFY(items);
+        const QString path = dir.filePath(QLatin1String(list.file));
+        auto table = std::get<toml::table>(ui::parseTomlFile(readAll(path).toStdString(), ListFile::kVersion));
+        table.insert("later", "kept");
+        table[list.format.array].as_array()->get(0)->as_table()->insert("colour", "red");
+        QVERIFY(writeAll(path, QByteArray::fromStdString(ui::formatTomlFile(table, ListFile::kVersion))));
+
+        queue.setBeforeEachWrite([] { QThread::msleep(1000); });
+        QList<ListFile::Write> heard;
+        file->writeInBackground(queue, [&heard](ListFile::Write result) { heard << result; });
+        int ticks = 0;
+        QTimer tick;
+        tick.setInterval(20);
+        connect(&tick, &QTimer::timeout, this, [&ticks] { ++ticks; });
+        tick.start();
+        const toml::array changed = edited(Kind::FontCatalogs, *items);
+        QElapsedTimer took;
+        took.start();
+        QCOMPARE(file->write(changed), ListFile::Write::Waiting);
+        QVERIFY2(took.elapsed() < 200, qPrintable(QString::number(took.elapsed())));
+        QTRY_COMPARE_WITH_TIMEOUT(heard, QList{ListFile::Write::Written}, 10000);
+        QVERIFY2(ticks >= 15, qPrintable(QString::number(ticks)));
+        const QByteArray text = readAll(path);
+        QVERIFY2(text.startsWith("version = 1\n\nlater = \"kept\"\n\n["), text.constData());
+        QVERIFY(text.contains("colour = \"red\""));
+        QCOMPARE(open(dir, list)->read()->size(), changed.size());
+
+        QCOMPARE(file->write(*items), ListFile::Write::Waiting);
+        QVERIFY(file->flush());
+        QCOMPARE(open(dir, list)->read()->size(), items->size());
+    }
+
+    void aLockedFolderIsWrittenLaterInTheBackground()
+    {
+        const List list = listOf(Kind::Shapes);
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        ui::FileWriteQueue queue;
+        auto file = open(dir, list);
+        QList<ListFile::Write> heard;
+        file->writeInBackground(queue, [&heard](ListFile::Write result) { heard << result; });
+        QLockFile other(dir.filePath(QStringLiteral(".settings.lock")));
+        QVERIFY(other.tryLock(0));
+        const auto shapes = ui::shapesToToml(application::visual::defaultShapePresets());
+        QCOMPARE(file->write(shapes), ListFile::Write::Waiting);
+        QTRY_COMPARE_WITH_TIMEOUT(heard, QList{ListFile::Write::Waiting}, 10000);
+        const QString path = dir.filePath(QLatin1String(list.file));
+        QVERIFY(!QFileInfo::exists(path));
+        other.unlock();
+        QTRY_COMPARE_WITH_TIMEOUT(heard.size(), 2, 10000);
+        QCOMPARE(heard.last(), ListFile::Write::Written);
+        QCOMPARE(open(dir, list)->read()->size(), shapes.size());
     }
 
     void fieldsAreNamed()

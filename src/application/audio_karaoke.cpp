@@ -633,6 +633,22 @@ void AudioKaraoke::moveStart(int oldStartMs, int newStartMs)
     }
 }
 
+bool AudioKaraoke::moveSyllableEnd(int i, int deltaMs, bool shiftFollowing, int curStartMs)
+{
+    const int last = count() - 1;
+    if (i < 0 || i >= last)
+        return false;
+    const auto end = [&](int j) { return j < 0 ? curStartMs : m_times[static_cast<std::size_t>(j)]; };
+    const int moved = shiftFollowing ? last - 1 : i;
+    const int delta = deltaMs > 0 ? std::min(deltaMs, end(moved + 1) - end(moved))
+                                  : std::max(deltaMs, end(i - 1) - end(i));
+    if (delta == 0)
+        return false;
+    for (int j = i; j <= moved; ++j)
+        m_times[static_cast<std::size_t>(j)] += delta;
+    return true;
+}
+
 bool AudioKaraoke::switchLongToKf(int thresholdMs, int curStartMs)
 {
     std::vector<std::size_t> longOnes;

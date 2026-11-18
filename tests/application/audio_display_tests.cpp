@@ -135,6 +135,30 @@ TEST(DisplayAudio, BlankAudioIsSilence)
     EXPECT_EQ(columns.peak, (std::vector<int>{50, 50, 50, 50}));
 }
 
+TEST(DisplayAudio, NoiseAudioIsTheSameNoiseOnEveryRead)
+{
+    const auto audio = DisplayAudio::noise(44100, 396'900'000);
+    EXPECT_EQ(audio.sampleCount(), 396'900'000);
+    EXPECT_EQ(audio.decoded(), 396'900'000);
+    EXPECT_TRUE(audio.finished());
+    std::vector<std::int16_t> first(4096), again(4096);
+    audio.read(1'000'000, 4096, first.data());
+    audio.read(1'000'000, 4096, again.data());
+    EXPECT_EQ(first, again);
+    const auto [low, high] = std::ranges::minmax(first);
+    EXPECT_LT(low, -16000);
+    EXPECT_GT(high, 16000);
+    std::int16_t past[3] = {1, 1, 1};
+    audio.read(396'899'999, 3, past);
+    EXPECT_NE(past[0], 0);
+    EXPECT_EQ(past[1], 0);
+    EXPECT_EQ(past[2], 0);
+    std::int16_t frames[2] = {0, 0};
+    audio.readFrames(1'000'000, 2, frames);
+    EXPECT_EQ(frames[0], first[0]);
+    EXPECT_EQ(frames[1], first[1]);
+}
+
 TEST(Waveform, ColumnsFromSamplesAtCloseZoom)
 {
     DisplayAudio audio(48000, 33);
@@ -1170,6 +1194,22 @@ TEST(AudioBox, ReopenOpensTheSameTrackWithoutTheChooser)
     f.box.open(AudioBox::kDummyName);
     EXPECT_FALSE(f.box.reopen());
     EXPECT_EQ(f.box.path(), AudioBox::kDummyName);
+}
+
+TEST(AudioBox, AStoredNoiseDummyOpensAsNoise)
+{
+    BoxFixture f("noise");
+    std::int16_t sample = 0;
+    f.box.open("dummy-audio:noise?sr=44100&bd=16&ch=1&ln=441000");
+    ASSERT_EQ(f.box.state(), AudioBox::State::Ready);
+    ASSERT_NE(f.box.audio(), nullptr);
+    EXPECT_EQ(f.box.audio()->sampleCount(), 441000);
+    std::vector<std::int16_t> samples(256);
+    f.box.audio()->read(0, 256, samples.data());
+    EXPECT_TRUE(std::ranges::any_of(samples, [](std::int16_t s) { return s != 0; }));
+    f.box.open(AudioBox::kDummyName);
+    f.box.audio()->read(0, 1, &sample);
+    EXPECT_EQ(sample, 0);
 }
 
 TEST(AudioBox, TheVideosAudioOpensTheVideosTrackFromItsIndexFile)

@@ -109,7 +109,7 @@ std::string lowerExtension(std::string_view path)
 
 }
 
-OpenKind openKindOf(std::string_view path, bool single)
+OpenKind openKindOf(std::string_view path, bool single, std::span<const std::string> moreSubtitles)
 {
     std::error_code error;
     if (std::filesystem::is_directory(std::filesystem::path(std::u8string(path.begin(), path.end())), error))
@@ -129,6 +129,8 @@ OpenKind openKindOf(std::string_view path, bool single)
     if (ext == "ass" || ext == "ssa" || ext == "txt" || ext == "srt" || ext == "sub")
         return OpenKind::Subtitles;
     if (const std::u8string u8ext(ext.begin(), ext.end()); core::isLyricsExtension(u8ext) || core::isSrv3Extension(u8ext))
+        return OpenKind::Subtitles;
+    if (std::ranges::find(moreSubtitles, ext) != moreSubtitles.end())
         return OpenKind::Subtitles;
     return OpenKind::Video;
 }

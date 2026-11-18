@@ -127,6 +127,9 @@ def main():
     write("board-restricted-qml.hikariplugin", board(lambda m: m.pop("tier")))
     write("board-ui-import.hikariplugin",
           board(files=lambda f: f.update({"qml/parts/Badge.qml": f["qml/parts/Badge.qml"].replace("import QtQuick\n", "import QtQuick\nimport Hikari.Ui\n", 1)})))
+    write("bad-preset.hikariplugin",
+          package({"hikari-plugin.json": manifest("1.0.0", contributes={"karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}),
+                   "main.lua": "return '1.0.0'\n", "presets/glow.ass": "[Script Info]\nTitle: Glow\n"}))
     marketplace(v1, hello("1.1.0", "a"), native)
 
 

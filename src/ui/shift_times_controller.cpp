@@ -41,6 +41,7 @@ constexpr Field kFields[] = {
     {"leadOut", "postprocessor.leadOut"},
     {"thresholdStart", "postprocessor.thresholdStart"},
     {"thresholdEnd", "postprocessor.thresholdEnd"},
+    {"maxOverlap", "postprocessor.maxOverlap"},
     {"keyframeBeforeStart", "postprocessor.keyframeBeforeStart"},
     {"keyframeAfterStart", "postprocessor.keyframeAfterStart"},
     {"keyframeBeforeEnd", "postprocessor.keyframeBeforeEnd"},
@@ -67,7 +68,8 @@ const QStringList kShiftKeys{
 const QStringList kPostprocessorKeys{
     QStringLiteral("postprocessor"),       QStringLiteral("leadIn"),
     QStringLiteral("leadOut"),             QStringLiteral("thresholdStart"),
-    QStringLiteral("thresholdEnd"),        QStringLiteral("keyframeBeforeStart"),
+    QStringLiteral("thresholdEnd"),        QStringLiteral("maxOverlap"),
+    QStringLiteral("keyframeBeforeStart"),
     QStringLiteral("keyframeAfterStart"),  QStringLiteral("keyframeBeforeEnd"),
     QStringLiteral("keyframeAfterEnd"),    QStringLiteral("ppWhichLines"),
     QStringLiteral("ppStyles")};
@@ -102,6 +104,7 @@ QVariantMap mapOf(const application::ShiftTimesSettings &s, int ppWhichLines, co
             {QStringLiteral("leadOut"), s.leadOut},
             {QStringLiteral("thresholdStart"), s.thresholdStart},
             {QStringLiteral("thresholdEnd"), s.thresholdEnd},
+            {QStringLiteral("maxOverlap"), s.maxOverlap},
             {QStringLiteral("keyframeBeforeStart"), s.keyframeBeforeStart},
             {QStringLiteral("keyframeAfterStart"), s.keyframeAfterStart},
             {QStringLiteral("keyframeBeforeEnd"), s.keyframeBeforeEnd},
@@ -246,6 +249,7 @@ void ShiftTimesController::assign(const QVariantMap &map)
     i("leadOut", s.leadOut);
     i("thresholdStart", s.thresholdStart);
     i("thresholdEnd", s.thresholdEnd);
+    i("maxOverlap", s.maxOverlap);
     i("keyframeBeforeStart", s.keyframeBeforeStart);
     i("keyframeAfterStart", s.keyframeAfterStart);
     i("keyframeBeforeEnd", s.keyframeBeforeEnd);

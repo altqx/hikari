@@ -201,7 +201,40 @@ private slots:
         writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")), "version = 1\n[export]\nfps = 30\n");
         const ProjectFile project(root.path());
         QVERIFY(project.refused().empty());
-        QCOMPARE(compact(project.exportJson()), std::string(R"({"format":"mdvd","fps":30,"mergeOverlaps":true})"));
+        QCOMPARE(compact(project.exportJson()), std::string(R"({"format":"microdvd","fps":30,"mergeOverlaps":true})"));
+    }
+
+    void beta4ExportFormatsReadAsTheirNewIdsAndAreWrittenBack_data()
+    {
+        QTest::addColumn<QString>("old");
+        QTest::addColumn<QString>("current");
+        QTest::newRow("txt") << QStringLiteral("txt") << QStringLiteral("text");
+        QTest::newRow("mdvd") << QStringLiteral("mdvd") << QStringLiteral("microdvd");
+        QTest::newRow("tmp") << QStringLiteral("tmp") << QStringLiteral("tmplayer");
+    }
+
+    void beta4ExportFormatsReadAsTheirNewIdsAndAreWrittenBack()
+    {
+        QFETCH(QString, old);
+        QFETCH(QString, current);
+        QTemporaryDir root;
+        const QString shared = root.filePath(QStringLiteral(".hikari/project.toml"));
+        writeAll(shared, QStringLiteral("version = 1\n# kept\n[export]\nformat = \"%1\"\nfps = 25\n").arg(old).toUtf8());
+        writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")),
+                 QStringLiteral("version = 1\n[export]\nformat = \"%1\"\n").arg(old).toUtf8());
+        ProjectFile project(root.path());
+        QVERIFY(project.refused().empty());
+        QCOMPARE(project.read(setting("export.format")), SettingValue(current.toStdString()));
+        QCOMPARE(compact(project.exportJson()), QStringLiteral(R"({"format":"%1","fps":25})").arg(current).toStdString());
+        QVERIFY(readAll(shared).contains(QStringLiteral("format = \"%1\"").arg(old).toUtf8()));
+
+        project.write(setting("translation.targetLanguage"), SettingValue(std::string("English")));
+        QVERIFY(!project.lastWriteFailed());
+        const QByteArray written = readAll(shared);
+        QVERIFY2(written.contains(QStringLiteral("format = \"%1\"").arg(current).toUtf8()), written.constData());
+        QVERIFY(written.contains("# kept"));
+        QVERIFY(written.contains("targetLanguage = \"English\""));
+        QCOMPARE(ProjectFile(root.path()).read(setting("export.format")), SettingValue(current.toStdString()));
     }
 
     void fontFoldersAreRelativeToTheProjectFolder()

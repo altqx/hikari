@@ -42,6 +42,8 @@ public:
     // The API committed a step on `document`; the views refresh and
     // documentChanged is reported.
     virtual void committed(application::DocumentId document) = 0;
+    // A Document opened from a plugin's format: that format's plugin:<plugin id>/<format id>.
+    virtual std::optional<std::string> pluginFormat(application::DocumentId) const { return std::nullopt; }
 };
 
 struct CommandState {
@@ -276,6 +278,15 @@ struct PluginState {
     std::vector<PluginCommand> commands; // only while it runs
 };
 
+struct FormatInfo {
+    std::string id; // ass, srt, … or plugin:<plugin id>/<format id>
+    std::string title;
+    std::vector<std::string> extensions;
+    bool imports = false;
+    bool exports = false;
+    std::string plugin; // empty for a built-in format
+};
+
 struct PluginFile {
     std::string path; // '/'-separated, relative to the plugin's folder
     std::string text;
@@ -305,6 +316,8 @@ class PluginHost {
 public:
     virtual ~PluginHost() = default;
     virtual std::vector<PluginState> plugins() const = 0;
+    // The formats of the plugins that run, in the order the plugins were installed.
+    virtual std::vector<FormatInfo> formats() const { return {}; }
     // The installed hikari-plugin.json; nullopt when the plugin isn't installed.
     virtual std::optional<std::string> manifest(std::string_view plugin) const = 0;
     virtual PluginRun run(std::string_view plugin, std::string_view command) = 0;
@@ -323,6 +336,15 @@ class EffectsHost {
 public:
     virtual ~EffectsHost() = default;
     virtual application::NodeEffectOptions options() = 0;
+};
+
+class ProgramHost;
+// The text a plugin sets for {plugin} in the user's Discord status.
+class PresenceHost {
+public:
+    virtual ~PresenceHost() = default;
+    // Empty `text` clears it.
+    virtual void setPluginText(std::string_view plugin, std::string_view text) = 0;
 };
 
 // A missing port makes its operations answer unavailable.
@@ -347,6 +369,8 @@ struct Host {
     KeyframeHost *keyframes = nullptr;
     application::RowMarks *marks = nullptr;
     application::VcsPort *vcs = nullptr;
+    ProgramHost *programs = nullptr;
+    PresenceHost *presence = nullptr;
 };
 
 }

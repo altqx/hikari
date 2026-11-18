@@ -14,7 +14,8 @@ target_sources(hikari_application PRIVATE kana.cpp include/hikari/application/ka
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
-target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
+target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h
+    plugin_content.cpp include/hikari/application/plugin_content.h)
 target_sources(hikari_application PRIVATE karaoke_templates.cpp include/hikari/application/karaoke_templates.h)
 target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
 target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp karaoke_layout.cpp node_graph_editing.cpp node_graph_presets.cpp

@@ -8,8 +8,8 @@ KDDWViews.TitleBarBase {
     id: root
     objectName: "dockTitleBar"
 
-    color: Theme.field
-    heightWhenVisible: 35
+    color: Theme.panel
+    heightWhenVisible: Theme.headerHeight
 
     // Some compositors frame the window although it asked for no frame; their title then replaces ours.
     readonly property bool systemTitle: Docking.windowTitleRevision >= 0 && Docking.windowSystemTitle(Window.window)
@@ -19,11 +19,9 @@ KDDWViews.TitleBarBase {
     // KDDW loads a title bar into every group; only some show it.
     Accessible.ignored: !root.visible
 
-    Rectangle {
-        width: parent.width
-        height: 1
-        y: parent.height - 1
-        color: Theme.line
+    Label {
+        id: fontSource
+        visible: false
     }
 
     Text {
@@ -36,7 +34,7 @@ KDDWViews.TitleBarBase {
         text: root.title
         textFormat: Text.PlainText
         color: Theme.text
-        font.bold: true
+        font: TypeRoles.sized(fontSource.font, 12, Font.DemiBold)
         elide: Text.ElideRight
         Accessible.ignored: true
     }
@@ -44,7 +42,7 @@ KDDWViews.TitleBarBase {
     DockMenuButton {
         id: menuButton
         z: 1
-        x: root.width - 12 - width
+        x: root.width - 4 - width
         anchors.verticalCenter: parent.verticalCenter
         panelTitle: root.title
         menuOpen: windowMenu.visible

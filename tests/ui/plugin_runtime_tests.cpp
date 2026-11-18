@@ -1,3 +1,4 @@
+#include "hikari/api/formats.h"
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/localisation.h"
@@ -5,6 +6,8 @@
 #include "hikari/app/plugin_ui.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/application/node_catalogue.h"
+#include "hikari/application/plugin_content.h"
+#include "hikari/application/recent_files.h"
 #include "hikari/application/row_marks.h"
 #include "hikari/plugins/registry.h"
 
@@ -13,6 +16,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QScopeGuard>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -197,6 +201,7 @@ private slots:
         QDir().mkpath(m_dir.path());
         m_registry = {};
         application::setPluginNodes({}, {});
+        application::setPluginContent({});
     }
 
     void enabledPluginsStartAndListTheirCommands()
@@ -818,6 +823,41 @@ private slots:
                  std::string(R"(comes from the plugin "Zigzag", which is turned off or not trusted)"));
     }
 
+    void aTurnedOnPluginsContentPacksAreListedAndGoWhenItIsTurnedOff()
+    {
+        const QString folder = folders().plugins + QStringLiteral("/com.example.kit");
+        write(folder + QStringLiteral("/hikari-plugin.json"),
+              R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
+                  "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
+                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})");
+        write(folder + QStringLiteral("/main.lua"), "");
+        const auto turn = [&](bool on) {
+            m_registry[QStringLiteral("com.example.kit")] =
+                QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), on}};
+            write(folders().registry,
+                  QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        };
+        turn(true);
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const application::PluginContent content = application::pluginContent();
+        QCOMPARE(content.styleCatalogues.size(), 1u);
+        QCOMPARE(content.styleCatalogues[0].plugin, std::string("com.example.kit"));
+        QVERIFY(content.styleCatalogues[0].pluginName == u8"Kit");
+        QVERIFY(content.styleCatalogues[0].title == u8"Signs");
+        QCOMPARE(QString::fromStdU16String(content.styleCatalogues[0].file.u16string()),
+                 QDir::cleanPath(folder + QStringLiteral("/styles/signs.sty")));
+        QCOMPARE(content.karaokePresets.size(), 1u);
+        QVERIFY(content.karaokePresets[0].title.empty());
+
+        turn(false);
+        runtime.sync();
+        QVERIFY(application::pluginContent().styleCatalogues.empty());
+        QVERIFY(application::pluginContent().karaokePresets.empty());
+    }
+
     void theFirstPluginGuideRunsAtEveryStep()
     {
         const QString id = QStringLiteral("com.example.first-plugin");
@@ -1428,6 +1468,190 @@ private slots:
         QTRY_COMPARE(texts(noticed).size(), 2);
         QCOMPARE(texts(noticed), (QStringList{QStringLiteral("Tidy: http://api.example.com/v1 refused not_https"),
                                               QStringLiteral("Tidy: https://evil.example.net/ not_granted evil.example.net")}));
+    }
+
+
+    void everyBuiltInFormatDoesWhatFormatsListSays()
+    {
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        app::Application a(o);
+        const QString episode = m_dir.filePath(QStringLiteral("sample.ass"));
+        write(episode, "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                       "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+                       "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+                       "MarginR, MarginV, Encoding\n"
+                       "Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n\n"
+                       "[Events]\n"
+                       "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first line\n"
+                       "Dialogue: 0,0:00:03.00,0:00:04.50,Default,,0,0,0,,second line\n");
+        QVERIFY(a.openFile(episode));
+        const QVariantMap extensions = a.exportSetup().value(QStringLiteral("extensions")).toMap();
+        QStringList roundTrips;
+        for (const api::FormatInfo &format : api::builtInFormats()) {
+            const QString id = QString::fromStdString(format.id);
+            for (const auto &extension : format.extensions)
+                QVERIFY2((application::openKindOf("/x/a." + extension, false) == application::OpenKind::Subtitles) == format.imports,
+                         qPrintable(id + u' ' + QString::fromStdString(extension)));
+            if (!format.exports || id == QLatin1String("ass"))
+                continue;
+            QVERIFY2(extensions.contains(id), qPrintable(id));
+            QCOMPARE(extensions.value(id).toString().toStdString(), format.extensions.front());
+            const QString out = m_dir.filePath(QStringLiteral("sample-%1.%2").arg(id, extensions.value(id).toString()));
+            QVariantMap values = a.exportSetup().value(QStringLiteral("options")).toMap();
+            values.insert(QStringLiteral("fps"), 25.0);
+            const QVariantMap result = a.exportTo(a.fileUrl(out), id, values);
+            QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(id + u' ' + result.value(QStringLiteral("problem")).toString()));
+            QVERIFY2(QFileInfo(out).size() > 0, qPrintable(id));
+            if (!format.imports)
+                continue;
+            auto staged = a.files().stageOpen({QFileInfo(out).absoluteFilePath().toStdString()});
+            QVERIFY2(staged, qPrintable(id));
+            QStringList texts;
+            for (const auto *line : staged->load.document.lines())
+                if (!line->comment && !line->text.empty()) {
+                    QString text = QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()), qsizetype(line->text.size()));
+                    text.remove(QRegularExpression(QStringLiteral("\\{[^}]*\\}")));
+                    if (texts.isEmpty() || texts.last() != text)
+                        texts << text;
+                }
+            QVERIFY2(texts.join(u'|').contains(QStringLiteral("first line|second line")), qPrintable(id + u' ' + texts.join(u'|')));
+            roundTrips << id;
+        }
+        QCOMPARE(roundTrips, (QStringList{QStringLiteral("srt"), QStringLiteral("text"), QStringLiteral("microdvd"), QStringLiteral("mpl2"),
+                                          QStringLiteral("tmplayer"), QStringLiteral("ttml"), QStringLiteral("srv3")}));
+    }
+
+    void installCues()
+    {
+        const QString folder = folders().plugins + QStringLiteral("/com.example.cues");
+        write(folder + QStringLiteral("/hikari-plugin.json"), R"({"id": "com.example.cues", "name": "Cues", "version": "1.0.0",
+            "api": 1, "main": "main.lua", "authors": ["Ana"],
+            "contributes": {"formats": [{"id": "cues", "title": "Cue list", "extensions": ["cue"], "import": true, "export": true}]}})");
+        write(folder + QStringLiteral("/main.lua"), R"~(
+local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+local function unbase64(data)
+    data = data:gsub("[^%w%+/]", "")
+    local bits = data:gsub(".", function(c)
+        local n, out = alphabet:find(c, 1, true) - 1, ""
+        for i = 6, 1, -1 do out = out .. (math.floor(n / 2 ^ (i - 1)) % 2) end
+        return out
+    end)
+    return (bits:gsub("%d%d%d%d%d%d%d%d", function(byte) return string.char(tonumber(byte, 2)) end))
+end
+hikari.formats.exporter("cues", function(doc, options)
+    local out = {}
+    for _, line in ipairs(doc.lines) do out[#out + 1] = line.start .. "|" .. line["end"] .. "|" .. line.text end
+    return table.concat(out, "\n") .. "\n"
+end)
+hikari.formats.importer("cues", function(data, name)
+    local lines = {}
+    for start, finish, text in unbase64(data):gmatch("(%d+)|(%d+)|([^\n]*)") do
+        lines[#lines + 1] = {start = tonumber(start), ["end"] = tonumber(finish), text = text}
+    end
+    if #lines == 0 then error("no cues in " .. name) end
+    return {lines = lines, info = {Title = name}}
+end)
+)~");
+        m_registry[QStringLiteral("com.example.cues")] =
+            QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+    }
+
+    static QByteArray readAll(const QString &path)
+    {
+        QFile f(path);
+        return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+    }
+
+    void aPluginFormatExportsOpensAndSavesBack()
+    {
+        installCues();
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.plugins = folders();
+        app::Application a(o);
+        const QString format = QStringLiteral("plugin:com.example.cues/cues");
+        QTRY_COMPARE(a.pluginOpenFormats(), QStringList{format});
+        QCOMPARE(a.pluginOpenFilters(), QStringList{QStringLiteral("Cue list (Cues) (*.cue)")});
+        const api::Result listed = apiCall(a, "formats.list", QStringLiteral("{}"));
+        QVERIFY(listed);
+        QCOMPARE(QString::fromStdString(listed->find("formats")->asArray().back().find("id")->asString()), format);
+
+        const QString episode = m_dir.filePath(QStringLiteral("episode.ass"));
+        write(episode, "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                       "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                       "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n"
+                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n");
+        QVERIFY(a.openFile(episode));
+        QSignalSpy exported(&a, &app::Application::pluginExportFinished);
+        const QString cues = m_dir.filePath(QStringLiteral("episode.cue"));
+        QVERIFY(a.exportTo(a.fileUrl(cues), format, {{QStringLiteral("lines"), QStringLiteral("all")}}).value(QStringLiteral("pending")).toBool());
+        QTRY_COMPARE(exported.size(), 1);
+        QVERIFY2(exported.first().first().toMap().value(QStringLiteral("ok")).toBool(),
+                 qPrintable(exported.first().first().toMap().value(QStringLiteral("problem")).toString()));
+        QCOMPARE(exported.first().first().toMap().value(QStringLiteral("written")).toInt(), 2);
+        QCOMPARE(readAll(cues), QByteArray("0|1000|first\n1000|2000|second\n"));
+
+        const QString opened = m_dir.filePath(QStringLiteral("talk.cue"));
+        write(opened, "0|500|hello\n600|900|world\n");
+        QSignalSpy reviewed(&a, &app::Application::pluginOpenReviewed);
+        QVERIFY(a.reviewOpen(opened).value(QStringLiteral("done")).toBool());
+        QTRY_COMPARE(reviewed.size(), 1);
+        const QVariantMap result = reviewed.first().at(1).toMap();
+        QVERIFY(result.value(QStringLiteral("ok")).toBool());
+        if (!result.value(QStringLiteral("done")).toBool())
+            a.finishClose();
+        QTRY_COMPARE(session(a).document().lines().size(), std::size_t(2));
+        QCOMPARE(session(a).document().lines()[1]->text, std::u8string(u8"world"));
+        const auto target = *a.workspace().editingTarget();
+        QCOMPARE(QString::fromStdString(a.files().destination(target)->value), QFileInfo(opened).absoluteFilePath());
+        const api::Result get = apiCall(a, "documents.get", QStringLiteral(R"({"document": %1})").arg(target.value));
+        QVERIFY(get);
+        QCOMPARE(QString::fromStdString(get->find("format")->asString()), format);
+
+        const auto first = lineIds(a).front();
+        QVERIFY(apiCall(a, "document.apply", QStringLiteral(R"({"document": %1, "revision": %2, "name": "Edit",
+            "edits": [{"op": "set_line", "line": %3, "fields": {"text": "bye"}}]})")
+                                                 .arg(target.value)
+                                                 .arg(session(a).revision())
+                                                 .arg(first)));
+        QVERIFY(a.saveRouteFor(target.value).isEmpty());
+        QSignalSpy written(&a, &app::Application::documentWritten);
+        QVERIFY(a.saveDocument(target.value));
+        QTRY_COMPARE(written.size(), 1);
+        QCOMPARE(readAll(opened), QByteArray("0|500|bye\n600|900|world\n"));
+        QVERIFY(!session(a).isDirty());
+
+        const QString ass = m_dir.filePath(QStringLiteral("talk"));
+        QVERIFY(a.saveChosenFor(target.value, a.fileUrl(ass), QStringLiteral("ass")).isEmpty());
+        QTRY_COMPARE(written.size(), 2);
+        QVERIFY(readAll(ass + QStringLiteral(".ass")).contains("Dialogue: 0,0:00:00.00,0:00:00.50,Default,,0,0,0,,bye"));
+        const api::Result after = apiCall(a, "documents.get", QStringLiteral(R"({"document": %1})").arg(target.value));
+        QCOMPARE(QString::fromStdString(after->find("format")->asString()), QStringLiteral("ass"));
+    }
+
+    void aFileNoPluginCanReadSaysWhichPluginTriedAndWhy()
+    {
+        installCues();
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.plugins = folders();
+        app::Application a(o);
+        QTRY_COMPARE(a.pluginOpenFormats().size(), qsizetype(1));
+        QSignalSpy noticed(&a.log(), &ui::LogController::noticed);
+        const QString empty = m_dir.filePath(QStringLiteral("empty.cue"));
+        write(empty, "nothing here\n");
+        QVERIFY(a.reviewOpen(empty).value(QStringLiteral("done")).toBool());
+        QTRY_COMPARE(noticed.size(), 1);
+        QVERIFY2(noticed.first().at(3).toString().startsWith(QStringLiteral("Cues couldn’t open this file: ")),
+                 qPrintable(noticed.first().at(3).toString()));
+        QVERIFY(noticed.first().at(3).toString().contains(QStringLiteral("no cues in empty.cue")));
     }
 };
 

@@ -10,6 +10,7 @@
 #include <kddockwidgets/core/FloatingWindow.h>
 #include <kddockwidgets/core/View.h>
 
+#include <QElapsedTimer>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
@@ -19,8 +20,11 @@
 #include <QQuickWindow>
 #include <QScreen>
 #include <QTemporaryDir>
+#include <QThread>
+#include <QTimer>
 #include <QtTest>
 
+#include <atomic>
 #include <memory>
 
 using namespace hikari;
@@ -236,7 +240,7 @@ private slots:
         QVERIFY(application->workspaceLayout().resetLayout());
         QTRY_VERIFY(!dock("editorDock")->property("isFloating").toBool());
         QVERIFY(dock("audioDock")->property("isOpen").toBool());
-        QVERIFY(application->workspaceLayout().hasBackup());
+        QTRY_VERIFY(application->workspaceLayout().hasBackup());
         QVERIFY(application->workspaceLayout().restoreBackup());
         QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
         stop();
@@ -392,6 +396,62 @@ private slots:
         QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Timing"));
         QVERIFY(!dock("videoDock")->property("isOpen").toBool());
         stop();
+    }
+
+    void aSlowDiskLeavesTheWindowResponsive()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        std::atomic<int> written = 0;
+        layouts.fileWrites().setBeforeEachWrite([&written] {
+            QThread::msleep(1500);
+            ++written;
+        });
+        int ticks = 0;
+        QTimer tick;
+        tick.setInterval(20);
+        connect(&tick, &QTimer::timeout, this, [&ticks] { ++ticks; });
+        tick.start();
+        QVERIFY(QMetaObject::invokeMethod(dock("audioDock"), "close"));
+        QTRY_VERIFY(!dock("audioDock")->property("isOpen").toBool());
+        auto closedInFile = [this] {
+            const QJsonObject payload =
+                QJsonDocument::fromJson(readAll(layoutFile())).object().value(QStringLiteral("payload")).toObject();
+            return payload.value(QStringLiteral("closedDockWidgets")).toArray().contains(QStringLiteral("Audio"));
+        };
+        QElapsedTimer took;
+        took.start();
+        layouts.save();
+        QVERIFY2(took.elapsed() < 500, qPrintable(QString::number(took.elapsed())));
+        const int before = ticks;
+        QTRY_VERIFY_WITH_TIMEOUT(written > 0 && closedInFile(), 10000);
+        QVERIFY2(ticks - before >= 25, qPrintable(QString::number(ticks - before)));
+        layouts.fileWrites().setBeforeEachWrite({});
+        stop();
+    }
+
+    void theQuitSaveIsWrittenBeforeItReturns()
+    {
+        start();
+        auto &layouts = application->workspaceLayout();
+        layouts.fileWrites().setBeforeEachWrite([] { QThread::msleep(500); });
+        QVERIFY(QMetaObject::invokeMethod(dock("audioDock"), "close"));
+        QTRY_VERIFY(!dock("audioDock")->property("isOpen").toBool());
+        layouts.save();
+        QVERIFY(QMetaObject::invokeMethod(dock("videoDock"), "close"));
+        QTRY_VERIFY(!dock("videoDock")->property("isOpen").toBool());
+        QVERIFY(application->saveLayoutForQuit());
+        const QJsonArray closed = QJsonDocument::fromJson(readAll(layoutFile()))
+                                      .object()
+                                      .value(QStringLiteral("payload"))
+                                      .toObject()
+                                      .value(QStringLiteral("closedDockWidgets"))
+                                      .toArray();
+        QVERIFY(closed.contains(QStringLiteral("Audio")));
+        QVERIFY(closed.contains(QStringLiteral("Video")));
+        layouts.fileWrites().setBeforeEachWrite({});
+        engine.reset();
+        application.reset();
     }
 
     void anUnusableLayoutIsKeptAndNamed_data()

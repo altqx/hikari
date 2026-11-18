@@ -24,6 +24,7 @@ public:
     explicit AiPlugins(Wiring wiring);
 
     std::vector<api::PluginState> plugins() const override;
+    std::vector<api::FormatInfo> formats() const override;
     std::optional<std::string> manifest(std::string_view plugin) const override;
     api::PluginRun run(std::string_view plugin, std::string_view command) override;
     std::expected<api::ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
