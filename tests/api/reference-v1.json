@@ -555,14 +555,8 @@
                   ]
                 },
                 "format": {
-                  "enum": [
-                    "ass",
-                    "srt",
-                    "tmplayer",
-                    "microdvd",
-                    "mpl2",
-                    "text"
-                  ]
+                  "type": "string",
+                  "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
                 },
                 "revision": {
                   "$ref": "#/$defs/Revision"
@@ -623,14 +617,8 @@
             ]
           },
           "format": {
-            "enum": [
-              "ass",
-              "srt",
-              "tmplayer",
-              "microdvd",
-              "mpl2",
-              "text"
-            ]
+            "type": "string",
+            "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
           },
           "revision": {
             "$ref": "#/$defs/Revision"

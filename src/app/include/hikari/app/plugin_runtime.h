@@ -132,6 +132,21 @@ public:
     // {id, name} of each running plugin whose manifest asks for presence.
     QVariantList presencePlugins() const;
 
+    struct Format {
+        std::string id; // plugin:<plugin id>/<format id>
+        std::string plugin;
+        std::string pluginName;
+        plugins::FormatContribution format;
+    };
+    // The formats of the plugins that run, in the order the plugins were installed.
+    std::vector<Format> formats() const;
+    std::optional<Format> format(const std::string &id) const;
+    // False when the format's plugin doesn't run or can't take more work; else `done` is called once.
+    bool exportDocument(const Format &format, const api::Json &snapshot, const api::Json &options,
+                        backends::PluginProcess::FormatDone done);
+    bool importFile(const Format &format, std::string bytes, const std::string &fileName,
+                    backends::PluginProcess::FormatDone done);
+
 signals:
     void commandsChanged();
     void windowsChanged();
@@ -168,6 +183,7 @@ private:
     Wiring m_wiring;
     std::optional<plugins::Installer> m_installer;
     std::map<std::string, std::unique_ptr<Running>> m_plugins;
+    std::vector<std::string> m_installOrder;
     Running *m_lockHolder = nullptr;
     std::deque<LockWaiter> m_lockWaiters;
     QVariantList m_commands;

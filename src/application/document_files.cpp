@@ -101,7 +101,7 @@ std::expected<StagedOpen, StageFailure> DocumentFiles::stageReload(DocumentId do
 
 std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
 {
-    std::vector<std::byte> bytes = staged.load.document.source().bytes;
+    std::vector<std::byte> bytes = staged.fileBytes ? std::move(*staged.fileBytes) : staged.load.document.source().bytes;
     if (staged.replaces) {
         Entry *entry = find(*staged.replaces);
         if (!entry)
@@ -225,15 +225,17 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     if (layout)
         saved.setHikariProperty(kLayoutKey, *layout);
     applyProjectGarbage(document, destination, saved);
+    auto deferred = m_deferredEncoder ? m_deferredEncoder(document, destination) : std::nullopt;
     return SavePlan{document,
                     entry->generation,
                     snapshot->revision,
                     snapshot->content,
                     destination,
-                    core::encodeSubtitle(saved, m_saveOptions),
+                    deferred ? std::vector<std::byte>() : core::encodeSubtitle(saved, m_saveOptions),
                     saveAs.has_value() && *saveAs != entry->destination,
-                    std::move(activeLine),
-                    std::move(layout)};
+                    deferred ? std::nullopt : std::move(activeLine),
+                    deferred ? std::nullopt : std::move(layout),
+                    std::move(deferred)};
 }
 
 std::optional<std::u8string> DocumentFiles::layoutToSave(DocumentId document, const core::Document &saved) const
@@ -276,6 +278,10 @@ std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, boo
     m_pending.emplace(*permit, Pending{plan.document, plan.generation, plan.content, plan.destination, plan.bytes,
                                        plan.saveAs, plan.activeLine, plan.layout});
     entry->lastSave = SaveStatus{*permit, std::nullopt};
+    if (plan.deferred) {
+        (*plan.deferred)([this, permit = *permit](std::optional<std::vector<std::byte>> bytes) { writeDeferred(permit, std::move(bytes)); });
+        return *permit;
+    }
     if (!m_writes.write(*permit, std::move(plan.bytes))) {
         m_pending.erase(*permit);
         entry->lastSave.reset();
@@ -294,6 +300,19 @@ bool DocumentFiles::acceptExternalChange(DocumentId document)
         return false;
     entry->knownBytes = std::move(*current);
     return true;
+}
+
+void DocumentFiles::writeDeferred(PermitId permit, std::optional<std::vector<std::byte>> bytes)
+{
+    const auto it = m_pending.find(permit);
+    if (it == m_pending.end())
+        return;
+    if (bytes) {
+        it->second.bytes = *bytes;
+        if (m_writes.write(permit, std::move(*bytes)))
+            return;
+    }
+    m_writes.abandon(permit);
 }
 
 void DocumentFiles::onWriteResult(const WriteResult &result)

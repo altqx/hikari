@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/export_format_ids.h"
 #include "hikari/application/style_manager.h"
 #include "hikari/core/export.h"
 #include "hikari/core/srv3.h"
@@ -35,11 +36,11 @@ struct ExportFormatRow {
 };
 
 constexpr ExportFormatRow kExportFormats[] = {
-    {"srt", ExportFormat::Srt, "srt"},      {"vtt", ExportFormat::WebVtt, "vtt"},
-    {"sbv", ExportFormat::Sbv, "sbv"},      {"txt", ExportFormat::PlainText, "txt"},
-    {"mdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
-    {"tmp", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
-    {"dfxp", ExportFormat::Dfxp, "dfxp"},   {"srv3", ExportFormat::Srv3, "ytt"},
+    {"srt", ExportFormat::Srt, "srt"},           {"vtt", ExportFormat::WebVtt, "vtt"},
+    {"sbv", ExportFormat::Sbv, "sbv"},           {"text", ExportFormat::PlainText, "txt"},
+    {"microdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
+    {"tmplayer", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
+    {"dfxp", ExportFormat::Dfxp, "dfxp"},        {"srv3", ExportFormat::Srv3, "ytt"},
 };
 
 constexpr std::pair<const char *, bool core::ExportOptions::*> kExportFlags[] = {
@@ -65,6 +66,21 @@ const ExportFormatRow *exportFormatNamed(const QString &id)
 QString rowKey(const QString &row)
 {
     return row.left(row.indexOf(u'\t'));
+}
+
+QStringList currentChoices(QStringList rows)
+{
+    for (QString &row : rows) {
+        const qsizetype tab = row.indexOf(u'\t');
+        QJsonObject choice = QJsonDocument::fromJson(row.mid(tab + 1).toUtf8()).object();
+        const QString format = choice.value(QStringLiteral("format")).toString();
+        const std::string current(application::currentExportFormat(format.toStdString()));
+        if (tab < 0 || current == format.toStdString())
+            continue;
+        choice.insert(QStringLiteral("format"), QString::fromStdString(current));
+        row = row.left(tab + 1) + QString::fromUtf8(QJsonDocument(choice).toJson(QJsonDocument::Compact));
+    }
+    return rows;
 }
 
 QJsonObject rememberedRow(const QStringList &rows, const QString &key)
@@ -308,7 +324,7 @@ QVariantMap Application::exportSetup() const
     const QString key = exportKey(*target);
     const auto *project = views(m_workspace.window(*target).value_or(m_workspace.activeWindow())).settings->project();
     const QJsonObject saved =
-        startingExport(m_settings->list("export.choices"), key, project ? project->exportJson() : std::string());
+        startingExport(currentChoices(m_settings->list("export.choices")), key, project ? project->exportJson() : std::string());
 
     const core::ExportOptions defaults;
     QVariantMap options;
@@ -340,16 +356,23 @@ QVariantMap Application::exportSetup() const
         shown += shownSet.contains(line->id) ? 1 : 0;
     }
 
-    QString format = saved.value(QStringLiteral("format")).toString();
-    if (!exportFormatNamed(format))
-        format = QStringLiteral("srt");
     QVariantMap extensions;
     for (const auto &row : kExportFormats)
         extensions.insert(QLatin1String(row.id), QLatin1String(row.extension));
+    QVariantList plugins;
+    for (const auto &f : pluginFormats(false)) {
+        const QString id = QString::fromStdString(f.id);
+        extensions.insert(id, QString::fromStdString(f.format.extensions.front()));
+        plugins << QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("text"), formatText(f)}};
+    }
+    QString format = saved.value(QStringLiteral("format")).toString();
+    if (!extensions.contains(format))
+        format = QStringLiteral("srt");
     const QFileInfo file(key);
     return {{QStringLiteral("format"), format},
             {QStringLiteral("options"), options},
             {QStringLiteral("extensions"), extensions},
+            {QStringLiteral("pluginFormats"), plugins},
             {QStringLiteral("all"), all},
             {QStringLiteral("selected"), selected},
             {QStringLiteral("shown"), shown},
@@ -364,19 +387,22 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     const auto target = m_workspace.editingTarget();
     const auto *session = target ? m_files->session(*target) : nullptr;
     const auto *format = exportFormatNamed(formatId);
+    const auto plugin = format || !m_pluginRuntime ? std::nullopt : m_pluginRuntime->format(formatId.toStdString());
     QString path = file.toLocalFile();
-    if (!session || !format || path.isEmpty())
+    if (!session || (!format && !(plugin && plugin->format.exports)) || path.isEmpty())
         return problem(QCoreApplication::translate("HikariSub.Export", "There is nothing to export."));
     if (QFileInfo(path).isRelative())
         return problem(QCoreApplication::translate("HikariSub.Export", "Enter the file’s full path, or choose it with Browse…"));
     if (QFileInfo(path).suffix().isEmpty())
-        path += u'.' + QLatin1String(format->extension);
+        path += u'.' + (format ? QLatin1String(format->extension) : QString::fromStdString(plugin->format.extensions.front()));
     if (QFileInfo(path).isDir())
         return problem(QCoreApplication::translate("HikariSub.Export", "“%1” is a folder.").arg(QDir::toNativeSeparators(path)));
     if (QFileInfo::exists(path) && !values.value(QStringLiteral("replace")).toBool())
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("exists"), true},
                 {QStringLiteral("name"), QFileInfo(path).fileName()}};
+    if (plugin)
+        return exportPluginFormat(*target, *plugin, path, values);
 
     core::ExportOptions options;
     for (const auto &[name, flag] : kExportFlags)
@@ -443,7 +469,7 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     for (const auto &[name, flag] : kExportFlags)
         choice.insert(QLatin1String(name), options.*flag);
     choice.insert(QStringLiteral("ttmlNetflix"), options.ttmlProfile == core::TtmlProfile::Netflix);
-    const QJsonObject before = rememberedExport(m_settings->list("export.choices"), exportKey(*target));
+    const QJsonObject before = rememberedExport(currentChoices(m_settings->list("export.choices")), exportKey(*target));
     choice.insert(QStringLiteral("language"),
                   isTtml(format->format) ? language : before.value(QStringLiteral("language")).toString());
     if (framesIn(format->format, options))
@@ -451,7 +477,7 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     else if (const double kept = before.value(QStringLiteral("fps")).toDouble(); kept >= 1)
         choice.insert(QStringLiteral("fps"), kept);
     m_settings->setValue(QStringLiteral("export.choices"),
-                         rememberedWith(m_settings->list("export.choices"), exportKey(*target), choice));
+                         rememberedWith(currentChoices(m_settings->list("export.choices")), exportKey(*target), choice));
 
     std::map<std::uint64_t, int> rows;
     int row = 0;
@@ -475,6 +501,26 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
             {QStringLiteral("empty"), result.emptySkipped},
             {QStringLiteral("srv3Styles"), srv3Styles},
             {QStringLiteral("notes"), notes}};
+}
+
+QVariantMap Application::exportPluginFormat(application::DocumentId target, const PluginRuntime::Format &format,
+                                            const QString &path, const QVariantMap &values)
+{
+    const auto *session = m_files->session(target);
+    const QString lines = values.value(QStringLiteral("lines")).toString();
+    std::optional<std::set<core::LineId>> only;
+    if (lines == QLatin1String("selected")) {
+        only = session->selection().selected;
+    } else if (lines == QLatin1String("shown")) {
+        const auto shown = shell().actionLines();
+        only = std::set<core::LineId>(shown.begin(), shown.end());
+    }
+    QJsonObject choice = rememberedExport(currentChoices(m_settings->list("export.choices")), exportKey(target));
+    choice.insert(QStringLiteral("format"), QString::fromStdString(format.id));
+    choice.insert(QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines);
+    m_settings->setValue(QStringLiteral("export.choices"),
+                         rememberedWith(currentChoices(m_settings->list("export.choices")), exportKey(target), choice));
+    return exportThroughPlugin(target, format, path, only, values.value(QStringLiteral("fps")).toDouble());
 }
 
 }
