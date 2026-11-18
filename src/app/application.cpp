@@ -14,6 +14,7 @@
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/automation_registry.h"
+#include "hikari/application/export_format_ids.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/getting_started.h"
@@ -814,6 +815,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return setKeyframesFromApi(frames, file);
         },
         &m_rowMarks, m_git.get(), m_pluginPrograms.get(), m_presence.get()});
+    m_apiHost->setPluginFormat([this](application::DocumentId document) { return fileFormat(document); });
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
@@ -925,6 +927,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->pluginFeatureUsed(feature);
     };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
+        return pluginSaveBytes(document, destination);
+    });
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
@@ -2959,11 +2964,12 @@ void Application::resolveClose(const QVariantList &choices)
         }
         if (c.save) {
             QString path = row.value(QStringLiteral("path")).toString();
-            const bool toAss = !path.isEmpty() && savesAsAss(session->document().format(), path,
-                                                              row.value(QStringLiteral("format")).toString());
-            if (const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
-                !path.isEmpty() && QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
-                path += u'.' + ext;
+            const SaveTarget target = path.isEmpty() ? SaveTarget{}
+                                                     : saveTargetFor(id, path, row.value(QStringLiteral("format")).toString());
+            const bool toAss = target.toAss;
+            path = target.path;
+            if (!path.isEmpty())
+                useSaveTarget(target);
             if (toAss && !convertToAss(id)) {
                 m_closing.clear();
                 emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
@@ -3225,6 +3231,36 @@ bool readOnly(const QString &path)
 
 }
 
+Application::SaveTarget Application::saveTargetFor(application::DocumentId document, QString path, const QString &chosen) const
+{
+    const auto *session = m_files->session(document);
+    std::optional<PluginRuntime::Format> plugin;
+    if (chosen.startsWith(u"plugin:"))
+        plugin = m_pluginRuntime ? m_pluginRuntime->format(chosen.toStdString()) : std::nullopt;
+    else if (chosen.isEmpty())
+        plugin = exportingFormat(document);
+    if (plugin && plugin->format.exports) {
+        const auto &extensions = plugin->format.extensions;
+        if (std::ranges::find(extensions, QFileInfo(path).suffix().toLower().toStdString()) == extensions.end())
+            path += u'.' + QString::fromStdString(extensions.front());
+        return {std::move(path), false, plugin->id};
+    }
+    const bool toAss = session && savesAsAss(session->document().format(), path, chosen);
+    const QString ext = toAss || !session ? QStringLiteral("ass") : extensionFor(session->document().format());
+    if (QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
+        path += u'.' + ext;
+    return {std::move(path), toAss, {}};
+}
+
+void Application::useSaveTarget(const SaveTarget &target)
+{
+    const std::string key = QFileInfo(target.path).absoluteFilePath().toStdString();
+    if (target.pluginFormat.empty())
+        m_fileFormats.erase(key);
+    else
+        m_fileFormats[key] = target.pluginFormat;
+}
+
 QString Application::saveRoute() const
 {
     return saveRouteFor(0);
@@ -3245,6 +3281,8 @@ QString Application::saveRouteFor(qulonglong id) const
     const QString video = *document == m_workspace.editingTarget() ? readyVideo(activeMedia().video->session()) : tabVideo(*document);
     if (path.isEmpty() || (saveWithVideoName() && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
+        return QStringLiteral("dialog");
+    if (fileFormat(*document) && !exportingFormat(*document))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
 }
@@ -3267,15 +3305,22 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
                          : destination && !destination->value.empty() ? QString::fromStdString(destination->value)
                          : importPath != m_importPaths.end()            ? importPath->second
                                                                        : QString();
-    const QString ext = extensionFor(session->document().format());
-    const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
-                               .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
+    const auto own = exportingFormat(*document);
+    const QString ext = own ? QString::fromStdString(own->format.extensions.front()) : extensionFor(session->document().format());
+    const QString filter = own ? formatFilter(*own)
+                               : QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
+                                     .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
     QStringList filters{filter};
     QStringList formats{QString()};
-    if (ext != QLatin1String("ass")) {
+    if (own || ext != QLatin1String("ass")) {
         filters << QCoreApplication::translate("HikariSub.Documents", "ASS subtitles (*.ass)");
         formats << QStringLiteral("ass");
     }
+    for (const auto &format : pluginFormats(false))
+        if (!own || format.id != own->id) {
+            filters << formatFilter(format);
+            formats << QString::fromStdString(format.id);
+        }
     const QFileInfo info(path);
     return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
             {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
@@ -3299,14 +3344,14 @@ QString Application::saveChosenFor(qulonglong id, const QUrl &file, const QStrin
         return QStringLiteral("failed");
     if (readOnly(path))
         return QStringLiteral("readonly");
-    const bool toAss = savesAsAss(session->document().format(), path, format);
-    const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
-    if (QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
-        path += u'.' + ext;
+    const SaveTarget target = saveTargetFor(*document, path, format);
+    const bool toAss = target.toAss;
+    path = target.path;
     if (readOnly(path))
         return QStringLiteral("readonly");
     if (toAss && !convertToAss(*document))
         return QStringLiteral("failed");
+    useSaveTarget(target);
     auto plan = m_files->prepareSave(*document, application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()});
     if (!plan || !m_files->startSave(std::move(*plan)))
         return QStringLiteral("failed");
@@ -3423,19 +3468,36 @@ void Application::openUserFolder()
 
 QVariantMap Application::reviewOpen(const QString &path, bool here)
 {
+    auto candidates = importCandidates(path, {});
+    if (!candidates.empty() && !builtInExtension(path)) {
+        openThroughPlugins(path, here, std::move(candidates), {});
+        return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()},
+                {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
+    }
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
         const QString problem = openProblem(path, staged.error());
+        if (!candidates.empty()) {
+            openThroughPlugins(path, here, std::move(candidates), problem);
+            return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()},
+                    {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
+        }
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"), problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
+    m_fileFormats.erase(staged->destination.value);
+    return continueOpen(std::move(*staged), path, here);
+}
+
+QVariantMap Application::continueOpen(application::StagedOpen staged, const QString &path, bool here)
+{
     if (!here && !m_openFromVideo && m_settings->boolean("subtitles.openInNewTab") && !targetUntitled()) {
-        const bool opened = openInNewTab(std::move(*staged), path);
+        const bool opened = openInNewTab(std::move(staged), path);
         return {{QStringLiteral("ok"), opened}, {QStringLiteral("problem"), QString()},
                 {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
     }
     const QVariantList rows = reviewClose(QStringLiteral("open"));
-    m_pendingOpen = std::move(*staged);
+    m_pendingOpen = std::move(staged);
     m_pendingOpenPath = path;
     return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()}, {QStringLiteral("rows"), rows}};
 }
@@ -4798,7 +4860,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     }
     const auto &selected = session->selection().selected;
     const auto lines = session->document().lines();
-    int changed = 0, leadIn = 0, leadOut = 0, gaps = 0, snapped = 0;
+    int changed = 0, leadIn = 0, leadOut = 0, gaps = 0, overlaps = 0, snapped = 0;
     std::vector<const application::ShiftedLine *> shown;
     for (const auto &l : plan->lines) {
         if (!l.changed())
@@ -4807,6 +4869,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
         leadIn += (l.rules & application::LeadIn) != 0;
         leadOut += (l.rules & application::LeadOut) != 0;
         gaps += (l.rules & application::GapClosed) != 0;
+        overlaps += (l.rules & application::OverlapClosed) != 0;
         snapped += (l.rules & (application::SnappedStart | application::SnappedEnd)) != 0;
     }
     for (const auto &l : plan->lines)
@@ -4825,6 +4888,8 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
             rules << QStringLiteral("leadIn");
         if (l->rules & application::GapClosed)
             rules << QStringLiteral("gapClosed");
+        if (l->rules & application::OverlapClosed)
+            rules << QStringLiteral("overlapClosed");
         if (l->rules & application::SnappedStart)
             rules << QStringLiteral("snappedStart");
         if (l->rules & application::LeadOut)
@@ -4851,6 +4916,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     out.insert(QStringLiteral("ruleCounts"), QVariantMap{{QStringLiteral("leadIn"), leadIn},
                                                          {QStringLiteral("leadOut"), leadOut},
                                                          {QStringLiteral("gapClosed"), gaps},
+                                                         {QStringLiteral("overlapClosed"), overlaps},
                                                          {QStringLiteral("snapped"), snapped}});
     return out;
 }
@@ -7546,6 +7612,8 @@ void insertExtras(QVariantMap &values, const application::Settings &settings)
 {
     for (const auto id : kProjectExtras)
         values.insert(qs(id), ui::SettingsStore::toVariant(settings.value(id)));
+    const QString format = values.value(QStringLiteral("export.format")).toString();
+    values.insert(QStringLiteral("export.format"), qs(application::currentExportFormat(format.toStdString())));
 }
 
 application::OptionsState projectableOnly(application::OptionsState state)

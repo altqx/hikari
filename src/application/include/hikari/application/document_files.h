@@ -65,7 +65,15 @@ struct StagedOpen {
     std::uint64_t expectedRevision = 0;
     // Lyrics or YouTube timed text turned into ASS: opens Untitled with unsaved work.
     bool imported = false;
+    // The file as read, when the Document was built from it rather than parsed (a plugin's format).
+    std::optional<std::vector<std::byte>> fileBytes;
 };
+
+// Gets a save's bytes later: nullopt when there are none, after the user was told why.
+using BytesReady = std::function<void(std::optional<std::vector<std::byte>>)>;
+using DeferredBytes = std::function<void(BytesReady)>;
+// A save whose bytes something other than HikariSub's own writers make; nullopt: HikariSub writes them.
+using DeferredEncoder = std::function<std::optional<DeferredBytes>(DocumentId, const DestinationKey &)>;
 
 struct SavePlan {
     DocumentId document;
@@ -79,6 +87,8 @@ struct SavePlan {
     std::optional<std::u8string> activeLine;
     // The [Hikari] "Layout" the bytes hold, taken the same way.
     std::optional<std::u8string> layout;
+    // Set: `bytes` are unused, and startSave writes what this gives once it has the permit.
+    std::optional<DeferredBytes> deferred;
 };
 
 // Every ASS save writes it; the Document takes it after the write, with no undo step.
@@ -155,6 +165,7 @@ public:
     void setProjectGarbageSource(ProjectGarbageSource source) { m_projectGarbageSource = std::move(source); }
     // Called as prepareSave starts, so a panel's pending edit reaches its Document.
     void setBeforeSave(std::function<void(DocumentId)> before) { m_beforeSave = std::move(before); }
+    void setDeferredEncoder(DeferredEncoder encoder) { m_deferredEncoder = std::move(encoder); }
     // An ASS Document's arrangement from the layout source; nullopt for other
     // formats or without a source.
     std::optional<std::u8string> layoutToSave(DocumentId document, const core::Document &saved) const;
@@ -181,6 +192,7 @@ private:
     };
     std::expected<StagedOpen, StageFailure> stage(const DestinationKey &destination);
     Entry *find(DocumentId document);
+    void writeDeferred(PermitId permit, std::optional<std::vector<std::byte>> bytes);
 
     FileReadPort &m_reader;
     LyricsDecoder m_lyricsDecoder;
@@ -192,6 +204,7 @@ private:
     LayoutSource m_layoutSource;
     ProjectGarbageSource m_projectGarbageSource;
     std::function<void(DocumentId)> m_beforeSave;
+    DeferredEncoder m_deferredEncoder;
 };
 
 }

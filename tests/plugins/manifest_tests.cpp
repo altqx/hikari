@@ -123,6 +123,42 @@ TEST(PluginManifest, APanelDocksInTheAreaItNames)
     EXPECT_EQ(p.at, "/contributes/panels/0/area");
 }
 
+TEST(PluginManifest, FormatsReadWithTheirExtensionsAndDirections)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"formats": [
+        {"id": "ebu-stl", "title": "EBU STL", "extensions": ["stl"], "import": true, "export": true},
+        {"id": "csv", "title": "CSV cues", "extensions": ["csv", "tsv"], "export": true}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().detail;
+    ASSERT_EQ(m->formats.size(), 2u);
+    EXPECT_EQ(m->formats[0].id, "ebu-stl");
+    EXPECT_EQ(m->formats[0].title, "EBU STL");
+    EXPECT_TRUE(m->formats[0].imports);
+    EXPECT_TRUE(m->formats[0].exports);
+    EXPECT_EQ(m->formats[1].extensions, (std::vector<std::string>{"csv", "tsv"}));
+    EXPECT_FALSE(m->formats[1].imports);
+}
+
+TEST(PluginManifest, AFormatNeedsADirectionAPlainExtensionAndAnIdOfItsOwn)
+{
+    const auto at = [](std::string_view formats) {
+        Json json = minimal();
+        json["contributes"] = *Json::parse(std::string(R"({"formats": )") + std::string(formats) + "}");
+        return problem(json);
+    };
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": ["a"]}])").at, "/contributes/formats/0");
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": ["a"], "import": false, "export": false}])").at,
+              "/contributes/formats/0");
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": [".stl"], "export": true}])").at,
+              "/contributes/formats/0/extensions/0");
+    EXPECT_EQ(at(R"([{"id": "a", "title": "A", "extensions": [], "export": true}])").at, "/contributes/formats/0/extensions");
+    const ManifestProblem repeated = at(R"([{"id": "a", "title": "A", "extensions": ["a"], "export": true},
+                                            {"id": "a", "title": "B", "extensions": ["b"], "import": true}])");
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/formats/1/id");
+}
+
 TEST(PluginManifest, OnlyAFullTrustManifestShipsAQmlPanel)
 {
     Json json = minimal();

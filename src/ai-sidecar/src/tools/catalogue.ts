@@ -12,8 +12,8 @@ export const kGroups = {
         "furigana; the karaoke check; the templater's preview and apply; the user's own forced aligner.",
     automation: "Automation macros and AI-written Lua.",
     effects: "The node-effect editor's node types and graphs.",
-    plugins: "Plugins: the installed ones, their manifests and commands; scaffolding a new one from the guide's " +
-        "template and installing it once the user approves.",
+    plugins: "Plugins: the installed ones, their manifests, commands and subtitle formats; scaffolding a new one " +
+        "from the guide's template and installing it once the user approves.",
     app: "Workspace panels and settings.",
 } as const;
 export type Group = keyof typeof kGroups;
@@ -118,6 +118,7 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "effects.save": { group: "effects" },
     "effects.apply": { group: "effects" },
     "plugins.list": { group: "plugins" },
+    "formats.list": { group: "plugins" },
     "plugins.manifest": { group: "plugins" },
     "plugins.scaffold": {
         group: "plugins",

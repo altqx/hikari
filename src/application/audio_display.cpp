@@ -313,6 +313,28 @@ DisplayAudio DisplayAudio::silence(int sampleRate, std::int64_t sampleCount)
     return audio;
 }
 
+DisplayAudio DisplayAudio::noise(int sampleRate, std::int64_t sampleCount)
+{
+    auto audio = silence(sampleRate, sampleCount);
+    audio.m_noise = true;
+    return audio;
+}
+
+namespace {
+
+void fillNoise(std::int64_t start, std::int64_t count, std::int64_t total, std::int16_t *out)
+{
+    const std::int64_t last = std::min(start + count, total);
+    for (std::int64_t i = std::max<std::int64_t>(start, 0); i < last; ++i) {
+        auto z = static_cast<std::uint64_t>(i) + 0x9E3779B97F4A7C15ull;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+        out[i - start] = static_cast<std::int16_t>(static_cast<std::uint16_t>((z ^ (z >> 31)) >> 48));
+    }
+}
+
+}
+
 bool DisplayAudio::appendFrames(const std::int16_t *interleaved, std::int64_t frames, int channels)
 {
     if (frames <= 0)
@@ -413,6 +435,8 @@ void DisplayAudio::read(std::int64_t start, std::int64_t count, std::int16_t *ou
     const std::int64_t first = std::clamp<std::int64_t>(start, 0, have);
     const std::int64_t last = std::clamp<std::int64_t>(start + count, 0, have);
     std::fill(out, out + count, std::int16_t(0));
+    if (m_noise)
+        return fillNoise(start, count, m_count, out);
     if (last <= first)
         return;
     const int channels = m_store->channels();
@@ -439,6 +463,8 @@ void DisplayAudio::readFrames(std::int64_t start, std::int64_t count, std::int16
     const std::int64_t first = std::clamp<std::int64_t>(start, 0, have);
     const std::int64_t last = std::clamp<std::int64_t>(start + count, 0, have);
     std::fill(out, out + count * channels, std::int16_t(0));
+    if (m_noise)
+        return fillNoise(start, count, m_count, out);
     if (last > first)
         m_store->read(first, last - first, out + (first - start) * channels);
 }

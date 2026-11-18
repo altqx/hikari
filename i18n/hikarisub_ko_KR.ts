@@ -1518,6 +1518,38 @@ Output device: %2</source>
         <source>Apply</source>
         <translation>적용</translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio and select lines with some length first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio is still loading.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio couldn’t be saved there.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -3757,6 +3789,42 @@ Output device: %2</source>
         <source>Import</source>
         <translation>가져오기</translation>
     </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the plugin that writes this format isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the document couldn’t be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t save.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be read: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is larger than 48 MiB, so no plugin can open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t open this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
@@ -4737,6 +4805,14 @@ Output device: %2</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t export this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t export.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6742,6 +6818,10 @@ Failed to copy %2 fonts.</source>
         <translation>프레임 단위는 영상이 있어야 합니다.</translation>
     </message>
     <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8672,6 +8752,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Run the last macro again</source>
         <translation>마지막 매크로 다시 실행</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Commit and use the default timing for the next line</source>
@@ -11779,6 +11863,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>줄 편집기에서 태그를 표시하거나 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the audio from the first selected line’s start to the last one’s end as a WAV file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to the scene</source>
@@ -16273,6 +16365,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Antigravity isn’t on PATH.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21539,10 +21643,6 @@ Styles deleted:
         <translation>스타일</translation>
     </message>
     <message>
-        <source>Styles: %1</source>
-        <translation>스타일: %1</translation>
-    </message>
-    <message>
         <source>Delete unused styles</source>
         <translation>사용하지 않는 스타일 삭제</translation>
     </message>
@@ -24204,6 +24304,20 @@ Styles deleted:
     <message>
         <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join lines that overlap by up to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>overlap closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>

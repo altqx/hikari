@@ -276,6 +276,12 @@ OptionReading readOption(const SettingDefinition &def, std::string_view raw, boo
         break;
     }
     }
+    if (def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON") {
+        r.value = std::int64_t{raw == "true" ? 1 : 0};
+        r.problem = raw.empty() || raw == "true" || raw == "false"
+                        ? std::string()
+                        : "legacy reads \"" + std::string(raw) + "\" as false (GetBool, config.cpp:165-168)";
+    }
     if (def.legacyKey == "PROGRAM_LANGUAGE" && (raw == "0" || raw == "1")) {
         r.value = std::string();
         r.note = "legacy reads the language \"" + std::string(raw) + "\" as none at startup (hikarisubApp.cpp:331-336)";

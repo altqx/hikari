@@ -1544,6 +1544,38 @@ Urządzenie wyjściowe: %2</translation>
         <source>Apply</source>
         <translation>Zastosuj</translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio and select lines with some length first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio is still loading.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio couldn’t be saved there.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -3835,6 +3867,42 @@ Urządzenie wyjściowe: %2</translation>
         <source>Import</source>
         <translation>Importuj</translation>
     </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the plugin that writes this format isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the document couldn’t be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t save.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be read: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is larger than 48 MiB, so no plugin can open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t open this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
@@ -4823,6 +4891,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Close</source>
         <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t export this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t export.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6872,6 +6948,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Klatki wymagają wideo.</translation>
     </message>
     <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8804,6 +8884,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Run the last macro again</source>
         <translation>Uruchom ponownie ostatnie makro</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Commit and use the default timing for the next line</source>
@@ -11987,6 +12071,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the audio from the first selected line’s start to the last one’s end as a WAV file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Snap to the scene</source>
@@ -16523,6 +16615,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Antigravity isn’t on PATH.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21909,10 +22013,6 @@ Usunięte style:
         <translation>Style</translation>
     </message>
     <message>
-        <source>Styles: %1</source>
-        <translation>Style: %1</translation>
-    </message>
-    <message>
         <source>Delete unused styles</source>
         <translation>Usuń nieużywane style</translation>
     </message>
@@ -24622,6 +24722,22 @@ Usunięte style:
     <message>
         <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join lines that overlap by up to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>overlap closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>

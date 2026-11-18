@@ -39,6 +39,9 @@ struct FrequencyPeaks {
     std::vector<int> intensities;
 };
 
+// Linear and Speech are legacy's rows; Speech and Logarithmic draw decibels.
+enum class SpectrumCurve { Linear, Speech, Logarithmic };
+
 class AudioSpectrum {
 public:
     static constexpr int kSubCacheLength = 16;
@@ -48,7 +51,7 @@ public:
     explicit AudioSpectrum(int threads = 0);
 
     void setScaling(float powerScale) { m_powerScale = powerScale; } // the vertical zoom
-    void setNonLinear(bool nonLinear) { m_nonLinear = nonLinear; }
+    void setCurve(SpectrumCurve curve) { m_curve = curve; }
     void setColours(std::uint32_t background, std::uint32_t echo, std::uint32_t inner);
 
     // Samples [rangeStart, rangeEnd) into `w` columns of `h` rows, BGRA with
@@ -89,7 +92,7 @@ private:
     int m_threads = 1;
     int m_overlaps = 1;
     float m_powerScale = 1;
-    bool m_nonLinear = false;
+    SpectrumCurve m_curve = SpectrumCurve::Linear;
     std::array<std::uint8_t, 256 * 3> m_palette{};
     std::vector<SubCache> m_slots;
     absl::flat_hash_map<std::uint64_t, std::size_t> m_byIndex;
