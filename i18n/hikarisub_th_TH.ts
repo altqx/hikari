@@ -3853,14 +3853,6 @@ Output device: %2</source>
         <translation>หลายค่า</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>จำนวนอักขระในแต่ละบรรทัด ควรไม่เกิน 43 อักขระ และไม่เกิน 2 บรรทัด</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>อักขระต่อวินาที ควรไม่เกิน 15</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>แสดงเวลา</translation>
     </message>
@@ -4283,6 +4275,16 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>แท็กขึ้นต้นด้วยแบ็กสแลช เช่น \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14434,6 +14436,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นับช่องว่างและเครื่องหมายวรรคตอนในการคำนวณ CPS</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>การแบ่ง</translation>
     </message>
@@ -19244,6 +19274,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Rendering</source>
         <translation>การเรนเดอร์</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save</source>

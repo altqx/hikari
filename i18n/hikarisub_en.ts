@@ -290,6 +290,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Editor</name>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Export</name>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -1312,6 +1322,17 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.StatusBar</name>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation>
+            <numerusform>%n plugin working</numerusform>
+            <numerusform>%n plugins working</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Styles</name>
     <message numerus="yes">
         <source>Apply the changes to the %n selected styles?</source>
@@ -1726,17 +1747,6 @@
         <translation>
             <numerusform>The tag takes %n value.</numerusform>
             <numerusform>The tag takes %n values.</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.StatusBar</name>
-    <message numerus="yes">
-        <source>%n plugin(s) working</source>
-        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
-        <translation>
-            <numerusform>%n plugin working</numerusform>
-            <numerusform>%n plugins working</numerusform>
         </translation>
     </message>
 </context>
