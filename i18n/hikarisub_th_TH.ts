@@ -4254,13 +4254,13 @@ Output device: %2</source>
     </message>
     <message numerus="yes">
         <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>จำนวนอักขระในแต่ละบรรทัด ควรไม่เกิน %1 อักขระ และไม่เกิน %n บรรทัด</numerusform>
         </translation>
     </message>
     <message>
         <source>Characters per second. Keep it at %1 or under.</source>
-        <translation type="unfinished"></translation>
+        <translation>อักขระต่อวินาที ควรไม่เกิน %1</translation>
     </message>
 </context>
 <context>
@@ -14017,31 +14017,31 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>CPS warning</source>
-        <translation type="unfinished"></translation>
+        <translation>คำเตือน CPS</translation>
     </message>
     <message>
         <source>Lines that read faster are tinted, more strongly up to the error level.</source>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัดที่อ่านเร็วกว่านี้จะถูกแต้มสี และสีจะเข้มขึ้นจนถึงระดับข้อผิดพลาด</translation>
     </message>
     <message>
         <source>CPS</source>
-        <translation type="unfinished"></translation>
+        <translation>CPS</translation>
     </message>
     <message>
         <source>CPS error</source>
-        <translation type="unfinished"></translation>
+        <translation>ข้อผิดพลาด CPS</translation>
     </message>
     <message>
         <source>Characters per line</source>
-        <translation type="unfinished"></translation>
+        <translation>อักขระต่อบรรทัด</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished"></translation>
+        <translation>จำนวนบรรทัด</translation>
     </message>
     <message>
         <source>A subtitle file can set its own limits in Script properties.</source>
-        <translation type="unfinished"></translation>
+        <translation>ไฟล์คำบรรยายสามารถกำหนดขีดจำกัดของตัวเองได้ในคุณสมบัติของสคริปต์</translation>
     </message>
     <message>
         <source>Splitting</source>
@@ -19097,27 +19097,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Reading limits</source>
-        <translation type="unfinished"></translation>
+        <translation>ขีดจำกัดการอ่าน</translation>
     </message>
     <message>
         <source>Use my settings</source>
-        <translation type="unfinished"></translation>
+        <translation>ใช้การตั้งค่าของฉัน</translation>
     </message>
     <message>
         <source>CPS warning</source>
-        <translation type="unfinished"></translation>
+        <translation>คำเตือน CPS</translation>
     </message>
     <message>
         <source>CPS error</source>
-        <translation type="unfinished"></translation>
+        <translation>ข้อผิดพลาด CPS</translation>
     </message>
     <message>
         <source>Characters per line</source>
-        <translation type="unfinished"></translation>
+        <translation>อักขระต่อบรรทัด</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished"></translation>
+        <translation>จำนวนบรรทัด</translation>
     </message>
     <message>
         <source>Save</source>

@@ -4293,14 +4293,14 @@ Output device: %2</source>
     </message>
     <message numerus="yes">
         <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>ஒவ்வொரு வரியிலும் உள்ள எழுத்துகளின் எண்ணிக்கை. அதை %1 அல்லது அதற்குக் குறைவாக, அதிகபட்சம் %n வரியில் வைக்கவும்.</numerusform>
+            <numerusform>ஒவ்வொரு வரியிலும் உள்ள எழுத்துகளின் எண்ணிக்கை. அதை %1 அல்லது அதற்குக் குறைவாக, அதிகபட்சம் %n வரிகளில் வைக்கவும்.</numerusform>
         </translation>
     </message>
     <message>
         <source>Characters per second. Keep it at %1 or under.</source>
-        <translation type="unfinished"></translation>
+        <translation>நொடிக்கு எழுத்துகள். அதை %1 அல்லது அதற்குக் குறைவாக வைக்கவும்.</translation>
     </message>
 </context>
 <context>
@@ -14133,31 +14133,31 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>CPS warning</source>
-        <translation type="unfinished"></translation>
+        <translation>CPS எச்சரிக்கை</translation>
     </message>
     <message>
         <source>Lines that read faster are tinted, more strongly up to the error level.</source>
-        <translation type="unfinished"></translation>
+        <translation>இதைவிட வேகமாகப் படிக்கப்படும் வரிகள் நிறமிடப்படுகின்றன; பிழை நிலை வரை நிறம் மேலும் அடர்கிறது.</translation>
     </message>
     <message>
         <source>CPS</source>
-        <translation type="unfinished"></translation>
+        <translation>CPS</translation>
     </message>
     <message>
         <source>CPS error</source>
-        <translation type="unfinished"></translation>
+        <translation>CPS பிழை</translation>
     </message>
     <message>
         <source>Characters per line</source>
-        <translation type="unfinished"></translation>
+        <translation>வரிக்கு எழுத்துகள்</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished"></translation>
+        <translation>வரிகள்</translation>
     </message>
     <message>
         <source>A subtitle file can set its own limits in Script properties.</source>
-        <translation type="unfinished"></translation>
+        <translation>ஒரு வசனக் கோப்பு தனது சொந்த வரம்புகளை ஸ்கிரிப்ட் பண்புகளில் அமைக்கலாம்.</translation>
     </message>
     <message>
         <source>Splitting</source>
@@ -19257,27 +19257,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Reading limits</source>
-        <translation type="unfinished"></translation>
+        <translation>வாசிப்பு வரம்புகள்</translation>
     </message>
     <message>
         <source>Use my settings</source>
-        <translation type="unfinished"></translation>
+        <translation>என் அமைப்புகளைப் பயன்படுத்து</translation>
     </message>
     <message>
         <source>CPS warning</source>
-        <translation type="unfinished"></translation>
+        <translation>CPS எச்சரிக்கை</translation>
     </message>
     <message>
         <source>CPS error</source>
-        <translation type="unfinished"></translation>
+        <translation>CPS பிழை</translation>
     </message>
     <message>
         <source>Characters per line</source>
-        <translation type="unfinished"></translation>
+        <translation>வரிக்கு எழுத்துகள்</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation type="unfinished"></translation>
+        <translation>வரிகள்</translation>
     </message>
     <message>
         <source>Save</source>
