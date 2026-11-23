@@ -1,8 +1,9 @@
 #pragma once
 
-// One plugin in its own hikari-plugin-helper. Work runs one unit at a time: the load, a command
-// or an event. A unit that runs longer than the time limit, not counting time HikariSub spends
-// answering it, is force stopped. After a stop or a crash the next command starts a new helper.
+// One plugin in its own hikari-plugin-helper. Work runs one unit at a time: the load, a command,
+// an event or a timer callback. A unit that runs longer than stillWorkingMs, not counting time
+// HikariSub spends answering it, is reported as still working; nothing stops it but forceStop.
+// After a stop or a crash the next command starts a new helper.
 
 #include "hikari/backends/helper_host.h"
 #include "hikari/backends/plugin_protocol.h"
@@ -13,6 +14,8 @@
 #include <QTimer>
 
 #include <deque>
+#include <expected>
+#include <map>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -28,11 +31,11 @@ class PluginProcess : public QObject {
     Q_OBJECT
 public:
     enum class State { Idle, Starting, Ready, LoadFailed, Stopped };
-    enum class StopReason { TimeLimit, ForceStopped, Crashed };
+    enum class StopReason { ForceStopped, Crashed };
     Q_ENUM(StopReason)
 
     struct Limits {
-        int timeLimitMs = 10'000;
+        int stillWorkingMs = 10'000;
         std::size_t maxQueued = 64;
     };
 
@@ -59,12 +62,20 @@ public:
     // Every later helper starts confined to `profile`; where that can't be enforced it still runs.
     void setSandbox(std::optional<sandbox::Profile> profile) { m_sandbox = std::move(profile); }
     bool sandboxed() const { return m_sandbox.has_value(); }
+    // The background permission: timers answer not_granted without it.
+    void setBackground(bool background) { m_background = background; }
 
     // Also tries again after a failed load.
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.
     bool run(const std::string &command);
+    // What a format call gives: the file's bytes for an export, the JSON {lines, styles, info} for an import;
+    // else the error to show. Called once, also when the helper stops first.
+    using FormatDone = std::function<void(std::expected<std::string, QString>)>;
+    // Queued and started as run is.
+    bool exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson, FormatDone done);
+    bool importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
     bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.
@@ -73,6 +84,12 @@ public:
     // The running command's job, after hikari.job.begin: hikari.job.cancelled answers true from now on.
     void cancelJob();
     bool inJob() const { return m_job; }
+    // The running unit passed stillWorkingMs and isn't a job.
+    bool stillWorking() const { return m_stillWorking; }
+    bool inTimer() const { return m_running && m_running->kind == Unit::Kind::Timer; }
+    // What the running unit is: "load", "timer", or the command's or event's name; empty when idle.
+    QString work() const;
+    std::size_t timerCount() const { return m_timers.size(); }
 
     State state() const { return m_state; }
     QString loadError() const { return m_loadError; }
@@ -92,7 +109,9 @@ signals:
     // crash gives stopped or loadFailed instead.
     void unitEnded();
     void stopped(hikari::backends::PluginProcess::StopReason reason);
-    // A command called hikari.job.begin: from then it has no time limit, until it ends.
+    // The running unit passed stillWorkingMs, a job began or ended, or a unit started or ended.
+    void workChanged();
+    // A command called hikari.job.begin.
     void jobBegan(const QString &command, const QString &title);
     // fraction < 0: it can't tell how far it is.
     void jobProgress(double fraction, const QString &text);
@@ -100,11 +119,20 @@ signals:
 
 private:
     struct Unit {
-        enum class Kind { Load, Command, Event } kind = Kind::Command;
+        enum class Kind { Load, Command, Event, Timer, Export, Import } kind = Kind::Command;
         std::string name;
         std::string json;
-        std::string key;
+        std::string key; // Event: the coalesce key; Export: the options; Import: the file name
+        FormatDone done;
+        std::int64_t timer = 0;
+        bool last = false;
     };
+    struct Timer {
+        std::unique_ptr<QTimer> clock;
+        bool repeat = false;
+    };
+    bool enqueue(Unit unit);
+    void failPending(const QString &message);
     void startHelper();
     void next();
     void onEvent(std::expected<helper::Event, helper::HostError> event);
@@ -115,6 +143,8 @@ private:
     void pauseWatchdog();
     void resumeWatchdog();
     std::string job(const std::string &operation, const std::string &json);
+    std::string timer(const std::string &operation, const std::string &json);
+    void fire(std::int64_t id);
     void endJob();
 
     QString m_helperPath;
@@ -138,6 +168,10 @@ private:
     QTimer m_watchdog;
     bool m_job = false;
     bool m_jobCancelled = false;
+    bool m_stillWorking = false;
+    bool m_background = false;
+    std::map<std::int64_t, Timer> m_timers;
+    std::int64_t m_nextTimer = 1;
 };
 
 }

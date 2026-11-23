@@ -78,6 +78,7 @@ public:
 
     Q_INVOKABLE void open();
     Q_INVOKABLE void close();
+    bool isOpen() const { return m_open; }
     Q_INVOKABLE void setStyles(const QString &romaji, const QString &kanji);
     void documentEdited();
 

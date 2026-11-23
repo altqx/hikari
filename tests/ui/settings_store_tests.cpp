@@ -132,7 +132,8 @@ private slots:
         const toml::table settings = tomlOf(file);
         QCOMPARE(settings["grid"]["hideColumns"].value_or(std::int64_t{0}),
                  std::get<std::int64_t>(sampleFor(*application::findSetting("grid.hideColumns"))));
-        QVERIFY(settings["appearance"]["highContrastBlack"]["accent"].is_string());
+        QVERIFY(settings["appearance"]["colours"].is_array());
+        QVERIFY(settings["appearance"]["darkTheme"].is_string());
         QVERIFY(settings["toolbar"]["actions"].is_array());
         QVERIFY(settings["editor"]["tagButton"].is_array());
         QVERIFY(!settings["program"]["theme"]);
@@ -628,7 +629,7 @@ private slots:
         }
         {
             SettingsStore store(file);
-            QCOMPARE(store.text("appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
+            QCOMPARE(store.list("appearance.colours"), QStringList{QStringLiteral("highContrastBlack/accent=#00FF00")});
             QVERIFY(store.boolean("audio.spectrumOn"));
             QCOMPARE(store.integer("workspace.audioBoxHeight"), 230);
         }
@@ -656,6 +657,24 @@ private slots:
         writeAll(file, "version = 1\n\n[automation]\ntrustedFolders = [\"/old\"]\n\n[trust]\nfolders = [\"/new\"]\n");
         SettingsStore store(file);
         QCOMPARE(store.list("trust.folders"), QStringList{QStringLiteral("/new")});
+    }
+
+    void oldAccentAndColourSettingsFoldIntoTheThemeLists()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        writeAll(file, "version = 1\n\n[appearance]\ntheme = \"light\"\nlightAccent = \"blue\"\ndarkAccent = \"purple\"\n"
+                       "accents = [\"dark=red\"]\n\n[appearance.highContrastWhite]\nborder = \"#123456\"\n");
+        {
+            SettingsStore store(file);
+            QCOMPARE(store.list("appearance.accents"), (QStringList{QStringLiteral("dark=red"), QStringLiteral("light=blue")}));
+            QCOMPARE(store.list("appearance.colours"), QStringList{QStringLiteral("highContrastWhite/line=#123456")});
+            QCOMPARE(store.text("appearance.theme"), QStringLiteral("light"));
+        }
+        const QByteArray text = readAll(file);
+        QVERIFY(!text.contains("lightAccent"));
+        QVERIFY(!text.contains("darkAccent"));
+        QVERIFY(!text.contains("border"));
     }
 
     void anInisTrustedScriptFoldersBecomeTrustedFolders()

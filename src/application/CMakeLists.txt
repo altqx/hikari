@@ -14,7 +14,8 @@ target_sources(hikari_application PRIVATE kana.cpp include/hikari/application/ka
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
 target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 target_sources(hikari_application PRIVATE furigana.cpp include/hikari/application/furigana.h)
-target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h)
+target_sources(hikari_application PRIVATE karaoke_presets.cpp include/hikari/application/karaoke_presets.h
+    plugin_content.cpp include/hikari/application/plugin_content.h)
 target_sources(hikari_application PRIVATE karaoke_templates.cpp include/hikari/application/karaoke_templates.h)
 target_sources(hikari_application PRIVATE karaoke_syllables.cpp include/hikari/application/karaoke_syllables.h)
 target_sources(hikari_application PRIVATE node_catalogue.cpp node_graph.cpp node_graph_library.cpp node_validation.cpp karaoke_layout.cpp node_graph_editing.cpp node_graph_presets.cpp
@@ -92,6 +93,7 @@ set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
 target_sources(hikari_application PRIVATE video_fullscreen.cpp)
 target_sources(hikari_application PRIVATE video_timing.cpp line_retime.h timing_helpers.cpp)
 target_sources(hikari_application PRIVATE center_times.cpp)
+target_sources(hikari_application PRIVATE jump_target.cpp include/hikari/application/jump_target.h)
 target_sources(hikari_application PRIVATE align_to_video.cpp)
 target_sources(hikari_application PRIVATE video_analysis.cpp)
 target_sources(hikari_application PRIVATE qc_notes.cpp)

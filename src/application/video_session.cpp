@@ -124,6 +124,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         }
         m_streamTimeline = core::FrameTimeline::indexed(m_streamStarts);
         m_keyframes = opened->keyframes;
+        m_videoKeyframes = opened->keyframes;
         m_hasAudio = opened->firstAudioTrack >= 0;
         m_audioTrack = chosen >= 0 ? chosen : opened->firstAudioTrack;
         const auto ordinal = std::find(opened->audioTracks.begin(), opened->audioTracks.end(), m_audioTrack);
@@ -176,6 +177,7 @@ void VideoSession::close()
     m_streamStarts.clear();
     m_streamTimeline.reset();
     m_keyframes.clear();
+    m_videoKeyframes.clear();
     m_hasAudio = false;
     m_audioTrack = -1;
     m_audioOrdinal = -1;

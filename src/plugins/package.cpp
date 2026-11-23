@@ -54,9 +54,25 @@ std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::ve
     return std::nullopt;
 }
 
+std::optional<PackageProblem> contentProblem(const std::vector<ContentFile> &content, const ContentFileCheck &check,
+                                            const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    for (const ContentFile &item : content) {
+        const auto file = std::ranges::find(files, item.path, &PackageFile::path);
+        if (file == files.end())
+            return PackageProblem{Kind::MissingContent, item.path, {}, {}};
+        if (check)
+            if (auto refused = check(file->data))
+                return PackageProblem{Kind::BadContent, item.path, {}, std::move(*refused)};
+    }
+    return std::nullopt;
 }
 
-std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion)
+}
+
+std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion,
+                                                   const ContentFileChecks &checks)
 {
     using Kind = PackageProblem::Kind;
     if (files.size() > kMaxPackageFiles)
@@ -93,6 +109,10 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
         return std::unexpected(std::move(*problem));
     if (auto problem = qmlProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
+    for (auto problem : {contentProblem(manifest->styles, checks.styleCatalogue, files),
+                         contentProblem(manifest->karaokePresets, checks.karaokePreset, files)})
+        if (problem)
+            return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};
 }
 

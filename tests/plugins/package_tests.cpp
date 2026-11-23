@@ -307,6 +307,38 @@ TEST(PluginPackage, AQmlPanelNeedsItsFileAndOnlyTheSupportedImports)
         << "a package without QML panels isn't read for imports";
 }
 
+TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
+{
+    constexpr std::string_view manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0",
+        "api": 1, "main": "lua/main.lua", "authors": ["Ana"],
+        "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
+                        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})";
+    const auto files = [&](std::vector<PackageFile> extra) {
+        std::vector<PackageFile> out{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
+        out.insert(out.end(), extra.begin(), extra.end());
+        return out;
+    };
+    const PackageFile styles{"styles/signs.sty", bytes("Style: Sign,Arial,20")};
+    const PackageFile preset{"presets/glow.ass", bytes("[Script Info]")};
+
+    const PackageProblem missing = problem(files({styles}));
+    EXPECT_EQ(missing.kind, Kind::MissingContent);
+    EXPECT_EQ(missing.path, "presets/glow.ass");
+    EXPECT_TRUE(openPackage(files({styles, preset}), 1)) << "with no checks set, a file need only be there";
+
+    ContentFileChecks checks;
+    checks.styleCatalogue = [](std::span<const std::byte>) { return std::optional<std::string>(); };
+    checks.karaokePreset = [](std::span<const std::byte> data) {
+        return data.size() < 20 ? std::optional<std::string>("is too short") : std::nullopt;
+    };
+    const auto refused = openPackage(files({styles, preset}), 1, checks);
+    ASSERT_FALSE(refused);
+    EXPECT_EQ(refused.error().kind, Kind::BadContent);
+    EXPECT_EQ(refused.error().path, "presets/glow.ass");
+    EXPECT_EQ(refused.error().detail, "is too short");
+    EXPECT_TRUE(openPackage(files({styles, {"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")}}), 1, checks));
+}
+
 TEST(PluginPackage, TheImportRuleReadsQmlAndScriptsAsWritten)
 {
     const std::pair<const char *, const char *> allowed[] = {

@@ -6,6 +6,7 @@
 #include "hikari/app/plugin_files.h"
 #include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_network.h"
+#include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/installer.h"
@@ -13,6 +14,7 @@
 
 #include <QNetworkAccessManager>
 #include <QObject>
+#include <QSet>
 #include <QTimer>
 #include <QVariantList>
 
@@ -37,6 +39,10 @@ class PluginRuntime : public QObject {
     Q_PROPERTY(QVariantList commands READ commands NOTIFY commandsChanged)
     // Commands running as jobs, newest first: {plugin, name, title, fraction (< 0: unknown), text, cancelling, stuck}.
     Q_PROPERTY(QVariantList jobs READ jobs NOTIFY jobsChanged)
+    // Plugins at work worth showing, by plugin name: {plugin, name, what, background, stillWorking}. stillWorking: a
+    // load, command, event or timer callback past 10 seconds that isn't a job. A background plugin is listed while a
+    // timer callback or a job runs too.
+    Q_PROPERTY(QVariantList working READ working NOTIFY workingChanged)
     Q_PROPERTY(int marksRevision READ marksRevision NOTIFY marksChanged)
     Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
     // Restricted plugins run in an operating-system sandbox here.
@@ -52,7 +58,7 @@ public:
         ui::LogController *log = nullptr;
         std::function<QString()> language; // "" for English
         backends::PluginProcess::Limits limits;
-        std::size_t memoryLimit = 256u << 20;
+        std::size_t memoryLimit = std::size_t(2) << 30;
         // How long a plugin waits for another plugin's edit before it is told HikariSub is busy.
         int transactionWaitMs = 5000;
         // How long a cancelled job may run on before Stop is offered.
@@ -77,6 +83,8 @@ public:
         application::RowMarks *marks = nullptr;
         // A Document's tab title, for the plugin manager's Marks row.
         std::function<QString(application::DocumentId)> documentTitle;
+        PluginPrograms *programs = nullptr;
+        QString lowRightsHelper;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -94,7 +102,10 @@ public:
     // False when no running plugin has the command.
     Q_INVOKABLE bool run(const QString &commandId);
     Q_INVOKABLE void forceStop(const QString &pluginId);
+    // As forceStop, but a background plugin then stays stopped until restart or the next HikariSub start.
+    Q_INVOKABLE void stopWorking(const QString &pluginId);
     QVariantList jobs() const;
+    QVariantList working() const { return m_working; }
     // Asks the plugin's job to stop; when it hasn't 5 seconds later, the job is stuck and Stop is offered.
     Q_INVOKABLE void cancelJob(const QString &pluginId);
     // Per Document the plugin marks Lines in: {document, file, count}.
@@ -117,11 +128,30 @@ public:
     backends::PluginProcess *process(const QString &pluginId) const;
     // Running a command or an event right now.
     bool busy(const QString &pluginId) const;
+    QSet<QString> runningIds() const;
+    // {id, name} of each running plugin whose manifest asks for presence.
+    QVariantList presencePlugins() const;
+
+    struct Format {
+        std::string id; // plugin:<plugin id>/<format id>
+        std::string plugin;
+        std::string pluginName;
+        plugins::FormatContribution format;
+    };
+    // The formats of the plugins that run, in the order the plugins were installed.
+    std::vector<Format> formats() const;
+    std::optional<Format> format(const std::string &id) const;
+    // False when the format's plugin doesn't run or can't take more work; else `done` is called once.
+    bool exportDocument(const Format &format, const api::Json &snapshot, const api::Json &options,
+                        backends::PluginProcess::FormatDone done);
+    bool importFile(const Format &format, std::string bytes, const std::string &fileName,
+                    backends::PluginProcess::FormatDone done);
 
 signals:
     void commandsChanged();
     void windowsChanged();
     void jobsChanged();
+    void workingChanged();
     void marksChanged();
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
@@ -133,11 +163,13 @@ private:
                backends::PluginProcess::ServiceReply reply);
     void unsubscribe(Running &plugin);
     void relist();
+    std::vector<const Running *> byName() const;
     void lock(Running &plugin, backends::PluginProcess::ServiceReply reply);
     void unlock(Running &plugin);
     void releaseLock(Running &plugin);
     void endAccess(Running &plugin);
     void wireQmlPanels();
+    void wirePrograms();
     std::optional<std::string> setSetting(const std::string &plugin, const std::string &setting, const api::Json &value);
     const plugins::ProjectPlugins *windowProject(int shellWindow) const;
     api::Json storedSettings(const std::string &plugin) const;
@@ -151,6 +183,7 @@ private:
     Wiring m_wiring;
     std::optional<plugins::Installer> m_installer;
     std::map<std::string, std::unique_ptr<Running>> m_plugins;
+    std::vector<std::string> m_installOrder;
     Running *m_lockHolder = nullptr;
     std::deque<LockWaiter> m_lockWaiters;
     QVariantList m_commands;
@@ -171,6 +204,8 @@ private:
     std::vector<Job> m_jobs;
     int m_marksRevision = 0;
     void endJob(const std::string &plugin);
+    void rework();
+    QVariantList m_working;
     int m_windowsRevision = 0;
 };
 

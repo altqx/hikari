@@ -604,6 +604,15 @@ void AudioController::setSettingsStore(SettingsStore *store)
                 QStringLiteral("audio.drawSelectionBackground"), QStringLiteral("audio.drawVideoPosition"),
                 QStringLiteral("audio.drawKeyframes"),          QStringLiteral("audio.lineBoundariesThickness"),
                 QStringLiteral("audio.inactiveLinesDisplayMode")};
+            if (id == QStringLiteral("audio.spectrumCurve")) {
+                const int curve = std::clamp(static_cast<int>(m_store->integer("audio.spectrumCurve")), 0, 2);
+                if (curve != m_spectrumCurve) {
+                    m_spectrumCurve = curve;
+                    emit boxControlsChanged();
+                    redraw();
+                }
+                return;
+            }
             if (!kDisplay.contains(id))
                 return;
             loadDisplayOptions();
@@ -645,7 +654,7 @@ void AudioController::loadBoxControls()
         link = m_store->boolean("audio.link");
         m_autoScroll = m_store->boolean("audio.autoScroll");
         m_spectrumOn = m_store->boolean("audio.spectrumOn");
-        m_spectrumNonLinear = m_store->boolean("audio.spectrumNonLinearOn");
+        m_spectrumCurve = std::clamp(static_cast<int>(m_store->integer("audio.spectrumCurve")), 0, 2);
         m_hasKara = m_store->boolean("audio.karaoke");
         m_karaAuto = m_store->boolean("audio.karaokeSplitMode");
         m_syncVideo = m_store->boolean("audio.syncVideo");
@@ -762,9 +771,14 @@ void AudioController::setSpectrumOn(bool on)
 
 void AudioController::setSpectrumNonLinear(bool on)
 {
-    m_spectrumNonLinear = on;
+    setSpectrumCurve(int(on ? application::SpectrumCurve::Speech : application::SpectrumCurve::Linear));
+}
+
+void AudioController::setSpectrumCurve(int curve)
+{
+    m_spectrumCurve = std::clamp(curve, 0, 2);
     if (m_store)
-        m_store->set("audio.spectrumNonLinearOn", on);
+        m_store->set("audio.spectrumCurve", m_spectrumCurve);
     emit boxControlsChanged();
     redraw();
 }
@@ -798,12 +812,12 @@ std::shared_ptr<const application::AudioImage> AudioController::spectrumImage()
         m_spectrumImage.reset();
     }
     const SpectrumKey key{m_box.serial(), m_view.position() * m_view.samples(), w, h, m_view.samples(),
-                          m_view.samplesPercent(), m_view.scale(), m_spectrumNonLinear};
+                          m_view.samplesPercent(), m_view.scale(), m_spectrumCurve};
     if (m_spectrumImage && key == m_spectrumKey)
         return m_spectrumImage;
     m_spectrumKey = key;
     m_spectrum->setScaling(key.scale);
-    m_spectrum->setNonLinear(key.nonLinear);
+    m_spectrum->setCurve(static_cast<application::SpectrumCurve>(key.curve));
     auto image = std::make_shared<application::AudioImage>();
     image->width = w;
     image->height = h;
@@ -952,6 +966,7 @@ bool AudioController::runHotkey(const QString &symbol)
         {QStringLiteral("AUDIO_PLAY_500MS_LAST"), [](AudioController &c) { c.focusAndPlay(PlayMode::Last500); }},
         {QStringLiteral("AUDIO_PLAY_TO_END"), [](AudioController &c) { c.focusAndPlay(PlayMode::ToEnd); }},
         {QStringLiteral("AUDIO_COMMIT"), [](AudioController &c) { c.commit(); }},
+        {QStringLiteral("AUDIO_COMMIT_DEFAULT"), [](AudioController &c) { c.commitWithDefaultTiming(); }},
         {QStringLiteral("AUDIO_GOTO"), [](AudioController &c) { c.goToSelection(); }},
         {QStringLiteral("AUDIO_GOTO_START"), [](AudioController &c) { c.goToSelectionStart(); }},
         {QStringLiteral("AUDIO_GOTO_END"), [](AudioController &c) { c.goToSelectionEnd(); }},
@@ -1098,6 +1113,41 @@ void AudioController::commit()
         return;
     emit focusRequested();
     commitChanges(!m_store || m_store->boolean("audio.nextLineOnCommit"), true, false);
+}
+
+void AudioController::commitWithDefaultTiming()
+{
+    if (tapBusy())
+        return;
+    emit focusRequested();
+    const int before = m_active, end = m_endMs;
+    if (!commitChanges(true, true, false) || m_active == before || m_hasKara)
+        return;
+    m_startMs = end;
+    m_endMs = end + static_cast<int>(m_store ? m_store->integer("audio.defaultDuration") : 5000);
+    if (m_hooks.commit)
+        m_hooks.commit({.startMs = m_startMs,
+                        .endMs = m_endMs,
+                        .save = false,
+                        .nextLine = false,
+                        .holding = m_timing.hold() != 0,
+                        .adjacent = application::AudioAdjacent::None});
+    syncCommittedStart();
+    m_needCommit = true;
+    if (timingOptions().autoCommit)
+        commitChanges(false, true, false);
+    update();
+}
+
+std::optional<bool> AudioController::nudgeSyllableEnd(int deltaMs, bool shiftFollowing)
+{
+    if (tapBusy() || !m_hasKara || !loaded() || !m_karaoke.count())
+        return std::nullopt;
+    if (!m_karaoke.moveSyllableEnd(m_karaoke.current, deltaMs, shiftFollowing, committedStart()))
+        return false;
+    commitKaraoke();
+    redraw();
+    return true;
 }
 
 void AudioController::changeLine(int delta)

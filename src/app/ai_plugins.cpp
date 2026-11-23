@@ -74,7 +74,7 @@ std::expected<Package, std::string> readPackage(const QString &path)
             if (auto manifest = plugins::parseManifest(std::string_view(text.constData(), std::size_t(text.size())),
                                                        std::numeric_limits<std::int64_t>::max())) {
                 main = manifest->main;
-                for (const plugins::Contribution &c : manifest->commands)
+                for (const plugins::Command &c : manifest->commands)
                     out.commands.push_back(c.title);
             }
         out.files.push_back({utf8(entry.filePath), text.toStdString()});
@@ -149,6 +149,15 @@ std::vector<api::PluginState> AiPlugins::plugins() const
         }
         out.push_back(std::move(state));
     }
+    return out;
+}
+
+std::vector<api::FormatInfo> AiPlugins::formats() const
+{
+    std::vector<api::FormatInfo> out;
+    if (PluginRuntime *runtime = m_wiring.runtime ? m_wiring.runtime() : nullptr)
+        for (auto &f : runtime->formats())
+            out.push_back({f.id, f.format.title, f.format.extensions, f.format.imports, f.format.exports, f.plugin});
     return out;
 }
 

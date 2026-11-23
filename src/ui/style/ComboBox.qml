@@ -1,11 +1,11 @@
-// Fusion's outline (the window colour darkened) all but vanishes on black panels.
 import QtQuick
 import QtQuick.Controls.Fusion as F
-import QtQuick.Controls.Fusion.impl as FI
 import QtQuick.Templates as T
 
 F.ComboBox {
     id: control
+    leftPadding: control.mirrored ? 26 : 8
+    rightPadding: control.mirrored ? 8 : 26
     delegate: F.MenuItem {
         id: choice
         required property var model
@@ -17,25 +17,41 @@ F.ComboBox {
         font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal
         highlighted: control.highlightedIndex === index
         hoverEnabled: control.hoverEnabled
+        implicitHeight: 24
+        background: Rectangle {
+            visible: StyleColours.themed ? choice.highlighted || choice.down : false
+            color: StyleColours.select
+            StateOverlay { control: choice; pressed: choice.down; visible: StyleColours.themed && choice.down }
+        }
         contentItem: Text {
             text: choice.text
             // File text as markup would fetch an <img> (and Qt's IconLabel crashes laying one out).
             textFormat: Text.PlainText
             font: choice.font
-            color: choice.down || choice.highlighted ? F.Fusion.highlightedText(choice.palette) : choice.palette.text
+            color: !StyleColours.themed ? (choice.down || choice.highlighted ? F.Fusion.highlightedText(choice.palette) : choice.palette.text)
+                : StyleColours.text
             elide: Text.ElideRight
             verticalAlignment: Text.AlignVCenter
         }
     }
-    background: FI.ButtonPanel {
-        implicitWidth: 120
-        implicitHeight: 24
+    indicator: Chevron {
+        objectName: "comboChevron"
+        x: control.mirrored ? 8 : control.width - width - 8
+        y: (control.height - height) / 2
+        width: 10
+        height: 5
+        color: !StyleColours.themed ? control.palette.buttonText
+            : control.enabled ? StyleColours.muted : StyleColours.disabled
+    }
+    background: FieldBackground {
         control: control
         visible: !control.flat || control.down
-        highlighted: control.contentItem.activeFocus
-        border.color: !control.enabled ? control.palette.mid
-            : highlighted ? F.Fusion.highlightedOutline(control.palette) : (StyleColours.themed ? StyleColours.control : control.palette.mid)
-        FocusFrame { control: control; shown: control.visualFocus }
+        open: control.popup.visible
+        editing: control.editable && control.activeFocus
+        color: !StyleColours.themed ? control.palette.button
+            : control.editable ? StyleColours.field : StyleColours.raised
+        keyboardFocus: control.visualFocus
+        StateOverlay { control: control; pressed: control.down; visible: !control.editable && StyleColours.themed && control.enabled && (control.down || control.hovered) }
     }
     // Fusion's inner text field is the box's Edit to UI Automation; it needs the box's name.
     Binding {
@@ -76,6 +92,11 @@ F.ComboBox {
     Binding {
         target: control.popup ? control.popup.background : null
         property: "border.color"
-        value: control.palette.mid
+        value: StyleColours.themed ? StyleColours.line : control.palette.mid
+    }
+    Binding {
+        target: control.popup ? control.popup.background : null
+        property: "radius"
+        value: 6
     }
 }

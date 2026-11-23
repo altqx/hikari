@@ -31,21 +31,32 @@ Rectangle {
     Accessible.role: Accessible.Grouping
     Accessible.name: onLeft ? qsTr("Left side bar") : qsTr("Right side bar")
 
+    readonly property int iconPitch: 24 + stripRow.spacing
+
     Rectangle {
         id: stripBack
         objectName: "sideBarStrip"
         anchors { left: parent.left; right: parent.right; top: parent.top }
-        height: 35
-        color: bar.dropTarget ? Color.transparent(Theme.accent, 0.22) : Theme.raised
+        height: Theme.headerHeight
+        color: bar.dropTarget ? Color.transparent(Theme.accent, 0.3) : Theme.panel
         border.width: bar.dropTarget ? 1 : 0
         border.color: Theme.accent
         Accessible.role: Accessible.PageTabList
-        Accessible.name: bar.Accessible.name
+        Accessible.name: bar.shownEntry ? bar.shownEntry.title : bar.Accessible.name
+
+        TapHandler {
+            acceptedButtons: Qt.RightButton
+            onTapped: eventPoint => {
+                const at = stripRow.mapFromItem(stripBack, eventPoint.position)
+                if (bar.shownEntry !== null && !stripRow.childAt(at.x, at.y))
+                    bar.menuRequested(menuButton)
+            }
+        }
 
         Row {
             id: stripRow
             anchors { left: parent.left; leftMargin: 4; verticalCenter: parent.verticalCenter }
-            spacing: 2
+            spacing: 4
             Repeater {
                 model: bar.entries
                 delegate: IconToolButton {
@@ -56,8 +67,8 @@ Rectangle {
                     objectName: "sideBarIcon_" + modelData.name
                     iconRole: modelData.iconRole
                     text: modelData.plugin ? qsTr("%1 (plugin)").arg(modelData.title) : modelData.title
-                    implicitWidth: 30
-                    implicitHeight: 28
+                    implicitWidth: 24
+                    implicitHeight: 24
                     checkable: false
                     highlighted: current
                     opacity: bar.dragging === modelData.name ? 0.35 : 1
@@ -66,18 +77,13 @@ Rectangle {
                     Accessible.checkable: true
                     Accessible.checked: current
                     background: Rectangle {
-                        color: icon.current ? Theme.select : icon.hovered ? Color.transparent(Theme.select, 0.6) : "transparent"
+                        radius: Theme.radius
+                        color: icon.current ? Theme.select : icon.hovered ? Theme.hover : "transparent"
                         border.width: icon.visualFocus ? 1 : 0
                         border.color: Theme.focus
                         Rectangle {
-                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom; leftMargin: 3; rightMargin: 3; bottomMargin: -3 }
-                            height: 2
-                            color: Theme.accent
-                            visible: icon.current
-                        }
-                        Rectangle {
                             width: 6; height: 6; radius: 3
-                            anchors { right: parent.right; bottom: parent.bottom; margins: 4 }
+                            anchors { right: parent.right; bottom: parent.bottom; margins: 2 }
                             color: Theme.accent
                             visible: icon.modelData.plugin === true
                         }
@@ -113,67 +119,34 @@ Rectangle {
             height: 22
             anchors.verticalCenter: parent.verticalCenter
             color: Theme.accent
-            x: stripRow.x + Math.min(bar.dropIndex, bar.entries.length) * 32 - 2
-        }
-        Rectangle {
-            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            height: 1
-            color: Theme.line
-        }
-    }
-
-    Rectangle {
-        id: header
-        objectName: "sideBarHeader"
-        visible: bar.shownEntry !== null
-        anchors { left: parent.left; right: parent.right; top: stripBack.bottom }
-        height: visible ? 35 : 0
-        color: Theme.field
-        Accessible.role: Accessible.TitleBar
-        Accessible.name: bar.shownEntry ? bar.shownEntry.title : ""
-        Label {
-            id: headerTitle
-            objectName: "sideBarTitle"
-            anchors { left: parent.left; leftMargin: 10; right: toolbarSlot.left; rightMargin: 6; verticalCenter: parent.verticalCenter }
-            text: bar.shownEntry ? bar.shownEntry.title : ""
-            color: Theme.text
-            font.bold: true
-            elide: Text.ElideRight
+            x: stripRow.x + Math.min(bar.dropIndex, bar.entries.length) * bar.iconPitch - 3
         }
         PanelToolbarSlot {
             id: toolbarSlot
-            toolbar: header.visible ? bar.toolbar : null
+            toolbar: bar.shownEntry !== null ? bar.toolbar : null
             anchors { right: menuButton.left; rightMargin: 4; verticalCenter: parent.verticalCenter }
-            height: parent.height - 1
-            readonly property real room: Math.max(0, header.width - menuButton.width - 32)
-            readonly property bool fits: toolbar !== null && room - 40 >= toolbar.implicitWidth
-            width: !toolbar ? 0 : fits ? toolbar.implicitWidth : Math.max(0, Math.min(32, room - 40))
+            height: parent.height
+            readonly property real room: Math.max(0, menuButton.x - 4 - stripRow.x - stripRow.width - 8)
+            readonly property bool fits: toolbar !== null && room >= toolbar.implicitWidth
+            width: !toolbar ? 0 : fits ? toolbar.implicitWidth : Math.max(0, Math.min(32, room))
         }
         DockMenuButton {
             id: menuButton
             objectName: "sideBarMenuButton"
-            anchors { right: parent.right; rightMargin: 6; verticalCenter: parent.verticalCenter }
+            visible: bar.shownEntry !== null
+            anchors { right: parent.right; rightMargin: 4; verticalCenter: parent.verticalCenter }
             panelTitle: bar.shownEntry ? bar.shownEntry.title : ""
             onClicked: bar.menuRequested(menuButton)
         }
-        TapHandler {
-            acceptedButtons: Qt.RightButton
-            onTapped: bar.menuRequested(menuButton)
-        }
         PanelFocusMark {
             shown: bar.panelFocused
-        }
-        Rectangle {
-            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            height: 1
-            color: Theme.line
         }
     }
 
     Item {
         id: slotItem
         objectName: "sideBarSlot"
-        anchors { left: parent.left; right: parent.right; top: header.bottom; bottom: parent.bottom }
+        anchors { left: parent.left; right: parent.right; top: stripBack.bottom; bottom: parent.bottom }
     }
 
     Label {
@@ -236,6 +209,6 @@ Rectangle {
     }
 
     function dropIndexAt(x) {
-        return Math.max(0, Math.min(entries.length, Math.round((x - stripRow.x) / 32)))
+        return Math.max(0, Math.min(entries.length, Math.round((x - stripRow.x) / iconPitch)))
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "file_write_queue.h"
 #include "hikari/application/tiers.h"
 
 #include <QByteArray>
@@ -158,6 +159,7 @@ public:
     bool menuHasFocus() const { return m_menuHasFocus; }
     bool modalOpen() const { return m_modalOpen; }
     bool hasBackup() const;
+    FileWriteQueue &fileWrites() { return m_writes; }
 
     static QByteArray envelope(const QByteArray &payload, const QString &preset = QStringLiteral("Editing"),
                                const QString &layout = {}, bool locked = false);
@@ -188,7 +190,10 @@ private:
     QByteArray serialiseWindow() const;
     bool restoreWindow(const QByteArray &payload, int options) const;
     bool restoreSavedFile();
+    bool writable(const WorkspaceArrangement &arrangement) const;
     bool write(const WorkspaceArrangement &arrangement);
+    FileWriteQueue::Write fileWrite(const WorkspaceArrangement &arrangement) const;
+    void wrote(const QByteArray &payload, bool written);
     bool buildPreset(const QString &name, bool inPlace);
     bool showArrangement(const WorkspaceArrangement &arrangement);
     WorkspaceArrangement shownArrangement() const;
@@ -270,6 +275,7 @@ private:
     bool m_modalOpen = false;
     QTimer m_screenCheck;
     std::optional<QByteArray> m_beforeNodeEffects;
+    FileWriteQueue m_writes;
 };
 
 }

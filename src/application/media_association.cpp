@@ -72,7 +72,7 @@ MediaAssociations resolveMediaAssociations(const core::Document &document, const
     const std::string dir = directoryOf(subtitlePath, windows);
     return {resolve(document, u8"Video File", dir, exists, windows),
             resolve(document, u8"Audio File", dir, exists, windows),
-            resolve(document, u8"Keyframes File", dir, exists, windows),
+            resolve(document, kKeyframesFileKey, dir, exists, windows),
             resolve(document, kTimecodesFileKey, dir, exists, windows)};
 }
 

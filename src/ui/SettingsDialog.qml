@@ -355,11 +355,12 @@ DialogWindow {
         questionLoader.active = true
         questionLoader.item.ask(options, done)
     }
-    function pickThemeColour(setting, colour, anchor, name) {
+    function pickThemeColour(theme, role, colour, anchor, name) {
         themeColourPopover.openFor(anchor, themeColourTarget, () => {
-            const now = values[setting] ?? colour
-            themeColourTarget.setting = setting
-            themeColourTarget.before = now
+            const now = colour
+            themeColourTarget.theme = theme
+            themeColourTarget.role = role
+            themeColourTarget.before = values["appearance.colours"] ?? []
             colourPicker.opened("settings")
             const c = colourPicker.htmlColour(now)
             return { r: c.r, g: c.g, b: c.b, a: 0 }
@@ -1884,9 +1885,23 @@ DialogWindow {
                             SettingNumber { setting: "audio.leadInValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-in") }
                             SettingNumber { setting: "audio.leadOutValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-out") }
                         }
+                        SettingsRow {
+                            host: dialog
+                            setting: "audio.defaultDuration"
+                            SettingNumber { setting: "audio.defaultDuration"; from: 100; to: 60000; unit: qsTr("ms"); name: qsTr("Default line duration") }
+                        }
                         SettingCheck { setting: "audio.lockScrollOnCursor" }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges" }
                         SettingCheck { setting: "audio.autoFocus" }
+                        SettingsRow {
+                            host: dialog
+                            setting: "audio.timingKeysEverywhere"
+                            SettingChoice {
+                                setting: "audio.timingKeysEverywhere"
+                                model: [qsTr("Never"), qsTr("In the Timing layout"), qsTr("Always")]
+                                Accessible.name: qsTr("Timing keys work in every panel")
+                            }
+                        }
                         SettingCheck { setting: "audio.playMono" }
                     }
                     Section {
@@ -1908,6 +1923,15 @@ DialogWindow {
                                 setting: "audio.inactiveLinesDisplayMode"
                                 model: [qsTr("None"), qsTr("Before and after the active"), qsTr("All visible")]
                                 Accessible.name: qsTr("Inactive lines")
+                            }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "audio.spectrumCurve"
+                            SettingChoice {
+                                setting: "audio.spectrumCurve"
+                                model: [qsTr("Linear"), qsTr("Speech"), qsTr("Logarithmic")]
+                                Accessible.name: qsTr("Frequency curve")
                             }
                         }
                     }
@@ -2451,13 +2475,11 @@ DialogWindow {
                             setting: "privacy.alwaysSendCrashReports"
                             visible: !dialog.crashReports || dialog.crashReports.canSend
                         }
-                        SettingCheck { setting: "privacy.discordPresence" }
-                        SettingCheck {
-                            setting: "privacy.discordFileName"
-                            enabled: dialog.values["privacy.discordPresence"] === true
-                            Layout.leftMargin: 22
-                        }
                         SettingCheck { setting: "plugins.network" }
+                    }
+                    Section {
+                        key: "updates.discord"
+                        DiscordSettingsSection { dialog: dialog; scroller: rowsView.contentItem }
                     }
                 }
 
@@ -2782,15 +2804,17 @@ DialogWindow {
 
     QtObject {
         id: themeColourTarget
-        property string setting: ""
-        property string before: ""
+        property string theme: ""
+        property string role: ""
+        property var before: []
         function changeColour(c) {
-            dialog.put(setting, dialog.colourPicker.htmlText(c))
+            dialog.put("appearance.colours", Theme.withUserColour(dialog.values["appearance.colours"] ?? [], theme, role,
+                                                                  dialog.colourPicker.htmlText(c)))
             return true
         }
         function endDialog(accepted) {
             if (!accepted)
-                dialog.put(setting, before)
+                dialog.put("appearance.colours", before)
         }
     }
     ColourPopover {

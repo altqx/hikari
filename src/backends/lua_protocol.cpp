@@ -322,6 +322,12 @@ std::vector<std::byte> encodeMacroResult(const application::MacroResult &result)
     }
     w.u8(result.active.has_value()).i32(result.active.value_or(0));
     w.u8(result.valid).str(result.validationError).str(result.report);
+    w.i32(static_cast<std::int32_t>(result.undoSteps.size()));
+    for (const auto &step : result.undoSteps) {
+        w.str(step.description);
+        writeLists(w, step.info, step.styles, step.dialogues);
+    }
+    w.str(result.undoDescription);
     return w.take();
 }
 
@@ -347,6 +353,17 @@ std::optional<application::MacroResult> decodeMacroResult(const std::vector<std:
     result.valid = r.u8() != 0;
     result.validationError = r.str();
     result.report = r.str();
+    const auto steps = count(r, payload.size());
+    if (!steps)
+        return std::nullopt;
+    for (std::size_t i = 0; i < *steps && r.ok(); ++i) {
+        application::MacroUndoStep step;
+        step.description = r.str();
+        if (!readLists(r, payload.size(), step.info, step.styles, step.dialogues))
+            return std::nullopt;
+        result.undoSteps.push_back(std::move(step));
+    }
+    result.undoDescription = r.str();
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return result;

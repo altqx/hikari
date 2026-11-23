@@ -11,6 +11,7 @@ namespace hikari::application {
 
 // Aegisub keeps it in [Aegisub Project Garbage]; older files have it in Script Info.
 inline constexpr std::u8string_view kTimecodesFileKey = u8"Timecodes File";
+inline constexpr std::u8string_view kKeyframesFileKey = u8"Keyframes File";
 
 struct MediaReference {
     std::string authored;              // the Script Info value as written

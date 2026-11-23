@@ -27,10 +27,10 @@ ColumnLayout {
         {id: "srt", text: "SubRip (SRT)"},
         {id: "vtt", text: "WebVTT"},
         {id: "sbv", text: "YouTube SBV"},
-        {id: "txt", text: qsTranslate("HikariSub.Export", "Plain text")},
-        {id: "mdvd", text: "MicroDVD"},
+        {id: "text", text: qsTranslate("HikariSub.Export", "Plain text")},
+        {id: "microdvd", text: "MicroDVD"},
         {id: "mpl2", text: "MPL2"},
-        {id: "tmp", text: "TMPlayer"},
+        {id: "tmplayer", text: "TMPlayer"},
         {id: "ttml", text: "TTML (IMSC1)"},
         {id: "dfxp", text: "DFXP"},
         {id: "srv3", text: qsTranslate("HikariSub.Export", "YouTube timed text (srv3)")}
@@ -102,6 +102,26 @@ ColumnLayout {
             onCountChanged: refresh()
             Connections { target: pages.dialog; function onProjectValuesChanged() { choice.refresh() } }
             onActivated: index => pages.dialog.projectPut(choiceRow.setting, index)
+        }
+    }
+    component ProjectPick: SettingsRow {
+        id: pickRow
+        property var choices: []
+        host: pages.dialog
+        project: true
+        ComboBox {
+            id: pick
+            objectName: "project_" + pickRow.setting
+            model: pickRow.choices
+            textRole: "text"
+            Layout.preferredWidth: 320
+            Accessible.name: pickRow.text
+            function refresh() {
+                currentIndex = Math.max(0, pickRow.choices.findIndex(c => c.value === (pages.dialog.projectValues[pickRow.setting] ?? pickRow.choices[0].value)))
+            }
+            Component.onCompleted: refresh()
+            Connections { target: pages.dialog; function onProjectValuesChanged() { pick.refresh() } }
+            onActivated: index => pages.dialog.projectPut(pickRow.setting, pickRow.choices[index].value)
         }
     }
     component ProjectField: SettingsRow {
@@ -302,6 +322,32 @@ ColumnLayout {
                 id: aiKeys
                 app: pages.app
                 shellWindow: pages.shellWindow
+            }
+        }
+    }
+    Page {
+        page: "updates"
+        Section {
+            key: "updates.discord"
+            ProjectPick {
+                setting: "privacy.discordProject"
+                choices: [{value: "yours", text: qsTr("Use yours")},
+                          {value: "hide", text: qsTr("Hide presence while this project is open")},
+                          {value: "own", text: qsTr("Use this project’s text")}]
+            }
+            ColumnLayout {
+                visible: (pages.dialog.projectValues["privacy.discordProject"] ?? "yours") === "own"
+                spacing: 10
+                Layout.fillWidth: true
+                ProjectField { setting: "privacy.discordShow" }
+                ProjectField { setting: "privacy.discordDetails" }
+                ProjectField { setting: "privacy.discordState" }
+            }
+            Label {
+                text: qsTr("What shows stays yours: a project can’t show the file or project name.")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
             }
         }
     }

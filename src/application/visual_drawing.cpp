@@ -1170,7 +1170,7 @@ void DrawingTool::shapePointer(const Pointer &event, VisualHost &host)
 
 Overlay DrawingTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     if (m_shape < 0) {
         syncMove(host);

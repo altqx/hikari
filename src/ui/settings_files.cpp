@@ -548,6 +548,20 @@ void migrateIni(QVariantMap &ini)
             ini.insert(targetKey(renamed.to), ini.value(from));
         ini.remove(from);
     }
+    for (const auto &folded : application::foldedSettings()) {
+        const QString from = QStringLiteral("profile/") + qs(folded.from);
+        if (!ini.contains(from))
+            continue;
+        const QString to = targetKey(folded.to);
+        std::vector<std::string> list;
+        for (const QString &entry : ini.value(to).toStringList())
+            list.push_back(entry.toStdString());
+        QStringList out;
+        for (const auto &entry : application::foldInto(std::move(list), folded, ini.value(from).toString().toStdString()))
+            out << QString::fromStdString(entry);
+        ini.insert(to, out);
+        ini.remove(from);
+    }
     if (ini.value(QStringLiteral("registry/schema"), 0).toInt() >= 1)
         return;
     for (const auto &interim : application::interimKeys()) {
@@ -750,6 +764,19 @@ void SettingsFiles::load()
         if (!tomlNode(m_settings, renamed.to))
             tomlParent(m_settings, renamed.to, true)->insert(idSegments(renamed.to).back(), *old);
         eraseToml(m_settings, renamed.from);
+        changed(Settings);
+    }
+    for (const auto &folded : application::foldedSettings()) {
+        const auto *old = tomlNode(m_settings, folded.from);
+        if (!old)
+            continue;
+        std::vector<std::string> list;
+        if (const auto *now = tomlNode(m_settings, folded.to))
+            if (auto value = fromToml(*now); value && std::holds_alternative<std::vector<std::string>>(*value))
+                list = std::get<std::vector<std::string>>(*value);
+        list = application::foldInto(std::move(list), folded, old->value<std::string>().value_or(""));
+        putToml(*tomlParent(m_settings, folded.to, true), idSegments(folded.to).back(), list);
+        eraseToml(m_settings, folded.from);
         changed(Settings);
     }
     // MUST KILL: settings.toml is written at a first start only so that its existence marks later starts

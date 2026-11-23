@@ -678,7 +678,7 @@ bool PositionTool::key(const Key &evt, VisualHost &host)
 
 Overlay PositionTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     const EditSession *session = host.session();
     if (!session)
@@ -706,7 +706,7 @@ Overlay PositionTool::overlay(const VisualHost &host) const
         const PointF p2 = host.view().scriptToView(m_rectangle[1]);
         const PointF v[5] = {p1, {p2.x, p1.y}, p2, {p1.x, p2.y}, p1};
         for (int i = 0; i < 4; i++)
-            out.lines.push_back({v[i], v[i + 1], 2, kHandleBorder});
+            out.lines.push_back({v[i], v[i + 1], 2, out.handles.border});
     }
     if (!nothingToShow && m_hasHelperLine)
         drawHelperLine(out, m_helperX, m_helperY, host.view());
@@ -1286,14 +1286,14 @@ bool MoveTool::key(const Key &evt, VisualHost &host)
 
 Overlay MoveTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     const int time = static_cast<int>(host.videoTimeMs());
     if (m_hasLineToMove && m_lineToMoveVisibility[0]) {
         drawRect(out, m_lineToMoveStart);
         if (m_lineToMoveVisibility[1]) {
             const PointF end = drawArrow(out, m_lineToMoveStart, m_lineToMoveEnd, 6);
-            out.lines.push_back({m_lineToMoveStart, end, 2, kHandleBorder});
+            out.lines.push_back({m_lineToMoveStart, end, 2, out.handles.border});
             drawCircle(out, m_lineToMoveEnd);
         }
     }
@@ -1310,8 +1310,8 @@ Overlay MoveTool::overlay(const VisualHost &host) const
         dist = m_to;
     else
         dist = {m_from.x - ((m_from.x - m_to.x) * actime), m_from.y - ((m_from.y - m_to.y) * actime)};
-    out.lines.push_back({m_from, end, 2, kHandleBorder});
-    drawCross(out, dist, kHandleBorder);
+    out.lines.push_back({m_from, end, 2, out.handles.border});
+    drawCross(out, dist, out.handles.border);
     drawRect(out, m_from);
     drawCircle(out, m_to);
     return out;

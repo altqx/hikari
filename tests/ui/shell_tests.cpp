@@ -118,6 +118,7 @@
 #include <QtQml/qqmlextensionplugin.h>
 #include <QElapsedTimer>
 #include <QFontDatabase>
+#include <QtQuickTest/quicktest.h>
 #include <QtTest>
 
 #ifndef _WIN32
@@ -799,11 +800,13 @@ class ShellTest : public QObject {
                 && view.contains(it->mapRectToScene(QRectF(0, 0, it->width(), it->height())));
         };
         if (!dockHeader(panel)) {
+            if (!QQuickTest::qWaitForPolish(window))
+                return false;
             QQuickItem *tab = tabTitled(dock->property("title").toString());
             if (!inView(tab))
                 return false;
             QTest::mouseClick(window, Qt::LeftButton, {}, tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2)).toPoint());
-            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }, 1000))
+            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }))
                 return false;
         }
         QQuickItem *header = dockHeader(panel);
@@ -1492,7 +1495,7 @@ private slots:
         QVERIFY(frame);
         QTRY_VERIFY(frame->custom());
         QVERIFY(window->flags().testFlag(Qt::FramelessWindowHint));
-        QTRY_COMPARE(qRound(bar->height()), 32);
+        QTRY_COMPARE(qRound(bar->height()), 36);
         QQuickItem *icon = visualItem("titleBarAppIcon");
         auto *menus = visualItem("appMenus");
         QQuickItem *switcher = visualItem("layoutSwitcher");
@@ -1654,7 +1657,7 @@ private slots:
         settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
         QTRY_VERIFY(!frame->custom());
         QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
-        QTRY_COMPARE(qRound(bar->height()), 27);
+        QTRY_COMPARE(qRound(bar->height()), 30);
         for (QQuickItem *i : {icon, title, minimize, maximize, close})
             QVERIFY2(!i->isVisible(), qPrintable(i->objectName()));
         QVERIFY(menus->isVisible() && switcher->isVisible());
@@ -4759,7 +4762,7 @@ private slots:
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
         QTRY_VERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.autosave-0.toml")).contains("C={\r\n}\r\n"));
-        QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
+        QTRY_COMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
         QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
         QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
 
@@ -4996,7 +4999,7 @@ private slots:
         for (int i = 0; i < 4; ++i) {
             QVERIFY(catalogs.addCatalog(QLatin1String(names[i])));
             QTRY_VERIFY(copy(files[i]).contains(QByteArray(names[i]) + "={\r\n}\r\n"));
-            QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
+            QTRY_COMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
         }
         QVERIFY(copy(1).contains("X={") && !copy(1).contains("Y={"));
         QVERIFY(copy(2).contains("Y={") && !copy(2).contains("Z={"));
@@ -7621,6 +7624,8 @@ private slots:
         QTRY_VERIFY(view->property("opened").toBool());
         QVERIFY(root->property("menuHasKeys").toBool());
         press(Qt::Key_Down);
+        QCOMPARE(current(view)->objectName(), QStringLiteral("commandPaletteMenuItem"));
+        press(Qt::Key_Down);
         QCOMPARE(current(view)->property("subMenu").value<QObject *>(), named("viewLayoutMenu"));
         QStringList between;
         for (int presses = 0; current(view)->property("subMenu").value<QObject *>() != panels; ++presses) {
@@ -8605,24 +8610,36 @@ private slots:
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
     }
 
-    void everyPanelsMenuButtonStaysInTheDockingArea_data()
+    void everyArrangementFitsTheDockingArea_data()
     {
         QTest::addColumn<QString>("arrangement");
         QTest::addColumn<QSize>("size");
+        QTest::addColumn<bool>("sideBarsOff");
         for (const char *name : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke", "NodeEffects"})
             for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
-                QTest::addRow("%s %dx%d", name, size.width(), size.height()) << QString::fromLatin1(name) << size;
+                for (const bool off : {false, true})
+                    QTest::addRow("%s %dx%d%s", name, size.width(), size.height(), off ? " side bars off" : "")
+                        << QString::fromLatin1(name) << size << off;
     }
 
-    void everyPanelsMenuButtonStaysInTheDockingArea()
+    void everyArrangementFitsTheDockingArea()
     {
         QFETCH(QString, arrangement);
         QFETCH(QSize, size);
+        QFETCH(bool, sideBarsOff);
         window->resize(size);
         QTRY_COMPARE(window->size(), size);
         QObject *root = engine->rootObjects().first();
         QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
         QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        if (sideBarsOff) {
+            for (const bool left : {true, false}) {
+                const char *shown = left ? "leftSideBarShown" : "rightSideBarShown";
+                if (root->property(shown).toBool())
+                    QVERIFY(QMetaObject::invokeMethod(root, "toggleSideBar", Q_ARG(QVariant, left)));
+                QTRY_VERIFY(!root->property(shown).toBool());
+            }
+        }
         QVERIFY(application->openFile(episode));
         if (arrangement == QLatin1String("Translation"))
             QVERIFY(application->turnOnTranslationMode());
@@ -8630,6 +8647,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(root, "setNodeEffects", Q_ARG(QVariant, true)));
         else
             QVERIFY(application->workspaceLayout().applyPreset(arrangement));
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         QVERIFY(application->openReference(original));
         for (const char *name : {"referenceDock", "spellDock", "logDock"}) {
             auto *dock = item<QObject>(name);
@@ -8641,6 +8659,7 @@ private slots:
         QStringList docked;
         QStringList unreachable;
         const auto reach = [&] {
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             docked.clear();
             unreachable.clear();
             const QRectF areaRect = area->mapRectToScene(QRectF(0, 0, area->width(), area->height()));
@@ -8664,12 +8683,17 @@ private slots:
                               .arg(least.width()).arg(least.height());
             for (const QString &panel : std::as_const(docked)) {
                 const QRect place = docking->placeInLayout(panel);
-                out += QStringLiteral(" %1 %2x%3+%4+%5;").arg(panel).arg(place.width()).arg(place.height()).arg(place.x()).arg(place.y());
+                const QSize panelLeast = docking->minimumSize(panel);
+                out += QStringLiteral(" %1 %2x%3+%4+%5 (minimum %6x%7);").arg(panel).arg(place.width()).arg(place.height())
+                           .arg(place.x()).arg(place.y()).arg(panelLeast.width()).arg(panelLeast.height());
             }
             return out;
         };
         QTRY_VERIFY2(reach(), qPrintable(unreachable.join(u", ") + QLatin1Char('\n') + places()));
         QVERIFY2(docked.contains(QStringLiteral("Spellchecker")) && docked.size() >= 4, qPrintable(docked.join(u", ")));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        const QSize least = docking->layoutMinimumSize(area->property("uniqueName").toString());
+        QVERIFY2(least.width() <= qCeil(area->width()) && least.height() <= qCeil(area->height()), qPrintable(places()));
     }
 
     void panelMenusReadInTheOrderTheyShow()
@@ -13824,13 +13848,13 @@ private slots:
                               {10, 11, R::TemplateVariables}, {12, 15, R::TemplateKeywords}}));
         application->settingsStore()->setValue(QStringLiteral("appearance.followSystem"), false);
         application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastWhite"));
-        QTRY_VERIFY(ui::theme::current().code == ui::theme::Code::HighContrastWhite);
+        QTRY_VERIFY(ui::theme::currentIs(ui::theme::Code::HighContrastWhite));
         QTRY_COMPARE(appliedColours("lineTextHighlighter"),
                      colours({{0, 2, R::TemplateKeywords}, {3, 4, R::TemplateVariables}, {5, 9, R::TemplateKeywords},
                               {10, 11, R::TemplateVariables}, {12, 15, R::TemplateKeywords}}));
         QCOMPARE(appliedColours("lineTextHighlighter")[2].toString(), QStringLiteral("#5b2da8"));
         application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
-        QTRY_VERIFY(ui::theme::current().code == ui::theme::Code::Dark);
+        QTRY_VERIFY(ui::theme::currentIs(ui::theme::Code::Dark));
     }
 
     void spellingStartsOnceAndReportsMissingDictionaries()
@@ -14035,6 +14059,7 @@ private slots:
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
         auto *replace = spellItem("spellReplace");
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         const QPoint centre = replace->mapToScene(QPointF(replace->width() / 2, replace->height() / 2)).toPoint();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, centre);
         QCoreApplication::processEvents();
@@ -14095,11 +14120,12 @@ private slots:
         };
         QTRY_VERIFY(suggestion(QStringLiteral("world")));
         auto *world = suggestion(QStringLiteral("world"));
-        const QPoint at = world->mapToScene(QPointF(world->width() / 2, world->height() / 2)).toPoint();
 
         auto *field = item("lineText");
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
+        QVERIFY(QQuickTest::qWaitForPolish(window));
+        const QPoint at = world->mapToScene(QPointF(world->width() / 2, world->height() / 2)).toPoint();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
         QCoreApplication::processEvents();
         QTRY_VERIFY(panel->property("activeFocus").toBool());
@@ -15367,6 +15393,15 @@ private slots:
         QTRY_VERIFY(item("ppGapsNeed")->isVisible());
         QTRY_COMPARE(item("postprocessorPreviewStatus")->property("text").toString(), QStringLiteral("No line changes"));
         QVERIFY(!item("postprocessorApply")->property("enabled").toBool());
+
+        auto &shift = application->shiftTimesSettings();
+        auto dropPreset = qScopeGuard([&] { shift.deletePreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")); });
+        setShift("maxOverlap", 200);
+        QTRY_VERIFY(!item("ppGapsNeed")->isVisible());
+        QVERIFY(shift.savePreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")));
+        setShift("maxOverlap", 0);
+        QVERIFY(shift.applyPreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")));
+        QCOMPARE(shift.settings().maxOverlap, 200);
         application->editor().discard();
     }
 
@@ -15457,6 +15492,20 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Snapping to the adjacent keyframe"));
         auto *menu = item<QObject>("snapStartToNextKeyframeItem");
         QVERIFY(menu && menu->property("enabled").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SNAP_TO_SCENE"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 10}));
+        QCOMPARE(session->history().back().name, std::string("Snapping to the scene"));
+        auto *scene = item<QObject>("snapToSceneItem");
+        QVERIFY(scene && scene->property("enabled").toBool());
+
+        const auto below = frames(1);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_END_LATER_SHIFT_FOLLOWING"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 11}));
+        QCOMPARE(frames(1), (Frames{below.first + 1, below.second + 1}));
+        QCOMPARE(session->history().back().name, std::string("Moving the end by frames"));
     }
 
     void theTimingLayoutOpensThePostprocessorWithItsPreset()
@@ -15737,6 +15786,105 @@ private slots:
         }
         QCOMPARE(application->openKeyframes(QUrl::fromLocalFile(bad)), QStringLiteral("Invalid keyframes format"));
         QCOMPARE(application->video().session().keyframes(), (std::vector<int>{0, 10, 20}));
+    }
+
+    void keyframeFilesSaveAndClose()
+    {
+        const QString kf = dir.filePath(QStringLiteral("kf-close.txt"));
+        {
+            QFile f(kf);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 25\n0\n10\n20\n");
+        }
+        const QString subtitles = dir.filePath(QStringLiteral("kf-close.ass"));
+        {
+            QFile f(subtitles);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[Aegisub Project Garbage]\nKeyframes File: missing-kf.txt\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(subtitles));
+        application->setAskForBadResolution(false);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready, 20000);
+        const auto own = application->video().session().keyframes();
+        QCOMPARE(application->keyframesFile(), QString());
+        QVERIFY(!item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+        QVERIFY(item<QObject>("saveKeyframesMenuItem")->property("enabled").toBool());
+
+        QVERIFY(application->openKeyframes(QUrl::fromLocalFile(kf)).isEmpty());
+        QCOMPARE(application->video().session().keyframes(), (std::vector<int>{0, 10, 20}));
+        QCOMPARE(application->keyframesFile(), QDir::toNativeSeparators(kf));
+        QTRY_VERIFY(item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+
+        const QString saved = dir.filePath(QStringLiteral("kf-saved.txt"));
+        QCOMPARE(application->saveKeyframesFile(QUrl::fromLocalFile(saved)), QString());
+        QFile f(saved);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), QByteArray("# keyframe format v1\nfps 0\n0\n10\n20\n"));
+
+        application->closeKeyframes();
+        QCOMPARE(application->video().session().keyframes(), own);
+        QCOMPARE(application->keyframesFile(), QString());
+        QTRY_VERIFY(!item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+        const QString resaved = dir.filePath(QStringLiteral("kf-close-saved.ass"));
+        QVERIFY(application->saveAs(resaved));
+        QTRY_VERIFY_WITH_TIMEOUT(QFileInfo::exists(resaved), 20000);
+        QFile written(resaved);
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QVERIFY(!written.readAll().contains("Keyframes File"));
+        QVERIFY(application->video().unloadVideo());
+        QVERIFY(!application->saveKeyframesFile(QUrl::fromLocalFile(saved)).isEmpty());
+    }
+
+    void timingKeysWorkInEveryPanelWhenAsked()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        auto &settings = *application->settingsStore();
+        const bool followed = settings.boolean("audio.autoFocus");
+        settings.set("audio.autoFocus", false);
+        auto restore = qScopeGuard([&] {
+            settings.set("audio.timingKeysEverywhere", 1);
+            settings.set("audio.autoFocus", followed);
+        });
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        const auto activeRow = [&] {
+            for (std::size_t i = 0; i < lines.size(); ++i)
+                if (session->selection().active == lines[i]->id)
+                    return int(i);
+            return -1;
+        };
+        QVERIFY(lines.size() >= 2);
+        application->selectLine(lines[1]->id.value);
+        QTRY_COMPARE(activeRow(), 1);
+        QTest::mouseMove(window, kOverNoPanel);
+        QTest::qWait(200);
+        auto *video = item("videoPanel");
+        const auto pressInVideo = [&](Qt::Key key) {
+            video->forceActiveFocus();
+            QTRY_VERIFY(video->hasActiveFocus());
+            QTest::keyClick(window, key);
+        };
+
+        settings.set("audio.timingKeysEverywhere", 0);
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
+        settings.set("audio.timingKeysEverywhere", 1);
+        QVERIFY(application->workspaceLayout().preset() != QStringLiteral("Timing"));
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
+
+        settings.set("audio.timingKeysEverywhere", 2);
+        pressInVideo(Qt::Key_Z);
+        QTRY_COMPARE(activeRow(), 0);
+        pressInVideo(Qt::Key_Right);
+        QCOMPARE(activeRow(), 0);
+        audio.closeAudio();
     }
 
     void hideColumnsMenuTogglesGridColumns()
@@ -19237,9 +19385,11 @@ private slots:
               {"audio.markPlayTime", nullptr},
               {"audio.leadInValue", nullptr},
               {"audio.leadOutValue", nullptr},
+              {"audio.defaultDuration", nullptr},
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
               {"audio.dontPlayWhenLineChanges", "Don’t play after changing the line"},
               {"audio.autoFocus", "Focus the panel under the pointer"},
+              {"audio.timingKeysEverywhere", nullptr},
               {"audio.playMono", "Play in mono"},
               {"audio.drawTimeCursor", "Show the time beside the cursor"},
               {"audio.drawSecondaryLines", "Show seconds markers"},
@@ -19248,6 +19398,7 @@ private slots:
               {"audio.drawKeyframes", "Show keyframes"},
               {"audio.lineBoundariesThickness", nullptr},
               {"audio.inactiveLinesDisplayMode", nullptr},
+              {"audio.spectrumCurve", nullptr},
               {"audio.snapToKeyframes", "Snap to keyframes"},
               {"audio.snapToOtherLines", "Snap to other lines"},
               {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
@@ -19307,9 +19458,24 @@ private slots:
               {"updater.autoInstall", "Install updates automatically"},
               {"privacy.usageData", "Send anonymous usage data"},
               {"privacy.alwaysSendCrashReports", "Always send crash reports"},
+              {"plugins.network", "Let plugins connect to the internet"},
               {"privacy.discordPresence", "Show what I am doing in Discord"},
-              {"privacy.discordFileName", "Include the file name"},
-              {"plugins.network", "Let plugins connect to the internet"}}},
+              {"privacy.discordMode", "The mode"},
+              {"privacy.discordModeIcon", "The mode’s icon"},
+              {"privacy.discordProjectName", "The project’s name"},
+              {"privacy.discordFileName", "The file name"},
+              {"privacy.discordText", nullptr},
+              {"privacy.discordDetails", nullptr},
+              {"privacy.discordState", nullptr},
+              {"privacy.discordPlugin", nullptr},
+              {"privacy.discordTime", nullptr},
+              {"privacy.discordIdleMinutes", nullptr},
+              {"privacy.discordIdle", nullptr},
+              {"privacy.discordIdleBackground", "Do the same while HikariSub is in the background"},
+              {"privacy.discordGetButton", "“Get HikariSub”"},
+              {"privacy.discordLink", "A link of your own"},
+              {"privacy.discordLinkLabel", nullptr},
+              {"privacy.discordLinkUrl", nullptr}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -19363,6 +19529,7 @@ private slots:
         bound.insert("automation.dialogAnswers");
         bound.insert("trust.folders");
         bound.insert("ai.agents.custom");
+        bound.insert("privacy.discordActivities");
 #ifndef HIKARI_WITH_VSFILTERMOD
         bound.erase("video.subtitleProvider");
 #endif
@@ -20661,6 +20828,73 @@ private slots:
         QVERIFY(runtime->jobs().isEmpty());
     }
 
+    void pluginsAtWorkShowAStillWorkingCardAndInTheStatusBar()
+    {
+        QTemporaryDir home;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.pluginStillWorkingMs = 300;
+        options.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                           home.filePath(QStringLiteral("cache")), home.filePath(QStringLiteral("plugins.json"))};
+        QJsonObject registry;
+        const auto install = [&](const char *id, const char *name, const char *permissions, const char *main) {
+            const QString folder = options.plugins.plugins + u'/' + QLatin1String(id);
+            QDir().mkpath(folder);
+            QFile manifest(folder + QStringLiteral("/hikari-plugin.json"));
+            QVERIFY(manifest.open(QIODevice::WriteOnly));
+            manifest.write(QStringLiteral(R"({"id": "%1", "name": "%2", "version": "1.0.0", "api": 1, "main": "main.lua",)"
+                                          R"( "authors": ["Ana"], "permissions": %3,)"
+                                          R"( "contributes": {"commands": [{"id": "spin", "title": "Count frames"}]}})")
+                               .arg(QLatin1String(id), QLatin1String(name), QLatin1String(permissions))
+                               .toUtf8());
+            QFile lua(folder + QStringLiteral("/main.lua"));
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write(main);
+            registry[QLatin1String(id)] =
+                QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        };
+        install("example.counter", "Counter", "{}", "hikari.commands.register('spin', function() while true do end end)");
+        install("example.feed", "Feed", R"({"background": "Checks the feed"})",
+                "hikari.timer.after(100, function() while true do end end) hikari.commands.register('spin', function() end)");
+        QFile json(options.plugins.registry);
+        QVERIFY(json.open(QIODevice::WriteOnly));
+        json.write(QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), registry}}).toJson());
+        json.close();
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        restartWith(options);
+        app::PluginRuntime *runtime = application->pluginRuntime();
+
+        QQuickItem *busy = item("statusPluginsWorking");
+        QTRY_VERIFY_WITH_TIMEOUT(busy->isVisible(), 10'000);
+        QCOMPARE(busy->property("text").toString(), QStringLiteral("1 plugin working"));
+        QVERIFY(QMetaObject::invokeMethod(busy, "click"));
+        auto *popover = item("statusBar")->findChild<QObject *>(QStringLiteral("pluginsWorkingPopover"));
+        QVERIFY(popover);
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = findItem(popover->property("contentItem").value<QQuickItem *>(),
+                                    QStringLiteral("pluginWorking_example.feed"))) &&
+                    row->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(findItem(row, QStringLiteral("pluginWorkingStop")), "click"));
+        QTRY_VERIFY(!busy->isVisible());
+        QVERIFY(!runtime->run(QStringLiteral("plugin.example.feed.spin")));
+
+        QTRY_VERIFY_WITH_TIMEOUT(runtime->run(QStringLiteral("plugin.example.counter.spin")), 10'000);
+        QQuickItem *card = nullptr;
+        QTRY_VERIFY_WITH_TIMEOUT((card = findItem(item("pluginJobCards"), QStringLiteral("pluginStillWorking_example.counter"))) &&
+                                     card->isVisible(),
+                                 10'000);
+        QCOMPARE(findItem(card, QStringLiteral("pluginStillWorkingTitle"))->property("text").toString(),
+                 QStringLiteral("Counter is still working"));
+        QVERIFY(!busy->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(findItem(card, QStringLiteral("pluginStillWorkingStop")), "click"));
+        QTRY_VERIFY(!item("pluginJobCards")->isVisible());
+        QVERIFY(runtime->working().isEmpty());
+    }
+
     void pluginsInstallFromTheAutomationMenu()
     {
         QTemporaryDir home;
@@ -21604,7 +21838,7 @@ private slots:
     {
         const LegacyHere none({});
         auto restore = qScopeGuard([] { ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown); });
-        const auto code = [] { return ui::theme::codeName(ui::theme::current().code); };
+        const auto code = [] { return ui::theme::current().id; };
         QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(gettingStarted()->property("visible").toBool());
         auto *store = application->settingsStore();
@@ -21635,7 +21869,7 @@ private slots:
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
         QCOMPARE(store->text("appearance.theme"), other);
         QCOMPARE(store->boolean("appearance.followSystem"), false);
-        QCOMPARE(store->text(other == u"dark" ? "appearance.darkAccent" : "appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(store->list("appearance.accents"), QStringList{other + QStringLiteral("=blue")});
         QCOMPARE(store->integer("autosave.maxFiles"), 7);
         QCOMPARE(store->boolean("updater.checkForStable"), false);
         QCOMPARE(store->boolean("updater.autoCheck"), true);
@@ -21771,22 +22005,21 @@ private slots:
         auto *store = application->settingsStore();
         store->setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         store->setValue(QStringLiteral("appearance.followSystem"), true);
+        store->setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("dark=red")});
         ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
-        QTRY_COMPARE(ui::theme::codeName(ui::theme::current().code), QStringLiteral("light"));
+        QTRY_COMPARE(ui::theme::current().id, QStringLiteral("light"));
         QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(gettingStarted()->property("visible").toBool());
         setupNext();
         QVERIFY(setupItem("gettingStartedTheme_light")->property("checked").toBool());
-        const QString dark = store->text("appearance.darkAccent");
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedAccent_blue"), "click"));
-        QCOMPARE(setupValues().value(QStringLiteral("appearance.lightAccent")).toString(), QStringLiteral("blue"));
-        QCOMPARE(setupValues().value(QStringLiteral("appearance.darkAccent")).toString(), dark);
+        const QStringList picked{QStringLiteral("dark=red"), QStringLiteral("light=blue")};
+        QCOMPARE(setupValues().value(QStringLiteral("appearance.accents")).toStringList(), picked);
         while (setupPage() != u"files")
             setupNext();
         setupNext();
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
-        QCOMPARE(store->text("appearance.lightAccent"), QStringLiteral("blue"));
-        QCOMPARE(store->text("appearance.darkAccent"), dark);
+        QCOMPARE(store->list("appearance.accents"), picked);
         QVERIFY(store->boolean("appearance.followSystem"));
     }
 
@@ -22354,6 +22587,7 @@ private slots:
         QVERIFY(audio.autoScroll());
         QVERIFY(!audio.spectrumOn());
         QVERIFY(!audio.spectrumNonLinear());
+        QCOMPARE(audio.spectrumCurve(), 0);
         audio.openDummy();
         QVERIFY(audio.ready());
         QVERIFY(item("audioZoom")->isVisible());
@@ -22561,6 +22795,40 @@ private slots:
         QTRY_VERIFY(item("audioPanel")->window() == window);
     }
 
+    void audioCommitGivesTheNextLineTheDefaultTiming()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "pt-default-timing.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:09.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto times = [&](int i) {
+            const auto &l = *session->document().lines()[static_cast<std::size_t>(i)];
+            return std::pair(int(l.start.value.microseconds() / 1000), int(l.end.value.microseconds() / 1000));
+        };
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("audio.defaultDuration"), 2000);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("audio.defaultDuration"), 5000); });
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(audio.marks().startMs, 1000);
+
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_COMMIT_DEFAULT")));
+        QTRY_COMPARE(audio.marks().startMs, 2000);
+        QCOMPARE(audio.marks().endMs, 4000);
+        QCOMPARE(times(1), std::pair(2000, 4000));
+        QCOMPARE(times(0), std::pair(1000, 2000));
+
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_COMMIT_DEFAULT")));
+        QTRY_COMPARE(int(session->document().lines().size()), 3);
+        QCOMPARE(times(2), std::pair(4000, 6000));
+        QCOMPARE(audio.marks().startMs, 4000);
+    }
+
     void audioPanelRowFoldsItsControls()
     {
         // MUST KILL: restarts without sound so our playback-failure log window can't steal activation and keys
@@ -22752,7 +23020,7 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(item("audioMoreGotoEnd")->isVisible());
-        for (const char *twice : {"audioMoreSpeechSpectrum", "audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
+        for (const char *twice : {"audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
                                   "audioMoreLineTiming", "audioMoreExtraGoto"})
             QVERIFY2(!item(twice)->isVisible(), twice);
         closeMore();
@@ -22786,13 +23054,18 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreAutoScroll")->isVisible());
         QVERIFY(item("audioMoreSyncVideo")->isVisible());
-        QVERIFY(item("audioMoreSpeechSpectrum")->isVisible());
+        QVERIFY(named("audioMoreFrequencyCurve")->property("shown").toBool());
+        QCOMPARE(named("audioMoreFrequencyCurveLinear")->property("checked").toBool(), audio.spectrumCurve() == 0);
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
         QVERIFY(!named("audioMoreTapOptions")->property("shown").toBool());
         QVERIFY(!item("audioMoreKaraokeSplitAtCursor")->isVisible());
         QVERIFY(!item("audioMoreKaraokeKf")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreFrequencyCurveLogarithmic"), "triggered"));
+        QCOMPARE(audio.spectrumCurve(), 2);
+        QVERIFY(named("audioMoreFrequencyCurveLogarithmic")->property("checked").toBool());
+        audio.setSpectrumCurve(0);
         closeMore();
         auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
         QVERIFY(moreAutoScroll->property("checked").toBool());
@@ -23417,11 +23690,22 @@ private slots:
         QVERIFY(lit > 0);
 
         audio.setSpectrumNonLinear(true);
-        QVERIFY(settings.boolean("audio.spectrumNonLinearOn"));
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 1);
+        QCOMPARE(audio.spectrumCurve(), 1);
         const auto speech = audio.spectrumImage();
         QVERIFY(speech != picture);
         QVERIFY(speech->bgra != picture->bgra);
         QCOMPARE(audio.spectrum()->transformedLines(), lines);
+
+        audio.setSpectrumCurve(2);
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 2);
+        QVERIFY(!audio.spectrumNonLinear());
+        const auto logarithmic = audio.spectrumImage();
+        QVERIFY(logarithmic->bgra != speech->bgra);
+        QVERIFY(logarithmic->bgra != picture->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines);
+        audio.setSpectrumCurve(1);
+        QVERIFY(audio.spectrumNonLinear());
 
         audio.setVerticalZoom(100);
         QVERIFY(audio.spectrumImage()->bgra != speech->bgra);
@@ -23449,6 +23733,30 @@ private slots:
         for (int peak : audio.columns().peak)
             QCOMPARE(peak, audio.view().height() / 2);
         QVERIFY(application->recentAudio().isEmpty());
+    }
+
+    void saveAudioOfSelectedLines()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        QVERIFY(!application->canSaveSelectedAudio());
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(application->canSaveSelectedAudio());
+        const QString path = dir.filePath(QStringLiteral("clip.wav"));
+        QCOMPARE(application->saveSelectedAudio(QUrl::fromLocalFile(path)), QString());
+        QFile wav(path);
+        QVERIFY(wav.open(QIODevice::ReadOnly));
+        const QByteArray bytes = wav.readAll();
+        QCOMPARE(bytes.left(4), QByteArray("RIFF"));
+        QCOMPARE(bytes.mid(8, 4), QByteArray("WAVE"));
+        const std::int64_t rate = audio.box().audio()->sampleRate();
+        const std::int64_t samples = std::int64_t{audio.selectionEnd() - audio.selectionStart()} * rate / 1000;
+        QCOMPARE(bytes.size(), 44 + 2 * samples);
+        QVERIFY(named("saveSelectedAudioDialog"));
+        audio.closeAudio();
+        QVERIFY(!application->canSaveSelectedAudio());
+        QVERIFY(!application->saveSelectedAudio(QUrl::fromLocalFile(path)).isEmpty());
     }
 
     void audioTimingByMouseAndKeys()
@@ -23934,8 +24242,8 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 396);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Run the last macro again"));
+        QCOMPARE(hotkeyRows().size(), 399);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Clear command history"));
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 4)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -24396,7 +24704,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
-        QCOMPARE(table().size(), 39);
+        QCOMPARE(table().size(), 41);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
@@ -27703,7 +28011,7 @@ private slots:
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         audio.setSpectrumOn(true);
-        QCOMPARE(ui::theme::current().code, ui::theme::Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(ui::theme::Code::Dark));
         const application::AudioDisplayOptions legacy;
         QCOMPARE(audio.options().background, 0xFF36393Eu);
         QCOMPARE(audio.options().spectrumBackground, 0xFF000000u);
@@ -27734,7 +28042,7 @@ private slots:
         fresh.render(*audio.box().audio(), view.position() * view.samples(), (view.position() + view.width()) * view.samples(),
                      expected.data(), view.width(), view.width(), view.height(), view.samplesPercent());
         QVERIFY(again->bgra == expected);
-        settings.setValue(QStringLiteral("appearance.lightAccent"), QStringLiteral("blue"));
+        settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("light=blue")});
         const QColor blue = ui::theme::accent(false, QStringLiteral("blue")).accent;
         QCOMPARE(audio.options().waveformSelected, blue.rgba());
         QCOMPARE(audio.options().selectionBackground, (blue.rgba() & 0x00FFFFFFu) | 0x37000000u);
@@ -27754,7 +28062,7 @@ private slots:
         auto &settings = *application->settingsStore();
         auto restore = qScopeGuard([] { ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown); });
         auto *root = engine->rootObjects().first();
-        const auto code = [] { return ui::theme::codeName(ui::theme::current().code); };
+        const auto code = [] { return ui::theme::current().id; };
         const auto accent = [] { return ui::theme::current().roles.accent; };
         const auto click = [&](const char *name) {
             auto *control = dialogItem("settingsDialog", name);
@@ -27762,8 +28070,12 @@ private slots:
             QVERIFY2(QMetaObject::invokeMethod(control, "click"), name);
         };
         const auto checked = [&](const char *name) { return dialogItem("settingsDialog", name)->property("checked").toBool(); };
+        const auto accents = [&] { return settings.list("appearance.accents"); };
+        const auto colours = [&] { return settings.list("appearance.colours"); };
+        QObject *dialog = nullptr;
+        const auto staged = [&] { return settingsValues(dialog).value(QStringLiteral("appearance.colours")).toStringList(); };
         QCOMPARE(code(), QStringLiteral("dark"));
-        QCOMPARE(root->property("color").value<QColor>(), QColor(0x17, 0x1B, 0x20));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0x18, 0x1B, 0x20));
 
         const auto openAppearance = [&] {
             auto *shown = openSettings();
@@ -27772,7 +28084,7 @@ private slots:
             showSettingsPage("appearance");
             return shown;
         };
-        auto *dialog = openAppearance();
+        dialog = openAppearance();
         QVERIFY(dialog);
         QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
         for (const char *theme : {"appearanceTheme_light", "appearanceTheme_dark", "appearanceTheme_highContrastWhite",
@@ -27781,7 +28093,7 @@ private slots:
         QVERIFY(checked("appearanceTheme_dark"));
         QVERIFY(checked("appearanceFollowSystem"));
         for (const auto &a : ui::theme::accents(true))
-            QVERIFY2(dialogItem("settingsDialog", qPrintable(QStringLiteral("accent_") + QLatin1String(a.key))), a.key);
+            QVERIFY2(dialogItem("settingsDialog", qPrintable(QStringLiteral("accent_") + a.key)), qPrintable(a.key));
         QVERIFY(checked("accent_green"));
         QVERIFY(dialogItem("settingsDialog", "appearanceAccents")->property("visible").toBool());
         QVERIFY(!dialogItem("settingsDialog", "appearanceHighContrast")->property("visible").toBool());
@@ -27815,9 +28127,9 @@ private slots:
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.followSystem")).toBool(), false);
         QVERIFY(!checked("appearanceFollowSystem"));
         QCOMPARE(code(), QStringLiteral("light"));
-        QCOMPARE(root->property("color").value<QColor>(), QColor(0xE5, 0xE9, 0xEC));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0xEE, 0xF0, 0xF3));
         auto *controls = root->property("palette").value<QObject *>();
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xF9, 0xFA, 0xFB));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xFF, 0xFF, 0xFF));
         QCOMPARE(accent(), QColor(0x14, 0x5C, 0x4C));
         click("accent_blue");
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
@@ -27826,8 +28138,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!settings.boolean("appearance.followSystem"));
-        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("green"));
+        QCOMPARE(accents(), QStringList{QStringLiteral("light=blue")});
         QCOMPARE(code(), QStringLiteral("light"));
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
         QVERIFY((dialog = openAppearance()) != nullptr);
@@ -27836,78 +28147,68 @@ private slots:
         click("accent_red");
         QVERIFY(dialog->property("visible").toBool());
         QCOMPARE(settings.text("appearance.theme"), QStringLiteral("dark"));
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
-        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(accents(), (QStringList{QStringLiteral("light=blue"), QStringLiteral("dark=red")}));
         QCOMPARE(code(), QStringLiteral("dark"));
         QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x1E, 0x21, 0x27));
         QVERIFY(checked("accent_red"));
         click("accent_purple");
         QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("purple")).accent);
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("purple"));
+        QCOMPARE(accents(), (QStringList{QStringLiteral("light=blue"), QStringLiteral("dark=purple")}));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(code(), QStringLiteral("dark"));
         QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("purple")).accent);
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("purple"));
-        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(accents(), (QStringList{QStringLiteral("light=blue"), QStringLiteral("dark=purple")}));
 
         QVERIFY((dialog = openAppearance()) != nullptr);
         click("appearanceTheme_highContrastBlack");
         QCOMPARE(code(), QStringLiteral("highContrastBlack"));
         QTRY_VERIFY(dialogItem("settingsDialog", "appearanceHighContrast")->property("visible").toBool());
         QVERIFY(!dialogItem("settingsDialog", "appearanceAccents")->property("visible").toBool());
-        for (const char *pick : {"highContrastPick_appearance.highContrastBlack.accent",
-                                 "highContrastPick_appearance.highContrastBlack.text",
-                                 "highContrastPick_appearance.highContrastBlack.border"})
+        for (const char *pick : {"highContrastPick_accent", "highContrastPick_text", "highContrastPick_line"})
             QVERIFY2(dialogItem("settingsDialog", pick), pick);
         auto *themePopover = named("themeColourPopover");
         QVERIFY(themePopover);
-        const QString accentBefore = settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString();
-        click("highContrastChoose_appearance.highContrastBlack.accent");
+        const QStringList coloursBefore = staged();
+        click("highContrastChoose_accent");
         QTRY_VERIFY(themePopover->property("visible").toBool());
         QCOMPARE(themePopover->property("anchor").value<QQuickItem *>(),
-                 dialogItem("settingsDialog", "highContrastChoose_appearance.highContrastBlack.accent"));
+                 dialogItem("settingsDialog", "highContrastChoose_accent"));
         QVERIFY(!dialogItem("themeColourPopover", "alpha")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0x12), Q_ARG(QVariant, 0x34), Q_ARG(QVariant, 0x56)));
-        QTRY_COMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                     QStringLiteral("#123456"));
+        QTRY_COMPARE(staged(), QStringList{QStringLiteral("highContrastBlack/accent=#123456")});
         QCOMPARE(accent(), QColor(0x12, 0x34, 0x56));
         QTest::keyClick(qobject_cast<QWindow *>(dialog), Qt::Key_Escape);
         QTRY_VERIFY(!themePopover->property("visible").toBool());
         QVERIFY(dialog->property("visible").toBool());
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(), accentBefore);
-        click("highContrastChoose_appearance.highContrastBlack.accent");
+        QCOMPARE(staged(), coloursBefore);
+        click("highContrastChoose_accent");
         QTRY_VERIFY(themePopover->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
         QVERIFY(QMetaObject::invokeMethod(themePopover, "accept"));
         QTRY_VERIFY(!themePopover->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.border")),
-                                          Q_ARG(QVariant, QStringLiteral("#FF00FF"))));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                 QStringLiteral("#00FF00"));
+        const QStringList picked{QStringLiteral("highContrastBlack/accent=#00FF00"),
+                                 QStringLiteral("highContrastBlack/line=#FF00FF")};
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.colours")),
+                                          Q_ARG(QVariant, picked)));
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
         QCOMPARE(ui::theme::current().roles.line, QColor(0xFF, 0x00, 0xFF));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(settings.text("appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
-        QCOMPARE(settings.text("appearance.highContrastBlack.border"), QStringLiteral("#FF00FF"));
+        QCOMPARE(colours(), picked);
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
-        QCOMPARE(settings.text("appearance.highContrastWhite.accent"), QStringLiteral("#0037B3"));
         QVERIFY((dialog = openAppearance()) != nullptr);
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
         answerSettingsQuestion("reset");
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                 QStringLiteral("#00FF00"));
+        QCOMPARE(staged(), picked);
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.theme")).toString(), QStringLiteral("highContrastBlack"));
         click("resetHighContrast");
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                 QStringLiteral("#FFFF00"));
+        QVERIFY(staged().isEmpty());
         QCOMPARE(accent(), QColor(0xFF, 0xFF, 0x00));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(settings.text("appearance.highContrastBlack.accent"), QStringLiteral("#FFFF00"));
-        QCOMPARE(settings.text("appearance.highContrastBlack.border"), QStringLiteral("#FFFFFF"));
+        QVERIFY(colours().isEmpty());
 
         QVERIFY((dialog = openAppearance()) != nullptr);
         click("appearanceFollowSystem");
@@ -27924,8 +28225,8 @@ private slots:
         ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
         QCOMPARE(code(), QStringLiteral("light"));
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
-        QCOMPARE(root->property("color").value<QColor>(), QColor(0xE5, 0xE9, 0xEC));
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xF9, 0xFA, 0xFB));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0xEE, 0xF0, 0xF3));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xFF, 0xFF, 0xFF));
         QVERIFY((dialog = openAppearance()) != nullptr);
         QVERIFY(checked("appearanceFollowSystem"));
         QVERIFY(checked("appearanceTheme_light"));
@@ -27969,11 +28270,10 @@ private slots:
                 ++headers;
                 auto *strip = findItem(bar, QStringLiteral("dockHeaderStrip"));
                 QVERIFY(strip);
-                const bool titleMode = bar->property("titleMode").toBool();
-                QCOMPARE(strip->property("color").value<QColor>(), titleMode ? roles.field : roles.raised);
-                if (!titleMode)
-                    QCOMPARE(findItem(bar->property("currentTab").value<QQuickItem *>(), QStringLiteral("dockTabBackground"))
-                                 ->property("color").value<QColor>(), roles.field);
+                QCOMPARE(strip->property("color").value<QColor>(), roles.panel);
+                if (!bar->property("titleMode").toBool())
+                    QCOMPARE(findItem(bar->property("currentTab").value<QQuickItem *>(), QStringLiteral("dockTabUnderline"))
+                                 ->property("color").value<QColor>(), roles.accent);
             }
             QVERIFY(headers >= 4);
             const auto windows = root->findChildren<QQuickWindow *>();
@@ -28061,13 +28361,13 @@ private slots:
         grid->forceActiveFocus(Qt::TabFocusReason);
         QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
         for (const char *key : {"blue", "purple", "orange"}) {
-            settings.setValue(QStringLiteral("appearance.darkAccent"), QLatin1String(key));
+            settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("dark=") + QLatin1String(key)});
             const QColor accent = ui::theme::accent(true, QLatin1String(key)).accent;
             QCOMPARE(ui::theme::current().roles.accent, accent);
             QTRY_COMPARE(markOf(QStringLiteral("Grid"))->property("colour").value<QColor>(), accent);
             checkMark(QStringLiteral("Grid"), accent);
         }
-        settings.setValue(QStringLiteral("appearance.lightAccent"), QStringLiteral("red"));
+        settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("light=red")});
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
         QTRY_COMPARE(markOf(QStringLiteral("Grid"))->property("colour").value<QColor>(),
                      ui::theme::accent(false, QStringLiteral("red")).accent);
@@ -32487,17 +32787,17 @@ private slots:
         }
         QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShift+click to set a shortcut"));
         setTheme("light");
-        QCOMPARE(colours(), all(QStringLiteral("#74808b")));
-        QVERIFY(shown(QColor(0x74, 0x80, 0x8B)));
+        QCOMPARE(colours(), all(QStringLiteral("#7a838d")));
+        QVERIFY(shown(QColor(0x7A, 0x83, 0x8D)));
         saveTransport(QStringLiteral("transport-light-disabled.png"));
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         closeMismatchQuestion();
         application->video().stepFrames(1);
-        QTRY_COMPARE(colours(), all(QStringLiteral("#202832")));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#1e2329")));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(),
                  QStringLiteral("#145c4c"));
-        QTRY_VERIFY(shown(QColor(0x20, 0x28, 0x32)));
+        QTRY_VERIFY(shown(QColor(0x1E, 0x23, 0x29)));
         saveTransport(QStringLiteral("transport-light.png"));
         application->video().togglePlay();
         QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-pause"));
@@ -32505,29 +32805,29 @@ private slots:
         application->video().togglePlay();
         QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-play"));
         setTheme("dark");
-        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e4e7eb")));
         auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
         QVERIFY(controls);
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x1E, 0x21, 0x27));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#9cdbc9"));
-        QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
+        QTRY_VERIFY(shown(QColor(0xE4, 0xE7, 0xEB)));
         saveTransport(QStringLiteral("transport-dark.png"));
-        settings.setValue(QStringLiteral("appearance.darkAccent"), QStringLiteral("purple"));
+        settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("dark=purple")});
         QTRY_COMPARE(icon("previousFrame")->property("accentColor").value<QColor>(),
                      ui::theme::accent(true, QStringLiteral("purple")).accent);
-        QCOMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QCOMPARE(colours(), all(QStringLiteral("#e4e7eb")));
         setTheme("highContrastBlack");
         QTRY_COMPARE(colours(), all(QStringLiteral("#ffffff")));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#ffff00"));
-        settings.setValue(QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FF8800"));
+        settings.setValue(QStringLiteral("appearance.colours"), QStringList{QStringLiteral("highContrastBlack/text=#FF8800")});
         QTRY_COMPARE(colours(), all(QStringLiteral("#ff8800")));
         QTRY_VERIFY(shown(QColor(0xFF, 0x88, 0x00)));
         setTheme("dark");
-        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e4e7eb")));
         application->video().stepFrames(-1);
-        QTRY_COMPARE(icon("previousFrame")->property("color").value<QColor>().name(), QStringLiteral("#75818d"));
-        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#75818d"));
-        QCOMPARE(icon("nextFrame")->property("color").value<QColor>().name(), QStringLiteral("#e8edf2"));
+        QTRY_COMPARE(icon("previousFrame")->property("color").value<QColor>().name(), QStringLiteral("#737b85"));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#737b85"));
+        QCOMPARE(icon("nextFrame")->property("color").value<QColor>().name(), QStringLiteral("#e4e7eb"));
     }
 
     void iconSurfacesShowTheSetWithTheirNames()
@@ -37827,17 +38127,17 @@ private slots:
             return menu->property("background").value<QQuickItem *>()->property("color").value<QColor>();
         };
         const auto check = [&](bool dark) {
-            const QColor field = ui::theme::current().roles.field;
-            QCOMPARE(field.lightness() < 128, dark);
+            const QColor panel = ui::theme::current().roles.panel;
+            QCOMPARE(panel.lightness() < 128, dark);
             QVERIFY(QMetaObject::invokeMethod(videoMenu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
             QTRY_VERIFY(videoMenu->property("opened").toBool());
-            QTRY_COMPARE(surface(videoMenu), field);
+            QTRY_COMPARE(surface(videoMenu), panel);
             QVERIFY(QMetaObject::invokeMethod(videoMenu, "close"));
             QTRY_VERIFY(!videoMenu->property("visible").toBool());
             QVERIFY(QMetaObject::invokeMethod(fileMenu, "popup", Q_ARG(QQuickItem *, bar),
                                               Q_ARG(QPointF, QPointF(0, bar->height()))));
             QTRY_VERIFY(fileMenu->property("opened").toBool());
-            QTRY_COMPARE(surface(fileMenu), field);
+            QTRY_COMPARE(surface(fileMenu), panel);
             QVERIFY(QMetaObject::invokeMethod(fileMenu, "close"));
             QTRY_VERIFY(!fileMenu->property("visible").toBool());
         };
