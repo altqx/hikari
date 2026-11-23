@@ -43,6 +43,7 @@ class VideoFullscreenController : public QObject {
     Q_PROPERTY(bool pointerOverBar READ pointerOverBar WRITE setPointerOverBar NOTIFY panelChanged)
     Q_PROPERTY(QString progressText READ progressText NOTIFY progressChanged)
     Q_PROPERTY(QString videoName READ videoName NOTIFY progressChanged)
+    Q_PROPERTY(QString videoSize READ videoSize NOTIFY progressChanged)
     Q_PROPERTY(bool seeking READ seeking NOTIFY progressChanged)
     // -1: none.
     Q_PROPERTY(int failedFrame READ failedFrame NOTIFY progressChanged)
@@ -76,6 +77,7 @@ public:
     void setPointerOverBar(bool over);
     QString progressText() const;
     QString videoName() const;
+    QString videoSize() const;
     bool seeking() const;
     int failedFrame() const;
     QString positionText() const;
@@ -93,6 +95,7 @@ public:
     Q_INVOKABLE int monitorFor(int monitor) const;
 
     Q_INVOKABLE bool toggle(int monitor = 0);
+    Q_INVOKABLE bool toggleTypesetting();
     Q_INVOKABLE bool showOn(int monitor);
     Q_INVOKABLE bool showOnScreen(int screen);
     Q_INVOKABLE bool leave();
