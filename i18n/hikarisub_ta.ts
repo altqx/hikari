@@ -5977,6 +5977,10 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub 0.0.x இந்தக் கணினியில் நிறுவப்பட்டுள்ளது. அதில் எதுவும் மாற்றப்படாது.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>எனது பழைய அமைப்புகளை இறக்குமதி செய்</translation>
     </message>
@@ -5991,6 +5995,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>புதிதாக அமை</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6087,14 +6095,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>காட்சிக் கருவிகள் மற்றும் பாணிகள் பலகத்துடன் பெரிய வீடியோ.</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>பின்னர்: அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -8200,10 +8200,6 @@ Failed to copy %2 fonts.</source>
         <translation>மங்கலைக் கண்டறி…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8258,6 +8254,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -13994,6 +13994,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>பயனர் கோப்புறையைத் திற</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>குறிச்சொற்களை மறை</translation>
     </message>
@@ -14623,10 +14627,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -20290,10 +20290,6 @@ because it was edited.</source>
         <translation>நிலைப்படத்தை எழுத முடியாது</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>பழைய அமைப்புகளை இறக்குமதி செய்</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>முரண்பாடு</translation>
     </message>
@@ -20318,20 +20314,8 @@ because it was edited.</source>
         <translation>கடைசி இறக்குமதிக்கு முன் இருந்த அமைப்புகளுக்குத் திரும்பவா?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>அடுத்த முறை HikariSub தொடங்கும்போது அவை நடைமுறைக்கு வரும். பழைய நிறுவல் மாற்றப்படாது.</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>அதன் பிறகு நீங்கள் மாற்றிய இந்த அமைப்புகளும் திரும்பும்: %1. பழைய நிறுவல் மாற்றப்படாது.</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>பழைய நிறுவலின் கோப்புறையைத் தேர்வுசெய்யவும்</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20366,10 +20350,6 @@ because it was edited.</source>
         <translation>இறக்குமதி</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>நிறுவல்</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>மதிப்பாய்வு</translation>
     </message>
@@ -20378,20 +20358,36 @@ because it was edited.</source>
         <translation>படி %1 / 3: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>இறக்குமதி செய்ய வேண்டிய பழைய நிறுவலைத் தேர்வுசெய்யவும்</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>இந்தக் கணினியில் கண்டறியப்பட்ட HikariSub 0.0.x நிறுவல்கள். அவற்றில் எதுவும் மாற்றப்படாது.</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>பழைய நிறுவல்கள்</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>பழைய நிறுவல் எதுவும் கண்டறியப்படவில்லை. அதன் கோப்புறையைத் தேர்வுசெய்யவும்.</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20418,8 +20414,8 @@ because it was edited.</source>
         <translation>இறக்குமதி செய்ய வேண்டியவற்றை மதிப்பாய்வு செய்யவும்</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>முரண்பாடு என்பது பழைய நிறுவல் உங்களுடையதிலிருந்து வேறுபட்டு அமைக்கும் ஓர் அமைப்பு. பரிந்துரைக்கப்பட்ட தேர்வு குறிக்கப்பட்டுள்ளது; நீங்கள் வைத்திருக்க விரும்புவதன் குறியை நீக்கவும்.</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20524,8 +20520,8 @@ because it was edited.</source>
         <translation>%2 மாற்றங்களில் %1 இறக்குமதிக்கு, %3 மாறாதவை, %4 தீர்க்கப்படாதவை, %5 விலக்கப்பட்டவை, %6 வழக்கொழிந்தவை</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>நிரலின் அருகில் பழைய அமைப்புகள் எதுவும் கண்டறியப்படவில்லை. பழைய நிறுவலின் கோப்புறையைத் தேர்வுசெய்யவும்.</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>

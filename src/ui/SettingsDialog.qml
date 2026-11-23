@@ -746,7 +746,7 @@ DialogWindow {
                             IconTextButton {
                                 iconRole: "import"
                                 objectName: "settingsImportLegacy"
-                                text: qsTr("Import legacy settings…")
+                                text: qsTr("Import settings…")
                                 enabled: dialog.importer !== null && dialog.importer.available
                                 onClicked: dialog.legacyImportRequested()
                             }
