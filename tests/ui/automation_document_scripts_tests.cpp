@@ -675,7 +675,8 @@ private slots:
         const QByteArray utf8 = script.toUtf8();
         const std::u8string expected =
             u8"|" + std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()));
-        QVERIFY(session().document().scriptInfo(u8"Automation Scripts") == expected);
+        QVERIFY(session().document().projectGarbage(u8"Automation Scripts") == expected);
+        QVERIFY(!session().document().scriptInfo(u8"Automation Scripts"));
         QCOMPARE(session().historySize(), steps + 1);
         QCOMPARE(session().history().back().name, std::string("Changing the subtitle header"));
         QVERIFY(settled());
@@ -880,6 +881,8 @@ private slots:
         automation.answerTrust(asked.first().at(0).toInt(), QStringLiteral("skip"));
         QCOMPARE(automation.documentScripts().scripts(), std::vector<std::string>{picked.toStdString()});
         QVERIFY(scriptInfo("|" + named.toUtf8() + "|" + picked.toUtf8()));
+        QVERIFY(session().document().projectGarbage(u8"Automation Scripts") ==
+                session().document().scriptInfo(u8"Automation Scripts"));
         QVERIFY(settled());
         QCOMPARE(automation.scripts().size(), std::size_t(1));
         QCOMPARE(automation.scripts().front().path, picked.toStdString());

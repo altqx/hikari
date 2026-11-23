@@ -55,6 +55,7 @@ void Application::trackVideoSources(WindowMedia &media)
         if (const auto tab = m_workspace.currentTab(media.window))
             if (const auto it = m_tabMedia.find(tab->value); it != m_tabMedia.end() && !it->second.video.isEmpty()) {
                 it->second.video.clear();
+                it->second.videoDropped = true;
                 it->second.position = 0;
                 emit tabsChanged();
             }

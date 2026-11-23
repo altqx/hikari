@@ -1839,6 +1839,11 @@ private:
         bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
+        QString openedAudio;
+        bool videoDropped = false;
+        bool audioDropped = false;
+        std::optional<int> fileFrame;
+        std::optional<double> fileAspect; // width / height
     };
     struct UnresolvedRestore {
         application::DocumentId document;
