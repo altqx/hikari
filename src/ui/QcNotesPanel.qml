@@ -10,16 +10,20 @@ FocusScope {
     id: panel
     objectName: "qcNotesTool"
     required property var qcNotes
+    required property var problems
     property var messages: null
     signal escaped()
 
     readonly property size minimumBodySize: Qt.size(300, 220)
     readonly property var notes: qcNotes.notes
+    readonly property var entries: problems.entries
+    readonly property bool listed: qcNotes.total > 0 || problems.problemCount > 0
     readonly property int noEditor: -2
     readonly property int newNote: -1
     property int editing: noEditor
-    property int chosen: -1
-    readonly property int chosenRow: notes.findIndex(n => n.index === chosen)
+    property string chosen: ""
+    readonly property int chosenRow: entries.findIndex(e => e.key === chosen)
+    readonly property var chosenEntry: chosenRow >= 0 ? entries[chosenRow] : null
     property string message: ""
     property bool exporting: false
     property string importName: ""
@@ -28,16 +32,50 @@ FocusScope {
         message = text
         messageTimer.restart()
     }
-    function choose(index) {
-        chosen = index
+    function noteKey(index) {
+        return "note:" + index
     }
-    function goTo(index) {
-        chosen = index
-        qcNotes.goTo(index)
+    function choose(key) {
+        chosen = key
+    }
+    function goTo(entry) {
+        chosen = entry.key
+        if (entry.kind === "note")
+            qcNotes.goTo(entry.index)
+        else
+            problems.goTo(entry.id)
+    }
+    function ink(severity) {
+        return severity === "error" ? Theme.danger : severity === "warning" ? Theme.warning
+             : severity === "info" ? Theme.accent : Theme.muted
+    }
+    function severityText(severity) {
+        return severity === "error" ? qsTr("error") : severity === "warning" ? qsTr("warning")
+             : severity === "info" ? qsTr("info") : qsTr("hint")
+    }
+    function quickFixChoices() {
+        const entry = chosenEntry
+        if (!entry || entry.kind !== "problem")
+            return []
+        return entry.fixes.map((title, fix) => ({ problem: entry.id, fix: fix, title: title, source: entry.sourceName }))
+    }
+    function chosenItem() {
+        return list.currentItem
+    }
+    function applyFix(problem, fix) {
+        if (!problems.applyFix(problem, fix))
+            say(qsTr("The fix could not be applied. Its line changed since the problem was found."))
+    }
+    function openFixMenu(entry, item) {
+        if (!entry || entry.kind !== "problem")
+            return
+        chosen = entry.key
+        fixMenu.entry = entry
+        fixMenu.popup(item, 0, item.height)
     }
     function step(forward) {
         if (forward ? qcNotes.next() : qcNotes.previous()) {
-            chosen = qcNotes.current
+            chosen = noteKey(qcNotes.current)
             return true
         }
         say(qsTr("No more notes"))
@@ -53,7 +91,7 @@ FocusScope {
         if (!note || !qcNotes.editable)
             return
         exporting = false
-        chosen = index
+        chosen = noteKey(index)
         editing = index
         editor.load(note.time, note.section, note.text, note.done)
     }
@@ -161,6 +199,39 @@ FocusScope {
         }
     }
 
+    ShellMenu {
+        id: fixMenu
+        objectName: "problemFixMenu"
+        property var entry: null
+        readonly property var fixes: entry ? entry.fixes : []
+        Instantiator {
+            model: fixMenu.fixes
+            delegate: ShellMenuItem {
+                required property string modelData
+                required property int index
+                objectName: "problemFix" + index
+                iconRole: "edit"
+                text: modelData
+                detailText: fixMenu.entry ? fixMenu.entry.sourceName : ""
+                onTriggered: {
+                    const problem = fixMenu.entry.id
+                    const fix = index
+                    Qt.callLater(() => panel.applyFix(problem, fix))
+                }
+            }
+            onObjectAdded: (index, object) => fixMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => fixMenu.removeItem(object)
+        }
+        ShellMenuItem {
+            objectName: "problemNoFixes"
+            iconRole: "edit"
+            text: qsTr("No quick fixes")
+            enabled: false
+            visible: fixMenu.fixes.length === 0
+            height: visible ? implicitHeight : 0
+        }
+    }
+
     FileChooser {
         id: importPicker
         objectName: "qcNotesImportPicker"
@@ -217,6 +288,7 @@ FocusScope {
             Label {
                 objectName: "qcNotesCount"
                 text: qsTr("In this file") + " · " + qsTr("%n note(s)", "", panel.qcNotes.total)
+                      + (panel.problems.problemCount > 0 ? " · " + qsTr("%n problem(s)", "", panel.problems.problemCount) : "")
                 color: Theme.muted
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -282,7 +354,7 @@ FocusScope {
             Layout.fillWidth: true
             onSave: (ms, section, text, done) => {
                 if (panel.qcNotes.add(ms, section, text)) {
-                    panel.chosen = panel.qcNotes.current
+                    panel.chosen = panel.noteKey(panel.qcNotes.current)
                     panel.stopEditing()
                 }
             }
@@ -290,10 +362,65 @@ FocusScope {
         }
 
         Flow {
+            objectName: "problemsSeverities"
+            Layout.fillWidth: true
+            spacing: 6
+            visible: panel.problems.problemCount > 0
+            FilterChip {
+                objectName: "problemsSeverityAll"
+                text: qsTr("All")
+                on: panel.problems.severity.length === 0
+                onClicked: panel.problems.severity = ""
+            }
+            Repeater {
+                model: panel.problems.severities
+                FilterChip {
+                    required property var modelData
+                    objectName: "problemsSeverity_" + modelData.id
+                    text: modelData.name + "  " + modelData.count
+                    on: panel.problems.severity === modelData.id
+                    onClicked: panel.problems.severity = on ? "" : modelData.id
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 3
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 4
+                        height: 4
+                        radius: 2
+                        color: panel.ink(parent.modelData.id)
+                    }
+                }
+            }
+        }
+
+        Flow {
+            objectName: "problemsSources"
+            Layout.fillWidth: true
+            spacing: 6
+            visible: panel.problems.problemCount > 0
+            FilterChip {
+                objectName: "problemsSourceAll"
+                text: qsTr("All sources")
+                on: panel.problems.source.length === 0
+                onClicked: panel.problems.source = ""
+            }
+            Repeater {
+                model: panel.problems.sources
+                FilterChip {
+                    required property var modelData
+                    objectName: "problemsSource_" + modelData.id
+                    text: modelData.name + "  " + modelData.count
+                    on: panel.problems.source === modelData.id
+                    onClicked: panel.problems.source = on ? "" : modelData.id
+                }
+            }
+        }
+
+        Flow {
             objectName: "qcNotesSections"
             Layout.fillWidth: true
             spacing: 6
-            visible: panel.qcNotes.total > 0
+            visible: panel.qcNotes.total > 0 && (panel.problems.source.length === 0 || panel.problems.source === "qc")
             FilterChip {
                 objectName: "qcNotesSectionAll"
                 text: qsTr("All") + "  " + panel.qcNotes.total
@@ -320,29 +447,49 @@ FocusScope {
             Layout.fillHeight: true
             clip: true
             focus: true
-            visible: panel.qcNotes.total > 0
-            model: panel.notes
+            visible: panel.listed
+            model: panel.entries
             currentIndex: panel.chosenRow
             keyNavigationEnabled: false
             spacing: 2
             ScrollBar.vertical: ScrollBar {}
             Accessible.role: Accessible.List
-            Accessible.name: qsTr("QC notes")
+            Accessible.name: qsTr("Problems")
+            section.property: "group"
+            section.criteria: ViewSection.FullString
+            section.delegate: Label {
+                required property string section
+                width: ListView.view.width
+                topPadding: 6
+                bottomPadding: 2
+                leftPadding: 6
+                text: section
+                textFormat: Text.PlainText
+                elide: Text.ElideRight
+                color: Theme.muted
+                font.bold: true
+                Accessible.role: Accessible.Heading
+                Accessible.name: text
+            }
             Keys.onPressed: event => {
                 const row = panel.chosenRow
-                const at = r => panel.notes[Math.max(0, Math.min(panel.notes.length - 1, r))]
-                if (panel.notes.length === 0)
+                const at = r => panel.entries[Math.max(0, Math.min(panel.entries.length - 1, r))]
+                const note = panel.chosenEntry && panel.chosenEntry.kind === "note" ? panel.chosenEntry.index : -1
+                if (panel.entries.length === 0)
                     return
                 if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
-                    panel.choose(at(row < 0 ? 0 : row + (event.key === Qt.Key_Down ? 1 : -1)).index)
-                } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && row >= 0) {
-                    panel.goTo(panel.chosen)
-                } else if (event.key === Qt.Key_Space && row >= 0) {
-                    panel.toggleDone(panel.chosen)
-                } else if (event.key === Qt.Key_F2 && row >= 0) {
-                    panel.startEditing(panel.chosen)
-                } else if (event.key === Qt.Key_Delete && row >= 0) {
-                    panel.remove(panel.chosen)
+                    panel.choose(at(row < 0 ? 0 : row + (event.key === Qt.Key_Down ? 1 : -1)).key)
+                } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && row >= 0
+                           && !(event.modifiers & Qt.AltModifier)) {
+                    panel.goTo(panel.chosenEntry)
+                } else if (event.key === Qt.Key_Space && note >= 0) {
+                    panel.toggleDone(note)
+                } else if (event.key === Qt.Key_F2 && note >= 0) {
+                    panel.startEditing(note)
+                } else if (event.key === Qt.Key_Delete && note >= 0) {
+                    panel.remove(note)
+                } else if (event.key === Qt.Key_Menu && row >= 0 && panel.chosenEntry.kind === "problem") {
+                    panel.openFixMenu(panel.chosenEntry, list.currentItem)
                 } else if (event.key === Qt.Key_Escape) {
                     panel.escaped()
                 } else {
@@ -354,15 +501,18 @@ FocusScope {
                 id: row
                 required property var modelData
                 required property int index
-                readonly property bool isEditing: panel.editing === modelData.index
-                readonly property bool isCurrent: panel.qcNotes.current === modelData.index
+                readonly property bool isNote: modelData.kind === "note"
+                readonly property bool isEditing: isNote && panel.editing === modelData.index
+                readonly property bool isCurrent: isNote && panel.qcNotes.current === modelData.index
                 width: ListView.view.width
-                implicitHeight: isEditing ? rowEditor.implicitHeight : noteRow.implicitHeight + 8
-                objectName: "qcNote_" + index
+                implicitHeight: isEditing ? rowEditor.implicitHeight : (isNote ? noteRow.implicitHeight : problemRow.implicitHeight) + 8
+                objectName: (isNote ? "qcNote_" : "problem_") + index
                 Accessible.role: Accessible.ListItem
-                Accessible.name: [modelData.timeText, modelData.section,
-                                  modelData.row > 0 ? qsTr("line %1").arg(modelData.row) : qsTr("no line"),
-                                  modelData.text, modelData.done ? qsTr("done") : qsTr("not done")].join(", ")
+                Accessible.name: isNote
+                    ? [modelData.timeText, modelData.section,
+                       modelData.row > 0 ? qsTr("line %1").arg(modelData.row) : qsTr("no line"),
+                       modelData.text, modelData.done ? qsTr("done") : qsTr("not done")].join(", ")
+                    : [qsTr("line %1").arg(modelData.row), panel.severityText(modelData.severity), modelData.message, modelData.sourceName].join(", ")
                 Rectangle {
                     anchors.fill: parent
                     visible: !row.isEditing
@@ -376,25 +526,66 @@ FocusScope {
                     anchors.fill: parent
                     visible: !row.isEditing
                     hoverEnabled: true
-                    onClicked: {
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: mouseEvent => {
                         list.forceActiveFocus()
-                        panel.goTo(row.modelData.index)
+                        if (mouseEvent.button === Qt.RightButton) {
+                            panel.openFixMenu(row.modelData, row)
+                            return
+                        }
+                        panel.goTo(row.modelData)
                     }
-                    onDoubleClicked: panel.startEditing(row.modelData.index)
+                    onDoubleClicked: mouseEvent => {
+                        if (row.isNote && mouseEvent.button === Qt.LeftButton)
+                            panel.startEditing(row.modelData.index)
+                    }
                 }
                 RowLayout {
-                    id: noteRow
-                    visible: !row.isEditing
+                    id: problemRow
+                    visible: !row.isNote
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.leftMargin: 6
                     anchors.rightMargin: 6
                     spacing: 8
-                    opacity: row.modelData.done ? 0.55 : 1
+                    Rectangle {
+                        objectName: "problemSeverity"
+                        readonly property color ink: panel.ink(row.modelData.severity)
+                        width: 8
+                        height: 8
+                        radius: 4
+                        color: ink
+                        Layout.alignment: Qt.AlignTop
+                        Layout.topMargin: 4
+                    }
+                    Label {
+                        text: row.modelData.message ?? ""
+                        textFormat: Text.PlainText
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                    Label {
+                        text: row.isNote ? "" : row.modelData.fixes.length > 0
+                              ? qsTr("%1 · %n fix(es)", "", row.modelData.fixes.length).arg(row.modelData.sourceName)
+                              : row.modelData.sourceName
+                        color: Theme.muted
+                        Layout.alignment: Qt.AlignTop
+                    }
+                }
+                RowLayout {
+                    id: noteRow
+                    visible: row.isNote && !row.isEditing
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.leftMargin: 6
+                    anchors.rightMargin: 6
+                    spacing: 8
+                    opacity: row.modelData.done === true ? 0.55 : 1
                     CheckBox {
                         objectName: "qcNoteDone"
-                        checked: row.modelData.done
+                        checked: row.modelData.done === true
                         enabled: panel.qcNotes.editable
                         focusPolicy: Qt.NoFocus
                         Accessible.name: qsTr("Done")
@@ -402,27 +593,22 @@ FocusScope {
                         Layout.alignment: Qt.AlignTop
                     }
                     Label {
-                        text: row.modelData.timeText
+                        text: row.modelData.timeText ?? ""
                         font.family: "monospace"
                         Layout.alignment: Qt.AlignTop
                     }
                     Label {
-                        text: row.modelData.section
+                        text: row.modelData.section ?? ""
                         visible: panel.qcNotes.section.length === 0
                         color: Theme.muted
                         Layout.alignment: Qt.AlignTop
                     }
                     Label {
-                        text: row.modelData.text
+                        text: row.modelData.text ?? ""
                         textFormat: Text.PlainText
                         wrapMode: Text.Wrap
-                        font.strikeout: row.modelData.done
+                        font.strikeout: row.modelData.done === true
                         Layout.fillWidth: true
-                    }
-                    Label {
-                        text: row.modelData.row > 0 ? "#" + row.modelData.row : qsTr("No line")
-                        color: Theme.muted
-                        Layout.alignment: Qt.AlignTop
                     }
                 }
                 QcNoteEditor {
@@ -433,7 +619,7 @@ FocusScope {
                     adding: false
                     onSave: (ms, section, text, done) => {
                         if (panel.qcNotes.edit(row.modelData.index, ms, section, text, done)) {
-                            panel.chosen = panel.qcNotes.current
+                            panel.chosen = panel.noteKey(panel.qcNotes.current)
                             panel.stopEditing()
                         }
                     }
@@ -448,7 +634,7 @@ FocusScope {
 
         ColumnLayout {
             objectName: "qcNotesEmpty"
-            visible: panel.qcNotes.total === 0 && panel.editing !== newNote
+            visible: !panel.listed && panel.editing !== newNote
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 8
@@ -529,7 +715,7 @@ FocusScope {
             Label {
                 objectName: "qcNotesPosition"
                 color: Theme.muted
-                text: panel.chosenRow >= 0 ? qsTr("%1 of %2").arg(panel.chosenRow + 1, panel.notes.length)
+                text: panel.chosenRow >= 0 ? qsTr("%1 of %2").arg(panel.chosenRow + 1, panel.entries.length)
                                            : qsTr("%n note(s)", "", panel.notes.length)
             }
         }

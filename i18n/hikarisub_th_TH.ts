@@ -7245,6 +7245,37 @@ Failed to copy %2 fonts.</source>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>ข้อผิดพลาด %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>คำเตือน %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>ข้อมูล %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>คำแนะนำ %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>ปัญหา %n รายการ: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>กรองตาราง</translation>
@@ -7504,6 +7535,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>แก้ไขด่วน</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14526,6 +14561,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไฟล์คำบรรยายสามารถกำหนดขีดจำกัดของตัวเองได้ในคุณสมบัติของสคริปต์</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>แสดงปัญหาขีดจำกัดการอ่าน</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>การแบ่ง</translation>
     </message>
@@ -18648,12 +18687,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>ข้อผิดพลาด</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>คำเตือน</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>ข้อมูล</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>คำแนะนำ</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>บรรทัด %1 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>โน้ต QC</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>ไม่มีโน้ตเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>แก้ไขด่วน</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>แถวที่เลือกไม่มีการแก้ไขด่วน</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>ปัญหาที่เคอร์เซอร์ไม่มีการแก้ไขด่วน</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18676,8 +18747,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ลบโน้ตทั้งหมด…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>ปัญหา</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>ข้อผิดพลาด</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>คำเตือน</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>ข้อมูล</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>คำแนะนำ</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>นำการแก้ไขไปใช้ไม่ได้ บรรทัดนั้นเปลี่ยนไปหลังจากพบปัญหา</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18774,6 +18874,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ลบทั้งหมด</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>ไม่มีการแก้ไขด่วน</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>นำเข้าไฟล์โน้ต</translation>
     </message>
@@ -18809,6 +18913,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>โน้ต %n รายการ</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>ปัญหา %n รายการ</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>เพิ่มโน้ต</translation>
@@ -18836,6 +18946,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ทั้งหมด</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>แหล่งที่มาทั้งหมด</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%1 จาก %2</translation>
     </message>
@@ -18854,6 +18968,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>ยังไม่เสร็จ</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · การแก้ไข %n รายการ</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -18932,6 +19052,24 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>บันทึก</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>อ่านที่ %1 CPS ขีดจำกัดคือ %2</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>บรรทัดข้อความที่ %1 มี %2 อักขระ ขีดจำกัดคือ %3</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>ข้อความ %n บรรทัด ขีดจำกัดคือ %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>การอ่าน</translation>
     </message>
 </context>
 <context>

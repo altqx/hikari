@@ -195,6 +195,7 @@ foreach(mode offscreen xvfb native)
         set_tests_properties(hikari_ui_grammar_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+hikari_add_qttest(hikari_ui_problems_tests SOURCES problems_ui_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_open_reload_tests PRIVATE

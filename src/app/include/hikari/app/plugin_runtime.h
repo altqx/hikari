@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/problems.h"
 #include "hikari/application/row_marks.h"
 
 #include "hikari/api/api.h"
@@ -94,6 +95,7 @@ public:
         std::function<void(const QString &feature)> featureUsed;
         // Grid row marks; a plugin's go when it stops.
         application::RowMarks *marks = nullptr;
+        application::Problems *problems = nullptr;
         // A Document's tab title, for the plugin manager's Marks row.
         std::function<QString(application::DocumentId)> documentTitle;
         PluginPrograms *programs = nullptr;
