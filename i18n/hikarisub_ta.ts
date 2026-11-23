@@ -6517,7 +6517,7 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
-        <source>No Lines match the filter</source>
+        <source>No lines match the filter</source>
         <translation>வடிப்பியுடன் பொருந்தும் வரிகள் இல்லை</translation>
     </message>
     <message>

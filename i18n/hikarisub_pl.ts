@@ -6575,7 +6575,7 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message>
-        <source>No Lines match the filter</source>
+        <source>No lines match the filter</source>
         <translation>Brak linijek pasujących do filtra</translation>
     </message>
     <message>

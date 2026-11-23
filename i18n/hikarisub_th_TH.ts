@@ -6459,7 +6459,7 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
-        <source>No Lines match the filter</source>
+        <source>No lines match the filter</source>
         <translation>ไม่มีบรรทัดที่ตรงกับตัวกรอง</translation>
     </message>
     <message>

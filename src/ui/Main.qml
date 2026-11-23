@@ -8240,7 +8240,7 @@ ApplicationWindow {
                     objectName: "gridEmptyState"
                     anchors.centerIn: parent
                     visible: !shell.hasEditingTarget || shell.gridFilterMatchesNothing
-                    text: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "No Lines match the filter")
+                    text: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "No lines match the filter")
                                                  : qsTranslate("HikariSub.Grid", "No document open")
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true

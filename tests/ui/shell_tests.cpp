@@ -16493,7 +16493,7 @@ private slots:
         field->forceActiveFocus();
         typeText(QStringLiteral("zz"));
         QTRY_VERIFY(empty->isVisible());
-        QCOMPARE(empty->property("text").toString(), QStringLiteral("No Lines match the filter"));
+        QCOMPARE(empty->property("text").toString(), QStringLiteral("No lines match the filter"));
         application->shell().setGridFilterText(QStringLiteral("hre"));
         QTRY_VERIFY(!empty->isVisible());
         press(Qt::Key_Return);
