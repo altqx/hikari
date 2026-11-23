@@ -256,6 +256,8 @@ public:
         // HikariSub legacy's autosave folder, read only; empty: "Subs" in the first legacy
         // root that has one, or none without a settings file.
         QString legacyAutosaveDir;
+        // Where legacy settings are looked for; unset: SettingsImportStore::defaultCandidates().
+        std::optional<QStringList> legacySettingsFolders;
         // Empty: none (Open user folder does nothing).
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
