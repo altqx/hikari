@@ -402,6 +402,7 @@ std::vector<SettingDefinition> &definitions()
         {"postprocessor.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.preset", "", String, Profile, Mapped, false, std::string()},
         {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
+        {"export.recipes", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
         {"qcNotes.hideDone", "", Bool, Profile, Mapped, false, false},

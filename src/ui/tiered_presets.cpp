@@ -1,5 +1,6 @@
 #include "tiered_presets.h"
 
+#include <QJsonDocument>
 #include <QVariantMap>
 
 #include <algorithm>
@@ -53,6 +54,22 @@ QJsonArray jsonOf(const QList<NamedPreset> &presets)
     QJsonArray out;
     for (const auto &p : presets)
         out.append(QJsonObject{{QLatin1String("name"), p.name}, {QLatin1String("values"), p.values}});
+    return out;
+}
+
+QList<NamedPreset> presetsOfRows(const QStringList &rows)
+{
+    QJsonArray presets;
+    for (const QString &s : rows)
+        presets.append(QJsonDocument::fromJson(s.toUtf8()).object());
+    return presetsOf(presets);
+}
+
+QStringList rowsOf(const QList<NamedPreset> &presets)
+{
+    QStringList out;
+    for (const auto &p : jsonOf(presets))
+        out << QString::fromUtf8(QJsonDocument(p.toObject()).toJson(QJsonDocument::Compact));
     return out;
 }
 

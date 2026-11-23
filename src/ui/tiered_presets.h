@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -23,6 +24,9 @@ struct NamedPreset {
 // `[{"name", "values"}]`, the stored form of every preset list; nameless entries are dropped.
 QList<NamedPreset> presetsOf(const QJsonArray &stored);
 QJsonArray jsonOf(const QList<NamedPreset> &presets);
+// A StringList setting's rows: one compact JSON preset each.
+QList<NamedPreset> presetsOfRows(const QStringList &rows);
+QStringList rowsOf(const QList<NamedPreset> &presets);
 
 // A named preset list with a Project tier: the Project's preset hides the user's of the same name.
 class TieredPresets {
