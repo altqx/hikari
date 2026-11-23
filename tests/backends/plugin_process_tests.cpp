@@ -14,7 +14,9 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <expected>
 #include <fstream>
+#include <optional>
 
 using hikari::backends::PluginProcess;
 using hikari::backends::pluginProfile;
@@ -74,6 +76,8 @@ protected:
             request.memoryLimit = 64 << 20;
             request.settings = "{}";
             request.commands = {"greet", "spin", "wait", "crash", "scan"};
+            request.exporters = {"csv", "bin", "spin"};
+            request.importers = {"csv"};
             return request;
         };
         auto p = std::make_unique<PluginProcess>(QStringLiteral(HIKARI_PLUGIN_HELPER), load, limits);
@@ -103,7 +107,7 @@ TEST_F(PluginProcessTest, ACommandRunsInTheHelperAndCallsHikariSub)
     auto p = process(plugin("hello", "hikari.commands.register('greet', function() "
                                      "hikari.notify('v' .. hikari.call('api.version').version) end)"));
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     EXPECT_EQ(finished.at(0).at(0).toString(), QStringLiteral("greet"));
     EXPECT_EQ(p->state(), PluginProcess::State::Ready);
@@ -120,7 +124,7 @@ TEST_F(PluginProcessTest, HikariVcsCallsTheGitOperationsForTheDocument)
                                    "hikari.notify(refs.version .. ' ' .. shown.version) "
                                    "hikari.notify(tostring(pcall(hikari.vcs.show, ''))) end)"));
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     EXPECT_EQ(m_calls, (std::vector<std::string>{R"(vcs.refs {"limit":5})", R"(vcs.show {"document":3,"ref":"v1"})"}));
     EXPECT_EQ(m_notices, (std::vector<std::string>{"1 1", "false"}));
@@ -133,7 +137,7 @@ TEST_F(PluginProcessTest, HikariPresenceSetsAndClearsTheText)
                                        "hikari.presence.set_text(nil) "
                                        "hikari.notify(tostring(pcall(hikari.presence.set_text, 5))) end)"));
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     EXPECT_EQ(m_calls, (std::vector<std::string>{R"(presence.set_text {"text":"Ep 5"})", R"(presence.set_text {"text":""})"}));
     EXPECT_EQ(m_notices, std::vector<std::string>{"false"});
@@ -146,7 +150,7 @@ TEST_F(PluginProcessTest, ALongCommandIsStillWorkingAndRunsOnUntilForceStopped)
                      {.stillWorkingMs = 300});
     QSignalSpy stopped(p.get(), &PluginProcess::stopped);
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("spin"));
+    ASSERT_TRUE(p->run("spin", "{}"));
     ASSERT_TRUE(waitFor([&] { return p->stillWorking(); }));
     EXPECT_EQ(p->work(), QStringLiteral("spin"));
     waitFor([] { return false; }, 700);
@@ -155,7 +159,7 @@ TEST_F(PluginProcessTest, ALongCommandIsStillWorkingAndRunsOnUntilForceStopped)
     p->forceStop();
     EXPECT_FALSE(p->stillWorking());
     EXPECT_EQ(p->state(), PluginProcess::State::Stopped);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     EXPECT_EQ(m_notices, std::vector<std::string>{"back"});
 }
@@ -168,7 +172,7 @@ TEST_F(PluginProcessTest, TimeHikariSubSpendsAnsweringIsNotCounted)
     QSignalSpy finished(p.get(), &PluginProcess::finished);
     bool stillWorking = false;
     QObject::connect(p.get(), &PluginProcess::workChanged, [&] { stillWorking = stillWorking || p->stillWorking(); });
-    ASSERT_TRUE(p->run("wait"));
+    ASSERT_TRUE(p->run("wait", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     EXPECT_FALSE(stillWorking);
 }
@@ -177,7 +181,7 @@ TEST_F(PluginProcessTest, ForceStopEndsARunningCommand)
 {
     auto p = process(plugin("spin", "hikari.commands.register('spin', function() while true do end end)"));
     QSignalSpy stopped(p.get(), &PluginProcess::stopped);
-    ASSERT_TRUE(p->run("spin"));
+    ASSERT_TRUE(p->run("spin", "{}"));
     ASSERT_TRUE(waitFor([&] { return p->busy() && p->state() == PluginProcess::State::Ready; }));
     p->forceStop();
     ASSERT_EQ(stopped.count(), 1);
@@ -205,7 +209,7 @@ TEST_F(PluginProcessTest, AJobReportsProgressAndEndsWhenCancelled)
     QSignalSpy ended(p.get(), &PluginProcess::jobEnded);
     QSignalSpy finished(p.get(), &PluginProcess::finished);
     QSignalSpy stopped(p.get(), &PluginProcess::stopped);
-    ASSERT_TRUE(p->run("scan"));
+    ASSERT_TRUE(p->run("scan", "{}"));
     ASSERT_TRUE(waitFor([&] { return began.count() == 1; }));
     EXPECT_EQ(began.at(0).at(0).toString(), QStringLiteral("scan"));
     EXPECT_EQ(began.at(0).at(1).toString(), QStringLiteral("Scanning"));
@@ -228,10 +232,11 @@ TEST_F(PluginProcessTest, OnlyACommandBecomesAJob)
     auto p = process(plugin("early", "local ok, err = hikari.job.begin{title = 'x'} hikari.notify(tostring(ok) .. ' ' .. err.message) "
                                      "hikari.commands.register('greet', function() hikari.notify(tostring(hikari.job.progress(1))) end)"));
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     ASSERT_EQ(m_notices.size(), 2u);
-    EXPECT_EQ(m_notices[0], "nil Only a command, a timer callback or a click in the plugin's own panel or dialog can become a job.");
+    EXPECT_EQ(m_notices[0],
+              "nil Only a command, a timer callback, a format call or a click in the plugin's own panel or dialog can become a job.");
     EXPECT_EQ(m_notices[1], "nil");
 }
 
@@ -246,7 +251,7 @@ TEST_F(PluginProcessTest, AClickInItsOwnPanelBecomesAJob)
                      {.stillWorkingMs = 300});
     QSignalSpy began(p.get(), &PluginProcess::jobBegan);
     QSignalSpy ended(p.get(), &PluginProcess::jobEnded);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return p->state() == PluginProcess::State::Ready && !p->busy(); }));
     ASSERT_TRUE(p->deliver("panel:scan", R"({"kind": "click", "widget": "go", "panel": "scan", "values": {}})", {}));
     ASSERT_TRUE(waitFor([&] { return m_notices.size() == 1; }));
@@ -268,13 +273,14 @@ TEST_F(PluginProcessTest, OtherEventsDontBecomeAJob)
         hikari.panels.on('scan', try)
         hikari.events.on('document.changed', try))"));
     QSignalSpy began(p.get(), &PluginProcess::jobBegan);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return p->state() == PluginProcess::State::Ready && !p->busy(); }));
     ASSERT_TRUE(p->deliver("panel:scan", R"({"kind": "change", "widget": "gap", "value": 3, "panel": "scan", "values": {}})", {}));
     ASSERT_TRUE(p->deliver("panel:scan", R"({"kind": "show", "panel": "scan", "values": {}})", {}));
     ASSERT_TRUE(p->deliver("document.changed", R"({"kind": "click"})", {}));
     ASSERT_TRUE(waitFor([&] { return m_notices.size() == 3; }));
-    const std::string no = "nil Only a command, a timer callback or a click in the plugin's own panel or dialog can become a job.";
+    const std::string no =
+        "nil Only a command, a timer callback, a format call or a click in the plugin's own panel or dialog can become a job.";
     EXPECT_EQ(m_notices, (std::vector<std::string>{no, no, no}));
     EXPECT_EQ(began.count(), 0);
 }
@@ -285,7 +291,7 @@ TEST_F(PluginProcessTest, MarksGoThroughTheHikariApi)
                                      "hikari.marks.set({{line = 2, colour = 'warning', tooltip = 'Changed'}}) "
                                      "hikari.marks.clear({2}) hikari.marks.list() end)"));
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     ASSERT_EQ(m_calls.size(), 3u);
     EXPECT_EQ(m_calls[0], R"(marks.set {"marks":[{"colour":"warning","line":2,"tooltip":"Changed"}]})");
@@ -302,7 +308,7 @@ TEST_F(PluginProcessTest, ForceStopEndsAJobThatIgnoresCancel)
     QSignalSpy began(p.get(), &PluginProcess::jobBegan);
     QSignalSpy ended(p.get(), &PluginProcess::jobEnded);
     QSignalSpy stopped(p.get(), &PluginProcess::stopped);
-    ASSERT_TRUE(p->run("scan"));
+    ASSERT_TRUE(p->run("scan", "{}"));
     ASSERT_TRUE(waitFor([&] { return began.count() == 1; }));
     p->cancelJob();
     waitFor([] { return false; }, 700);
@@ -324,13 +330,13 @@ TEST_F(PluginProcessTest, ACrashTakesDownOnlyItsHelper)
     auto steady = process(plugin("steady", "hikari.commands.register('greet', function() hikari.notify('fine') end)"));
     QSignalSpy stopped(crashing.get(), &PluginProcess::stopped);
     QSignalSpy finished(steady.get(), &PluginProcess::finished);
-    ASSERT_TRUE(steady->run("greet"));
+    ASSERT_TRUE(steady->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
     const qint64 steadyPid = steady->processId();
-    ASSERT_TRUE(crashing->run("crash"));
+    ASSERT_TRUE(crashing->run("crash", "{}"));
     ASSERT_TRUE(waitFor([&] { return stopped.count() == 1; }));
     EXPECT_EQ(stopped.at(0).at(0).value<PluginProcess::StopReason>(), PluginProcess::StopReason::Crashed);
-    ASSERT_TRUE(steady->run("greet"));
+    ASSERT_TRUE(steady->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 2; }));
     EXPECT_EQ(steady->processId(), steadyPid);
     EXPECT_EQ(m_notices, (std::vector<std::string>{"fine", "fine"}));
@@ -342,7 +348,7 @@ TEST_F(PluginProcessTest, EventsWaitBehindACommandAndTheNewestOfANameWins)
     auto p = process(plugin("events", "hikari.events.on('document.changed', function(e) hikari.notify('seen ' .. e.n) end) "
                                       "hikari.commands.register('wait', function() hikari.call('api.version') end)"));
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("wait"));
+    ASSERT_TRUE(p->run("wait", "{}"));
     ASSERT_TRUE(waitFor([&] { return p->busy() && p->state() == PluginProcess::State::Ready; }));
     for (int n = 1; n <= 3; ++n)
         ASSERT_TRUE(p->push("document.changed", "{\"n\": " + std::to_string(n) + "}"));
@@ -358,7 +364,7 @@ TEST_F(PluginProcessTest, DeliveredEventsMergeOnlyUnderTheSameKey)
     auto p = process(plugin("keys", "hikari.events.on('document.changed', function(e) hikari.notify(e.n) end) "
                                     "hikari.commands.register('wait', function() hikari.call('api.version') end)"));
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("wait"));
+    ASSERT_TRUE(p->run("wait", "{}"));
     ASSERT_TRUE(waitFor([&] { return p->busy() && p->state() == PluginProcess::State::Ready; }));
     ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click a"})", {}));
     ASSERT_TRUE(p->deliver("document.changed", R"({"n": "click b"})", {}));
@@ -377,7 +383,7 @@ TEST_F(PluginProcessTest, ALoadErrorIsReportedAndStopsFurtherRuns)
     ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
     EXPECT_TRUE(p->loadError().startsWith(QStringLiteral("main.lua:1:"))) << p->loadError().toStdString();
     EXPECT_EQ(p->state(), PluginProcess::State::LoadFailed);
-    EXPECT_FALSE(p->run("greet"));
+    EXPECT_FALSE(p->run("greet", "{}"));
 }
 
 TEST_F(PluginProcessTest, StartTriesAgainAfterAFailedLoad)
@@ -399,7 +405,7 @@ TEST_F(PluginProcessTest, AnErrorInACommandIsReportedAndThePluginKeepsRunning)
 {
     auto p = process(plugin("err", "hikari.commands.register('greet', function() error('nope') end)"));
     QSignalSpy failed(p.get(), &PluginProcess::commandFailed);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
     EXPECT_TRUE(failed.at(0).at(1).toString().contains(QStringLiteral("main.lua:1: nope")));
     EXPECT_EQ(p->state(), PluginProcess::State::Ready);
@@ -431,7 +437,7 @@ TEST_F(PluginProcessTest, AConfinedHelperLoadsAndRunsItsPlugin)
     p->setSandbox(pluginProfile(QStringLiteral(HIKARI_PLUGIN_HELPER), QString::fromStdString(root), "com.example.test"));
     EXPECT_TRUE(p->sandboxed());
     QSignalSpy finished(p.get(), &PluginProcess::finished);
-    ASSERT_TRUE(p->run("greet"));
+    ASSERT_TRUE(p->run("greet", "{}"));
     ASSERT_TRUE(waitFor([&] { return finished.count() == 1; })) << p->diagnostics().toStdString();
     EXPECT_EQ(m_notices, std::vector<std::string>{"hi"});
 #ifdef Q_OS_LINUX
@@ -480,6 +486,87 @@ TEST_F(PluginProcessTest, ThePluginProfileRefusesWhatItLeavesOut)
     EXPECT_TRUE(denied(QStringLiteral("read ") + outside)) << report;
     EXPECT_TRUE(denied(QStringLiteral("write ") + fresh)) << report;
     EXPECT_TRUE(denied(QStringLiteral("tcp"))) << report;
+}
+
+namespace {
+
+struct FormatResult {
+    std::optional<std::expected<std::string, QString>> value;
+    PluginProcess::FormatDone done()
+    {
+        return [this](std::expected<std::string, QString> v) { value = std::move(v); };
+    }
+};
+
+}
+
+TEST_F(PluginProcessTest, AnExporterTurnsTheSnapshotIntoTheFilesBytes)
+{
+    auto p = process(plugin("formats", R"(
+hikari.formats.exporter("csv", function(doc, options)
+    local rows = {}
+    for _, line in ipairs(doc.lines) do rows[#rows + 1] = line.start .. "," .. line.text end
+    return table.concat(rows, "\n") .. "\n" .. options.path
+end)
+hikari.formats.exporter("bin", function() return "AAH/", "base64" end)
+)"));
+    FormatResult csv, bin;
+    ASSERT_TRUE(p->exportDocument("csv", R"({"lines": [{"start": 0, "text": "Hi"}, {"start": 1500, "text": "Bye"}]})",
+                                  R"({"path": "/x/a.csv"})", csv.done()));
+    ASSERT_TRUE(p->exportDocument("bin", "{}", "{}", bin.done()));
+    ASSERT_TRUE(waitFor([&] { return csv.value && bin.value; }));
+    ASSERT_TRUE(csv.value->has_value()) << csv.value->error().toStdString();
+    EXPECT_EQ(**csv.value, "0,Hi\n1500,Bye\n/x/a.csv");
+    ASSERT_TRUE(bin.value->has_value());
+    EXPECT_EQ(**bin.value, std::string("\0\x01\xff", 3));
+}
+
+TEST_F(PluginProcessTest, AnImporterGetsTheBytesInBase64AndItsTableComesBackAsJson)
+{
+    auto p = process(plugin("formats", R"(
+hikari.formats.importer("csv", function(data, name)
+    return {lines = {{text = data}}, info = {Title = name}}
+end)
+)"));
+    FormatResult read;
+    ASSERT_TRUE(p->importFile("csv", std::string("\0\x01\xff", 3), "a.csv", read.done()));
+    ASSERT_TRUE(waitFor([&] { return read.value.has_value(); }));
+    ASSERT_TRUE(read.value->has_value()) << read.value->error().toStdString();
+    EXPECT_EQ(**read.value, R"({"info":{"Title":"a.csv"},"lines":[{"text":"AAH/"}]})");
+}
+
+TEST_F(PluginProcessTest, FormatCallsThatGoWrongSayWhy)
+{
+    auto p = process(plugin("formats", R"(
+hikari.formats.exporter("csv", function() return 42 end)
+hikari.formats.exporter("bin", function() return "\255" end)
+hikari.formats.exporter("spin", function() while true do end end)
+)"));
+    FormatResult number, notText, missing, spin;
+    ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", number.done()));
+    ASSERT_TRUE(p->exportDocument("bin", "{}", "{}", notText.done()));
+    ASSERT_TRUE(p->importFile("csv", "x", "a.csv", missing.done()));
+    ASSERT_TRUE(waitFor([&] { return number.value && notText.value && missing.value; }));
+    EXPECT_EQ(number.value->error(), QStringLiteral("an exporter must return the file as a string, not a number"));
+    EXPECT_EQ(notText.value->error(), QStringLiteral("the exporter's file isn't UTF-8 text; return it with \"base64\""));
+    EXPECT_TRUE(missing.value->error().startsWith(QStringLiteral("format “csv” has no importer")));
+    ASSERT_TRUE(p->exportDocument("spin", "{}", "{}", spin.done()));
+    waitFor([] { return false; }, 300);
+    EXPECT_FALSE(spin.value.has_value());
+    p->forceStop();
+    ASSERT_TRUE(waitFor([&] { return spin.value.has_value(); }));
+    EXPECT_EQ(spin.value->error(), QStringLiteral("the plugin was stopped"));
+}
+
+TEST_F(PluginProcessTest, OnlyDeclaredFormatsTakeAHandler)
+{
+    auto p = process(plugin("formats", "hikari.formats.importer('bin', function() end)"));
+    QSignalSpy failed(p.get(), &PluginProcess::loadFailed);
+    FormatResult never;
+    ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", never.done()));
+    ASSERT_TRUE(waitFor([&] { return failed.count() == 1 && never.value; }));
+    EXPECT_TRUE(failed.at(0).at(0).toString().contains(QStringLiteral("“bin” isn't a format with import in hikari-plugin.json")));
+    EXPECT_FALSE(never.value->has_value());
 }
 
 TEST_F(PluginProcessTest, TimersNeedTheBackgroundPermission)

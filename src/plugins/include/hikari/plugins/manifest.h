@@ -44,6 +44,28 @@ struct Command {
     bool palette = true;
 };
 
+enum class MenuLocation { Grid, LineEditor, MenuBar };
+
+struct MenuPlacement {
+    std::string command;
+    MenuLocation location = MenuLocation::MenuBar;
+    std::string group;
+};
+
+struct StatusItem {
+    std::string id;
+    std::string title;
+    std::string text;
+    std::string icon;
+    std::string tooltip;
+    std::string command; // empty: not a button
+};
+
+struct Keybinding {
+    std::string command;
+    std::string key; // Qt's portable text
+};
+
 enum class PanelArea { Left, Right, Bottom };
 
 struct Panel {
@@ -79,6 +101,14 @@ struct NodeContribution {
     std::string summary;
     std::string file; // a package .lua path: the node's code
     std::vector<NodePort> inputs, outputs;
+};
+
+struct FormatContribution {
+    std::string id;
+    std::string title;
+    std::vector<std::string> extensions; // lower case, without the dot
+    bool imports = false;
+    bool exports = false;
 };
 
 struct ProgramDownload {
@@ -122,6 +152,14 @@ struct ContentFile {
     std::string path;  // a package path
 };
 
+// A Hunspell pair the spell checker offers after the user's and the bundled dictionaries.
+struct Dictionary {
+    std::string language; // the Hunspell name, such as en_US
+    std::string title;
+    std::string aff; // package paths
+    std::string dic;
+};
+
 struct Manifest {
     std::string id;
     std::string name;
@@ -140,11 +178,16 @@ struct Manifest {
     Permissions permissions;
     std::vector<Command> commands;
     std::vector<Panel> panels;
+    std::vector<MenuPlacement> menus;
+    std::vector<StatusItem> statusItems;
+    std::vector<Keybinding> keybindings;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
+    std::vector<FormatContribution> formats;
     std::vector<Program> programs;
     std::vector<ContentFile> styles;
     std::vector<ContentFile> karaokePresets;
+    std::vector<Dictionary> dictionaries;
     std::vector<ContentFile> graphs;
 
     bool hasQmlPanels() const;
@@ -155,7 +198,7 @@ struct Manifest {
 std::string_view manifestSchema();
 
 struct ManifestProblem {
-    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust };
+    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust, UnknownCommand, DuplicateKey };
     Kind kind = Kind::Schema;
     std::string at;     // a JSON pointer into the manifest
     std::string detail; // English, technical: the parser's or validator's words

@@ -13,7 +13,9 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_window_media.cpp
     application_karaoke.cpp
     application_export.cpp
+    application_formats.cpp
     automation_shell.cpp include/hikari/app/automation_shell.h
+    lua_export_filters.cpp include/hikari/app/lua_export_filters.h
     script_packages.cpp include/hikari/app/script_packages.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h

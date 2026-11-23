@@ -10,6 +10,8 @@ QtObject {
     property var macros: []
     property bool enabled: true
     property var keys: null
+    // Why a macro can't run now, or "".
+    property var reasonOf: null
     // Entries name their place with `titles` (a list), else with `name` split at "/".
     property string itemPrefix: "macro_"
     property string menuPrefix: "macroMenu_"
@@ -21,7 +23,8 @@ QtObject {
         ShellMenuItem {
             required property var macro
             objectName: entries.itemPrefix + (macro.id ?? macro.name)
-            enabled: entries.enabled
+            reason: entries.reasonOf ? entries.reasonOf(macro) : ""
+            enabled: entries.enabled && reason.length === 0
             shortcutText: entries.keys ? entries.keys(macro) : ""
             onTriggered: entries.triggered(macro)
         }

@@ -272,9 +272,11 @@ private slots:
         const auto steps = s->historySize();
         QVERIFY(a.saveAs(path));
         a.waitForWrites();
-        QVERIFY(readAll(path).startsWith("[Script Info]\r\nActive Line: 1\r\n") ||
-                readAll(path).startsWith("[Script Info]\nActive Line: 1\n"));
+        const QByteArray saved = readAll(path).replace("\r\n", "\n");
+        QVERIFY2(saved.contains("; https://hikarisub.org/\nActive Line: 1\n"), saved.constData());
+        QVERIFY2(saved.contains("\n[Aegisub Project Garbage]\nActive Line: 1\n"), saved.constData());
         QVERIFY(s->document().scriptInfo(application::kActiveLineKey) == std::u8string(u8"1"));
+        QVERIFY(s->document().projectGarbage(application::kActiveLineKey) == std::u8string(u8"1"));
         QCOMPARE(s->historySize(), steps);
         QVERIFY(!s->isDirty());
     }
@@ -376,6 +378,25 @@ private slots:
         a.shell().setStatusText(QStringLiteral("set_status_text"));
         QTRY_COMPARE_WITH_TIMEOUT(a.shell().statusText(), QString(), 10000);
         QVERIFY2(clock.elapsed() >= 4900, qPrintable(QString::number(clock.elapsed())));
+    }
+
+    void theAutosaveIntervalSettingSetsTheTimer()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("interval.ass")), "x");
+        app::Application a(options());
+        QCOMPARE(a.autosaveIntervalMs(), 20'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 1);
+        QCOMPARE(a.autosaveIntervalMs(), 5'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 100'000);
+        QCOMPARE(a.autosaveIntervalMs(), 3'600'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 5);
+        QVERIFY(a.openFile(path));
+        a.editor().textEdited(QStringLiteral("y"), 1);
+        QVERIFY(a.editor().commit());
+        const auto document = *a.workspace().editingTarget();
+        QTest::qWait(4'000);
+        QVERIFY(a.autosavePending(document));
+        QTRY_VERIFY_WITH_TIMEOUT(!a.autosavePending(document), 4'000);
     }
 
     void aSlowDiskLeavesTheWindowResponsiveWhileAutosaving()

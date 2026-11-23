@@ -2,6 +2,8 @@
 
 #include "toml_file.h"
 
+#include "hikari/application/export_format_ids.h"
+
 #include <QDir>
 
 #include <algorithm>
@@ -18,6 +20,25 @@ namespace {
 
 using application::SettingDefinition;
 using application::SettingValue;
+
+std::optional<std::string> renamedExportFormat(const toml::table &table)
+{
+    const auto *format = table["export"]["format"].as_string();
+    if (!format)
+        return std::nullopt;
+    const std::string_view current = application::currentExportFormat(format->get());
+    return current == format->get() ? std::nullopt : std::optional(std::string(current));
+}
+
+std::string withCurrentExportFormat(std::string text)
+{
+    auto parsed = parseTomlFile(text, ProjectFile::kVersion);
+    const auto *table = std::get_if<toml::table>(&parsed);
+    const auto renamed = table ? renamedExportFormat(*table) : std::nullopt;
+    if (auto migrated = renamed ? patchTomlSetting(text, "export.format", SettingValue(*renamed)) : std::nullopt)
+        return std::move(*migrated);
+    return text;
+}
 
 std::filesystem::path pathOf(const QString &path)
 {
@@ -122,6 +143,8 @@ void ProjectFile::load(File file)
         if (auto *failure = std::get_if<application::ParseFailure>(&parsed))
             return std::optional(*failure);
         m_tables[file] = std::move(std::get<toml::table>(parsed));
+        if (const auto renamed = renamedExportFormat(m_tables[file]))
+            m_tables[file]["export"].as_table()->insert_or_assign("format", *renamed);
         return std::optional<application::ParseFailure>();
     });
     if (loaded.problem) {
@@ -235,7 +258,7 @@ bool ProjectFile::storeNode(std::string_view id, const toml::table *value)
     const auto bytes = application::readOwnedFile(file);
     if (!bytes && !value)
         return true;
-    const std::string text = bytes ? *bytes : formatTomlFile({}, kVersion);
+    const std::string text = withCurrentExportFormat(bytes ? *bytes : formatTomlFile({}, kVersion));
     auto patched = patchTomlNode(text, id, value);
     if (!patched) {
         auto parsed = parseTomlFile(text, kVersion);
@@ -335,7 +358,7 @@ void ProjectFile::store(const SettingDefinition &setting, const std::optional<Se
         m_writeFailed = false;
         return;
     }
-    const std::string text = bytes ? *bytes : formatTomlFile({}, kVersion);
+    const std::string text = withCurrentExportFormat(bytes ? *bytes : formatTomlFile({}, kVersion));
     auto patched = patchTomlSetting(text, setting.id, value);
     if (!patched) {
         auto parsed = parseTomlFile(text, kVersion);

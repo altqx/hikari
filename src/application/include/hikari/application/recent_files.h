@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -43,6 +44,7 @@ bool isMissingLocalFile(const std::string &path, const std::function<bool(const 
 // An existing folder opens as a Project. Otherwise by extension: unknown ones open as video,
 // archives and programs are refused, a session file (.hksession, .kls) only opens alone.
 enum class OpenKind { Subtitles, Script, Keyframes, Video, Session, Folder, Refused };
-OpenKind openKindOf(std::string_view path, bool single);
+// moreSubtitles: lower-case extensions that open as subtitles too, such as plugins' formats.
+OpenKind openKindOf(std::string_view path, bool single, std::span<const std::string> moreSubtitles = {});
 
 }

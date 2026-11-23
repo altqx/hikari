@@ -63,6 +63,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `plugins.review` | read | 1 | What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files. |
 | `plugins.install` | write | 1 | Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time. |
 | `plugins.run` | write | 1 | Runs an installed plugin's command as its menu item would. |
+| `status_items.set` | write | 1 | Changes one of the caller's status bar items. Plugins only. |
+| `formats.list` | read | 1 | The subtitle formats HikariSub can open and export, built-in and from plugins. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
 | `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
 | `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
@@ -109,7 +111,7 @@ The open Documents, in tab order, with the protected reference last.
 | `documents[].document` | [DocumentId](#documentid) |  |  |
 | `documents[].title` | string |  |  |
 | `documents[].path` | string or null |  |  |
-| `documents[].format` | one of `ass`, `srt`, `tmplayer`, `microdvd`, `mpl2` or `text` |  |  |
+| `documents[].format` | string |  | A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. |
 | `documents[].revision` | [Revision](#revision) |  |  |
 | `documents[].editingTarget` | boolean |  |  |
 | `documents[].reference` | boolean |  | The protected comparison reference. |
@@ -135,7 +137,7 @@ One Document's summary, Line and Style counts and its pending Line editor draft.
 | `document` | [DocumentId](#documentid) |  |  |
 | `title` | string |  |  |
 | `path` | string or null |  |  |
-| `format` | one of `ass`, `srt`, `tmplayer`, `microdvd`, `mpl2` or `text` |  |  |
+| `format` | string |  | A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. |
 | `revision` | [Revision](#revision) |  |  |
 | `editingTarget` | boolean |  |  |
 | `reference` | boolean |  | The protected comparison reference. |
@@ -1422,6 +1424,49 @@ Runs an installed plugin's command as its menu item would.
 | Field | Type | Always | Meaning |
 | --- | --- | --- | --- |
 | `ran` | `true` | yes |  |
+
+### `status_items.set`
+
+Write. Since version 1.
+
+Changes one of the caller's status bar items. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `item` | string | yes | An id from contributes.statusItems. At most 64 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `text` | string |  | Empty: icon only. At most 40 characters. |
+| `icon` | string |  | An icon role or own:<id>; empty: text only. At most 68 characters. `pattern`: `"^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$"`. |
+| `tooltip` | string |  | At most 300 characters. |
+| `tone` | one of `normal`, `warning` or `danger` |  |  |
+| `visible` | boolean |  |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `item` | string | yes |  |
+
+### `formats.list`
+
+Read. Since version 1.
+
+The subtitle formats HikariSub can open and export, built-in and from plugins.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `formats` | array of objects | yes |  |
+| `formats[].id` | string | yes | ass, srt, … or plugin:<plugin id>/<format id>. |
+| `formats[].title` | string | yes |  |
+| `formats[].extensions` | array of string | yes |  |
+| `formats[].import` | boolean | yes |  |
+| `formats[].export` | boolean | yes |  |
+| `formats[].plugin` | string |  | The plugin's id, for a plugin format. |
 
 ### `typeset.perspective`
 

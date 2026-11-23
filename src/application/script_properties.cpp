@@ -52,7 +52,9 @@ ScriptProperties scriptProperties(const core::Document &d)
     p.originalTranslation = text(u8"Original Translation");
     p.originalEditing = text(u8"Original Editing");
     p.originalTiming = text(u8"Original Timing");
+    p.synchPoint = text(u8"Synch Point");
     p.updatedBy = text(u8"Script Updated By");
+    p.updateDetails = text(u8"Update Details");
     std::tie(p.playResX, p.playResY) = assRes(d);
     p.layoutResX = toInt(d.scriptInfo(u8"LayoutResX"));
     p.layoutResY = toInt(d.scriptInfo(u8"LayoutResY"));
@@ -117,8 +119,12 @@ std::expected<void, CommandRefusal> applyScriptProperties(EditSession &session, 
         put(u8"Original Editing", edited.originalEditing);
     if (edits.originalTiming)
         put(u8"Original Timing", edited.originalTiming);
+    if (edits.synchPoint)
+        put(u8"Synch Point", edited.synchPoint);
     if (edits.updatedBy)
         put(u8"Script Updated By", edited.updatedBy);
+    if (edits.updateDetails)
+        put(u8"Update Details", edited.updateDetails);
     if (edits.playResX)
         put(u8"PlayResX", fromInt(newx));
     if (edits.playResY)

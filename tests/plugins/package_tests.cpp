@@ -347,6 +347,36 @@ TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
     EXPECT_EQ(notAGraph.error().detail, "is not a graph");
 }
 
+TEST(PluginPackage, ADictionaryNeedsBothFilesAndEachPassesItsCheck)
+{
+    constexpr std::string_view manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0",
+        "api": 1, "main": "lua/main.lua", "authors": ["Ana"],
+        "contributes": {"dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}]}})";
+    const auto files = [&](std::vector<PackageFile> extra) {
+        std::vector<PackageFile> out{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
+        out.insert(out.end(), extra.begin(), extra.end());
+        return out;
+    };
+    const PackageFile aff{"dict/pl.aff", bytes("SET UTF-8\n")};
+    const PackageFile dic{"dict/pl.dic", bytes("1\nkot\n")};
+
+    EXPECT_EQ(problem(files({dic})).path, "dict/pl.aff");
+    const PackageProblem noDic = problem(files({aff}));
+    EXPECT_EQ(noDic.kind, Kind::MissingContent);
+    EXPECT_EQ(noDic.path, "dict/pl.dic");
+
+    ContentFileChecks checks;
+    checks.dictionaryDic = [](std::span<const std::byte> data) {
+        return data.front() == std::byte{'0'} ? std::optional<std::string>("is empty") : std::nullopt;
+    };
+    EXPECT_TRUE(openPackage(files({aff, dic}), 1, checks));
+    const auto refused = openPackage(files({aff, {"dict/pl.dic", bytes("0\n")}}), 1, checks);
+    ASSERT_FALSE(refused);
+    EXPECT_EQ(refused.error().kind, Kind::BadContent);
+    EXPECT_EQ(refused.error().path, "dict/pl.dic");
+    EXPECT_EQ(refused.error().detail, "is empty");
+}
+
 TEST(PluginPackage, TheImportRuleReadsQmlAndScriptsAsWritten)
 {
     const std::pair<const char *, const char *> allowed[] = {

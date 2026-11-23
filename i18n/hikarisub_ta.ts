@@ -3828,6 +3828,42 @@ Output device: %2</source>
         <source>Import</source>
         <translation>இறக்குமதி</translation>
     </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the plugin that writes this format isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the document couldn’t be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t save.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be read: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is larger than 48 MiB, so no plugin can open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t open this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
@@ -4812,6 +4848,14 @@ Output device: %2</source>
     <message>
         <source>Close</source>
         <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t export this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t export.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5933,6 +5977,10 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub 0.0.x இந்தக் கணினியில் நிறுவப்பட்டுள்ளது. அதில் எதுவும் மாற்றப்படாது.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>எனது பழைய அமைப்புகளை இறக்குமதி செய்</translation>
     </message>
@@ -5947,6 +5995,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>புதிதாக அமை</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6043,14 +6095,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>காட்சிக் கருவிகள் மற்றும் பாணிகள் பலகத்துடன் பெரிய வீடியோ.</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>பின்னர்: அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub இன் இயல்புநிலைகளிலிருந்து தொடங்கு. அமைப்புகள் › பொது › பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்… மூலம் பின்னரும் அவற்றைக் கொண்டுவரலாம்.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -8156,10 +8200,6 @@ Failed to copy %2 fonts.</source>
         <translation>மங்கலைக் கண்டறி…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8214,6 +8254,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -8574,6 +8618,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen typesetting</source>
+        <translation>முழுத் திரை டைப்செட்டிங்</translation>
     </message>
     <message>
         <source>Global</source>
@@ -13950,6 +13998,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>பயனர் கோப்புறையைத் திற</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>குறிச்சொற்களை மறை</translation>
     </message>
@@ -14107,6 +14159,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>ASS tag replacement</source>
         <translation>ASS குறிச்சொல் மாற்று</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -14553,6 +14665,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>AI</translation>
     </message>
     <message>
+        <source>Autosave every</source>
+        <translation>தானியங்கு சேமிப்பு இடைவெளி</translation>
+    </message>
+    <message>
+        <source>seconds</source>
+        <translation>வினாடிகள்</translation>
+    </message>
+    <message>
+        <source>Seconds from a change to its autosave. Range from 5 to 3600</source>
+        <translation>ஒரு மாற்றத்திலிருந்து அதன் தானியங்கு சேமிப்பு வரையிலான வினாடிகள். வரம்பு 5 முதல் 3600 வரை</translation>
+    </message>
+    <message>
         <source>Trusted folders</source>
         <translation>நம்பகமான கோப்புறைகள்</translation>
     </message>
@@ -14567,10 +14691,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>பழைய பதிப்பின் அமைப்புகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -14936,6 +15056,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A built-in theme could not be read, so Dark is shown.</source>
         <translation>உள்ளமைந்த கருப்பொருளைப் படிக்க முடியவில்லை, எனவே இருண்ட கருப்பொருள் காட்டப்படுகிறது.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s spelling dictionary: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
@@ -16464,20 +16589,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not installed</source>
+        <translation>நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>நிறுவு</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>நிறுவப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>மீண்டும் முயல்</translation>
+    </message>
+    <message>
+        <source>Downloading the AI component · %1 of %2 MB</source>
+        <translation>AI கூறைப் பதிவிறக்குகிறது · %2 MB இல் %1</translation>
     </message>
 </context>
 <context>
@@ -17414,6 +17551,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json %2 இல் “%1” கட்டளையைக் குறிப்பிடுகிறது, ஆனால் அதை அறிவிக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json %1 ஐ %2 இல் இரண்டு முறை இணைக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>நிலைப் பட்டி உருப்படி: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>குறுக்குவிசை: %2 க்கு %1</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 ஐ %2 ஏற்கெனவே பயன்படுத்துகிறது</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>திறந்த கோப்பு தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>திறந்த கோப்பு இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>தேர்வு தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>தேர்வு இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>இரண்டு அல்லது அதற்கு மேற்பட்ட தேர்ந்தெடுத்த வரிகள் தேவை</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>ஒரு வரி தேர்ந்தெடுக்கப்பட்டிருக்கும்போது அல்லது தேர்வு இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>திறந்த வீடியோ தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>திறந்த வீடியோ இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>திறந்த ஆடியோ தேவை</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>திறந்த ஆடியோ இல்லாதபோது மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>கரோக்கி வரி தேவை</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>கரோக்கி இல்லாத வரியில் மட்டுமே இயங்கும்</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>மொழிபெயர்ப்பு பயன்முறை தேவை</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>மொழிபெயர்ப்பு பயன்முறைக்கு வெளியே மட்டுமே இயங்கும்</translation>
     </message>
 </context>
 <context>
@@ -19149,6 +19362,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>திருத்துதல்</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation>மேலும்</translation>
+    </message>
+    <message>
+        <source>Synch point</source>
+        <translation>ஒத்திசைவுப் புள்ளி</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>புதுப்பிப்பு விவரங்கள்</translation>
+    </message>
+    <message>
         <source>Resolution</source>
         <translation>தெளிவுத்திறன்</translation>
     </message>
@@ -20027,8 +20252,8 @@ because it was edited.</source>
         <translation>வசன வரிகள் (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -20222,10 +20447,6 @@ because it was edited.</source>
         <translation>நிலைப்படத்தை எழுத முடியாது</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>பழைய அமைப்புகளை இறக்குமதி செய்</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>முரண்பாடு</translation>
     </message>
@@ -20250,20 +20471,8 @@ because it was edited.</source>
         <translation>கடைசி இறக்குமதிக்கு முன் இருந்த அமைப்புகளுக்குத் திரும்பவா?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>அடுத்த முறை HikariSub தொடங்கும்போது அவை நடைமுறைக்கு வரும். பழைய நிறுவல் மாற்றப்படாது.</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>அதன் பிறகு நீங்கள் மாற்றிய இந்த அமைப்புகளும் திரும்பும்: %1. பழைய நிறுவல் மாற்றப்படாது.</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>பழைய நிறுவலின் கோப்புறையைத் தேர்வுசெய்யவும்</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20298,10 +20507,6 @@ because it was edited.</source>
         <translation>இறக்குமதி</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>நிறுவல்</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>மதிப்பாய்வு</translation>
     </message>
@@ -20310,20 +20515,36 @@ because it was edited.</source>
         <translation>படி %1 / 3: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>இறக்குமதி செய்ய வேண்டிய பழைய நிறுவலைத் தேர்வுசெய்யவும்</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>இந்தக் கணினியில் கண்டறியப்பட்ட HikariSub 0.0.x நிறுவல்கள். அவற்றில் எதுவும் மாற்றப்படாது.</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>பழைய நிறுவல்கள்</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>பழைய நிறுவல் எதுவும் கண்டறியப்படவில்லை. அதன் கோப்புறையைத் தேர்வுசெய்யவும்.</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20350,8 +20571,8 @@ because it was edited.</source>
         <translation>இறக்குமதி செய்ய வேண்டியவற்றை மதிப்பாய்வு செய்யவும்</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>முரண்பாடு என்பது பழைய நிறுவல் உங்களுடையதிலிருந்து வேறுபட்டு அமைக்கும் ஓர் அமைப்பு. பரிந்துரைக்கப்பட்ட தேர்வு குறிக்கப்பட்டுள்ளது; நீங்கள் வைத்திருக்க விரும்புவதன் குறியை நீக்கவும்.</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20456,8 +20677,8 @@ because it was edited.</source>
         <translation>%2 மாற்றங்களில் %1 இறக்குமதிக்கு, %3 மாறாதவை, %4 தீர்க்கப்படாதவை, %5 விலக்கப்பட்டவை, %6 வழக்கொழிந்தவை</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>நிரலின் அருகில் பழைய அமைப்புகள் எதுவும் கண்டறியப்படவில்லை. பழைய நிறுவலின் கோப்புறையைத் தேர்வுசெய்யவும்.</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
@@ -21777,10 +21998,6 @@ Styles deleted:
     <message>
         <source>Styles</source>
         <translation>பாணிகள்</translation>
-    </message>
-    <message>
-        <source>Styles: %1</source>
-        <translation>பாணிகள்: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>
@@ -25358,6 +25575,14 @@ Styles deleted:
         <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>முழுத் திரை டைப்செட்டிங்</translation>
+    </message>
+    <message>
+        <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
+        <translation>காட்சிக் கருவிகளுடன் வீடியோவை முழுத் திரையில் திறக்கும்; செயலில் உள்ள வரியும் அதன் கருவிகளும் அருகில் இருக்கும்</translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>வீடியோ</translation>
     </message>
@@ -25402,6 +25627,10 @@ Styles deleted:
         <translation>அடுத்த கோப்பு</translation>
     </message>
     <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+    </message>
+    <message>
         <source>Choose keyframes file</source>
         <translation>கீஃப்ரேம் கோப்பைத் தேர்ந்தெடு</translation>
     </message>
@@ -25416,10 +25645,6 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
-    </message>
-    <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -25527,10 +25752,6 @@ Styles deleted:
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation>முழுத் திரையிலிருந்து வெளியேறு</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>முழுத் திரை</translation>
     </message>
@@ -25615,22 +25836,78 @@ Styles deleted:
         <translation>முழுத் திரை வீடியோ</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>முழுத் திரையிலிருந்து வெளியேற Esc அழுத்தவும்</translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation>முந்தைய வீடியோ கோப்பு</translation>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>வரி %1, %2: %3</translation>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Visual tools</source>
-        <translation>காட்சிக் கருவிகள்</translation>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>டைப்செட்டிங்</translation>
+    </message>
+    <message>
+        <source>Video status</source>
+        <translation>வீடியோ நிலை</translation>
+    </message>
+    <message>
+        <source>Frame %1</source>
+        <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
+        <translation>சட்டகம் %1</translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
+        <translation>வரி %1 / %2</translation>
+    </message>
+    <message>
+        <source>Line %1 text</source>
+        <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
+        <translation>வரி %1 உரை</translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25650,32 +25927,48 @@ Styles deleted:
         <translation>முழுத் திரைப் பட்டி</translation>
     </message>
     <message>
-        <source>Full screen bar: %1</source>
-        <translation>முழுத் திரைப் பட்டி: %1</translation>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show when the pointer moves</source>
-        <translation>சுட்டி நகரும்போது காட்டு</translation>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always show</source>
-        <translation>எப்போதும் காட்டு</translation>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never show</source>
-        <translation>ஒருபோதும் காட்டாதே</translation>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation>சுட்டி நகரும்போது காட்டு, செயலற்றபோது மறை</translation>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation>பட்டியை வை; படம் அதற்கு மேலே முடியும்</translation>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>படம் மட்டும்</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -25986,6 +26279,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>வரி %1: %2</translation>
     </message>
     <message>
@@ -26238,6 +26532,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Move</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>நகர்வு</translation>
     </message>
     <message>
@@ -26334,6 +26629,32 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Changes the active line</source>
         <translation>செயலில் உள்ள வரியை மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>On the frame</source>
+        <translation>சட்டகத்தில்</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Apply to</source>
+        <translation>பயன்படுத்துமிடம்</translation>
+    </message>
+    <message>
+        <source>This line</source>
+        <translation>இந்த வரி</translation>
+    </message>
+    <message>
+        <source>Picked lines (%1)</source>
+        <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
+        <translation>எடுத்த வரிகள் (%1)</translation>
+    </message>
+    <message>
+        <source>Picks the selected lines: the tools edit them, not the active line</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை எடுக்கும்: கருவிகள் செயலில் உள்ள வரியை அல்ல, அவற்றைத் திருத்தும்</translation>
     </message>
     <message>
         <source>More options</source>
@@ -26743,6 +27064,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Drawing</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>வரைபடம்</translation>
     </message>
     <message>
@@ -26906,6 +27228,10 @@ or codecs or a splitter may be missing</source>
         <translation>வடிவம்: %1</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>காட்சிக் கருவிகள்</translation>
+    </message>
+    <message>
         <source>More tools</source>
         <translation>மேலும் கருவிகள்</translation>
     </message>
@@ -26959,6 +27285,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Gradient</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>சாய்வு</translation>
     </message>
     <message>
@@ -27018,12 +27345,220 @@ or codecs or a splitter may be missing</source>
         <translation>Hydra</translation>
     </message>
     <message>
+        <source>Pointer</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>சுட்டி</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>அளவீடு</translation>
+    </message>
+    <message>
+        <source>Tilt X / Y</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>X / Y சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Rectangle clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>செவ்வகக் கிளிப்</translation>
+    </message>
+    <message>
+        <source>Vector clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>திசையன் கிளிப்</translation>
+    </message>
+    <message>
+        <source>Shift positions</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>நிலை நகர்த்தி</translation>
+    </message>
+    <message>
+        <source>All tags</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>எல்லா குறிச்சொற்களும்</translation>
+    </message>
+    <message>
         <source>Perspective</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
         <source>Text on path</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>பாதையில் உரை</translation>
+    </message>
+    <message>
+        <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
+        <translation>நிலையைப் படிக்கப் படத்தின் மீது சுட்டவும். Ctrl-சொடுக்கு வரியை அங்கே வைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
+        <translation>வரியை வைக்க இழுக்கவும். Shift உடன் இழுத்தால் ஒரு அச்சில் மட்டும் நகரும். வலது சொடுக்கு அதைச் சுட்டியின் இடத்தில் வைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
+        <translation>தொடக்க அல்லது முடிவுப் புள்ளியை இழுக்கவும்; வலது பொத்தானால் இழுத்தால் முடிவு அமையும். வரி அவற்றுக்கு இடையே நகரும்.</translation>
+    </message>
+    <message>
+        <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
+        <translation>குறுக்காக நீட்ட இழுக்கவும், மேலே நீட்ட வலது பொத்தானால் இழுக்கவும். Shift உடன் இழுத்தால் இரண்டும் அளவிடப்படும்.</translation>
+    </message>
+    <message>
+        <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
+        <translation>உரையைச் சுழற்ற மூலப்புள்ளியைச் சுற்றி இழுக்கவும். மூலப்புள்ளியை நகர்த்த அதை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
+        <translation>Y அச்சில் சுழற்றப் பக்கவாட்டில் இழுக்கவும், X அச்சில் சுழற்ற வலது பொத்தானால் மேலே அல்லது கீழே இழுக்கவும். மூலப்புள்ளியை நகர்த்த அதை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
+        <translation>ஒரு பெட்டியை இழுக்கவும். உள்ளே இருப்பது மட்டுமே தெரியும். அளவை மாற்ற அதன் ஓரங்களையும், நகர்த்த உள்ளேயும் இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
+        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும். உள்ளே இருப்பது மட்டுமே தெரியும்.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
+        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும். அல்லது ஒரு வடிவத்தைத் தேர்ந்தெடுத்து ஒரு பெட்டியை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
+        <translation>எடுத்த வரிகளின் நிலைகள், கிளிப்புகள், மூலப்புள்ளிகளை ஒன்றாக நகர்த்த இழுக்கவும். Shift ஒரு அச்சைப் பூட்டும்.</translation>
+    </message>
+    <message>
+        <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
+        <translation>ஒரு குறிச்சொல்லைத் தேர்ந்தெடுத்து, அதை மாற்றப் படத்தின் மீது பக்கவாட்டில் இழுக்கவும். சிறு படிகளுக்கு Shift.</translation>
+    </message>
+    <message>
+        <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
+        <translation>உரையை ஒரு பரப்பின் மீது அமைக்க மூலைகளை இழுக்கவும். அதை நகர்த்த உள்ளே இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
+        <translation>சாய்வின் திசையை அமைக்க உரையின் குறுக்கே இழுக்கவும். சரிசெய்ய முனைகளை இழுக்கவும்; Enter பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
+        <translation>பாதைப் புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், பாதையை வடிவமைக்க அவற்றை இழுக்கவும். உரை அதைப் பின்தொடரும்; Enter பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>square</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>சதுரம்</translation>
+    </message>
+    <message>
+        <source>circle</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>வட்டம்</translation>
+    </message>
+    <message>
+        <source>cross</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>குறுக்குக்குறி</translation>
+    </message>
+    <message>
+        <source>line</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>கோடு</translation>
+    </message>
+    <message>
+        <source>arrow</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>அம்பு</translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Start point</source>
+        <translation>தொடக்கப் புள்ளி</translation>
+    </message>
+    <message>
+        <source>End point</source>
+        <translation>முடிவுப் புள்ளி</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>பாதை</translation>
+    </message>
+    <message>
+        <source>Current position</source>
+        <translation>தற்போதைய நிலை</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation>அகலம்</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation>உயரம்</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>இரண்டும்</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>கோணம்</translation>
+    </message>
+    <message>
+        <source>Tilt grid</source>
+        <translation>சுழற்சிக் கட்டம்</translation>
+    </message>
+    <message>
+        <source>Edges and corners</source>
+        <translation>ஓரங்களும் மூலைகளும்</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>புள்ளி</translation>
+    </message>
+    <message>
+        <source>Curve handle</source>
+        <translation>வளைவுக் கைப்பிடி</translation>
+    </message>
+    <message>
+        <source>Position and move start</source>
+        <translation>நிலையும் நகர்வுத் தொடக்கமும்</translation>
+    </message>
+    <message>
+        <source>Move end</source>
+        <translation>நகர்வு முடிவு</translation>
+    </message>
+    <message>
+        <source>Clip and drawing</source>
+        <translation>கிளிப்பும் வரைபடமும்</translation>
+    </message>
+    <message>
+        <source>Changed line</source>
+        <translation>மாற்றப்பட்ட வரி</translation>
+    </message>
+    <message>
+        <source>Corners</source>
+        <translation>மூலைகள்</translation>
+    </message>
+    <message>
+        <source>Plane corners</source>
+        <translation>தள மூலைகள்</translation>
+    </message>
+    <message>
+        <source>Start and end</source>
+        <translation>தொடக்கமும் முடிவும்</translation>
+    </message>
+    <message>
+        <source>P1, P2 and P3</source>
+        <translation>P1, P2 மற்றும் P3</translation>
     </message>
     <message>
         <source>\org mode</source>
@@ -27385,6 +27920,7 @@ increasing or decreasing the value.</source>
     </message>
     <message>
         <source>Rotate</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>சுழற்று</translation>
     </message>
     <message>

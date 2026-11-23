@@ -1462,17 +1462,29 @@ std::u8string u8(std::string_view s)
 }
 }
 
-bool TemplateEditorController::karaOKMode() const
+std::optional<application::karaoke_templates::Mode> TemplateEditorController::decidedMode() const
 {
     const auto *s = session();
-    return s && application::karaoke_templates::documentMode(*s) == application::karaoke_templates::Mode::KaraOK;
+    if (!s)
+        return std::nullopt;
+    const ModeSeen seen{documentKey(), s->revision()};
+    if (m_modeSeen != seen) {
+        m_modeSeen = seen;
+        m_decidedMode = application::karaoke_templates::decidedMode(s->document());
+    }
+    return m_decidedMode;
+}
+
+bool TemplateEditorController::karaOKMode() const
+{
+    namespace kt = application::karaoke_templates;
+    const auto *s = session();
+    return s && decidedMode().value_or(s->isNewDocument() ? kt::Mode::KaraOK : kt::Mode::Stock) == kt::Mode::KaraOK;
 }
 
 bool TemplateEditorController::modeUndecided() const
 {
-    namespace kt = application::karaoke_templates;
-    const auto *doc = document();
-    return doc && kt::documentMode(*doc, kt::Mode::Stock) != kt::documentMode(*doc, kt::Mode::KaraOK);
+    return session() && !decidedMode();
 }
 
 bool TemplateEditorController::karaOKPresetsUsable() const

@@ -77,6 +77,8 @@ void AutomationHotkeysController::load()
         b.scriptSha256 = v.value(3).toStdString();
         if (!b.keys.empty())
             m_committed[b.legacyName] = b;
+        else if (application::isPluginCommand(b.legacyName))
+            m_cleared.insert(b.legacyName);
     }
 }
 
@@ -85,6 +87,8 @@ void AutomationHotkeysController::save() const
     QStringList rows;
     for (const auto &[name, b] : m_committed)
         rows << QStringList{qs(name), qs(b.keys), qs(b.macroName), qs(b.scriptSha256)}.join(QLatin1Char('\t'));
+    for (const std::string &name : m_cleared)
+        rows << qs(name) + QLatin1Char('\t');
     m_settings.set(application::kAutomationHotkeysSetting.data(), rows);
 }
 
@@ -138,8 +142,63 @@ void AutomationHotkeysController::setPluginCommands(const QVariantList &commands
         m_pluginCommands[c.value(QStringLiteral("id")).toString().toStdString()] = {
             c.value(QStringLiteral("pluginName")).toString(), c.value(QStringLiteral("title")).toString()};
     }
+    applyDefaults();
     emit bindingsChanged();
     emit shortcutsChanged();
+}
+
+void AutomationHotkeysController::setPluginDefaults(const QVariantList &defaults)
+{
+    m_pluginDefaults.clear();
+    for (const QVariant &d : defaults) {
+        const QVariantMap row = d.toMap();
+        m_pluginDefaults.push_back({row.value(QStringLiteral("id")).toString().toStdString(),
+                                    canonicalKeys(row.value(QStringLiteral("keys")).toString().toStdString()),
+                                    row.value(QStringLiteral("pluginName")).toString()});
+    }
+    applyDefaults();
+    emit bindingsChanged();
+    emit shortcutsChanged();
+}
+
+void AutomationHotkeysController::setBuiltInOwner(std::function<QString(const std::string &keys)> owner)
+{
+    m_builtInOwner = std::move(owner);
+    applyDefaults();
+}
+
+QString AutomationHotkeysController::label(const std::string &name) const
+{
+    const QVariantMap described = describe(name);
+    const QString macro = described.value(QStringLiteral("macro")).toString();
+    return macro.isEmpty() ? described.value(QStringLiteral("script")).toString() : macro;
+}
+
+void AutomationHotkeysController::applyDefaults()
+{
+    m_defaults.clear();
+    m_takenDefaults.clear();
+    std::map<std::string, QString> owners;
+    for (const auto &[name, b] : m_committed)
+        owners.emplace(b.keys, label(name));
+    for (const PluginDefault &d : m_pluginDefaults) {
+        if (!m_pluginCommands.contains(d.id) || m_committed.contains(d.id) || m_cleared.contains(d.id))
+            continue;
+        QString owner;
+        if (const auto taken = owners.find(d.keys); taken != owners.end())
+            owner = taken->second;
+        else if (m_builtInOwner)
+            owner = m_builtInOwner(d.keys);
+        if (owner.isEmpty()) {
+            m_defaults[d.id] = d.keys;
+            owners.emplace(d.keys, d.pluginName);
+        } else {
+            m_takenDefaults.insert(qs(d.id), QCoreApplication::translate("HikariSub.Plugins", "%1 is taken by %2")
+                                                 .arg(QKeySequence::fromString(qs(d.keys), QKeySequence::PortableText)
+                                                          .toString(QKeySequence::NativeText),
+                                                      owner));
+        }
+    }
 }
 
 QVariantMap AutomationHotkeysController::keys() const
@@ -148,6 +207,8 @@ QVariantMap AutomationHotkeysController::keys() const
     for (const auto &[name, b] : m_committed)
         if (resolves(b))
             out.insert(qs(name), qs(b.keys));
+    for (const auto &[name, keys] : m_defaults)
+        out.insert(qs(name), qs(keys));
     return out;
 }
 
@@ -174,6 +235,8 @@ QVariantList AutomationHotkeysController::shortcuts() const
     for (const auto &[name, b] : m_installed)
         if (resolves(b))
             out << QVariantMap{{QStringLiteral("legacyName"), qs(name)}, {QStringLiteral("keys"), qs(b.keys)}};
+    for (const auto &[name, keys] : m_defaults)
+        out << QVariantMap{{QStringLiteral("legacyName"), qs(name)}, {QStringLiteral("keys"), qs(keys)}};
     return out;
 }
 
@@ -187,7 +250,7 @@ std::vector<std::string> AutomationHotkeysController::unboundMacros() const
             out.push_back(name);
     }
     for (const auto &[id, names] : m_pluginCommands)
-        if (!m_committed.contains(id))
+        if (!m_committed.contains(id) && !m_defaults.contains(id))
             out.push_back(id);
     return out;
 }
@@ -199,7 +262,7 @@ QVariantMap AutomationHotkeysController::describe(const std::string &legacyName)
         if (listed != m_pluginCommands.end())
             return {{QStringLiteral("script"), listed->second.first},
                     {QStringLiteral("macro"), listed->second.second},
-                    {QStringLiteral("problem"), QString()}};
+                    {QStringLiteral("problem"), m_takenDefaults.value(qs(legacyName)).toString()}};
         const std::string rest = legacyName.substr(application::kPluginCommandPrefix.size());
         return {{QStringLiteral("script"), qs(rest.substr(0, rest.rfind('.')))},
                 {QStringLiteral("macro"), QString()},
@@ -229,6 +292,8 @@ std::map<std::string, std::string> AutomationHotkeysController::committedKeys() 
     std::map<std::string, std::string> out;
     for (const auto &[name, b] : m_committed)
         out[name] = b.keys;
+    for (const auto &[name, keys] : m_defaults)
+        out[name] = keys;
     return out;
 }
 
@@ -243,10 +308,16 @@ void AutomationHotkeysController::recordIdentity(application::MacroBinding &bind
 
 void AutomationHotkeysController::replaceCommitted(const std::map<std::string, std::string> &keys)
 {
+    for (const auto &[name, k] : m_defaults)
+        if (const auto kept = keys.find(name); kept == keys.end() || kept->second.empty())
+            m_cleared.insert(name);
     std::map<std::string, application::MacroBinding> next;
     for (const auto &[name, k] : keys) {
         if (k.empty())
             continue;
+        if (const auto d = m_defaults.find(name); d != m_defaults.end() && d->second == k)
+            continue;
+        m_cleared.erase(name);
         const auto kept = m_committed.find(name);
         application::MacroBinding b;
         if (kept != m_committed.end())
@@ -259,6 +330,7 @@ void AutomationHotkeysController::replaceCommitted(const std::map<std::string, s
         next[name] = std::move(b);
     }
     m_committed = std::move(next);
+    applyDefaults();
     emit bindingsChanged();
 }
 
@@ -278,6 +350,7 @@ bool AutomationHotkeysController::renew(const QString &legacyName)
 
 void AutomationHotkeysController::install()
 {
+    applyDefaults();
     m_installed = m_committed;
     emit shortcutsChanged();
 }
@@ -299,6 +372,7 @@ QString AutomationHotkeysController::recordingProblem(const QString &legacyName)
 
 void AutomationHotkeysController::commitChange()
 {
+    applyDefaults();
     save();
     emit bindingsChanged();
     emit committed();
@@ -306,13 +380,19 @@ void AutomationHotkeysController::commitChange()
 
 void AutomationHotkeysController::clearKeys(const QString &legacyName)
 {
-    if (m_committed.erase(legacyName.toStdString()) == 0)
+    const std::string name = legacyName.toStdString();
+    const bool hadDefault = m_defaults.contains(name);
+    if (hadDefault)
+        m_cleared.insert(name);
+    if (m_committed.erase(name) == 0 && !hadDefault)
         return;
     commitChange();
 }
 
 bool AutomationHotkeysController::run(const QString &legacyName)
 {
+    if (m_defaults.contains(legacyName.toStdString()))
+        return m_runPlugin && m_runPlugin(legacyName);
     const auto it = m_committed.find(legacyName.toStdString());
     if (it == m_committed.end())
         return false;

@@ -54,17 +54,36 @@ std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::ve
     return std::nullopt;
 }
 
-std::optional<PackageProblem> contentProblem(const std::vector<ContentFile> &content, const ContentFileCheck &check,
+std::optional<PackageProblem> contentProblem(const std::string &path, const ContentFileCheck &check,
                                             const std::vector<PackageFile> &files)
 {
     using Kind = PackageProblem::Kind;
-    for (const ContentFile &item : content) {
-        const auto file = std::ranges::find(files, item.path, &PackageFile::path);
-        if (file == files.end())
-            return PackageProblem{Kind::MissingContent, item.path, {}, {}};
-        if (check)
-            if (auto refused = check(file->data))
-                return PackageProblem{Kind::BadContent, item.path, {}, std::move(*refused)};
+    const auto file = std::ranges::find(files, path, &PackageFile::path);
+    if (file == files.end())
+        return PackageProblem{Kind::MissingContent, path, {}, {}};
+    if (check)
+        if (auto refused = check(file->data))
+            return PackageProblem{Kind::BadContent, path, {}, std::move(*refused)};
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> contentProblem(const std::vector<ContentFile> &content, const ContentFileCheck &check,
+                                            const std::vector<PackageFile> &files)
+{
+    for (const ContentFile &item : content)
+        if (auto problem = contentProblem(item.path, check, files))
+            return problem;
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> dictionaryProblem(const std::vector<Dictionary> &dictionaries,
+                                               const ContentFileChecks &checks, const std::vector<PackageFile> &files)
+{
+    for (const Dictionary &dictionary : dictionaries) {
+        if (auto problem = contentProblem(dictionary.aff, checks.dictionaryAff, files))
+            return problem;
+        if (auto problem = contentProblem(dictionary.dic, checks.dictionaryDic, files))
+            return problem;
     }
     return std::nullopt;
 }
@@ -111,6 +130,7 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
         return std::unexpected(std::move(*problem));
     for (auto problem : {contentProblem(manifest->styles, checks.styleCatalogue, files),
                          contentProblem(manifest->karaokePresets, checks.karaokePreset, files),
+                         dictionaryProblem(manifest->dictionaries, checks, files),
                          contentProblem(manifest->graphs, checks.graph, files)})
         if (problem)
             return std::unexpected(std::move(*problem));

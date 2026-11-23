@@ -8,6 +8,24 @@
 - A Line with nothing visible left after conversion (a drawing, empty text) or with no duration is skipped and counted. Plain text keeps zero-length Lines, because it has no times.
 - Timed formats are sorted by start time; plain text keeps document order.
 
+## Before export
+The steps, the order they run in and their settings, as Aegisub's export filters ([#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772; the dialog is in [Exporting mode](ux/exporting-mode.md)). The engine is `application::runExportSteps` (`src/application/export_steps.cpp`).
+
+| Step | Aegisub filter | Priority |
+|---|---|---|
+| Apply karaoke template | Karaoke template | 2000 |
+| Transform frame rate | Transform Framerate | 1000 |
+| Remove tags | Clean Tags | 0 |
+| Set unknown styles to Default | Fix Styles | −5000 |
+
+- A loaded script's `aegisub.register_filter` filters are steps too ([C06-register-filter](compatibility-decisions.md#c06-register-filter)). The list comes by priority, highest first; among equal priorities, the four above come first and the rest keep the order they registered in. A filter named after one of the four is that step: Apply karaoke template runs the templater's filter.
+- The steps run on a copy of the Document, after the editor's draft and the srv3 style options. Only HikariSub's own formats run them; a plugin's format exports the open Document.
+- A step that fails stops the run, nothing is written, and the steps after it don't run. A Lua step whose script isn't loaded is skipped and the export goes on (an untrusted Project script isn't loaded). A Lua step can't start while a macro runs.
+- **Selected** and **Shown** keep the Lines the steps made, such as the templater's.
+- Transform frame rate maps every time from the input frame rate's frames to the output's: a constant frame rate, or the video's or timecodes' frames (Variable). Reverse swaps them.
+- **From this file (Aegisub)** reads the file's `Export Filters` line in `[Aegisub Project Garbage]`. After an export that ran steps, the next save writes the steps that were on back to it, by their Aegisub names, so Aegisub reads the same list. An export without steps leaves the line alone.
+- Recipes are named step lists with their settings, without the format: `export.recipes`, with a Project's in `.hikari/presets.toml` ([Project tiers](project-tiers.md)).
+
 ## Shared conversion
 | ASS | Export |
 |---|---|
@@ -36,6 +54,8 @@ Spaces at the start and end of each row are trimmed, and empty rows are dropped,
 | TTML (IMSC1) | `.ttml` | `00:00:01.000`, or frames (`24f`) with `ttp:frameRate`; LF | IMSC1 text profile (`ttp:profile`); one `<style>` per Style used; `<span>` for tag changes (`tts:fontStyle`, `tts:fontWeight`, `tts:textDecoration`, `tts:color`); up to three regions (below) | Netflix timed-text style (off), times in frames (off), frame rate, language |
 | DFXP | `.dfxp` | as TTML | as TTML, without the IMSC1 profile designator | as TTML |
 | YouTube timed text (srv3) | `.ytt` | milliseconds, YTSubConverter's own conversion (below) | what YTSubConverter 1.6.5 carries | per-style options |
+
+Plugins add formats of their own ([Formats](plugins.md#formats)). Each shows after the built-in ones as `<title> (<plugin>)`, with the Lines choice and the frame rate, and the plugin writes the file. Its report says only whether the file was written.
 
 **Merge overlaps** cuts time at every Line start and end that falls inside a run of overlapping Lines. Each piece becomes one cue holding the Lines on screen during it: top-aligned Lines first, then middle, then bottom, then document order.
 
@@ -105,9 +125,10 @@ Export as leaves the Document alone. To turn an SRT, WebVTT, SBV, MicroDVD, MPL2
 Subtitles › Conversion and its five commands (5020–5024, `GLOBAL_CONVERT_TO_*`) were removed in [#611](https://github.com/altqx/hikari/issues/611). Shortcut files and imported settings that bind them still load. The bindings are dropped with a Log notice that points to Save as (ASS) or Export as (other formats).
 
 ## Memory
-The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). A document without a remembered choice, or without a file, gets its Project's `[export]` default over the last export's ([Project tiers](project-tiers.md)).
+The last format and options are kept per document file in `export.choices` (at most 100 rows, last used first). Format ids are the ones `formats.list` gives (`plugin:<plugin id>/<format>` for a plugin's). The ids 0.1.0-beta.4 wrote, `txt`, `mdvd` and `tmp`, read as `text`, `microdvd` and `tmplayer`, in `export.choices` and in a Project's `[export]`; the next export or Project save writes the new id. Any other id that names no format today falls back to SubRip. A document without a remembered choice, or without a file, gets its Project's `[export]` default over the last export's ([Project tiers](project-tiers.md)).
 
 ## Tests
+- `ExportSteps.*` (`hikari_application_export_steps_tests`): the order, the Export Filters line both ways, each built-in, Lua steps, a failing, refused or skipped step. `hikari_ui_project_windows_tests`: an export with steps changes only the copy, a failing step writes nothing, and the next save writes the Export Filters line. `PresetTiersTests::exportRecipesKeepTheirStepsInBothTiers` and `AutomationManagerUiTests::anExportFilterRunsWhileNoMacroDoes`.
 - `hikari_core_export_tests`: goldens for every format on `tests/fixtures/export/{plain,karaoke,typesetting}.ass`, TTML in three variants (`.ttml`, `.dfxp` in frames, `.netflix.ttml`) (`HIKARI_WRITE_EXPORT_GOLDENS=1` rewrites them); read-back through the SRT and line-format loaders; every option; the report; and the TTML layout rules.
 - `Export.TtmlGoldensMatchTheImsc1Schema` (Linux): the TTML and DFXP goldens against the W3C schemas.
 - `hikari_core_srv3_tests`: byte-identical output on 21 inputs, plain and with 38 style options, the Hikari fixtures, refusals, and the style-option keys (read, write, defaults). The srv3 cases in `hikari_core_export_tests` cover the Lines choice, attachments, the report and the saved options. `Srv3Import.*` in the same binary: byte-identical ASS for 35 files, refusals, and the round trip on the fixtures.

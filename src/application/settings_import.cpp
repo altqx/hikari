@@ -329,6 +329,14 @@ int importedAction(const HotkeyRecord &record, bool windows)
     return id == kGlobalQuit && qtKeysOfAccel(record.accel) == qtKeysOfAccel("Alt-F4") ? kGlobalCloseWindow : id;
 }
 
+bool sameKeys(const std::string &a, const std::string &b)
+{
+    if (a == b)
+        return true;
+    const std::string keys = qtKeysOfAccel(a);
+    return !keys.empty() && keys == qtKeysOfAccel(b);
+}
+
 std::string windowLetter(int type)
 {
     return type >= 0 && type < kHotkeyWindows ? std::string(1, kWindowLetters[std::size_t(type)]) : std::string("?");
@@ -345,6 +353,7 @@ std::span<const KnownSource> knownSources()
         {SourceKind::AudioHotkeys, "Config/AudioHotkeys.txt"},
         {SourceKind::Rules, "Config/Rules.txt"},
         {SourceKind::UserDictionary, "Dictionary/UserDic.udic"},
+        {SourceKind::AegisubHotkeys, "hotkey.json"},
     };
     return table;
 }
@@ -1353,17 +1362,187 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         missingDefaults(false, mainShort, "Config/Hotkeys.txt");
     if (audioAccepted)
         missingDefaults(true, audioShort, "Config/AudioHotkeys.txt");
+
+    std::map<HotkeyId, std::string> importedKeys;
+    for (const auto &[key, binding] : legacyBindings)
+        importedKeys.emplace(key, binding.record->accel);
+    std::set<std::size_t> aegisubRows;
+    std::map<HotkeyId, std::string> aegisubCommandOf;
+    auto currentAccelOf = [&](const HotkeyId &key) {
+        const auto it = currentMap.find(key);
+        return it == currentMap.end() ? std::string() : it->second.accel;
+    };
+    auto addAegisubRows = [&](const SourceFile &s) {
+        const auto decoded = decodeSettingsText(s.bytes, options.readBy, options.interpretation);
+        if (!decoded.text) {
+            fileRow(s, Disposition::Unresolved, {}, evidenceText(decoded.evidence) + "; nothing is read from it");
+            return;
+        }
+        const AegisubHotkeyFile file = readAegisubHotkeyFile(*decoded.text);
+        if (!file.error.empty()) {
+            fileRow(s, Disposition::Unresolved, {}, file.error + "; nothing is read from it");
+            return;
+        }
+        fileRow(s, Disposition::Read, {},
+                std::to_string(file.hotkeys.size()) + " Aegisub hotkeys" +
+                    (file.oldForm ? "; Aegisub 3.1's form, read as Aegisub 3.2 reads it" : ""));
+        // A panel's own keys come before Aegisub's Default ones, and Always (the Medusa keys) last.
+        static constexpr std::string_view order[] = {"Audio", "Video", "Subtitle Grid", "Subtitle Edit Box",
+                                                     "Default", "Always"};
+        auto rank = [](const AegisubHotkey &h) { return std::ranges::find(order, h.context) - std::begin(order); };
+        std::vector<const AegisubHotkey *> hotkeys;
+        for (const auto &h : file.hotkeys)
+            hotkeys.push_back(&h);
+        std::ranges::stable_sort(hotkeys, {}, [&](const AegisubHotkey *h) { return rank(*h); });
+        std::map<std::pair<int, std::string>, const AegisubHotkey *> chords;
+        for (const AegisubHotkey *h : hotkeys) {
+            PlanRow row;
+            row.kind = RowKind::Shortcut;
+            row.source = s.path + " › " + h->context;
+            row.sourceKey = h->command;
+            row.raw = h->keys;
+            row.id = "aegisub:" + h->context + ":" + h->command + ":" + h->keys;
+            auto unresolved = [&](std::string reason) {
+                row.disposition = Disposition::Unresolved;
+                row.reason = std::move(reason);
+                add(std::move(row));
+            };
+            const auto commands = aegisubCommands();
+            const auto command = std::ranges::find(commands, h->command, &AegisubCommand::command);
+            if (command == commands.end()) {
+                unresolved("not an Aegisub command HikariSub knows");
+                continue;
+            }
+            if (command->symbol.empty()) {
+                unresolved(std::string(command->reason));
+                continue;
+            }
+            const int id = hotkeyIdOf(command->symbol);
+            const int window = aegisubWindow(h->context, id);
+            if (window < 0) {
+                unresolved("HikariSub has no " + h->context);
+                continue;
+            }
+            const std::string accel = accelOfAegisubKeys(h->keys);
+            if (accel.empty()) {
+                unresolved("HikariSub has no such key");
+                continue;
+            }
+            HotkeyId key{id, window};
+            if (const auto first = aegisubCommandOf.find(key); first != aegisubCommandOf.end()) {
+                const HotkeyId alternative{id - (kAudioCommit - kAudioCommitAlt), AudioHotkey};
+                if (window == AudioHotkey && id >= kAudioCommit && id <= kAudioNext &&
+                    !aegisubCommandOf.contains(alternative)) {
+                    key = alternative;
+                } else {
+                    row.disposition = Disposition::Superseded;
+                    row.reason = "HikariSub keeps one key per command in each panel: " + first->second +
+                                 " is imported";
+                    add(std::move(row));
+                    continue;
+                }
+            }
+            const std::string chord = qtKeysOfAccel(accel);
+            if (const auto taken = chords.find({key.type, chord}); taken != chords.end()) {
+                row.disposition = Disposition::Superseded;
+                row.reason = "these keys go to " + taken->second->command + " (" + taken->second->context +
+                             "), which comes first";
+                add(std::move(row));
+                continue;
+            }
+            chords[{key.type, chord}] = h;
+            aegisubCommandOf[key] = h->command + " (" + h->context + ", " + h->keys + ")";
+            importedKeys[key] = accel;
+            const std::string symbol(hotkeySymbol(key.id));
+            row.binding = key;
+            row.id = "shortcut:" + symbol + ":" + windowLetter(key.type);
+            row.destination = symbol + " (" + std::string(hotkeyWindowName(key.type)) + ")";
+            row.value = accel;
+            const std::string current = currentAccelOf(key);
+            row.current = current;
+            if (sameKeys(current, accel)) {
+                row.disposition = Disposition::Unchanged;
+            } else {
+                row.disposition = Disposition::Change;
+                propose(row, current != defaultHotkey(key), options, identity);
+                shortcutRows.push_back(plan.rows.size());
+                aegisubRows.insert(plan.rows.size());
+            }
+            add(std::move(row));
+        }
+        std::set<int> targets;
+        for (const auto &c : aegisubCommands())
+            if (!c.symbol.empty())
+                targets.insert(hotkeyIdOf(c.symbol));
+        HotkeyMap defaults;
+        loadDefaultHotkeys(defaults, false);
+        loadDefaultHotkeys(defaults, true);
+        for (const auto &[key, hotkey] : defaults) {
+            const int command = key.id < kAudioCommit ? key.id + (kAudioCommit - kAudioCommitAlt) : key.id;
+            if (!targets.contains(command) || aegisubCommandOf.contains(key))
+                continue;
+            const std::string current = currentAccelOf(key);
+            if (current.empty())
+                continue;
+            const std::string symbol(hotkeySymbol(key.id));
+            PlanRow row;
+            row.kind = RowKind::Shortcut;
+            row.binding = key;
+            row.id = "shortcut:" + symbol + ":" + windowLetter(key.type);
+            row.source = s.path;
+            row.sourceKey = symbol;
+            row.destination = symbol + " (" + std::string(hotkeyWindowName(key.type)) + ")";
+            row.value = std::string();
+            row.current = current;
+            row.disposition = Disposition::Missing;
+            row.reason = "Aegisub has no key for it in this panel; choose it to unbind";
+            row.selectable = true;
+            missingRows.push_back(plan.rows.size());
+            add(std::move(row));
+        }
+    };
+    std::vector<PlanRow> unboundHolders;
+    auto unbindHolder = [&](const HotkeyId &key, const std::string &accel, bool proposed, std::string why) {
+        const std::string symbol(hotkeySymbol(key.id));
+        const std::string id = "shortcut:" + symbol + ":" + windowLetter(key.type);
+        if (const auto known = std::ranges::find(unboundHolders, id, &PlanRow::id); known != unboundHolders.end()) {
+            known->proposedImport = known->proposedImport || proposed;
+            return;
+        }
+        PlanRow row;
+        row.kind = RowKind::Shortcut;
+        row.binding = key;
+        row.id = id;
+        row.source = "hotkey.json";
+        row.sourceKey = symbol;
+        row.destination = symbol + " (" + std::string(hotkeyWindowName(key.type)) + ")";
+        row.value = std::string();
+        row.current = accel;
+        row.disposition = Disposition::Change;
+        row.selectable = true;
+        row.proposedImport = proposed;
+        row.reason = "not in Aegisub: its default keys are taken; " + why + "; choose it to unbind";
+        unboundHolders.push_back(std::move(row));
+    };
+    auto addUnboundHolders = [&] {
+        for (auto &row : unboundHolders)
+            add(std::move(row));
+    };
+    if (const SourceFile *aegisub = findSource(sources, SourceKind::AegisubHotkeys))
+        addAegisubRows(*aegisub);
     for (const std::size_t i : shortcutRows) {
         PlanRow &row = plan.rows[i];
         if (row.disposition != Disposition::Change)
             continue;
+        const bool fromAegisub = aegisubRows.contains(i);
         const std::string &accel = std::get<std::string>(*row.value);
         for (const auto &[key, hotkey] : currentMap) {
-            if (key == row.binding || key.type != row.binding.type || hotkey.accel != accel)
+            const bool same = fromAegisub ? sameKeys(hotkey.accel, accel) : hotkey.accel == accel;
+            if (key == row.binding || key.type != row.binding.type || !same)
                 continue;
             // The holder's own imported binding replaces it: no conflict.
-            if (const auto legacy = legacyBindings.find(key); legacy != legacyBindings.end() &&
-                                                               legacy->second.record->accel != accel)
+            if (const auto imported = importedKeys.find(key);
+                imported != importedKeys.end() && !sameKeys(imported->second, accel))
                 continue;
             const std::string holder = std::string(hotkeySymbol(key.id));
             const bool users = hotkey.accel != defaultHotkey(key);
@@ -1371,17 +1550,24 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
                 row.proposedImport = false;
                 row.reason += (row.reason.empty() ? "" : "; ") + std::string("your binding of ") + holder +
                               " has these keys: review before importing";
-            } else {
-                row.reason += (row.reason.empty() ? "" : "; ") + std::string("the default binding of ") + holder +
-                              " has these keys";
-                for (const std::size_t m : missingRows)
-                    if (plan.rows[m].binding == key) {
-                        plan.rows[m].proposedImport = true;
-                        plan.rows[m].reason += "; legacy gave its keys to " + std::string(hotkeySymbol(row.binding.id));
-                    }
+                continue;
             }
+            row.reason += (row.reason.empty() ? "" : "; ") + std::string("the default binding of ") + holder +
+                          " has these keys";
+            const std::string gave = fromAegisub ? "; Aegisub gave its keys to " + aegisubCommandOf[row.binding]
+                                                 : "; legacy gave its keys to " + std::string(hotkeySymbol(row.binding.id));
+            bool missing = false;
+            for (const std::size_t m : missingRows)
+                if (plan.rows[m].binding == key) {
+                    missing = true;
+                    plan.rows[m].proposedImport = true;
+                    plan.rows[m].reason += gave;
+                }
+            if (fromAegisub && !missing)
+                unbindHolder(key, hotkey.accel, row.proposedImport, gave.substr(2));
         }
     }
+    addUnboundHolders();
 
     auto collection = [&](const SourceFile &s, const std::string &destPath, const std::string &bytes,
                           std::string reason) {

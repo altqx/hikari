@@ -107,7 +107,7 @@ The marketplace website's Install in HikariSub opens `hikarisub://plugin/install
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
 | `<user folder>/plugins/.previous/<id>/` | The version the last update replaced, for Roll back. |
-| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, and `source`; for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`). |
+| `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, `source`, and `installed`, its place in install order (kept across updates, which decides which plugin's [format](#formats) reads a file first); for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`). |
 | `<user folder>/marketplace.json` | `serial`: the highest marketplace index serial accepted. |
 
 An update keeps the enabled state, the grants whose ids the new manifest still asks for, and the setting values that still fit the new manifest. A `plugins.json` HikariSub can't read stops installs rather than forgetting pinned keys.
@@ -165,7 +165,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 
 | Member | What it does |
 | --- | --- |
-| `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. |
+| `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. The handler is `fn(args, context)`: `args` is a table (`{}` from a menu, key or status item) and `context.via` says what ran it: `menu`, `key`, `status`, `api` or `ai`. |
 | `hikari.commands.run(id)` | Runs a HikariSub command (`GLOBAL_SAVE_SUBS`), as `commands.run` does. |
 | `hikari.call(operation, params)` | Calls any [Hikari API](api.md) operation as the plugin. It returns the result, or `nil` and the error `{code, message, data}`. Without `documents.all` the plugin sees the editing target only. |
 | `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `document.saved`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`, `project.changed`, `macro.ran`). An unknown name is refused. `document.saved` comes once the file is on disk; `command.ran` only says a command was triggered, so a Save that asks first reports before anything is written. |
@@ -183,6 +183,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.net.fetch(request)` | An HTTPS request that HikariSub makes to a host from the manifest. See [Network](#network). |
 | `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command, a background plugin's timer callback, or a click in the plugin's own panel or dialog, into a job with a progress card and Cancel. See [Long jobs](#long-jobs). |
 | `hikari.timer.after(ms, fn)`, `hikari.timer.every(ms, fn)`, `hikari.timer.cancel(id)` | A background plugin's timers. See [Background plugins and time](#background-plugins-and-time). |
+| `hikari.formats.exporter(id, fn)`, `hikari.formats.importer(id, fn)` | Writes and reads a subtitle format from `contributes.formats`. See [Formats](#formats). |
 | `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
 | `hikari.presence.set_text(text)` | The plugin's text for `{plugin}` in the user's Discord status, with `presence`. See [Discord status text](#discord-status-text). |
@@ -214,7 +215,7 @@ Only one plugin edits at a time, app-wide. An edit waits for another plugin's ed
 
 ## Commands and shortcuts
 
-A command `greet` of `com.example.hello` is `plugin.com.example.hello.greet`. While the plugin runs, its commands sit in the Automation menu after Plugins…, in a submenu named after the plugin. In Settings › Shortcuts, the **Plugin shortcuts** filter lists them. A plugin command's shortcut is global, and it is kept with the macro shortcuts in the hotkeys file. A shortcut whose plugin isn't installed or turned on stays listed with a note, ready for when it comes back.
+A command `greet` of `com.example.hello` is `plugin.com.example.hello.greet`. While the plugin runs, its commands sit in the Automation menu after Plugins…, in a submenu named after the plugin. In Settings › Shortcuts, the **Plugin shortcuts** filter lists them. A plugin command's shortcut is global, and it is kept with the macro shortcuts in the hotkeys file. A shortcut whose plugin isn't installed or turned on stays listed with a note, ready for when it comes back. A plugin can also place its commands in right-click menus and the menu bar, show status bar items, suggest default shortcuts and disable a command under conditions; see [Menus, status items and shortcuts](#menus-status-items-and-shortcuts).
 
 When a command fails, its error shows in a toast. When a plugin fails to load, the toast says it didn't start, and its details hold the error. Errors in event handlers go to the Log panel only.
 
@@ -669,7 +670,7 @@ A command whose conditions fail is disabled in every menu and the palette, and i
 
 - **When a default applies.** It applies while the plugin runs, unless the user bound or cleared that command's shortcut, or the key is taken.
 - **When the key is taken.** A key that the user, HikariSub or an earlier-installed plugin already binds stays theirs, in any context. The plugin's default is dropped, and Settings › Shortcuts and the plugin's details say "Ctrl+Alt+K is taken by <owner>".
-- **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A default never overwrites a kept row. Plugin shortcuts stay global.
+- **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A cleared default is kept as a row without keys, so it stays cleared. A default never overwrites a kept row. Plugin shortcuts stay global.
 
 ### Quick picks and input boxes
 
@@ -950,9 +951,10 @@ hikari.formats.importer("ebu-stl", function(data, name)
 end)
 ```
 
-- **Export.** It shows in File › Export subtitles and in Save as, as `<title> (<plugin>)` with its extensions. HikariSub gives the snapshot and gets back at most 48 MiB, then writes the file itself.
+- **Handlers.** `hikari.formats.exporter(id, fn)` and `hikari.formats.importer(id, fn)` take a format id the manifest declares with `export` or `import`, once each.
+- **Export.** It shows in File › Export subtitles and in Save as, as `<title> (<plugin>)` with its extensions. HikariSub gives the snapshot and gets back at most 48 MiB, then writes the file itself. The exporter returns the file as UTF-8 text, or as base64 with `"base64"` as its second result. In Export subtitles the snapshot holds the Lines the dialog's Lines choice names. `options.frameRate` is the dialog's frame rate, else the video's, else `nil`; `options.video` is the open video's path or `nil`; `options.path` is the file being written.
 - **Import.** It shows in Open subtitles' filter and in drag and drop for its extensions, and takes files of at most 48 MiB. A built-in format of the same extension is tried first, then plugins' formats in the order their plugins were installed; the first that reads the file wins. Open subtitles' filter lists each format, so choosing one there tries only it.
-- **What an import gives.** Lines in the shape of `document.apply`'s `insert_line` fields, Styles as `set_style` fields, and Script Info. HikariSub builds the Document from them, and a result that breaks those shapes fails the open with the plugin's name.
+- **What an import gives.** Lines in the shape of `document.apply`'s `insert_line` fields, Styles as `set_style` fields with their `name`, and Script Info as text by key. HikariSub builds an ASS Document from them; its Default Style stays only when no Styles come. A result that breaks those shapes fails the open with the plugin's name and where it broke, such as `/lines/3/start`.
 - **Saving.** A Document opened from a plugin format saves back through the plugin when the format has `export`, and through Save as otherwise.
 - **Format calls** are treated like commands: no time limit, the still-working card, and a job when the plugin begins one.
 

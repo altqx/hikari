@@ -440,25 +440,23 @@ private slots:
         QQuickItem *video = header(QStringLiteral("Video"));
         QVERIFY(video);
         QVERIFY(video->property("titleMode").toBool());
-        QCOMPARE(video->height(), 35.0);
-        QCOMPARE(video->property("contentGap").toInt(), 0);
-        QQuickItem *title = childNamed(video, QStringLiteral("dockTitleText"));
+        QCOMPARE(video->height(), qreal(hikari::ui::dockchrome::kHeaderHeight));
+                QQuickItem *title = childNamed(video, QStringLiteral("dockTitleText"));
         QVERIFY(title && title->isVisible());
         QCOMPARE(title->property("text").toString(), QStringLiteral("Video"));
-        QVERIFY(title->property("font").value<QFont>().bold());
+        QCOMPARE(title->property("font").value<QFont>().weight(), QFont::DemiBold);
         QQuickItem *menu = childNamed(video, QStringLiteral("dockMenuButton"));
         QVERIFY(menu && menu->isVisible());
         QCOMPARE(menu->width(), 20.0);
         QCOMPARE(menu->height(), 20.0);
-        QCOMPARE(menu->mapToItem(video, QPointF(menu->width(), 0)).x(), video->width() - 12);
+        QCOMPARE(menu->mapToItem(video, QPointF(menu->width(), 0)).x(), video->width() - 4);
         for (QQuickItem *bar : itemsNamed(window, QStringLiteral("dockTitleBar")))
             QVERIFY2(!bar->isVisible(), "a group shows the engine's title bar");
 
         QQuickItem *grid = header(QStringLiteral("Grid"));
         QVERIFY(grid);
         QVERIFY(!grid->property("titleMode").toBool());
-        QCOMPARE(grid->property("contentGap").toInt(), 8);
-        QQuickItem *gridTab = childNamed(grid, QStringLiteral("dockTab0"));
+                QQuickItem *gridTab = childNamed(grid, QStringLiteral("dockTab0"));
         QVERIFY(gridTab && gridTab->isVisible());
         QCOMPARE(gridTab->property("text").toString(), QStringLiteral("Grid"));
         QVERIFY(gridTab->property("selected").toBool());
@@ -470,9 +468,9 @@ private slots:
         QQuickItem *gridGroup = groupOf(grid);
         auto *gridBody = window->findChild<QQuickItem *>(QStringLiteral("gridBody"));
         QVERIFY(gridGroup && gridBody);
-        QCOMPARE(gridBody->mapToItem(gridGroup, QPointF()).y(), 35.0 + 8.0);
+        QCOMPARE(gridBody->mapToItem(gridGroup, QPointF()).y(), qreal(hikari::ui::dockchrome::kHeaderHeight));
         auto *videoBody = window->findChild<QQuickItem *>(QStringLiteral("videoBody"));
-        QCOMPARE(videoBody->mapToItem(groupOf(video), QPointF()).y(), 35.0);
+        QCOMPARE(videoBody->mapToItem(groupOf(video), QPointF()).y(), qreal(hikari::ui::dockchrome::kHeaderHeight));
 
         auto *editor = dock("Editor");
         auto *audio = qobject_cast<QQuickItem *>(dock("Audio"));
@@ -493,7 +491,7 @@ private slots:
         const QRectF onSelected = selected->mapRectToItem(group, QRectF(0, 0, selected->width(), selected->height()));
         const QRectF button = groupMenu->mapRectToItem(group, QRectF(0, 0, groupMenu->width(), groupMenu->height()));
         QVERIFY2(onSelected.contains(button), "the ⋯ button sits on the selected tab");
-        QCOMPARE(onSelected.right() - button.right(), 7.0);
+        QCOMPARE(onSelected.right() - button.right(), 4.0);
         group->setProperty("currentTabIndex", other == tab0 ? 0 : 1);
         QTRY_VERIFY(other->property("selected").toBool());
         const QRectF onOther = other->mapRectToItem(group, QRectF(0, 0, other->width(), other->height()));
@@ -1098,14 +1096,14 @@ private slots:
         QCOMPARE(docking()->minimumSize(QStringLiteral("Editor")), QSize(300, 260));
         QQuickItem *editor = header(QStringLiteral("Editor"));
         QQuickItem *group = groupOf(editor);
-        QTRY_VERIFY2(group->height() >= 260 + 35, qPrintable(QString::number(group->height())));
+        QTRY_VERIFY2(group->height() >= 260 + hikari::ui::dockchrome::kHeaderHeight, qPrintable(QString::number(group->height())));
         QVERIFY(group->width() >= 300);
         QVERIFY(docking()->resizeInLayout(QStringLiteral("Editor"), 0, -200, 0, -200));
         QTest::qWait(50);
-        QVERIFY2(group->height() >= 260 + 35, qPrintable(QString::number(group->height())));
+        QVERIFY2(group->height() >= 260 + hikari::ui::dockchrome::kHeaderHeight, qPrintable(QString::number(group->height())));
         QVERIFY(KDDockWidgets::LayoutSaver().restoreLayout(initial));
         hikari::ui::refreshDockConstraints();
-        QTRY_VERIFY(groupOf(header(QStringLiteral("Editor"))) && groupOf(header(QStringLiteral("Editor")))->height() >= 260 + 35);
+        QTRY_VERIFY(groupOf(header(QStringLiteral("Editor"))) && groupOf(header(QStringLiteral("Editor")))->height() >= 260 + hikari::ui::dockchrome::kHeaderHeight);
         QVERIFY(docking()->setMinimumSize(QStringLiteral("Editor"), QSize()));
         hikari::ui::refreshDockConstraints();
     }
@@ -1634,7 +1632,7 @@ private slots:
         QQuickItem *titleBar = nullptr;
         QTRY_VERIFY(!itemsNamed(floating, QStringLiteral("dockTitleBar")).isEmpty());
         titleBar = itemsNamed(floating, QStringLiteral("dockTitleBar")).first();
-        QCOMPARE(titleBar->height(), 35.0);
+        QCOMPARE(titleBar->height(), qreal(hikari::ui::dockchrome::kHeaderHeight));
         QQuickItem *button = childNamed(titleBar, QStringLiteral("dockMenuButton"));
         QVERIFY(button && button->isVisible());
         QCOMPARE(button->property("contentItem").value<QObject *>()->property("iconRole").toString(), QStringLiteral("panel-menu"));

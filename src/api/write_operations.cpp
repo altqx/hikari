@@ -1,9 +1,15 @@
 #include "operations.h"
 
+#include "hikari/api/formats.h"
+#include "hikari/api/schema.h"
+#include "hikari/application/document_files.h"
+#include "hikari/core/ass_load.h"
+
 #include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
 
 #include <algorithm>
+#include <cstring>
 
 namespace hikari::api::detail {
 
@@ -542,3 +548,87 @@ void addWriteOperations(Registry &registry)
 }
 
 }
+
+namespace hikari::api {
+
+namespace {
+
+struct ImportEdits {
+    Json edits = Json::array();
+    std::vector<std::string> from; // each edit's JSON pointer into the import
+};
+
+ImportEdits importEdits(const Json &imported, std::string &problem)
+{
+    ImportEdits out;
+    Json &edits = out.edits;
+    const auto add = [&](Json edit, std::string from) {
+        edits.push(std::move(edit));
+        out.from.push_back(std::move(from));
+    };
+    const Json *lines = imported.find("lines");
+    const Json *styles = imported.find("styles");
+    const Json *info = imported.find("info");
+    if (!imported.isObject() || (lines && !lines->isArray()) || (styles && !styles->isArray()) || (info && !info->isObject())) {
+        problem = "the importer must return {lines = {…}, styles = {…}, info = {…}}";
+        return out;
+    }
+    bool ownDefault = false;
+    if (styles)
+        for (std::size_t i = 0; i < styles->asArray().size(); ++i) {
+            const Json &style = styles->asArray()[i];
+            const Json *name = style.isObject() ? style.find("name") : nullptr;
+            if (!name || !name->isString()) {
+                problem = "/styles/" + std::to_string(i) + ": a Style needs a name";
+                return out;
+            }
+            ownDefault = ownDefault || name->asString() == "Default";
+            add(Json::object({{"op", Json("set_style")}, {"name", *name}, {"fields", style}}), "/styles/" + std::to_string(i));
+        }
+    if (styles && !styles->asArray().empty() && !ownDefault)
+        add(Json::object({{"op", Json("delete_style")}, {"name", Json("Default")}}), "/styles");
+    if (info)
+        for (const Json::Member &m : info->asObject())
+            add(Json::object({{"op", Json("set_info")}, {"key", Json(m.key)}, {"value", m.value}}), "/info/" + m.key);
+    if (lines)
+        for (std::size_t i = 0; i < lines->asArray().size(); ++i)
+            add(Json::object({{"op", Json("insert_line")}, {"fields", lines->asArray()[i]}}), "/lines/" + std::to_string(i));
+    return out;
+}
+
+core::Document emptyDocument()
+{
+    std::string script(application::defaultScript());
+    script.erase(script.rfind("Dialogue:"));
+    std::vector<std::byte> bytes(script.size());
+    std::memcpy(bytes.data(), script.data(), script.size());
+    return core::loadAss(bytes).document;
+}
+
+}
+
+std::expected<core::Document, std::string> documentFromImport(const Json &imported)
+{
+    std::string problem;
+    const ImportEdits built = importEdits(imported, problem);
+    if (!problem.empty())
+        return std::unexpected(problem);
+    core::Document document = emptyDocument();
+    const Json edit = Json::object({{"$ref", Json("#/$defs/Edit")}});
+    const auto &edits = built.edits.asArray();
+    for (std::size_t i = 0; i < edits.size(); ++i)
+        if (auto failure = validate(edit, edits[i], Api::registry().defs())) {
+            const std::string_view inner = failure->path.starts_with("/fields") ? std::string_view(failure->path).substr(7)
+                                           : failure->path == "/value"           ? std::string_view()
+                                                                                 : std::string_view(failure->path);
+            return std::unexpected(built.from[i] + std::string(inner) + ": " + failure->message);
+        }
+    detail::ChangeSet change(built.edits);
+    change.apply(document);
+    if (change.problem())
+        return std::unexpected(change.problem()->message);
+    return document;
+}
+
+}
+
