@@ -12,6 +12,8 @@ QtObject {
     property var keys: null
     // Why a macro can't run now, or "".
     property var reasonOf: null
+    // A macro's check: {reason, note, help, active}, each optional; `active` gives the row a check mark.
+    property var checkOf: null
     // Entries name their place with `titles` (a list), else with `name` split at "/".
     property string itemPrefix: "macro_"
     property string menuPrefix: "macroMenu_"
@@ -21,12 +23,22 @@ QtObject {
 
     readonly property Component itemComponent: Component {
         ShellMenuItem {
+            id: macroItem
             required property var macro
+            readonly property var check: entries.checkOf ? entries.checkOf(macro) : ({})
             objectName: entries.itemPrefix + (macro.id ?? macro.name)
-            reason: entries.reasonOf ? entries.reasonOf(macro) : ""
+            reason: entries.reasonOf ? entries.reasonOf(macro) : (check.reason ?? "")
+            description: check.note ?? ""
+            help: check.help ?? ""
+            checkable: check.active !== undefined
+            checked: check.active === true
+            keepsMenuOpen: false
             enabled: entries.enabled && reason.length === 0
             shortcutText: entries.keys ? entries.keys(macro) : ""
-            onTriggered: entries.triggered(macro)
+            onTriggered: {
+                checked = Qt.binding(() => macroItem.check.active === true)
+                entries.triggered(macro)
+            }
         }
     }
     readonly property Component submenuComponent: Component {

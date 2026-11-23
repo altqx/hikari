@@ -19,6 +19,7 @@
 extern "C" {
 #include <lauxlib.h>
 #include <lua.h>
+#include <luajit.h>
 #include <lualib.h>
 }
 
@@ -79,6 +80,8 @@ Responder *g_services = nullptr;  // host services: the running request, or the 
 constexpr int kNoProgress = std::numeric_limits<int>::min();
 int g_lastProgress = kNoProgress;
 char g_cancelTag; // its address identifies aegisub.cancel()
+char g_slowTag;   // its address identifies a check past its time budget
+bool g_checking = false;
 std::optional<hikari::application::HostServiceReply> askOrThrow(hikari::application::HostServiceRequest request);
 
 std::string toUtf8(const std::filesystem::path &p)
@@ -259,8 +262,8 @@ int moonLine(lua_State *L, int luaLine, const std::string &file)
 // One "File ..., line ..." block per frame, each followed by the message without its "[string ...]:N: " location.
 int addStackTrace(lua_State *L)
 {
-    if (lua_touserdata(L, 1) == &g_cancelTag)
-        return 1; // cancellation is not an error to annotate
+    if (lua_touserdata(L, 1) == &g_cancelTag || lua_touserdata(L, 1) == &g_slowTag)
+        return 1; // neither is an error to annotate
     int level = 1;
     if (lua_isnumber(L, 2)) {
         level = static_cast<int>(lua_tointeger(L, 2));
@@ -715,6 +718,8 @@ int dialogDisplay(lua_State *L)
 {
     if (!g_responder)
         return luaL_error(L, "no macro is running");
+    if (g_checking)
+        return luaL_error(L, "a dialog can't be shown while the menu checks the macro");
     // One argument gets an empty button table; the third is the button-ID table; later arguments are not read.
     if (lua_gettop(L) == 1)
         lua_newtable(L);
@@ -2434,17 +2439,22 @@ void installHostServices(lua_State *L)
 
 // The first return is the answer; a runtime error answers false. Edits made while validating reach the macro,
 // and are dropped when it answers false.
-bool validate(lua_State *L, int index, std::string &error)
+bool pushFeature(lua_State *L, int index, const char *field)
 {
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
-    lua_getfield(L, -1, "validate");
+    lua_getfield(L, -1, field);
     lua_remove(L, -2);
     if (!lua_isfunction(L, -1)) {
         lua_pop(L, 1);
-        return true;
+        return false;
     }
     lua_pushcfunction(L, addStackTrace);
     lua_insert(L, -2);
+    return true;
+}
+
+void pushMacroArguments(lua_State *L)
+{
     pushSubtitles(L);
     lua_createtable(L, static_cast<int>(g_subs->lists.selected.size()), 0);
     for (std::size_t i = 0; i < g_subs->lists.selected.size(); ++i) {
@@ -2452,6 +2462,13 @@ bool validate(lua_State *L, int index, std::string &error)
         lua_rawseti(L, -2, static_cast<int>(i) + 1);
     }
     lua_pushinteger(L, g_subs->lists.active);
+}
+
+bool validate(lua_State *L, int index, std::string &error)
+{
+    if (!pushFeature(L, index, "validate"))
+        return true;
+    pushMacroArguments(L);
     if (lua_pcall(L, 3, 2, -5)) {
         error = "Runtime error in Lua macro validation function:\n" + stringOrEmpty(L, -1);
         lua_pop(L, 2); // the error and the handler
@@ -2511,6 +2528,134 @@ void failRequestWithErrorAndHandlerOnTop(lua_State *L, Responder &r)
     removeSink(L);
     endRequest();
     r.terminal(cancelled ? Outcome::Cancelled : Outcome::Failed, bytesOf(message));
+}
+
+using CheckClock = std::chrono::steady_clock;
+CheckClock::time_point g_checkDeadline;
+constexpr int kCheckHookInstructions = 1000;
+
+void checkBudgetHook(lua_State *L, lua_Debug *)
+{
+    if (g_responder && g_responder->cancelled()) {
+        lua_pushlightuserdata(L, &g_cancelTag);
+        lua_error(L);
+    }
+    if (CheckClock::now() >= g_checkDeadline) {
+        lua_pushlightuserdata(L, &g_slowTag);
+        lua_error(L);
+    }
+}
+
+enum class CheckEnd { Missing, Returned, Raised, Slow, Cancelled };
+
+// Returned leaves two results over the handler. LuaJIT skips count hooks in compiled code, so check() turns the JIT off.
+CheckEnd callWithinBudget(lua_State *L, int index, const char *field, std::chrono::milliseconds budget,
+                          std::string &error)
+{
+    if (!pushFeature(L, index, field))
+        return CheckEnd::Missing;
+    pushMacroArguments(L);
+    g_checkDeadline = CheckClock::now() + budget;
+    lua_sethook(L, checkBudgetHook, LUA_MASKCOUNT, kCheckHookInstructions);
+    const int status = lua_pcall(L, 3, 2, -5);
+    lua_sethook(L, nullptr, 0, 0);
+    if (status == 0)
+        return CheckEnd::Returned;
+    const void *tag = lua_touserdata(L, -1);
+    const CheckEnd end = tag == &g_slowTag ? CheckEnd::Slow : tag == &g_cancelTag ? CheckEnd::Cancelled : CheckEnd::Raised;
+    if (end == CheckEnd::Raised)
+        error = stringOrEmpty(L, -1);
+    lua_pop(L, 2); // the error and the handler
+    return end;
+}
+
+bool jitIsOn(lua_State *L)
+{
+    lua_getglobal(L, "jit");
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 1);
+        return false;
+    }
+    lua_getfield(L, -1, "status");
+    const bool on = lua_isfunction(L, -1) && lua_pcall(L, 0, 1, 0) == 0 && lua_toboolean(L, -1);
+    lua_pop(L, 2);
+    return on;
+}
+
+void check(Reader &in, Responder &r, std::size_t payloadSize)
+{
+    using hikari::application::MacroCheck;
+    const std::int32_t budgetMs = in.i32();
+    auto snapshot = lua::decodeSnapshot(in, payloadSize);
+    if (!in.ok() || !snapshot || budgetMs <= 0)
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed Check"));
+    lua_State *L = g_script.L;
+    if (!L)
+        return r.terminal(Outcome::Failed, bytesOf("no script is loaded"));
+    const std::chrono::milliseconds budget(budgetMs);
+    const bool jitWasOn = jitIsOn(L);
+    luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_FLUSH);
+    luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_OFF);
+    g_checking = true;
+    std::vector<MacroCheck> checks;
+    bool cancelled = false;
+    for (std::size_t i = 0; i < g_script.info.macros.size() && i < g_script.features.size() && !cancelled; ++i) {
+        const ScriptMacro &macro = g_script.info.macros[i];
+        if (!macro.hasValidate && !macro.hasIsActive)
+            continue;
+        MacroCheck c;
+        c.index = static_cast<int>(i);
+        Staged staged;
+        staged.canModify = snapshot->canModify;
+        staged.lists = *snapshot;
+        beginRequest(L, staged, r);
+        removeSink(L);
+        g_services = nullptr;
+        std::string error;
+        switch (callWithinBudget(L, c.index, "validate", budget, error)) {
+        case CheckEnd::Returned:
+            c.verdict = lua_toboolean(L, -2) ? MacroCheck::Verdict::Valid : MacroCheck::Verdict::Invalid;
+            if (lua_type(L, -1) == LUA_TSTRING)
+                c.help = lua_tostring(L, -1);
+            lua_pop(L, 3); // two returns and the handler
+            break;
+        case CheckEnd::Raised:
+            c.verdict = MacroCheck::Verdict::Failed;
+            c.help = std::move(error);
+            break;
+        case CheckEnd::Slow:
+            c.verdict = MacroCheck::Verdict::TooSlow;
+            break;
+        case CheckEnd::Cancelled:
+            cancelled = true;
+            break;
+        case CheckEnd::Missing:
+            break;
+        }
+        if (!cancelled) {
+            switch (callWithinBudget(L, c.index, "isactive", budget, error)) {
+            case CheckEnd::Returned:
+                c.active = lua_toboolean(L, -2) != 0;
+                lua_pop(L, 3);
+                break;
+            case CheckEnd::Cancelled:
+                cancelled = true;
+                break;
+            case CheckEnd::Missing:
+            case CheckEnd::Raised:
+            case CheckEnd::Slow:
+                break;
+            }
+        }
+        endRequest();
+        checks.push_back(std::move(c));
+    }
+    g_checking = false;
+    if (jitWasOn)
+        luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_ON);
+    if (cancelled)
+        return r.terminal(Outcome::Cancelled);
+    r.terminal(Outcome::Ok, lua::encodeMacroChecks(checks));
 }
 
 DialogRequest *g_configDialog = nullptr;
@@ -2869,6 +3014,8 @@ int main()
             return runFilter(in, r, request.payload.size());
         case lua::Command::FilterConfig:
             return filterConfig(in, r, request.payload.size());
+        case lua::Command::Check:
+            return check(in, r, request.payload.size());
         }
         r.terminal(Outcome::Unsupported);
     });

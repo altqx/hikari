@@ -383,6 +383,43 @@ std::optional<application::MacroResult> decodeMacroResult(const std::vector<std:
     return result;
 }
 
+std::vector<std::byte> encodeMacroChecks(const std::vector<application::MacroCheck> &checks)
+{
+    Writer w;
+    w.i32(static_cast<std::int32_t>(checks.size()));
+    for (const auto &c : checks)
+        w.i32(c.index).i32(static_cast<std::int32_t>(c.verdict)).str(c.help).u8(c.active.has_value()).u8(
+            c.active.value_or(false));
+    return w.take();
+}
+
+std::optional<std::vector<application::MacroCheck>> decodeMacroChecks(const std::vector<std::byte> &payload)
+{
+    using Verdict = application::MacroCheck::Verdict;
+    Reader r(payload);
+    const auto n = count(r, payload.size());
+    if (!n)
+        return std::nullopt;
+    std::vector<application::MacroCheck> checks;
+    for (std::size_t i = 0; i < *n && r.ok(); ++i) {
+        application::MacroCheck c;
+        c.index = r.i32();
+        const std::int32_t verdict = r.i32();
+        if (verdict < static_cast<std::int32_t>(Verdict::Valid) || verdict > static_cast<std::int32_t>(Verdict::TooSlow))
+            return std::nullopt;
+        c.verdict = static_cast<Verdict>(verdict);
+        c.help = r.str();
+        const bool hasActive = r.u8() != 0;
+        const bool active = r.u8() != 0;
+        if (hasActive)
+            c.active = active;
+        checks.push_back(std::move(c));
+    }
+    if (!r.ok() || !r.atEnd())
+        return std::nullopt;
+    return checks;
+}
+
 namespace {
 
 bool plausible(std::int32_t count, const std::vector<std::byte> &payload)
