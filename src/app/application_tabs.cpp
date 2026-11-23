@@ -239,6 +239,7 @@ void Application::forgetTab(application::DocumentId document)
     for (auto *layout : layouts())
         layout->forgetTab(document.value);
     m_importPaths.erase(document.value);
+    m_exportFiltersToSave.erase(document.value);
     m_lyricsImports.erase(document.value);
     m_originalColumns.erase(document.value);
     m_translationDeclined.erase(document.value);
@@ -321,7 +322,11 @@ void Application::setUpFileArrangements()
 {
     m_files->setProjectGarbageSource(
         [this](application::DocumentId document, const application::DestinationKey &destination) {
-            return mediaFileGarbage(document, destination);
+            auto edits = mediaFileGarbage(document, destination);
+            if (const auto line = m_exportFiltersToSave.find(document.value); line != m_exportFiltersToSave.end())
+                edits.push_back({std::u8string(application::kExportFiltersKey),
+                                 std::u8string(line->second.begin(), line->second.end())});
+            return edits;
         });
     m_files->setLayoutSource([this](application::DocumentId document) -> std::optional<std::u8string> {
         if (!m_settings->boolean(kLayoutInFile))
@@ -1103,6 +1108,7 @@ bool Application::retryRestore(int row)
         m_comparison.replaced(entry.document, *id);
         m_tabMedia.erase(entry.document.value);
         m_originalColumns.erase(entry.document.value);
+        m_exportFiltersToSave.erase(entry.document.value);
         m_tabMedia[id->value] = kept;
         for (auto &u : m_unresolved)
             if (u.document == entry.document)

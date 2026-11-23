@@ -2196,6 +2196,11 @@ int load(lua_State *L)
                               gettext(L, "Applies karaoke effects from templates to the selected lines only, replacing "
                                     "their earlier generated lines"),
                               applySelected, validateSelected);
+    // MUST KILL: the name stays English so Export as and Export Filters lines find it in every language.
+    lua_helper::registerFilter(L, "Karaoke template",
+                               gettext(L, "Apply karaoke effect templates to the subtitles.\n\nSee the help file for "
+                                          "information on how to use this."),
+                               2000, applyAll);
     return 0;
 }
 

@@ -461,7 +461,8 @@
    ],
    "surfaces": [
     "menu:video",
-    "video-transport"
+    "video-transport",
+    "video-fullscreen"
    ]
   },
   {
@@ -475,7 +476,8 @@
    ],
    "surfaces": [
     "menu:video",
-    "video-transport"
+    "video-transport",
+    "video-fullscreen"
    ]
   },
   {
@@ -679,8 +681,7 @@
     "backward1.png"
    ],
    "surfaces": [
-    "video-transport",
-    "video-fullscreen"
+    "video-transport"
    ]
   },
   {
@@ -694,8 +695,7 @@
     "forward1.png"
    ],
    "surfaces": [
-    "video-transport",
-    "video-fullscreen"
+    "video-transport"
    ]
   },
   {
@@ -706,7 +706,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "video-fullscreen"
+    "video-fullscreen",
+    "settings-dialog"
    ]
   },
   {
@@ -1564,7 +1565,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "dialogs"
+    "dialogs",
+    "video-fullscreen"
    ]
   },
   {
@@ -1803,7 +1805,8 @@
     "Position.png"
    ],
    "surfaces": [
-    "visual-tools"
+    "visual-tools",
+    "video-fullscreen"
    ]
   },
   {
@@ -2684,7 +2687,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "video-context-menu"
+    "video-context-menu",
+    "settings-dialog"
    ]
   },
   {
@@ -3218,7 +3222,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:view"
+    "menu:view",
+    "video-fullscreen"
    ]
   },
   {
@@ -5768,7 +5773,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "visual-tools"
+    "visual-tools",
+    "video-fullscreen"
    ]
   },
   {

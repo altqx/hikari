@@ -14,8 +14,10 @@ std::u8string u8(const std::string &s)
 void add(std::vector<application::PluginContentFile> &into, const std::vector<plugins::ContentFile> &files,
          const std::string &id, const plugins::Manifest &manifest, const std::filesystem::path &root)
 {
-    for (const plugins::ContentFile &file : files)
-        into.push_back({id, u8(manifest.name), u8(file.title), root / std::filesystem::path(u8(file.path))});
+    for (const plugins::ContentFile &file : files) {
+        auto path = root / std::filesystem::path(u8(file.path));
+        into.push_back({id, u8(manifest.name), u8(file.title), path.make_preferred()});
+    }
 }
 
 }
