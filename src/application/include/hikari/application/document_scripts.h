@@ -1,6 +1,9 @@
 #pragma once
 
+#include "hikari/core/document.h"
+
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <absl/container/flat_hash_set.h>
@@ -9,6 +12,11 @@
 namespace hikari::application {
 
 inline constexpr char kAutomationScriptsKey[] = "Automation Scripts";
+
+// Project Garbage first, then Script Info (older files).
+std::optional<std::string> documentScriptsValue(const core::Document &document);
+// Into Project Garbage, and into Script Info only where the file already has it there.
+bool setDocumentScriptsValue(core::Document &document, const std::string &value);
 
 // Splits at every '|', '~' and '$', keeping empty tokens; each token loses
 // its leading whitespace. A relative path after '~' joins subtitleFolder, as Aegisub reads it.

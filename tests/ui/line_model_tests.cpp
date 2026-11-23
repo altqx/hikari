@@ -108,11 +108,41 @@ private slots:
         QCOMPARE(model.index(0, LineTableModel::EffectColumn).data().toString(), QStringLiteral("fx"));
         QCOMPARE(model.index(0, LineTableModel::WrapsColumn).data().toString(), QStringLiteral("5/5"));
         QCOMPARE(model.index(0, LineTableModel::CpsColumn).data().toString(), QStringLiteral("2"));
-        QVERIFY(!model.index(0, 0).data(LineTableModel::CpsTooHighRole).toBool());
+        QCOMPARE(model.index(0, 0).data(LineTableModel::CpsSeverityRole).toDouble(), 0.0);
         QCOMPARE(model.index(1, LineTableModel::CpsColumn).data().toString(), QString());
         QCOMPARE(model.index(1, LineTableModel::WrapsColumn).data().toString(), QString());
         QCOMPARE(model.index(2, LineTableModel::CpsColumn).data().toString(), QStringLiteral("30"));
-        QVERIFY(model.index(2, 0).data(LineTableModel::CpsTooHighRole).toBool());
+        QCOMPARE(model.index(2, 0).data(LineTableModel::CpsSeverityRole).toDouble(), 1.0);
+    }
+
+    void readingLimitsComeFromTheProfileAndTheScriptInfo()
+    {
+        const auto document = [](std::string_view info) {
+            return load("[Script Info]\nScriptType: v4.00+\n" + std::string(info) +
+                        "\n[Events]\n"
+                        "Dialogue: 0,0:00:05.00,0:00:05.50,Default,,0,0,0,,much too fast here\n"
+                        "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,Hello\\Nworld\n");
+        };
+        LineTableModel model;
+        model.setDocument(document(""));
+        const auto severity = [&] { return model.index(0, 0).data(LineTableModel::CpsSeverityRole).toDouble(); };
+        const auto badWraps = [&] { return model.index(1, 0).data(LineTableModel::BadWrapsRole).toBool(); };
+        QCOMPARE(model.index(0, LineTableModel::CpsColumn).data().toString(), QStringLiteral("30"));
+        QCOMPARE(severity(), 1.0);
+        QVERIFY(!badWraps());
+
+        QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+        model.setReadingLimits({.cpsWarning = 20, .cpsError = 39, .lineLength = 4, .maxLines = 2});
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(severity(), 11.0 / 20);
+        QVERIFY(badWraps());
+        model.setReadingLimits({.cpsWarning = 20, .cpsError = 39, .lineLength = 4, .maxLines = 2});
+        QCOMPARE(changed.count(), 1);
+
+        model.setDocument(document("Hikari CPS Warning: 30\nHikari Line Length: 5\n"));
+        QCOMPARE(severity(), 0.0);
+        QVERIFY(!badWraps());
+        QCOMPARE(model.readingLimits(), (application::ReadingLimits{30, 39, 5, 2}));
     }
 
     void formatsAndHidingChooseTheColumns()
@@ -479,7 +509,7 @@ private slots:
         QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 2);
         QCOMPARE(text(2), QStringLiteral("zulu, longer and faster"));
         QCOMPARE(model.index(2, LineTableModel::EndColumn).data().toString(), QStringLiteral("0:00:05.50"));
-        QVERIFY(model.index(2, 0).data(LineTableModel::CpsTooHighRole).toBool());
+        QVERIFY(model.index(2, 0).data(LineTableModel::CpsSeverityRole).toDouble() > 0);
         QVERIFY(draftAt(2));
         QVERIFY(!draftAt(0) && !draftAt(1));
         QCOMPARE(model.recordAt(2)->text, std::u8string(u8"bravo"));

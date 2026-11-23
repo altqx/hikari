@@ -191,7 +191,7 @@ Item {
         const plugin = item.commandKind === "plugin"
         Qt.callLater(() => {
             if (plugin)
-                quick.shell.app.pluginRuntime.run(command)
+                quick.shell.app.pluginRuntime.run(command, "palette")
             else
                 quick.api("commands.run", { command: command })
         })

@@ -13,6 +13,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -28,12 +29,15 @@ class AutomationHotkeysController : public QObject {
     Q_PROPERTY(QVariantList missing READ missing NOTIFY bindingsChanged)
     // Installed bindings that resolve: {legacyName, keys}.
     Q_PROPERTY(QVariantList shortcuts READ shortcuts NOTIFY shortcutsChanged)
+    // Plugin default shortcuts left out because the key is taken: command id -> "Ctrl+Alt+K is taken by <owner>".
+    Q_PROPERTY(QVariantMap takenDefaults READ takenDefaults NOTIFY bindingsChanged)
 public:
     AutomationHotkeysController(AutomationShell &automation, ui::SettingsStore &settings, QObject *parent = nullptr);
 
     QVariantMap keys() const;
     QVariantList missing() const;
     QVariantList shortcuts() const;
+    QVariantMap takenDefaults() const { return m_takenDefaults; }
 
     // Saves and installs at once.
     Q_INVOKABLE void clearKeys(const QString &legacyName);
@@ -66,6 +70,10 @@ public:
     // [{id, pluginName, title}].
     void setPluginCommands(const QVariantList &commands);
     void setPluginRunner(std::function<bool(const QString &)> run) { m_runPlugin = std::move(run); }
+    // Running plugins' contributes.keybindings, earliest installed first: [{id, keys, pluginName}].
+    void setPluginDefaults(const QVariantList &defaults);
+    // The HikariSub command that binds the keys in any context, or "".
+    void setBuiltInOwner(std::function<QString(const std::string &keys)> owner);
 
 signals:
     void bindingsChanged();
@@ -79,6 +87,8 @@ private:
     void recordIdentity(application::MacroBinding &binding) const;
     QString scriptLabel(const std::string &path) const;
     void commitChange();
+    void applyDefaults();
+    QString label(const std::string &name) const;
 
     AutomationShell &m_automation;
     ui::SettingsStore &m_settings;
@@ -86,6 +96,15 @@ private:
     std::map<std::string, application::MacroBinding> m_installed;
     std::map<std::string, std::pair<QString, QString>> m_pluginCommands; // id -> plugin name, title
     std::function<bool(const QString &)> m_runPlugin;
+    std::function<QString(const std::string &)> m_builtInOwner;
+    struct PluginDefault {
+        std::string id, keys;
+        QString pluginName;
+    };
+    std::vector<PluginDefault> m_pluginDefaults;
+    std::map<std::string, std::string> m_defaults; // applied: command id -> keys
+    std::set<std::string> m_cleared;               // plugin commands whose default the user cleared
+    QVariantMap m_takenDefaults;
     bool resolves(const application::MacroBinding &binding) const;
 };
 

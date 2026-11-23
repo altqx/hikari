@@ -290,6 +290,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Editor</name>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n line.</numerusform>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n lines.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Export</name>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>

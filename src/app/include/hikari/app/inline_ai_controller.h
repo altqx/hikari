@@ -2,6 +2,7 @@
 
 #include "hikari/application/ai_inline.h"
 #include "hikari/application/ai_providers.h"
+#include "hikari/application/reading_limits.h"
 #include "hikari/application/write_coordinator.h"
 #include "hikari/backends/ai_translation_run.h"
 #include "hikari/core/document.h"
@@ -45,7 +46,7 @@ class InlineAiController final : public QObject {
     Q_PROPERTY(QString translateTo READ translateTo NOTIFY changed)
     Q_PROPERTY(QStringList recentInstructions READ recentInstructions NOTIFY changed)
     Q_PROPERTY(QVariantMap last READ last NOTIFY changed)
-    Q_PROPERTY(int maxCps READ maxCps CONSTANT)
+    Q_PROPERTY(int maxCps READ maxCps NOTIFY maxCpsChanged)
     Q_PROPERTY(QVariantMap progress READ progress NOTIFY runChanged)
     Q_PROPERTY(QVariantList results READ results NOTIFY runChanged)
     Q_PROPERTY(QVariantMap notice READ notice NOTIFY runChanged)
@@ -95,7 +96,7 @@ public:
     void projectChanged();
     QStringList recentInstructions() const;
     QVariantMap last() const;
-    int maxCps() const;
+    int maxCps() const { return m_maxCps; }
     QVariantMap progress() const;
     QVariantList results() const;
     QVariantMap notice() const;
@@ -128,6 +129,7 @@ public:
 signals:
     void changed();
     void runChanged();
+    void maxCpsChanged();
     /// "done", "stopped", "dailyCap" or "noModel".
     void finished(QString end);
 
@@ -153,12 +155,14 @@ private:
     bool write(const std::vector<std::uint64_t> &keys);
     const core::Document *documentOf(application::DocumentId document) const;
     std::string mode() const;
+    void updateMaxCps();
     void dropEdited();
     void closeResults();
 
     Wiring m_wiring;
     std::unique_ptr<Run> m_run;
     QVariantMap m_lastAsk;
+    int m_maxCps = application::ReadingLimits{}.cpsWarning;
 };
 
 }

@@ -19,7 +19,7 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MenuContent.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MenuContent.qml MacroMenuEntries.qml PluginMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 list(APPEND hikari_ui_qml_files ShiftTimesPanel.qml TimingPostprocessorPanel.qml TimingAssistantView.qml ShiftPresetBar.qml ShiftPreview.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
@@ -73,7 +73,7 @@ list(APPEND hikari_ui_qml_files FilterChip.qml FontResolutionNote.qml FontWindow
 list(APPEND hikari_ui_qml_files MatroskaSubtitles.qml)
 list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
-list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
+list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 list(APPEND hikari_ui_qml_files VisualToolOption.qml VisualToolDialogs.qml)
 list(APPEND hikari_ui_qml_files ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
 list(APPEND hikari_ui_qml_files AllTagsEditionDialog.qml)
@@ -120,7 +120,7 @@ add_subdirectory(plugin_api)
 target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)
 target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
 target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscreen_controller.h)
-list(APPEND hikari_ui_qml_files VideoFullscreen.qml FullscreenBarMenu.qml FullscreenStripButton.qml)
+list(APPEND hikari_ui_qml_files VideoFullscreen.qml FullscreenTypesetting.qml FullscreenBarMenu.qml FullscreenStripButton.qml)
 list(APPEND hikari_ui_qml_files VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoRenderCost.qml
     VideoTemplateBadge.qml

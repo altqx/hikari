@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/reading_limits.h"
 #include "hikari/core/document.h"
 
 #include <cstddef>
@@ -38,7 +39,7 @@ struct Ask {
     Action action = Action::Rewrite;
     std::string instruction; // Rewrite and Custom
     std::string language;    // Translate
-    int maxCps = 15;         // Shorten
+    int maxCps = ReadingLimits{}.cpsWarning; // Shorten
 };
 
 struct Neighbours {
