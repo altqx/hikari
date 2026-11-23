@@ -8,6 +8,7 @@ FocusScope {
     id: panel
     required property QtObject agent
     property QtObject aiSettings: null
+    property AppQuickInput quickInput: null
     signal reviewRequested()
     signal restoreRequested(var turn)
     signal settingsRequested()
@@ -22,6 +23,21 @@ FocusScope {
     readonly property bool canCompact: hasThread && thread.external !== true
     readonly property real contextUsed: hasThread && thread.compactWindow > 0 ? thread.contextTokens / thread.compactWindow : 0
     readonly property bool isChild: hasThread && (thread.child?.parent ?? "").length > 0
+
+    function renameThread() {
+        const id = panel.thread.id
+        const title = panel.thread.title
+        panel.quickInput.askFor({
+            title: qsTr("Rename thread"),
+            prompt: qsTr("Thread name"),
+            value: title,
+            from: panel,
+            check: text => text.trim().length > 0 ? "" : qsTranslate("HikariSub.VisualTools", "Type a name.")
+        }, text => {
+            if (text !== null && text.trim() !== title)
+                panel.agent.rename(id, text.trim())
+        })
+    }
     property bool showingThreads: false
     property string componentResult: ""
     readonly property var download: aiSettings ? aiSettings.download : ({})
@@ -975,7 +991,7 @@ FocusScope {
             objectName: "agentRenameThread"
             iconRole: "edit"
             text: qsTr("Rename thread…")
-            onTriggered: renameLoader.active = true
+            onTriggered: panel.renameThread()
         }
         ShellMenuItem {
             objectName: "agentExportThread"
@@ -1217,50 +1233,6 @@ FocusScope {
     LazyMessageBox {
         id: deleteQuestion
         name: "agentDeleteQuestion"
-    }
-
-    Loader {
-        id: renameLoader
-        active: false
-        sourceComponent: DialogWindow {
-            id: renameDialog
-            objectName: "agentRenameWindow"
-            title: qsTr("Rename thread")
-            modal: true
-            initialFocus: renameField
-            defaultButton: renameOk
-            onAccepted: if (renameOk.enabled) panel.agent.rename(panel.thread.id, renameField.text.trim())
-            onVisibleChanged: if (!visible) Qt.callLater(() => renameLoader.active = false)
-            Component.onCompleted: {
-                renameField.text = panel.thread.title
-                renameField.selectAll()
-                open()
-            }
-            Label {
-                text: qsTr("Name")
-            }
-            TextField {
-                id: renameField
-                objectName: "agentRenameField"
-                Accessible.name: qsTr("Thread name")
-                Layout.preferredWidth: 360
-            }
-            buttons: [
-                PrimaryButton {
-                    id: renameOk
-                    objectName: "agentRenameOk"
-                    text: qsTr("Rename")
-                    enabled: renameField.text.trim().length > 0 && renameField.text.trim() !== panel.thread.title
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: renameDialog.accept()
-                },
-                Button {
-                    text: qsTr("Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: renameDialog.reject()
-                }
-            ]
-        }
     }
 
     Component {

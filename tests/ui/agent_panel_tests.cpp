@@ -918,7 +918,7 @@ private slots:
         QVERIFY(!kinds().contains(QStringLiteral("change")));
     }
 
-    void aThreadIsRenamedInItsOwnWindow()
+    void aThreadIsRenamedInTheInputBox()
     {
         openPanel();
         QVERIFY(click(QStringLiteral("agentNewThread")));
@@ -926,11 +926,11 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
         QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
         QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
-        QTRY_VERIFY(item(QStringLiteral("agentRenameField")));
-        item(QStringLiteral("agentRenameField"))->setProperty("text", QStringLiteral("Honorifics pass"));
-        QVERIFY(click(QStringLiteral("agentRenameOk")));
+        QTRY_VERIFY(item(QStringLiteral("inputBoxField")));
+        item(QStringLiteral("inputBoxField"))->setProperty("text", QStringLiteral("Honorifics pass"));
+        QTest::keyClick(window(), Qt::Key_Return);
         QTRY_COMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
-        QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
+        QTRY_VERIFY(!item(QStringLiteral("inputBoxField")));
     }
 
     void threadMenusFollowTheThreadRulesAndRowsAndAnswersHaveMenus()
@@ -1950,20 +1950,27 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
         QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
         QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
-        QTRY_VERIFY(item(QStringLiteral("agentRenameField")));
-        QQuickItem *field = item(QStringLiteral("agentRenameField"));
+        QTRY_VERIFY(item(QStringLiteral("inputBoxField")));
+        QQuickItem *field = item(QStringLiteral("inputBoxField"));
         QCOMPARE(field->property("selectedText").toString(), QStringLiteral("Honorifics pass"));
-        QVERIFY(!item(QStringLiteral("agentRenameOk"))->isEnabled());
+        QCOMPARE(item(QStringLiteral("inputBoxMessage"))->property("text").toString(), QStringLiteral("Thread name"));
         field->setProperty("text", QStringLiteral("   "));
-        QVERIFY(!item(QStringLiteral("agentRenameOk"))->isEnabled());
-        field->setProperty("text", QStringLiteral("Honorifics, second pass"));
-        QVERIFY(item(QStringLiteral("agentRenameOk"))->isEnabled());
-        field->setProperty("text", QString());
-        QTest::keyClick(field->window(), Qt::Key_Return);
-        QTest::qWait(100);
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(item(QStringLiteral("inputBoxMessage"))->property("text").toString(), QStringLiteral("Type a name."));
+        QVERIFY(item(QStringLiteral("inputBoxField")));
         QCOMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
-        QVERIFY(QMetaObject::invokeMethod(field->window(), "reject"));
-        QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
+        field->setProperty("text", QStringLiteral("Honorifics pass"));
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_VERIFY(!item(QStringLiteral("inputBoxField")));
+        QCOMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
+        QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
+        QTRY_VERIFY(item(QStringLiteral("inputBoxField")));
+        item(QStringLiteral("inputBoxField"))->setProperty("text", QStringLiteral("Honorifics, second pass"));
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!item(QStringLiteral("inputBoxField")));
+        QCOMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
 
         for (QObject *open : window()->findChildren<QObject *>())
             if (open->inherits("QQuickPopup") && open->property("visible").toBool())
