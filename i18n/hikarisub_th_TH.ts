@@ -16462,6 +16462,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Not installed</source>
+        <translation>ยังไม่ได้ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Downloading the AI component · %1 of %2 MB</source>
+        <translation>กำลังดาวน์โหลดคอมโพเนนต์ AI · %1 จาก %2 MB</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
