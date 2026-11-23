@@ -1,6 +1,7 @@
 #include "hikari/app/plugin_runtime.h"
 
 #include "hikari/app/plugin_content.h"
+#include "hikari/app/plugin_themes.h"
 #include "hikari/app/plugin_nodes.h"
 #include "hikari/backends/program_plugin_link.h"
 #include "hikari/backends/program_process.h"
@@ -374,6 +375,7 @@ void PluginRuntime::sync()
     std::vector<application::PluginNode> nodes;
     std::map<std::string, std::string> unavailable;
     application::PluginContent content;
+    std::vector<PluginTheme> pluginThemes;
     if (m_installer) {
         std::set<std::string> installedIds;
         const auto registry = m_installer->registry();
@@ -397,8 +399,10 @@ void PluginRuntime::sync()
                 installed.push_back({id, manifest->name, runs, manifest->panels,
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
-                if (pluginContentShows(entry, *manifest))
+                const bool shows = pluginContentShows(entry, *manifest);
+                if (shows)
                     addPluginContent(content, id, *manifest, root);
+                std::ranges::move(pluginThemesOf(id, *manifest, root, shows), std::back_inserter(pluginThemes));
                 if (!manifest->nodes.empty()) {
                     std::expected<std::vector<application::PluginNode>, std::string> own = std::unexpected(std::string());
                     if (pluginNodesRun(entry, *manifest))
@@ -455,6 +459,10 @@ void PluginRuntime::sync()
     m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
     application::setPluginContent(std::move(content));
+    for (const QString &problem : syncPluginThemes(pluginThemes))
+        if (m_wiring.log)
+            m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "A theme can’t be used: %1").arg(problem),
+                              ui::LogController::Error);
     m_ui->setPlugins(std::move(installed));
     relist();
     emit mcpServersChanged();
