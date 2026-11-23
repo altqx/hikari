@@ -383,7 +383,6 @@ void PluginRuntime::sync()
                         m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Its nodes can’t run: %1").arg(qs(own.error())),
                                           ui::LogController::Error, qs(manifest->name));
                 }
-                m_installOrder[id] = entry.installed;
                 if (runs) {
                     order.emplace_back(entry.installed, id);
                     wanted.emplace(id, std::move(*manifest));
@@ -1021,17 +1020,17 @@ QVariantList PluginRuntime::statusItems() const
 
 QVariantList PluginRuntime::keybindings() const
 {
-    auto order = byName();
-    std::ranges::stable_sort(order, {}, [this](const Running *p) {
-        const auto it = m_installOrder.find(p->id);
-        return it == m_installOrder.end() ? 0 : it->second;
-    });
     QVariantList out;
-    for (const Running *plugin : order)
+    for (const std::string &id : m_installOrder) {
+        const auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            continue;
+        const Running *plugin = it->second.get();
         for (const plugins::Keybinding &binding : plugin->manifest.keybindings)
             out << QVariantMap{{QStringLiteral("id"), qs(std::string(kCommandPrefix) + plugin->id + "." + binding.command)},
                                {QStringLiteral("keys"), qs(binding.key)},
                                {QStringLiteral("pluginName"), qs(plugin->manifest.name)}};
+    }
     return out;
 }
 
