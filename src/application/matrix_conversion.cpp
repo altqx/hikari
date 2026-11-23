@@ -93,6 +93,11 @@ bool convertTags(std::u8string &text, const MatrixConversion &conversion)
 
 }
 
+bool namesConvertibleMatrix(std::string_view name)
+{
+    return header(name).has_value();
+}
+
 std::optional<MatrixConversion> MatrixConversion::between(std::string_view from, std::string_view to)
 {
     const auto source = header(from), target = header(to);

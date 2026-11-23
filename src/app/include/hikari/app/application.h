@@ -565,11 +565,16 @@ public:
     // The current tab's loaded keyframes file; empty when none.
     QString keyframesFile() const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
-    // video size is the subtitles'); empty for a Document that is not ASS.
+    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo, matrix, videoMatrix, matrices} (without a
+    // video the video size is the subtitles'); matrix is "" unless the subtitles name one that converts, and
+    // videoMatrix "" unless the video's does. Empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
+    // [left, right, top, bottom]: application::fittingEdges.
+    Q_INVOKABLE QVariantList resampleEdges(int subsWidth, int subsHeight, int width, int height, bool crop) const;
+    // `edges` as resampleEdges gives them; `matrix` converts the colours to it ("" keeps the matrix).
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch,
-                              bool adjustRotations = true);
+                              bool adjustRotations = true, const QVariantList &edges = {},
+                              const QString &matrix = {});
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
     // {data (the clipboard's Power-Pin data when it fits the selection), frames, firstFrame, relativeFrame,
@@ -1293,7 +1298,7 @@ private:
     void refreshVideo();
     void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
-                          bool adjustRotations);
+                          bool adjustRotations, application::Edges edges = {}, const std::string &matrix = {});
     application::visual::perspective::TextMeasure perspectiveMeasure() const;
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);

@@ -633,7 +633,7 @@ Other colours are refused, so the icons follow the theme and high contrast. A ro
 | `graphs` | `{id, title, path}`, a graph `.json` in the [graph format](node-effects.md#the-graph-format) | The node-effect graph library, in a group per plugin. |
 | `snippets` | `{id, title, insert, prefix, description}`. `insert` is ASS text with `$1` to `$9`, `${1:default}` and `$0` tab stops. | The line editor's tag completion, after the built-in tags, when the typed text starts `prefix`, such as `\fad`. Tab moves between stops. |
 | `dictionaries` | `{language, title, aff, dic}`, a Hunspell pair such as `en_US` | The spell checker's languages, after the user's and the bundled ones. A plugin dictionary never replaces a language the user already has. |
-| `layouts` | `{id, title, path}`, a `.json` holding one arrangement envelope as in [docking](docking.md) | Manage layouts, in a group per plugin. Applying it works like applying a saved layout. |
+| `layouts` | `{id, title, path}`, a `.json` holding one arrangement envelope as in [docking](docking.md) | View › Layout, the layout switcher and Manage layouts, as `<title> (<plugin>)`, after the user's own layouts and in a group per plugin. Applying it works like applying a saved layout, and Reset this layout returns to it. A saved layout of the same name wins. Save layout as… makes an editable copy. |
 
 ### Menus, status items and shortcuts
 
@@ -851,19 +851,21 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
   | Method | Params | Answer |
   | --- | --- | --- |
   | `initialize` | `{protocol: 1, api: 1, plugin: {id, version}, locale, settings}` | `{}` once it is ready. A program that doesn't answer in 30 seconds didn't start. |
-  | `command` | `{command, args, via}` | What the command gives back, or `null`. `via` is `menu`, `key`, `palette`, `status`, `api` or `ai`. |
+  | `command` | `{command, args, context}` | `null`, or what the command gives back. `args` and `context` are a Lua handler's: `args` is `{}` from a menu, key or status item, and `context.via` says what ran it. |
   | `event` | `{name, data}` | `null`, for each event it subscribed to. |
   | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
 | `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
   | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
-  | `export`, `import` | As for [Lua formats](#formats) | The bytes, or the Lines. |
-  | `shutdown` | `{}` | `null`, after which HikariSub sends the notification `exit` and closes stdin. It ends the program 5 seconds later. |
+  | `export` | `{format, document, options}`, as a [Lua exporter](#formats) gets them | `{data, encoding}`: the file as text, or as base64 with `encoding: "base64"`. |
+  | `import` | `{format, data, name}`, with the file's bytes in base64 | `{lines, styles, info}`, as a Lua importer returns. |
+  | `shutdown` | `{}` | `null`. HikariSub then sends the notification `exit` and closes stdin, and ends the program 5 seconds later. It sends these when the plugin is turned off, updated or removed; Force stop ends the program at once. |
 
 - **The program calls HikariSub:**
   - **Operations.** Every [Hikari API](api.md) operation is a method of its own name with its own params, such as `{"jsonrpc": "2.0", "id": 7, "method": "lines.list", "params": {}}`. So are the plugin services: `panels.*`, `dialogs.*`, `quick_pick.*`, `input_box.*`, `files.*`, `net.fetch`, `job.begin`, `job.progress` and `job.cancelled`.
-  - **What Lua's members do.** `hikari/notify` `{text, level}`, `hikari/settings.get` `{id}`, `hikari/settings.set` `{id, value}`, `hikari/subscribe` `{events}`, `hikari/unsubscribe` `{events}`, `hikari/edit.begin` `{document, name}` and `hikari/edit.end` `{}`. The last two take and give back the app-wide edit turn that `hikari.document.edit` holds. Every step the program commits between them is one undo step, "<plugin name>: <name>", as `document.group_begin` makes. The turn also ends when the request from HikariSub it was taken in is answered.
+  - **What Lua's members do.** `hikari/notify` `{text, level}`, `hikari/settings.get` `{id}`, `hikari/settings.set` `{id, value}`, `hikari/subscribe` `{events}`, `hikari/unsubscribe` `{events}`, `hikari/edit.begin` `{name}` and `hikari/edit.end` `{}`. The last two take and give back the app-wide edit turn that `hikari.document.edit` holds. Every step the program commits between them is one undo step, "<plugin name>: <name>", as `document.group_begin` makes. The turn also ends when the request from HikariSub it was taken in is answered.
 - **Errors.** A Hikari API error comes back as `{"code": -32000, "message", "data": {"code": "not_granted", "data": {…}}}`. An unknown method is `-32601`, and parameters that break the schema are `-32602` with `data.pointer`.
-- **Other output.** stderr goes to the Log panel.
+- **Other output.** stderr goes to the Log panel, at most 20 lines a minute. Anything on stdout that isn't a JSON-RPC message stops the program, as a crash does, and its next command starts it again.
+- **Its sandbox.** The `main` program runs as any [program](#programs) does, with the same profile, folders and network. A program plugin whose program is still downloading starts once the download is checked.
 - **Types.** #1231's TypeScript types cover the protocol, and a sample program plugin in TypeScript (built into one file with `bun build --compile`) proves it.
 
 ### Language features and problems

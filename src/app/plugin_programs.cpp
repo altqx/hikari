@@ -220,6 +220,14 @@ std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launc
         ProgramProcess::Options{file, arguments, environment, plugin->data, std::move(profile)});
 }
 
+std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::prepare(const std::string &pluginId,
+                                                                                 const std::string &programId) const
+{
+    api::ProgramCall call;
+    call.program = programId;
+    return launch(pluginId, call);
+}
+
 void PluginPrograms::run(const api::Caller &caller, api::ProgramCall call, api::Reply reply)
 {
     const std::string pluginId = caller.id.substr(std::string_view("plugin:").size());

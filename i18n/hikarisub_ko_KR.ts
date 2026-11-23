@@ -3025,6 +3025,50 @@ Output device: %2</source>
         <translation>자막을 영상 해상도에 맞게 변경하시겠습니까? 나중에 자막 › 자막 해상도 변경에서도 할 수 있습니다.</translation>
     </message>
     <message>
+        <source>Text keeps its proportions. Positions follow the new picture.</source>
+        <translation>텍스트 비율은 유지됩니다. 위치는 새 화면을 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Text stretches with the picture.</source>
+        <translation>텍스트가 화면과 함께 늘어납니다.</translation>
+    </message>
+    <message>
+        <source>The video adds bars around the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>영상이 자막을 만든 원래 화면 둘레에 여백 띠를 더합니다. 표지 자막은 가리키는 대상 위에 남습니다.</translation>
+    </message>
+    <message>
+        <source>The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>영상이 자막을 만든 원래 화면의 가장자리를 잘라냅니다. 표지 자막은 가리키는 대상 위에 남습니다.</translation>
+    </message>
+    <message>
+        <source>Custom edges. Text keeps its proportions.</source>
+        <translation>사용자 지정 가장자리. 텍스트 비율은 유지됩니다.</translation>
+    </message>
+    <message>
+        <source>Left %1</source>
+        <translation>왼쪽 %1</translation>
+    </message>
+    <message>
+        <source>Right %1</source>
+        <translation>오른쪽 %1</translation>
+    </message>
+    <message>
+        <source>Top %1</source>
+        <translation>위 %1</translation>
+    </message>
+    <message>
+        <source>Bottom %1</source>
+        <translation>아래 %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>%1 (video)</source>
+        <translation>%1 (영상)</translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
     </message>
@@ -3081,8 +3125,76 @@ Output device: %2</source>
         <translation>유지</translation>
     </message>
     <message>
+        <source>Letterbox</source>
+        <translation>레터박스</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation>자르기</translation>
+    </message>
+    <message>
         <source>The aspect ratio changes from %1 to %2.</source>
         <translation>가로 세로 비율이 %1에서 %2(으)로 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Edges</source>
+        <translation>가장자리</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>왼쪽</translation>
+    </message>
+    <message>
+        <source>Left edge</source>
+        <translation>왼쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>오른쪽</translation>
+    </message>
+    <message>
+        <source>Right edge</source>
+        <translation>오른쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>위</translation>
+    </message>
+    <message>
+        <source>Top edge</source>
+        <translation>위쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>아래</translation>
+    </message>
+    <message>
+        <source>Bottom edge</source>
+        <translation>아래쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Same on both sides</source>
+        <translation>양쪽을 같게</translation>
+    </message>
+    <message>
+        <source>Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.</source>
+        <translation>배율을 조정하기 전에 자막 화면의 각 가장자리에 더하거나(+) 잘라낼(−) 픽셀입니다.</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix</source>
+        <translation>YCbCr 매트릭스</translation>
+    </message>
+    <message>
+        <source>Colours are converted so that they look the same under the new matrix.</source>
+        <translation>새 매트릭스에서도 같아 보이도록 색상을 변환합니다.</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix to convert from.</source>
+        <translation>자막에 변환할 YCbCr 매트릭스가 없습니다.</translation>
     </message>
     <message>
         <source>Adjust 3D rotations</source>
@@ -18146,6 +18258,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>it couldn’t be kept.</source>
         <translation>저장할 수 없습니다.</translation>
     </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>이 플러그인은 프로그램 %1(이)며, 이 컴퓨터에서는 사용할 수 없습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -28897,6 +29013,15 @@ do not work on comments</source>
         <translation>레이아웃은 %1에 보관됩니다.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>파일을 읽을 수 없음</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>%1에 저장된 패널 레이아웃을 사용하지 않았습니다(이유: %2).</translation>
     </message>
@@ -29075,6 +29200,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>사용할 수 없음: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>플러그인과 함께 제공되므로 여기에서 변경할 수 없습니다. 다른 이름으로 레이아웃 저장…을 사용하면 사본이 따로 보관됩니다.</translation>
     </message>
     <message>
         <source>Rename</source>

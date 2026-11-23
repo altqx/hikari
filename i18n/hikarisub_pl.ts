@@ -3073,6 +3073,50 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Zmień rozdzielczość napisów.</translation>
     </message>
     <message>
+        <source>Text keeps its proportions. Positions follow the new picture.</source>
+        <translation>Tekst zachowuje proporcje. Pozycje podążają za nowym obrazem.</translation>
+    </message>
+    <message>
+        <source>Text stretches with the picture.</source>
+        <translation>Tekst rozciąga się razem z obrazem.</translation>
+    </message>
+    <message>
+        <source>The video adds bars around the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>Wideo dodaje pasy wokół obrazu, do którego powstały napisy. Napisy ekranowe zostają na tym, co oznaczają.</translation>
+    </message>
+    <message>
+        <source>The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>Wideo przycina krawędzie obrazu, do którego powstały napisy. Napisy ekranowe zostają na tym, co oznaczają.</translation>
+    </message>
+    <message>
+        <source>Custom edges. Text keeps its proportions.</source>
+        <translation>Własne krawędzie. Tekst zachowuje proporcje.</translation>
+    </message>
+    <message>
+        <source>Left %1</source>
+        <translation>Lewa %1</translation>
+    </message>
+    <message>
+        <source>Right %1</source>
+        <translation>Prawa %1</translation>
+    </message>
+    <message>
+        <source>Top %1</source>
+        <translation>Górna %1</translation>
+    </message>
+    <message>
+        <source>Bottom %1</source>
+        <translation>Dolna %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>%1 (video)</source>
+        <translation>%1 (wideo)</translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Napisy</translation>
     </message>
@@ -3129,8 +3173,76 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zachowaj</translation>
     </message>
     <message>
+        <source>Letterbox</source>
+        <translation>Pasy</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation>Przytnij</translation>
+    </message>
+    <message>
         <source>The aspect ratio changes from %1 to %2.</source>
         <translation>Proporcje obrazu zmieniają się z %1 na %2.</translation>
+    </message>
+    <message>
+        <source>Edges</source>
+        <translation>Krawędzie</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Lewa</translation>
+    </message>
+    <message>
+        <source>Left edge</source>
+        <translation>Lewa krawędź</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Prawa</translation>
+    </message>
+    <message>
+        <source>Right edge</source>
+        <translation>Prawa krawędź</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>Górna</translation>
+    </message>
+    <message>
+        <source>Top edge</source>
+        <translation>Górna krawędź</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>Dolna</translation>
+    </message>
+    <message>
+        <source>Bottom edge</source>
+        <translation>Dolna krawędź</translation>
+    </message>
+    <message>
+        <source>Same on both sides</source>
+        <translation>Tak samo po obu stronach</translation>
+    </message>
+    <message>
+        <source>Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.</source>
+        <translation>Dodawane do (+) lub odcinane od (−) każdej krawędzi obrazu napisów przed skalowaniem.</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix</source>
+        <translation>Macierz YCbCr</translation>
+    </message>
+    <message>
+        <source>Colours are converted so that they look the same under the new matrix.</source>
+        <translation>Kolory są konwertowane tak, aby wyglądały tak samo w nowej macierzy.</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix to convert from.</source>
+        <translation>Napisy nie mają macierzy YCbCr, z której można konwertować.</translation>
     </message>
     <message>
         <source>Adjust 3D rotations</source>
@@ -18414,6 +18526,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>it couldn’t be kept.</source>
         <translation>nie można go zapisać.</translation>
     </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>Ta wtyczka to program %1, który jest niedostępny na tym komputerze.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -29383,6 +29499,15 @@ nie działają na komentarzach</translation>
         <translation>Układ zachowano w %1.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>nie można odczytać pliku</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>Układ paneli zapisany w %1 nie został użyty, ponieważ %2.</translation>
     </message>
@@ -29561,6 +29686,10 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cannot be used: %1</source>
         <translation>Nie można użyć: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>Pochodzi z wtyczki, więc nie można go tu zmienić. Zapisz układ jako… tworzy Twoją własną kopię.</translation>
     </message>
     <message>
         <source>Rename</source>

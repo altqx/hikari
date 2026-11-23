@@ -107,10 +107,10 @@ void PluginProcess::dropHelper(bool kill)
     m_timers.clear();
     if (!m_host)
         return;
-    HelperHost *host = m_host.release();
+    PluginLink *host = m_host.release();
     disconnect(host, nullptr, this, nullptr);
     if (kill)
-        host->stop();
+        host->stop(true);
     m_lastDiagnostics = host->diagnostics();
     host->deleteLater();
 }
@@ -125,12 +125,6 @@ void PluginProcess::startHelper()
 {
     m_state = State::Starting;
     m_handled.clear();
-    m_host = std::make_unique<HelperHost>(m_helperPath, QStringList(), plugin::kProtocolVersion);
-    HelperHost *host = m_host.get();
-    // Windows grants a Launcher's access entries when it is made, and an update replaces the package folder.
-    m_launcher = m_sandbox ? std::make_unique<sandbox::Launcher>(m_sandbox) : nullptr;
-    if (m_launcher)
-        host->setPrepare([launcher = m_launcher.get()](QProcess &process) { launcher->prepare(process); });
     auto loadFailure = [this](const QString &message) {
         m_state = State::LoadFailed;
         m_loadError = message;
@@ -138,17 +132,34 @@ void PluginProcess::startHelper()
         dropHelper(false);
         emit loadFailed(message);
     };
-    connect(host, &HelperHost::ready, this, [this] {
+    if (m_linkFactory) {
+        auto link = m_linkFactory();
+        if (!link) {
+            loadFailure(link.error());
+            return;
+        }
+        m_host = std::move(*link);
+    } else {
+        auto helper = std::make_unique<HelperHost>(m_helperPath, QStringList(), plugin::kProtocolVersion);
+        // Windows grants a Launcher's access entries when it is made, and an update replaces the package folder.
+        m_launcher = m_sandbox ? std::make_unique<sandbox::Launcher>(m_sandbox) : nullptr;
+        if (m_launcher)
+            helper->setPrepare([launcher = m_launcher.get()](QProcess &process) { launcher->prepare(process); });
+        m_host = std::make_unique<HelperPluginLink>(std::move(helper));
+    }
+    PluginLink *host = m_host.get();
+    connect(host, &PluginLink::started, this, [this] {
         m_queue.push_front(Unit{Unit::Kind::Load, {}, {}, {}, {}});
         next();
     });
-    connect(host, &HelperHost::refused, this,
-            [loadFailure] { loadFailure(QStringLiteral("hikari-plugin-helper speaks another protocol version")); });
-    connect(host, &HelperHost::lost, this, [this, host, loadFailure] {
+    connect(host, &PluginLink::refused, this, [loadFailure](const QString &message) { loadFailure(message); });
+    connect(host, &PluginLink::outsideService, this,
+            [this](std::uint64_t call, const std::vector<std::byte> &payload) { serve(0, call, payload); });
+    connect(host, &PluginLink::lost, this, [this, host, loadFailure] {
         if (m_host.get() != host)
             return;
         if (m_state == State::Starting) {
-            loadFailure(QStringLiteral("hikari-plugin-helper didn't start"));
+            loadFailure(host->name() + QStringLiteral(" didn't start"));
             return;
         }
         m_state = State::Stopped;
@@ -222,9 +233,24 @@ void PluginProcess::forceStop()
         stopHelper(StopReason::ForceStopped);
 }
 
+void PluginProcess::end()
+{
+    m_queue.clear();
+    m_running.reset();
+    m_watchdog.stop();
+    m_timers.clear();
+    if (!m_host)
+        return;
+    PluginLink *host = m_host.release();
+    disconnect(host, nullptr, this, nullptr);
+    host->stop(false);
+    host->deleteLater();
+    m_state = State::Stopped;
+}
+
 void PluginProcess::next()
 {
-    if (m_running || !m_host || m_host->state() != HelperHost::State::Ready || m_queue.empty())
+    if (m_running || !m_host || !m_host->ready() || m_queue.empty())
         return;
     if (m_state != State::Ready && m_queue.front().kind != Unit::Kind::Load)
         return;
@@ -255,7 +281,7 @@ void PluginProcess::next()
         w.str(unit.name).str(unit.json);
         payload = w.take();
     }
-    HelperHost *host = m_host.get();
+    PluginLink *host = m_host.get();
     auto handler = [this, host](std::expected<helper::Event, helper::HostError> event) {
         if (m_host.get() == host)
             onEvent(std::move(event));
@@ -298,7 +324,7 @@ void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> even
         dropHelper(false);
         if (loading) {
             m_state = State::LoadFailed;
-            m_loadError = QStringLiteral("hikari-plugin-helper stopped while the plugin loaded");
+            m_loadError = (m_host ? m_host->name() : QStringLiteral("The plugin")) + QStringLiteral(" stopped while the plugin loaded");
             emit loadFailed(m_loadError);
         } else {
             m_state = State::Stopped;
@@ -314,7 +340,12 @@ void PluginProcess::onEvent(std::expected<helper::Event, helper::HostError> even
 
 void PluginProcess::onService(const helper::Event &event)
 {
-    Reader in(event.payload);
+    serve(m_request, event.call, event.payload);
+}
+
+void PluginProcess::serve(std::uint64_t requestId, std::uint64_t call, const std::vector<std::byte> &payload)
+{
+    Reader in(payload);
     ServiceRequest request;
     request.service = static_cast<plugin::Service>(in.i32());
     switch (request.service) {
@@ -342,27 +373,26 @@ void PluginProcess::onService(const helper::Event &event)
     case plugin::Service::Unlock:
         break;
     default:
-        m_host->answer(m_request, event.call, Outcome::Unsupported);
+        m_host->answer(requestId, call, Outcome::Unsupported);
         return;
     }
     if (!in.ok() || !in.atEnd()) {
-        m_host->answer(m_request, event.call, Outcome::InvalidInput);
+        m_host->answer(requestId, call, Outcome::InvalidInput);
         return;
     }
     if (request.service == plugin::Service::Job || request.service == plugin::Service::Timer) {
         Writer w;
         w.str(request.service == plugin::Service::Job ? job(request.name, request.json) : timer(request.name, request.json));
-        m_host->answer(m_request, event.call, Outcome::Ok, w.take());
+        m_host->answer(requestId, call, Outcome::Ok, w.take());
         return;
     }
-    if (m_openServices++ == 0)
+    const bool inUnit = requestId != 0;
+    if (inUnit && m_openServices++ == 0)
         pauseWatchdog();
-    HelperHost *host = m_host.get();
-    const std::uint64_t requestId = m_request;
-    const std::uint64_t call = event.call;
+    PluginLink *host = m_host.get();
     const bool carriesText = request.service != plugin::Service::Notify && request.service != plugin::Service::Unlock;
-    ServiceReply reply = [this, host, requestId, call, carriesText](std::string text) {
-        if (m_host.get() != host || m_request != requestId)
+    ServiceReply reply = [this, host, requestId, call, carriesText, inUnit](std::string text) {
+        if (m_host.get() != host || (inUnit && m_request != requestId))
             return;
         std::vector<std::byte> payload;
         if (carriesText) {
@@ -371,7 +401,7 @@ void PluginProcess::onService(const helper::Event &event)
             payload = w.take();
         }
         m_host->answer(requestId, call, Outcome::Ok, std::move(payload));
-        if (--m_openServices == 0 && m_running)
+        if (inUnit && --m_openServices == 0 && m_running)
             resumeWatchdog();
     };
     if (m_services)

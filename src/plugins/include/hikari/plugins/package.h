@@ -22,7 +22,8 @@ struct PackageFile {
 };
 
 struct PackageProblem {
-    enum class Kind { TooLarge, BadPath, NoManifest, Manifest, MissingMain, Media, MissingPanel, QmlImport, MissingContent, BadContent, MissingProgram };
+    enum class Kind { TooLarge, BadPath, NoManifest, Manifest, MissingMain, Media, MissingPanel, QmlImport, MissingContent, BadContent, MissingProgram,
+                      MainProgramUnavailable };
     Kind kind = Kind::BadPath;
     std::string path;
     ManifestProblem manifest;
@@ -45,6 +46,7 @@ struct ContentFileChecks {
     ContentFileCheck dictionaryAff;
     ContentFileCheck dictionaryDic;
     ContentFileCheck graph;
+    ContentFileCheck layout;
 };
 
 // Refuses more than kMaxPackageFiles files or kMaxPackageBytes unpacked (kMaxPlatformPackageBytes for a package built

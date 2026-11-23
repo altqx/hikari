@@ -3049,6 +3049,50 @@ Output device: %2</source>
         <translation>வசன வரிகளை வீடியோவுக்கு ஏற்ப மறுமாதிரியாக்கவா? வசன வரிகள் › வசன வரிகளை மறுமாதிரியாக்கு மூலம் பின்னரும் இதைச் செய்யலாம்.</translation>
     </message>
     <message>
+        <source>Text keeps its proportions. Positions follow the new picture.</source>
+        <translation>உரை தன் விகிதங்களைத் தக்கவைக்கும். நிலைகள் புதிய படத்தைப் பின்பற்றும்.</translation>
+    </message>
+    <message>
+        <source>Text stretches with the picture.</source>
+        <translation>உரை படத்துடன் நீளும்.</translation>
+    </message>
+    <message>
+        <source>The video adds bars around the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>வசன வரிகள் உருவாக்கப்பட்ட படத்தைச் சுற்றி வீடியோ பட்டைகளைச் சேர்க்கிறது. குறிப்பு வரிகள் அவை குறிப்பவற்றின் மேலேயே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>வசன வரிகள் உருவாக்கப்பட்ட படத்தின் ஓரங்களை வீடியோ வெட்டுகிறது. குறிப்பு வரிகள் அவை குறிப்பவற்றின் மேலேயே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Custom edges. Text keeps its proportions.</source>
+        <translation>தனிப்பயன் ஓரங்கள். உரை தன் விகிதங்களைத் தக்கவைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Left %1</source>
+        <translation>இடது %1</translation>
+    </message>
+    <message>
+        <source>Right %1</source>
+        <translation>வலது %1</translation>
+    </message>
+    <message>
+        <source>Top %1</source>
+        <translation>மேல் %1</translation>
+    </message>
+    <message>
+        <source>Bottom %1</source>
+        <translation>கீழ் %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 ஐ வை</translation>
+    </message>
+    <message>
+        <source>%1 (video)</source>
+        <translation>%1 (வீடியோ)</translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>வசன வரிகள்</translation>
     </message>
@@ -3105,8 +3149,76 @@ Output device: %2</source>
         <translation>அப்படியே வை</translation>
     </message>
     <message>
+        <source>Letterbox</source>
+        <translation>பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation>வெட்டு</translation>
+    </message>
+    <message>
         <source>The aspect ratio changes from %1 to %2.</source>
         <translation>தோற்ற விகிதம் %1 இலிருந்து %2 ஆக மாறும்.</translation>
+    </message>
+    <message>
+        <source>Edges</source>
+        <translation>ஓரங்கள்</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>இடது</translation>
+    </message>
+    <message>
+        <source>Left edge</source>
+        <translation>இடது ஓரம்</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>வலது</translation>
+    </message>
+    <message>
+        <source>Right edge</source>
+        <translation>வலது ஓரம்</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>மேல்</translation>
+    </message>
+    <message>
+        <source>Top edge</source>
+        <translation>மேல் ஓரம்</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>கீழ்</translation>
+    </message>
+    <message>
+        <source>Bottom edge</source>
+        <translation>கீழ் ஓரம்</translation>
+    </message>
+    <message>
+        <source>Same on both sides</source>
+        <translation>இரு பக்கமும் ஒன்றாக</translation>
+    </message>
+    <message>
+        <source>Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.</source>
+        <translation>அளவிடுவதற்கு முன் வசன வரிகளின் படத்தின் ஒவ்வொரு ஓரத்திலும் சேர்க்கப்படும் (+) அல்லது வெட்டப்படும் (−) அளவு.</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix</source>
+        <translation>YCbCr மேட்ரிக்ஸ்</translation>
+    </message>
+    <message>
+        <source>Colours are converted so that they look the same under the new matrix.</source>
+        <translation>புதிய மேட்ரிக்ஸிலும் ஒரே மாதிரி தோன்ற வண்ணங்கள் மாற்றப்படும்.</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix to convert from.</source>
+        <translation>வசன வரிகளில் மாற்றுவதற்கான YCbCr மேட்ரிக்ஸ் இல்லை.</translation>
     </message>
     <message>
         <source>Adjust 3D rotations</source>
@@ -18280,6 +18392,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>it couldn’t be kept.</source>
         <translation>அதைச் சேமிக்க முடியவில்லை.</translation>
     </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>இந்தச் செருகுநிரல் %1 என்ற நிரல்; அது இந்தக் கணினிக்குக் கிடைக்கவில்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -29140,6 +29256,15 @@ do not work on comments</source>
         <translation>தளவமைப்பு %1 இல் வைக்கப்பட்டுள்ளது.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>கோப்பைப் படிக்க முடியவில்லை</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>%1 இல் சேமிக்கப்பட்ட பலகத் தளவமைப்பு பயன்படுத்தப்படவில்லை, ஏனெனில் %2.</translation>
     </message>
@@ -29318,6 +29443,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>பயன்படுத்த முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>இது செருகுநிரலுடன் வருகிறது, எனவே இதை இங்கே மாற்ற முடியாது. “தளவமைப்பைப் புதிய பெயரில் சேமி…” உங்கள் சொந்த நகலை வைத்திருக்கும்.</translation>
     </message>
     <message>
         <source>Rename</source>

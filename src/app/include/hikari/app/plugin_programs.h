@@ -45,6 +45,11 @@ public:
     api::Result send(const api::Caller &caller, const std::string &process, const std::string &bytes, bool close) override;
     api::Result stop(const api::Caller &caller, const std::string &process) override;
     void end(const std::string &pluginId);
+    // A program plugin's main program, ready to start in its sandbox.
+    std::expected<std::unique_ptr<backends::ProgramProcess>, api::Error> prepare(const std::string &pluginId,
+                                                                                 const std::string &programId) const;
+    // Its stderr line in the Log panel, at most 20 lines a minute for each plugin.
+    void logLine(const std::string &pluginId, const QString &line);
     std::size_t started(const std::string &pluginId) const;
 
 private:
@@ -54,7 +59,6 @@ private:
     Running *find(const api::Caller &caller, const std::string &process);
     void onOutput(std::uint64_t key, bool error, const QByteArray &bytes);
     void onFinished(std::uint64_t key, int exitCode, bool killed);
-    void logLine(const std::string &pluginId, const QString &line);
 
     Wiring m_wiring;
     std::map<std::uint64_t, std::unique_ptr<Running>> m_running;
