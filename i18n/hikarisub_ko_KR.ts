@@ -8555,7 +8555,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Full screen typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면 식자</translation>
     </message>
     <message>
         <source>Global</source>
@@ -25253,11 +25253,11 @@ Styles deleted:
     </message>
     <message>
         <source>Full screen typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면 식자</translation>
     </message>
     <message>
         <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
-        <translation type="unfinished"></translation>
+        <translation>시각 도구와 활성 줄, 그 도구를 옆에 두고 영상을 전체 화면으로 엽니다</translation>
     </message>
     <message>
         <source>Video</source>
@@ -25553,26 +25553,26 @@ Styles deleted:
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>식자</translation>
     </message>
     <message>
         <source>Video status</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 상태</translation>
     </message>
     <message>
         <source>Frame %1</source>
         <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>프레임 %1</translation>
     </message>
     <message>
         <source>Line %1 of %2</source>
         <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>줄 %1/%2</translation>
     </message>
     <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1번 줄 텍스트</translation>
     </message>
     <message>
         <source>Typeset</source>
@@ -26303,29 +26303,29 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>On the frame</source>
-        <translation type="unfinished"></translation>
+        <translation>프레임 위</translation>
     </message>
     <message>
         <source>%1 · %2</source>
         <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Apply to</source>
-        <translation type="unfinished"></translation>
+        <translation>적용 대상</translation>
     </message>
     <message>
         <source>This line</source>
-        <translation type="unfinished"></translation>
+        <translation>이 줄</translation>
     </message>
     <message>
         <source>Picked lines (%1)</source>
         <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>지정한 줄 (%1)</translation>
     </message>
     <message>
         <source>Picks the selected lines: the tools edit them, not the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 줄을 지정합니다: 도구가 활성 줄 대신 이 줄들을 편집합니다</translation>
     </message>
     <message>
         <source>More options</source>
@@ -26894,7 +26894,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Visual tools</source>
-        <translation type="unfinished"></translation>
+        <translation>시각 도구</translation>
     </message>
     <message>
         <source>More tools</source>
@@ -27012,42 +27012,42 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Pointer</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>포인터</translation>
     </message>
     <message>
         <source>Position</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>위치</translation>
     </message>
     <message>
         <source>Scale</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>크기 조정</translation>
     </message>
     <message>
         <source>Tilt X / Y</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>X / Y 회전</translation>
     </message>
     <message>
         <source>Rectangle clip</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>사각형 클립</translation>
     </message>
     <message>
         <source>Vector clip</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>벡터 클립</translation>
     </message>
     <message>
         <source>Shift positions</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>위치 일괄 이동</translation>
     </message>
     <message>
         <source>All tags</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>모든 태그</translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -27061,169 +27061,169 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
-        <translation type="unfinished"></translation>
+        <translation>화면을 가리키면 위치를 읽습니다. Ctrl+클릭하면 줄을 그곳에 놓습니다.</translation>
     </message>
     <message>
         <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
-        <translation type="unfinished"></translation>
+        <translation>끌어서 줄을 배치하십시오. Shift+끌기는 한 축으로 고정합니다. 오른쪽 클릭하면 포인터 위치에 놓습니다.</translation>
     </message>
     <message>
         <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
-        <translation type="unfinished"></translation>
+        <translation>시작점이나 끝점을 끄십시오. 오른쪽 끌기로 끝점을 정합니다. 줄은 두 점 사이를 이동합니다.</translation>
     </message>
     <message>
         <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
-        <translation type="unfinished"></translation>
+        <translation>끌어서 가로로, 오른쪽 끌기로 세로로 늘리십시오. Shift+끌기는 둘 다 조정합니다.</translation>
     </message>
     <message>
         <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>원점 주위로 끌어 텍스트를 회전하십시오. 원점을 끌면 원점이 이동합니다.</translation>
     </message>
     <message>
         <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>옆으로 끌면 Y축으로, 오른쪽 끌기로 위나 아래로 끌면 X축으로 회전합니다. 원점을 끌면 원점이 이동합니다.</translation>
     </message>
     <message>
         <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
-        <translation type="unfinished"></translation>
+        <translation>끌어서 상자를 만드십시오. 상자 안쪽만 보입니다. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
     </message>
     <message>
         <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
-        <translation type="unfinished"></translation>
+        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오. 안쪽만 보입니다.</translation>
     </message>
     <message>
         <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
-        <translation type="unfinished"></translation>
+        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오. 또는 도형을 고른 다음 끌어서 상자를 만드십시오.</translation>
     </message>
     <message>
         <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
-        <translation type="unfinished"></translation>
+        <translation>끌어서 지정한 줄의 위치, 클립, 원점을 함께 옮기십시오. Shift를 누르면 한 축으로 고정됩니다.</translation>
     </message>
     <message>
         <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
-        <translation type="unfinished"></translation>
+        <translation>태그를 고른 다음 화면에서 옆으로 끌어 값을 바꾸십시오. Shift를 누르면 조금씩 바뀝니다.</translation>
     </message>
     <message>
         <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>모서리를 끌어 텍스트를 면에 맞추십시오. 안쪽을 끌면 이동합니다.</translation>
     </message>
     <message>
         <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트를 가로질러 끌어 그라데이션 방향을 정하십시오. 양 끝을 끌어 조정하고, Enter로 적용합니다.</translation>
     </message>
     <message>
         <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
-        <translation type="unfinished"></translation>
+        <translation>클릭하여 경로 점을 추가하고, 점을 끌어 경로 모양을 만드십시오. 텍스트가 경로를 따르며, Enter로 적용합니다.</translation>
     </message>
     <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>사각형</translation>
     </message>
     <message>
         <source>circle</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>원</translation>
     </message>
     <message>
         <source>cross</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>십자</translation>
     </message>
     <message>
         <source>line</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>선</translation>
     </message>
     <message>
         <source>arrow</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>화살표</translation>
     </message>
     <message>
         <source>outline</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>외곽선</translation>
     </message>
     <message>
         <source>Start point</source>
-        <translation type="unfinished"></translation>
+        <translation>시작점</translation>
     </message>
     <message>
         <source>End point</source>
-        <translation type="unfinished"></translation>
+        <translation>끝점</translation>
     </message>
     <message>
         <source>Path</source>
-        <translation type="unfinished"></translation>
+        <translation>경로</translation>
     </message>
     <message>
         <source>Current position</source>
-        <translation type="unfinished"></translation>
+        <translation>현재 위치</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>너비</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>높이</translation>
     </message>
     <message>
         <source>Both</source>
-        <translation type="unfinished"></translation>
+        <translation>둘 다</translation>
     </message>
     <message>
         <source>Angle</source>
-        <translation type="unfinished"></translation>
+        <translation>각도</translation>
     </message>
     <message>
         <source>Tilt grid</source>
-        <translation type="unfinished"></translation>
+        <translation>회전 격자</translation>
     </message>
     <message>
         <source>Edges and corners</source>
-        <translation type="unfinished"></translation>
+        <translation>가장자리와 모서리</translation>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation>점</translation>
     </message>
     <message>
         <source>Curve handle</source>
-        <translation type="unfinished"></translation>
+        <translation>곡선 핸들</translation>
     </message>
     <message>
         <source>Position and move start</source>
-        <translation type="unfinished"></translation>
+        <translation>위치와 이동 시작점</translation>
     </message>
     <message>
         <source>Move end</source>
-        <translation type="unfinished"></translation>
+        <translation>이동 끝점</translation>
     </message>
     <message>
         <source>Clip and drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>클립과 도형</translation>
     </message>
     <message>
         <source>Changed line</source>
-        <translation type="unfinished"></translation>
+        <translation>바뀐 줄</translation>
     </message>
     <message>
         <source>Corners</source>
-        <translation type="unfinished"></translation>
+        <translation>모서리</translation>
     </message>
     <message>
         <source>Plane corners</source>
-        <translation type="unfinished"></translation>
+        <translation>평면 모서리</translation>
     </message>
     <message>
         <source>Start and end</source>
-        <translation type="unfinished"></translation>
+        <translation>시작과 끝</translation>
     </message>
     <message>
         <source>P1, P2 and P3</source>
-        <translation type="unfinished"></translation>
+        <translation>P1, P2, P3</translation>
     </message>
     <message>
         <source>\org mode</source>

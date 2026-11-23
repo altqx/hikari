@@ -8555,7 +8555,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Full screen typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Global</source>
@@ -25253,11 +25253,11 @@ Styles deleted:
     </message>
     <message>
         <source>Full screen typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
-        <translation type="unfinished"></translation>
+        <translation>เปิดวิดีโอแบบเต็มหน้าจอ โดยมีเครื่องมือภาพ บรรทัดปัจจุบัน และเครื่องมือของบรรทัดอยู่ด้านข้าง</translation>
     </message>
     <message>
         <source>Video</source>
@@ -25553,26 +25553,26 @@ Styles deleted:
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ต</translation>
     </message>
     <message>
         <source>Video status</source>
-        <translation type="unfinished"></translation>
+        <translation>สถานะวิดีโอ</translation>
     </message>
     <message>
         <source>Frame %1</source>
         <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>เฟรม %1</translation>
     </message>
     <message>
         <source>Line %1 of %2</source>
         <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัด %1 จาก %2</translation>
     </message>
     <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ข้อความบรรทัด %1</translation>
     </message>
     <message>
         <source>Typeset</source>
@@ -26303,29 +26303,29 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>On the frame</source>
-        <translation type="unfinished"></translation>
+        <translation>บนเฟรม</translation>
     </message>
     <message>
         <source>%1 · %2</source>
         <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Apply to</source>
-        <translation type="unfinished"></translation>
+        <translation>นำไปใช้กับ</translation>
     </message>
     <message>
         <source>This line</source>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัดนี้</translation>
     </message>
     <message>
         <source>Picked lines (%1)</source>
         <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัดที่ตรึงไว้ (%1)</translation>
     </message>
     <message>
         <source>Picks the selected lines: the tools edit them, not the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>ตรึงบรรทัดที่เลือก: เครื่องมือจะแก้ไขบรรทัดเหล่านั้น ไม่ใช่บรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>More options</source>
@@ -26894,7 +26894,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Visual tools</source>
-        <translation type="unfinished"></translation>
+        <translation>เครื่องมือภาพ</translation>
     </message>
     <message>
         <source>More tools</source>
@@ -27012,42 +27012,42 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Pointer</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ตัวบ่งชี้ตำแหน่ง</translation>
     </message>
     <message>
         <source>Position</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ตำแหน่ง</translation>
     </message>
     <message>
         <source>Scale</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ปรับขนาด</translation>
     </message>
     <message>
         <source>Tilt X / Y</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>หมุนตามแกน X / Y</translation>
     </message>
     <message>
         <source>Rectangle clip</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>คลิปสี่เหลี่ยม</translation>
     </message>
     <message>
         <source>Vector clip</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>คลิปเวกเตอร์</translation>
     </message>
     <message>
         <source>Shift positions</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>เลื่อนตำแหน่ง</translation>
     </message>
     <message>
         <source>All tags</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ไฮดรา</translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -27061,169 +27061,169 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
-        <translation type="unfinished"></translation>
+        <translation>ชี้ที่ภาพเพื่ออ่านตำแหน่ง Ctrl+คลิกเพื่อวางบรรทัดที่นั่น</translation>
     </message>
     <message>
         <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากเพื่อวางบรรทัด Shift+ลากเพื่อล็อกไว้ที่แกนเดียว คลิกขวาเพื่อวางบรรทัดที่ตัวชี้</translation>
     </message>
     <message>
         <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากจุดเริ่มต้นหรือจุดสิ้นสุด ลากด้วยปุ่มขวาเพื่อกำหนดจุดสิ้นสุด บรรทัดจะเคลื่อนที่ระหว่างสองจุดนี้</translation>
     </message>
     <message>
         <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากเพื่อยืดแนวนอน ลากด้วยปุ่มขวาเพื่อยืดแนวตั้ง Shift+ลากเพื่อปรับขนาดทั้งสองแนว</translation>
     </message>
     <message>
         <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากรอบจุดศูนย์กลางเพื่อหมุนข้อความ ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
     </message>
     <message>
         <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากไปด้านข้างเพื่อหมุนตามแกน Y ลากด้วยปุ่มขวาขึ้นหรือลงเพื่อหมุนตามแกน X ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
     </message>
     <message>
         <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากสร้างกรอบ จะแสดงเฉพาะส่วนที่อยู่ข้างใน ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
     </message>
     <message>
         <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
-        <translation type="unfinished"></translation>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง จะแสดงเฉพาะส่วนที่อยู่ข้างใน</translation>
     </message>
     <message>
         <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
-        <translation type="unfinished"></translation>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง หรือเลือกรูปร่างแล้วลากสร้างกรอบ</translation>
     </message>
     <message>
         <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากเพื่อย้ายตำแหน่ง คลิป และจุดศูนย์กลางของบรรทัดที่ตรึงไว้พร้อมกัน กด Shift เพื่อล็อกแกน</translation>
     </message>
     <message>
         <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
-        <translation type="unfinished"></translation>
+        <translation>เลือกแท็ก แล้วลากไปด้านข้างบนภาพเพื่อเปลี่ยนค่า กด Shift เพื่อปรับทีละน้อย</translation>
     </message>
     <message>
         <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากมุมเพื่อวางข้อความบนพื้นผิว ลากด้านในเพื่อย้าย</translation>
     </message>
     <message>
         <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
-        <translation type="unfinished"></translation>
+        <translation>ลากผ่านข้อความเพื่อกำหนดทิศทางการไล่ระดับ ลากปลายเพื่อปรับ กด Enter เพื่อนำไปใช้</translation>
     </message>
     <message>
         <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
-        <translation type="unfinished"></translation>
+        <translation>คลิกเพื่อเพิ่มจุดเส้นทาง ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง กด Enter เพื่อนำไปใช้</translation>
     </message>
     <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>สี่เหลี่ยมจัตุรัส</translation>
     </message>
     <message>
         <source>circle</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>วงกลม</translation>
     </message>
     <message>
         <source>cross</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>กากบาท</translation>
     </message>
     <message>
         <source>line</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>เส้น</translation>
     </message>
     <message>
         <source>arrow</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ลูกศร</translation>
     </message>
     <message>
         <source>outline</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>เส้นขอบ</translation>
     </message>
     <message>
         <source>Start point</source>
-        <translation type="unfinished"></translation>
+        <translation>จุดเริ่มต้น</translation>
     </message>
     <message>
         <source>End point</source>
-        <translation type="unfinished"></translation>
+        <translation>จุดสิ้นสุด</translation>
     </message>
     <message>
         <source>Path</source>
-        <translation type="unfinished"></translation>
+        <translation>เส้นทาง</translation>
     </message>
     <message>
         <source>Current position</source>
-        <translation type="unfinished"></translation>
+        <translation>ตำแหน่งปัจจุบัน</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>ความกว้าง</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>ความสูง</translation>
     </message>
     <message>
         <source>Both</source>
-        <translation type="unfinished"></translation>
+        <translation>ทั้งสอง</translation>
     </message>
     <message>
         <source>Angle</source>
-        <translation type="unfinished"></translation>
+        <translation>มุม</translation>
     </message>
     <message>
         <source>Tilt grid</source>
-        <translation type="unfinished"></translation>
+        <translation>กริดการเอียง</translation>
     </message>
     <message>
         <source>Edges and corners</source>
-        <translation type="unfinished"></translation>
+        <translation>ขอบและมุม</translation>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation>จุด</translation>
     </message>
     <message>
         <source>Curve handle</source>
-        <translation type="unfinished"></translation>
+        <translation>จุดควบคุมเส้นโค้ง</translation>
     </message>
     <message>
         <source>Position and move start</source>
-        <translation type="unfinished"></translation>
+        <translation>ตำแหน่งและจุดเริ่มการเคลื่อนตำแหน่ง</translation>
     </message>
     <message>
         <source>Move end</source>
-        <translation type="unfinished"></translation>
+        <translation>จุดสิ้นสุดการเคลื่อนตำแหน่ง</translation>
     </message>
     <message>
         <source>Clip and drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>คลิปและภาพวาด</translation>
     </message>
     <message>
         <source>Changed line</source>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัดที่เปลี่ยน</translation>
     </message>
     <message>
         <source>Corners</source>
-        <translation type="unfinished"></translation>
+        <translation>มุม</translation>
     </message>
     <message>
         <source>Plane corners</source>
-        <translation type="unfinished"></translation>
+        <translation>มุมระนาบ</translation>
     </message>
     <message>
         <source>Start and end</source>
-        <translation type="unfinished"></translation>
+        <translation>จุดเริ่มต้นและจุดสิ้นสุด</translation>
     </message>
     <message>
         <source>P1, P2 and P3</source>
-        <translation type="unfinished"></translation>
+        <translation>P1, P2 และ P3</translation>
     </message>
     <message>
         <source>\org mode</source>

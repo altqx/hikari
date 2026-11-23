@@ -8687,7 +8687,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Full screen typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting na pełnym ekranie</translation>
     </message>
     <message>
         <source>Global</source>
@@ -25697,11 +25697,11 @@ Usunięte style:
     </message>
     <message>
         <source>Full screen typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting na pełnym ekranie</translation>
     </message>
     <message>
         <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
-        <translation type="unfinished"></translation>
+        <translation>Otwiera wideo na pełnym ekranie z narzędziami wizualnymi, a obok aktywną linijkę i jej narzędzia</translation>
     </message>
     <message>
         <source>Video</source>
@@ -25997,26 +25997,26 @@ Usunięte style:
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>Video status</source>
-        <translation type="unfinished"></translation>
+        <translation>Stan wideo</translation>
     </message>
     <message>
         <source>Frame %1</source>
         <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Klatka %1</translation>
     </message>
     <message>
         <source>Line %1 of %2</source>
         <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Linijka %1 z %2</translation>
     </message>
     <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Tekst linijki %1</translation>
     </message>
     <message>
         <source>Typeset</source>
@@ -26759,29 +26759,29 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>On the frame</source>
-        <translation type="unfinished"></translation>
+        <translation>Na klatce</translation>
     </message>
     <message>
         <source>%1 · %2</source>
         <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Apply to</source>
-        <translation type="unfinished"></translation>
+        <translation>Zastosuj do</translation>
     </message>
     <message>
         <source>This line</source>
-        <translation type="unfinished"></translation>
+        <translation>Ta linijka</translation>
     </message>
     <message>
         <source>Picked lines (%1)</source>
         <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Wybrane linijki (%1)</translation>
     </message>
     <message>
         <source>Picks the selected lines: the tools edit them, not the active line</source>
-        <translation type="unfinished"></translation>
+        <translation>Używa zaznaczonych linijek: narzędzia edytują je, a nie aktywną linijkę</translation>
     </message>
     <message>
         <source>More options</source>
@@ -27362,7 +27362,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Visual tools</source>
-        <translation type="unfinished"></translation>
+        <translation>Narzędzia wizualne</translation>
     </message>
     <message>
         <source>More tools</source>
@@ -27480,42 +27480,42 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Pointer</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Wskaźnik</translation>
     </message>
     <message>
         <source>Position</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Pozycjonowanie</translation>
     </message>
     <message>
         <source>Scale</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Skalowanie</translation>
     </message>
     <message>
         <source>Tilt X / Y</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Obrót X / Y</translation>
     </message>
     <message>
         <source>Rectangle clip</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Wycinek prostokątny</translation>
     </message>
     <message>
         <source>Vector clip</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Wycinek wektorowy</translation>
     </message>
     <message>
         <source>Shift positions</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Przesuwanie pozycji</translation>
     </message>
     <message>
         <source>All tags</source>
         <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie tagi</translation>
     </message>
     <message>
         <source>Perspective</source>
@@ -27529,169 +27529,169 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wskaż obraz, aby odczytać pozycję. Ctrl+kliknięcie umieszcza tam linijkę.</translation>
     </message>
     <message>
         <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij, aby umieścić linijkę. Shift+przeciągnięcie blokuje jedną oś. Kliknięcie prawym przyciskiem umieszcza ją pod wskaźnikiem.</translation>
     </message>
     <message>
         <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij punkt początkowy lub końcowy; przeciąganie prawym przyciskiem ustawia koniec. Linijka przesuwa się między nimi.</translation>
     </message>
     <message>
         <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij, aby rozciągnąć w poziomie, prawym przyciskiem – w pionie. Shift+przeciągnięcie skaluje w obu osiach.</translation>
     </message>
     <message>
         <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągaj wokół środka obrotu, aby obrócić tekst. Przeciągnij środek obrotu, aby go przesunąć.</translation>
     </message>
     <message>
         <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągaj na boki, aby obrócić wokół osi Y, prawym przyciskiem w górę lub w dół – wokół osi X. Przeciągnij środek obrotu, aby go przesunąć.</translation>
     </message>
     <message>
         <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij, aby narysować prostokąt. Widać tylko to, co w środku. Przeciągaj krawędzie, aby zmienić rozmiar, a wnętrze, aby przesunąć.</translation>
     </message>
     <message>
         <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
-        <translation type="unfinished"></translation>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt. Widać tylko to, co w środku.</translation>
     </message>
     <message>
         <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
-        <translation type="unfinished"></translation>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt. Albo wybierz kształt i przeciągnij, aby narysować prostokąt.</translation>
     </message>
     <message>
         <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij, aby razem przesunąć pozycje, wycinki i środki obrotu wybranych linijek. Shift blokuje oś.</translation>
     </message>
     <message>
         <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz tag, a potem przeciągaj na boki po obrazie, aby go zmienić. Shift daje małe kroki.</translation>
     </message>
     <message>
         <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij narożniki, aby położyć tekst na powierzchni. Przeciągnij wnętrze, aby go przesunąć.</translation>
     </message>
     <message>
         <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeciągnij przez tekst, aby ustawić kierunek gradientu. Przeciągnij końce, aby go dopasować; Enter zatwierdza.</translation>
     </message>
     <message>
         <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
-        <translation type="unfinished"></translation>
+        <translation>Klikaj, aby dodać punkty ścieżki, i przeciągaj je, aby nadać ścieżce kształt. Tekst podąża za nią; Enter zatwierdza.</translation>
     </message>
     <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>kwadrat</translation>
     </message>
     <message>
         <source>circle</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>okrąg</translation>
     </message>
     <message>
         <source>cross</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>krzyżyk</translation>
     </message>
     <message>
         <source>line</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>linia</translation>
     </message>
     <message>
         <source>arrow</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>strzałka</translation>
     </message>
     <message>
         <source>outline</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>obrys</translation>
     </message>
     <message>
         <source>Start point</source>
-        <translation type="unfinished"></translation>
+        <translation>Punkt początkowy</translation>
     </message>
     <message>
         <source>End point</source>
-        <translation type="unfinished"></translation>
+        <translation>Punkt końcowy</translation>
     </message>
     <message>
         <source>Path</source>
-        <translation type="unfinished"></translation>
+        <translation>Ścieżka</translation>
     </message>
     <message>
         <source>Current position</source>
-        <translation type="unfinished"></translation>
+        <translation>Bieżąca pozycja</translation>
     </message>
     <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
+        <translation>Szerokość</translation>
     </message>
     <message>
         <source>Height</source>
-        <translation type="unfinished"></translation>
+        <translation>Wysokość</translation>
     </message>
     <message>
         <source>Both</source>
-        <translation type="unfinished"></translation>
+        <translation>Obie</translation>
     </message>
     <message>
         <source>Angle</source>
-        <translation type="unfinished"></translation>
+        <translation>Kąt</translation>
     </message>
     <message>
         <source>Tilt grid</source>
-        <translation type="unfinished"></translation>
+        <translation>Siatka obrotu</translation>
     </message>
     <message>
         <source>Edges and corners</source>
-        <translation type="unfinished"></translation>
+        <translation>Krawędzie i narożniki</translation>
     </message>
     <message>
         <source>Point</source>
-        <translation type="unfinished"></translation>
+        <translation>Punkt</translation>
     </message>
     <message>
         <source>Curve handle</source>
-        <translation type="unfinished"></translation>
+        <translation>Uchwyt krzywej</translation>
     </message>
     <message>
         <source>Position and move start</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozycja i początek ruchu</translation>
     </message>
     <message>
         <source>Move end</source>
-        <translation type="unfinished"></translation>
+        <translation>Koniec ruchu</translation>
     </message>
     <message>
         <source>Clip and drawing</source>
-        <translation type="unfinished"></translation>
+        <translation>Wycinek i rysunek</translation>
     </message>
     <message>
         <source>Changed line</source>
-        <translation type="unfinished"></translation>
+        <translation>Zmieniona linijka</translation>
     </message>
     <message>
         <source>Corners</source>
-        <translation type="unfinished"></translation>
+        <translation>Narożniki</translation>
     </message>
     <message>
         <source>Plane corners</source>
-        <translation type="unfinished"></translation>
+        <translation>Narożniki płaszczyzny</translation>
     </message>
     <message>
         <source>Start and end</source>
-        <translation type="unfinished"></translation>
+        <translation>Początek i koniec</translation>
     </message>
     <message>
         <source>P1, P2 and P3</source>
-        <translation type="unfinished"></translation>
+        <translation>P1, P2 i P3</translation>
     </message>
     <message>
         <source>\org mode</source>
