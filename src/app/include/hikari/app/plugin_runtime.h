@@ -181,6 +181,18 @@ public:
     bool importFile(const Format &format, std::string bytes, const std::string &fileName,
                     backends::PluginProcess::FormatDone done);
 
+    struct Provider {
+        std::string plugin;
+        QString pluginName;
+        std::vector<std::string> triggers; // completion only
+    };
+    // The running plugins whose contributes.providers answer `provider` ("completion" or "hover") for `field`, in
+    // the order the plugins were installed.
+    std::vector<Provider> providers(std::string_view provider, std::string_view field) const;
+    // As exportDocument, for the plugin's hikari.providers handler.
+    bool provide(const std::string &plugin, const std::string &provider, const api::Json &request,
+                 backends::PluginProcess::FormatDone done);
+
 signals:
     void commandsChanged();
     void statusItemsChanged();

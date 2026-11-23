@@ -111,6 +111,15 @@ struct FormatContribution {
     bool exports = false;
 };
 
+struct CompletionProvider {
+    std::vector<std::string> triggers;
+    std::vector<std::string> fields;
+};
+
+struct HoverProvider {
+    std::vector<std::string> fields;
+};
+
 struct ProgramDownload {
     std::string url;
     std::string sha256;
@@ -185,6 +194,8 @@ struct Manifest {
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
     std::vector<FormatContribution> formats;
+    std::optional<CompletionProvider> completion;
+    std::optional<HoverProvider> hover;
     std::vector<Program> programs;
     std::vector<ContentFile> styles;
     std::vector<ContentFile> karaokePresets;

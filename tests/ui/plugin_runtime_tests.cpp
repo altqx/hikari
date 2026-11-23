@@ -18,6 +18,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QProcess>
@@ -1769,6 +1770,99 @@ end)
     {
         QFile f(path);
         return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+    }
+
+    void providersAnswerInInstallOrderWithoutItemsThatBreakTheContract()
+    {
+        const auto install = [&](const QString &id, const QString &name, const QJsonObject &providers, const char *lua) {
+            const QString folder = folders().plugins + QStringLiteral("/") + id;
+            const QJsonObject manifest{{QStringLiteral("id"), id},
+                                       {QStringLiteral("name"), name},
+                                       {QStringLiteral("version"), QStringLiteral("1.0.0")},
+                                       {QStringLiteral("api"), 1},
+                                       {QStringLiteral("main"), QStringLiteral("main.lua")},
+                                       {QStringLiteral("authors"), QJsonArray{QStringLiteral("Ana")}},
+                                       {QStringLiteral("contributes"), QJsonObject{{QStringLiteral("providers"), providers}}}};
+            write(folder + QStringLiteral("/hikari-plugin.json"), QJsonDocument(manifest).toJson());
+            write(folder + QStringLiteral("/main.lua"), lua);
+            m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        };
+        install(QStringLiteral("com.example.tags"), QStringLiteral("Tags"),
+                QJsonObject{{QStringLiteral("completion"), QJsonObject{{QStringLiteral("triggers"), QJsonArray{QStringLiteral("\\"), QStringLiteral("(")}}}},
+                            {QStringLiteral("hover"), QJsonObject{}}},
+                R"~(
+hikari.providers.completion(function(r)
+    return {{label = "\\fad", insert = "\\fad(${1:200},${2:200})", detail = r.document .. " " .. r.line, snippet = true,
+             from = r.offset - 1, to = r.offset}}
+end)
+hikari.providers.hover(function(r) return {text = "Fade", from = 0, to = 4} end)
+)~");
+        install(QStringLiteral("com.example.words"), QStringLiteral("Words"),
+                QJsonObject{{QStringLiteral("completion"),
+                             QJsonObject{{QStringLiteral("triggers"), QJsonArray{QStringLiteral("\\")}},
+                                         {QStringLiteral("fields"), QJsonArray{QStringLiteral("text"), QStringLiteral("translation")}}}},
+                            {QStringLiteral("hover"), QJsonObject{{QStringLiteral("fields"), QJsonArray{QStringLiteral("translation")}}}}},
+                R"~(
+hikari.providers.completion(function(r)
+    return {{label = ""}, {label = "far", from = 9, to = 1}, {label = "bad", snippet = "yes"}, {label = r.field}}
+end)
+hikari.providers.hover(function() return {text = "Never asked for text"} end)
+)~");
+        write(folders().registry, QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.plugins = folders();
+        app::Application a(o);
+        app::LanguageProviders &providers = *a.languageProviders();
+        QTRY_COMPARE(providers.triggers(QStringLiteral("text")), (QStringList{QStringLiteral("\\"), QStringLiteral("(")}));
+        QCOMPARE(providers.triggers(QStringLiteral("translation")), QStringList{QStringLiteral("\\")});
+
+        std::optional<std::vector<app::CompletionItem>> items;
+        providers.complete({"d1", "l2", QStringLiteral("text"), QStringLiteral("{\\"), 2, QStringLiteral("\\")},
+                           [&](std::vector<app::CompletionItem> answer) { items = std::move(answer); });
+        QTRY_VERIFY(items.has_value());
+        QCOMPARE(items->size(), std::size_t(2));
+        QCOMPARE(items->at(0), (app::CompletionItem{QStringLiteral("\\fad"), QStringLiteral("\\fad(${1:200},${2:200})"),
+                                                    QStringLiteral("d1 l2"), QStringLiteral("Tags"), 1, 2, true}));
+        QCOMPARE(items->at(1), (app::CompletionItem{QStringLiteral("text"), QStringLiteral("text"), {}, QStringLiteral("Words"), 2, 2, false}));
+
+        std::optional<std::optional<app::HoverText>> hover;
+        providers.hover({"d1", "l2", QStringLiteral("text"), QStringLiteral("{\\fad(1,2)}"), 3, {}},
+                        [&](std::optional<app::HoverText> answer) { hover = std::move(answer); });
+        QTRY_VERIFY(hover.has_value());
+        QCOMPARE(*hover, (app::HoverText{QStringLiteral("Fade"), QStringLiteral("Tags"), 0, 4}));
+
+        bool stale = false;
+        std::optional<std::vector<app::CompletionItem>> latest;
+        providers.complete({"d1", "l2", QStringLiteral("text"), QStringLiteral("a"), 1, {}}, [&](auto) { stale = true; });
+        providers.complete({"d1", "l2", QStringLiteral("translation"), QStringLiteral("a"), 1, {}},
+                           [&](std::vector<app::CompletionItem> answer) { latest = std::move(answer); });
+        QTRY_VERIFY(latest.has_value());
+        QCOMPARE(latest->size(), std::size_t(1));
+        QCOMPARE(latest->front().label, QStringLiteral("translation"));
+        QTest::qWait(100);
+        QVERIFY(!stale);
+    }
+
+    void completionItemsAndHoversKeepToTheContract()
+    {
+        const auto items = [](const char *json, int length, int offset) {
+            return app::completionItems(*api::Json::parse(json), length, offset, QStringLiteral("P"));
+        };
+        QVERIFY(items("{}", 3, 1).empty());
+        QCOMPARE(items(R"([{"label": "a", "from": 1}])", 3, 1).size(), std::size_t(0));
+        QCOMPARE(items(R"([{"label": "a", "from": 2, "to": 3}])", 3, 1).front().from, 2);
+        QCOMPARE(items(R"([{"label": "a", "from": 1.5, "to": 3}])", 3, 1).size(), std::size_t(0));
+        QCOMPARE(items(R"([{"label": "a", "insert": 4}])", 3, 1).size(), std::size_t(0));
+        std::string many = "[";
+        for (int i = 0; i < 250; ++i)
+            many += std::string(i ? "," : "") + R"({"label": "x"})";
+        QCOMPARE(items((many + "]").c_str(), 0, 0).size(), app::kMostCompletions);
+        QVERIFY(!app::hoverText(api::Json(), 3, {}));
+        QVERIFY(!app::hoverText(*api::Json::parse(R"({"text": ""})"), 3, {}));
+        QVERIFY(!app::hoverText(*api::Json::parse(R"({"text": "t", "from": 0, "to": 4})"), 3, {}));
+        QCOMPARE(app::hoverText(*api::Json::parse(R"({"text": "t"})"), 3, QStringLiteral("P"))->to, 0);
     }
 
     void aPluginFormatExportsOpensAndSavesBack()

@@ -953,6 +953,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->pluginFeatureUsed(feature);
     };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    m_languageProviders = std::make_unique<LanguageProviders>(*m_pluginRuntime);
     m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
         return pluginSaveBytes(document, destination);
     });
