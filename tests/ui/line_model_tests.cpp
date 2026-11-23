@@ -51,6 +51,9 @@ private slots:
         filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
         model.setSelection({core::LineId{1}, {core::LineId{1}, core::LineId{2}}}, core::LineId{1});
         model.setDocument(load(kLines));
+        filter.setText(QStringLiteral("a"));
+        model.setDocument(load(kLines));
+        filter.setText({});
         filter.setPredicate({});
     }
 
@@ -108,11 +111,41 @@ private slots:
         QCOMPARE(model.index(0, LineTableModel::EffectColumn).data().toString(), QStringLiteral("fx"));
         QCOMPARE(model.index(0, LineTableModel::WrapsColumn).data().toString(), QStringLiteral("5/5"));
         QCOMPARE(model.index(0, LineTableModel::CpsColumn).data().toString(), QStringLiteral("2"));
-        QVERIFY(!model.index(0, 0).data(LineTableModel::CpsTooHighRole).toBool());
+        QCOMPARE(model.index(0, 0).data(LineTableModel::CpsSeverityRole).toDouble(), 0.0);
         QCOMPARE(model.index(1, LineTableModel::CpsColumn).data().toString(), QString());
         QCOMPARE(model.index(1, LineTableModel::WrapsColumn).data().toString(), QString());
         QCOMPARE(model.index(2, LineTableModel::CpsColumn).data().toString(), QStringLiteral("30"));
-        QVERIFY(model.index(2, 0).data(LineTableModel::CpsTooHighRole).toBool());
+        QCOMPARE(model.index(2, 0).data(LineTableModel::CpsSeverityRole).toDouble(), 1.0);
+    }
+
+    void readingLimitsComeFromTheProfileAndTheScriptInfo()
+    {
+        const auto document = [](std::string_view info) {
+            return load("[Script Info]\nScriptType: v4.00+\n" + std::string(info) +
+                        "\n[Events]\n"
+                        "Dialogue: 0,0:00:05.00,0:00:05.50,Default,,0,0,0,,much too fast here\n"
+                        "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,Hello\\Nworld\n");
+        };
+        LineTableModel model;
+        model.setDocument(document(""));
+        const auto severity = [&] { return model.index(0, 0).data(LineTableModel::CpsSeverityRole).toDouble(); };
+        const auto badWraps = [&] { return model.index(1, 0).data(LineTableModel::BadWrapsRole).toBool(); };
+        QCOMPARE(model.index(0, LineTableModel::CpsColumn).data().toString(), QStringLiteral("30"));
+        QCOMPARE(severity(), 1.0);
+        QVERIFY(!badWraps());
+
+        QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+        model.setReadingLimits({.cpsWarning = 20, .cpsError = 39, .lineLength = 4, .maxLines = 2});
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(severity(), 11.0 / 20);
+        QVERIFY(badWraps());
+        model.setReadingLimits({.cpsWarning = 20, .cpsError = 39, .lineLength = 4, .maxLines = 2});
+        QCOMPARE(changed.count(), 1);
+
+        model.setDocument(document("Hikari CPS Warning: 30\nHikari Line Length: 5\n"));
+        QCOMPARE(severity(), 0.0);
+        QVERIFY(!badWraps());
+        QCOMPARE(model.readingLimits(), (application::ReadingLimits{30, 39, 5, 2}));
     }
 
     void formatsAndHidingChooseTheColumns()
@@ -254,6 +287,88 @@ private slots:
         off.removeScriptInfo(u8"TLMode");
         model.setDocument(off);
         QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Gate"));
+    }
+
+    void textFilterMatchesTextWithoutTagsActorEffectAndStyle()
+    {
+        LineTableModel model;
+        model.setDocument(load("[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,{\\an8}Charlie\n"
+                               "Comment: 0,0:00:03.00,0:00:04.00,Default,Note,0,0,0,,alpha\n"
+                               "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,fx,bravo\n"));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        const auto shown = [&](const QString &text) {
+            filter.setText(text);
+            QList<qulonglong> ids;
+            for (int row = 0; row < filter.rowCount(); ++row)
+                ids << idAt(filter, row);
+            return ids;
+        };
+        QCOMPARE(shown(QStringLiteral("cHARL")), QList<qulonglong>{1});
+        QCOMPARE(shown(QStringLiteral("an8")), QList<qulonglong>{});
+        QCOMPARE(shown(QStringLiteral("NOTE")), QList<qulonglong>{2});
+        QCOMPARE(shown(QStringLiteral("fx")), QList<qulonglong>{3});
+        QCOMPARE(shown(QStringLiteral("sign")), QList<qulonglong>{1});
+        QCOMPARE(shown(QString()), (QList<qulonglong>{1, 2, 3}));
+    }
+
+    void textFilterAndsWithTheVisibilityFilterAndClearingRestoresIt()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
+        filter.setText(QStringLiteral("A"));
+        QCOMPARE(filter.rowCount(), 2);
+        filter.setText(QStringLiteral("alpha"));
+        QCOMPARE(filter.rowCount(), 0);
+        filter.setText({});
+        QCOMPARE(filter.rowCount(), 2);
+        QCOMPARE(idAt(filter, 0), 1ULL);
+        QCOMPARE(idAt(filter, 1), 3ULL);
+    }
+
+    void textFilterMatchesTheTranslationInTranslationMode()
+    {
+        LineTableModel model;
+        model.setDocument(load("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Wall\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n"));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        filter.setText(QStringLiteral("brama"));
+        QCOMPARE(filter.rowCount(), 1);
+        filter.setText(QStringLiteral("gate"));
+        QCOMPARE(filter.rowCount(), 1);
+        filter.setText(QStringLiteral("wall"));
+        QCOMPARE(filter.rowCount(), 1);
+    }
+
+    void textFilterKeepsAMatchingActiveLineShownWhileItIsActive()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        QAbstractItemModelTester tester(&filter, QAbstractItemModelTester::FailureReportingMode::QtTest);
+        model.setSelection({core::LineId{3}, {core::LineId{3}}}, core::LineId{3});
+        filter.setText(QStringLiteral("bravo"));
+        QCOMPARE(filter.rowCount(), 1);
+        auto edited = std::string(kLines);
+        edited.replace(edited.find("bravo"), 5, "delta");
+        model.setDocument(load(edited));
+        QCOMPARE(filter.rowCount(), 1);
+        QCOMPARE(idAt(filter, 0), 3ULL);
+        model.setSelection({core::LineId{1}, {core::LineId{1}}}, core::LineId{1});
+        QCOMPARE(filter.rowCount(), 0);
+        filter.setText(QStringLiteral("charlie"));
+        model.setSelection({core::LineId{3}, {core::LineId{3}}}, core::LineId{3});
+        QCOMPARE(filter.rowCount(), 1);
+        QCOMPARE(idAt(filter, 0), 1ULL);
     }
 
     void identitySurvivesFilteringAndSorting()
@@ -479,7 +594,7 @@ private slots:
         QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 2);
         QCOMPARE(text(2), QStringLiteral("zulu, longer and faster"));
         QCOMPARE(model.index(2, LineTableModel::EndColumn).data().toString(), QStringLiteral("0:00:05.50"));
-        QVERIFY(model.index(2, 0).data(LineTableModel::CpsTooHighRole).toBool());
+        QVERIFY(model.index(2, 0).data(LineTableModel::CpsSeverityRole).toDouble() > 0);
         QVERIFY(draftAt(2));
         QVERIFY(!draftAt(0) && !draftAt(1));
         QCOMPARE(model.recordAt(2)->text, std::u8string(u8"bravo"));

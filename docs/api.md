@@ -23,7 +23,7 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `selection.get` | read | The active Line and the selected Lines, in Document order. |
 | `commands.list` | read | Commands with their id (`GLOBAL_SAVE_SUBS`), name, window, enabled state, disabled reason and keys; `query` searches ids and names. |
 | `panels.list` | read | Workspace panels: open, floating, focused. |
-| `settings.list`, `settings.get` | read | Settings with type, scope, default and value. AI callers (`reviewed`) never see `privacy.*` or `recent.*`: a list leaves them out and a get answers `refused` with reason `private`. |
+| `settings.list`, `settings.get` | read | Settings with type, scope, default, value, title, source and projectable, plugins' settings included ([grown](#settingslist-and-settingsget-grown)). AI callers (`reviewed`) never see `privacy.*` or `recent.*`: a list leaves them out and a get answers `refused` with reason `private`. |
 | `video.info` | read | Whether a video is open; its size, aspect ratio, the frame shown and the keyframes. |
 | `video.frame_at_time`, `video.time_of_frame` | read | Converts between milliseconds and frame numbers. |
 | `video.frame` | read | One frame as BGRA in base64, with every Line, one Line (`line`) or none drawn on it, optionally cropped, scaled to fit `maxEdge` and `maxPixels`; `crop` gives the part of the frame shown. |
@@ -61,6 +61,7 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `commands.run` | write | Runs a command as its menu item or toolbar button would. |
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
 | `settings.set` | write | One setting, type-checked. |
+| `settings.open` | write | Opens the Settings window at a setting, on the Yours or Project tab ([schema](#settingsopen)). |
 | `files.write` | write | Replaces a file granted for writing, or makes one in a writable folder. |
 | `programs.run` | write | Runs one of the plugin's declared programs to the end and gives its output. Plugins with the `programs` permission only. |
 | `programs.start`, `programs.send`, `programs.stop` | write | Starts one of the plugin's declared programs and keeps it running, writes to its stdin, or ends it. |
@@ -148,8 +149,6 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `problems.fix` | write | all | Applies one quick fix as one undo step. | #1227 |
 | `formats.list` | read | all | The subtitle formats HikariSub can open and export, built-in and from plugins. | #1229 |
 | `plugins.run` | write | all | Gains `args` and gives the command's `result`. | #1228 |
-| `settings.open` | write | all | Opens the Settings window at a setting, on the Yours or Project tab. | #1238 |
-| `settings.list`, `settings.get` | read | all | Gain `title`, `source` and `projectable`, and list plugins' settings too. | #1238 |
 | `presence.set_text` | write | plugins | Sets or clears the caller's text for `{plugin}` in the user's Discord status. | #1245 |
 
 "Plugins" means every plugin, Lua or program; AI and MCP callers get `not_granted`. `programs.*` need the plugin's `programs` permission, and `presence.set_text` its `presence` permission. While a plugin runs as a `read` [AI tool](plugins.md#ai-tools-and-mcp-servers), each of its write operations, and the services `net.fetch`, `files.write` and `hikari/settings.set`, answer `refused` with reason `read_tool`.
@@ -406,7 +405,7 @@ Each setting in their results gains three optional fields:
 "projectable": {"type": "boolean", "description": "Whether a Project can override it on the Project tab."}
 ```
 
-They also list each running plugin's settings, as `plugin.<plugin id>.<setting id>` with that plugin as `source`. A `secret` setting is listed without its value, and `settings.get` and `settings.set` refuse it with reason `private` for every caller; its plugin reads it with `hikari.settings.get`. For AI callers, `settings.set` of a `plugin.` setting joins the always-ask list beside `plugins.*` (#1228 amends [ai-agent.md](ai-agent.md)).
+They also list each running plugin's settings, as `plugin.<plugin id>.<setting id>` with that plugin as `source`. A `secret` setting is left out of the list. `settings.get` and `settings.set` refuse a `secret` with reason `private` for every caller; its plugin reads it with `hikari.settings.get`. For AI callers, `settings.set` of a `plugin.` setting joins the always-ask list beside `plugins.*` (#1228 amends [ai-agent.md](ai-agent.md)).
 
 ### `presence.set_text`
 
@@ -457,7 +456,7 @@ Result: `{"type": "object", "additionalProperties": false}`.
 {"type": "object", "properties": {
   "cancelled": {"type": "boolean"},
   "items": {"type": "array", "items": {"type": "string"}, "description": "The picked ids in list order; absent when cancelled."},
-  "button": {"type": "string", "description": "A title button the user pressed instead of picking; cancelled is then true."},
+  "button": {"type": "string", "description": "A title or item button the user pressed instead of picking; cancelled is then true."},
   "back": {"type": "boolean", "description": "true when the user pressed Back; cancelled is then true."}},
  "required": ["cancelled"], "additionalProperties": false}
 ```

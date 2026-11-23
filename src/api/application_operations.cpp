@@ -93,13 +93,17 @@ Result commandsList(const Context &context, const Json &params)
     if (global && context.host.plugins)
         for (const PluginState &plugin : context.host.plugins->plugins())
             for (const PluginCommand &c : plugin.commands)
-                if (matches(c.command, c.title))
-                    list.push(Json::object({{"command", Json(c.command)},
-                                            {"name", Json(c.title)},
-                                            {"window", Json("global")},
-                                            {"enabled", Json(true)},
-                                            {"keys", Json::array()},
-                                            {"kind", Json("plugin")}}));
+                if (matches(c.command, c.title)) {
+                    Json entry = Json::object({{"command", Json(c.command)},
+                                               {"name", Json(c.title)},
+                                               {"window", Json("global")},
+                                               {"enabled", Json(c.enabled)},
+                                               {"keys", Json::array()},
+                                               {"kind", Json("plugin")}});
+                    if (!c.enabled && !c.disabledReason.empty())
+                        entry["disabledReason"] = Json(c.disabledReason);
+                    list.push(std::move(entry));
+                }
     return Json::object({{"commands", list}});
 }
 
@@ -152,6 +156,41 @@ bool keptFrom(const Caller &caller, std::string_view id)
     return caller.reviewed && (id.starts_with("privacy.") || id.starts_with("recent."));
 }
 
+constexpr std::string_view kPluginSettingPrefix = "plugin.";
+
+std::string pluginSettingId(const PluginSettingState &setting)
+{
+    return std::string(kPluginSettingPrefix) + setting.plugin + "." + setting.setting;
+}
+
+std::string_view pluginTypeName(std::string_view type)
+{
+    if (type == "boolean" || type == "integer" || type == "number")
+        return type;
+    return type == "list" ? "stringList" : "string";
+}
+
+std::vector<PluginSettingState> pluginSettings(const Context &context)
+{
+    return context.host.settingsWindow ? context.host.settingsWindow->pluginSettings() : std::vector<PluginSettingState>{};
+}
+
+std::optional<PluginSettingState> findPluginSetting(const Context &context, std::string_view id)
+{
+    if (!id.starts_with(kPluginSettingPrefix))
+        return std::nullopt;
+    for (PluginSettingState &setting : pluginSettings(context))
+        if (pluginSettingId(setting) == id)
+            return std::move(setting);
+    return std::nullopt;
+}
+
+Result secretRefused(std::string_view id)
+{
+    return fail(errors::kRefused, "\"" + std::string(id) + "\" is a secret; only its plugin reads it.",
+                Json::object({{"setting", Json(std::string(id))}, {"reason", Json("private")}}));
+}
+
 Result settingsList(const Context &context, const Json &params)
 {
     if (!context.host.settings)
@@ -162,11 +201,31 @@ Result settingsList(const Context &context, const Json &params)
         if (definition.disposition != application::SettingDisposition::Mapped || !definition.id.starts_with(prefix) ||
             keptFrom(context.caller, definition.id))
             continue;
-        list.push(Json::object({{"setting", Json(definition.id)},
-                                {"type", Json(typeName(definition.type))},
-                                {"scope", Json(application::scopeName(definition.scope))},
-                                {"default", settingJson(definition.defaultValue)},
-                                {"value", settingJson(context.host.settings->value(definition.id))}}));
+        Json entry = Json::object({{"setting", Json(definition.id)},
+                                   {"type", Json(typeName(definition.type))},
+                                   {"scope", Json(application::scopeName(definition.scope))},
+                                   {"default", settingJson(definition.defaultValue)},
+                                   {"value", settingJson(context.host.settings->value(definition.id))},
+                                   {"source", Json("app")},
+                                   {"projectable", Json(definition.projectable)}});
+        if (context.host.settingsWindow)
+            if (std::string title = context.host.settingsWindow->title(definition.id); !title.empty())
+                entry["title"] = Json(std::move(title));
+        list.push(std::move(entry));
+    }
+    for (const PluginSettingState &setting : pluginSettings(context)) {
+        const std::string id = pluginSettingId(setting);
+        if (!id.starts_with(prefix) || setting.type == "secret")
+            continue;
+        Json entry = Json::object({{"setting", Json(id)},
+                                   {"type", Json(pluginTypeName(setting.type))},
+                                   {"scope", Json("profile")},
+                                   {"title", Json(setting.title)},
+                                   {"source", Json(setting.plugin)},
+                                   {"projectable", Json(setting.projectable)},
+                                   {"default", setting.defaultValue},
+                                   {"value", setting.value}});
+        list.push(std::move(entry));
     }
     return Json::object({{"settings", list}});
 }
@@ -177,6 +236,12 @@ Result settingsGet(const Context &context, const Json &params)
         return fail(errors::kUnavailable, "No settings are available.");
     Json values = Json::object();
     for (const Json &id : params.find("settings")->asArray()) {
+        if (const auto plugin = findPluginSetting(context, id.asString())) {
+            if (plugin->type == "secret")
+                return secretRefused(id.asString());
+            values[id.asString()] = plugin->value;
+            continue;
+        }
         if (!offered(id.asString()))
             return fail(errors::kNotFound, "No setting is named \"" + id.asString() + "\".",
                         Json::object({{"setting", id}}));
@@ -186,6 +251,23 @@ Result settingsGet(const Context &context, const Json &params)
         values[id.asString()] = settingJson(context.host.settings->value(id.asString()));
     }
     return Json::object({{"values", values}});
+}
+
+Result settingsOpen(const Context &context, const Json &params)
+{
+    if (!context.host.settingsWindow)
+        return fail(errors::kUnavailable, "The Settings window isn't available.");
+    const std::string id = params.find("setting") ? params.find("setting")->asString() : std::string();
+    if (!id.empty()) {
+        if (!findPluginSetting(context, id) && !offered(id))
+            return fail(errors::kNotFound, "No setting is named \"" + id + "\".", Json::object({{"setting", Json(id)}}));
+        if (keptFrom(context.caller, id))
+            return fail(errors::kRefused, "AI callers can't open \"" + id + "\": privacy.* and recent.* settings stay private.",
+                        Json::object({{"setting", Json(id)}, {"reason", Json("private")}}));
+    }
+    const Json *scope = params.find("scope");
+    context.host.settingsWindow->open(id, scope && scope->asString() == "project");
+    return Json::object({{"opened", Json(true)}});
 }
 
 Result commandsRun(const Context &context, const Json &params)
@@ -224,9 +306,11 @@ Result commandsRun(const Context &context, const Json &params)
         if (context.caller.id == "plugin:" + plugin)
             return fail(errors::kRefused, "A plugin can't run its own command through commands.run.",
                         Json::object({{"reason", Json("self")}}));
-        switch (context.host.plugins->run(plugin, command.substr(dot + 1))) {
+        switch (context.host.plugins->run(plugin, command.substr(dot + 1), viaOf(context.caller))) {
         case PluginRun::Ran:
             return ran;
+        case PluginRun::Disabled:
+            return disabled(*context.host.plugins, command);
         case PluginRun::NotRunning:
             return fail(errors::kRefused, "The plugin isn't running.", Json::object({{"reason", Json("disabled")}}));
         default:
@@ -296,6 +380,14 @@ Result settingsSet(const Context &context, const Json &params)
     if (!context.host.settings)
         return fail(errors::kUnavailable, "No settings are available.");
     const std::string &id = params.find("setting")->asString();
+    if (const auto plugin = findPluginSetting(context, id)) {
+        if (plugin->type == "secret")
+            return secretRefused(id);
+        if (const auto refused = context.host.settingsWindow->setPluginSetting(plugin->plugin, plugin->setting,
+                                                                                *params.find("value")))
+            return fail(errors::kInvalidParams, "Parameter /value: " + *refused, Json::object({{"pointer", Json("/value")}}));
+        return Json::object({{"setting", Json(id)}, {"value", findPluginSetting(context, id)->value}});
+    }
     const auto *definition = offered(id);
     if (!definition)
         return fail(errors::kNotFound, "No setting is named \"" + id + "\".", Json::object({{"setting", Json(id)}}));
@@ -368,15 +460,18 @@ void addApplicationOperations(Registry &registry)
              "required": ["panel", "title", "open", "floating", "focused"], "additionalProperties": false}}},
              "required": ["panels"], "additionalProperties": false})",
          panelsList);
-    read(registry, "settings.list", "Settings with their type, scope, default and current value.",
+    read(registry, "settings.list", "Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>.",
          R"({"type": "object", "properties": {"prefix": {"type": "string", "description": "Only ids starting with it, e.g. grid."}},
              "additionalProperties": false})",
          R"({"type": "object", "properties": {"settings": {"type": "array", "items": {"type": "object", "properties": {
              "setting": {"type": "string"},
-             "type": {"enum": ["boolean", "integer", "string", "stringList"]},
+             "type": {"enum": ["boolean", "integer", "number", "string", "stringList"]},
              "scope": {"enum": ["profile", "collections", "workspace"]},
              "default": {"$ref": "#/$defs/SettingValue"},
-             "value": {"$ref": "#/$defs/SettingValue"}},
+             "value": {"$ref": "#/$defs/SettingValue"},
+             "title": {"type": "string", "description": "The name the Settings window shows, in the UI language."},
+             "source": {"type": "string", "description": "app, or the id of the plugin whose setting it is."},
+             "projectable": {"type": "boolean", "description": "Whether a Project can override it on the Project tab."}},
              "required": ["setting", "type", "scope", "default", "value"], "additionalProperties": false}}},
              "required": ["settings"], "additionalProperties": false})",
          settingsList);
@@ -398,6 +493,14 @@ void addApplicationOperations(Registry &registry)
           panelChange([](PanelHost &panels, std::string_view id) { return panels.setOpen(id, false); }));
     write(registry, "panels.focus", "Opens a panel if needed and gives it the keyboard focus.", kPanelParams, kPanelResult,
           panelChange([](PanelHost &panels, std::string_view id) { return panels.focus(id); }));
+    write(registry, "settings.open", "Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting.",
+          R"({"type": "object", "properties": {
+              "setting": {"type": "string", "pattern": "^[A-Za-z0-9_.-]{1,200}$",
+                  "description": "A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>."},
+              "scope": {"enum": ["yours", "project"], "description": "The tab; yours when omitted."}},
+              "additionalProperties": false})",
+          R"({"type": "object", "properties": {"opened": {"const": true}}, "required": ["opened"], "additionalProperties": false})",
+          settingsOpen);
     write(registry, "settings.set", "Changes a setting; the value must have the setting's type.",
           R"({"type": "object", "properties": {"setting": {"type": "string"}, "value": {"$ref": "#/$defs/SettingValue"}},
               "required": ["setting", "value"], "additionalProperties": false})",

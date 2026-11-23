@@ -5,23 +5,23 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-ScrollView {
+Item {
     id: page
     objectName: "settingsPageEditing"
     required property var dialog
-    contentWidth: availableWidth
+    implicitHeight: cycleColumn.implicitHeight
+    Layout.fillWidth: true
 
     ColumnLayout {
-        width: page.availableWidth
-        spacing: 16
+        id: cycleColumn
+        width: page.width
+        spacing: 24
 
         SettingsSection {
             objectName: "editingCycleValues"
-            title: qsTr("Cycle values")
+            host: page.dialog
+            key: "editing.cycleValues"
             ruled: false
-            Layout.leftMargin: 24
-            Layout.rightMargin: 24
-            Layout.topMargin: 20
             Label {
                 text: qsTr("Each Cycle command steps the tag in the start block of the selected lines to the next value. Cycle back steps the other way.")
                 color: Theme.muted

@@ -439,6 +439,11 @@ int main(int argc, char **argv)
                 const auto open = text.find("<line>") + 6;
                 text = text.substr(open, text.find("</line>") - open);
                 std::string answer;
+                if (const auto word = text.find("<word>"); word != std::string::npos) {
+                    const std::string asked = text.substr(word + 6, text.find("</word>") - word - 6);
+                    answer = asked == "nothing" ? std::string() : "1. vast\n- large\nLarge\n" + asked + "\nhuge";
+                    text.clear();
+                }
                 for (std::size_t i = 0; i < text.size(); ++i) {
                     if (modelId == "inline-drop" && text.compare(i, 3, "\xE2\x9F\xA6") == 0) {
                         i = text.find("\xE2\x9F\xA7", i) + 2;

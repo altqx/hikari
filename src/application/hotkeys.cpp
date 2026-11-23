@@ -446,6 +446,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_SELECTED_AUDIO", 5349},
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
+        {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
 };
 
 struct NameRow {
@@ -861,6 +862,7 @@ constexpr NameRow kNames[] = {
         {5349, "Save audio of selected lines…"},
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
+        {5374, "Full screen typesetting"},
 };
 
 struct DefaultRow {
@@ -1624,10 +1626,63 @@ void HotkeyList::removeUnchangedRows(const std::function<bool(const Row &)> &gon
         m_sel = int(m_filtered.size()) - 1;
 }
 
+namespace {
+
+bool overlaps(const HotkeyId &a, const HotkeyId &b)
+{
+    return a.type == b.type || a.type == GlobalHotkey || b.type == GlobalHotkey;
+}
+
+bool shownBySource(int source, const HotkeyList::Row &r)
+{
+    if (source == 0)
+        return true;
+    const bool script = r.key.id >= kFirstScriptHotkey;
+    if (source == 3)
+        return script && isPluginCommand(r.name);
+    if (source == 4)
+        return script && !isPluginCommand(r.name);
+    static const HotkeyMap defaults = defaultHotkeys();
+    const auto it = defaults.find(r.key);
+    const bool own = script ? !r.accel.empty() : r.accel != (it == defaults.end() ? std::string() : it->second.accel);
+    return source == 2 ? own : !script && !own;
+}
+
+}
+
+std::vector<int> HotkeyList::clashes(int index) const
+{
+    std::vector<int> out;
+    if (index < 0 || std::size_t(index) >= m_rows.size() || m_rows[std::size_t(index)]->accel.empty())
+        return out;
+    const Row &row = *m_rows[std::size_t(index)];
+    for (std::size_t i = 0; i < m_rows.size(); ++i)
+        if (int(i) != index && m_rows[i]->accel == row.accel && overlaps(m_rows[i]->key, row.key))
+            out.push_back(int(i));
+    return out;
+}
+
+void HotkeyList::filterSource(int source)
+{
+    m_source = source;
+    filter(m_filterMode);
+}
+
+void HotkeyList::filterConflicts(bool on)
+{
+    m_conflicts = on;
+    filter(m_filterMode);
+}
+
 bool HotkeyList::shownNow(const Row &r) const
 {
-    if (!shownByFilter(m_filterMode, r))
+    if (!shownByFilter(m_filterMode, r) || !shownBySource(m_source, r))
         return false;
+    if (m_conflicts) {
+        const auto it = std::ranges::find_if(m_rows, [&r](const RowPtr &p) { return p.get() == &r; });
+        if (it == m_rows.end() || clashes(int(it - m_rows.begin())).empty())
+            return false;
+    }
     if (m_search.empty())
         return true;
     const auto holds = [this](std::string_view text) {

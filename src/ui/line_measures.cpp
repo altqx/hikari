@@ -49,7 +49,7 @@ LineMeasures measureLine(const QString &text, core::SubtitleFormat format, Measu
         out.chars += options.allCharsForCps ? fullTextLen : counted;
         const int wrapChars = options.allCharsForWraps ? fullTextLen : counted;
         if (!out.badWraps)
-            out.badWraps = wrapChars > 43 || out.wraps.count(QLatin1Char('/')) > 1;
+            out.badWraps = wrapChars > options.lineLength || out.wraps.count(QLatin1Char('/')) >= options.maxLines;
         out.wraps += QString::number(wrapChars) + QLatin1Char('/');
         checkText.clear();
     };

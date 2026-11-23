@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Dialogs
 import Hikari.Ui
+import HikariStyle as Style
 import com.kdab.dockwidgets 2.0 as KDDW
 
 ApplicationWindow {
@@ -399,7 +400,8 @@ ApplicationWindow {
     function defaultLayout() {
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
-        dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
+        dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
+                                  Qt.size(Math.round(dockingArea.width * 0.56), 0))
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
         dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         originalDock.close()
@@ -523,6 +525,26 @@ ApplicationWindow {
     readonly property bool originalShown: root.editor.translationMode && root.panelShown(originalDock)
     readonly property bool translationMode: root.editor.translationMode
     onTranslationModeChanged: root.placeOriginal()
+    readonly property var pluginConditions: ({
+        document: root.shell.hasEditingTarget,
+        selectedLines: root.shell.selectedCount,
+        video: root.video.hasVideo,
+        audio: root.audio.hasAudio,
+        karaoke: root.editor.hasLine && /\\(?:kf|ko|k|K)\d/.test(root.editor.text),
+        translation: root.translationMode
+    })
+    onPluginConditionsChanged: root.app.pluginRuntime?.setConditions(root.shellWindow, root.pluginConditions)
+    Component.onDestruction: root.app.pluginRuntime?.forgetWindow(root.shellWindow)
+    function pluginMenuItems(location) {
+        const runtime = root.app.pluginRuntime
+        if (!runtime)
+            return []
+        runtime.windowsRevision
+        return runtime.menuItems.filter(item => item.location === location && runtime.onIn(item.plugin, root.shellWindow))
+    }
+    function runPluginCommand(id, via) {
+        root.app.pluginRuntime.run(id, via)
+    }
     function placeOriginal() {
         if (!root.arrangementSettled)
             return
@@ -943,7 +965,7 @@ ApplicationWindow {
         [spellDock, spellPanel], [logDock, logPanel], [stylesDock, stylesPanel], [templateDock, templatePanel],
         [qcNotesDock, qcNotesPanel], [reviewDock, reviewPanel], [agentDock, agentPanel], [nodeGraphDock, nodeGraphPanel],
         [nodeInspectorDock, nodeInspectorPanel], [nodeSourcesDock, nodeSourcesPanel], [explorerDock, explorerPanel]
-    ].filter(([dock]) => (dock !== reviewDock || root.review.on) && (dock !== agentDock || root.agent.on))
+    ].filter(([dock]) => dock !== reviewDock || root.review.on)
     readonly property var builtInDocks: builtIns.map(([dock]) => dock)
     readonly property var panelMenuGroups: [
         [videoDock, audioDock, gridDock, editorDock, originalDock, referenceDock],
@@ -2709,6 +2731,20 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_KEYFRAMES")) root.app.closeKeyframes()
         }
         Action {
+            id: fullScreenTypesettingAction
+            readonly property bool open: root.videoFullscreen.active
+                                         && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
+            text: qsTranslate("HikariSub.Video", "Full screen typesetting")
+            checkable: true
+            checked: open
+            enabled: root.video.hasVideo
+            onTriggered: {
+                checked = Qt.binding(() => open)
+                if (!root.hotkeyGesture("GLOBAL_FULL_SCREEN_TYPESETTING"))
+                    root.videoFullscreen.toggleTypesetting()
+            }
+        }
+        Action {
             id: openTimecodesAction
             text: qsTr("Open timecodes…")
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_TIMECODES")) timecodesDialog.show()
@@ -3382,8 +3418,15 @@ ApplicationWindow {
                 MenuSeparator {
                     id: reviewSeparator
                     objectName: "reviewSeparator"
-                    visible: root.review.on
+                }
+                ShellMenuItem {
+                    objectName: "turnOnAiMenuItem"
+                    visible: !root.agent.on
                     height: visible ? implicitHeight : 0
+                    text: qsTranslate("HikariSub.Agent", "Turn on AI…")
+                    help: qsTranslate("HikariSub.Agent", "Shows the Agent panel, where you can turn AI on")
+                    iconRole: "ai-assistant"
+                    onTriggered: root.showPanel(agentDock)
                 }
                 Instantiator {
                     active: editMenu.lazyItems?.placed ?? false
@@ -4313,6 +4356,15 @@ ApplicationWindow {
                     objectName: "pluginsMenuItem"
                     action: pluginsAction
                 }
+                PluginMenuEntries {
+                    menu: automationMenu
+                    after: pluginsMenuItem
+                    items: automationMenu.lazyItems?.placed ? root.pluginMenuItems("menuBar") : []
+                    runtime: root.app.pluginRuntime
+                    shellWindow: root.shellWindow
+                    keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                    onTriggered: item => root.runPluginCommand(item.id, "menu")
+                }
                 MenuSeparator {
                     id: pluginCommandsSeparator
                     objectName: "pluginCommandsSeparator"
@@ -4331,9 +4383,13 @@ ApplicationWindow {
                         return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
                     }
                     keys: command => root.automationHotkeys.keys[command.id] ?? ""
+                    reasonOf: command => {
+                        root.app.pluginRuntime.conditionsRevision
+                        return root.app.pluginRuntime.disabledReason(command.id, root.shellWindow)
+                    }
                     itemPrefix: "pluginCommand_"
                     menuPrefix: "pluginCommandMenu_"
-                    onTriggered: command => root.app.pluginRuntime.run(command.id)
+                    onTriggered: command => root.runPluginCommand(command.id, "menu")
                 }
                 MenuSeparator {
                     id: macrosSeparator
@@ -4568,6 +4624,15 @@ ApplicationWindow {
                     objectName: "nodeEffectsMenuItem"
                     reason: nodeEffectsAction.enabled ? "" : !root.shell.hasEditingTarget ? qsTr("Open a file first") : root.lockedReason
                     action: nodeEffectsAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_FULL_SCREEN_TYPESETTING"
+                    help: qsTranslate("HikariSub.Video", "Opens the video full screen with the visual tools, the active line and its tools beside it")
+                    iconRole: "fullscreen"
+                    objectName: "fullScreenTypesettingMenuItem"
+                    reason: root.video.hasVideo ? "" : qsTr("Open a video first")
+                    keepsMenuOpen: false
+                    action: fullScreenTypesettingAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
@@ -5080,6 +5145,15 @@ ApplicationWindow {
         ContextMenu.menu: ShellMenu {
             id: editMenu
             objectName: field.objectName + "Menu"
+            PluginMenuEntries {
+                menu: editMenu
+                items: field.objectName === "lineText" || field.objectName === "translationText"
+                       ? root.pluginMenuItems("lineEditor.context") : []
+                runtime: root.app.pluginRuntime
+                shellWindow: root.shellWindow
+                keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                onTriggered: item => root.runPluginCommand(item.id, "menu")
+            }
             readonly property bool grammar: !!field.grammar.rule
             readonly property var suggestions: (grammar ? field.grammar.suggestions : field.misspell.suggestions) || []
             property bool headerShown: false
@@ -5245,6 +5319,7 @@ ApplicationWindow {
                 objectName: field.objectName + "AiMenu"
                 controller: root.inlineAi
                 editor: true
+                field: field
                 shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
                 onChosen: ask => inlineAiBox.begin(ask, true, field)
                 onRepeatRequested: root.repeatInlineAi(true, field)
@@ -5687,6 +5762,25 @@ ApplicationWindow {
                     video: root.video
                     anchors { left: videoStageDock.left; right: parent.right; top: parent.top }
                     z: 1
+                }
+                Item {
+                    id: videoHeaderTools
+                    objectName: "videoHeaderTools"
+                    visible: parent !== null && parent.objectName === "dockToolbarSlot"
+                    implicitWidth: 24
+                    implicitHeight: 24
+                    IconToolButton {
+                        objectName: "videoFullScreenTypesetting"
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                        implicitWidth: 24
+                        implicitHeight: 24
+                        iconRole: "fullscreen"
+                        text: fullScreenTypesettingAction.text
+                        tip: root.bitmapTip(text, "GLOBAL_FULL_SCREEN_TYPESETTING", 0)
+                        enabled: fullScreenTypesettingAction.enabled
+                        focusPolicy: Qt.NoFocus
+                        onClicked: if (!root.hotkeyGesture("GLOBAL_FULL_SCREEN_TYPESETTING", 0, "bitmap")) root.videoFullscreen.toggleTypesetting()
+                    }
                 }
                 VisualToolRail {
                     id: visualRail
@@ -6264,25 +6358,30 @@ ApplicationWindow {
                     id: audioButtons
                     objectName: "audioButtons"
                     visible: root.audio.loaded
+                    implicitHeight: 28
                     height: visible ? implicitHeight : 0
                     spacing: 2
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
+                    readonly property int buttonSize: 24
+                    readonly property int chevronWidth: 16
+                    readonly property int splitWidth: buttonSize + chevronWidth
+                    readonly property int groupGap: 6
                     readonly property bool folded: width < transportWidth(shownExtras)
-                                                           + (root.audio.karaoke ? audioSwitches.modesWidth + 26 + spacing
+                                                           + (root.audio.karaoke ? audioSwitches.modesWidth + buttonSize + spacing
                                                                                  : audioSwitches.fullWidth)
                                                            + audioTail.unfoldedWidth + 3 * spacing
                     readonly property bool togglesFolded: folded
                         || width < transportWidth(shownExtras) + audioSwitches.fullWidth + audioTail.unfoldedWidth + 3 * spacing
                     readonly property bool splitArrowFolded: folded
                         || root.audio.karaoke && width < transportWidth(shownExtras) + audioSwitches.modesWidth
-                                                        + audioSwitches.splitArrowWidth + 26 + spacing
+                                                        + audioSwitches.splitArrowWidth + buttonSize + spacing
                                                         + audioTail.unfoldedWidth + 3 * spacing
-                    readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + 26 + 3 * spacing
+                    readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + buttonSize + 3 * spacing
                     readonly property var shownExtras: audioPanel.extraOrder.filter(id => audioPanel.shows(id))
                     readonly property var kept: {
                         if (!folded)
                             return shownExtras
-                        const room = width - audioTail.unfoldedWidth - 26 - 3 * spacing
+                        const room = width - audioTail.unfoldedWidth - buttonSize - 3 * spacing
                         let k = shownExtras.length
                         while (k > 0 && transportWidth(shownExtras.slice(0, k)) > room)
                             --k
@@ -6290,23 +6389,24 @@ ApplicationWindow {
                     }
                     function keeps(id) { return kept.indexOf(id) >= 0 }
                     function foldsOut(id) { return audioPanel.shows(id) && !keeps(id) }
-                    // MUST KILL: transportWidth hardcodes the row's item widths (button 26, split button 39, separator 5)
+                    // MUST KILL: transportWidth repeats the transport row's layout to size it before it is shown
                     function transportWidth(extras) {
                         const around = audioPanel.shows("playAround")
                         const marks = extras.filter(id => id === "beforeMark" || id === "afterMark").length
                         const plays = extras.filter(id => audioPanel.playExtras.indexOf(id) >= 0).length
-                        const widths = [26, 26, 26, 26, 26, 5]
+                        const b = buttonSize
+                        const widths = [b, b, b, b, b, groupGap]
                         if (around)
-                            widths.push(39)
+                            widths.push(splitWidth)
                         if (marks > 0 && around)
-                            widths.push(5)
+                            widths.push(groupGap)
                         if (plays > marks && (around || marks > 0))
-                            widths.push(5)
+                            widths.push(groupGap)
                         for (let i = 0; i < extras.length; ++i)
-                            widths.push(26)
+                            widths.push(b)
                         if (around || plays > 0)
-                            widths.push(5)
-                        widths.push(26, 26, 39)
+                            widths.push(groupGap)
+                        widths.push(b, b, splitWidth)
                         return widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * spacing
                     }
                     component AudioButton: ToolButton {
@@ -6317,13 +6417,13 @@ ApplicationWindow {
                         property string iconRole: ""
                         signal run()
                         focusPolicy: Qt.NoFocus
-                        padding: 5
+                        padding: 4
                         display: AbstractButton.IconOnly
                         contentItem: Icon {
                             iconRole: audioButton.iconRole
                         }
-                        implicitHeight: 26
-                        implicitWidth: 26
+                        implicitHeight: audioButtons.buttonSize
+                        implicitWidth: audioButtons.buttonSize
                         Accessible.name: tip
                         ToolTip.text: symbol.length ? audioPanel.audioTip(tip, symbol, altSymbol) : tip
                         ToolTip.visible: hovered
@@ -6331,12 +6431,6 @@ ApplicationWindow {
                             if (symbol.length && root.hotkeyGesture(symbol, 4, true, altSymbol.length > 0))
                                 return
                             run()
-                        }
-                        Rectangle {
-                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                            height: 2
-                            color: Theme.accent
-                            visible: audioButton.checked
                         }
                     }
                     component AudioSegment: AudioButton {
@@ -6346,7 +6440,7 @@ ApplicationWindow {
                         Accessible.checkable: true
                         Accessible.checked: checked
                         background: Rectangle {
-                            color: segment.checked ? Theme.select : segment.hovered ? Theme.raised : "transparent"
+                            color: segment.checked ? Theme.select : segment.hovered ? Theme.hover : "transparent"
                             Rectangle {
                                 width: 1
                                 height: parent.height
@@ -6358,33 +6452,15 @@ ApplicationWindow {
                     component AudioSwitch: Rectangle {
                         default property alias segments: switchRow.data
                         implicitWidth: switchRow.implicitWidth + 2
-                        implicitHeight: 28
+                        implicitHeight: audioButtons.buttonSize + 2
                         color: "transparent"
-                        radius: 3
-                        border.color: Theme.control
+                        radius: Theme.radius
+                        border.color: Theme.line
+                        clip: true
                         Accessible.role: Accessible.Grouping
                         Row {
                             id: switchRow
                             anchors { fill: parent; margins: 1 }
-                        }
-                    }
-                    component AudioArrow: Canvas {
-                        implicitWidth: 8
-                        implicitHeight: 8
-                        readonly property color ink: enabled ? Theme.text : Theme.disabled
-                        onInkChanged: requestPaint()
-                        onPaint: {
-                            const ctx = getContext("2d")
-                            ctx.reset()
-                            ctx.strokeStyle = ink
-                            ctx.lineWidth = 1
-                            ctx.lineCap = "round"
-                            ctx.lineJoin = "round"
-                            ctx.beginPath()
-                            ctx.moveTo(1.5, 3)
-                            ctx.lineTo(4, 5.5)
-                            ctx.lineTo(6.5, 3)
-                            ctx.stroke()
                         }
                     }
                     component AudioSplitButton: Row {
@@ -6397,7 +6473,7 @@ ApplicationWindow {
                         property string menuTip
                         property Menu menu
                         property string faceText: tip
-                        property real arrowWidth: 13
+                        property real arrowWidth: audioButtons.chevronWidth
                         property bool arrowShown: true
                         property alias checkable: splitFace.checkable
                         property alias checked: splitFace.checked
@@ -6420,7 +6496,7 @@ ApplicationWindow {
                             visible: split.arrowShown
                             focusPolicy: Qt.NoFocus
                             implicitWidth: split.arrowWidth
-                            implicitHeight: 26
+                            implicitHeight: audioButtons.buttonSize
                             padding: 0
                             down: split.menu !== null && split.menu.visible
                             display: AbstractButton.IconOnly
@@ -6430,8 +6506,9 @@ ApplicationWindow {
                             ToolTip.text: split.menuTip
                             ToolTip.visible: hovered
                             contentItem: Item {
-                                AudioArrow {
+                                Style.Chevron {
                                     anchors.centerIn: parent
+                                    color: parent.enabled ? Theme.text : Theme.disabled
                                 }
                             }
                             onClicked: split.menu.popup(splitFace, 0, splitFace.height)
@@ -6452,12 +6529,8 @@ ApplicationWindow {
                             font.bold: true
                         }
                     }
-                    component AudioSeparator: Rectangle {
-                        implicitWidth: 1
-                        implicitHeight: 18
-                        Layout.leftMargin: 2
-                        Layout.rightMargin: 2
-                        color: Theme.line
+                    component AudioSeparator: Item {
+                        implicitWidth: audioButtons.groupGap
                     }
                     component TapOptionsMenu: ShellMenu {
                         id: tapMenu
@@ -6783,9 +6856,11 @@ ApplicationWindow {
                         visible: !audioButtons.folded
                         spacing: 2
                         // MUST KILL: modesWidth and fullWidth hardcode the switches' and toggles' widths
-                        readonly property real modesWidth: 2 * 54 + 2 * spacing + (root.audio.karaoke ? 26 + 39 + 2 * spacing : 0)
-                        readonly property real splitArrowWidth: root.audio.karaoke ? 9 : 0
-                        readonly property real fullWidth: modesWidth + splitArrowWidth + 5 + 3 * 26 + 4 * spacing
+                        readonly property real switchWidth: 2 * audioButtons.buttonSize + 2
+                        readonly property real modesWidth: 2 * switchWidth + 2 * spacing
+                                                           + (root.audio.karaoke ? audioButtons.buttonSize + audioButtons.splitWidth + 2 * spacing : 0)
+                        readonly property real splitArrowWidth: root.audio.karaoke ? audioButtons.chevronWidth : 0
+                        readonly property real fullWidth: modesWidth + splitArrowWidth + audioButtons.groupGap + 3 * audioButtons.buttonSize + 4 * spacing
                         AudioSwitch {
                             AudioSegment {
                                 objectName: "audioLineMode"
@@ -6815,7 +6890,6 @@ ApplicationWindow {
                             tip: faceText
                             menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
                             menu: audioKaraokeMenu
-                            arrowWidth: 9
                             arrowShown: !audioButtons.splitArrowFolded
                             onToggled: {
                                 root.audio.toggleKaraokeSplitMode()
@@ -6911,7 +6985,7 @@ ApplicationWindow {
                     RowLayout {
                         id: audioTail
                         spacing: 2
-                        readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 2 * 26 + 3 * spacing
+                        readonly property real unfoldedWidth: audioButtons.groupGap + audioZoomButton.implicitWidth + 2 * audioButtons.buttonSize + 3 * spacing
                         AudioSeparator {}
                         AudioButton {
                             id: audioMoreButton
@@ -7171,7 +7245,7 @@ ApplicationWindow {
                             id: audioZoomButton
                             objectName: "audioZoom"
                             focusPolicy: Qt.NoFocus
-                            implicitHeight: 26
+                            implicitHeight: audioButtons.buttonSize
                             leftPadding: 4
                             rightPadding: 6
                             down: audioZoomMenu.visible
@@ -7187,6 +7261,7 @@ ApplicationWindow {
                                 Label {
                                     objectName: "audioZoomReadout"
                                     text: audioPanel.magnificationText
+                                    color: Theme.muted
                                     font.features: ({ "tnum": 1 })
                                 }
                             }
@@ -7522,6 +7597,7 @@ ApplicationWindow {
                         objectName: "editorAiMenu"
                         controller: root.inlineAi
                         editor: true
+                        field: lineText
                         onChosen: ask => inlineAiBox.begin(ask, true, lineText)
                         onRepeatRequested: root.repeatInlineAi(true, lineText)
                         onSettingsRequested: root.openSettings("ai")
@@ -7794,6 +7870,14 @@ ApplicationWindow {
                     ShellMenu {
                         id: gridMenu
                         objectName: "gridMenu"
+                        PluginMenuEntries {
+                            menu: gridMenu
+                            items: root.pluginMenuItems("grid.context")
+                            runtime: root.app.pluginRuntime
+                            shellWindow: root.shellWindow
+                            keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                            onTriggered: item => root.runPluginCommand(item.id, "menu")
+                        }
                         property bool canPasteTranslation: false
                         property bool canShiftTranslation: false
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
@@ -8156,10 +8240,21 @@ ApplicationWindow {
                 Label {
                     objectName: "gridEmptyState"
                     anchors.centerIn: parent
-                    visible: !shell.hasEditingTarget
-                    text: qsTranslate("HikariSub.Grid", "No document open")
+                    visible: !shell.hasEditingTarget || shell.gridFilterMatchesNothing
+                    text: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "No lines match the filter")
+                                                 : qsTranslate("HikariSub.Grid", "No document open")
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true
+                }
+                GridFilterField {
+                    id: gridFilterField
+                    shell: root.shell
+                    onLeave: toFirstLine => {
+                        const first = toFirstLine ? root.shell.firstShownLine() : undefined
+                        if (first !== undefined)
+                            root.app.selectLine(first)
+                        root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    }
                 }
             }
         }
@@ -8346,15 +8441,24 @@ ApplicationWindow {
                 id: agentPanel
                 objectName: "agentPanel"
                 dockName: root.engineName("Agent")
-                minimumBodySize: Qt.size(300, Math.max(240, agentLoader.item ? agentLoader.item.minimumHeight : 0))
+                minimumBodySize: Qt.size(300, Math.max(240, agentLoader.item?.minimumHeight ?? 0))
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Agent", "Agent")
                 Loader {
                     id: agentLoader
                     anchors.fill: parent
-                    active: root.agent.on
                     focus: true
-                    sourceComponent: AgentPanel {
+                    sourceComponent: root.agent.on ? agentPanelOn : agentPanelOff
+                }
+                Component {
+                    id: agentPanelOff
+                    AgentPanelOff {
+                        onTurnOnRequested: root.app.settings.setValue("ai.off", false)
+                    }
+                }
+                Component {
+                    id: agentPanelOn
+                    AgentPanel {
                         agent: root.agent
                         aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
@@ -8363,13 +8467,6 @@ ApplicationWindow {
                         onLogRequested: root.showPanel(logDock)
                         onExportRequested: id => agentExportDialog.openFor(id)
                         onPluginRequested: id => pluginManagerDialog.showPlugin(id)
-                    }
-                }
-                Connections {
-                    target: root.agent
-                    function onSwitched() {
-                        if (!root.agent.on && agentDock.isOpen)
-                            agentDock.close()
                     }
                 }
             }
@@ -8653,7 +8750,7 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader(root.engineName("Grid"), true, null)
+            Docking.setPanelHeader(root.engineName("Grid"), true, gridFilterField)
             Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
             Docking.setPanelHeader(root.engineName("Search"), true, null)
             Docking.setPanelHeader(root.engineName("Log"), true, null)
@@ -8665,6 +8762,7 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("NodeSources"), true, nodeSourcesTool.toolbar)
             Docking.setPanelHeader(root.engineName("NodeInspector"), true, null)
             Docking.setPanelHeader(root.engineName("Explorer"), true, explorerTool.toolbar)
+            Docking.setPanelHeader(root.engineName("Video"), true, videoHeaderTools)
             root.defaultLayout()
         }
     }
@@ -8982,6 +9080,35 @@ ApplicationWindow {
                     ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", root.review.waiting) : ""
         onReviewClicked: root.showPanel(reviewDock)
         pluginRuntime: root.app.pluginRuntime
+        pluginItems: {
+            const runtime = root.app.pluginRuntime
+            if (!runtime)
+                return []
+            runtime.windowsRevision
+            return runtime.statusItems.filter(item => runtime.onIn(item.plugin, root.shellWindow))
+        }
+        pluginTitles: {
+            const runtime = root.app.pluginRuntime
+            if (!runtime)
+                return []
+            runtime.windowsRevision
+            return runtime.statusItemTitles.filter(item => runtime.onIn(item.plugin, root.shellWindow))
+        }
+        hiddenItems: root.app.settings.value("statusBar.hiddenItems") || []
+        Connections {
+            target: root.app.settings
+            function onChanged(id) {
+                if (id === "statusBar.hiddenItems")
+                    statusStrip.hiddenItems = root.app.settings.value(id) || []
+            }
+        }
+        onPluginItemClicked: item => root.runPluginCommand(item.command, "status")
+        onPluginItemHidden: (key, hidden) => {
+            const rows = (root.app.settings.value("statusBar.hiddenItems") || []).filter(k => k !== key)
+            if (hidden)
+                rows.push(key)
+            root.app.settings.setValue("statusBar.hiddenItems", rows)
+        }
     }
     function currentTab() {
         const tabs = root.app.tabs
@@ -9094,6 +9221,7 @@ ApplicationWindow {
     PluginManagerDialog {
         id: pluginManagerDialog
         manager: root.app.pluginManager
+        takenShortcuts: root.automationHotkeys.takenDefaults
         market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
@@ -9104,6 +9232,7 @@ ApplicationWindow {
             return root.app.projectPlugins(root.shellWindow)
         }
         onCopyRequested: text => root.app.copyText(text)
+        onSettingsRequested: node => root.settingsWindow().openDialog(node)
         onTrustRequested: root.app.trustProject(root.shellWindow)
     }
     Connections {
@@ -9590,6 +9719,13 @@ ApplicationWindow {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
         }
+    }
+    QtObject {
+        readonly property bool typesetting: root.videoFullscreen.active
+                                            && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
+        readonly property bool watching: root.videoFullscreen.active && !typesetting
+        onWatchingChanged: root.app.presenceActivity(root.shellWindow, "watching", watching)
+        onTypesettingChanged: root.app.presenceActivity(root.shellWindow, "typesetting", typesetting)
     }
     Binding {
         when: root.videoFullscreen.active
@@ -10373,8 +10509,11 @@ ApplicationWindow {
         case "matrixMismatch":
             o = { title: qsTr("YCbCr matrix mismatch"),
                   text: qsTr("The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).").arg(question.recommended, question.script),
-                  detail: qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
-                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+                  detail: question.convertible
+                          ? qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.").arg(question.script)
+                          : qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)]
+                           .concat(question.convertible ? [set("convert", qsTr("Convert colours and set to %1").arg(question.recommended), false)] : []) }
             break
         case "missingLayoutRes":
             o = { title: qsTr("Set the layout resolution?"),
@@ -10396,7 +10535,7 @@ ApplicationWindow {
         }
         o.dontAsk = true
         root.messages.ask(o, (id, dontAskAgain) => {
-            const choice = ({ set: 1, play: 2 })[id] ?? 0
+            const choice = ({ set: 1, play: 2, convert: 2 })[id] ?? 0
             if (dontAskAgain)
                 root.app.stopAskingVideoProperty(question.kind, choice)
             if (choice > 0)
@@ -10468,6 +10607,8 @@ ApplicationWindow {
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport
+                pluginManager: root.app.pluginManager
+                onPluginsRequested: plugin => plugin.length > 0 ? pluginManagerDialog.showPlugin(plugin) : pluginManagerDialog.show()
                 onCreditsRequested: root.lazy(creditsDialogLoader).open()
                 onLegacyImportRequested: root.importLegacySettings()
                 onLegacyRollBackRequested: root.lazy(settingsImportDialogLoader).openRollBack()
@@ -10480,6 +10621,13 @@ ApplicationWindow {
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
     function openProjectSettingsPage(page) { settingsWindow().openDialog(undefined, undefined, page) }
+    // hikarisub://settings/<id>[?scope=project] and settings.open.
+    function openSettingLink(setting, project) { settingsWindow().openSetting(setting, project) }
+    Connections {
+        target: root.app.apiHost
+        enabled: root.servesApi
+        function onSettingsOpenRequested(setting, project) { root.openSettingLink(setting, project) }
+    }
     function repeatInlineAi(inEditor, field) {
         if (root.inlineAi.last.action)
             inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)
@@ -10783,6 +10931,20 @@ ApplicationWindow {
         explorer: explorerModel
         hangFrom: (titleBar.visible ? titleBar.height : 0) + 8
     }
+    Connections {
+        target: quickOpen.popup
+        function onOpened() {
+            if (root.pluginUi)
+                root.pluginUi.popups.dismissShown()
+        }
+    }
+    PluginQuickInput {
+        id: pluginQuickInput
+        objectName: "pluginQuickInput"
+        popups: root.pluginUi ? root.pluginUi.popups : null
+        hangFrom: quickOpen.hangFrom
+        onShowing: quickOpen.close()
+    }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]
         if (!target) {
@@ -10838,6 +11000,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         root.app.shellWindowLoaded(root)
+        root.app.pluginRuntime?.setConditions(root.shellWindow, root.pluginConditions)
         root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
@@ -11078,6 +11241,7 @@ ApplicationWindow {
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
         GLOBAL_CLOSE_TIMECODES: closeTimecodesAction, GLOBAL_SAVE_KEYFRAMES: saveKeyframesAction,
         GLOBAL_CLOSE_KEYFRAMES: closeKeyframesAction,
+        GLOBAL_FULL_SCREEN_TYPESETTING: fullScreenTypesettingAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,

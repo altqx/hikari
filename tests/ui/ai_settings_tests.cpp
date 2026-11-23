@@ -187,6 +187,7 @@ protected:
 
     void SetUp() override
     {
+        settings.set(app::AiFeatures::kOffSetting, false);
         auth.script("ok");
         previousRoutes = backends::desktop::replaceRoutes({.openUrl = [this](const QUrl &url) {
             opened.push_back(url);
@@ -239,8 +240,10 @@ TEST_F(AiSettingsTest, AddingGeminiTestsTheTypedKeyThenStoresItAndItsModels)
     EXPECT_TRUE(stored.providers.empty());
 
     QSignalSpy saved(&page, &app::AiSettings::draftSaved);
+    QSignalSpy providersChanged(&features, &app::AiFeatures::providersChanged);
     page.saveDraft(form(QStringLiteral("gemini"), QStringLiteral("Google Gemini"), QStringLiteral("AIza-typed")));
     ASSERT_TRUE(waitFor([&] { return saved.count() == 1; }));
+    EXPECT_GE(providersChanged.count(), 1);
     EXPECT_EQ(saved.first().first().toString(), QStringLiteral("gemini"));
     EXPECT_EQ(chain.keys.at("gemini"), "AIza-typed");
     ASSERT_EQ(page.providers().size(), 1);
@@ -431,6 +434,49 @@ TEST_F(AiSettingsTest, AFailedComponentDownloadForMcpSaysWhy)
     EXPECT_EQ(hostsBuilt, 0);
 }
 
+TEST_F(AiSettingsTest, TheComponentsRowSaysNotInstalledUntilInstallPutsItOnDisk)
+{
+    serveSidecar();
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    EXPECT_TRUE(component(page, "present").toBool());
+    EXPECT_FALSE(component(page, "installed").toBool());
+    EXPECT_TRUE(component(page, "version").toString().isEmpty());
+    EXPECT_EQ(component(page, "checkedAt").toLongLong(), 0);
+
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    EXPECT_TRUE(page.download().value(QStringLiteral("active")).toBool());
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_TRUE(ready.front().front().toBool());
+    EXPECT_TRUE(component(page, "installed").toBool());
+    EXPECT_EQ(component(page, "version").toString(), QStringLiteral("1.1.0"));
+    EXPECT_GT(component(page, "checkedAt").toLongLong(), 0);
+    EXPECT_TRUE(component(page, "available").toString().isEmpty());
+    EXPECT_TRUE(component(page, "staged").toString().isEmpty());
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, AFailedInstallStaysNotInstalledAndRetryInstalls)
+{
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_FALSE(ready.front().front().toBool());
+    EXPECT_FALSE(component(page, "installed").toBool());
+    EXPECT_FALSE(page.download().value(QStringLiteral("active")).toBool());
+    EXPECT_EQ(page.download().value(QStringLiteral("error")).toString(), QStringLiteral("downloadManifest"));
+
+    serveSidecar();
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 2; }));
+    EXPECT_TRUE(ready.back().front().toBool());
+    EXPECT_TRUE(component(page, "installed").toBool());
+    EXPECT_TRUE(page.download().value(QStringLiteral("error")).toString().isEmpty());
+}
+
 TEST_F(AiSettingsTest, AFailedDownloadFailsTheTestAndSaysSo)
 {
     app::AiFeatures features(settings, ports(true));
@@ -552,6 +598,46 @@ TEST_F(AiSettingsTest, TurningAiOffEmptiesThePageAndBuildsNothing)
     EXPECT_TRUE(page.on());
     EXPECT_EQ(page.providers().size(), 1);
     EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, TurningAiOnWithoutTheComponentInstallsItAtOnceAndAFailureOffersRetry)
+{
+    settings.set(app::AiFeatures::kOffSetting, true);
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    settings.set(app::AiFeatures::kOffSetting, false);
+    EXPECT_TRUE(page.download().value(QStringLiteral("active")).toBool());
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_FALSE(ready.front().front().toBool());
+    EXPECT_EQ(page.download().value(QStringLiteral("error")).toString(), QStringLiteral("downloadManifest"));
+    EXPECT_FALSE(component(page, "installed").toBool());
+
+    serveSidecar();
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 2; }));
+    EXPECT_TRUE(ready.back().front().toBool());
+    EXPECT_TRUE(component(page, "installed").toBool());
+
+    settings.set(app::AiFeatures::kOffSetting, true);
+    EXPECT_TRUE(QFile::exists(dir.filePath(QStringLiteral("ai/sidecar/state.json"))));
+    const std::size_t requests = release.requested.size();
+    settings.set(app::AiFeatures::kOffSetting, false);
+    EXPECT_FALSE(page.download().value(QStringLiteral("active")).toBool());
+    EXPECT_TRUE(component(page, "installed").toBool());
+    EXPECT_EQ(release.requested.size(), requests);
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, TurningAiOnWithItsOwnSidecarDownloadsNothing)
+{
+    settings.set(app::AiFeatures::kOffSetting, true);
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    settings.set(app::AiFeatures::kOffSetting, false);
+    EXPECT_TRUE(page.on());
+    EXPECT_FALSE(page.download().value(QStringLiteral("active")).toBool());
+    EXPECT_TRUE(release.requested.empty());
 }
 
 TEST_F(AiSettingsTest, TheCachingSettingReachesEveryRequest)
@@ -706,6 +792,7 @@ TEST_F(AiSettingsTest, TheComponentsSectionOffersANewerVersionAndDownloadsItOnUp
     app::AiSettings page(features);
     installComponent(features);
     EXPECT_TRUE(component(page, "present").toBool());
+    EXPECT_TRUE(component(page, "installed").toBool());
     EXPECT_EQ(component(page, "version").toString(), QStringLiteral("1.1.0"));
     EXPECT_EQ(component(page, "openai").toString(), QStringLiteral("7.45.0"));
 
@@ -723,6 +810,8 @@ TEST_F(AiSettingsTest, TheComponentsSectionOffersANewerVersionAndDownloadsItOnUp
     ASSERT_TRUE(waitFor([&] { return !component(page, "staged").toString().isEmpty(); }));
     EXPECT_EQ(component(page, "staged").toString(), QStringLiteral("1.2.0"));
     EXPECT_TRUE(component(page, "error").toString().isEmpty());
+    EXPECT_TRUE(component(page, "installed").toBool());
+    EXPECT_EQ(component(page, "version").toString(), QStringLiteral("1.1.0"));
 }
 
 TEST_F(AiSettingsTest, AnUpdateListWithABadSignatureIsRefused)
@@ -885,10 +974,12 @@ TEST_F(AiSettingsTest, SigningInToOpenRouterAddsTheProviderWithItsNewKey)
 
     auth.script("ok");
     QSignalSpy saved(&page, &app::AiSettings::draftSaved);
+    QSignalSpy providersChanged(&features, &app::AiFeatures::providersChanged);
     opened.clear();
     page.signInDraft(form(QStringLiteral("openrouter"), QStringLiteral("OpenRouter"), {}));
     approveOpenRouter();
     ASSERT_TRUE(waitFor([&] { return saved.count() == 1; }));
+    EXPECT_GE(providersChanged.count(), 1);
     EXPECT_EQ(chain.keys.at("openrouter"), "sk-or-v1-fake");
     EXPECT_FALSE(chain.keys.contains("openrouter-key"));
     EXPECT_TRUE(row(page, 0).value(QStringLiteral("signedIn")).toBool());
@@ -923,7 +1014,9 @@ TEST_F(AiSettingsTest, SigningOutOfOpenRouterDeletesTheKeyAndAPastedKeyIsNoLonge
     chain.keys["openrouter"] = "sk-or-v1-signed";
     app::AiFeatures features(settings, ports());
     app::AiSettings page(features);
+    QSignalSpy providersChanged(&features, &app::AiFeatures::providersChanged);
     page.signOutProvider(QStringLiteral("openrouter"));
+    EXPECT_EQ(providersChanged.count(), 1);
     EXPECT_FALSE(chain.keys.contains("openrouter"));
     EXPECT_FALSE(row(page, 0).value(QStringLiteral("signedIn")).toBool());
     EXPECT_EQ(row(page, 0).value(QStringLiteral("error")).toString(), QStringLiteral("key"));

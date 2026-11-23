@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 
+#include <tuple>
+
 using namespace hikari::plugins;
 using hikari::api::Json;
 using Kind = ManifestProblem::Kind;
@@ -349,7 +351,8 @@ TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
     Json json = minimal();
     json["contributes"] = *Json::parse(R"({
         "styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}, {"id": "pop", "path": "presets/pop.ass"}]})");
+        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}, {"id": "pop", "path": "presets/pop.ass"}],
+        "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}]})");
     const auto m = parse(json);
     ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
     ASSERT_EQ(m->styles.size(), 1u);
@@ -359,12 +362,61 @@ TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
     ASSERT_EQ(m->karaokePresets.size(), 2u);
     EXPECT_EQ(m->karaokePresets[1].path, "presets/pop.ass");
     EXPECT_TRUE(m->karaokePresets[1].title.empty());
+    ASSERT_EQ(m->graphs.size(), 1u);
+    EXPECT_EQ(m->graphs[0].title, "Sparkle");
+    EXPECT_EQ(m->graphs[0].path, "graphs/sparkle.json");
 
     json["contributes"] = *Json::parse(R"({"karaokePresets": [{"id": "glow", "path": "a.ass"}, {"id": "glow", "path": "b.ass"}]})");
     const ManifestProblem repeated = problem(json);
     EXPECT_EQ(repeated.kind, Kind::DuplicateId);
     EXPECT_EQ(repeated.at, "/contributes/karaokePresets/1/id");
+    json["contributes"] = *Json::parse(R"({"graphs": [{"id": "g", "title": "A", "path": "a.json"}, {"id": "g", "title": "B", "path": "b.json"}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/graphs/1/id");
     json["contributes"] = *Json::parse(R"({"styles": [{"id": "signs", "title": "Signs", "path": "signs.ass"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
+TEST(PluginManifest, DictionariesReadAndALanguageRepeatsNot)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"dictionaries": [
+        {"language": "ca_ES-valencia", "title": "Valencian", "aff": "dict/ca.aff", "dic": "dict/ca.dic"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->dictionaries.size(), 1u);
+    EXPECT_EQ(m->dictionaries[0].language, "ca_ES-valencia");
+    EXPECT_EQ(m->dictionaries[0].title, "Valencian");
+    EXPECT_EQ(m->dictionaries[0].aff, "dict/ca.aff");
+    EXPECT_EQ(m->dictionaries[0].dic, "dict/ca.dic");
+
+    json["contributes"] = *Json::parse(R"({"dictionaries": [
+        {"language": "pl", "title": "A", "aff": "a.aff", "dic": "a.dic"},
+        {"language": "pl", "title": "B", "aff": "b.aff", "dic": "b.dic"}]})");
+    const ManifestProblem repeated = problem(json);
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/dictionaries/1/language");
+    EXPECT_EQ(repeated.detail, "pl");
+    json["contributes"] = *Json::parse(R"({"dictionaries": [{"language": "pl", "title": "A", "aff": "a.dic", "dic": "a.aff"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
+TEST(PluginManifest, LayoutsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->layouts.size(), 1u);
+    EXPECT_EQ(m->layouts[0].id, "quiet");
+    EXPECT_EQ(m->layouts[0].title, "Quiet");
+    EXPECT_EQ(m->layouts[0].path, "layouts/quiet.json");
+
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "A", "path": "a.json"},
+                                                       {"id": "quiet", "title": "B", "path": "b.json"}]})");
+    const ManifestProblem repeated = problem(json);
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/layouts/1/id");
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "Quiet", "path": "quiet.ass"}]})");
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
@@ -552,6 +604,30 @@ TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun
     EXPECT_TRUE(parse(json));
 }
 
+TEST(PluginManifest, MainIsALuaFileAProgramOrNothing)
+{
+    Json json = minimal();
+    std::erase_if(json.asObject(), [](const Json::Member &m) { return m.key == "main"; });
+    const auto none = parse(json);
+    ASSERT_TRUE(none) << none.error().at << " " << none.error().detail;
+    EXPECT_TRUE(none->main.empty());
+    EXPECT_TRUE(none->mainProgram.empty());
+
+    json["permissions"] = *Json::parse(R"({"programs": "Is the plugin"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "core", "title": "Core", "api": true,
+        "platforms": {"linux-x64": {"path": "bin/core"}}}, {"id": "lsp", "title": "LSP", "platforms": {"linux-x64": {"path": "bin/lsp"}}}]})");
+    json["main"] = *Json::parse(R"({"program": "core"})");
+    const auto program = parse(json);
+    ASSERT_TRUE(program) << program.error().at << " " << program.error().detail;
+    EXPECT_EQ(program->mainProgram, "core");
+    EXPECT_TRUE(program->main.empty());
+
+    json["main"] = *Json::parse(R"({"program": "nope"})");
+    EXPECT_EQ(problem(json).at, "/main/program");
+    json["main"] = *Json::parse(R"({"program": "lsp"})");
+    EXPECT_EQ(problem(json).detail, "the main program needs \"api\": true");
+}
+
 TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
 {
     Manifest current;
@@ -570,4 +646,103 @@ TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
     EXPECT_TRUE(permissionIncrease(none, current).runPrograms);
 }
 
+}
+
+namespace {
+
+Json withCommands()
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"commands": [
+        {"id": "count", "title": "Count", "icon": "plugins", "when": ["selection", "!video"]},
+        {"id": "clean", "title": "Clean"}]})");
+    return json;
+}
+
+}
+
+TEST(PluginManifest, MenusStatusItemsAndKeybindingsRead)
+{
+    Json json = withCommands();
+    Json &contributes = json["contributes"];
+    contributes["menus"] = *Json::parse(R"([{"command": "count", "location": "grid.context", "group": "tools"},
+        {"command": "count", "location": "lineEditor.context"}, {"command": "clean", "location": "menuBar"}])");
+    contributes["statusItems"] = *Json::parse(R"([{"id": "words", "title": "Words", "text": "0 words",
+        "tooltip": "Words in the Line", "command": "count"}, {"id": "dot", "title": "Dot", "icon": "plugins"}])");
+    contributes["keybindings"] = *Json::parse(R"([{"command": "count", "key": "Ctrl+Alt+K"}])");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    EXPECT_EQ(m->commands[0].icon, "plugins");
+    EXPECT_EQ(m->commands[0].when, (std::vector<std::string>{"selection", "!video"}));
+    EXPECT_TRUE(m->commands[1].when.empty());
+    ASSERT_EQ(m->menus.size(), 3u);
+    EXPECT_EQ(m->menus[0].location, MenuLocation::Grid);
+    EXPECT_EQ(m->menus[0].group, "tools");
+    EXPECT_EQ(m->menus[1].location, MenuLocation::LineEditor);
+    EXPECT_EQ(m->menus[2].location, MenuLocation::MenuBar);
+    EXPECT_EQ(m->menus[2].command, "clean");
+    ASSERT_EQ(m->statusItems.size(), 2u);
+    EXPECT_EQ(m->statusItems[0].text, "0 words");
+    EXPECT_EQ(m->statusItems[0].command, "count");
+    EXPECT_EQ(m->statusItems[1].icon, "plugins");
+    EXPECT_TRUE(m->statusItems[1].command.empty());
+    ASSERT_EQ(m->keybindings.size(), 1u);
+    EXPECT_EQ(m->keybindings[0].key, "Ctrl+Alt+K");
+}
+
+TEST(PluginManifest, ACommandThatIsntDeclaredIsRefused)
+{
+    for (const auto &[list, entry, at] :
+         {std::tuple{"menus", R"({"command": "nope", "location": "menuBar"})", "/contributes/menus/0/command"},
+          std::tuple{"statusItems", R"({"id": "a", "title": "A", "text": "A", "command": "nope"})",
+                     "/contributes/statusItems/0/command"},
+          std::tuple{"keybindings", R"({"command": "nope", "key": "Ctrl+Alt+K"})", "/contributes/keybindings/0/command"}}) {
+        Json json = withCommands();
+        json["contributes"][list] = Json::array({*Json::parse(entry)});
+        const ManifestProblem p = problem(json);
+        EXPECT_EQ(p.kind, Kind::UnknownCommand) << list;
+        EXPECT_EQ(p.at, at);
+        EXPECT_EQ(p.detail, "nope");
+    }
+}
+
+TEST(PluginManifest, RepeatsInMenusStatusItemsAndKeysAreRefused)
+{
+    Json json = withCommands();
+    json["contributes"]["menus"] = *Json::parse(R"([{"command": "count", "location": "menuBar"},
+        {"command": "count", "location": "grid.context"}, {"command": "count", "location": "menuBar", "group": "x"}])");
+    ManifestProblem p = problem(json);
+    EXPECT_EQ(p.kind, Kind::DuplicateId);
+    EXPECT_EQ(p.at, "/contributes/menus/2/command");
+
+    json = withCommands();
+    json["contributes"]["statusItems"] = *Json::parse(R"([{"id": "a", "title": "A", "text": "A"},
+        {"id": "a", "title": "B", "text": "B"}])");
+    p = problem(json);
+    EXPECT_EQ(p.kind, Kind::DuplicateId);
+    EXPECT_EQ(p.at, "/contributes/statusItems/1/id");
+
+    json = withCommands();
+    json["contributes"]["keybindings"] = *Json::parse(R"([{"command": "count", "key": "Ctrl+Alt+K"},
+        {"command": "clean", "key": "Ctrl+Alt+K"}])");
+    p = problem(json);
+    EXPECT_EQ(p.kind, Kind::DuplicateKey);
+    EXPECT_EQ(p.at, "/contributes/keybindings/1/key");
+}
+
+TEST(PluginManifest, KeysAndConditionsFollowTheSchema)
+{
+    for (const char *key : {"K", "Shift+K", "Alt+Ctrl+K", "Ctrl+Alt+K+L", "Meta+K"}) {
+        Json json = withCommands();
+        json["contributes"]["keybindings"] = Json::array({Json::object({{"command", Json("count")}, {"key", Json(key)}})});
+        EXPECT_EQ(problem(json).kind, Kind::Schema) << key;
+    }
+    for (const char *key : {"Ctrl+Alt+K", "Alt+Shift+F2", "F5", "Shift+F12", "Ctrl+Shift+Meta+Space"}) {
+        Json json = withCommands();
+        json["contributes"]["keybindings"] = Json::array({Json::object({{"command", Json("count")}, {"key", Json(key)}})});
+        EXPECT_TRUE(parse(json)) << key;
+    }
+    Json json = withCommands();
+    json["contributes"]["commands"] = *Json::parse(R"([{"id": "count", "title": "Count", "when": ["lines"]}])");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
 }

@@ -284,7 +284,7 @@ Item {
                     // MUST KILL: tabLabel packs "<history step>*<name>" and is parsed back here
                     readonly property int mark: tabModified ? tabLabel.indexOf("*") : -1
                     readonly property string stepText: mark >= 0 ? tabLabel.slice(0, mark) : ""
-                    implicitHeight: label.implicitHeight + 10
+                    implicitHeight: Math.max(24, label.implicitHeight + 8)
                     implicitWidth: label.implicitWidth + 12 + closeMark.implicitWidth
                                    + (mark >= 0 ? modifiedMark.width + 4 : 0)
                                    + (reviewBadge.visible ? reviewBadge.implicitWidth + 2 : 0)

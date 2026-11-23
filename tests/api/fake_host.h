@@ -242,10 +242,20 @@ public:
             return std::nullopt;
         return std::string(R"({"id": "org.example.word-count"})");
     }
-    PluginRun run(std::string_view plugin, std::string_view command) override
+    PluginRun run(std::string_view plugin, std::string_view command, std::string_view via) override
     {
         runs.emplace_back(std::string(plugin) + "/" + std::string(command));
+        vias.emplace_back(via);
         return nextRun;
+    }
+    StatusItemSet setStatusItem(std::string_view plugin, const StatusItemChange &change) override
+    {
+        if (plugin != "org.example.word-count")
+            return StatusItemSet::NotRunning;
+        if (change.item != "words")
+            return StatusItemSet::UnknownItem;
+        statusChanges.push_back(change);
+        return StatusItemSet::Set;
     }
     std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
                                                           const std::vector<PluginFile> &files) override
@@ -292,7 +302,8 @@ public:
     std::vector<FormatInfo> pluginFormats;
     PluginRun nextRun = PluginRun::Ran;
     bool fullTrust = false;
-    std::vector<std::string> runs, reviewed, installs;
+    std::vector<std::string> runs, vias, reviewed, installs;
+    std::vector<StatusItemChange> statusChanges;
     std::vector<PluginFile> scaffolded;
     std::string package;
 };
@@ -378,6 +389,34 @@ public:
     std::optional<application::VcsFailure> problem;
 };
 
+class FakeSettingsWindow final : public SettingsHost {
+public:
+    std::string title(std::string_view setting) const override
+    {
+        return setting == "grid.copyColumns" ? "Columns to copy" : "";
+    }
+    std::vector<PluginSettingState> pluginSettings() const override { return states; }
+    std::optional<std::string> setPluginSetting(std::string_view plugin, std::string_view setting,
+                                                const Json &value) override
+    {
+        for (PluginSettingState &state : states)
+            if (state.plugin == plugin && state.setting == setting) {
+                if (state.type == "boolean" && !value.isBool())
+                    return "Not a boolean.";
+                state.value = value;
+                return std::nullopt;
+            }
+        return "No such setting.";
+    }
+    void open(std::string_view setting, bool project) override { opened.emplace_back(setting, project); }
+
+    std::vector<PluginSettingState> states{
+        {"org.example.word-count", "countSpaces", "Count spaces", "boolean", true, Json(false), Json(true)},
+        {"org.example.word-count", "goal", "Goal", "number", false, Json(1.5), Json(2.5)},
+        {"org.example.word-count", "token", "Token", "secret", false, Json(), Json()}};
+    std::vector<std::pair<std::string, bool>> opened;
+};
+
 class FakeHost final : public DocumentHost, public CommandHost, public PanelHost {
 public:
     FakeHost()
@@ -408,6 +447,7 @@ public:
     SkillTiers skills{std::filesystem::path()};
     FakeAutomation automation;
     FakeTranslation translation;
+    FakeSettingsWindow settingsWindow;
     Host host()
     {
         return Host{
@@ -430,6 +470,7 @@ public:
             .keyframes = &keyframes,
             .marks = &marks,
             .vcs = &vcs,
+            .settingsWindow = &settingsWindow,
         };
     }
 

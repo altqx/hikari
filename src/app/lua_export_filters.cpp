@@ -31,9 +31,8 @@ bool LuaExportFilters::available(const std::string &scriptFile, const std::strin
     return find(scriptFile, filterName).has_value();
 }
 
-bool LuaExportFilters::run(const std::string &scriptFile, const std::string &filterName,
-                           const application::MacroSnapshot &snapshot, const application::DialogRequest &settings,
-                           Done done)
+template <class Start, class Finish>
+bool LuaExportFilters::start(const std::string &scriptFile, const std::string &filterName, Start begin, Finish finish)
 {
     const auto target = find(scriptFile, filterName);
     if (!target || m_shell.busy())
@@ -42,21 +41,47 @@ bool LuaExportFilters::run(const std::string &scriptFile, const std::string &fil
     if (!host)
         return false;
     auto connection = std::make_shared<QMetaObject::Connection>();
-    *connection = QObject::connect(
-        host, &LuaScriptHost::finished, host,
-        [host, connection, done](LuaScriptHost::RunOutcome outcome, const QString &message) {
-            QObject::disconnect(*connection);
-            if (outcome == LuaScriptHost::RunOutcome::Ok && host->lastResult()) {
-                done(*host->lastResult());
-                return;
-            }
-            done(std::unexpected((message.isEmpty() ? host->lastError() : message).toStdString()));
-        });
-    if (!m_shell.manager().runFilter(target->path, target->index, snapshot, settings)) {
+    *connection = QObject::connect(host, &LuaScriptHost::finished, host,
+                                   [host, connection, finish](LuaScriptHost::RunOutcome outcome, const QString &message) {
+                                       QObject::disconnect(*connection);
+                                       const std::string error =
+                                           (message.isEmpty() ? host->lastError() : message).toStdString();
+                                       finish(*host, outcome == LuaScriptHost::RunOutcome::Ok, error);
+                                   });
+    if (!begin(target->path, target->index)) {
         QObject::disconnect(*connection);
         return false;
     }
     return true;
+}
+
+bool LuaExportFilters::run(const std::string &scriptFile, const std::string &filterName,
+                           const application::MacroSnapshot &snapshot, const application::DialogRequest &settings,
+                           Done done)
+{
+    return start(
+        scriptFile, filterName,
+        [&](const std::string &path, int index) { return m_shell.manager().runFilter(path, index, snapshot, settings); },
+        [done](const LuaScriptHost &host, bool ok, const std::string &error) {
+            if (ok && host.lastResult())
+                done(*host.lastResult());
+            else
+                done(std::unexpected(error));
+        });
+}
+
+bool LuaExportFilters::configure(const std::string &scriptFile, const std::string &filterName,
+                                 const application::MacroSnapshot &snapshot, DialogDone done)
+{
+    return start(
+        scriptFile, filterName,
+        [&](const std::string &path, int index) { return m_shell.manager().filterConfig(path, index, snapshot); },
+        [done](const LuaScriptHost &host, bool ok, const std::string &error) {
+            if (ok && host.lastDialog())
+                done(*host.lastDialog());
+            else
+                done(std::unexpected(error));
+        });
 }
 
 }

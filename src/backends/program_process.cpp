@@ -17,6 +17,8 @@ ProgramProcess::~ProgramProcess()
     if (m_process)
         disconnect(m_process.get(), nullptr, this, nullptr);
     kill();
+    if (m_process)
+        m_process->waitForFinished(1000);
 }
 
 bool ProgramProcess::start()

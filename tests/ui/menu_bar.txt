@@ -42,16 +42,7 @@ Edit > Redo [GLOBAL_REDO]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
 Edit > -
-Edit > Review >
-Edit > Review > Keep AI change [GLOBAL_KEEP_AI_CHANGE]
-Edit > Review > Undo AI change [GLOBAL_UNDO_AI_CHANGE]
-Edit > Review > Next AI change [GLOBAL_NEXT_AI_CHANGE]
-Edit > Review > Previous AI change [GLOBAL_PREVIOUS_AI_CHANGE]
-Edit > Review > -
-Edit > Review > Keep all [GLOBAL_KEEP_ALL_AI_CHANGES]
-Edit > Review > Undo all [GLOBAL_UNDO_ALL_AI_CHANGES]
-Edit > Review > -
-Edit > Review > Show in Review panel [GLOBAL_SHOW_AI_REVIEW]
+Edit > Turn on AI…
 Edit > -
 Edit > Find… [GLOBAL_SEARCH]
 Edit > Replace… [GLOBAL_FIND_REPLACE]
@@ -257,7 +248,6 @@ View > Panels > Automation >
 View > Panels > Explorer >
 View > Panels > Log >
 View > Panels > -
-View > Panels > Review >
 View > Panels > Agent >
 View > Panels > -
 View > Panels > Graph >
@@ -269,6 +259,7 @@ View > Explorer [GLOBAL_SHOW_EXPLORER]
 View > Log
 View > -
 View > Node effects [GLOBAL_NODE_EFFECTS]
+View > Full screen typesetting [GLOBAL_FULL_SCREEN_TYPESETTING]
 View > -
 View > Hide tags in the Grid [GLOBAL_HIDE_TAGS]
 View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
