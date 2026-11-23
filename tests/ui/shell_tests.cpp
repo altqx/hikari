@@ -40322,6 +40322,11 @@ private slots:
         const auto line = [&](int at) { return v5Session()->document().lines()[at]; };
         const auto u8 = [](const std::u8string &text) { return QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())); };
         const auto id = [&](int at) { return qulonglong(line(at)->id.value); };
+        const auto hoverClick = [&](QQuickItem *target) {
+            QTest::mouseMove(target->window(), target->mapToScene(QPointF(target->width() / 2, target->height() / 2)).toPoint());
+            QTRY_VERIFY(target->property("hovered").toBool());
+            clickWith(target, Qt::NoModifier);
+        };
         application->selectLine(id(0));
         auto &fs = application->videoFullscreen();
         QVERIFY(fs.toggle(0));
@@ -40364,16 +40369,16 @@ private slots:
         QTRY_COMPARE(fsWindow->activeFocusItem(), fullscreenItem("videoFullscreenKeys"));
         QVERIFY(fs.active());
 
-        clickWith(fullscreenItem("fullscreenLineBoxNext"), Qt::NoModifier);
+        hoverClick(fullscreenItem("fullscreenLineBoxNext"));
         QTRY_COMPARE(application->shell().activeLineNumber(), 2);
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("second"));
         field->forceActiveFocus();
         QTest::keyClick(fsWindow, Qt::Key_Up, Qt::ControlModifier);
         QTRY_COMPARE(application->shell().activeLineNumber(), 1);
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("{\\b1}first!"));
-        clickWith(fullscreenItem("fullscreenLineBoxUndo"), Qt::NoModifier);
+        hoverClick(fullscreenItem("fullscreenLineBoxUndo"));
         QTRY_COMPARE(u8(line(0)->text), QStringLiteral("{\\b1}first"));
-        clickWith(fullscreenItem("fullscreenLineBoxRedo"), Qt::NoModifier);
+        hoverClick(fullscreenItem("fullscreenLineBoxRedo"));
         QTRY_COMPARE(u8(line(0)->text), QStringLiteral("{\\b1}first!"));
 
         auto *picker = fullscreenItem("fullscreenLineBox")->property("stylePicker").value<QObject *>();
@@ -40381,7 +40386,7 @@ private slots:
         const auto pickerItem = [&](const char *name) {
             return findItem(picker->property("contentItem").value<QQuickItem *>(), QLatin1String(name));
         };
-        clickWith(fullscreenItem("fullscreenLineBoxStyle"), Qt::NoModifier);
+        hoverClick(fullscreenItem("fullscreenLineBoxStyle"));
         QTRY_VERIFY(picker->property("opened").toBool());
         QTRY_VERIFY(pickerItem("stylePickerFilter")->hasActiveFocus());
         QTRY_VERIFY(pickerItem("stylePickerRow2"));
@@ -40395,12 +40400,12 @@ private slots:
         QTRY_VERIFY(!picker->property("visible").toBool());
         QCOMPARE(application->shell().activeLineNumber(), 1);
 
-        clickWith(fullscreenItem("fullscreenLineBoxStyle"), Qt::NoModifier);
+        hoverClick(fullscreenItem("fullscreenLineBoxStyle"));
         QTRY_VERIFY(picker->property("opened").toBool());
         QTRY_VERIFY(pickerItem("stylePickerFilter")->hasActiveFocus());
         auto *foot = pickerItem("stylePickerFoot");
         QVERIFY(!foot->isVisible());
-        clickWith(pickerItem("stylePickerStep"), Qt::NoModifier);
+        hoverClick(pickerItem("stylePickerStep"));
         QTRY_VERIFY(foot->isVisible());
         QCOMPARE(foot->property("text").toString(), QStringLiteral("Enter applies “Sign” to line 1 and goes to 2."));
         QVERIFY(pickerItem("stylePickerFilter")->hasActiveFocus());
@@ -40445,10 +40450,10 @@ private slots:
         QTRY_VERIFY(!fsWindow->isVisible());
         auto *root = engine->rootObjects().first();
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("stylesDock")))));
-        QTRY_VERIFY(item("stylesStep") && item("stylesStep")->isVisible());
+        QTRY_VERIFY(item("stylesStep") && item("stylesStep")->isVisible() && item("stylesFilter")->width() > 100);
         application->selectLine(id(1));
         auto *panel = item("stylesTool");
-        clickWith(item("stylesStep"), Qt::NoModifier);
+        hoverClick(item("stylesStep"));
         QTRY_VERIFY(panel->property("stepper").value<QObject *>()->property("on").toBool());
         panel->setProperty("chosen", QStringLiteral("Sign"));
         QTRY_COMPARE(item("stylesStepFoot")->property("text").toString(),
@@ -40456,7 +40461,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(panel, "applyFromList", Q_ARG(QVariant, QStringLiteral("Sign"))));
         QTRY_COMPARE(u8(line(1)->style), QStringLiteral("Sign"));
         QTRY_COMPARE(application->shell().activeLineNumber(), 3);
-        clickWith(item("stylesStep"), Qt::NoModifier);
+        hoverClick(item("stylesStep"));
         QTRY_VERIFY(!item("stylesStepFoot")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(panel, "applyFromList", Q_ARG(QVariant, QStringLiteral("Sign"))));
         QTRY_COMPARE(u8(line(2)->style), QStringLiteral("Sign"));

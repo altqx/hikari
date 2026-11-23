@@ -95,13 +95,14 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         spacing: 4
-        RowLayout {
-            spacing: 2
+        Item {
             Layout.fillWidth: true
+            implicitHeight: Math.max(filterField.implicitHeight, stepToggle.implicitHeight)
             TextField {
                 id: filterField
                 objectName: "stylesFilter"
-                Layout.fillWidth: true
+                anchors { left: parent.left; right: stepToggle.visible ? stepToggle.left : parent.right
+                          rightMargin: stepToggle.visible ? 2 : 0; verticalCenter: parent.verticalCenter }
                 placeholderText: qsTr("Filter")
                 Accessible.name: qsTr("Filter styles")
                 Keys.onDownPressed: list.forceActiveFocus(Qt.TabFocusReason)
@@ -114,7 +115,10 @@ Item {
                 }
             }
             IconToolButton {
+                id: stepToggle
                 objectName: "stylesStep"
+                visible: parent.width >= 160
+                anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                 iconRole: "style-apply"
                 text: qsTr("Step through lines")
                 tip: qsTr("Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back")
