@@ -6,7 +6,7 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 
 | Section | What | Saved |
 | --- | --- | --- |
-| AI features | **Turn off all AI features** (`ai.off`, off by default) | On OK or Apply, like every other setting |
+| AI features | **Turn off all AI features** (`ai.off`, on by default since [#1330](https://github.com/altqx/hikari/issues/1330)) | On OK or Apply, like every other setting |
 | Providers | Add, edit, test and delete providers | At once (see below) |
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
 | Web search | **Let AI search the web** (`ai.webSearch`, on by default), how each provider searches, and **Search service** (`ai.searchService`: None, Brave Search, Tavily, Exa or Firecrawl) with its key | The switch and the service on OK or Apply; the key once its test passes, or on Add anyway |
@@ -24,7 +24,12 @@ The Agent section arrives with AI7 below Models, and AI13 added MCP servers to t
 
 Checking the box folds the rest of the page away at once and lists what is kept (providers, keys, threads, the downloaded AI component) and what is hidden. OK or Apply then turns AI off without a restart: `AiFeatures` destroys its objects and stops the sidecar ([architecture](architecture.md#ai)). Unchecking it and pressing OK or Apply brings everything back. While the box is unchecked but not yet applied, the page says to press OK or Apply.
 
-With AI off, `AiSettings` lists no providers and refuses every action, and nothing reads the keychain, downloads or starts.
+With AI off, `AiSettings` lists no providers and refuses every action, and nothing reads the keychain, downloads or starts. The Agent panel stays, with only its "AI is off" card and **Turn on AI**, and Edit › Turn on AI… shows it ([Agent panel](ux/agent-panel.md#panel-states)).
+
+- **Off by default** (owner, [#1330](https://github.com/altqx/hikari/issues/1330)). A new profile starts with AI off.
+- **Profiles from before.** At start, a profile that never set `ai.off` keeps AI on when the AI component is installed (or the build runs its own) or `providers.json` lists a provider; `AiFeatures::settleOffDefault` then stores `ai.off = false`. It reads no keychain.
+- **Turning AI on**, from the box with OK or Apply or from the Agent panel's card, downloads the AI component at once when none is installed, whatever **Update AI components automatically** says. Its progress, failure and Retry show in AI components and in a strip at the top of the Agent panel.
+- **Reset page or Reset all** removes `ai.off`, so AI turns off at once. At the next start the profile is settled again, so AI comes back on if the AI component or a provider is still there.
 
 ## Providers
 

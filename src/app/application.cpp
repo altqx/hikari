@@ -850,6 +850,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
         return m_crashReports && m_crashReports->aiComponentFailed(version, reason);
     };
+    AiFeatures::settleOffDefault(*m_settings, aiPorts);
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder),
