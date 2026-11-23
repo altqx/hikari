@@ -224,6 +224,7 @@ AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, AiMcpServers *mcpServer
         emit componentsChanged();
     });
     connect(&m_features, &AiFeatures::componentsChanged, this, &AiSettings::componentsChanged);
+    connect(&m_features, &AiFeatures::providersChanged, this, &AiSettings::providersChanged);
     watchUpdater();
 }
 
@@ -317,7 +318,7 @@ QVariantMap AiSettings::download() const
     return {{QStringLiteral("needed"), m_download != nullptr},
             {QStringLiteral("size"), m_downloadSize},
             {QStringLiteral("received"), m_downloadReceived},
-            {QStringLiteral("active"), m_installing},
+            {QStringLiteral("active"), m_installing || m_installWanted},
             {QStringLiteral("error"), m_downloadError}};
 }
 
@@ -1118,6 +1119,7 @@ QVariantMap AiSettings::components() const
                     {QStringLiteral("reportSent"), r->reportSent}};
     const QString state = m_componentState == QLatin1String("cancelled") ? QString() : m_componentState;
     return {{QStringLiteral("present"), true},
+            {QStringLiteral("installed"), m_features.installed()},
             {QStringLiteral("version"), versions.value(QLatin1String("ai_component_version")).toString()},
             {QStringLiteral("runtime"), versions.value(QLatin1String("ai_runtime_version")).toString()},
             {QStringLiteral("anthropic"), versions.value(QLatin1String("ai_anthropic_version")).toString()},

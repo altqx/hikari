@@ -17,6 +17,13 @@ Rectangle {
     readonly property var workingPlugins: pluginRuntime ? pluginRuntime.working.filter(w => w.background) : []
     onWorkingPluginsChanged: if (workingPlugins.length === 0) workingPopover.revert()
     signal reviewClicked()
+    // PluginRuntime.statusItems rows shown in this window.
+    property var pluginItems: []
+    // PluginRuntime.statusItemTitles rows, for the menu that hides them.
+    property var pluginTitles: []
+    property var hiddenItems: []
+    signal pluginItemClicked(var item)
+    signal pluginItemHidden(string key, bool hidden)
     readonly property color warningColour: Theme.warning
     default property alias trailing: trailingItems.data
 
@@ -146,8 +153,76 @@ Rectangle {
         Row {
             id: trailingItems
             objectName: "statusTrailing"
-            visible: children.length > 0
+            visible: pluginItemsRepeater.count > 0 || children.length > 1
+            spacing: 14
             Layout.alignment: Qt.AlignVCenter
+            Repeater {
+                id: pluginItemsRepeater
+                model: bar.pluginItems.filter(item => bar.hiddenItems.indexOf(item.key) < 0)
+                delegate: AbstractButton {
+                    id: pluginItem
+                    required property var modelData
+                    objectName: "pluginStatus_" + modelData.key
+                    readonly property bool runs: modelData.command.length > 0
+                    readonly property color tone: modelData.tone === "danger" ? Theme.danger
+                                                  : modelData.tone === "warning" ? bar.warningColour : bar.palette.windowText
+                    enabled: runs
+                    focusPolicy: runs ? Qt.TabFocus : Qt.NoFocus
+                    hoverEnabled: true
+                    implicitWidth: content.implicitWidth
+                    implicitHeight: content.implicitHeight
+                    Accessible.role: runs ? Accessible.Button : Accessible.StaticText
+                    Accessible.name: modelData.title + (modelData.text.length > 0 ? ": " + modelData.text : "")
+                    Accessible.description: modelData.tooltip
+                    ToolTip.visible: hovered && modelData.tooltip.length > 0
+                    ToolTip.text: modelData.pluginName + ": " + modelData.tooltip
+                    onClicked: bar.pluginItemClicked(modelData)
+                    contentItem: Row {
+                        id: content
+                        spacing: 4
+                        Icon {
+                            iconRole: pluginItem.modelData.icon
+                            size: 14
+                            visible: pluginItem.modelData.icon.length > 0
+                            color: pluginItem.tone
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Label {
+                            text: pluginItem.modelData.text
+                            visible: text.length > 0
+                            font: bar.statusFont
+                            color: pluginItem.tone
+                            textFormat: Text.PlainText
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        enabled: bar.pluginTitles.length > 0
+        onTapped: eventPoint => statusBarMenu.popup(eventPoint.position.x, eventPoint.position.y)
+    }
+
+    ShellMenu {
+        id: statusBarMenu
+        objectName: "statusBarMenu"
+        Instantiator {
+            model: bar.pluginTitles
+            delegate: ShellMenuItem {
+                required property var modelData
+                objectName: "statusItemToggle_" + modelData.key
+                text: modelData.title
+                help: modelData.pluginName
+                checkable: true
+                checked: bar.hiddenItems.indexOf(modelData.key) < 0
+                onTriggered: bar.pluginItemHidden(modelData.key, !checked)
+            }
+            onObjectAdded: (index, object) => statusBarMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => statusBarMenu.removeItem(object)
         }
     }
 

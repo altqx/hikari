@@ -8686,6 +8686,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>Typesetting na pełnym ekranie</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -16712,6 +16716,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Not installed</source>
+        <translation>Niezainstalowany</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Zainstaluj</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Zainstalowany</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Ponów próbę</translation>
+    </message>
+    <message>
+        <source>Downloading the AI component · %1 of %2 MB</source>
+        <translation>Pobieranie komponentu AI · %1 z %2 MB</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -17648,6 +17672,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json wskazuje w %2 polecenie „%1”, którego nie deklaruje.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json przypisuje %1 dwa razy, w %2.</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>Element paska stanu: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>Skrót: %1 dla %2</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 jest już zajęty przez %2</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>Wymaga otwartego pliku</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>Działa tylko bez otwartego pliku</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>Wymaga zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>Działa tylko bez zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>Wymaga co najmniej dwóch zaznaczonych linijek</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>Działa tylko z jedną zaznaczoną linijką lub bez zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>Wymaga otwartego wideo</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>Działa tylko bez otwartego wideo</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>Wymaga otwartego audio</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>Działa tylko bez otwartego audio</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>Wymaga linijki karaoke</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>Działa tylko na linijce bez karaoke</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>Wymaga trybu tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>Działa tylko poza trybem tłumaczenia</translation>
     </message>
 </context>
 <context>
@@ -25692,6 +25792,14 @@ Usunięte style:
         <translation>Odtwórz lub wstrzymaj</translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>Typesetting na pełnym ekranie</translation>
+    </message>
+    <message>
+        <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
+        <translation>Otwiera wideo na pełnym ekranie z narzędziami wizualnymi, a obok aktywną linijkę i jej narzędzia</translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>Wideo</translation>
     </message>
@@ -25980,12 +26088,31 @@ Usunięte style:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Visual tools</source>
-        <translation>Narzędzia wizualne</translation>
-    </message>
-    <message>
         <source>Simple</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>Typesetting</translation>
+    </message>
+    <message>
+        <source>Video status</source>
+        <translation>Stan wideo</translation>
+    </message>
+    <message>
+        <source>Frame %1</source>
+        <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
+        <translation>Klatka %1</translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
+        <translation>Linijka %1 z %2</translation>
+    </message>
+    <message>
+        <source>Line %1 text</source>
+        <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
+        <translation>Tekst linijki %1</translation>
     </message>
     <message>
         <source>Typeset</source>
@@ -26371,6 +26498,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>Wiersz %1: %2</translation>
     </message>
     <message>
@@ -26626,6 +26754,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Move</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>Ruch</translation>
     </message>
     <message>
@@ -26723,6 +26852,32 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Changes the active line</source>
         <translation>Zmienia aktywną linijkę</translation>
+    </message>
+    <message>
+        <source>On the frame</source>
+        <translation>Na klatce</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Apply to</source>
+        <translation>Zastosuj do</translation>
+    </message>
+    <message>
+        <source>This line</source>
+        <translation>Ta linijka</translation>
+    </message>
+    <message>
+        <source>Picked lines (%1)</source>
+        <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
+        <translation>Wybrane linijki (%1)</translation>
+    </message>
+    <message>
+        <source>Picks the selected lines: the tools edit them, not the active line</source>
+        <translation>Używa zaznaczonych linijek: narzędzia edytują je, a nie aktywną linijkę</translation>
     </message>
     <message>
         <source>More options</source>
@@ -27138,6 +27293,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Drawing</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>Rysunek</translation>
     </message>
     <message>
@@ -27301,6 +27457,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Kształt: %1</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>Narzędzia wizualne</translation>
+    </message>
+    <message>
         <source>More tools</source>
         <translation>Więcej narzędzi</translation>
     </message>
@@ -27354,6 +27514,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Gradient</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>Gradient</translation>
     </message>
     <message>
@@ -27413,12 +27574,220 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Hydra</translation>
     </message>
     <message>
+        <source>Pointer</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Wskaźnik</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Pozycjonowanie</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Skalowanie</translation>
+    </message>
+    <message>
+        <source>Tilt X / Y</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Obrót X / Y</translation>
+    </message>
+    <message>
+        <source>Rectangle clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Wycinek prostokątny</translation>
+    </message>
+    <message>
+        <source>Vector clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Wycinek wektorowy</translation>
+    </message>
+    <message>
+        <source>Shift positions</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Przesuwanie pozycji</translation>
+    </message>
+    <message>
+        <source>All tags</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>Wszystkie tagi</translation>
+    </message>
+    <message>
         <source>Perspective</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>Perspektywa</translation>
     </message>
     <message>
         <source>Text on path</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>Tekst na ścieżce</translation>
+    </message>
+    <message>
+        <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
+        <translation>Wskaż obraz, aby odczytać pozycję. Ctrl+kliknięcie umieszcza tam linijkę.</translation>
+    </message>
+    <message>
+        <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
+        <translation>Przeciągnij, aby umieścić linijkę. Shift+przeciągnięcie blokuje jedną oś. Kliknięcie prawym przyciskiem umieszcza ją pod wskaźnikiem.</translation>
+    </message>
+    <message>
+        <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
+        <translation>Przeciągnij punkt początkowy lub końcowy; przeciąganie prawym przyciskiem ustawia koniec. Linijka przesuwa się między nimi.</translation>
+    </message>
+    <message>
+        <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
+        <translation>Przeciągnij, aby rozciągnąć w poziomie, prawym przyciskiem – w pionie. Shift+przeciągnięcie skaluje w obu osiach.</translation>
+    </message>
+    <message>
+        <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
+        <translation>Przeciągaj wokół środka obrotu, aby obrócić tekst. Przeciągnij środek obrotu, aby go przesunąć.</translation>
+    </message>
+    <message>
+        <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
+        <translation>Przeciągaj na boki, aby obrócić wokół osi Y, prawym przyciskiem w górę lub w dół – wokół osi X. Przeciągnij środek obrotu, aby go przesunąć.</translation>
+    </message>
+    <message>
+        <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
+        <translation>Przeciągnij, aby narysować prostokąt. Widać tylko to, co w środku. Przeciągaj krawędzie, aby zmienić rozmiar, a wnętrze, aby przesunąć.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt. Widać tylko to, co w środku.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt. Albo wybierz kształt i przeciągnij, aby narysować prostokąt.</translation>
+    </message>
+    <message>
+        <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
+        <translation>Przeciągnij, aby razem przesunąć pozycje, wycinki i środki obrotu wybranych linijek. Shift blokuje oś.</translation>
+    </message>
+    <message>
+        <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
+        <translation>Wybierz tag, a potem przeciągaj na boki po obrazie, aby go zmienić. Shift daje małe kroki.</translation>
+    </message>
+    <message>
+        <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
+        <translation>Przeciągnij narożniki, aby położyć tekst na powierzchni. Przeciągnij wnętrze, aby go przesunąć.</translation>
+    </message>
+    <message>
+        <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
+        <translation>Przeciągnij przez tekst, aby ustawić kierunek gradientu. Przeciągnij końce, aby go dopasować; Enter zatwierdza.</translation>
+    </message>
+    <message>
+        <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
+        <translation>Klikaj, aby dodać punkty ścieżki, i przeciągaj je, aby nadać ścieżce kształt. Tekst podąża za nią; Enter zatwierdza.</translation>
+    </message>
+    <message>
+        <source>square</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>kwadrat</translation>
+    </message>
+    <message>
+        <source>circle</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>okrąg</translation>
+    </message>
+    <message>
+        <source>cross</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>krzyżyk</translation>
+    </message>
+    <message>
+        <source>line</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>linia</translation>
+    </message>
+    <message>
+        <source>arrow</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>strzałka</translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>obrys</translation>
+    </message>
+    <message>
+        <source>Start point</source>
+        <translation>Punkt początkowy</translation>
+    </message>
+    <message>
+        <source>End point</source>
+        <translation>Punkt końcowy</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>Ścieżka</translation>
+    </message>
+    <message>
+        <source>Current position</source>
+        <translation>Bieżąca pozycja</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation>Szerokość</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation>Wysokość</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>Obie</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>Kąt</translation>
+    </message>
+    <message>
+        <source>Tilt grid</source>
+        <translation>Siatka obrotu</translation>
+    </message>
+    <message>
+        <source>Edges and corners</source>
+        <translation>Krawędzie i narożniki</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>Punkt</translation>
+    </message>
+    <message>
+        <source>Curve handle</source>
+        <translation>Uchwyt krzywej</translation>
+    </message>
+    <message>
+        <source>Position and move start</source>
+        <translation>Pozycja i początek ruchu</translation>
+    </message>
+    <message>
+        <source>Move end</source>
+        <translation>Koniec ruchu</translation>
+    </message>
+    <message>
+        <source>Clip and drawing</source>
+        <translation>Wycinek i rysunek</translation>
+    </message>
+    <message>
+        <source>Changed line</source>
+        <translation>Zmieniona linijka</translation>
+    </message>
+    <message>
+        <source>Corners</source>
+        <translation>Narożniki</translation>
+    </message>
+    <message>
+        <source>Plane corners</source>
+        <translation>Narożniki płaszczyzny</translation>
+    </message>
+    <message>
+        <source>Start and end</source>
+        <translation>Początek i koniec</translation>
+    </message>
+    <message>
+        <source>P1, P2 and P3</source>
+        <translation>P1, P2 i P3</translation>
     </message>
     <message>
         <source>\org mode</source>
@@ -27780,6 +28149,7 @@ zwiększając lub zmniejszając wartość.</translation>
     </message>
     <message>
         <source>Rotate</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>Obracaj</translation>
     </message>
     <message>

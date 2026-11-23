@@ -20,13 +20,14 @@ public:
     std::int64_t msFromFrame(std::int64_t frame) const;
     // The frame's own start, extrapolated past the held frames.
     std::int64_t startOf(std::int64_t frame) const;
+    // The frame showing at `ms`, as agi::vfr::Framerate::FrameAtTime(ms, EXACT).
+    std::int64_t frameAt(std::int64_t ms) const;
     std::int64_t heldFrames() const { return static_cast<std::int64_t>(m_starts.size()); }
     double fps() const;
     Timecodes timecodes() const;
 
 private:
     AegisubFrameTimes(std::vector<std::int64_t> startsMs, std::int64_t numerator, std::int64_t last);
-    std::int64_t frameAt(std::int64_t ms) const;
 
     std::vector<std::int64_t> m_starts;
     std::int64_t m_numerator = 0;

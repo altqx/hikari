@@ -55,7 +55,7 @@ class AiSettings final : public QObject {
     Q_PROPERTY(QVariantMap search READ search NOTIFY searchChanged)
     /// False where the OS sandbox can't apply, so the page says the AI component isn't sandboxed.
     Q_PROPERTY(bool sandboxed READ sandboxed NOTIFY switched)
-    /// The AI components section: {present, version, runtime, anthropic, openai, google, available, availableBytes,
+    /// The AI components section: {present, installed, version, runtime, anthropic, openai, google, available, availableBytes,
     /// staged, newerNeedsApp, checkedAt, state, received, total, error, policyOff, rollback}. state is "", "checking"
     /// or "downloading"; error is a download error's id; rollback is {version, to, reportSent} or empty.
     Q_PROPERTY(QVariantMap components READ components NOTIFY componentsChanged)

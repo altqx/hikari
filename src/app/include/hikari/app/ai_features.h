@@ -174,6 +174,7 @@ public:
     backends::ai::AiSidecarHost *sidecar() const;
     /// The version the running sidecar reported, or the one that would run.
     QString sidecarVersion() const;
+    bool installed() const { return runnable().has_value(); }
     /// Whether the sidecar runs fully sandboxed: the host's own coverage once it is built, else what this system can
     /// enforce.
     bool sandboxed() const;
@@ -207,6 +208,7 @@ signals:
     void switched(bool on);
     /// The sidecar's version, the check or the staged update changed.
     void componentsChanged();
+    void providersChanged();
     /// `version` failed `initialize` or crashed twice (`reason` "initialize" or "crashed"); the previous sidecar runs
     /// again and `version` is skipped.
     void rolledBack(QString version, QString reason);

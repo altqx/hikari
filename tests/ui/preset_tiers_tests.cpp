@@ -1,3 +1,4 @@
+#include "export_recipes.h"
 #include "presets_file.h"
 #include "script_dialog_memory.h"
 #include "settings_store.h"
@@ -203,6 +204,39 @@ private slots:
         shift.setProjectRoot({});
         QVERIFY(shift.savePreset(QStringLiteral("shift"), QStringLiteral("Alone"), QStringLiteral("project")));
         QCOMPARE(presetNames(store.list("shiftTimes.presets")), (QStringList{QStringLiteral("House"), QStringLiteral("Alone")}));
+    }
+
+    void exportRecipesKeepTheirStepsInBothTiers()
+    {
+        SettingsStore store(userFile());
+        ui::ExportRecipes recipes(store);
+        recipes.setProjectRoot(project());
+        const application::ExportRecipe fansub{{{"fix-styles", true, {}},
+                                               {"transform-frame-rate", false,
+                                                {{"input", 23.976}, {"output", std::string("constant")}, {"reverse", false}}},
+                                               {"lua:sign-fx.lua/Sign blur pass", true, {{"strength", 3}}}}};
+        QVERIFY(recipes.save(QStringLiteral("Fansub release"), Tier::Project, fansub));
+        QVERIFY(recipes.save(QStringLiteral("Fansub release"), Tier::Mine, {}));
+        QCOMPARE(presetNames(PresetsFile(project()).list("export.recipes")), QStringList{QStringLiteral("Fansub release")});
+        QCOMPARE(presetNames(store.list("export.recipes")), QStringList{QStringLiteral("Fansub release")});
+        QCOMPARE(rowKeys(recipes.rows()),
+                 (QStringList{QStringLiteral("project:Fansub release"), QStringLiteral("mine:Fansub release (hidden)")}));
+
+        ui::ExportRecipes reopened(store);
+        reopened.setProjectRoot(project());
+        QCOMPARE(reopened.recipe(QStringLiteral("Fansub release")), std::optional(fansub));
+        QCOMPARE(reopened.recipe(QStringLiteral("Fansub release"), Tier::Mine), std::optional(application::ExportRecipe{}));
+        QCOMPARE(ui::ExportRecipes::recipeOf(ui::ExportRecipes::stepsOf(fansub)), fansub);
+
+        QVERIFY(reopened.rename(Tier::Project, QStringLiteral("Fansub release"), QStringLiteral("TV")));
+        QVERIFY(reopened.remove(QStringLiteral("Fansub release"), Tier::Mine));
+        QVERIFY(!reopened.save(QStringLiteral("  "), Tier::Mine, fansub));
+        QCOMPARE(rowKeys(reopened.rows()), QStringList{QStringLiteral("project:TV")});
+        QVERIFY(store.list("export.recipes").isEmpty());
+
+        reopened.setProjectRoot({});
+        QVERIFY(reopened.save(QStringLiteral("Alone"), Tier::Project, fansub));
+        QCOMPARE(presetNames(store.list("export.recipes")), QStringList{QStringLiteral("Alone")});
     }
 
     void dialogPresetsHideByDialogKeyAndName()

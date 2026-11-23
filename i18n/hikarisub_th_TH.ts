@@ -8554,6 +8554,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -16462,6 +16466,26 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Not installed</source>
+        <translation>ยังไม่ได้ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Downloading the AI component · %1 of %2 MB</source>
+        <translation>กำลังดาวน์โหลดคอมโพเนนต์ AI · %1 จาก %2 MB</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -17396,6 +17420,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json อ้างถึงคำสั่ง “%1” ที่ %2 ซึ่งไม่ได้ประกาศไว้</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json กำหนด %1 ซ้ำสองครั้ง ที่ %2</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>รายการในแถบสถานะ: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>ปุ่มลัด: %1 สำหรับ %2</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 ถูกใช้โดย %2 แล้ว</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>ต้องมีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>ต้องมีการเลือก</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีการเลือก</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>ต้องเลือกตั้งแต่สองบรรทัดขึ้นไป</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>ทำงานได้เฉพาะเมื่อเลือกบรรทัดเดียวหรือไม่ได้เลือก</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>ต้องมีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>ต้องมีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>ต้องเป็นบรรทัดคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>ทำงานได้เฉพาะบนบรรทัดที่ไม่มีคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>ต้องอยู่ในโหมดการแปล</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>ทำงานได้เฉพาะนอกโหมดการแปล</translation>
     </message>
 </context>
 <context>
@@ -25248,6 +25348,14 @@ Styles deleted:
         <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
+        <translation>เปิดวิดีโอแบบเต็มหน้าจอ โดยมีเครื่องมือภาพ บรรทัดปัจจุบัน และเครื่องมือของบรรทัดอยู่ด้านข้าง</translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>วิดีโอ</translation>
     </message>
@@ -25536,12 +25644,31 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Visual tools</source>
-        <translation>เครื่องมือภาพ</translation>
-    </message>
-    <message>
         <source>Simple</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
+        <source>Video status</source>
+        <translation>สถานะวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame %1</source>
+        <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
+        <translation>เฟรม %1</translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
+        <translation>บรรทัด %1 จาก %2</translation>
+    </message>
+    <message>
+        <source>Line %1 text</source>
+        <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
+        <translation>ข้อความบรรทัด %1</translation>
     </message>
     <message>
         <source>Typeset</source>
@@ -25923,6 +26050,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>บรรทัด %1: %2</translation>
     </message>
     <message>
@@ -26172,6 +26300,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Move</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ย้าย</translation>
     </message>
     <message>
@@ -26267,6 +26396,32 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Changes the active line</source>
         <translation>เปลี่ยนบรรทัดปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>On the frame</source>
+        <translation>บนเฟรม</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Apply to</source>
+        <translation>นำไปใช้กับ</translation>
+    </message>
+    <message>
+        <source>This line</source>
+        <translation>บรรทัดนี้</translation>
+    </message>
+    <message>
+        <source>Picked lines (%1)</source>
+        <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
+        <translation>บรรทัดที่ตรึงไว้ (%1)</translation>
+    </message>
+    <message>
+        <source>Picks the selected lines: the tools edit them, not the active line</source>
+        <translation>ตรึงบรรทัดที่เลือก: เครื่องมือจะแก้ไขบรรทัดเหล่านั้น ไม่ใช่บรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>More options</source>
@@ -26670,6 +26825,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Drawing</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ภาพวาด</translation>
     </message>
     <message>
@@ -26833,6 +26989,10 @@ or codecs or a splitter may be missing</source>
         <translation>รูปร่าง: %1</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>เครื่องมือภาพ</translation>
+    </message>
+    <message>
         <source>More tools</source>
         <translation>เครื่องมือเพิ่มเติม</translation>
     </message>
@@ -26886,6 +27046,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Gradient</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ไล่ระดับ</translation>
     </message>
     <message>
@@ -26945,12 +27106,220 @@ or codecs or a splitter may be missing</source>
         <translation>ไฮดรา</translation>
     </message>
     <message>
+        <source>Pointer</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ตัวบ่งชี้ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ปรับขนาด</translation>
+    </message>
+    <message>
+        <source>Tilt X / Y</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>หมุนตามแกน X / Y</translation>
+    </message>
+    <message>
+        <source>Rectangle clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>คลิปสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Vector clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>คลิปเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Shift positions</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>เลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>All tags</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ไฮดรา</translation>
+    </message>
+    <message>
         <source>Perspective</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>เพอร์สเปกทีฟ</translation>
     </message>
     <message>
         <source>Text on path</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ข้อความตามเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
+        <translation>ชี้ที่ภาพเพื่ออ่านตำแหน่ง Ctrl+คลิกเพื่อวางบรรทัดที่นั่น</translation>
+    </message>
+    <message>
+        <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
+        <translation>ลากเพื่อวางบรรทัด Shift+ลากเพื่อล็อกไว้ที่แกนเดียว คลิกขวาเพื่อวางบรรทัดที่ตัวชี้</translation>
+    </message>
+    <message>
+        <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
+        <translation>ลากจุดเริ่มต้นหรือจุดสิ้นสุด ลากด้วยปุ่มขวาเพื่อกำหนดจุดสิ้นสุด บรรทัดจะเคลื่อนที่ระหว่างสองจุดนี้</translation>
+    </message>
+    <message>
+        <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
+        <translation>ลากเพื่อยืดแนวนอน ลากด้วยปุ่มขวาเพื่อยืดแนวตั้ง Shift+ลากเพื่อปรับขนาดทั้งสองแนว</translation>
+    </message>
+    <message>
+        <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
+        <translation>ลากรอบจุดศูนย์กลางเพื่อหมุนข้อความ ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
+    </message>
+    <message>
+        <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
+        <translation>ลากไปด้านข้างเพื่อหมุนตามแกน Y ลากด้วยปุ่มขวาขึ้นหรือลงเพื่อหมุนตามแกน X ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
+    </message>
+    <message>
+        <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบ จะแสดงเฉพาะส่วนที่อยู่ข้างใน ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง จะแสดงเฉพาะส่วนที่อยู่ข้างใน</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง หรือเลือกรูปร่างแล้วลากสร้างกรอบ</translation>
+    </message>
+    <message>
+        <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
+        <translation>ลากเพื่อย้ายตำแหน่ง คลิป และจุดศูนย์กลางของบรรทัดที่ตรึงไว้พร้อมกัน กด Shift เพื่อล็อกแกน</translation>
+    </message>
+    <message>
+        <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
+        <translation>เลือกแท็ก แล้วลากไปด้านข้างบนภาพเพื่อเปลี่ยนค่า กด Shift เพื่อปรับทีละน้อย</translation>
+    </message>
+    <message>
+        <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
+        <translation>ลากมุมเพื่อวางข้อความบนพื้นผิว ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
+        <translation>ลากผ่านข้อความเพื่อกำหนดทิศทางการไล่ระดับ ลากปลายเพื่อปรับ กด Enter เพื่อนำไปใช้</translation>
+    </message>
+    <message>
+        <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
+        <translation>คลิกเพื่อเพิ่มจุดเส้นทาง ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง กด Enter เพื่อนำไปใช้</translation>
+    </message>
+    <message>
+        <source>square</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>สี่เหลี่ยมจัตุรัส</translation>
+    </message>
+    <message>
+        <source>circle</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>วงกลม</translation>
+    </message>
+    <message>
+        <source>cross</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>กากบาท</translation>
+    </message>
+    <message>
+        <source>line</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>เส้น</translation>
+    </message>
+    <message>
+        <source>arrow</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>ลูกศร</translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Start point</source>
+        <translation>จุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>End point</source>
+        <translation>จุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>เส้นทาง</translation>
+    </message>
+    <message>
+        <source>Current position</source>
+        <translation>ตำแหน่งปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation>ความกว้าง</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation>ความสูง</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>ทั้งสอง</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>มุม</translation>
+    </message>
+    <message>
+        <source>Tilt grid</source>
+        <translation>กริดการเอียง</translation>
+    </message>
+    <message>
+        <source>Edges and corners</source>
+        <translation>ขอบและมุม</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>จุด</translation>
+    </message>
+    <message>
+        <source>Curve handle</source>
+        <translation>จุดควบคุมเส้นโค้ง</translation>
+    </message>
+    <message>
+        <source>Position and move start</source>
+        <translation>ตำแหน่งและจุดเริ่มการเคลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Move end</source>
+        <translation>จุดสิ้นสุดการเคลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Clip and drawing</source>
+        <translation>คลิปและภาพวาด</translation>
+    </message>
+    <message>
+        <source>Changed line</source>
+        <translation>บรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Corners</source>
+        <translation>มุม</translation>
+    </message>
+    <message>
+        <source>Plane corners</source>
+        <translation>มุมระนาบ</translation>
+    </message>
+    <message>
+        <source>Start and end</source>
+        <translation>จุดเริ่มต้นและจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>P1, P2 and P3</source>
+        <translation>P1, P2 และ P3</translation>
     </message>
     <message>
         <source>\org mode</source>
@@ -27312,6 +27681,7 @@ increasing or decreasing the value.</source>
     </message>
     <message>
         <source>Rotate</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>หมุน</translation>
     </message>
     <message>

@@ -93,13 +93,17 @@ Result commandsList(const Context &context, const Json &params)
     if (global && context.host.plugins)
         for (const PluginState &plugin : context.host.plugins->plugins())
             for (const PluginCommand &c : plugin.commands)
-                if (matches(c.command, c.title))
-                    list.push(Json::object({{"command", Json(c.command)},
-                                            {"name", Json(c.title)},
-                                            {"window", Json("global")},
-                                            {"enabled", Json(true)},
-                                            {"keys", Json::array()},
-                                            {"kind", Json("plugin")}}));
+                if (matches(c.command, c.title)) {
+                    Json entry = Json::object({{"command", Json(c.command)},
+                                               {"name", Json(c.title)},
+                                               {"window", Json("global")},
+                                               {"enabled", Json(c.enabled)},
+                                               {"keys", Json::array()},
+                                               {"kind", Json("plugin")}});
+                    if (!c.enabled && !c.disabledReason.empty())
+                        entry["disabledReason"] = Json(c.disabledReason);
+                    list.push(std::move(entry));
+                }
     return Json::object({{"commands", list}});
 }
 
@@ -224,9 +228,11 @@ Result commandsRun(const Context &context, const Json &params)
         if (context.caller.id == "plugin:" + plugin)
             return fail(errors::kRefused, "A plugin can't run its own command through commands.run.",
                         Json::object({{"reason", Json("self")}}));
-        switch (context.host.plugins->run(plugin, command.substr(dot + 1))) {
+        switch (context.host.plugins->run(plugin, command.substr(dot + 1), viaOf(context.caller))) {
         case PluginRun::Ran:
             return ran;
+        case PluginRun::Disabled:
+            return disabled(*context.host.plugins, command);
         case PluginRun::NotRunning:
             return fail(errors::kRefused, "The plugin isn't running.", Json::object({{"reason", Json("disabled")}}));
         default:

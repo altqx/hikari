@@ -299,6 +299,8 @@ hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_temp
 
 hikari_add_gtest(hikari_application_tag_removal_tests SOURCES tag_removal_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_export_steps_tests SOURCES export_steps_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_dependency_control_tests SOURCES dependency_control_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_shape_kernel_tests SOURCES shape_kernel_tests.cpp
