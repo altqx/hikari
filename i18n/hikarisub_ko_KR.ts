@@ -3368,11 +3368,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Import text</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 가져오기</translation>
     </message>
     <message>
         <source>Text files (*.txt)</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 파일 (*.txt)</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -3855,45 +3855,45 @@ Output device: %2</source>
     </message>
     <message numerus="yes">
         <source>The file is larger than %n MB.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>파일이 %nMB보다 큽니다.</numerusform>
         </translation>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation type="unfinished"></translation>
+        <translation>파일이 UTF-8 텍스트가 아닙니다. 텍스트 편집기에서 UTF-8로 저장한 다음 가져오십시오.</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>타임코드 파일입니다. 대신 영상 › 타임코드 열기…로 여십시오.</translation>
     </message>
     <message>
         <source>The file has no lines to import.</source>
-        <translation type="unfinished"></translation>
+        <translation>파일에 가져올 줄이 없습니다.</translation>
     </message>
     <message>
         <source>Actor separator</source>
-        <translation type="unfinished"></translation>
+        <translation>배우 구분자</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation>없음</translation>
     </message>
     <message>
         <source>Comment starter</source>
-        <translation type="unfinished"></translation>
+        <translation>주석 시작 문자</translation>
     </message>
     <message>
         <source>Keep blank lines as comment lines</source>
-        <translation type="unfinished"></translation>
+        <translation>빈 줄을 주석 줄로 유지</translation>
     </message>
     <message>
         <source>A line without an actor keeps the last one</source>
-        <translation type="unfinished"></translation>
+        <translation>배우가 없는 줄은 직전 배우 유지</translation>
     </message>
     <message>
         <source>Comment: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>주석: %1</translation>
     </message>
 </context>
 <context>
@@ -8789,7 +8789,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Import text…</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 가져오기…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -12008,11 +12008,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Turns a plain text file into lines, in the open file or a new one</source>
-        <translation type="unfinished"></translation>
+        <translation>일반 텍스트 파일을 열린 파일이나 새 파일의 줄로 바꿉니다</translation>
     </message>
     <message>
         <source>Import text…</source>
-        <translation type="unfinished"></translation>
+        <translation>텍스트 가져오기…</translation>
     </message>
     <message>
         <source>Saves the document</source>

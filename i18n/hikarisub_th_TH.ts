@@ -3368,11 +3368,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Import text</source>
-        <translation type="unfinished"></translation>
+        <translation>นำเข้าข้อความ</translation>
     </message>
     <message>
         <source>Text files (*.txt)</source>
-        <translation type="unfinished"></translation>
+        <translation>ไฟล์ข้อความ (*.txt)</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -3855,45 +3855,45 @@ Output device: %2</source>
     </message>
     <message numerus="yes">
         <source>The file is larger than %n MB.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>ไฟล์มีขนาดใหญ่กว่า %n MB</numerusform>
         </translation>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation type="unfinished"></translation>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>นี่คือไฟล์ไทม์โค้ด ให้เปิดด้วย วิดีโอ › เปิดไทม์โค้ด… แทน</translation>
     </message>
     <message>
         <source>The file has no lines to import.</source>
-        <translation type="unfinished"></translation>
+        <translation>ไฟล์ไม่มีบรรทัดที่จะนำเข้า</translation>
     </message>
     <message>
         <source>Actor separator</source>
-        <translation type="unfinished"></translation>
+        <translation>ตัวคั่นผู้พูด</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่มี</translation>
     </message>
     <message>
         <source>Comment starter</source>
-        <translation type="unfinished"></translation>
+        <translation>เครื่องหมายความคิดเห็น</translation>
     </message>
     <message>
         <source>Keep blank lines as comment lines</source>
-        <translation type="unfinished"></translation>
+        <translation>เก็บบรรทัดว่างไว้เป็นบรรทัดความคิดเห็น</translation>
     </message>
     <message>
         <source>A line without an actor keeps the last one</source>
-        <translation type="unfinished"></translation>
+        <translation>บรรทัดที่ไม่มีผู้พูดใช้ผู้พูดของบรรทัดก่อนหน้า</translation>
     </message>
     <message>
         <source>Comment: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ความคิดเห็น: %1</translation>
     </message>
 </context>
 <context>
@@ -8789,7 +8789,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Import text…</source>
-        <translation type="unfinished"></translation>
+        <translation>นำเข้าข้อความ…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -12008,11 +12008,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Turns a plain text file into lines, in the open file or a new one</source>
-        <translation type="unfinished"></translation>
+        <translation>แปลงไฟล์ข้อความธรรมดาเป็นบรรทัด ในไฟล์ที่เปิดอยู่หรือไฟล์ใหม่</translation>
     </message>
     <message>
         <source>Import text…</source>
-        <translation type="unfinished"></translation>
+        <translation>นำเข้าข้อความ…</translation>
     </message>
     <message>
         <source>Saves the document</source>

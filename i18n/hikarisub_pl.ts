@@ -3436,11 +3436,11 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Import text</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj tekst</translation>
     </message>
     <message>
         <source>Text files (*.txt)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki tekstowe (*.txt)</translation>
     </message>
     <message>
         <source>Open subtitles</source>
@@ -3933,47 +3933,47 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message numerus="yes">
         <source>The file is larger than %n MB.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Plik jest większy niż %n MB.</numerusform>
+            <numerusform>Plik jest większy niż %n MB.</numerusform>
+            <numerusform>Plik jest większy niż %n MB.</numerusform>
         </translation>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik nie jest tekstem w kodowaniu UTF-8. Zapisz go jako UTF-8 w edytorze tekstu, a potem zaimportuj.</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
-        <translation type="unfinished"></translation>
+        <translation>To jest plik kodów czasowych. Zamiast tego otwórz go za pomocą Wideo › Otwórz kody czasowe….</translation>
     </message>
     <message>
         <source>The file has no lines to import.</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik nie zawiera linijek do zaimportowania.</translation>
     </message>
     <message>
         <source>Actor separator</source>
-        <translation type="unfinished"></translation>
+        <translation>Separator aktora</translation>
     </message>
     <message>
         <source>None</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak</translation>
     </message>
     <message>
         <source>Comment starter</source>
-        <translation type="unfinished"></translation>
+        <translation>Znacznik komentarza</translation>
     </message>
     <message>
         <source>Keep blank lines as comment lines</source>
-        <translation type="unfinished"></translation>
+        <translation>Zachowuj puste wiersze jako zakomentowane linijki</translation>
     </message>
     <message>
         <source>A line without an actor keeps the last one</source>
-        <translation type="unfinished"></translation>
+        <translation>Wiersz bez aktora przejmuje poprzedniego aktora</translation>
     </message>
     <message>
         <source>Comment: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Komentarz: %1</translation>
     </message>
 </context>
 <context>
@@ -8935,7 +8935,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Import text…</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj tekst…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -12230,11 +12230,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Turns a plain text file into lines, in the open file or a new one</source>
-        <translation type="unfinished"></translation>
+        <translation>Zamienia zwykły plik tekstowy na linijki w otwartym pliku lub w nowym</translation>
     </message>
     <message>
         <source>Import text…</source>
-        <translation type="unfinished"></translation>
+        <translation>Importuj tekst…</translation>
     </message>
     <message>
         <source>Saves the document</source>

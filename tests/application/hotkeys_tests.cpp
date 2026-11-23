@@ -553,13 +553,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 406u);
+    EXPECT_EQ(cut.rowCount(), 407u);
     EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 407u);
+    EXPECT_EQ(whole.rowCount(), 408u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -880,16 +880,16 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
     ASSERT_EQ(list.rowCount(), 409u);
-    const auto &added = list.row(407);
+    const auto &added = list.row(408);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 408u);
-    EXPECT_EQ(list.row(407).accel, "F6");
-    EXPECT_EQ(list.selection(), 407);
+    EXPECT_EQ(list.rowCount(), 409u);
+    EXPECT_EQ(list.row(408).accel, "F6");
+    EXPECT_EQ(list.selection(), 408);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)

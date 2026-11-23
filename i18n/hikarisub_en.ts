@@ -290,9 +290,9 @@
     </message>
     <message numerus="yes">
         <source>The file is larger than %n MB.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>The file is larger than %n MB.</numerusform>
+            <numerusform>The file is larger than %n MB.</numerusform>
         </translation>
     </message>
 </context>
