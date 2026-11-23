@@ -140,6 +140,7 @@ Item {
         const r = Object.assign({}, stagedRoles)
         r[role] = value
         stagedRoles = r
+        commit()
     }
     function openForm(preset, id) {
         adding = id ? "" : preset

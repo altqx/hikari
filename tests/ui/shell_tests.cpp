@@ -19336,6 +19336,7 @@ private slots:
               {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
               {"program.tabTextMaxChars", nullptr},
               {"autosave.maxFiles", nullptr},
+              {"autosave.intervalSeconds", nullptr},
               {"notices.toasts", "Show notices as toasts"},
               {"fonts.externalDirectory", nullptr}}},
             {"settingsPageAppearance",
@@ -19680,17 +19681,12 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiDraftCancel"), "click"));
         QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
 
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!stored->config.roles.contains(ai::Role::Judge));
-        dialog = openSettings();
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        showSettingsPage("ai");
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
+        QTRY_VERIFY(stored->config.roles.contains(ai::Role::Judge));
+        QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
 
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
