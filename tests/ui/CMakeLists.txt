@@ -243,6 +243,9 @@ hikari_add_qttest(hikari_ui_automation_submenus_tests SOURCES automation_submenu
 target_compile_definitions(hikari_ui_automation_submenus_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_submenus_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_automation_menu_checks_tests SOURCES automation_menu_checks_tests.cpp
+    LIBRARIES hikari_composition)
+add_dependencies(hikari_ui_automation_menu_checks_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends
     PARTS listing matching=anUndoneApplyMatchesAgain applying=aFailedMatchIsNotKept)

@@ -2336,6 +2336,18 @@ Output device: %2</source>
         <translation>매크로가 실행되는 동안 문서가 변경되어 아무것도 변경되지 않았습니다.</translation>
     </message>
     <message>
+        <source>Checking…</source>
+        <translation>확인 중…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>선택한 줄에서 실행할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>유효성 검사 함수가 오류로 중지되었습니다</translation>
+    </message>
+    <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>마지막으로 실행한 매크로를 더 이상 불러온 상태가 아니어서 반복할 수 없습니다.</translation>
     </message>

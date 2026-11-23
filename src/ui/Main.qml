@@ -4387,6 +4387,7 @@ ApplicationWindow {
                     after: macrosSeparator
                     macros: automationMenu.lazyItems?.placed ? root.macroItems : []
                     enabled: !root.automation.running
+                    checkOf: macro => root.automation.checksRevision >= 0 ? root.automation.macroCheck(macro.path, macro.ordinal) : ({})
                     keys: macro => root.automationHotkeys.keys[root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal)] ?? ""
                     onTriggered: macro => {
                         if (root.hotkeys.shiftClicked(true)) {
