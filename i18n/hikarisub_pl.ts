@@ -8949,6 +8949,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>Synonim</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8975,6 +8979,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>Zaproponuj synonimy</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>Brak synonimów dla “%1”</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>Nie można zaproponować synonimów: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>Osiągnięto dzisiejszy limit kosztów.</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>Szukanie synonimów…</translation>
     </message>
     <message>
         <source>Translate to %1</source>

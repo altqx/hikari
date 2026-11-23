@@ -5301,6 +5301,7 @@ ApplicationWindow {
                 objectName: field.objectName + "AiMenu"
                 controller: root.inlineAi
                 editor: true
+                field: field
                 shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
                 onChosen: ask => inlineAiBox.begin(ask, true, field)
                 onRepeatRequested: root.repeatInlineAi(true, field)
@@ -7597,6 +7598,7 @@ ApplicationWindow {
                         objectName: "editorAiMenu"
                         controller: root.inlineAi
                         editor: true
+                        field: lineText
                         onChosen: ask => inlineAiBox.begin(ask, true, lineText)
                         onRepeatRequested: root.repeatInlineAi(true, lineText)
                         onSettingsRequested: root.openSettings("ai")

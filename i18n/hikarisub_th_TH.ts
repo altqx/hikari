@@ -8813,6 +8813,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>คำพ้องความหมาย</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8837,6 +8841,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>แนะนำคำพ้องความหมาย</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>ไม่มีคำพ้องความหมายของ “%1”</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>แนะนำคำพ้องความหมายไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>ถึงเพดานค่าใช้จ่ายของวันนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>กำลังหาคำพ้องความหมาย…</translation>
     </message>
     <message>
         <source>Translate to %1</source>

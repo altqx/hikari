@@ -221,7 +221,7 @@ private slots:
         QVERIFY(shell(QStringLiteral("aiActionsAction.trigger(), gridAiHotkeyMenu.visible")).toBool());
         QTRY_VERIFY(item(QStringLiteral("inlineAiRewrite")));
         QCOMPARE(shell(QStringLiteral("gridAiHotkeyMenu.title")).toString(), QStringLiteral("AI actions"));
-        QVERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.itemAt(5).visible")).toBool());
+        QVERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.itemAt(6).visible")).toBool());
         QCOMPARE(item(QStringLiteral("inlineAiSettings"))->property("text").toString(), QStringLiteral("Edit actions"));
         shell(QStringLiteral("gridAiHotkeyMenu.close()"));
         QTRY_VERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.visible")).toBool());
@@ -232,9 +232,9 @@ private slots:
                                            {QStringLiteral("ask"), true}}});
         QVERIFY(shell(QStringLiteral("aiActionsAction.trigger(), gridAiHotkeyMenu.visible")).toBool());
         QTRY_VERIFY(item(QStringLiteral("inlineAiCustom1")));
-        QCOMPARE(shell(QStringLiteral("[5, 6, 7].map(i => gridAiHotkeyMenu.itemAt(i).objectName).join(' ')")).toString(),
+        QCOMPARE(shell(QStringLiteral("[6, 7, 8].map(i => gridAiHotkeyMenu.itemAt(i).objectName).join(' ')")).toString(),
                  QStringLiteral("inlineAiCustomSeparator inlineAiCustom0 inlineAiCustom1"));
-        QVERIFY(shell(QStringLiteral("gridAiHotkeyMenu.itemAt(5).visible")).toBool());
+        QVERIFY(shell(QStringLiteral("gridAiHotkeyMenu.itemAt(6).visible")).toBool());
         QCOMPARE(item(QStringLiteral("inlineAiCustom0"))->property("text").toString(), QStringLiteral("Make it formal"));
         QCOMPARE(item(QStringLiteral("inlineAiCustom1"))->property("text").toString(), QStringLiteral("Explain the idiom…"));
         shell(QStringLiteral("gridAiHotkeyMenu.close()"));
@@ -310,6 +310,78 @@ private slots:
         QCOMPARE(inlineAi().last().value(QStringLiteral("action")).toString(), QStringLiteral("rewrite"));
         QCOMPARE(inlineAi().recentInstructions(), QStringList{QStringLiteral("Shout it")});
         QVERIFY(shell(QStringLiteral("repeatAiActionAction.enabled")).toBool());
+    }
+
+    void suggestSynonymsTakesTheWordAtTheCaretOrAOneWordSelection()
+    {
+        const QString stored = QString::fromUtf8(reinterpret_cast<const char *>(text(0).data()), qsizetype(text(0).size()));
+        const qsizetype there = stored.indexOf(QStringLiteral("there"));
+        const qsizetype hello = stored.indexOf(QStringLiteral("hello"));
+        QCOMPARE(inlineAi().synonymWord(int(there + 2), int(there + 2), stored), QStringLiteral("there"));
+        QCOMPARE(inlineAi().synonymWord(int(there), int(there + 5), stored), QStringLiteral("there"));
+        QCOMPARE(inlineAi().synonymWord(int(hello + 5), int(hello + 5), stored), QStringLiteral("hello"));
+        QCOMPARE(inlineAi().synonymWord(int(there), int(there + 4), stored), QString());
+        QCOMPARE(inlineAi().synonymWord(int(hello), int(there + 5), stored), QString());
+        QCOMPARE(inlineAi().synonymWord(2, 2, stored), QString());
+        QCOMPARE(inlineAi().synonymWord(int(there + 2), int(there + 2), stored + QStringLiteral("!")), QString());
+
+        editByHand(0, "\\Nwell-known");
+        QCOMPARE(inlineAi().synonymWord(2, 2, QStringLiteral("\\Nwell-known")), QStringLiteral("well-known"));
+        QCOMPARE(inlineAi().synonymWord(1, 1, QStringLiteral("\\Nwell-known")), QString());
+    }
+
+    void aChosenSynonymReplacesOnlyTheWordAsOneHistoryStepEvenInManual()
+    {
+        setMode("manual");
+        const QString stored = QString::fromUtf8(reinterpret_cast<const char *>(text(0).data()), qsizetype(text(0).size()));
+        const int at = int(stored.indexOf(QStringLiteral("there"))) + 1;
+        const std::size_t steps = session().historySize();
+        QVERIFY(inlineAi().suggestSynonyms(at, at, stored));
+        QCOMPARE(inlineAi().synonyms().value(QStringLiteral("state")).toString(), QStringLiteral("finding"));
+        QTRY_COMPARE(inlineAi().synonyms().value(QStringLiteral("state")).toString(), QStringLiteral("found"));
+        QCOMPARE(inlineAi().synonyms().value(QStringLiteral("word")).toString(), QStringLiteral("there"));
+        QCOMPARE(inlineAi().synonyms().value(QStringLiteral("words")).toStringList(),
+                 (QStringList{QStringLiteral("vast"), QStringLiteral("large"), QStringLiteral("huge")}));
+        QVERIFY(!inlineAi().useSynonym(QStringLiteral("enormous")));
+        QVERIFY(inlineAi().useSynonym(QStringLiteral("large")));
+        QCOMPARE(text(0), u8"{\\i1}hello{\\i0} large");
+        QCOMPARE(text(1), u8"second?");
+        QCOMPARE(session().historySize(), steps + 1);
+        QCOMPARE(session().history().back().name, std::string("AI: Synonym"));
+        QVERIFY(inlineAi().synonyms().isEmpty());
+        QVERIFY(inlineAi().results().isEmpty());
+    }
+
+    void aSynonymForALineEditedMeanwhileChangesNothing()
+    {
+        const QString stored = QString::fromUtf8(reinterpret_cast<const char *>(text(0).data()), qsizetype(text(0).size()));
+        const int at = int(stored.indexOf(QStringLiteral("there"))) + 1;
+        QVERIFY(inlineAi().suggestSynonyms(at, at, stored));
+        QTRY_COMPARE(inlineAi().synonyms().value(QStringLiteral("state")).toString(), QStringLiteral("found"));
+        editByHand(0, "by hand");
+        const std::size_t steps = session().historySize();
+        QVERIFY(!inlineAi().useSynonym(QStringLiteral("vast")));
+        QCOMPARE(text(0), u8"by hand");
+        QCOMPARE(session().historySize(), steps);
+
+        editByHand(0, "say nothing");
+        QVERIFY(inlineAi().suggestSynonyms(6, 6, QStringLiteral("say nothing")));
+        QTRY_COMPARE(inlineAi().synonyms().value(QStringLiteral("state")).toString(), QStringLiteral("none"));
+        QVERIFY(!inlineAi().suggestSynonyms(3, 4, QStringLiteral("say nothing")));
+        QVERIFY(inlineAi().synonyms().isEmpty());
+    }
+
+    void onlyTheLineEditorsMenusOfferSynonyms()
+    {
+        QVERIFY(shell(QStringLiteral("lineText.cursorPosition = lineText.text.indexOf('there') + 1, editorAiMenu.popup(), "
+                                     "editorAiMenu.visible")).toBool());
+        QTRY_COMPARE(shell(QStringLiteral("editorAiMenu.synonymWord")).toString(), QStringLiteral("there"));
+        shell(QStringLiteral("editorAiMenu.close()"));
+        QTRY_VERIFY(!shell(QStringLiteral("editorAiMenu.visible")).toBool());
+        QVERIFY(shell(QStringLiteral("aiActionsAction.trigger(), gridAiHotkeyMenu.visible")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("inlineAiRewrite")));
+        QCOMPARE(shell(QStringLiteral("gridAiHotkeyMenu.synonymWord")).toString(), QString());
+        shell(QStringLiteral("gridAiHotkeyMenu.close()"));
     }
 
     void manualResultsWaitForApplyAndSkipEditedLines()

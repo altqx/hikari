@@ -8813,6 +8813,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>동의어</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8837,6 +8841,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>동의어 제안</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>“%1”의 동의어 없음</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>동의어를 제안할 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>오늘의 비용 한도에 도달했습니다.</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>동의어를 찾는 중…</translation>
     </message>
     <message>
         <source>Translate to %1</source>
