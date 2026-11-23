@@ -2167,13 +2167,13 @@ ApplicationWindow {
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
-        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("F6")
+        enabled: root.shellActive && !root.videoFullscreen.active && !root.hotkeys.globalSequences.includes("F6")
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
         context: Qt.ApplicationShortcut
-        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("Shift+F6")
+        enabled: root.shellActive && !root.videoFullscreen.active && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
     // Windows puts the window in menu mode on an unclaimed Shift+F10, which eats the next keys.
@@ -5746,6 +5746,7 @@ ApplicationWindow {
                 VideoRenderCost {
                     anchors.fill: presenter
                     visible: root.videoView.renderCost && root.video.hasVideo
+                             && (!root.videoFullscreen.active || root.videoFullscreen.overlays)
                     cost: presenter.renderCost
                     textTop: templateBadge.visible ? templateBadge.height + 12 : nodeBadge.visible ? nodeBadge.height + 12 : 8
                 }
@@ -5763,6 +5764,7 @@ ApplicationWindow {
                         at = point
                         popup(visualOverlay, point)
                     }
+                    onFullscreenSettingsRequested: root.openSettings("video")
                     onOpenVideoRequested: videoDialog.show()
                     onOpenSubtitlesRequested: openDialog.show()
                     onAspectRatioRequested: root.lazy(aspectRatioDialogLoader).openAtCursor(visualOverlay)
@@ -9532,10 +9534,13 @@ ApplicationWindow {
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.show()
         onAspectRatioRequested: root.lazy(aspectRatioDialogLoader).openAtCursor(videoFullscreenWindow.contentItem)
-        onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
             root.openSettings("audio")
+        }
+        onFullscreenSettingsRequested: {
+            root.videoFullscreen.leave()
+            root.openSettings("video")
         }
         Component.onCompleted: {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
@@ -9580,14 +9585,15 @@ ApplicationWindow {
                                                qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
                                                qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
                                                qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)")]
+        readonly property string allFilesFilter: qsTranslate("HikariSub.Documents", "All files (*)")
         property var pluginFormats: []
+        nameFilters: builtInFilters.concat([allFilesFilter])
         function show() {
             const folder = root.pickerFolder("subtitles")
             if (folder.length > 0)
                 currentFolder = folder
             pluginFormats = root.app.pluginOpenFormats()
-            nameFilters = builtInFilters.concat(root.app.pluginOpenFilters(),
-                                                [qsTranslate("HikariSub.Documents", "All files (*)")])
+            nameFilters = builtInFilters.concat(root.app.pluginOpenFilters(), [allFilesFilter])
             open()
         }
         onAccepted: {
@@ -11380,8 +11386,8 @@ ApplicationWindow {
         case "VIDEO_MINUTE_BACKWARD": root.video.seekBy(-60000); return true
         case "VIDEO_STOP": root.video.stop(); return true
         case "VIDEO_COPY_COORDS": root.visualTools.copyCoordinatesAtCursor(visualOverlay); return true
-        case "VIDEO_PREVIOUS_FILE": videoFileQuestion.ask(false); return true
-        case "VIDEO_NEXT_FILE": videoFileQuestion.ask(true); return true
+        case "VIDEO_PREVIOUS_FILE": videoFileQuestion.ask(false, root.videoFullscreen.active ? videoFullscreenWindow : null); return true
+        case "VIDEO_NEXT_FILE": videoFileQuestion.ask(true, root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_PREVIOUS_CHAPTER": root.video.previousChapter(); return true
         case "VIDEO_NEXT_CHAPTER": root.video.nextChapter(); return true
         case "VIDEO_DELETE_FILE": root.video.unloadVideo(); return true

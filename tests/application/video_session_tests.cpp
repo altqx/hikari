@@ -297,6 +297,27 @@ TEST_F(VideoTest, SourceGeometryOutlivesADecoderFailure)
     EXPECT_FALSE(video.sourceGeometry().valid());
 }
 
+TEST_F(VideoTest, AFrameThatWontDecodeIsNamedUntilTheNextRequest)
+{
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    EXPECT_FALSE(video.failedFrame());
+    video.showFrame(5);
+    source.fail();
+    EXPECT_EQ(video.failedFrame(), 5);
+    EXPECT_EQ(video.shownFrame(), 0);
+    video.showFrame(6);
+    EXPECT_FALSE(video.failedFrame());
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 6);
+    video.showFrame(7);
+    source.fail();
+    video.close();
+    EXPECT_FALSE(video.failedFrame());
+}
+
 TEST_F(VideoTest, SourceGeometryFallsBackToTheShownFrame)
 {
     video.open("/m/ep1.mkv");

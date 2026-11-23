@@ -70,7 +70,7 @@ set_source_files_properties(visual_transform.cpp visual_scale.cpp visual_rotatio
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 set_source_files_properties(visual_view.cpp visual_crosshair.cpp visual_script.cpp visual_position.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
-target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp)
+target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp settings_import_aegisub.cpp)
 target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
 target_sources(hikari_application PRIVATE position_commands.cpp)
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)

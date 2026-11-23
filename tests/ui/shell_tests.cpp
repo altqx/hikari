@@ -19407,7 +19407,12 @@ private slots:
               {"grid.insertEndOffset", nullptr},
               {"grid.tagsSwapCharacter", nullptr}}},
             {"settingsPageVideo",
-             {{"video.pauseOnClick", "Left mouse button pauses video"},
+             {{"video.fullscreenBarPosition", nullptr},
+              {"video.fullscreenBar", nullptr},
+              {"video.fullscreenHidePointer", "Hide the pointer with the bar"},
+              {"video.fullscreenOverlays", "Show the render time and position overlays"},
+              {"video.fullscreenOpensIn", nullptr},
+              {"video.pauseOnClick", "Left mouse button pauses video"},
               {"video.fullScreenOnStart", "Open video from the context menu in full screen"},
               {"video.openAtActiveLine", "Open video at the active line’s time"},
               {"video.moveToActiveLine", nullptr},
@@ -24218,6 +24223,19 @@ private slots:
         return application->hotkeys().keys().value(QLatin1String(window)).toMap();
     }
     QVariantList hotkeyRows() const { return application->hotkeys().rows(); }
+    QStringList listedHotkeyTexts() const
+    {
+        const auto hidden = [this](int id) { return !application->ai()->on() && application::aiCommand(id); };
+        auto bound = application->hotkeys().bindings();
+        std::erase_if(bound, [&](const auto &binding) { return hidden(binding.first.id); });
+        application::HotkeyMap copy;
+        application::HotkeyList list(copy);
+        list.build(bound, hidden);
+        QStringList texts;
+        for (std::size_t i = 0; i < list.rowCount(); ++i)
+            texts << QString::fromStdString(list.row(int(i)).text);
+        return texts;
+    }
     int hotkeyPosition(const QString &text) const
     {
         const auto rows = hotkeyRows();
@@ -24308,8 +24326,9 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 399);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Clear command history"));
+        const QStringList listed = listedHotkeyTexts();
+        QCOMPARE(hotkeyRows().size(), listed.size());
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), listed.first());
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -28379,7 +28398,8 @@ private slots:
             const auto windows = root->findChildren<QQuickWindow *>();
             QVERIFY(windows.size() >= 10);
             for (auto *other : windows)
-                QVERIFY2(other->color() == roles.panel || other->color() == roles.background,
+                QVERIFY2(other->color() == roles.panel || other->color() == roles.background
+                             || (other->objectName() == QLatin1String("videoFullscreen") && other->color() == Qt::black),
                          qPrintable(other->objectName() + QLatin1Char(' ') + other->color().name()));
             QCOMPARE(ui::IconTheme::colours()[0], roles.text);
             QTRY_COMPARE(gridPixel(), roles.panel);
@@ -29369,12 +29389,13 @@ private slots:
 
         auto &fs = application->videoFullscreen();
         fs.setBarMode(1);
+        application->settingsStore()->set("video.fullscreenOpensIn", 1);
         viewController.setAspectFromSlider(100000);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QVERIFY(fsWindow);
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.pinned());
+        QVERIFY(fs.stripReserved());
         QTRY_COMPARE(overlay->window(), fsWindow);
         pointerMovesTo(fsWindow);
         QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
@@ -29382,7 +29403,7 @@ private slots:
         crosshairOnlyOverThePicture("fullscreen, zoomed");
         if (QTest::currentTestFailed())
             return;
-        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenBarMode", "fullscreenVolume",
+        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenSimple", "fullscreenVolume",
                               "fullscreenSpeaker", "fullscreenToolsButton", "fullscreenExit"},
                              true);
         if (QTest::currentTestFailed())
@@ -29401,6 +29422,7 @@ private slots:
         viewController.setAspectFromSlider(525000);
         QTRY_COMPARE(tools.videoView().aspectRatio(), 0.75f);
         fs.setBarMode(0);
+        application->settingsStore()->set("video.fullscreenOpensIn", 0);
 
         QTRY_VERIFY(visualItem("visualToolRail")->isVisible());
         // Qt drops a move to the pointer's current point, so each try moves a pixel.
@@ -38820,14 +38842,14 @@ private slots:
         QTRY_VERIFY(fsWindow->grabWindow().copy(picture) != before);
         auto *panel = fullscreenItem("videoFullscreenPanel");
         QCOMPARE(fs.barMode(), 0);
-        QVERIFY(!fs.pinned());
+        QVERIFY(fs.stripReserved());
         QVERIFY(fs.barShown());
         QTRY_VERIFY(panel && panel->isVisible());
         QTRY_VERIFY(fullscreenItem("videoFullscreenHint")->isVisible());
         QCOMPARE(fullscreenItem("videoFullscreenHintText")->property("text").toString(),
                  QStringLiteral("Press Esc to exit full screen"));
-        QTRY_VERIFY(fullscreenItem("videoFullscreenTitle")->isVisible());
-        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
+        QVERIFY(!fullscreenItem("videoFullscreenTitle"));
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
         QCOMPARE(presenter->width(), qreal(fsWindow->width()));
         QVERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
         QVERIFY(!fullscreenItem("fullscreenInspectorSlot")->isVisible());
@@ -38835,9 +38857,8 @@ private slots:
         QVERIFY(qAbs(shownRect.width() - presenter->width()) <= 1 || qAbs(shownRect.height() - presenter->height()) <= 1);
         QVERIFY(qAbs(shownRect.center().x() - presenter->width() / 2) <= 1);
         QVERIFY(qAbs(shownRect.center().y() - presenter->height() / 2) <= 1);
-        for (const char *name : {"fullscreenPreviousFile", "fullscreenPlayPause", "fullscreenPlayLine", "fullscreenStop",
-                                 "fullscreenNextFile", "fullscreenOpenEditor", "fullscreenToolsButton", "fullscreenSpeaker",
-                                 "fullscreenExit"}) {
+        for (const char *name : {"fullscreenPreviousFrame", "fullscreenPlayPause", "fullscreenNextFrame", "fullscreenPlayLine",
+                                 "fullscreenStop", "fullscreenSpeaker", "fullscreenExit"}) {
             auto *button = fullscreenItem(name);
             QVERIFY2(button && button->isVisible(), name);
             QCOMPARE(button->property("display").toInt(), 0);
@@ -38845,22 +38866,17 @@ private slots:
             QVERIFY2(!button->property("tip").toString().isEmpty(), name);
         }
         QCOMPARE(fullscreenItem("fullscreenExit")->property("tip").toString(),
-                 QStringLiteral("Exit full screen (Esc)\nShift+click to set a shortcut"));
-        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Show when the pointer moves"));
-        QVERIFY(fullscreenItem("fullscreenBarMode")->property("tip").toString().startsWith(QStringLiteral("Full screen bar (Tab)")));
-        QCOMPARE(fullscreenItem("fullscreenVideoName")->property("text").toString(), QStringLiteral("clip.mkv"));
+                 QStringLiteral("Leave full screen (Esc)\nShift+click to set a shortcut"));
+        QCOMPARE(fs.videoName(), QStringLiteral("clip.mkv"));
         QTRY_VERIFY(fullscreenItem("fullscreenLine")->isVisible());
         QCOMPARE(fullscreenItem("fullscreenLineNumber")->property("text").toString(), QStringLiteral("1"));
         QCOMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
-        QCOMPARE(fullscreenItem("fullscreenLineTimes")->property("text").toString(),
-                 application->editor().startText() + QStringLiteral(" – ") + application->editor().endText());
         application->editor().textEdited(QStringLiteral("{\\i1}draft\\Nnow"), 5);
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("draft \u21B5 now"));
         const QString markup = QStringLiteral("<img src=\"http://127.0.0.1:9/x\"><b>bold</b>");
         application->editor().textEdited(markup, int(markup.size()));
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), markup);
         QCOMPARE(fullscreenItem("fullscreenLineText")->property("textFormat").toInt(), int(Qt::PlainText));
-        QCOMPARE(fullscreenItem("fullscreenVideoName")->property("textFormat").toInt(), int(Qt::PlainText));
         application->editor().discard();
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
         auto *progress = fullscreenItem("videoFullscreenProgress");
@@ -39094,23 +39110,21 @@ private slots:
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.pinned());
-        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Always show"));
+        QVERIFY(fs.stripReserved());
         const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
         QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
         auto *fsMenu = named("videoFullscreenMenu");
         QTRY_VERIFY(fsMenu->property("opened").toBool());
         QCOMPARE(named("fullscreenMenuFullscreenBar")->property("title").toString(), QStringLiteral("Full screen bar"));
         QVERIFY(named("fullscreenMenuFullscreenBar")->property("shown").toBool());
-        QCOMPARE(named("fullscreenMenuFullscreenBarAuto")->property("text").toString(), QStringLiteral("Show when the pointer moves"));
+        QCOMPARE(named("fullscreenMenuFullscreenBarAuto")->property("text").toString(), QStringLiteral("Auto-hide"));
         QCOMPARE(named("fullscreenMenuFullscreenBar")->property("shortcutText").toString(), QStringLiteral("Tab"));
         QVERIFY(checked(QStringLiteral("fullscreenMenuFullscreenBarAlways")));
         pick(QStringLiteral("fullscreenMenuFullscreenBar"), "Never", 2);
-        QVERIFY(!fs.pinned());
-        QTRY_COMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Never show"));
+        QVERIFY(!fs.stripReserved());
         QVERIFY(checked(QStringLiteral("fullscreenBarNever")));
         pick(QStringLiteral("fullscreenMenuFullscreenBar"), "Auto", 0);
-        QTRY_COMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Show when the pointer moves"));
+        QVERIFY(fs.stripReserved());
         QTRY_VERIFY(!fsMenu->property("visible").toBool());
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 1);
@@ -39172,13 +39186,18 @@ private slots:
         auto &fs = application->videoFullscreen();
         auto &settings = *application->settingsStore();
         auto &video = application->video();
+        const auto restore = qScopeGuard([&] {
+            settings.set("video.fullscreenBar", 0);
+            settings.set("video.fullscreenBarPosition", 0);
+            settings.set("video.fullscreenHidePointer", true);
+        });
         fs.setIdleInterval(300);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
         QVERIFY(becomesFocusWindow(fsWindow));
         auto *panel = fullscreenItem("videoFullscreenPanel");
-        auto *title = fullscreenItem("videoFullscreenTitle");
+        QVERIFY(!fullscreenItem("videoFullscreenTitle"));
         auto *overlay = item("visualOverlay");
         auto *presenter = item("videoPresenter");
         const auto cursor = [&] { return overlay->property("cursorOverride").toInt(); };
@@ -39194,16 +39213,20 @@ private slots:
             QTRY_VERIFY(!video.playing());
         };
         const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
+        QCOMPARE(fs.barPosition(), ui::VideoFullscreenController::BarPosition::Below);
+        QCOMPARE(fs.barMode(), 0);
+        QVERIFY(fs.stripReserved());
+        QCOMPARE(panel->height(), 112.0);
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
         QTest::mouseMove(fsWindow, picture);
         QTest::qWait(600);
         QVERIFY(fs.barShown());
         QVERIFY(panel->isVisible());
-        QVERIFY(title->isVisible());
         QCOMPARE(cursor(), -1);
         playFromStart();
         QTRY_VERIFY(!fs.barShown());
         QTRY_VERIFY(!panel->isVisible());
-        QTRY_VERIFY(!title->isVisible());
+        QCOMPARE(presenter->height(), fsWindow->height() - panel->height());
         QCOMPARE(cursor(), int(Qt::BlankCursor));
         QVERIFY(fullscreenItem("videoFullscreenKeys")->hasActiveFocus());
         // Qt Quick resends a still pointer's hover each frame the picture changes.
@@ -39228,6 +39251,21 @@ private slots:
         QCOMPARE(cursor(), -1);
         QTRY_VERIFY(panel->isVisible());
         QTRY_VERIFY(!fs.barShown());
+        QTest::keyClick(fsWindow, Qt::Key_Space);
+        QTRY_VERIFY(!video.playing());
+        QTRY_VERIFY(fs.barShown());
+        playFromStart();
+        QTRY_VERIFY(!fs.barShown());
+        QTest::keyClick(fsWindow, Qt::Key_Right);
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        fs.keyPressed(Qt::Key_Space);
+        QVERIFY(!fs.barShown());
+        settings.set("video.fullscreenHidePointer", false);
+        QTRY_COMPARE(cursor(), -1);
+        QVERIFY(!fs.barShown());
+        settings.set("video.fullscreenHidePointer", true);
+        QTRY_COMPARE(cursor(), int(Qt::BlankCursor));
         auto &view = application->videoView();
         QVERIFY(view.toggleZoom());
         QVERIFY(view.zoomMode());
@@ -39240,9 +39278,12 @@ private slots:
         QVERIFY(!view.zoomMode());
         QVERIFY(view.resetZoom());
         auto &tools = application->visualTools();
-        const qreal barHeight = panel->height();
         tools.selectFamily(3);
         auto *rail = fullscreenItem("fullscreenToolRail");
+        QTest::qWait(50);
+        QVERIFY(!rail->isVisible());
+        QVERIFY(!fullscreenItem("fullscreenInspectorSlot")->isVisible());
+        fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
         QTRY_VERIFY(rail->isVisible());
         pause();
         playFromStart();
@@ -39256,22 +39297,14 @@ private slots:
         QTRY_VERIFY(!fs.barShown());
         QTest::mouseMove(fsWindow, onRail + QPoint(0, 2));
         QTRY_VERIFY(fs.barShown());
-        pause();
-        playFromStart();
-        QTRY_VERIFY(title->isVisible());
-        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
-        for (int i = 0; i < 5; ++i) {
-            QTest::mouseMove(fsWindow, onTitle + QPoint(4 * i, 0));
-            QTest::qWait(150);
-            QVERIFY2(fs.barShown(), qPrintable(QString::number(i)));
-        }
+        fs.setMode(ui::VideoFullscreenController::Mode::Simple);
         tools.selectFamily(0);
         QTRY_VERIFY(!rail->isVisible());
-        QTRY_COMPARE(panel->height(), barHeight);
         pause();
         QVERIFY(fs.barShown());
         QTRY_VERIFY(panel->isVisible());
-        const QPoint onBar = panel->mapToScene(QPointF(panel->width() / 2, 4)).toPoint();
+        QTRY_COMPARE(panel->height(), 112.0);
+        const QPoint onBar = panel->mapToScene(QPointF(panel->width() / 2, panel->height() / 2)).toPoint();
         QTest::mouseMove(fsWindow, onBar);
         QTRY_VERIFY(fs.pointerOverBar());
         playFromStart();
@@ -39296,11 +39329,9 @@ private slots:
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 1);
         QCOMPARE(settings.integer("video.fullscreenBar"), 1);
-        QVERIFY(fs.pinned());
+        QVERIFY(fs.stripReserved());
         QTRY_VERIFY(panel->isVisible());
         QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
-        QTRY_VERIFY(!title->isVisible());
-        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Always show"));
         playFromStart();
         QTRY_COMPARE(cursor(), int(Qt::BlankCursor));
         QVERIFY(fs.barShown());
@@ -39308,29 +39339,52 @@ private slots:
         pause();
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 2);
+        QVERIFY(!fs.stripReserved());
         QTRY_VERIFY(!panel->isVisible());
         QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
         QTest::mouseMove(fsWindow, picture + QPoint(0, 10));
         QTest::qWait(50);
         QVERIFY(!fs.barShown());
-        QVERIFY(!title->isVisible());
         QCOMPARE(cursor(), -1);
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 0);
         QTest::mouseMove(fsWindow, picture);
         QTRY_VERIFY(panel->isVisible());
-        clickWith(fullscreenItem("fullscreenBarMode"), Qt::NoModifier);
-        auto *modeMenu = named("fullscreenBarModeMenu");
-        QTRY_VERIFY(modeMenu->property("opened").toBool());
-        QCOMPARE(named("fullscreenBarAuto")->property("checked").toBool(), true);
-        QCOMPARE(named("fullscreenBarNever")->property("text").toString(), QStringLiteral("Never show"));
+
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier,
+                          panel->mapToScene(QPointF(8, 8)).toPoint());
+        auto *stripMenu = named("fullscreenStripMenu");
+        QTRY_VERIFY(stripMenu->property("opened").toBool());
+        QVERIFY(fs.menuOpen());
+        QCOMPARE(named("fullscreenBarPosition")->property("title").toString(), QStringLiteral("Bar position"));
+        QCOMPARE(named("fullscreenBarShow")->property("title").toString(), QStringLiteral("Show bar"));
+        QCOMPARE(named("fullscreenBarSettings")->property("text").toString(), QStringLiteral("Full-screen settings…"));
+        QVERIFY(named("fullscreenBarPositionBelow")->property("checked").toBool());
+        QVERIFY(named("fullscreenBarAuto")->property("checked").toBool());
+        QCOMPARE(named("fullscreenBarAuto")->property("text").toString(), QStringLiteral("Auto-hide"));
+        QCOMPARE(named("fullscreenBarNever")->property("text").toString(), QStringLiteral("Never"));
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarPositionOver"), "triggered"));
+        QCOMPARE(settings.integer("video.fullscreenBarPosition"), 1);
+        QCOMPARE(fs.barPosition(), ui::VideoFullscreenController::BarPosition::Over);
+        QVERIFY(!fs.stripReserved());
+        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
+        QVERIFY(panel->height() < 112);
+        QMetaObject::invokeMethod(stripMenu, "close");
+        QTRY_VERIFY(!stripMenu->property("visible").toBool());
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier,
+                          panel->mapToScene(QPointF(8, panel->height() - 8)).toPoint());
+        QTRY_VERIFY(stripMenu->property("opened").toBool());
+        QVERIFY(named("fullscreenBarPositionOver")->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarAlways"), "triggered"));
         QCOMPARE(fs.barMode(), 1);
-        QTRY_VERIFY(!modeMenu->property("visible").toBool());
+        QVERIFY(!fs.stripReserved());
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarPositionBelow"), "triggered"));
+        QMetaObject::invokeMethod(stripMenu, "close");
+        QTRY_VERIFY(!stripMenu->property("visible").toBool());
         QVERIFY(fs.leave());
         QVERIFY(fs.toggle(0));
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.pinned());
+        QVERIFY(fs.stripReserved());
         QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
         const int volume = application->videoView().volume();
         const QPoint below = panel->mapToScene(QPointF(panel->width() / 2, panel->height() / 2)).toPoint();
@@ -39347,7 +39401,119 @@ private slots:
         QTest::qWait(50);
         QCOMPARE(fs.barMode(), 1);
         QVERIFY(!fs.active());
-        settings.set("video.fullscreenBar", 0);
+    }
+
+    void videoFullscreenOpensInTheChosenModeAndTypesetSwitchesInPlace()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        auto &settings = *application->settingsStore();
+        const auto restore = qScopeGuard([&] { settings.set("video.fullscreenOpensIn", 0); });
+        using Mode = ui::VideoFullscreenController::Mode;
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QCOMPARE(fs.mode(), Mode::Simple);
+        QVERIFY(!fullscreenItem("fullscreenToolsButton")->isVisible());
+        auto *typeset = fullscreenItem("fullscreenTypeset");
+        QTRY_VERIFY(typeset && typeset->isVisible());
+        QCOMPARE(typeset->property("label").toString(), QStringLiteral("Typeset"));
+        QCOMPARE(typeset->property("tip").toString(),
+                 QStringLiteral("Typeset: switch to full-screen typesetting · the frame keeps its place"));
+        const QRectF frame = application->visualTools().videoRect();
+        clickWith(typeset, Qt::NoModifier);
+        QCOMPARE(fs.mode(), Mode::Typesetting);
+        QVERIFY(fs.active());
+        QTRY_VERIFY(fullscreenItem("fullscreenToolsButton")->isVisible());
+        QCOMPARE(application->video().frame(), 30);
+        QCOMPARE(application->visualTools().videoRect(), frame);
+        auto *simple = fullscreenItem("fullscreenSimple");
+        QTRY_VERIFY(simple && simple->isVisible());
+        QTest::qWait(200);
+        clickWith(simple, Qt::NoModifier);
+        QCOMPARE(fs.mode(), Mode::Simple);
+        QVERIFY(fs.leave());
+        settings.set("video.fullscreenOpensIn", 1);
+        QVERIFY(fs.toggle(0));
+        QCOMPARE(fs.mode(), Mode::Typesetting);
+        QVERIFY(fs.leave());
+    }
+
+    void videoFullscreenStripStatesAndKeyboard()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        keysNeverRepeat();
+        auto &fs = application->videoFullscreen();
+        auto &settings = *application->settingsStore();
+        const auto restore = qScopeGuard([&] { settings.set("video.fullscreenOverlays", true); });
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QCOMPARE(fullscreenItem("fullscreenStartTime")->property("text").toString(), fs.positionText());
+        QCOMPARE(fullscreenItem("fullscreenTime")->property("text").toString(), fs.positionText());
+        QVERIFY(fs.positionText().startsWith(QStringLiteral("0:00:0")));
+        QVERIFY(fs.lengthText().startsWith(QStringLiteral("0:00:0")));
+        QCOMPARE(fullscreenItem("fullscreenLength")->property("text").toString(), fs.lengthText());
+        QVERIFY(!fs.seeking());
+        QCOMPARE(fs.failedFrame(), -1);
+        QVERIFY(!fullscreenItem("videoFullscreenFailure")->isVisible());
+        QVERIFY(fullscreenItem("videoFullscreenProgress")->isVisible());
+        settings.set("video.fullscreenOverlays", false);
+        QTRY_VERIFY(!fullscreenItem("videoFullscreenProgress")->isVisible());
+
+        auto *leading = fullscreenItem("fullscreenLine");
+        QTRY_VERIFY(fullscreenItem("fullscreenLineText")->isVisible());
+        QCOMPARE(QAccessible::queryAccessibleInterface(leading)->text(QAccessible::Name),
+                 QStringLiteral("Line 1: first"));
+        v5Session()->setSelection(application::Selection{});
+        application->editor().reloadFromSession();
+        QTRY_VERIFY(fullscreenItem("fullscreenNoLine")->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenNoLine")->property("text").toString(), QStringLiteral("No line at this time"));
+        QVERIFY(!fullscreenItem("fullscreenLineText")->isVisible());
+
+        for (const char *name : {"fullscreenPreviousFile", "fullscreenNextFile", "fullscreenBarMode", "fullscreenOpenEditor"})
+            QVERIFY2(!fullscreenItem(name), name);
+        for (const char *name : {"fullscreenPreviousFrame", "fullscreenPlayPause", "fullscreenNextFrame", "fullscreenPlayLine",
+                                 "fullscreenStop", "fullscreenTypeset", "fullscreenSpeaker", "fullscreenExit"}) {
+            auto *button = fullscreenItem(name);
+            QVERIFY2(button && button->isVisible(), name);
+            QVERIFY2(button->width() >= 34 && qAbs(button->width() - qMax(34.0, button->implicitWidth())) < 1, name);
+            QCOMPARE(button->height(), 34.0);
+            const auto *a11y = QAccessible::queryAccessibleInterface(button);
+            QCOMPARE(a11y->text(QAccessible::Name), button->property("text").toString());
+            QCOMPARE(a11y->text(QAccessible::Description), button->property("tip").toString().section(QLatin1Char('\n'), 0, 0));
+        }
+        const int frame = application->video().frame();
+        clickWith(fullscreenItem("fullscreenNextFrame"), Qt::NoModifier);
+        QTRY_COMPARE(application->video().frame(), frame + 1);
+        clickWith(fullscreenItem("fullscreenPreviousFrame"), Qt::NoModifier);
+        QTRY_COMPARE(application->video().frame(), frame);
+
+        fullscreenItem("videoFullscreenKeys")->forceActiveFocus();
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_VERIFY(leading->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_VERIFY(fullscreenItem("fullscreenPreviousFrame")->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_VERIFY(fullscreenItem("fullscreenTypeset")->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_COMPARE(fsWindow->activeFocusItem(), fullscreenItem("videoFullscreenKeys"));
+        QTest::keyClick(fsWindow, Qt::Key_F6, Qt::ShiftModifier);
+        QTRY_VERIFY(fullscreenItem("fullscreenTypeset")->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QVERIFY(fs.active());
+        QTRY_COMPARE(fsWindow->activeFocusItem(), fullscreenItem("videoFullscreenKeys"));
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QVERIFY(!fs.active());
     }
 
     void videoTextIsWhatTheVideoShows()
@@ -39401,14 +39567,8 @@ private slots:
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
-        auto *title = fullscreenItem("videoFullscreenTitle");
         auto *panel = fullscreenItem("videoFullscreenPanel");
-        QTRY_VERIFY(title->isVisible());
         QTRY_VERIFY(panel->isVisible());
-        QVERIFY(!video.playing());
-        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
-        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, onTitle);
-        QTest::qWait(100);
         QVERIFY(!video.playing());
         const QPoint betweenControls = panel->mapToScene(QPointF(panel->width() / 2, 2)).toPoint();
         QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, betweenControls);
@@ -39420,26 +39580,6 @@ private slots:
         QTRY_VERIFY(video.playing());
         QVERIFY(video.pause());
         QVERIFY(fs.leave());
-    }
-
-    void videoFullscreenOpenEditorShowsTheLineEditor()
-    {
-        restartWithoutSound();
-        QTemporaryDir &folder = testFolder();
-        QVERIFY(v5Open(folder));
-        auto &fs = application->videoFullscreen();
-        QObject *editorDock = named("editorDock");
-        QVERIFY(QMetaObject::invokeMethod(editorDock, "close"));
-        QTRY_VERIFY(!editorDock->property("isOpen").toBool());
-        QVERIFY(fs.toggle(0));
-        QQuickWindow *fsWindow = fullscreenWindow();
-        QTRY_VERIFY(fsWindow->isExposed());
-        auto *open = fullscreenItem("fullscreenOpenEditor");
-        QTRY_VERIFY(open->isVisible());
-        clickWith(open, Qt::NoModifier);
-        QTRY_VERIFY(!fs.active());
-        QTRY_VERIFY(editorDock->property("isOpen").toBool());
-        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
     }
 
     void videoFullscreenToastDetailsLeaveForTheLog()
@@ -39722,7 +39862,7 @@ private slots:
         QCOMPARE(aspectWindow->transientParent(), fsWindow);
         QVERIFY(QMetaObject::invokeMethod(aspect, "close"));
         QTRY_VERIFY(!aspectWindow->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(fullscreenItem("fullscreenNextFile"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_NEXT_FILE"))));
         auto *question = named("videoFileQuestion");
         QObject *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
@@ -39754,7 +39894,10 @@ private slots:
         QVERIFY(!rail->isVisible());
         QVERIFY(!slot->isVisible());
         auto *toolsButton = fullscreenItem("fullscreenToolsButton");
+        QVERIFY(!toolsButton->isVisible());
+        fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
         QTRY_VERIFY(toolsButton->isVisible());
+        QTest::qWait(200);
         clickWith(toolsButton, Qt::NoModifier);
         auto *toolsMenu = named("fullscreenToolsMenu");
         QTRY_VERIFY(toolsMenu->property("opened").toBool());
@@ -39990,7 +40133,8 @@ private slots:
             QTRY_VERIFY(!fullscreenItem("videoFullscreenHint")->isVisible());
             shot("auto");
             openAndShoot("fullscreenSpeaker", "fullscreenAudioOutputMenu", "output", Qt::RightButton);
-            openAndShoot("fullscreenBarMode", "fullscreenBarModeMenu", "mode");
+            fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
+            QTRY_VERIFY(fullscreenItem("fullscreenToolsButton")->isVisible());
             openAndShoot("fullscreenToolsButton", "fullscreenToolsMenu", "tools");
             const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
             QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
@@ -40005,8 +40149,9 @@ private slots:
             shot("tool");
             tools.selectFamily(0);
             QTRY_VERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
+            fs.setMode(ui::VideoFullscreenController::Mode::Simple);
             fs.setBarMode(1);
-            QTRY_VERIFY(fs.pinned());
+            QTRY_VERIFY(fs.stripReserved());
             shot("always");
             fs.setBarMode(2);
             QVERIFY(fs.leave());
