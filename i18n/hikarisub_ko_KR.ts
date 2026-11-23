@@ -3837,14 +3837,6 @@ Output device: %2</source>
         <translation>혼합</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>각 줄의 글자 수. 43자 이하, 최대 2줄로 유지하십시오.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>초당 문자 수. 15자 이하로 유지하십시오.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>시간 표시</translation>
     </message>
@@ -4259,6 +4251,16 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>태그는 역슬래시로 시작합니다. 예: \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>각 줄의 문자 수입니다. %1자 이하로, 최대 %n줄 안에서 유지해야 합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>초당 문자 수입니다. %1 이하로 유지해야 합니다.</translation>
     </message>
 </context>
 <context>
@@ -8552,6 +8554,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen typesetting</source>
+        <translation>전체 화면 식자</translation>
     </message>
     <message>
         <source>Global</source>
@@ -14038,6 +14044,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>초당 문자 수 계산에 공백과 문장 부호 포함</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>초당 문자 수 경고</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>이보다 빨리 읽어야 하는 줄은 색이 칠해지며, 오류 수준에 가까울수록 색이 진해집니다.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>초당 문자</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>초당 문자 수 오류</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>줄당 문자 수</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄 수</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>자막 파일은 스크립트 속성에서 자체 제한을 설정할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>분할</translation>
     </message>
@@ -14958,6 +14992,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A built-in theme could not be read, so Dark is shown.</source>
         <translation>기본 제공 테마를 읽을 수 없어 어둡게 테마를 표시합니다.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s spelling dictionary: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
@@ -19184,6 +19223,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Rendering</source>
         <translation>렌더링</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>읽기 제한</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>내 설정 사용</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>초당 문자 수 경고</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>초당 문자 수 오류</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>줄당 문자 수</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄 수</translation>
     </message>
     <message>
         <source>Save</source>
@@ -25368,6 +25431,14 @@ Styles deleted:
         <translation>재생 또는 일시 정지</translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>전체 화면 식자</translation>
+    </message>
+    <message>
+        <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
+        <translation>시각 도구와 활성 줄, 그 도구를 옆에 두고 영상을 전체 화면으로 엽니다</translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>영상</translation>
     </message>
@@ -25656,12 +25727,31 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Visual tools</source>
-        <translation>시각 도구</translation>
-    </message>
-    <message>
         <source>Simple</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>식자</translation>
+    </message>
+    <message>
+        <source>Video status</source>
+        <translation>영상 상태</translation>
+    </message>
+    <message>
+        <source>Frame %1</source>
+        <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
+        <translation>프레임 %1</translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
+        <translation>줄 %1/%2</translation>
+    </message>
+    <message>
+        <source>Line %1 text</source>
+        <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
+        <translation>%1번 줄 텍스트</translation>
     </message>
     <message>
         <source>Typeset</source>
@@ -26043,6 +26133,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>%1번째 줄: %2</translation>
     </message>
     <message>
@@ -26292,6 +26383,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Move</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>이동</translation>
     </message>
     <message>
@@ -26387,6 +26479,32 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Changes the active line</source>
         <translation>활성 줄 변경</translation>
+    </message>
+    <message>
+        <source>On the frame</source>
+        <translation>프레임 위</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Apply to</source>
+        <translation>적용 대상</translation>
+    </message>
+    <message>
+        <source>This line</source>
+        <translation>이 줄</translation>
+    </message>
+    <message>
+        <source>Picked lines (%1)</source>
+        <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
+        <translation>지정한 줄 (%1)</translation>
+    </message>
+    <message>
+        <source>Picks the selected lines: the tools edit them, not the active line</source>
+        <translation>선택한 줄을 지정합니다: 도구가 활성 줄 대신 이 줄들을 편집합니다</translation>
     </message>
     <message>
         <source>More options</source>
@@ -26790,6 +26908,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Drawing</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>그리기 명령</translation>
     </message>
     <message>
@@ -26953,6 +27072,10 @@ or codecs or a splitter may be missing</source>
         <translation>도형: %1</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>시각 도구</translation>
+    </message>
+    <message>
         <source>More tools</source>
         <translation>도구 더 보기</translation>
     </message>
@@ -27006,6 +27129,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Gradient</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>그라데이션</translation>
     </message>
     <message>
@@ -27065,12 +27189,220 @@ or codecs or a splitter may be missing</source>
         <translation>히드라</translation>
     </message>
     <message>
+        <source>Pointer</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>포인터</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>위치</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>크기 조정</translation>
+    </message>
+    <message>
+        <source>Tilt X / Y</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>X / Y 회전</translation>
+    </message>
+    <message>
+        <source>Rectangle clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>사각형 클립</translation>
+    </message>
+    <message>
+        <source>Vector clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>벡터 클립</translation>
+    </message>
+    <message>
+        <source>Shift positions</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>위치 일괄 이동</translation>
+    </message>
+    <message>
+        <source>All tags</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>모든 태그</translation>
+    </message>
+    <message>
         <source>Perspective</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>원근</translation>
     </message>
     <message>
         <source>Text on path</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>경로 따라 텍스트</translation>
+    </message>
+    <message>
+        <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
+        <translation>화면을 가리키면 위치를 읽습니다. Ctrl+클릭하면 줄을 그곳에 놓습니다.</translation>
+    </message>
+    <message>
+        <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
+        <translation>끌어서 줄을 배치하십시오. Shift+끌기는 한 축으로 고정합니다. 오른쪽 클릭하면 포인터 위치에 놓습니다.</translation>
+    </message>
+    <message>
+        <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
+        <translation>시작점이나 끝점을 끄십시오. 오른쪽 끌기로 끝점을 정합니다. 줄은 두 점 사이를 이동합니다.</translation>
+    </message>
+    <message>
+        <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
+        <translation>끌어서 가로로, 오른쪽 끌기로 세로로 늘리십시오. Shift+끌기는 둘 다 조정합니다.</translation>
+    </message>
+    <message>
+        <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
+        <translation>원점 주위로 끌어 텍스트를 회전하십시오. 원점을 끌면 원점이 이동합니다.</translation>
+    </message>
+    <message>
+        <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
+        <translation>옆으로 끌면 Y축으로, 오른쪽 끌기로 위나 아래로 끌면 X축으로 회전합니다. 원점을 끌면 원점이 이동합니다.</translation>
+    </message>
+    <message>
+        <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
+        <translation>끌어서 상자를 만드십시오. 상자 안쪽만 보입니다. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
+        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오. 안쪽만 보입니다.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
+        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오. 또는 도형을 고른 다음 끌어서 상자를 만드십시오.</translation>
+    </message>
+    <message>
+        <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
+        <translation>끌어서 지정한 줄의 위치, 클립, 원점을 함께 옮기십시오. Shift를 누르면 한 축으로 고정됩니다.</translation>
+    </message>
+    <message>
+        <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
+        <translation>태그를 고른 다음 화면에서 옆으로 끌어 값을 바꾸십시오. Shift를 누르면 조금씩 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
+        <translation>모서리를 끌어 텍스트를 면에 맞추십시오. 안쪽을 끌면 이동합니다.</translation>
+    </message>
+    <message>
+        <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
+        <translation>텍스트를 가로질러 끌어 그라데이션 방향을 정하십시오. 양 끝을 끌어 조정하고, Enter로 적용합니다.</translation>
+    </message>
+    <message>
+        <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
+        <translation>클릭하여 경로 점을 추가하고, 점을 끌어 경로 모양을 만드십시오. 텍스트가 경로를 따르며, Enter로 적용합니다.</translation>
+    </message>
+    <message>
+        <source>square</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>사각형</translation>
+    </message>
+    <message>
+        <source>circle</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>원</translation>
+    </message>
+    <message>
+        <source>cross</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>십자</translation>
+    </message>
+    <message>
+        <source>line</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>선</translation>
+    </message>
+    <message>
+        <source>arrow</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>화살표</translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>외곽선</translation>
+    </message>
+    <message>
+        <source>Start point</source>
+        <translation>시작점</translation>
+    </message>
+    <message>
+        <source>End point</source>
+        <translation>끝점</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>경로</translation>
+    </message>
+    <message>
+        <source>Current position</source>
+        <translation>현재 위치</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation>너비</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation>높이</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>둘 다</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>각도</translation>
+    </message>
+    <message>
+        <source>Tilt grid</source>
+        <translation>회전 격자</translation>
+    </message>
+    <message>
+        <source>Edges and corners</source>
+        <translation>가장자리와 모서리</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>점</translation>
+    </message>
+    <message>
+        <source>Curve handle</source>
+        <translation>곡선 핸들</translation>
+    </message>
+    <message>
+        <source>Position and move start</source>
+        <translation>위치와 이동 시작점</translation>
+    </message>
+    <message>
+        <source>Move end</source>
+        <translation>이동 끝점</translation>
+    </message>
+    <message>
+        <source>Clip and drawing</source>
+        <translation>클립과 도형</translation>
+    </message>
+    <message>
+        <source>Changed line</source>
+        <translation>바뀐 줄</translation>
+    </message>
+    <message>
+        <source>Corners</source>
+        <translation>모서리</translation>
+    </message>
+    <message>
+        <source>Plane corners</source>
+        <translation>평면 모서리</translation>
+    </message>
+    <message>
+        <source>Start and end</source>
+        <translation>시작과 끝</translation>
+    </message>
+    <message>
+        <source>P1, P2 and P3</source>
+        <translation>P1, P2, P3</translation>
     </message>
     <message>
         <source>\org mode</source>
@@ -27432,6 +27764,7 @@ increasing or decreasing the value.</source>
     </message>
     <message>
         <source>Rotate</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>회전</translation>
     </message>
     <message>

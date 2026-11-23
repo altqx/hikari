@@ -144,8 +144,8 @@ function(hikari_provision_vcpkg platform)
     set(ENV{VCPKG_DEFAULT_BINARY_CACHE} "${HIKARI_SDK_DIR}/vcpkg-archives")
     set(ENV{VCPKG_DISABLE_METRICS} "1")
     set(ENV{VCPKG_ROOT} "${root}")
-    # Asset sources the caller set are asked before GnuMirrors.cmake.
-    set(mirrors "x-script,\"${CMAKE_COMMAND}\" -DHIKARI_ASSET_URL={url} -DHIKARI_ASSET_SHA512={sha512} -DHIKARI_ASSET_DST={dst} -P \"${CMAKE_CURRENT_FUNCTION_LIST_DIR}/GnuMirrors.cmake\"")
+    # Asset sources the caller set are asked before AssetSources.cmake.
+    set(mirrors "x-script,\"${CMAKE_COMMAND}\" -DHIKARI_ASSET_URL={url} -DHIKARI_ASSET_SHA512={sha512} -DHIKARI_ASSET_DST={dst} -P \"${CMAKE_CURRENT_FUNCTION_LIST_DIR}/AssetSources.cmake\"")
     if(DEFINED ENV{X_VCPKG_ASSET_SOURCES} AND NOT "$ENV{X_VCPKG_ASSET_SOURCES}" STREQUAL "")
         set(ENV{X_VCPKG_ASSET_SOURCES} "$ENV{X_VCPKG_ASSET_SOURCES};${mirrors}")
     else()

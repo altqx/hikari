@@ -152,6 +152,14 @@ struct ContentFile {
     std::string path;  // a package path
 };
 
+// A Hunspell pair the spell checker offers after the user's and the bundled dictionaries.
+struct Dictionary {
+    std::string language; // the Hunspell name, such as en_US
+    std::string title;
+    std::string aff; // package paths
+    std::string dic;
+};
+
 struct Manifest {
     std::string id;
     std::string name;
@@ -179,6 +187,7 @@ struct Manifest {
     std::vector<Program> programs;
     std::vector<ContentFile> styles;
     std::vector<ContentFile> karaokePresets;
+    std::vector<Dictionary> dictionaries;
 
     bool hasQmlPanels() const;
     const Program *program(std::string_view id) const;

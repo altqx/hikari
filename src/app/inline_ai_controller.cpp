@@ -35,7 +35,6 @@ using backends::ai::TranslationRun;
 
 namespace {
 
-constexpr int kMaxCps = 15;
 constexpr int kParallel = 4;
 constexpr int kRecentKept = 5;
 constexpr std::size_t kBeforeKept = 5;
@@ -204,8 +203,11 @@ InlineAiController::InlineAiController(Wiring wiring, QObject *parent) : QObject
     connect(&m_wiring.settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
         if (id.startsWith(QLatin1String("ai.")))
             emit changed();
+        else if (id.startsWith(QLatin1String("grid.")))
+            updateMaxCps();
     });
     connect(&m_wiring.agent, &AgentController::modelsChanged, this, &InlineAiController::changed);
+    updateMaxCps();
 }
 
 InlineAiController::~InlineAiController() = default;
@@ -285,9 +287,16 @@ QVariantMap InlineAiController::last() const
     return m_lastAsk;
 }
 
-int InlineAiController::maxCps() const
+void InlineAiController::updateMaxCps()
 {
-    return kMaxCps;
+    const auto profile = application::profileReadingLimits(m_wiring.settings.settings());
+    const auto target = m_wiring.workspace.editingTarget();
+    const core::Document *doc = target ? documentOf(*target) : nullptr;
+    const int cps = (doc ? application::readingLimits(*doc, profile) : profile).cpsWarning;
+    if (cps == m_maxCps)
+        return;
+    m_maxCps = cps;
+    emit maxCpsChanged();
 }
 
 std::string InlineAiController::mode() const
@@ -309,7 +318,7 @@ std::optional<in::Ask> InlineAiController::askOf(const QVariantMap &map, std::st
         return std::nullopt;
     in::Ask ask;
     ask.action = *action;
-    ask.maxCps = kMaxCps;
+    ask.maxCps = m_maxCps;
     ai::Role r = ai::Role::Chat;
     QString name;
     switch (*action) {
@@ -670,6 +679,7 @@ std::unique_ptr<backends::ai::LineRun> InlineAiController::translationRun(std::v
 
 void InlineAiController::refreshed()
 {
+    updateMaxCps();
     if (!m_run)
         return;
     dropEdited();

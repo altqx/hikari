@@ -158,6 +158,7 @@ private slots:
 
     void aDeclaredHostIsFetchedByHikariSub()
     {
+        QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0-beta.6"));
         std::optional<api::Result> answer;
         m_plugins.fetch("com.example.net", kHosts,
                         request("https://API.example.com/v1?q=1", ", \"method\": \"POST\","
@@ -170,6 +171,7 @@ private slots:
         QCOMPARE(reply->sent, QByteArray("{\"a\": 1}"));
         QCOMPARE(reply->request().url(), QUrl(QStringLiteral("https://api.example.com/v1?q=1")));
         QCOMPARE(reply->request().rawHeader("Authorization"), QByteArray("Bearer t"));
+        QCOMPARE(reply->request().rawHeader("User-Agent"), QByteArray("HikariSub/0.1.0-beta.6"));
         QCOMPARE(reply->request().attribute(QNetworkRequest::CookieLoadControlAttribute).toInt(), int(QNetworkRequest::Manual));
         QCOMPARE(reply->request().attribute(QNetworkRequest::RedirectPolicyAttribute).toInt(),
                  int(QNetworkRequest::UserVerifiedRedirectPolicy));

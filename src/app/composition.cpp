@@ -234,6 +234,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+    QGuiApplication::setApplicationVersion(QStringLiteral(HIKARI_VERSION));
     const UpdateEnvironment updateEnvironment = UpdateEnvironment::current();
     const auto folderEnvironment = folderEnvironmentOf(updateEnvironment);
     const UserFolder userFolder = UserFolder::locate(folderEnvironment);
@@ -488,6 +489,7 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
         QGuiApplication app(argc, argv);
         QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
         QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+        QGuiApplication::setApplicationVersion(QStringLiteral(HIKARI_VERSION));
         if (startup.exportDocs->empty()) {
             std::fprintf(stderr, "--export-docs needs a folder\n");
             return 2;

@@ -18,8 +18,6 @@ Window {
     readonly property bool typesetting: controller.mode === VideoFullscreenController.Mode.Typesetting
     readonly property color ink: "#EEF0F2"
     readonly property color inkMuted: Qt.rgba(0xEE / 255, 0xF0 / 255, 0xF2 / 255, 0.62)
-    readonly property bool toolOn: shell.visualTools.railEnabled
-                                   && shell.visualTools.activeFamily > 0
     signal openVideoRequested()
     signal openSubtitlesRequested()
     signal aspectRatioRequested()
@@ -69,8 +67,7 @@ Window {
     Binding {
         target: fs.controller
         property: "menuOpen"
-        value: fullscreenMenu.opened || outputMenu.opened || stripMenu.opened || toolsMenu.opened
-               || rail.menuOpen || toolBar.popoverOpen || strip.holdsFocus
+        value: fullscreenMenu.opened || outputMenu.opened || stripMenu.opened || strip.holdsFocus
     }
     Connections {
         target: fs.controller
@@ -88,6 +85,9 @@ Window {
         Accessible.role: Accessible.Pane
         Accessible.name: qsTr("Full screen video")
 
+        function typesettingKey(event) {
+            return fs.shell.hotkeys.actionFor(0, event.key, event.modifiers) === "GLOBAL_FULL_SCREEN_TYPESETTING"
+        }
         function leaves(event) {
             return (event.key === Qt.Key_Escape || event.key === Qt.Key_B)
                     && fs.shell.hotkeys.actionFor(0, event.key, event.modifiers) === ""
@@ -95,14 +95,14 @@ Window {
         MenuKey.onRequested: fs.openMenuAt(fs.shell.videoView.cursorIn(stageHolder))
         Keys.onShortcutOverride: event => event.accepted = fs.shell.visualTools.takesKey(event.key, event.modifiers)
                                                           || fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
-                                                          || keyScope.leaves(event)
+                                                          || keyScope.typesettingKey(event) || keyScope.leaves(event)
         function stripGroups() {
             const centred = [previousFrame, playPause, nextFrame].find(b => b.enabled) ?? modeSwitch
             return [leadingGroup, centred, modeSwitch]
         }
         function focusPicture() {
-            if (fs.activeFocusItem && fs.activeFocusItem !== keyScope)
-                fs.activeFocusItem.focus = false
+            for (let i = fs.activeFocusItem; i && i !== keyScope; i = i.parent)
+                i.focus = false
             keyScope.forceActiveFocus(Qt.OtherFocusReason)
         }
         function nextGroup(back) {
@@ -116,10 +116,15 @@ Window {
         }
         Keys.onPressed: event => {
             const action = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers)
-            if (event.key === Qt.Key_F6 && action === "" && fs.controller.barShown) {
-                keyScope.nextGroup((event.modifiers & Qt.ShiftModifier) !== 0)
+            const back = (event.modifiers & Qt.ShiftModifier) !== 0
+            if (event.key === Qt.Key_F6 && action === "" && typesetting.item) {
+                typesetting.item.nextRegion(fs.activeFocusItem, back)
                 event.accepted = true
-            } else if (event.key === Qt.Key_Escape && strip.holdsFocus) {
+            } else if (event.key === Qt.Key_F6 && action === "" && fs.controller.barShown) {
+                keyScope.nextGroup(back)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Escape && fs.activeFocusItem !== keyScope
+                       && (strip.holdsFocus || typesetting.item && typesetting.item.regionOf(fs.activeFocusItem) >= 0)) {
                 keyScope.focusPicture()
                 event.accepted = true
             } else if (fs.shell.visualTools.takesKey(event.key, event.modifiers)) {
@@ -127,6 +132,9 @@ Window {
                 event.accepted = true
             } else if (action !== "") {
                 fs.shell.runVideoHotkey(action)
+                event.accepted = true
+            } else if (keyScope.typesettingKey(event)) {
+                fs.shell.runGlobalHotkey("GLOBAL_FULL_SCREEN_TYPESETTING")
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape && fs.shell.visualTools.escape()) {
                 event.accepted = true
@@ -144,11 +152,29 @@ Window {
         }
         Keys.onReleased: event => event.accepted = fs.shell.visualTools.key(event.key, event.modifiers, true, event.isAutoRepeat)
 
+        Loader {
+            id: typesetting
+            anchors.fill: parent
+            active: fs.typesetting && fs.controller.active
+            sourceComponent: FullscreenTypesetting {
+                shell: fs.shell
+                controller: fs.controller
+                dialogs: fs.visible
+                onPictureFocusRequested: keyScope.focusPicture()
+            }
+        }
+
         Item {
             id: stageHolder
             objectName: "videoFullscreenStage"
-            anchors { left: parent.left; right: parent.right; top: parent.top }
-            height: fs.controller.stripReserved ? parent.height - strip.height : parent.height
+            readonly property rect frame: typesetting.item ? typesetting.item.frameRect
+                                                           : Qt.rect(0, 0, parent.width,
+                                                                     fs.controller.stripReserved ? parent.height - strip.height
+                                                                                                 : parent.height)
+            x: frame.x
+            y: frame.y
+            width: frame.width
+            height: frame.height
         }
 
         Rectangle {
@@ -269,26 +295,11 @@ Window {
             }
         }
 
-        VisualToolRail {
-            id: rail
-            objectName: "fullscreenToolRail"
-            tools: fs.shell.visualTools
-            keyOf: symbol => fs.shell.boundKeys(symbol, 3)
-            visible: fs.typesetting && fs.toolOn
-            z: 3
-            x: 8
-            y: 8
-            height: Math.min(implicitHeight, (strip.visible ? strip.y : fs.height) - y - 8)
-            // On X11 its buttons take the hover from the picture.
-            HoverHandler {
-                onPointChanged: if (hovered) fs.pointerMoved(point.scenePosition)
-            }
-        }
 
         Rectangle {
             id: hint
             objectName: "videoFullscreenHint"
-            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 40 }
+            anchors { horizontalCenter: stageHolder.horizontalCenter; top: stageHolder.top; topMargin: 40 }
             z: 4
             width: hintText.implicitWidth + 32
             height: hintText.implicitHeight + 14
@@ -376,22 +387,6 @@ Window {
                 anchors { left: parent.left; right: parent.right; bottom: parent.bottom
                           leftMargin: 16; rightMargin: 16; bottomMargin: 12 }
                 spacing: 6
-                RowLayout {
-                    id: inspectorSlot
-                    objectName: "fullscreenInspectorSlot"
-                    Layout.fillWidth: true
-                    visible: fs.typesetting && fs.toolOn
-                    VisualToolBar {
-                        id: toolBar
-                        objectName: "fullscreenToolBar"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        tools: fs.shell.visualTools
-                        background: null
-                        dialogs: fs.visible
-                        settings: fs.shell.app.settings
-                    }
-                }
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
@@ -581,26 +576,13 @@ Window {
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                         spacing: 2
                         FullscreenStripButton {
-                            id: toolsButton
-                            objectName: "fullscreenToolsButton"
-                            visible: fs.typesetting
-                            // MUST KILL: iconRole list mirrors application::visual::Family order and must stay on one line for icon_tests
-                            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient", "tool-text-on-path"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
-                            text: qsTr("Visual tools")
-                            enabled: fs.shell.visualTools.railEnabled
-                            down: toolsMenu.visible
-                            onClicked: fs.popupAbove(toolsMenu, toolsButton)
-                        }
-                        FullscreenStripButton {
                             id: modeSwitch
-                            objectName: fs.typesetting ? "fullscreenSimple" : "fullscreenTypeset"
-                            iconRole: fs.typesetting ? "media-play" : "tool-position"
-                            label: fs.typesetting ? qsTr("Simple") : qsTr("Typeset")
+                            objectName: "fullscreenTypeset"
+                            iconRole: "tool-position"
+                            label: qsTr("Typeset")
                             text: label
-                            tip: fs.typesetting ? qsTr("Simple: switch to full-screen watching · the frame keeps its place")
-                                                : qsTr("Typeset: switch to full-screen typesetting · the frame keeps its place")
-                            onClicked: fs.controller.mode = fs.typesetting ? VideoFullscreenController.Mode.Simple
-                                                                           : VideoFullscreenController.Mode.Typesetting
+                            tip: qsTr("Typeset: switch to full-screen typesetting · the frame keeps its place")
+                            onClicked: fs.controller.mode = VideoFullscreenController.Mode.Typesetting
                         }
                         FullscreenStripButton {
                             id: speaker
@@ -665,28 +647,6 @@ Window {
             controller: fs.controller
             onSettingsRequested: fs.fullscreenSettingsRequested()
             onClosed: keyScope.forceActiveFocus()
-        }
-        ShellMenu {
-            id: toolsMenu
-            objectName: "fullscreenToolsMenu"
-            onClosed: keyScope.forceActiveFocus()
-            Instantiator {
-                model: fs.shell.visualTools.railOrder
-                delegate: ShellMenuItem {
-                    required property int modelData
-                    readonly property int family: modelData
-                    objectName: "fullscreenTool" + family
-                    // MUST KILL: iconRole list mirrors application::visual::Family order and must stay on one line for icon_tests
-                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient", "tool-text-on-path"][family] ?? ""
-                    text: fs.shell.visualTools.families[family]?.name ?? ""
-                    checkable: true
-                    checked: fs.shell.visualTools.activeFamily === family
-                    keepsMenuOpen: false
-                    onTriggered: if (fs.shell.visualTools.activeFamily !== family) fs.shell.visualTools.selectFamily(family)
-                }
-                onObjectAdded: (index, object) => toolsMenu.insertItem(index, object)
-                onObjectRemoved: (index, object) => toolsMenu.removeItem(object)
-            }
         }
     }
 }

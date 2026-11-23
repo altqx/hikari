@@ -2728,6 +2728,20 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_KEYFRAMES")) root.app.closeKeyframes()
         }
         Action {
+            id: fullScreenTypesettingAction
+            readonly property bool open: root.videoFullscreen.active
+                                         && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
+            text: qsTranslate("HikariSub.Video", "Full screen typesetting")
+            checkable: true
+            checked: open
+            enabled: root.video.hasVideo
+            onTriggered: {
+                checked = Qt.binding(() => open)
+                if (!root.hotkeyGesture("GLOBAL_FULL_SCREEN_TYPESETTING"))
+                    root.videoFullscreen.toggleTypesetting()
+            }
+        }
+        Action {
             id: openTimecodesAction
             text: qsTr("Open timecodes…")
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_TIMECODES")) timecodesDialog.show()
@@ -4593,6 +4607,15 @@ ApplicationWindow {
                     reason: nodeEffectsAction.enabled ? "" : !root.shell.hasEditingTarget ? qsTr("Open a file first") : root.lockedReason
                     action: nodeEffectsAction
                 }
+                ShellMenuItem {
+                    command: "GLOBAL_FULL_SCREEN_TYPESETTING"
+                    help: qsTranslate("HikariSub.Video", "Opens the video full screen with the visual tools, the active line and its tools beside it")
+                    iconRole: "fullscreen"
+                    objectName: "fullScreenTypesettingMenuItem"
+                    reason: root.video.hasVideo ? "" : qsTr("Open a video first")
+                    keepsMenuOpen: false
+                    action: fullScreenTypesettingAction
+                }
                 MenuSeparator {}
                 ShellMenuItem {
                     command: "GLOBAL_HIDE_TAGS"
@@ -5721,6 +5744,25 @@ ApplicationWindow {
                     video: root.video
                     anchors { left: videoStageDock.left; right: parent.right; top: parent.top }
                     z: 1
+                }
+                Item {
+                    id: videoHeaderTools
+                    objectName: "videoHeaderTools"
+                    visible: parent !== null && parent.objectName === "dockToolbarSlot"
+                    implicitWidth: 24
+                    implicitHeight: 24
+                    IconToolButton {
+                        objectName: "videoFullScreenTypesetting"
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                        implicitWidth: 24
+                        implicitHeight: 24
+                        iconRole: "fullscreen"
+                        text: fullScreenTypesettingAction.text
+                        tip: root.bitmapTip(text, "GLOBAL_FULL_SCREEN_TYPESETTING", 0)
+                        enabled: fullScreenTypesettingAction.enabled
+                        focusPolicy: Qt.NoFocus
+                        onClicked: if (!root.hotkeyGesture("GLOBAL_FULL_SCREEN_TYPESETTING", 0, "bitmap")) root.videoFullscreen.toggleTypesetting()
+                    }
                 }
                 VisualToolRail {
                     id: visualRail
@@ -8708,6 +8750,7 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("NodeSources"), true, nodeSourcesTool.toolbar)
             Docking.setPanelHeader(root.engineName("NodeInspector"), true, null)
             Docking.setPanelHeader(root.engineName("Explorer"), true, explorerTool.toolbar)
+            Docking.setPanelHeader(root.engineName("Video"), true, videoHeaderTools)
             root.defaultLayout()
         }
     }
@@ -9628,6 +9671,13 @@ ApplicationWindow {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
         }
+    }
+    QtObject {
+        readonly property bool typesetting: root.videoFullscreen.active
+                                            && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
+        readonly property bool watching: root.videoFullscreen.active && !typesetting
+        onWatchingChanged: root.app.presenceActivity(root.shellWindow, "watching", watching)
+        onTypesettingChanged: root.app.presenceActivity(root.shellWindow, "typesetting", typesetting)
     }
     Binding {
         when: root.videoFullscreen.active
@@ -11117,6 +11167,7 @@ ApplicationWindow {
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
         GLOBAL_CLOSE_TIMECODES: closeTimecodesAction, GLOBAL_SAVE_KEYFRAMES: saveKeyframesAction,
         GLOBAL_CLOSE_KEYFRAMES: closeKeyframesAction,
+        GLOBAL_FULL_SCREEN_TYPESETTING: fullScreenTypesettingAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
