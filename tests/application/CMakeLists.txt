@@ -178,7 +178,8 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
 hikari_add_gtest(hikari_application_settings_import_tests SOURCES settings_import_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_settings_import_tests PRIVATE
-    HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map")
+    HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map"
+    HIKARI_AEGISUB_HOTKEY_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-hotkeys")
 hikari_add_gtest(hikari_application_font_catalogs_tests SOURCES font_catalogs_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_include_directories(hikari_application_font_catalogs_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

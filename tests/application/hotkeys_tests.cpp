@@ -486,7 +486,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(rowNamed(list, "Global Centre times within frames").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Align to video…").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Convert Aegisub folds to line groups").accel, "");
-    EXPECT_EQ(rowNamed(list, "Global Import legacy settings…").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Import settings…").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Open timecodes…").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Save timecodes…").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Close timecodes").accel, "");

@@ -5922,6 +5922,10 @@ Failed to copy %2 fonts.</source>
         <translation>มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>นำเข้าการตั้งค่าเดิมของฉัน</translation>
     </message>
@@ -5936,6 +5940,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>ตั้งค่าใหม่ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6032,14 +6040,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>วิดีโอขนาดใหญ่พร้อมเครื่องมือภาพและแผงสไตล์</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>ภายหลัง: การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>เริ่มจากค่าเริ่มต้นของ HikariSub การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม… ยังนำการตั้งค่าเดิมมาใช้ภายหลังได้</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -8138,10 +8138,6 @@ Failed to copy %2 fonts.</source>
         <translation>หาการจาง…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8196,6 +8192,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -13884,6 +13884,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เปิดโฟลเดอร์ผู้ใช้</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>ซ่อนแท็ก</translation>
     </message>
@@ -14596,6 +14600,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>AI</translation>
     </message>
     <message>
+        <source>Autosave every</source>
+        <translation>บันทึกอัตโนมัติทุก</translation>
+    </message>
+    <message>
+        <source>seconds</source>
+        <translation>วินาที</translation>
+    </message>
+    <message>
+        <source>Seconds from a change to its autosave. Range from 5 to 3600</source>
+        <translation>จำนวนวินาทีนับจากการแก้ไขจนถึงการบันทึกอัตโนมัติ ช่วง 5 ถึง 3600</translation>
+    </message>
+    <message>
         <source>Trusted folders</source>
         <translation>โฟลเดอร์ที่เชื่อถือ</translation>
     </message>
@@ -14610,10 +14626,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -19234,6 +19246,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>แก้ไข</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation>เพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Synch point</source>
+        <translation>จุดซิงก์</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>รายละเอียดการอัปเดต</translation>
+    </message>
+    <message>
         <source>Resolution</source>
         <translation>ความละเอียด</translation>
     </message>
@@ -20105,8 +20129,8 @@ because it was edited.</source>
         <translation>คำบรรยาย (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -20296,10 +20320,6 @@ because it was edited.</source>
         <translation>ไม่สามารถเขียนสแนปช็อต</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>ขัดแย้ง</translation>
     </message>
@@ -20324,20 +20344,8 @@ because it was edited.</source>
         <translation>กลับไปใช้การตั้งค่าก่อนการนำเข้าครั้งล่าสุดหรือไม่?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>การตั้งค่าจะมีผลเมื่อเริ่ม HikariSub ครั้งถัดไป การติดตั้งรุ่นเดิมจะไม่ถูกเปลี่ยนแปลง</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>การตั้งค่าที่คุณเปลี่ยนหลังจากนั้นจะย้อนกลับด้วย: %1 การติดตั้งรุ่นเดิมจะไม่ถูกเปลี่ยนแปลง</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>เลือกโฟลเดอร์ของการติดตั้งรุ่นเดิม</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20372,10 +20380,6 @@ because it was edited.</source>
         <translation>นำเข้า</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>การติดตั้ง</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>ตรวจทาน</translation>
     </message>
@@ -20384,20 +20388,36 @@ because it was edited.</source>
         <translation>ขั้นตอนที่ %1 จาก 3: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>เลือกการติดตั้งรุ่นเดิมที่จะนำเข้า</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>การติดตั้ง HikariSub 0.0.x ที่พบในคอมพิวเตอร์นี้ จะไม่มีสิ่งใดในการติดตั้งเหล่านั้นถูกเปลี่ยนแปลง</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>การติดตั้งรุ่นเดิม</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>ไม่พบการติดตั้งรุ่นเดิม เลือกโฟลเดอร์ของการติดตั้ง</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20424,8 +20444,8 @@ because it was edited.</source>
         <translation>ตรวจทานสิ่งที่จะนำเข้า</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>ความขัดแย้งคือการตั้งค่าที่การติดตั้งรุ่นเดิมกำหนดไว้ต่างจากของคุณ ตัวเลือกที่แนะนำถูกเลือกไว้แล้ว ยกเลิกเครื่องหมายรายการที่คุณต้องการคงไว้</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20528,8 +20548,8 @@ because it was edited.</source>
         <translation>นำเข้า %1 จาก %2 การเปลี่ยนแปลง, ไม่เปลี่ยน %3, ระบุไม่ได้ %4, ไม่รวม %5, เลิกใช้แล้ว %6</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>ไม่พบการตั้งค่ารุ่นเดิมข้างโปรแกรม เลือกโฟลเดอร์ของการติดตั้งรุ่นเดิม</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
@@ -25420,6 +25440,10 @@ Styles deleted:
         <translation>ไฟล์ถัดไป</translation>
     </message>
     <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+    </message>
+    <message>
         <source>Choose keyframes file</source>
         <translation>เลือกไฟล์คีย์เฟรม</translation>
     </message>
@@ -25434,10 +25458,6 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
-    </message>
-    <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

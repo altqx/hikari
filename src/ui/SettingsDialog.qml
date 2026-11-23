@@ -1181,6 +1181,14 @@ DialogWindow {
                                 tip: qsTr("Number of autosaves can be set from 2 to 1000000")
                             }
                         }
+                        SettingsRow {
+                            host: dialog
+                            setting: "autosave.intervalSeconds"
+                            SettingNumber {
+                                setting: "autosave.intervalSeconds"; from: 5; to: 3600; unit: qsTr("seconds")
+                                name: qsTr("Autosave every"); tip: qsTr("Seconds from a change to its autosave. Range from 5 to 3600")
+                            }
+                        }
                     }
                     Section {
                         key: "general.notices"
@@ -1278,7 +1286,7 @@ DialogWindow {
                             IconTextButton {
                                 iconRole: "import"
                                 objectName: "settingsImportLegacy"
-                                text: qsTr("Import legacy settings…")
+                                text: qsTr("Import settings…")
                                 enabled: dialog.importer !== null && dialog.importer.available
                                 onClicked: dialog.legacyImportRequested()
                             }

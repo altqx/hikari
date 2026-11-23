@@ -3,3 +3,4 @@ hikari_add_gtest(hikari_plugins_tests SOURCES manifest_tests.cpp marketplace_tes
     LIBRARIES hikari_plugins Hikari::sodium LABELS plugins)
 hikari_add_gtest(hikari_plugin_state_tests SOURCES plugin_state_tests.cpp
     LIBRARIES hikari_plugin_state Hikari::luajit LABELS plugins)
+add_executable(hikari_plugin_test_program plugin_test_program.cpp)
