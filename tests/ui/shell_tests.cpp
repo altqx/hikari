@@ -19599,7 +19599,7 @@ private slots:
         typeText(qobject_cast<QWindow *>(dialog), QStringLiteral("Kei"));
         QCOMPARE(field->property("text").toString(), QStringLiteral("Kei"));
         QVERIFY(settings.boolean("scriptProperties.translationOn"));
-        QCOMPARE(settings.text("scriptProperties.translation"), QStringLiteral("Kei"));
+        QTRY_COMPARE(settings.text("scriptProperties.translation"), QStringLiteral("Kei"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
     }
 
