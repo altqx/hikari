@@ -38326,14 +38326,14 @@ private slots:
         QVERIFY(runGlobal("GLOBAL_JUMP_TO"));
         QTRY_VERIFY(field->isVisible() && field->hasActiveFocus());
         QCOMPARE(field->property("selectedText").toString(), video.timecode());
-        QTest::keyClicks(window, QStringLiteral("+3f"));
+        typeText(window, QStringLiteral("+3f"));
         press(Qt::Key_Return);
         QTRY_COMPARE(video.frame(), start + 3);
         QTRY_VERIFY(!field->isVisible());
 
         QVERIFY(runGlobal("GLOBAL_JUMP_TO"));
         QTRY_VERIFY(field->hasActiveFocus());
-        QTest::keyClicks(window, QStringLiteral("3:99"));
+        typeText(window, QStringLiteral("3:99"));
         press(Qt::Key_Return);
         QVERIFY(field->isVisible());
         QTRY_VERIFY(item("videoJumpError")->isVisible());
@@ -38347,7 +38347,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(item("videoTime"), "click"));
         QTRY_VERIFY(field->hasActiveFocus());
-        QTest::keyClicks(window, QStringLiteral("0"));
+        typeText(window, QStringLiteral("0"));
         press(Qt::Key_Return);
         QTRY_COMPARE(video.frame(), 0);
     }
@@ -38465,7 +38465,7 @@ private slots:
         QVERIFY(field);
         QTRY_VERIFY(field->isVisible() && field->hasActiveFocus());
         QVERIFY(fs.barShown());
-        QTest::keyClicks(fsWindow, QStringLiteral("+2f"));
+        typeText(fsWindow, QStringLiteral("+2f"));
         QTest::keyClick(fsWindow, Qt::Key_Return);
         QTRY_COMPARE(application->video().frame(), 32);
         QTRY_VERIFY(!field->isVisible());
