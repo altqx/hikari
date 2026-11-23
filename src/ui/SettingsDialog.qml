@@ -1099,8 +1099,42 @@ DialogWindow {
                 SettingsPage {
                     objectName: "settingsPageVideo"
                     SettingsSection {
-                        title: qsTr("Playback")
+                        objectName: "settingsFullscreen"
+                        title: qsTr("Full screen")
                         ruled: false
+                        SettingsRow {
+                            iconRole: "fullscreen"
+                            text: qsTr("Bar position")
+                            note: qsTr("Below keeps the whole picture in view; the bar sits in the black strip under it.")
+                            SettingChoice {
+                                setting: "video.fullscreenBarPosition"
+                                model: [qsTr("Below the picture (letterbox)"), qsTr("Over the picture")]
+                                Accessible.name: qsTr("Bar position")
+                            }
+                        }
+                        SettingsRow {
+                            iconRole: "show-toolbar"
+                            text: qsTr("Show bar")
+                            note: qsTr("Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.")
+                            SettingChoice {
+                                setting: "video.fullscreenBar"
+                                model: [qsTr("Auto-hide"), qsTr("Always"), qsTr("Never")]
+                                Accessible.name: qsTr("Show bar")
+                            }
+                        }
+                        SettingCheck { setting: "video.fullscreenHidePointer"; text: qsTr("Hide the pointer with the bar") }
+                        SettingCheck { setting: "video.fullscreenOverlays"; text: qsTr("Show the render time and position overlays") }
+                        SettingsRow {
+                            text: qsTr("Opens in")
+                            SettingChoice {
+                                setting: "video.fullscreenOpensIn"
+                                model: [qsTr("Simple"), qsTr("Typesetting")]
+                                Accessible.name: qsTr("Opens in")
+                            }
+                        }
+                    }
+                    SettingsSection {
+                        title: qsTr("Playback")
                         SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
                         SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from the context menu in full screen") }
                         SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line’s time") }

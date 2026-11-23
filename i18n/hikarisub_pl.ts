@@ -14272,6 +14272,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Znak podmiany tagów ASS</translation>
     </message>
     <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open video from the context menu in full screen</source>
         <translation>Otwieraj wideo z menu kontekstowego na pełnym ekranie</translation>
     </message>
@@ -16645,15 +16705,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25809,10 +25861,6 @@ Usunięte style:
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation>Wyłącz pełny ekran</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>Pełny ekran</translation>
     </message>
@@ -25897,22 +25945,59 @@ Usunięte style:
         <translation>Wideo na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>Naciśnij Esc, aby wyjść z pełnego ekranu</translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation>Poprzedni plik wideo</translation>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>Linijka %1, %2: %3</translation>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Visual tools</source>
         <translation>Narzędzia wizualne</translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25932,32 +26017,48 @@ Usunięte style:
         <translation>Pasek pełnego ekranu</translation>
     </message>
     <message>
-        <source>Full screen bar: %1</source>
-        <translation>Pasek pełnego ekranu: %1</translation>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show when the pointer moves</source>
-        <translation>Pokazuj przy ruchu wskaźnika</translation>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always show</source>
-        <translation>Zawsze pokazuj</translation>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never show</source>
-        <translation>Nigdy nie pokazuj</translation>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation>Pokazuj przy ruchu wskaźnika, ukrywaj przy bezczynności</translation>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation>Zachowaj pasek; obraz kończy się nad nim</translation>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>Tylko obraz</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>
