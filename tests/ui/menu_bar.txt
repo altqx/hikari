@@ -270,7 +270,10 @@ View > -
 View > Node effects [GLOBAL_NODE_EFFECTS]
 View > Full screen typesetting [GLOBAL_FULL_SCREEN_TYPESETTING]
 View > -
-View > Hide tags in the Grid [GLOBAL_HIDE_TAGS]
+View > Tags in the Grid >
+View > Tags in the Grid > Show [GLOBAL_GRID_TAGS_SHOW]
+View > Tags in the Grid > Replace with symbol [GLOBAL_GRID_TAGS_REPLACE]
+View > Tags in the Grid > Hide [GLOBAL_GRID_TAGS_HIDE]
 View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
 Help
 Help > Getting started [GLOBAL_GETTING_STARTED]

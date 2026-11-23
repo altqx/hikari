@@ -1334,7 +1334,7 @@ private slots:
         grid.setModel(&model);
         const int text = grid.columnCount() - 1;
         QCOMPARE(grid.cellText(0, text), QStringLiteral("{\\an8\\fs20}Top {\\i1}line"));
-        model.setHideTags(true, QStringLiteral("\u2600"));
+        model.setTagsMode(application::GridTagsMode::ReplaceWithSymbol, QStringLiteral("\u2600"));
         QCOMPARE(grid.cellText(0, text), QStringLiteral("\u2600Top \u2600line"));
         QImage image(720, 60, QImage::Format_ARGB32);
         QPainter painter(&image);

@@ -447,6 +447,9 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_SELECTED_AUDIO", 5349},
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
+        {"GLOBAL_GRID_TAGS_SHOW", 5354},
+        {"GLOBAL_GRID_TAGS_REPLACE", 5355},
+        {"GLOBAL_GRID_TAGS_HIDE", 5356},
         {"GLOBAL_REMOVE_TEXT_KEEP_TAGS", 5357},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
 };
@@ -588,7 +591,7 @@ constexpr NameRow kNames[] = {
         {5028, "Font collector"},
         {5112, "User guide"},
         {5111, "Credits"},
-        {5029, "Hide tags in the Grid"},
+        {5029, "Cycle tags in the Grid"},
         {5008, "History"},
         {5152, "Merge with previous line"},
         {5153, "Merge with next line"},
@@ -865,6 +868,9 @@ constexpr NameRow kNames[] = {
         {5349, "Save audio of selected lines…"},
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
+        {5354, "Show tags in the Grid"},
+        {5355, "Replace tags in the Grid with a symbol"},
+        {5356, "Hide tags in the Grid"},
         {5357, "Delete text, keep tags"},
         {5374, "Full screen typesetting"},
 };

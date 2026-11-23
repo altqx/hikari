@@ -203,7 +203,7 @@ const QString &LineTableModel::shownTextOf(const Row &row) const
         static const core::LegacyRegex srt(u"\\<[^\\<]*\\>", core::LegacyRegex::Advanced);
         std::u16string raw = text.toStdU16String();
         // MUST KILL: m_tagSwap is a regex replacement, so "&" and "\0".."\9" in the swap text are back-references
-        (m_format == core::SubtitleFormat::Srt ? srt : ass).replaceAll(raw, m_tagSwap.toStdU16String());
+        (m_format == core::SubtitleFormat::Srt ? srt : ass).replaceAll(raw, tagSwap().toStdU16String());
         text = QString::fromStdU16String(raw);
     }
     row.shownText = std::move(text);
@@ -252,11 +252,11 @@ bool LineTableModel::unplacedRunsOf(const Row &row) const
     return unplaced;
 }
 
-void LineTableModel::setHideTags(bool hide, const QString &swap)
+void LineTableModel::setTagsMode(application::GridTagsMode mode, const QString &swap)
 {
-    if (hide == m_hideTags && swap == m_tagSwap)
+    if (mode == m_tagsMode && swap == m_tagSwap)
         return;
-    m_hideTags = hide;
+    m_tagsMode = mode;
     m_tagSwap = swap;
     for (const Row &row : m_rows) {
         row.shownText.reset();
@@ -340,7 +340,7 @@ const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
         const QString text = qs(line.text);
         const auto result = m_spelling(std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()),
                                                            static_cast<std::size_t>(text.size())),
-                                       m_format, true, tagsSwapped() ? static_cast<int>(m_tagSwap.size()) : -1);
+                                       m_format, true, tagsSwapped() ? static_cast<int>(tagSwap().size()) : -1);
         for (const int offset : result.errors)
             marks << offset;
     }

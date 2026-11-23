@@ -658,6 +658,49 @@ private slots:
         QCOMPARE(store.list("trust.folders"), QStringList{QStringLiteral("/new")});
     }
 
+    void theOldHideTagsFlagBecomesTheTagsMode_data()
+    {
+        QTest::addColumn<QByteArray>("grid");
+        QTest::addColumn<int>("mode");
+        QTest::newRow("off") << QByteArray("hideTags = false\ntagsSwapCharacter = \"\"\n") << 0;
+        QTest::newRow("default symbol") << QByteArray("hideTags = true\n") << 1;
+        QTest::newRow("own symbol") << QByteArray("hideTags = true\ntagsSwapCharacter = \"*\"\n") << 1;
+        QTest::newRow("empty symbol") << QByteArray("hideTags = true\ntagsSwapCharacter = \"\"\n") << 2;
+        QTest::newRow("already migrated") << QByteArray("hideTags = true\ntagsMode = 0\n") << 0;
+    }
+
+    void theOldHideTagsFlagBecomesTheTagsMode()
+    {
+        QFETCH(QByteArray, grid);
+        QFETCH(int, mode);
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        writeAll(file, "version = 1\n\n[grid]\nfontSize = 12\n" + grid);
+        {
+            SettingsStore store(file);
+            QCOMPARE(store.integer("grid.tagsMode"), mode);
+            QCOMPARE(store.integer("grid.fontSize"), 12);
+        }
+        QVERIFY(!readAll(file).contains("hideTags"));
+    }
+
+    void anInisHideTagsFlagBecomesTheTagsMode()
+    {
+        QTemporaryDir dir;
+        {
+            QSettings s(dir.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat);
+            s.setValue(QStringLiteral("registry/schema"), 1);
+            s.setValue(QStringLiteral("profile/grid.hideTags"), true);
+            s.setValue(QStringLiteral("profile/grid.tagsSwapCharacter"), QString());
+        }
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        {
+            SettingsStore store(file);
+            QCOMPARE(store.integer("grid.tagsMode"), 2);
+        }
+        QVERIFY(!readAll(file).contains("hideTags"));
+    }
+
     void oldAccentAndColourSettingsFoldIntoTheThemeLists()
     {
         QTemporaryDir dir;

@@ -2962,7 +2962,7 @@ private slots:
         QTRY_COMPARE(editor.text(), QStringLiteral("first"));
     }
 
-    void hideTagsSwitchesTheGridsTags()
+    void tagsInTheGridShowReplaceOrHide()
     {
         const QString tagged = writeFile(dir, "tagged.ass",
                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Hi{\\i0} there\n");
@@ -2970,33 +2970,64 @@ private slots:
         auto *model = item("editingGrid")->property("model").value<QAbstractItemModel *>();
         const auto shown = [&] { return model->index(0, ui::LineTableModel::TextColumn).data().toString(); };
         QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
-        auto *menuItem = named("hideTagsMenuItem");
-        QVERIFY(menuItem);
-        QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("hide-tags"));
-        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Hide tags in the Grid"));
-        QVERIFY(menuItem->property("checkable").toBool());
-        QVERIFY(!menuItem->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        auto *submenu = named("gridTagsMenu");
+        QVERIFY(submenu);
+        QCOMPARE(submenu->property("title").toString(), QStringLiteral("Tags in the Grid"));
+        QCOMPARE(submenu->property("iconRole").toString(), QStringLiteral("hide-tags"));
+        QObject *rows[] = {named("gridTagsShowMenuItem"), named("gridTagsReplaceMenuItem"), named("gridTagsHideMenuItem")};
+        const auto checkedRow = [&] {
+            int checked = -1;
+            for (int i = 0; i < 3; ++i)
+                if (rows[i]->property("checked").toBool())
+                    checked = checked < 0 ? i : 3;
+            return checked;
+        };
+        for (auto *row : rows) {
+            QVERIFY(row);
+            QVERIFY(row->property("checkable").toBool());
+        }
+        QTRY_COMPARE(checkedRow(), 0);
+        QVERIFY(QMetaObject::invokeMethod(rows[1], "triggered"));
         QCOMPARE(shown(), QStringLiteral("☀Hi☀ there"));
-        QVERIFY(application->settingsStore()->boolean("grid.hideTags"));
-        QTRY_VERIFY(menuItem->property("checked").toBool());
+        QCOMPARE(application->settingsStore()->integer("grid.tagsMode"), 1);
+        QTRY_COMPARE(checkedRow(), 1);
         application->settingsStore()->set("grid.tagsSwapCharacter", QStringLiteral("~"));
         QCOMPARE(shown(), QStringLiteral("~Hi~ there"));
-        QVariant ran;
-        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
-                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
-        QVERIFY(ran.toBool());
+        QVERIFY(QMetaObject::invokeMethod(rows[2], "triggered"));
+        QCOMPARE(shown(), QStringLiteral("Hi there"));
+        QTRY_COMPARE(checkedRow(), 2);
+
+        const auto cycle = [&] {
+            QVariant ran;
+            QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                              Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
+            QVERIFY(ran.toBool());
+        };
+        const auto status = [&] { return item<QObject>("statusText")->property("text").toString(); };
+        cycle();
         QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
-        QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
-        QTRY_VERIFY(!menuItem->property("checked").toBool());
+        QCOMPARE(application->settingsStore()->integer("grid.tagsMode"), 0);
+        QTRY_COMPARE(checkedRow(), 0);
+        QCOMPARE(status(), QStringLiteral("Tags in the Grid: Show"));
+        cycle();
+        QCOMPARE(shown(), QStringLiteral("~Hi~ there"));
+        QCOMPARE(status(), QStringLiteral("Tags in the Grid: Replace with symbol"));
+        cycle();
+        QCOMPARE(shown(), QStringLiteral("Hi there"));
+        QCOMPARE(status(), QStringLiteral("Tags in the Grid: Hide"));
+
         QVERIFY(!item("showTags"));
         auto *editorItem = named("hideEditorTagsMenuItem");
         QVERIFY(editorItem);
         QCOMPARE(editorItem->property("iconRole").toString(), QStringLiteral("hide-tags"));
         QVERIFY(application->editor().showTags());
+        QVariant ran;
         QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
-                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_GRID_TAGS_SHOW"))));
+        QVERIFY(ran.toBool());
+        QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
         QVERIFY(application->editor().showTags());
+        application->settingsStore()->set("grid.tagsSwapCharacter", QStringLiteral("☀"));
     }
 
     void menuBarRowsFollowTheBoard()

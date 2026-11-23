@@ -4617,20 +4617,40 @@ ApplicationWindow {
                     action: fullScreenTypesettingAction
                 }
                 MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_HIDE_TAGS"
-                    id: hideTagsItem
-                    help: qsTr("Shows or hides tags in the Grid")
+                ShellMenu {
+                    help: qsTr("Shows, replaces or hides tags in the Grid")
                     iconRole: "hide-tags"
-                    objectName: "hideTagsMenuItem"
-                    text: qsTr("Hide tags in the Grid")
-                    checkable: true
-                    checked: root.shell.hideTags
-                    keepsMenuOpen: false
-                    onTriggered: {
-                        checked = Qt.binding(() => root.shell.hideTags)
-                        if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS"))
-                            root.app.toggleHideTags()
+                    objectName: "gridTagsMenu"
+                    title: qsTr("Tags in the Grid")
+                    component GridTagsItem: MenuRadioItem {
+                        required property int mode
+                        checked: root.shell.tagsMode === mode
+                        onTriggered: {
+                            checked = Qt.binding(() => root.shell.tagsMode === mode)
+                            if (!root.hotkeyGesture(command))
+                                root.app.setGridTagsMode(mode)
+                        }
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_SHOW"
+                        help: qsTr("Shows tags in the Grid as they are")
+                        objectName: "gridTagsShowMenuItem"
+                        text: qsTr("Show")
+                        mode: 0
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_REPLACE"
+                        help: qsTr("Shows each tag block in the Grid as the symbol set in Settings › Grid")
+                        objectName: "gridTagsReplaceMenuItem"
+                        text: qsTr("Replace with symbol")
+                        mode: 1
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_HIDE"
+                        help: qsTr("Hides tags in the Grid")
+                        objectName: "gridTagsHideMenuItem"
+                        text: qsTr("Hide")
+                        mode: 2
                     }
                 }
                 ShellMenuItem {
@@ -11453,7 +11473,10 @@ ApplicationWindow {
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
-        case "GLOBAL_HIDE_TAGS": root.app.toggleHideTags(); return true
+        case "GLOBAL_HIDE_TAGS": root.app.cycleGridTagsMode(); return true
+        case "GLOBAL_GRID_TAGS_SHOW": root.app.setGridTagsMode(0); return true
+        case "GLOBAL_GRID_TAGS_REPLACE": root.app.setGridTagsMode(1); return true
+        case "GLOBAL_GRID_TAGS_HIDE": root.app.setGridTagsMode(2); return true
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true

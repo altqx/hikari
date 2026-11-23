@@ -2011,7 +2011,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         if (m_review)
             Q_EMIT m_review->currentChanged();
     });
-    v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    v.shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -6765,10 +6765,32 @@ bool Application::deleteLines()
     return done;
 }
 
-void Application::toggleHideTags()
+application::GridTagsMode Application::gridTagsMode() const
 {
-    m_settings->set("grid.hideTags", !shell().hideTags());
-    shell().setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    return application::GridTagsMode(std::clamp<qint64>(m_settings->integer("grid.tagsMode"), 0, 2));
+}
+
+void Application::setGridTagsMode(int mode)
+{
+    m_settings->set("grid.tagsMode", std::clamp(mode, 0, 2));
+}
+
+void Application::cycleGridTagsMode()
+{
+    const int mode = (int(gridTagsMode()) + 1) % 3;
+    setGridTagsMode(mode);
+    const QString shown = std::array{
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Show"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Replace with symbol"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Hide")}[std::size_t(mode)];
+    shell().setStatusText(shown);
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, shown] {
+        if (shell().statusText() == shown)
+            shell().setStatusText(QString());
+    });
 }
 
 bool Application::deleteText()
@@ -7331,9 +7353,9 @@ void Application::settingChanged(const QString &id)
     else if (id == QLatin1String("editor.timesToFramesSwitch") && !m_resettingSettings)
         for (auto *views : allViews())
             views->editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
-    else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
+    else if (id == QLatin1String("grid.tagsMode") || id == QLatin1String("grid.tagsSwapCharacter"))
         for (auto *views : allViews())
-            views->shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+            views->shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     else if (id == QLatin1String("program.language"))
         switchLanguage();
     else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))

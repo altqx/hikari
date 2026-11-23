@@ -311,6 +311,22 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
     EXPECT_EQ(count, 10u);
 }
 
+TEST(SettingsRegistry, TheOldHideTagsFlagIsATagsMode)
+{
+    using enum GridTagsMode;
+    EXPECT_EQ(findSetting(kRetiredHideTagsSetting), nullptr);
+    const auto *mode = findLegacySetting("GRID_HIDE_TAGS");
+    ASSERT_NE(mode, nullptr);
+    EXPECT_EQ(mode->id, kGridTagsModeSetting);
+    EXPECT_EQ(mode->type, SettingType::Int);
+    EXPECT_EQ(mode->defaultValue, SettingValue(std::int64_t(Show)));
+    EXPECT_EQ(gridTagsModeOfHideTags(false, std::nullopt), Show);
+    EXPECT_EQ(gridTagsModeOfHideTags(false, std::string()), Show);
+    EXPECT_EQ(gridTagsModeOfHideTags(true, std::nullopt), ReplaceWithSymbol);
+    EXPECT_EQ(gridTagsModeOfHideTags(true, std::string("*")), ReplaceWithSymbol);
+    EXPECT_EQ(gridTagsModeOfHideTags(true, std::string()), Hide);
+}
+
 TEST(SettingsRegistry, FoldingKeepsAnEntryAlreadyInTheList)
 {
     const auto &dark = foldedSettings()[1];

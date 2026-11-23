@@ -505,7 +505,9 @@ public:
     // "titleCase", "sentenceCase", "fullWidth", "halfWidth", "swapAlternatives".
     Q_INVOKABLE bool textCommand(const QString &command);
     Q_INVOKABLE bool selectionWrapsAtBreaksOnly() const;
-    Q_INVOKABLE void toggleHideTags();
+    // mode: 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
+    Q_INVOKABLE void setGridTagsMode(int mode);
+    Q_INVOKABLE void cycleGridTagsMode();
     // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
@@ -1213,6 +1215,7 @@ signals:
 
 private:
     struct WindowMedia;
+    application::GridTagsMode gridTagsMode() const;
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     static QString openProblem(const QString &path, const application::StageFailure &failure);

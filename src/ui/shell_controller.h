@@ -36,7 +36,8 @@ class ShellController : public QObject {
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
     Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
-    Q_PROPERTY(bool hideTags READ hideTags NOTIFY hideTagsChanged)
+    // 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
+    Q_PROPERTY(int tagsMode READ tagsMode NOTIFY tagsModeChanged)
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
     Q_PROPERTY(bool referenceLinked READ referenceLinked NOTIFY referenceNavigationChanged)
     Q_PROPERTY(int referenceMatchCount READ referenceMatchCount NOTIFY referenceNavigationChanged)
@@ -120,14 +121,14 @@ public:
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
     bool filtered() const { return m_lines.headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool(); }
-    bool hideTags() const { return m_lines.hideTags(); }
-    void setHideTags(bool hide, const QString &swap)
+    int tagsMode() const { return int(m_lines.tagsMode()); }
+    void setTagsMode(application::GridTagsMode mode, const QString &swap)
     {
-        const bool changed = hide != m_lines.hideTags();
-        m_lines.setHideTags(hide, swap);
-        m_referenceLines.setHideTags(hide, swap);
+        const bool changed = mode != m_lines.tagsMode();
+        m_lines.setTagsMode(mode, swap);
+        m_referenceLines.setTagsMode(mode, swap);
         if (changed)
-            emit hideTagsChanged();
+            emit tagsModeChanged();
     }
     void setReadingLimits(const application::ReadingLimits &profile)
     {
@@ -200,7 +201,7 @@ signals:
     void autoHideColumnsChanged();
     void gridColumnWidthsChanged();
     void foldGeneratedChanged();
-    void hideTagsChanged();
+    void tagsModeChanged();
     void referenceNavigationChanged();
     void referenceLineShown(qulonglong id);
 

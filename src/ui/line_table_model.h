@@ -5,6 +5,7 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/legacy_timebase.h"
 #include "hikari/application/reading_limits.h"
+#include "hikari/application/settings.h"
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/document.h"
 #include "hikari/core/spelling.h"
@@ -119,10 +120,10 @@ public:
     using ChangeState = std::function<int(const core::LineRecord &)>;
     void setChangeState(ChangeState changeState) { m_changeState = std::move(changeState); }
     void setReview(Review review) { m_review = std::move(review); }
-    void setHideTags(bool hide, const QString &swap);
+    void setTagsMode(application::GridTagsMode mode, const QString &swap);
     void setReadingLimits(const application::ReadingLimits &profile);
     const application::ReadingLimits &readingLimits() const { return m_limits; }
-    bool hideTags() const { return m_hideTags; }
+    application::GridTagsMode tagsMode() const { return m_tagsMode; }
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
     void setDraft(std::optional<core::LineRecord> draft);
     void setHiddenColumns(int mask);
@@ -224,7 +225,8 @@ private:
     const QString &shownTextOf(const Row &row) const;
     const Row &shownRow(int row) const;
     void emitRowChanged(int row);
-    bool tagsSwapped() const { return m_hideTags && !m_translationMode; }
+    bool tagsSwapped() const { return m_tagsMode != application::GridTagsMode::Show && !m_translationMode; }
+    QString tagSwap() const { return m_tagsMode == application::GridTagsMode::Hide ? QString() : m_tagSwap; }
     const Measures &measuresOf(const Row &row) const;
     const QVariantList &spellMarksOf(const Row &row) const;
     bool unplacedRunsOf(const Row &row) const;
@@ -232,7 +234,7 @@ private:
     TagSpelling m_spelling;
     ChangeState m_changeState;
     Review m_review;
-    bool m_hideTags = false;
+    application::GridTagsMode m_tagsMode = application::GridTagsMode::Show;
     QString m_tagSwap;
     void emitStateChanged(const std::vector<core::LineId> &ids);
 

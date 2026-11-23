@@ -76,3 +76,12 @@ The named G45 obligations transferred from [Painted-Grid accessibility and perfo
 - **Grid:** the CPS cell is tinted with the Grid warning colour at Aegisub 3.5's alpha, `min((cps − warning + 1) / (error − warning + 1), 1)`, so it deepens from the warning to the error level. An error level under the warning tints fully past the warning. The Wraps cell is tinted when a line is longer than the characters-per-line limit or there are more lines than the Lines limit.
 - **Line editor:** the Wraps and CPS counters show the limits, turn the warning colour past the warning level and the danger colour at the error level.
 - **AI Shorten** sends the Lines over the CPS warning and asks for that speed.
+
+## Tags in the Grid
+
+[#1213](https://github.com/altqx/hikari/issues/1213), Owner decision Q765 (#1209). `grid.tagsMode` is Show (0), Replace with symbol (1) or Hide (2), as Aegisub 3.5's Hide Overrides.
+
+- **View › Tags in the Grid** has the three modes as radio rows (5354 Show, 5355 Replace with symbol, 5356 Hide); Aegisub's `grid/tags/show`, `grid/tags/simplify` and `grid/tags/hide` import to them.
+- **Cycle tags in the Grid** (`GLOBAL_HIDE_TAGS`, 5029, Aegisub's `grid/tag/cycle_hiding`) goes Show → Replace with symbol → Hide → Show and names the new mode in the status bar for 5 seconds. It is a shortcut only, not a menu row, as in Aegisub's View menu.
+- **Replace with symbol** shows each override block as `grid.tagsSwapCharacter` (☀ by default); **Hide** leaves the blocks out even when a symbol is set. Translation mode shows the tags in every mode.
+- **Migration:** the old `grid.hideTags` (and legacy `GRID_HIDE_TAGS`) becomes the mode once: off → Show; on with a non-empty symbol → Replace with symbol; on with an empty symbol → Hide. A profile that already has `grid.tagsMode` keeps it.
