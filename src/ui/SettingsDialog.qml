@@ -1269,7 +1269,7 @@ DialogWindow {
                                 { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s")] },
                                 { setting: "video.matrixMismatch", text: qsTr("A different YCbCr matrix from the video’s"),
-                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Convert the colours and set it to the video’s")] },
                                 { setting: "video.missingLayoutRes", text: qsTr("No layout resolution in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Set it to the script resolution")] },
                                 { setting: "video.layoutResMismatch", text: qsTr("A different layout resolution from the video’s"),

@@ -296,7 +296,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(handleSize.max, 400);
     EXPECT_EQ(std::get<std::int64_t>(findSetting("video.handleSize")->defaultValue), 100);
     for (std::size_t i = 0; const auto &[id, entries] : {std::pair<std::string_view, int>{"video.missingMatrix", 3},
-                                      {"video.matrixMismatch", 3},
+                                      {"video.matrixMismatch", 4},
                                       {"video.missingLayoutRes", 4},
                                       {"video.layoutResMismatch", 3}}) {
         const auto &prompt = all[std::size(kLegacy) + 48 + i++];

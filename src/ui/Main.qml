@@ -10324,8 +10324,11 @@ ApplicationWindow {
         case "matrixMismatch":
             o = { title: qsTr("YCbCr matrix mismatch"),
                   text: qsTr("The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).").arg(question.recommended, question.script),
-                  detail: qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
-                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+                  detail: question.convertible
+                          ? qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.").arg(question.script)
+                          : qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)]
+                           .concat(question.convertible ? [set("convert", qsTr("Convert colours and set to %1").arg(question.recommended), false)] : []) }
             break
         case "missingLayoutRes":
             o = { title: qsTr("Set the layout resolution?"),
@@ -10347,7 +10350,7 @@ ApplicationWindow {
         }
         o.dontAsk = true
         root.messages.ask(o, (id, dontAskAgain) => {
-            const choice = ({ set: 1, play: 2 })[id] ?? 0
+            const choice = ({ set: 1, play: 2, convert: 2 })[id] ?? 0
             if (dontAskAgain)
                 root.app.stopAskingVideoProperty(question.kind, choice)
             if (choice > 0)

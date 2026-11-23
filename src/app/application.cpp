@@ -6226,8 +6226,11 @@ void Application::checkVideoMatrix()
     const QVariantMap question{{QStringLiteral("kind"), kind},
                                {QStringLiteral("video"), path},
                                {QStringLiteral("script"), QString::fromStdString(check.script)},
-                               {QStringLiteral("recommended"), recommended}};
-    if (action == application::VideoPropertyAction::Set)
+                               {QStringLiteral("recommended"), recommended},
+                               {QStringLiteral("convertible"), check.convertible}};
+    if (action == application::VideoPropertyAction::ConvertColours && check.question == application::MatrixQuestion::Mismatch)
+        answerVideoProperty(question, check.convertible ? 2 : 1);
+    else if (action == application::VideoPropertyAction::Set)
         answerVideoProperty(question, 1);
     else if (action == application::VideoPropertyAction::Ask)
         emit videoPropertyQuestion(question);
@@ -6275,7 +6278,9 @@ bool Application::answerVideoProperty(const QVariantMap &question, int choice)
     const QString kind = question.value(QStringLiteral("kind")).toString();
     bool done = false;
     if (kind == QLatin1String("missingMatrix") || kind == QLatin1String("matrixMismatch")) {
-        done = application::setMatrix(*session, question.value(QStringLiteral("recommended")).toString().toStdString())
+        const auto matrix = question.value(QStringLiteral("recommended")).toString().toStdString();
+        done = (kind == QLatin1String("matrixMismatch") && choice == 2 ? application::convertMatrix(*session, matrix)
+                                                                        : application::setMatrix(*session, matrix))
                    .has_value();
     } else if (kind == QLatin1String("missingLayoutRes") || kind == QLatin1String("layoutResMismatch")) {
         const auto layout = choice == 2 ? application::writtenScriptResolution(session->document())
@@ -6298,7 +6303,9 @@ void Application::stopAskingVideoProperty(const QString &kind, int choice)
     else if (kind == QLatin1String("layoutResMismatch"))
         m_settings->set(setting, static_cast<int>(application::LayoutResMismatch::Never));
     else
-        m_settings->set(setting, static_cast<int>(choice == 2   ? VideoPropertyAction::SetToPlayRes
+        m_settings->set(setting, static_cast<int>(choice == 2   ? kind == QLatin1String("matrixMismatch")
+                                                                      ? VideoPropertyAction::ConvertColours
+                                                                      : VideoPropertyAction::SetToPlayRes
                                                   : choice == 1 ? VideoPropertyAction::Set
                                                                 : VideoPropertyAction::Ignore));
 }

@@ -10,10 +10,17 @@
 namespace hikari::application {
 
 inline constexpr std::string_view kMatrixStep = "Setting the YCbCr Matrix";
+inline constexpr std::string_view kMatrixConversionStep = "Converting colours to the YCbCr Matrix";
 inline constexpr std::string_view kLayoutResolutionStep = "Setting the layout resolution";
 
 // The video.missingMatrix, video.matrixMismatch and video.missingLayoutRes values.
-enum class VideoPropertyAction { Ignore = 0, Ask = 1, Set = 2, SetToPlayRes = 3 };
+enum class VideoPropertyAction {
+    Ignore = 0,
+    Ask = 1,
+    Set = 2,
+    SetToPlayRes = 3,   // video.missingLayoutRes only
+    ConvertColours = 3, // video.matrixMismatch only
+};
 // The video.layoutResMismatch values.
 enum class LayoutResMismatch { Never = 0, OnAspectChange = 1, Always = 2 };
 
@@ -38,6 +45,7 @@ struct MatrixCheck {
     MatrixQuestion question = MatrixQuestion::None;
     std::string script;      // the written value
     std::string recommended; // recommendedMatrix
+    bool convertible = false; // a Mismatch that convertMatrix can convert
 };
 // Missing: no YCbCr Matrix key, or one that names no matrix. Mismatch: a matrix other than None that differs
 // from `recommended`. None for non-ASS.
@@ -56,6 +64,9 @@ LayoutCheck checkLayoutResolution(const core::Document &document, Resolution vid
 
 // One undo step each; refused for non-ASS; no step when nothing changes.
 std::expected<void, CommandRefusal> setMatrix(EditSession &session, std::string_view matrix);
+// One undo step: convertColours from the written YCbCr Matrix to `matrix`, then sets it. Refused unless
+// MatrixConversion::between them exists.
+std::expected<void, CommandRefusal> convertMatrix(EditSession &session, std::string_view matrix);
 std::expected<void, CommandRefusal> setLayoutResolution(EditSession &session, Resolution layout);
 
 }
