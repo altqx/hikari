@@ -148,6 +148,18 @@ aegisub.register_macro("Signs/Fade in and out", "Adds \\fad(200,200) to the sele
             QVERIFY(writeAt(home->filePath(QStringLiteral("Dictionary/en_US.dic")),
                             "12\nFinally\nfinally\nthe\nThe\ntent\ntents\nten\nnet\nis\nup\nit\ntext\n"));
         }
+        if (QTest::currentTestFunction() == QByteArrayLiteral("pluginsAutomationMenu")) {
+            const QString folder = home->filePath(QStringLiteral("plugins/com.example.line-tools"));
+            QVERIFY(QDir().mkpath(folder));
+            for (const char *file : {"hikari-plugin.json", "main.lua"})
+                QVERIFY(QFile::copy(QStringLiteral(HIKARI_PLUGIN_EXAMPLES "/line-tools/") + QLatin1String(file),
+                                    folder + QLatin1Char('/') + QLatin1String(file)));
+            QVERIFY(writeAt(home->filePath(QStringLiteral("plugins.json")),
+                            R"({"format": 1, "plugins": {"com.example.line-tools": {"version": "1.2.0", "enabled": true}}})"));
+            o.plugins = {home->filePath(QStringLiteral("plugins")), home->filePath(QStringLiteral("plugin-data")),
+                         home->filePath(QStringLiteral("plugin-cache")), home->filePath(QStringLiteral("plugins.json"))};
+            o.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        }
         if (QTest::currentTestFunction() == QByteArrayLiteral("homePlugins")) {
             o.plugins = {home->filePath(QStringLiteral("plugins")), home->filePath(QStringLiteral("plugin-data")),
                          home->filePath(QStringLiteral("plugin-cache")), home->filePath(QStringLiteral("plugins.json"))};
@@ -1076,6 +1088,20 @@ private slots:
         QTest::qWait(1500);
         QTest::mouseMove(window, QPoint(1, 1));
         shoot(QStringLiteral("home"), QStringLiteral("ai-review-window"));
+    }
+
+    void pluginsAutomationMenu()
+    {
+        openCommonsDialogue(kEditingFrame);
+        seekTo(kBetweenLinesFrame);
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("plugins"), QStringLiteral("automation-menu"), [this](QList<QObject *> &shown) {
+            popupFromMenuBar("automationMenu");
+            QObject *lineTools = nullptr;
+            QTRY_VERIFY((lineTools = named("pluginCommandMenu_Line tools")));
+            openMenu(lineTools);
+            shown << named("automationMenu") << lineTools;
+        });
     }
 
     void homeAutomation()
