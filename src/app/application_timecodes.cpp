@@ -47,6 +47,12 @@ QString fileSystemPath(const QString &path)
     return QUrl(path).isLocalFile() ? QUrl(path).toLocalFile() : path;
 }
 
+std::u8string utf8(const QString &text)
+{
+    const QByteArray bytes = text.toUtf8();
+    return std::u8string(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+}
+
 }
 
 std::expected<application::Timecodes, QString> Application::readTimecodes(const QString &path) const
@@ -159,23 +165,40 @@ std::vector<application::ProjectGarbageEdit> Application::mediaFileGarbage(appli
     if (it == m_tabMedia.end())
         return {};
     const TabMedia &media = it->second;
+    const QDir folder = QFileInfo(QString::fromStdString(destination.value)).dir();
     std::vector<application::ProjectGarbageEdit> edits;
-    if (media.keyframesDropped && media.keyframes.isEmpty())
-        edits.push_back({std::u8string(application::kKeyframesFileKey), std::nullopt});
-    if (media.timecodes.isEmpty()) {
-        if (media.timecodesDropped)
-            edits.push_back({std::u8string(application::kTimecodesFileKey), std::nullopt});
+    auto file = [&](std::u8string_view key, const QString &path, bool dropped) {
+        if (path.isEmpty()) {
+            if (dropped)
+                edits.push_back({std::u8string(key), std::nullopt});
+            return;
+        }
+        QString value = QDir::fromNativeSeparators(path);
+        const bool dummy = path.startsWith(QLatin1Char('?')) || path.startsWith(QLatin1String("dummy-audio:"));
+        if (!dummy && !destination.value.empty())
+            if (const QString relative = folder.relativeFilePath(value); !QDir::isAbsolutePath(relative))
+                value = relative;
+        edits.push_back({std::u8string(key), utf8(dummy ? path : value)});
+    };
+    file(u8"Audio File", media.openedAudio, media.audioDropped);
+    file(u8"Video File", media.video, media.videoDropped);
+    file(application::kTimecodesFileKey, media.timecodes, media.timecodesDropped);
+    file(application::kKeyframesFileKey, media.keyframes, media.keyframesDropped);
+    auto count = [&](std::u8string_view key, int value) {
+        edits.push_back({std::u8string(key), value > 0 ? std::optional(utf8(QString::number(value))) : std::nullopt});
+    };
+    count(u8"Scroll Position", media.scroll);
+    const auto window = m_workspace.window(document);
+    if (!window || m_workspace.currentTab(*window) != document)
         return edits;
-    }
-    QString path = QDir::fromNativeSeparators(media.timecodes);
-    if (!destination.value.empty()) {
-        const QString relative = QFileInfo(QString::fromStdString(destination.value)).dir().relativeFilePath(path);
-        if (!QDir::isAbsolutePath(relative))
-            path = relative;
-    }
-    const QByteArray utf8 = path.toUtf8();
-    edits.push_back({std::u8string(application::kTimecodesFileKey),
-                     std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()))});
+    const WindowViews &shown = views(*window);
+    const auto &view = shown.visualTools->videoView();
+    if (!view.hasVideo() || !(view.aspectRatio() > 0) || !(view.ownAspectRatio() > 0))
+        return edits;
+    for (auto &edit : application::aspectGarbage(1.0 / view.aspectRatio(), 1.0 / view.ownAspectRatio()))
+        edits.push_back(std::move(edit));
+    edits.push_back({u8"Video Zoom Percent", application::aegisubDecimal(view.displayScale())});
+    count(u8"Video Position", shown.media->video->session().reportedFrame().value_or(0));
     return edits;
 }
 
