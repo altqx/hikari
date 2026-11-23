@@ -1,10 +1,12 @@
 #include "hikari/app/plugin_manager.h"
 
 #include "hikari/app/plugin_content.h"
+#include "hikari/app/plugin_secrets.h"
 
 #include "hikari/api/api.h"
 #include "plugin_variant.h"
 #include "hikari/backends/desktop_handoff.h"
+#include "hikari/plugins/project_plugins.h"
 
 #include <QBuffer>
 #include <QCollator>
@@ -245,12 +247,15 @@ QStringList contributionLines(const plugins::Manifest &manifest)
     return lines;
 }
 
-QVariantList settingRows(const plugins::Manifest &manifest, const api::Json &stored)
+QVariantList settingRows(const plugins::Manifest &manifest, const api::Json &stored, const PluginSecrets *secrets)
 {
-    const api::Json values = plugins::settingValues(manifest, stored);
+    api::Json values = plugins::settingValues(manifest, stored);
+    if (secrets)
+        values = secrets->fill(manifest, std::move(values));
     QVariantList rows;
     for (const plugins::Setting &setting : manifest.settings) {
         QVariantMap row = variantOf(setting.definition).toMap();
+        row.insert(QStringLiteral("projectable"), plugins::projectable(setting));
         if (const api::Json *value = values.find(setting.id))
             row.insert(QStringLiteral("value"), variantOf(*value));
         rows << row;
@@ -428,6 +433,8 @@ void PluginManager::refresh()
                                                              std::numeric_limits<std::int64_t>::max()))
                         manifest = std::move(*parsed);
                 }
+                if (manifest && m_secrets)
+                    m_secrets->load(*manifest);
                 m_rows.append(QVariantMap{
                     {QStringLiteral("id"), text(id)},
                     {QStringLiteral("name"), manifest ? text(manifest->name) : text(id)},
@@ -446,7 +453,7 @@ void PluginManager::refresh()
                     {QStringLiteral("homepage"), manifest ? text(manifest->homepage) : QString()},
                     {QStringLiteral("permissions"), manifest ? permissionLines(*manifest) : QStringList()},
                     {QStringLiteral("adds"), manifest ? contributionLines(*manifest) : QStringList()},
-                    {QStringLiteral("settings"), manifest ? settingRows(*manifest, entry.settings) : QVariantList()},
+                    {QStringLiteral("settings"), manifest ? settingRows(*manifest, entry.settings, m_secrets) : QVariantList()},
                     {QStringLiteral("folders"), manifest ? folderRows(*manifest, entry.grants) : QVariantList()},
                     {QStringLiteral("autoUpdate"), entry.autoUpdate},
                     {QStringLiteral("previous"), text(entry.previous)},
@@ -607,11 +614,35 @@ QVariantMap PluginManager::reviewUpdate(const QUrl &file, const QString &id)
     return review;
 }
 
+std::optional<plugins::Manifest> PluginManager::manifest(const std::string &id) const
+{
+    if (!m_installer)
+        return std::nullopt;
+    auto found = m_installer->installedManifest(id);
+    return found ? std::optional(std::move(*found)) : std::nullopt;
+}
+
+void PluginManager::setSecrets(PluginSecrets *secrets)
+{
+    m_secrets = secrets;
+    connect(secrets, &PluginSecrets::changed, this, [this](const QString &id, const QString &setting) {
+        refresh();
+        const std::optional<std::string> text = m_secrets->text(id.toStdString(), setting.toStdString());
+        emit settingChanged(id, setting, QString::fromStdString((text ? api::Json(*text) : api::Json()).dump()));
+    });
+    refresh();
+}
+
 QString PluginManager::setSetting(const QString &id, const QString &setting, const QString &json)
 {
     const auto value = api::Json::parse(json.toStdString());
     if (!m_installer || !value)
         return {};
+    if (const auto manifest = m_installer->installedManifest(id.toStdString()); manifest && m_secrets) {
+        const auto declared = std::ranges::find(manifest->settings, setting.toStdString(), &plugins::Setting::id);
+        if (declared != manifest->settings.end() && declared->secret())
+            return m_secrets->set(manifest->id, declared->id, *value);
+    }
     const auto done = m_installer->setSetting(id.toStdString(), setting.toStdString(), *value);
     if (!done)
         return problemText(done.error());
@@ -634,7 +665,7 @@ std::vector<api::PluginSettingState> PluginManager::settingStates() const
             out.push_back({plugin.value(QStringLiteral("id")).toString().toStdString(),
                            setting.value(QStringLiteral("id")).toString().toStdString(),
                            setting.value(QStringLiteral("title")).toString().toStdString(), type.toStdString(),
-                           setting.value(QStringLiteral("scope")).toString() != QLatin1String("user") && !secret,
+                           setting.value(QStringLiteral("projectable")).toBool(),
                            secret ? api::Json() : fromVariant(setting.value(QStringLiteral("default"))),
                            secret ? api::Json() : fromVariant(setting.value(QStringLiteral("value")))});
         }
@@ -731,7 +762,10 @@ QString PluginManager::uninstall(const QString &id, bool removeData)
 {
     if (!m_installer)
         return {};
+    const auto manifest = m_installer->installedManifest(id.toStdString());
     const auto done = m_installer->uninstall(id.toStdString(), removeData);
+    if (done && manifest && m_secrets)
+        m_secrets->forget(*manifest);
     refresh();
     return done ? QString() : problemText(done.error());
 }

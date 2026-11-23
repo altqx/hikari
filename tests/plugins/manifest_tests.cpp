@@ -69,7 +69,8 @@ TEST(PluginManifest, EveryFieldReads)
     json["contributes"] = *Json::parse(R"({"commands": [{"id": "greet", "title": "Greet"}],
         "panels": [{"id": "board", "title": "Board"}, {"id": "notes", "title": "Notes", "area": "bottom"}],
         "settings": [{"id": "loud", "title": "Loud", "type": "boolean", "default": false},
-                     {"id": "mode", "title": "Mode", "type": "choice", "options": ["a", "b"], "default": "b"},
+                     {"id": "mode", "title": "Mode", "type": "choice",
+                      "options": [{"value": "a", "title": "A"}, {"value": "b", "title": "B"}], "default": "b"},
                      {"id": "count", "title": "Count", "type": "integer", "default": 3, "minimum": 1}]})");
     const auto m = parse(json);
     ASSERT_TRUE(m) << m.error().at << " " << m.error().detail;
@@ -294,8 +295,14 @@ TEST(PluginManifest, RepeatedIdsAndBadDefaultsAreRefused)
     EXPECT_EQ(repeated.kind, Kind::DuplicateId);
     EXPECT_EQ(repeated.at, "/contributes/commands/1/id");
 
-    json["contributes"] = *Json::parse(R"({"settings": [{"id": "m", "title": "M", "type": "choice", "options": ["a"], "default": "z"}]})");
+    json["contributes"] = *Json::parse(
+        R"({"settings": [{"id": "m", "title": "M", "type": "choice", "options": [{"value": "a", "title": "A"}], "default": "z"}]})");
     EXPECT_EQ(problem(json).kind, Kind::BadDefault);
+    json["contributes"] = *Json::parse(
+        R"({"settings": [{"id": "m", "title": "M", "type": "choice", "options": [{"value": "a", "title": "A"}], "default": "A"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    json["contributes"] = *Json::parse(R"({"settings": [{"id": "m", "title": "M", "type": "choice", "options": ["a"], "default": "a"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
     json["contributes"] = *Json::parse(R"({"settings": [{"id": "n", "title": "N", "type": "number", "default": 0.5, "minimum": 1}]})");
     EXPECT_EQ(problem(json).at, "/contributes/settings/0/default");
     json["contributes"] = *Json::parse(R"({"settings": [{"id": "n", "title": "N", "type": "integer", "default": 0.5}]})");

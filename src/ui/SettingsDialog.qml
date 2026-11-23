@@ -64,6 +64,7 @@ DialogWindow {
                            projectable: s.scope !== "user" && s.type !== "secret" })
         return out
     }
+    property var projectPlugins: []
     readonly property var pluginsWithSettings: (pluginManager ? pluginManager.plugins : []).filter(p => (p.settings ?? []).length > 0)
     readonly property var found: SettingsCatalogue.search(query, pluginRows, projectTab ? Object.keys(projectSources).filter(id => projectSources[id] === "project") : changedIds, projectTab)
     readonly property var catalogue: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.pages() : [])
@@ -209,11 +210,12 @@ DialogWindow {
         projectSources = r.sources ?? {}
         projectWaiting = app.projectWaitsForTrust(shellWindow)
         overrides = app.projectOverrides(shellWindow)
+        projectPlugins = app.projectPluginSettings(shellWindow)
         projectPages.load()
     }
     function isChanged(ids) {
         if (projectTab)
-            return ids.some(id => projectSources[id] === "project")
+            return ids.some(id => projectSources[id] === "project" || (id.startsWith("plugin.") && projectSetsPlugin(id)))
         return ids.some(id => changedIds.includes(id) || (id.startsWith("plugin.") && pluginChanged(id)))
     }
     function pluginChanged(id) {
@@ -221,16 +223,38 @@ DialogWindow {
         return r !== undefined && r.value !== undefined && JSON.stringify(r.value) !== JSON.stringify(r.default)
     }
     function pluginSetting(id) {
-        for (const plugin of pluginManager ? pluginManager.plugins : [])
+        const found = pluginEntry(id)
+        return found ? found.setting : undefined
+    }
+    function pluginEntry(id, plugins) {
+        for (const plugin of plugins ?? (pluginManager ? pluginManager.plugins : []))
             for (const s of plugin.settings ?? [])
                 if ("plugin." + plugin.id + "." + s.id === id)
-                    return s
+                    return { plugin: plugin.id, setting: s }
         return undefined
+    }
+    function projectSetsPlugin(id) {
+        const found = pluginEntry(id, projectPlugins)
+        return found !== undefined && found.setting.project !== undefined
+    }
+    function keepPluginSetting(plugin, setting, value) {
+        if (!projectTab)
+            return pluginManager.setSetting(plugin, setting, JSON.stringify(value ?? null))
+        const problem = app.setProjectPluginSetting(shellWindow, plugin, setting, JSON.stringify(value ?? null))
+        loadProject()
+        return problem
     }
     // {text, link?, readOnly?, warning?} or null: where else the row's setting is set.
     function elsewhere(setting) {
-        if (!hasProject || setting.startsWith("plugin."))
+        if (!hasProject)
             return null
+        if (setting.startsWith("plugin.")) {
+            const set = projectSetsPlugin(setting)
+            if (!projectTab)
+                return set ? { text: qsTranslate("HikariSub.Project", "Set in this project"), link: "project" } : null
+            return set ? { text: qsTranslate("HikariSub.Project", "Set in this project") }
+                       : { text: qsTranslate("HikariSub.Project", "Uses yours"), link: "yours" }
+        }
         if (!projectTab)
             return overrides.includes(setting) ? { text: qsTranslate("HikariSub.Project", "Set in this project"), link: "project" } : null
         const source = projectSources[setting]
@@ -273,17 +297,21 @@ DialogWindow {
     }
     function resetSetting(ids) {
         if (projectTab) {
-            app.applyProjectSettings(shellWindow, {}, ids)
+            for (const id of ids.filter(id => id.startsWith("plugin."))) {
+                const found = pluginEntry(id, projectPlugins)
+                if (found)
+                    app.setProjectPluginSetting(shellWindow, found.plugin, found.setting.id, "null")
+            }
+            app.applyProjectSettings(shellWindow, {}, ids.filter(id => !id.startsWith("plugin.")))
             loadProject()
             reloaded()
             return
         }
         for (const id of ids) {
             if (id.startsWith("plugin.")) {
-                const parts = id.split(".")
-                const s = pluginSetting(id)
-                if (s)
-                    pluginManager.setSetting(parts[1], parts.slice(2).join("."), JSON.stringify(s.default))
+                const found = pluginEntry(id)
+                if (found)
+                    pluginManager.setSetting(found.plugin, found.setting.id, JSON.stringify(found.setting.default ?? null))
                 continue
             }
             settings.reset(id)
@@ -2551,10 +2579,10 @@ DialogWindow {
                         SettingsPage {
                             page: "plugins"
                             objectName: "settingsPagePlugins"
-                            visible: !dialog.projectTab && (dialog.searching ? (dialog.found.pages["plugins"] ?? 0) > 0 : true)
+                            visible: dialog.pageShown("plugins")
                             RowLayout {
                                 objectName: "settingsNoPluginSettings"
-                                visible: dialog.pluginsWithSettings.length === 0
+                                visible: !dialog.projectTab && dialog.pluginsWithSettings.length === 0
                                 spacing: 8
                                 Label {
                                     text: qsTr("No plugin has settings.")
@@ -2567,7 +2595,7 @@ DialogWindow {
                                 }
                             }
                             Repeater {
-                                model: dialog.pluginsWithSettings
+                                model: dialog.projectTab ? dialog.projectPlugins : dialog.pluginsWithSettings
                                 PluginSection {}
                             }
                         }
@@ -2722,6 +2750,8 @@ DialogWindow {
         required property string plugin
         property string problem: ""
         readonly property string type: modelData.type
+        readonly property bool inProject: dialog.projectTab
+        readonly property var value: inProject && modelData.project !== undefined ? modelData.project : modelData.value
         readonly property bool deprecated: (modelData.deprecated ?? "").length > 0
         host: dialog
         setting: "plugin." + plugin + "." + modelData.id
@@ -2730,7 +2760,7 @@ DialogWindow {
         inline: type === "boolean"
         visible: dialog.shows(setting) && (!deprecated || dialog.pluginChanged(setting))
         function keep(value) {
-            problem = dialog.pluginManager.setSetting(plugin, modelData.id, JSON.stringify(value))
+            problem = dialog.keepPluginSetting(plugin, modelData.id, value)
             if (problem.length > 0)
                 pluginField.Accessible.announce(problem, Accessible.Assertive)
         }
@@ -2745,7 +2775,8 @@ DialogWindow {
                 sourceComponent: pluginRow.type === "boolean" ? boolControl
                                : pluginRow.type === "choice" ? choiceControl
                                : pluginRow.type === "integer" || pluginRow.type === "number" ? numberControl
-                               : pluginRow.type === "string" ? stringControl : valueControl
+                               : pluginRow.type === "string" ? (pluginRow.modelData.multiline === true ? textControl : stringControl)
+                               : pluginRow.type === "list" ? listControl : secretControl
             }
         }
         Label {
@@ -2762,7 +2793,7 @@ DialogWindow {
                 text: pluginRow.text
                 leftPadding: 1
                 spacing: 9
-                checked: pluginRow.modelData.value === true
+                checked: pluginRow.value === true
                 Accessible.name: text
                 Accessible.description: pluginRow.note
                 onToggled: pluginRow.keep(checked)
@@ -2772,20 +2803,17 @@ DialogWindow {
             id: choiceControl
             ComboBox {
                 objectName: "setting_" + pluginRow.setting
-                model: (pluginRow.modelData.options ?? []).map(o => typeof o === "object" ? o.title : o)
-                currentIndex: (pluginRow.modelData.options ?? []).findIndex(o => (typeof o === "object" ? o.value : o) === pluginRow.modelData.value)
+                model: (pluginRow.modelData.options ?? []).map(o => o.title)
+                currentIndex: (pluginRow.modelData.options ?? []).findIndex(o => o.value === pluginRow.value)
                 Accessible.name: pluginRow.text
-                onActivated: index => {
-                    const o = pluginRow.modelData.options[index]
-                    pluginRow.keep(typeof o === "object" ? o.value : o)
-                }
+                onActivated: index => pluginRow.keep(pluginRow.modelData.options[index].value)
             }
         }
         Component {
             id: numberControl
             TextField {
                 objectName: "setting_" + pluginRow.setting
-                text: String(pluginRow.modelData.value ?? "")
+                text: String(pluginRow.value ?? "")
                 inputMethodHints: Qt.ImhFormattedNumbersOnly
                 Accessible.name: pluginRow.text
                 onEditingFinished: {
@@ -2795,7 +2823,7 @@ DialogWindow {
                         Accessible.announce(pluginRow.problem, Accessible.Assertive)
                         return
                     }
-                    if (n !== pluginRow.modelData.value)
+                    if (n !== pluginRow.value)
                         pluginRow.keep(n)
                 }
             }
@@ -2804,26 +2832,100 @@ DialogWindow {
             id: stringControl
             TextField {
                 objectName: "setting_" + pluginRow.setting
-                text: pluginRow.modelData.value ?? ""
+                text: pluginRow.value ?? ""
                 Accessible.name: pluginRow.text
-                onEditingFinished: if (text !== pluginRow.modelData.value) pluginRow.keep(text)
+                onEditingFinished: if (text !== pluginRow.value) pluginRow.keep(text)
             }
         }
         Component {
-            id: valueControl
+            id: textControl
+            TextArea {
+                objectName: "setting_" + pluginRow.setting
+                text: pluginRow.value ?? ""
+                wrapMode: TextEdit.Wrap
+                Layout.minimumHeight: 80
+                Accessible.name: pluginRow.text
+                onActiveFocusChanged: if (!activeFocus && text !== pluginRow.value) pluginRow.keep(text)
+            }
+        }
+        Component {
+            id: listControl
+            ColumnLayout {
+                id: list
+                readonly property var items: pluginRow.value ?? []
+                readonly property int limit: pluginRow.modelData.maxItems ?? 256
+                function without(index) {
+                    return items.filter((_, i) => i !== index)
+                }
+                function replaced(index, text) {
+                    return items.map((item, i) => i === index ? text : item)
+                }
+                objectName: "setting_" + pluginRow.setting
+                spacing: 6
+                Repeater {
+                    model: list.items
+                    RowLayout {
+                        id: item
+                        required property string modelData
+                        required property int index
+                        spacing: 8
+                        Layout.fillWidth: true
+                        TextField {
+                            objectName: "settingListItem" + item.index
+                            text: item.modelData
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("%1, item %2").arg(pluginRow.text).arg(item.index + 1)
+                            onEditingFinished: if (text !== item.modelData) pluginRow.keep(list.replaced(item.index, text))
+                        }
+                        IconButton {
+                            objectName: "settingListRemove" + item.index
+                            iconRole: "remove"
+                            text: qsTr("Remove item %1").arg(item.index + 1)
+                            onClicked: pluginRow.keep(list.without(item.index))
+                        }
+                    }
+                }
+                IconTextButton {
+                    objectName: "settingListAdd"
+                    iconRole: "add"
+                    text: qsTr("Add")
+                    enabled: list.items.length < list.limit
+                    onClicked: pluginRow.keep(list.items.concat([""]))
+                }
+            }
+        }
+        Component {
+            id: secretControl
             RowLayout {
+                id: secret
+                property bool shown: false
+                readonly property bool kept: typeof pluginRow.value === "string"
                 spacing: 8
                 TextField {
                     objectName: "setting_" + pluginRow.setting
-                    readOnly: true
-                    text: pluginRow.type === "secret" ? "" : JSON.stringify(pluginRow.modelData.value ?? null)
+                    text: pluginRow.value ?? ""
+                    echoMode: secret.shown ? TextInput.Normal : TextInput.Password
+                    placeholderText: qsTr("Not set")
                     Layout.fillWidth: true
                     Accessible.name: pluginRow.text
+                    onEditingFinished: if (text !== (pluginRow.value ?? "")) pluginRow.keep(text.length > 0 ? text : null)
                 }
                 IconTextButton {
-                    iconRole: "folder-open"
-                    text: qsTr("Open settings file")
-                    onClicked: dialog.openSettingsFile(pluginRow.setting)
+                    objectName: "settingSecretShow"
+                    iconRole: secret.shown ? "hide" : "show"
+                    text: secret.shown ? qsTr("Hide") : qsTr("Show")
+                    enabled: secret.kept
+                    onClicked: secret.shown = !secret.shown
+                }
+                IconTextButton {
+                    objectName: "settingSecretClear"
+                    iconRole: "clear"
+                    text: qsTr("Clear")
+                    enabled: secret.kept
+                    onClicked: {
+                        secret.shown = false
+                        pluginRow.keep(null)
+                    }
                 }
             }
         }

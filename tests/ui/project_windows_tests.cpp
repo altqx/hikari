@@ -2,6 +2,7 @@
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/forwarded_launches.h"
+#include "hikari/app/plugin_manager.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/app/session_json.h"
 #include "hikari/app/skills_settings.h"
@@ -86,6 +87,31 @@ QVariantList discardAll(const QVariantList &rows)
     return out;
 }
 
+class MemoryKeychain final : public hikari::application::ai::KeyStore {
+public:
+    explicit MemoryKeychain(std::map<std::string, std::string> &keys) : m_keys(keys) {}
+    void read(const std::string &id, std::function<void(hikari::application::ai::KeyResult)> done) override
+    {
+        const auto it = m_keys.find(id);
+        done(it == m_keys.end() ? hikari::application::ai::KeyResult(hikari::application::ai::KeyError::NotFound)
+                                : hikari::application::ai::KeyResult(it->second));
+    }
+    void write(const std::string &id, const std::string &key,
+               std::function<void(std::optional<hikari::application::ai::KeyError>)> done) override
+    {
+        m_keys[id] = key;
+        done(std::nullopt);
+    }
+    void remove(const std::string &id, std::function<void(std::optional<hikari::application::ai::KeyError>)> done) override
+    {
+        m_keys.erase(id);
+        done(std::nullopt);
+    }
+
+private:
+    std::map<std::string, std::string> &m_keys;
+};
+
 }
 
 class ProjectWindowsTests : public QObject {
@@ -98,6 +124,25 @@ class ProjectWindowsTests : public QObject {
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
     QString userFolder;
+    bool withPlugins = false;
+    std::map<std::string, std::string> keychain;
+
+    void installPlugin(const QString &id, const QByteArray &settings)
+    {
+        const QString folder = home.filePath(QStringLiteral("plugins/") + id);
+        QDir().mkpath(folder);
+        writeAll(folder + QStringLiteral("/hikari-plugin.json"),
+                 QStringLiteral(R"({"id": "%1", "name": "KF", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],)"
+                                R"( "contributes": {"settings": %2}})")
+                     .arg(id, QString::fromUtf8(settings))
+                     .toUtf8());
+        writeAll(folder + QStringLiteral("/main.lua"), "local _ = hikari\n");
+        writeAll(home.filePath(QStringLiteral("plugins.json")),
+                 QJsonDocument(QJsonObject{{id, QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")},
+                                                           {QStringLiteral("enabled"), true}}}})
+                     .toJson());
+        withPlugins = true;
+    }
 
     void start(application::SpellingBackendLoader spelling = {})
     {
@@ -106,6 +151,11 @@ class ProjectWindowsTests : public QObject {
         o.playbackAudio = false;
         o.spellingBackend = std::move(spelling);
         o.userFolder = userFolder;
+        if (withPlugins) {
+            o.plugins = {home.filePath(QStringLiteral("plugins")), home.filePath(QStringLiteral("plugin-data")),
+                         home.filePath(QStringLiteral("plugin-cache")), home.filePath(QStringLiteral("plugins.json"))};
+            o.pluginKeychain = [this] { return std::make_unique<MemoryKeychain>(keychain); };
+        }
         application = new app::Application(o);
         forwarded = new app::ForwardedLaunches(*application);
         engine = new QQmlApplicationEngine;
@@ -266,6 +316,11 @@ private slots:
         if (!userFolder.isEmpty())
             QDir(userFolder).removeRecursively();
         userFolder.clear();
+        for (const char *name : {"plugins", "plugin-data", "plugin-cache"})
+            QDir(home.filePath(QLatin1String(name))).removeRecursively();
+        QFile::remove(home.filePath(QStringLiteral("plugins.json")));
+        withPlugins = false;
+        keychain.clear();
     }
 
     void theSkillsListIsTheWindowsProjectOverMineOverBuiltIn()
@@ -989,6 +1044,82 @@ private slots:
         shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
         QVERIFY2(shared.contains("spellchecker = false"), shared);
         QVERIFY(application->settingsStore()->value(QStringLiteral("editor.spellchecker")).toBool());
+    }
+
+    void theProjectTabSetsAPluginsProjectableSettingsOnly()
+    {
+        installPlugin(QStringLiteral("com.example.kf"), R"([
+            {"id": "size", "title": "Size", "type": "integer", "default": 10},
+            {"id": "host", "title": "Host", "type": "string", "default": "", "projectable": false},
+            {"id": "mode", "title": "Mode", "type": "choice", "options": [{"value": "fast", "title": "Fast"}, {"value": "slow", "title": "Slow"}], "default": "fast"},
+            {"id": "hosts", "title": "Hosts", "type": "list", "default": []},
+            {"id": "token", "title": "Token", "type": "secret"}])");
+        keychain["plugin/com.example.kf/token"] = "t0";
+        start();
+        const QString show = folder("plugged", true);
+        writeAll(show + QStringLiteral("/.hikari/project.toml"),
+                 "version = 1\n# Shared by the team.\n[plugins.\"com.example.kf\"]\nsize = 3\n");
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        application->trustProject(w);
+        const auto rows = [&] {
+            const QVariantList plugins = application->projectPluginSettings(w);
+            QMap<QString, QVariant> out;
+            if (plugins.size() == 1)
+                for (const QVariant &row : plugins.first().toMap().value(QStringLiteral("settings")).toList())
+                    out.insert(row.toMap().value(QStringLiteral("id")).toString(), row.toMap().value(QStringLiteral("project")));
+            return out;
+        };
+        QTRY_COMPARE(rows().keys(), (QStringList{"hosts", "mode", "size"}));
+        QCOMPARE(rows().value(QStringLiteral("size")).toInt(), 3);
+        QTRY_COMPARE(application->pluginManager()->plugins().first().toMap().value(QStringLiteral("settings")).toList().last()
+                         .toMap().value(QStringLiteral("value")).toString(),
+                     QStringLiteral("t0"));
+
+        const QString plugin = QStringLiteral("com.example.kf");
+        QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("mode"), QStringLiteral("\"slow\"")), QString());
+        QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("mode"), QStringLiteral("\"Slow\"")),
+                 QStringLiteral("“mode” must be one of: Fast, Slow"));
+        QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("host"), QStringLiteral("\"a\"")),
+                 QStringLiteral("A Project can’t set “Host”."));
+        QVERIFY(!application->setProjectPluginSetting(w, plugin, QStringLiteral("token"), QStringLiteral("\"t\"")).isEmpty());
+        QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("hosts"), QStringLiteral(R"(["a.example"])")),
+                 QString());
+        QCOMPARE(rows().value(QStringLiteral("mode")).toString(), QStringLiteral("slow"));
+        QCOMPARE(rows().value(QStringLiteral("hosts")).toStringList(), QStringList{"a.example"});
+
+        QVERIFY(QMetaObject::invokeMethod(shell(w), "openSettings", Q_ARG(QVariant, QStringLiteral("plugins")),
+                                          Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(dialog("settingsDialog"));
+        QQuickWindow *settings = dialog("settingsDialog");
+        const auto elsewhere = [&](const char *setting) {
+            QVariant found;
+            QMetaObject::invokeMethod(settings, "elsewhere", Q_RETURN_ARG(QVariant, found),
+                                      Q_ARG(QVariant, QString::fromLatin1(setting)));
+            return found.toMap().value(QStringLiteral("text")).toString();
+        };
+        QTRY_COMPARE(elsewhere("plugin.com.example.kf.size"), QStringLiteral("Set in this project"));
+        QVERIFY(elsewhere("plugin.com.example.kf.host").isEmpty());
+        settings->setProperty("projectTab", true);
+        QTRY_VERIFY(item(settings->contentItem(), QStringLiteral("setting_hosts")));
+        QCOMPARE(elsewhere("plugin.com.example.kf.size"), QStringLiteral("Set in this project"));
+        QVERIFY(QMetaObject::invokeMethod(settings, "resetSetting",
+                                          Q_ARG(QVariant, QStringList{QStringLiteral("plugin.com.example.kf.size")})));
+        QTRY_COMPARE(elsewhere("plugin.com.example.kf.size"), QStringLiteral("Uses yours"));
+
+        const QByteArray shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
+        QVERIFY2(shared.contains("# Shared by the team."), shared);
+        QVERIFY2(!shared.contains("size"), shared);
+        QVERIFY2(shared.contains("mode = \"slow\""), shared);
+        QVERIFY2(!shared.contains("token") && !shared.contains("host ="), shared);
+        QVERIFY(!rows().contains(QStringLiteral("size")) || !rows().value(QStringLiteral("size")).isValid());
+
+        settings->setProperty("projectTab", false);
+        QCOMPARE(application->pluginManager()->setSetting(plugin, QStringLiteral("token"), QStringLiteral("\"t1\"")), QString());
+        QCOMPARE(keychain.at("plugin/com.example.kf/token"), std::string("t1"));
+        QVERIFY(QMetaObject::invokeMethod(settings, "resetSetting",
+                                          Q_ARG(QVariant, QStringList{QStringLiteral("plugin.com.example.kf.token")})));
+        QVERIFY(!keychain.contains("plugin/com.example.kf/token"));
     }
 
     void aProjectWithScriptsAsksForTrust()

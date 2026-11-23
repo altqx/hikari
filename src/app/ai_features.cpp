@@ -1,4 +1,5 @@
 #include "hikari/app/ai_features.h"
+#include "hikari/app/plugin_secrets.h"
 
 #include "hikari/api/api.h"
 #include "hikari/backends/ai_agent_broker.h"
@@ -6,10 +7,8 @@
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_config_store.h"
 #ifdef Q_OS_WIN
-#include "hikari/backends/ai_file_key_store.h"
 #endif
 #include "hikari/backends/ai_http_relay.h"
-#include "hikari/backends/ai_keychain.h"
 #include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
@@ -113,15 +112,7 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
     const QString ai = userFolder + QStringLiteral("/ai");
     const QString codexHome = ai + QStringLiteral("/agents/codex/home");
     Ports ports;
-#ifdef Q_OS_WIN
-    ports.keyStore = [ai, kept = !userFolder.isEmpty()] {
-        return std::make_unique<backends::ai::FileKeyStore>(
-            kept ? ai + QStringLiteral("/secrets") : QString(),
-            std::make_unique<backends::ai::KeychainKeyStore>(QStringLiteral("HikariSub")));
-    };
-#else
-    ports.keyStore = [] { return std::make_unique<backends::ai::KeychainKeyStore>(QStringLiteral("HikariSub")); };
-#endif
+    ports.keyStore = [userFolder] { return systemKeyStore(userFolder); };
     ports.configStore = [ai, kept = !userFolder.isEmpty()]() -> std::unique_ptr<application::ai::ConfigStore> {
         if (!kept)
             return std::make_unique<NoConfigStore>();

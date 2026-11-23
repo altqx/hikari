@@ -32,16 +32,23 @@ bool pluginRunsAnywhere(const std::string &id, const InstalledPlugin &installed,
     return std::ranges::any_of(windows, [&](const ProjectPlugins *project) { return pluginOn(id, installed, project); });
 }
 
-api::Json projectSettings(const std::string &id, const api::Json &stored, const ProjectPlugins *project)
+bool projectable(const Setting &setting)
+{
+    const api::Json *flag = setting.definition.find("projectable");
+    return !setting.secret() && (!flag || flag->asBool());
+}
+
+api::Json projectSettings(const Manifest &manifest, const api::Json &stored, const ProjectPlugins *project)
 {
     if (!project)
         return stored;
-    const auto set = project->settings.find(id);
+    const auto set = project->settings.find(manifest.id);
     if (set == project->settings.end() || !set->second.isObject())
         return stored;
     api::Json out = stored.isObject() ? stored : api::Json::object();
-    for (const auto &member : set->second.asObject())
-        out[member.key] = member.value;
+    for (const Setting &setting : manifest.settings)
+        if (const api::Json *value = set->second.find(setting.id); value && projectable(setting))
+            out[setting.id] = *value;
     return out;
 }
 
