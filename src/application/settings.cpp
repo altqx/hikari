@@ -38,10 +38,12 @@ constexpr std::string_view kProjectable[] = {
     "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "translation.glossary",
     "translation.translator",        "translation.reviewer",         "ai.exclude",
     "translation.sourceLanguage",    "translation.targetLanguage",   "export.format",
-    "explorer.exclude",
+    "explorer.exclude",              "privacy.discordProject",       "privacy.discordShow",
+    "privacy.discordDetails",        "privacy.discordState",
 };
 // Projectable ids whose Project value waits for trust.
-constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer"};
+constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer", "privacy.discordShow",
+                                          "privacy.discordDetails", "privacy.discordState"};
 
 bool listed(std::span<const std::string_view> rules, std::string_view id)
 {
@@ -91,7 +93,7 @@ std::vector<SettingDefinition> &definitions()
         {"audio.snapToKeyframes", "AUDIO_SNAP_TO_KEYFRAMES", Bool, Profile, Mapped, true, false},
         {"audio.snapToOtherLines", "AUDIO_SNAP_TO_OTHER_LINES", Bool, Profile, Mapped, true, false},
         {"audio.spectrumOn", "AUDIO_SPECTRUM_ON", Bool, Profile, Mapped, true, false},
-        {"audio.spectrumNonLinearOn", "AUDIO_SPECTRUM_NON_LINEAR_ON", Bool, Profile, Mapped, true, false},
+        {"audio.spectrumCurve", "AUDIO_SPECTRUM_NON_LINEAR_ON", Int, Profile, Mapped, true, std::int64_t{0}},
         {"audio.startDragSensitivity", "AUDIO_START_DRAG_SENSITIVITY", Int, Profile, Mapped, true, std::int64_t{6}},
         {"audio.verticalZoom", "AUDIO_VERTICAL_ZOOM", Int, Profile, Mapped, true, std::int64_t{50}},
         {"audio.volume", "AUDIO_VOLUME", Int, Profile, Mapped, true, std::int64_t{50}},
@@ -112,6 +114,7 @@ std::vector<SettingDefinition> &definitions()
         {"scriptProperties.updateOn", "ASS_PROPERTIES_UPDATE_ON", Bool, Profile, Mapped, false, false},
         {"scriptProperties.askForChange", "ASS_PROPERTIES_ASK_FOR_CHANGE", Bool, Profile, Mapped, false, false},
         {"recent.audio", "AUDIO_RECENT_FILES", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"recent.commands", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"automation.loadingMethod", "AUTOMATION_LOADING_METHOD", Int, Profile, Mapped, false, std::int64_t{0}},
         {"automation.oldScriptsCompatibility", "AUTOMATION_OLD_SCRIPTS_COMPATIBILITY", Bool, Profile, Mapped, false, false},
         {"automation.lastScript", "AUTOMATION_RECENT_FILES", String, Profile, Mapped, false, std::string()},
@@ -197,6 +200,7 @@ std::vector<SettingDefinition> &definitions()
         {"postprocessor.leadOut", "POSTPROCESSOR_LEAD_OUT", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdStart", "POSTPROCESSOR_THRESHOLD_START", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.thresholdEnd", "POSTPROCESSOR_THRESHOLD_END", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"postprocessor.maxOverlap", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"styles.previewText", "STYLE_PREVIEW_TEXT", String, Profile, Mapped, false, utf8(u8"光 Hikari 日本")},
         {"program.font", "PROGRAM_FONT", String, Profile, Mapped, false, std::string("Tahoma")},
         {"program.fontSize", "PROGRAM_FONT_SIZE", Int, Profile, Mapped, false, std::int64_t{10}},
@@ -273,17 +277,17 @@ std::vector<SettingDefinition> &definitions()
         // Hotkeys.txt / AudioHotkeys.txt lines; unset: the defaults.
         {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // theme: "light", "dark", "highContrastWhite" or "highContrastBlack"; colours "#RRGGBB".
+        // A theme id: "light", "dark", "highContrastWhite", "highContrastBlack" or "plugin:<plugin id>/<theme id>".
         {"appearance.theme", "", String, Profile, Mapped, false, std::string("dark")},
         {"appearance.followSystem", "", Bool, Profile, Mapped, false, true},
-        {"appearance.lightAccent", "", String, Profile, Mapped, false, std::string("green")},
-        {"appearance.darkAccent", "", String, Profile, Mapped, false, std::string("green")},
-        {"appearance.highContrastWhite.accent", "", String, Profile, Mapped, false, std::string("#0037B3")},
-        {"appearance.highContrastWhite.text", "", String, Profile, Mapped, false, std::string("#000000")},
-        {"appearance.highContrastWhite.border", "", String, Profile, Mapped, false, std::string("#000000")},
-        {"appearance.highContrastBlack.accent", "", String, Profile, Mapped, false, std::string("#FFFF00")},
-        {"appearance.highContrastBlack.text", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
-        {"appearance.highContrastBlack.border", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
+        {"appearance.lightTheme", "", String, Profile, Mapped, false, std::string("light")},
+        {"appearance.darkTheme", "", String, Profile, Mapped, false, std::string("dark")},
+        {"appearance.highContrastLightTheme", "", String, Profile, Mapped, false, std::string("highContrastWhite")},
+        {"appearance.highContrastDarkTheme", "", String, Profile, Mapped, false, std::string("highContrastBlack")},
+        // "<theme id>=<accent choice id>" rows.
+        {"appearance.accents", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // "<theme id>/<role>=#RRGGBB" rows.
+        {"appearance.colours", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // "system", "custom" or "auto" (the system's on tiling window managers).
         {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
         // "start" or "end": the first side bar's edge in reading order (ADR 0032).
@@ -292,6 +296,7 @@ std::vector<SettingDefinition> &definitions()
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // One "<picker>\t<folder URL>" row per picker.
         {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        {"statusBar.hiddenItems", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // One "<list>\t<project|mine>" row per tiered list: where New and Save as save.
         {"workspace.saveTiers", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
@@ -311,6 +316,8 @@ std::vector<SettingDefinition> &definitions()
         {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
         // PortAudio output only: general playback keeps the file's channels.
         {"audio.playMono", "", Bool, Profile, Mapped, false, false},
+        {"audio.defaultDuration", "", Int, Profile, Mapped, false, std::int64_t{5000}},
+        {"audio.timingKeysEverywhere", "", Int, Profile, Mapped, false, std::int64_t{1}},
         // An AUDIO_HOTKEY symbol.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
         // Controls the row shows: "playAround", the plays, "autoCommit", "nextCommit",
@@ -350,6 +357,25 @@ std::vector<SettingDefinition> &definitions()
         {"privacy.alwaysSendCrashReports", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordPresence", "", Bool, Profile, Mapped, false, false},
         {"privacy.discordFileName", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordMode", "", Bool, Profile, Mapped, false, true},
+        {"privacy.discordModeIcon", "", Bool, Profile, Mapped, false, true},
+        {"privacy.discordProjectName", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordActivities", "", StringList, Profile, Mapped, false,
+         std::vector<std::string>{"watching", "effects", "styling", "spelling", "reviewing", "exporting"}},
+        {"privacy.discordText", "", String, Profile, Mapped, false, std::string("standard")},
+        {"privacy.discordDetails", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordState", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordPlugin", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordTime", "", String, Profile, Mapped, false, std::string("started")},
+        {"privacy.discordIdle", "", String, Profile, Mapped, false, std::string("idle")},
+        {"privacy.discordIdleMinutes", "", Int, Profile, Mapped, false, std::int64_t{10}},
+        {"privacy.discordIdleBackground", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordGetButton", "", Bool, Profile, Mapped, false, true},
+        {"privacy.discordLink", "", Bool, Profile, Mapped, false, false},
+        {"privacy.discordLinkLabel", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordLinkUrl", "", String, Profile, Mapped, false, std::string()},
+        {"privacy.discordProject", "", String, Profile, Mapped, false, std::string("yours")},
+        {"privacy.discordShow", "", String, Profile, Mapped, false, std::string()},
         // The star prompt's counters: lastDay is an ISO date, snoozedUntil seconds since the epoch.
         {"starPrompt.days", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"starPrompt.lastDay", "", String, Profile, Mapped, false, std::string()},
@@ -377,6 +403,7 @@ std::vector<SettingDefinition> &definitions()
         {"postprocessor.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.preset", "", String, Profile, Mapped, false, std::string()},
         {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
+        {"export.recipes", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
         {"qcNotes.hideDone", "", Bool, Profile, Mapped, false, false},
@@ -399,6 +426,12 @@ std::vector<SettingDefinition> &definitions()
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
         // 0 Auto, 1 Always, 2 Never.
         {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // 0 below the picture (letterbox), 1 over it.
+        {"video.fullscreenBarPosition", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.fullscreenHidePointer", "", Bool, Profile, Mapped, false, true},
+        {"video.fullscreenOverlays", "", Bool, Profile, Mapped, false, true},
+        // 0 Simple, 1 Typesetting.
+        {"video.fullscreenOpensIn", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
         // visual::ZoomModel and visual::ScrollAction values.
@@ -476,6 +509,7 @@ std::vector<SettingDefinition> &definitions()
         {"video.layoutResMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.untaggedMatrixWarning", "", Bool, Profile, Mapped, false, true},
         {"video.hdrWarning", "", Bool, Profile, Mapped, false, true},
+        {"autosave.intervalSeconds", "", Int, Profile, Mapped, false, std::int64_t{20}},
     });
     return table;
 }
@@ -523,6 +557,29 @@ std::span<const RenamedSetting> renamedSettings()
 {
     static constexpr RenamedSetting renamed[] = {{"automation.trustedFolders", "trust.folders"}};
     return renamed;
+}
+
+std::span<const FoldedSetting> foldedSettings()
+{
+    static constexpr FoldedSetting folded[] = {
+        {"appearance.lightAccent", "appearance.accents", "light"},
+        {"appearance.darkAccent", "appearance.accents", "dark"},
+        {"appearance.highContrastWhite.accent", "appearance.colours", "highContrastWhite/accent"},
+        {"appearance.highContrastWhite.text", "appearance.colours", "highContrastWhite/text"},
+        {"appearance.highContrastWhite.border", "appearance.colours", "highContrastWhite/line"},
+        {"appearance.highContrastBlack.accent", "appearance.colours", "highContrastBlack/accent"},
+        {"appearance.highContrastBlack.text", "appearance.colours", "highContrastBlack/text"},
+        {"appearance.highContrastBlack.border", "appearance.colours", "highContrastBlack/line"},
+    };
+    return folded;
+}
+
+std::vector<std::string> foldInto(std::vector<std::string> list, const FoldedSetting &folded, std::string_view value)
+{
+    const std::string key = std::string(folded.entryKey) + '=';
+    if (!value.empty() && std::ranges::none_of(list, [&key](const std::string &e) { return e.starts_with(key); }))
+        list.push_back(key + std::string(value));
+    return list;
 }
 
 std::span<const std::string_view> retiredSettings()

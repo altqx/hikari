@@ -236,7 +236,7 @@ bool TextOnPathTool::key(const Key &event, VisualHost &host)
 
 Overlay TextOnPathTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     m_editor.draw(out, frame(host));
     const IntRect video = host.view().videoRect();

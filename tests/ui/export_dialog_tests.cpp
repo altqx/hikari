@@ -113,7 +113,7 @@ class ExportDialogTest : public QObject {
     }
     void choose(const char *format, const QString &path)
     {
-        const QStringList ids{"srt", "vtt", "sbv", "txt", "mdvd", "mpl2", "tmp", "ttml", "dfxp", "srv3"};
+        const QStringList ids{"srt", "vtt", "sbv", "text", "microdvd", "mpl2", "tmplayer", "ttml", "dfxp", "srv3"};
         part("exportFormat")->setProperty("currentIndex", ids.indexOf(QLatin1String(format)));
         part("exportDestination")->setProperty("text", path);
     }
@@ -213,7 +213,7 @@ private slots:
         QVERIFY(!open("replace.ass").isEmpty());
         const QString out = written(dir.filePath(QStringLiteral("replace.txt")), "keep me");
         openDialog();
-        choose("txt", out);
+        choose("text", out);
         run();
         QObject *question = nullptr;
         QTRY_VERIFY((question = dialog()->findChild<QObject *>(QStringLiteral("exportReplaceQuestion"))) &&
@@ -236,7 +236,7 @@ private slots:
         application->editor().reloadFromSession();
         openDialog();
         const QString out = dir.filePath(QStringLiteral("selected.txt"));
-        choose("txt", out);
+        choose("text", out);
         part("exportLines")->setProperty("currentIndex", 1);
         run();
         QTRY_VERIFY(dialog()->property("reported").toBool());
@@ -247,7 +247,7 @@ private slots:
     {
         QVERIFY(!open("remembered.ass").isEmpty());
         openDialog();
-        choose("mdvd", dir.filePath(QStringLiteral("remembered.sub")));
+        choose("microdvd", dir.filePath(QStringLiteral("remembered.sub")));
         part("exportFps")->setProperty("text", QStringLiteral("25"));
         part<QObject>("exportMerge")->setProperty("checked", true);
         run();
@@ -267,7 +267,7 @@ private slots:
         const QString remembered = dir.filePath(QStringLiteral("remembered.ass"));
         QVERIFY(targets(remembered));
         openDialog();
-        QCOMPARE(dialog()->property("format").toString(), QStringLiteral("mdvd"));
+        QCOMPARE(dialog()->property("format").toString(), QStringLiteral("microdvd"));
         QCOMPARE(part("exportFps")->property("text").toString(), QStringLiteral("25"));
         QVERIFY(part<QObject>("exportMerge")->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
@@ -282,7 +282,7 @@ private slots:
     {
         QVERIFY(!open("fps.ass").isEmpty());
         openDialog();
-        choose("mdvd", dir.filePath(QStringLiteral("fps.sub")));
+        choose("microdvd", dir.filePath(QStringLiteral("fps.sub")));
         part("exportFps")->setProperty("text", QStringLiteral("0"));
         QVERIFY(!part("exportRun")->property("enabled").toBool());
         choose("srt", dir.filePath(QStringLiteral("fps.srt")));

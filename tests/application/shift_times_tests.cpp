@@ -338,6 +338,38 @@ TEST(Postprocessor, ContinuousTimesCloseSmallGaps)
     EXPECT_EQ(times(session), (std::vector<std::pair<int, int>>{{1000, 2180}, {2180, 3000}}));
 }
 
+TEST(Postprocessor, ContinuousTimesCloseOverlapsUpToTheMaximum)
+{
+    const auto tb = timebase();
+    ShiftContext c;
+    c.timebase = &tb;
+    ShiftTimesSettings s;
+    s.postprocessor = 16 | 4;
+    s.thresholdStart = 200;
+    s.thresholdEnd = 300;
+
+    auto kept = twoLines("0:00:01.00,0:00:02.20", "0:00:02.00,0:00:03.00");
+    EXPECT_FALSE(planShift(kept, s, c)->lines[0].changed());
+
+    s.maxOverlap = 250;
+    auto session = twoLines("0:00:01.00,0:00:02.20", "0:00:02.00,0:00:03.00");
+    const auto plan = planShift(session, s, c);
+    ASSERT_TRUE(plan);
+    EXPECT_EQ(plan->lines[0].rules, unsigned(OverlapClosed));
+    EXPECT_EQ(plan->lines[1].rules, unsigned(OverlapClosed));
+    EXPECT_TRUE(plan->lines[0].marked);
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session), (std::vector<std::pair<int, int>>{{1000, 2080}, {2080, 3000}}));
+
+    auto far = twoLines("0:00:01.00,0:00:02.30", "0:00:02.00,0:00:03.00");
+    EXPECT_FALSE(planShift(far, s, c)->lines[0].changed());
+
+    s.thresholdStart = s.thresholdEnd = 0;
+    auto even = twoLines("0:00:01.00,0:00:02.20", "0:00:02.00,0:00:03.00");
+    ASSERT_TRUE(shiftTimes(even, s, c));
+    EXPECT_EQ(times(even), (std::vector<std::pair<int, int>>{{1000, 2100}, {2100, 3000}}));
+}
+
 TEST(Postprocessor, SnapToKeyframes)
 {
     EditSession session{load("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"

@@ -7,6 +7,7 @@
 #include "hikari/application/video_fullscreen.h"
 
 #include <QEvent>
+#include <QKeyEvent>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QQuickItem>
@@ -44,7 +45,8 @@ VideoFullscreenController::VideoFullscreenController(VideoController &video, Vid
         updateBar();
     });
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
-        if (id == QLatin1String("video.fullscreenBar")) {
+        if (id == QLatin1String("video.fullscreenBar") || id == QLatin1String("video.fullscreenBarPosition")
+            || id == QLatin1String("video.fullscreenHidePointer") || id == QLatin1String("video.fullscreenOverlays")) {
             updateBar();
             emit panelChanged();
         }
@@ -68,8 +70,30 @@ VideoFullscreenController::VideoFullscreenController(VideoController &video, Vid
             }
         }
         updateBar();
+        checkKeyframes();
         emit progressChanged();
     });
+    connect(&m_video, &VideoController::textsChanged, this, [this] {
+        updateBar();
+        checkKeyframes();
+        emit progressChanged();
+    });
+}
+
+void VideoFullscreenController::checkKeyframes()
+{
+    const auto &keyframes = m_video.session().keyframes();
+    if (keyframes.data() == m_keyframesData && keyframes.size() == m_keyframesSize)
+        return;
+    m_keyframesData = keyframes.data();
+    m_keyframesSize = keyframes.size();
+    emit keyframesChanged();
+}
+
+QList<int> VideoFullscreenController::keyframeTicks(int width) const
+{
+    const auto ticks = application::fullscreenKeyframeTicks(m_video.session().keyframes(), m_video.frameCount(), width);
+    return {ticks.begin(), ticks.end()};
 }
 
 void VideoFullscreenController::setWindows(QQuickWindow *fullscreen, QWindow *main)
@@ -86,6 +110,11 @@ bool VideoFullscreenController::eventFilter(QObject *watched, QEvent *event)
 {
     if (watched == m_window && event->type() == QEvent::Leave)
         m_pointer.reset();
+    if (event->type() == QEvent::ShortcutOverride && m_window) {
+        auto *item = qobject_cast<QQuickItem *>(watched);
+        if (watched == m_window || (item && item->window() == m_window))
+            keyPressed(static_cast<QKeyEvent *>(event)->key());
+    }
     return QObject::eventFilter(watched, event);
 }
 
@@ -131,9 +160,38 @@ void VideoFullscreenController::setBarMode(int mode)
         m_settings.set("video.fullscreenBar", static_cast<int>(m));
 }
 
-bool VideoFullscreenController::pinned() const
+VideoFullscreenController::BarPosition VideoFullscreenController::barPosition() const
 {
-    return application::fullscreenBarMode(barMode()) == application::FullscreenBarMode::Always;
+    return application::fullscreenBarPosition(m_settings.integer("video.fullscreenBarPosition"))
+                   == application::FullscreenBarPosition::Over
+               ? BarPosition::Over
+               : BarPosition::Below;
+}
+
+void VideoFullscreenController::setBarPosition(BarPosition position)
+{
+    if (position != barPosition())
+        m_settings.set("video.fullscreenBarPosition", static_cast<int>(position));
+}
+
+bool VideoFullscreenController::stripReserved() const
+{
+    return application::fullscreenStripReserved(
+        application::fullscreenBarPosition(m_settings.integer("video.fullscreenBarPosition")),
+        application::fullscreenBarMode(barMode()));
+}
+
+bool VideoFullscreenController::overlays() const
+{
+    return m_settings.boolean("video.fullscreenOverlays");
+}
+
+void VideoFullscreenController::setMode(Mode mode)
+{
+    if (m_mode == mode)
+        return;
+    m_mode = mode;
+    emit modeChanged();
 }
 
 void VideoFullscreenController::cycleBarMode()
@@ -170,6 +228,17 @@ void VideoFullscreenController::pointerMoved(QPointF at)
     if (!m_active || m_pointer == at)
         return;
     m_pointer = at;
+    wake();
+}
+
+void VideoFullscreenController::keyPressed(int key)
+{
+    if (m_active && key != Qt::Key_Space)
+        wake();
+}
+
+void VideoFullscreenController::wake()
+{
     m_awake = true;
     m_idle.start();
     updateBar();
@@ -180,7 +249,7 @@ void VideoFullscreenController::updateBar()
     const application::FullscreenBarState state{m_awake, m_video.playing(), m_menuOpen, m_pointerOverBar};
     const auto mode = application::fullscreenBarMode(barMode());
     const bool shown = m_active && application::fullscreenBarShown(mode, state);
-    const bool hidden = m_active && application::fullscreenIdle(state);
+    const bool hidden = m_active && application::fullscreenPointerHidden(m_settings.boolean("video.fullscreenHidePointer"), state);
     if (shown == m_barShown && hidden == m_cursorHidden)
         return;
     m_barShown = shown;
@@ -199,6 +268,28 @@ QString VideoFullscreenController::progressText() const
     if (!m_video.hasVideo())
         return {};
     return QString::fromStdString(application::fullscreenProgressText(session.tellMs(), session.durationMs()));
+}
+
+bool VideoFullscreenController::seeking() const
+{
+    const auto &session = m_video.session();
+    return m_video.hasVideo() && !m_video.playing() && !session.failedFrame() && session.requestedFrame()
+           && session.shownFrame() != session.requestedFrame();
+}
+
+int VideoFullscreenController::failedFrame() const
+{
+    return m_video.hasVideo() ? m_video.session().failedFrame().value_or(-1) : -1;
+}
+
+QString VideoFullscreenController::positionText() const
+{
+    return QString::fromStdString(application::fullscreenTimecode(m_video.hasVideo() ? m_video.session().tellMs() : 0));
+}
+
+QString VideoFullscreenController::lengthText() const
+{
+    return QString::fromStdString(application::fullscreenTimecode(m_video.hasVideo() ? m_video.session().durationMs() : 0));
 }
 
 QString VideoFullscreenController::videoName() const
@@ -287,6 +378,10 @@ bool VideoFullscreenController::enter(int monitor)
     if (index < 0 || index >= screens.size())
         return false;
     if (!m_active) {
+        setMode(application::fullscreenMode(m_settings.integer("video.fullscreenOpensIn"))
+                        == application::FullscreenMode::Typesetting
+                    ? Mode::Typesetting
+                    : Mode::Simple);
         m_focusWindow = QGuiApplication::focusWindow();
         auto *quick = qobject_cast<QQuickWindow *>(m_focusWindow.data());
         m_focusItem = quick ? quick->activeFocusItem() : nullptr;
@@ -302,6 +397,7 @@ bool VideoFullscreenController::enter(int monitor)
     m_awake = true;
     m_idle.start();
     m_view.setFullscreen(true);
+    qApp->installEventFilter(this);
     place(screens[index]);
     emit activeChanged();
     updateBar();
@@ -324,6 +420,7 @@ bool VideoFullscreenController::leave()
     m_menuOpen = false;
     m_pointerOverBar = false;
     m_view.setFullscreen(false);
+    qApp->removeEventFilter(this);
     if (m_window)
         hideWindow();
     emit activeChanged();

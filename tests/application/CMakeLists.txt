@@ -176,7 +176,8 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
 hikari_add_gtest(hikari_application_settings_import_tests SOURCES settings_import_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_settings_import_tests PRIVATE
-    HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map")
+    HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/proposals/settings-migration-map"
+    HIKARI_AEGISUB_HOTKEY_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-hotkeys")
 hikari_add_gtest(hikari_application_font_catalogs_tests SOURCES font_catalogs_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_include_directories(hikari_application_font_catalogs_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
@@ -227,6 +228,8 @@ target_compile_definitions(hikari_application_video_timing_tests PRIVATE
 hikari_add_gtest(hikari_application_timing_helpers_tests SOURCES timing_helpers_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_jump_target_tests SOURCES jump_target_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -295,6 +298,8 @@ hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_temp
     LIBRARIES hikari_application LABELS application)
 
 hikari_add_gtest(hikari_application_tag_removal_tests SOURCES tag_removal_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_export_steps_tests SOURCES export_steps_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_dependency_control_tests SOURCES dependency_control_tests.cpp
     LIBRARIES hikari_application LABELS application)

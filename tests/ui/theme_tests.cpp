@@ -196,20 +196,20 @@ private slots:
     void rolesAreTheSpecTokens()
     {
         const auto dark = roles(Code::Dark);
-        QCOMPARE(surfaces(dark), (std::array{hex(0x171B20), hex(0x20262D), hex(0x29313A), hex(0x171D24)}));
-        QCOMPARE(dark.text, hex(0xE8EDF2));
-        QCOMPARE(dark.muted, hex(0xA5B1BD));
-        QCOMPARE(dark.line, hex(0x414B57));
+        QCOMPARE(surfaces(dark), (std::array{hex(0x181B20), hex(0x1E2127), hex(0x2A2E35), hex(0x15171B)}));
+        QCOMPARE(dark.text, hex(0xE4E7EB));
+        QCOMPARE(dark.muted, hex(0xA0A8B2));
+        QCOMPARE(dark.line, hex(0x2C3037));
         QCOMPARE(dark.accent, hex(0x9CDBC9));
         QCOMPARE(dark.onAccent, hex(0x102C24));
         QCOMPARE(dark.select, hex(0x304C47));
         QCOMPARE(dark.focus, dark.text);
         QCOMPARE(dark.danger, hex(0xFFADAD));
         const auto light = roles(Code::Light);
-        QCOMPARE(surfaces(light), (std::array{hex(0xE5E9EC), hex(0xF9FAFB), hex(0xEDF0F3), hex(0xFFFFFF)}));
-        QCOMPARE(light.text, hex(0x202832));
-        QCOMPARE(light.muted, hex(0x526170));
-        QCOMPARE(light.line, hex(0xAAB5BE));
+        QCOMPARE(surfaces(light), (std::array{hex(0xEEF0F3), hex(0xFFFFFF), hex(0xEEF0F3), hex(0xFFFFFF)}));
+        QCOMPARE(light.text, hex(0x1E2329));
+        QCOMPARE(light.muted, hex(0x56616C));
+        QCOMPARE(light.line, hex(0xDCE0E5));
         QCOMPARE(light.accent, hex(0x145C4C));
         QCOMPARE(light.onAccent, hex(0xFFFFFF));
         QCOMPARE(light.select, hex(0xD6EBE4));
@@ -227,8 +227,12 @@ private slots:
         QCOMPARE(black.danger, hex(0xFFADAD));
         QCOMPARE(light.success, hex(0x008000));
         QCOMPARE(dark.success, hex(0x4DBA4D));
-        QCOMPARE(light.control, hex(0x76828D));
-        QCOMPARE(dark.control, hex(0x7A8691));
+        QCOMPARE(light.control, hex(0x7A838D));
+        QCOMPARE(dark.control, hex(0x757E89));
+        QCOMPARE(dark.hover, QColor::fromRgba(0x0FE4E7EB));
+        QCOMPARE(dark.pressed, QColor::fromRgba(0x1EE4E7EB));
+        QCOMPARE(light.hover, QColor::fromRgba(0x0D1E2329));
+        QCOMPARE(black.hover, QColor::fromRgba(0x1FFFFFFF));
         QCOMPARE(black.control, black.line);
         for (const auto code : ui::theme::kCodes) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
@@ -279,12 +283,13 @@ private slots:
         for (const bool dark : {false, true})
             for (const auto &a : ui::theme::accents(dark)) {
                 ui::theme::Choice choice;
-                (dark ? choice.darkAccent : choice.lightAccent) = QLatin1String(a.key);
+                choice.accents = {(dark ? QStringLiteral("dark=") : QStringLiteral("light=")) + a.key};
                 check(roles(dark ? Code::Dark : Code::Light, choice),
-                      QLatin1String(dark ? "dark " : "light ") + QLatin1String(a.key));
+                      QLatin1String(dark ? "dark " : "light ") + a.key);
             }
-        const QVariantMap picks{{QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FFD000")},
-                                {QStringLiteral("appearance.highContrastWhite.text"), QStringLiteral("#300060")}};
+        const QVariantMap picks{{QStringLiteral("appearance.colours"),
+                                 QStringList{QStringLiteral("highContrastBlack/text=#FFD000"),
+                                             QStringLiteral("highContrastWhite/text=#300060")}}};
         const auto picked = ui::theme::choiceFrom([&](const char *id) { return picks.value(QLatin1String(id)); });
         QCOMPARE(roles(Code::HighContrastBlack, picked).focus, hex(0xFFD000));
         QCOMPARE(roles(Code::HighContrastWhite, picked).focus, hex(0x300060));
@@ -298,15 +303,15 @@ private slots:
             QCOMPARE(list.size(), std::size_t(7));
             QStringList seen;
             for (const auto &a : list)
-                seen << QLatin1String(a.key);
+                seen << a.key;
             QCOMPARE(seen, keys);
-            QCOMPARE(QLatin1String(list[3].key), QLatin1String(ui::theme::kDefaultAccent));
+            QCOMPARE(list[3].key, QLatin1String(ui::theme::kDefaultAccent));
             const Code code = dark ? Code::Dark : Code::Light;
             for (const auto &a : list) {
                 ui::theme::Choice choice;
-                (dark ? choice.darkAccent : choice.lightAccent) = QLatin1String(a.key);
+                choice.accents = {(dark ? QStringLiteral("dark=") : QStringLiteral("light=")) + a.key};
                 const auto r = roles(code, choice);
-                const QString what = QLatin1String(dark ? "dark " : "light ") + QLatin1String(a.key);
+                const QString what = QLatin1String(dark ? "dark " : "light ") + a.key;
                 QCOMPARE(r.accent, a.accent);
                 QCOMPARE(r.select, a.select);
                 QVERIFY2(lowest(a.accent, r) >= 4.5, qPrintable(what));
@@ -319,18 +324,15 @@ private slots:
         }
         QCOMPARE(ui::theme::accent(false, QStringLiteral("green")).accent, hex(0x145C4C));
         QCOMPARE(ui::theme::accent(true, QStringLiteral("green")).accent, hex(0x9CDBC9));
-        QCOMPARE(QLatin1String(ui::theme::accent(true, QStringLiteral("teal")).key), QLatin1String("green"));
+        QCOMPARE(ui::theme::accent(true, QStringLiteral("teal")).key, QStringLiteral("green"));
     }
 
     void eachModeKeepsItsAccent()
     {
         ui::theme::Choice choice;
-        choice.lightAccent = QStringLiteral("blue");
-        choice.darkAccent = QStringLiteral("pink");
+        choice.accents = {QStringLiteral("light=blue"), QStringLiteral("dark=pink")};
         QCOMPARE(roles(Code::Light, choice).accent, ui::theme::accent(false, QStringLiteral("blue")).accent);
         QCOMPARE(roles(Code::Dark, choice).accent, ui::theme::accent(true, QStringLiteral("pink")).accent);
-        const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });
-        choice.picks = defaults.picks;
         QCOMPARE(roles(Code::HighContrastBlack, choice).accent, hex(0xFFFF00));
         QCOMPARE(roles(Code::HighContrastWhite, choice).accent, hex(0x0037B3));
     }
@@ -340,9 +342,9 @@ private slots:
         using S = Qt::ColorScheme;
         const auto shown = [](Code chosen, bool follow, S scheme) {
             ui::theme::Choice choice;
-            choice.theme = chosen;
+            choice.theme = ui::theme::codeName(chosen);
             choice.followSystem = follow;
-            return ui::theme::effective(choice, scheme);
+            return *ui::theme::codeFromName(ui::theme::effective(choice, scheme));
         };
         QCOMPARE(shown(Code::Dark, true, S::Light), Code::Light);
         QCOMPARE(shown(Code::Light, true, S::Dark), Code::Dark);
@@ -357,16 +359,16 @@ private slots:
         int changes = 0;
         QObject context;
         ui::theme::onChanged(&context, [&] { ++changes; });
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         ui::theme::forceSystemScheme(S::Light);
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         QCOMPARE(changes, 1);
         ui::theme::forceSystemScheme(S::Dark);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         QCOMPARE(changes, 2);
         store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), false);
         ui::theme::forceSystemScheme(S::Light);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         ui::theme::useSettings(nullptr);
     }
 
@@ -444,53 +446,53 @@ private slots:
             ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
         });
         QVERIFY(ui::theme::systemScheme() == S::Dark);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         int changes = 0;
         QObject context;
         ui::theme::onChanged(&context, [&] { ++changes; });
 
         // The portal's color-scheme: 1 prefer-dark, 2 prefer-light, 0 no preference.
         portal.change(2);
-        QTRY_COMPARE(ui::theme::current().code, Code::Light);
+        QTRY_COMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         QCOMPARE(changes, 1);
         portal.change(1);
-        QTRY_COMPARE(ui::theme::current().code, Code::Dark);
+        QTRY_COMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         portal.change(2);
-        QTRY_COMPARE(ui::theme::current().code, Code::Light);
+        QTRY_COMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         QCOMPARE(changes, 3);
         portal.change(1, QStringLiteral("org.gnome.desktop.interface"), QStringLiteral("color-scheme"));
         portal.change(1, QStringLiteral("org.freedesktop.appearance"), QStringLiteral("accent-color"));
         QTest::qWait(100);
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         portal.change(0);
-        QTRY_COMPARE(ui::theme::current().code, Code::Dark);
+        QTRY_COMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         portal.change(2);
-        QTRY_COMPARE(ui::theme::current().code, Code::Light);
+        QTRY_COMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
 
         ui::theme::forcePlatformScheme(S::Dark);
         QCOMPARE(ui::theme::systemScheme(), S::Dark);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         ui::theme::forcePlatformScheme(S::Unknown);
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         ui::theme::forcePlatformScheme(std::nullopt);
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
 
         store.setValue(QLatin1String(ui::theme::kThemeSetting), ui::theme::codeName(Code::HighContrastBlack));
-        QCOMPARE(ui::theme::current().code, Code::HighContrastWhite);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::HighContrastWhite));
         store.setValue(QLatin1String(ui::theme::kThemeSetting), ui::theme::codeName(Code::Dark));
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
 
         store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), false);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         portal.change(1);
         portal.change(2);
         QTest::qWait(100);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), true);
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
 
         ui::theme::followPortal(nullptr);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
 
         server.unregisterObject(path);
         auto *old = new FakeOldSettingsPortal;
@@ -508,19 +510,21 @@ private slots:
         PortalColourScheme late(client2);
         QCOMPARE(late.scheme(), S::Unknown);
         ui::theme::followPortal(&late);
-        QCOMPARE(ui::theme::current().code, Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
         QTRY_COMPARE_WITH_TIMEOUT(late.scheme(), S::Light, 5000);
-        QCOMPARE(ui::theme::current().code, Code::Light);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
         ui::theme::followPortal(nullptr);
 #endif
     }
 
     void highContrastPickersSetThreeRoles()
     {
-        QVariantMap values{{QStringLiteral("appearance.highContrastBlack.accent"), QStringLiteral("#000080")},
-                           {QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FFD000")},
-                           {QStringLiteral("appearance.highContrastBlack.border"), QStringLiteral("#00FF00")},
-                           {QStringLiteral("appearance.highContrastWhite.accent"), QStringLiteral("not a colour")}};
+        QVariantMap values{{QStringLiteral("appearance.colours"),
+                            QStringList{QStringLiteral("highContrastBlack/accent=#000080"),
+                                        QStringLiteral("highContrastBlack/text=#FFD000"),
+                                        QStringLiteral("highContrastBlack/line=#00FF00"),
+                                        QStringLiteral("highContrastBlack/select=#FF0000"),
+                                        QStringLiteral("highContrastWhite/accent=not a colour")}}};
         const auto choice = ui::theme::choiceFrom([&](const char *id) { return values.value(QLatin1String(id)); });
         const auto base = roles(Code::HighContrastBlack, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
         const auto black = roles(Code::HighContrastBlack, choice);
@@ -534,11 +538,8 @@ private slots:
         QCOMPARE(black.disabled, base.disabled);
         QCOMPARE(roles(Code::HighContrastWhite, choice).accent, hex(0x0037B3));
         QCOMPARE(roles(Code::HighContrastWhite, choice).text, hex(0x000000));
+        QCOMPARE(black.control, hex(0x00FF00));
         QCOMPARE(roles(Code::Dark, choice), roles(Code::Dark));
-        QCOMPARE(QLatin1String(ui::theme::pickSetting(Code::HighContrastWhite, ui::theme::Pick::Border)),
-                 QLatin1String("appearance.highContrastWhite.border"));
-        QCOMPARE(ui::theme::pickDefault(Code::HighContrastBlack, ui::theme::Pick::Accent), hex(0xFFFF00));
-        QCOMPARE(ui::theme::pickDefault(Code::HighContrastWhite, ui::theme::Pick::Text), hex(0x000000));
     }
 
     void choiceDefaults()
@@ -547,9 +548,9 @@ private slots:
             return QLatin1String(id) == QLatin1String("appearance.theme") ? QVariant(QStringLiteral("LightSentro"))
                                                                          : QVariant(QStringLiteral("x"));
         });
-        QCOMPARE(choice.theme, Code::Dark);
-        QCOMPARE(choice.lightAccent, QStringLiteral("green"));
-        QCOMPARE(choice.darkAccent, QStringLiteral("green"));
+        QCOMPARE(choice.theme, QStringLiteral("dark"));
+        QCOMPARE(choice.pair, (ui::theme::Choice{}.pair));
+        QCOMPARE(ui::Theme().accentChoice(choice.accents, QStringLiteral("dark")), QStringLiteral("green"));
         QCOMPARE(ui::theme::choiceFrom([](const char *) { return QVariant(); }).followSystem, true);
         for (const auto code : ui::theme::kCodes)
             QCOMPARE(ui::theme::codeFromName(ui::theme::codeName(code)), std::optional(code));
@@ -559,7 +560,7 @@ private slots:
     void contentColoursAreFixedPerTheme()
     {
         const application::AudioDisplayOptions legacy;
-        const auto dark = ui::theme::content(Code::Dark, roles(Code::Dark));
+        const auto dark = ui::theme::content(Code::Dark, ui::theme::Choice{});
         auto expected = legacy;
         expected.selectionBackground = expected.selectionModified = 0x379CDBC9;
         expected.waveformSelected = 0xFF9CDBC9;
@@ -577,21 +578,21 @@ private slots:
             QCOMPARE(actual.*member, expected.*member);
         QCOMPARE(dark.comparison, (std::array{hex(0x2700FF), hex(0x272B32), hex(0x3A3E45), hex(0x003176), hex(0x3662A1)}));
         QCOMPARE(dark.spellcheck, hex(0xFF6B6B));
-        const auto light = ui::theme::content(Code::Light, roles(Code::Light));
+        const auto light = ui::theme::content(Code::Light, ui::theme::Choice{});
         QCOMPARE(light.comparison, (std::array{hex(0xFFFFFF), hex(0xFF000C), hex(0xB7AC00), hex(0x9C0000), hex(0x817900)}));
         QCOMPARE(light.spellcheck, hex(0xD70000));
         QCOMPARE(dark.grammar, hex(0x6EA8FE));
         QCOMPARE(light.grammar, hex(0x1A56DB));
         for (const auto code : {Code::Dark, Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
-            const auto c = ui::theme::content(code, r);
+            const auto c = ui::theme::content(code, ui::theme::Choice{});
             QVERIFY2(contrastRatio(c.grammar, r.field) >= 3.0, qPrintable(ui::theme::codeName(code)));
             for (const QColor &under : {r.field, r.panel, c.gridAlternate})
                 QVERIFY2(contrastRatio(c.spellcheck, under) >= 3.0, qPrintable(ui::theme::codeName(code)));
             QVERIFY(c.grammar != c.spellcheck);
         }
-        QCOMPARE(ui::theme::content(Code::HighContrastWhite, roles(Code::HighContrastWhite)).grammar, hex(0x0000C8));
-        QCOMPARE(ui::theme::content(Code::HighContrastBlack, roles(Code::HighContrastBlack)).grammar, hex(0xFFFF00));
+        QCOMPARE(ui::theme::content(Code::HighContrastWhite, ui::theme::Choice{}).grammar, hex(0x0000C8));
+        QCOMPARE(ui::theme::content(Code::HighContrastBlack, ui::theme::Choice{}).grammar, hex(0xFFFF00));
         QCOMPARE(dark.syntax, (std::array{roles(Code::Dark).text, hex(0x8791FD), hex(0x00C3FF), hex(0x00C3FF),
                                           hex(0x0076FF), hex(0xADABAB), hex(0xBDB76B), hex(0xFB4544), hex(0x00C3FF),
                                           hex(0x8D80D3), hex(0x11A243), hex(0x4EC9B0), hex(0xE5A0D9)}));
@@ -600,7 +601,7 @@ private slots:
                                            hex(0x8D80D3), hex(0x11A243), hex(0x00796B), hex(0xAD1457)}));
         for (const auto code : {Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
-            const auto c = ui::theme::content(code, r);
+            const auto c = ui::theme::content(code, ui::theme::Choice{});
             QCOMPARE(c.syntax[0], r.text);
             QVERIFY(c.syntax[std::size_t(core::syntax::Role::DrawingX)] !=
                     c.syntax[std::size_t(core::syntax::Role::DrawingY)]);
@@ -609,8 +610,8 @@ private slots:
                          qPrintable(ui::theme::codeName(code) + QLatin1Char(' ') + colour.name()));
         }
         ui::theme::Choice choice;
-        choice.darkAccent = QStringLiteral("blue");
-        const auto blue = ui::theme::content(Code::Dark, roles(Code::Dark, choice));
+        choice.accents = {QStringLiteral("dark=blue")};
+        const auto blue = ui::theme::content(Code::Dark, choice);
         const QColor accent = ui::theme::accent(true, QStringLiteral("blue")).accent;
         QCOMPARE(blue.audio.waveformSelected, accent.rgba());
         QCOMPARE(blue.audio.selectionBackground, (accent.rgba() & 0x00FFFFFFu) | 0x37000000u);
@@ -619,7 +620,7 @@ private slots:
         QCOMPARE(blue.audio.cursor, dark.audio.cursor);
         QCOMPARE(blue.comparison, dark.comparison);
         for (const auto code : {Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
-            const auto c = ui::theme::content(code, roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); })));
+            const auto c = ui::theme::content(code, ui::theme::Choice{});
             const double minimum = ui::theme::isHighContrast(code) ? 4.5 : 3.0;
             const auto colour = [](std::uint32_t argb) { return QColor::fromRgba(argb); };
             QVERIFY2(contrastRatio(colour(c.audio.waveform), colour(c.audio.background)) >= minimum,
@@ -635,7 +636,7 @@ private slots:
     {
         for (const auto code : {Code::Dark, Code::Light, Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto r = roles(code, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
-            const auto c = ui::theme::content(code, r);
+            const auto c = ui::theme::content(code, ui::theme::Choice{});
             for (const QColor &colour : c.ports)
                 QVERIFY2(contrastRatio(colour, r.field) >= 3.0,
                          qPrintable(ui::theme::codeName(code) + QLatin1Char(' ') + colour.name()));
@@ -659,22 +660,22 @@ private slots:
         int changes = 0;
         ui::theme::onChanged(&context, [&] { ++changes; });
         const auto window = [] { return QGuiApplication::palette().color(QPalette::Window); };
-        QCOMPARE(window(), hex(0x20262D));
+        QCOMPARE(window(), hex(0x1E2127));
         QCOMPARE(QGuiApplication::palette().color(QPalette::Highlight), hex(0x9CDBC9));
-        QCOMPARE(QGuiApplication::palette().color(QPalette::Disabled, QPalette::WindowText), hex(0x75818D));
+        QCOMPARE(QGuiApplication::palette().color(QPalette::Disabled, QPalette::WindowText), hex(0x737B85));
         store.setValue(QStringLiteral("audio.spectrumOn"), true);
         QCOMPARE(changes, 0);
-        store.setValue(QStringLiteral("appearance.darkAccent"), QStringLiteral("gold"));
+        store.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("dark=gold")});
         QCOMPARE(changes, 1);
         QCOMPARE(QGuiApplication::palette().color(QPalette::Accent), ui::theme::accent(true, QStringLiteral("gold")).accent);
         ui::theme::preview({{QStringLiteral("appearance.theme"), QStringLiteral("light")},
                             {QStringLiteral("appearance.followSystem"), false}});
-        QCOMPARE(ui::theme::current().code, Code::Light);
-        QCOMPARE(window(), hex(0xF9FAFB));
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Light));
+        QCOMPARE(window(), hex(0xFFFFFF));
         QCOMPARE(store.value(QStringLiteral("appearance.theme")).toString(), QStringLiteral("dark"));
         ui::theme::endPreview();
-        QCOMPARE(ui::theme::current().code, Code::Dark);
-        QCOMPARE(window(), hex(0x20262D));
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(Code::Dark));
+        QCOMPARE(window(), hex(0x1E2127));
         QCOMPARE(ui::theme::current().roles.accent, ui::theme::accent(true, QStringLiteral("gold")).accent);
         ui::theme::useSettings(nullptr);
         QCOMPARE(ui::theme::current().roles.accent, hex(0x9CDBC9));
@@ -696,7 +697,7 @@ QtObject {
     property var themes: Theme.themes()
     property var accents: Theme.accents(false)
     property var picks: Theme.picks("highContrastWhite")
-    property var lightRoles: Theme.rolesOf("light", {"appearance.lightAccent": "purple"})
+    property var lightRoles: Theme.rolesOf("light", {"appearance.accents": ["light=purple"]})
 }
 )", QUrl(QStringLiteral("qrc:/k2-test.qml")));
         std::unique_ptr<QObject> object(component.create());
@@ -748,7 +749,7 @@ Window {
         field.background.border.color, area.background.border.color, spin.background.border.color,
         combo.background.border.color, check.indicator.border.color, radio.indicator.border.color,
         group.background.border.color, frame.background.border.color, menu.background.border.color,
-        tab.background.border.color, tabBar.background.children[0].color, slider.background.border.color,
+        tab.background.border.color, tabBar.background.children[0].color, slider.background.color,
         slider.handle.border.color, off.background.border.color, offField.background.border.color]
     // A control the style leaves alone is Fusion's (the qmldir's fallback),
     // not Basic's: Fusion's switch indicator is its SwitchIndicator item.
@@ -782,8 +783,16 @@ Window {
             const ui::theme::Roles &r = ui::theme::current().roles;
             // The controls take a new application palette an event loop pass later; a closed menu only when it opens.
             QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("menu")), "open");
-            // MUST KILL: expected picks the operable controls by their index in outlines (0-7, 13, 14)
-            const auto expected = [&](qsizetype i) { return (i < 8 || i == 13 || i == 14) ? r.control : r.line; };
+            // MUST KILL: expected picks each control by its index in outlines
+            const auto expected = [&](qsizetype i) {
+                if (i == 1 || (i >= 8 && i <= 12))
+                    return r.line;
+                if (i == 13)
+                    return ui::theme::isHighContrast(code) ? r.muted : r.line;
+                if (i >= 15)
+                    return r.disabled;
+                return r.control;
+            };
             const auto drawn = [&] {
                 const auto outlines = window->property("outlines").toList();
                 for (qsizetype i = 0; i < outlines.size(); ++i)
@@ -809,8 +818,7 @@ Window {
                 QVERIFY(lowest(r.line, r) >= 7);
         }
         store.setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastBlack"));
-        store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Border)),
-                       QStringLiteral("#00FF00"));
+        store.setValue(QStringLiteral("appearance.colours"), QStringList{QStringLiteral("highContrastBlack/line=#00FF00")});
         QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
     }
 
@@ -874,6 +882,7 @@ import QtQuick
 import QtQuick.Controls
 Window {
     width: 400; height: 900; visible: true
+    color: palette.window
     property var controls: [button, toolButton, combo, check, radio, field, area, spin, tab, slider]
     property var outlines: [button.background.border.color, toolButton.background.border.color,
         combo.background.border.color, check.indicator.border.color, radio.indicator.border.color]
@@ -907,7 +916,7 @@ Window {
         for (const QVariant &c : object->property("controls").toList())
             controls.append(c.value<QQuickItem *>());
         QCOMPARE(controls.size(), 10);
-        enum { Field = 5, Tab = 8, Slider = 9 };
+        enum { Check = 3, Radio = 4, Field = 5, Tab = 8, Slider = 9 };
         const auto ring = [&](qsizetype i) { return controls[i]->findChild<QQuickItem *>(QStringLiteral("focusRing")); };
         for (qsizetype i = 0; i < controls.size(); ++i)
             QVERIFY2(ring(i), qPrintable(QStringLiteral("control %1 has no focus ring").arg(i)));
@@ -945,21 +954,24 @@ Window {
                     QVERIFY2(sceneRect(controls[i]).contains(at), qPrintable(where));
                     QCOMPARE(at, sceneRect(background).adjusted(1, 1, -1, -1));
                 } else {
-                    QCOMPARE(at, sceneRect(i == Slider ? controls[i]->property("handle").value<QQuickItem *>()
-                                                       : controls[i]).adjusted(-1, -1, 1, 1));
+                    const char *part = i == Slider ? "handle" : i == Check || i == Radio ? "indicator" : nullptr;
+                    QCOMPARE(at, sceneRect(part ? controls[i]->property(part).value<QQuickItem *>() : controls[i])
+                                     .adjusted(-1, -1, 1, 1));
                 }
                 const QImage shot = window->grabWindow();
                 const qreal dpr = window->effectiveDevicePixelRatio();
                 const auto pixelAt = [&](qreal x) {
                     return QPoint(int(std::floor((at.left() + x) * dpr)), int(std::floor((at.top() + at.height() / 2) * dpr)));
                 };
-                QVERIFY2(shot.pixelColor(pixelAt(0.5)) == r.text,
-                         qPrintable(where + QStringLiteral(" drawn %1").arg(name(shot.pixelColor(pixelAt(0.5))))));
+                const bool roundRing = i == Radio || i == Slider;
+                if (!roundRing)
+                    QVERIFY2(shot.pixelColor(pixelAt(0.5)) == r.text,
+                             qPrintable(where + QStringLiteral(" drawn %1").arg(name(shot.pixelColor(pixelAt(0.5))))));
                 // MUST KILL: the text area is the bare index 6 beside the Field, Tab and Slider enum
                 if (i == Tab || i == Field || i == 6)
                     QVERIFY2(shot.pixelColor(pixelAt(1.5)) != r.text,
                              qPrintable(where + QStringLiteral(" 2 wide: %1").arg(name(shot.pixelColor(pixelAt(1.5))))));
-                if (i < 5)
+                if (i < 5 && i != 1)
                     QTRY_VERIFY2(outline(i) == r.control, qPrintable(where));
             }
             QVERIFY2(colour("defaultOutline") != r.control, qPrintable(what));
@@ -976,8 +988,7 @@ Window {
             if (QTest::currentTestFailed())
                 return;
         }
-        store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Text)),
-                       QStringLiteral("#FFD000"));
+        store.setValue(QStringLiteral("appearance.colours"), QStringList{QStringLiteral("highContrastBlack/text=#FFD000")});
         tabTo(controls[0]);
         QTRY_COMPARE(ringColour(0), hex(0xFFD000));
         ui::theme::useSettings(nullptr);
@@ -1006,14 +1017,14 @@ Window {
         for (const bool dark : {false, true})
             for (const auto &a : ui::theme::accents(dark)) {
                 ui::theme::Choice choice;
-                (dark ? choice.darkAccent : choice.lightAccent) = QLatin1String(a.key);
+                choice.accents = {(dark ? QStringLiteral("dark=") : QStringLiteral("light=")) + a.key};
                 const Code code = dark ? Code::Dark : Code::Light;
-                check(code, roles(code, choice), QLatin1String(a.key));
+                check(code, roles(code, choice), a.key);
             }
         const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });
         for (const Code code : {Code::HighContrastWhite, Code::HighContrastBlack}) {
             const auto r = roles(code, defaults);
-            QCOMPARE(r.accent, ui::theme::pickDefault(code, ui::theme::Pick::Accent));
+            QCOMPARE(r.accent, code == Code::HighContrastBlack ? hex(0xFFFF00) : hex(0x0037B3));
             check(code, r, QStringLiteral("accent pick"));
         }
         qInfo().noquote() << report;
@@ -1061,7 +1072,7 @@ Window {
                 for (std::size_t i = 0; i < list.size(); ++i) {
                     const auto &a = list[i];
                     ui::theme::Choice choice;
-                    (dark ? choice.darkAccent : choice.lightAccent) = QLatin1String(a.key);
+                    choice.accents = {(dark ? QStringLiteral("dark=") : QStringLiteral("light=")) + a.key};
                     const auto r = roles(code, choice);
                     const int x = label + int(i) * cell;
                     const QRect button(x + 8, y + 8, cell - 16, 30);
@@ -1069,7 +1080,7 @@ Window {
                     p.setBrush(a.accent);
                     p.drawRoundedRect(button, 1, 1);
                     p.setPen(a.onAccent);
-                    p.drawText(button, Qt::AlignCenter, QString::fromLatin1(a.name));
+                    p.drawText(button, Qt::AlignCenter, a.name);
                     const QRect row(x + 8, y + 44, cell - 16, 22);
                     p.fillRect(row, a.select);
                     p.fillRect(QRect(row.x(), row.y(), 3, row.height()), a.accent);

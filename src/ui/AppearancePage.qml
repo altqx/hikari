@@ -16,7 +16,10 @@ ScrollView {
 
     function staged(setting) { return page.dialog.values[setting] }
     readonly property string shownTheme: Theme.code
-    readonly property string accentSetting: Theme.dark ? "appearance.darkAccent" : "appearance.lightAccent"
+    readonly property var pairSettings: ({light: "appearance.lightTheme", dark: "appearance.darkTheme",
+                                          highContrastLight: "appearance.highContrastLightTheme",
+                                          highContrastDark: "appearance.highContrastDarkTheme"})
+    function stagedList(setting) { return page.staged(setting) ?? [] }
 
     ColumnLayout {
         width: Math.max(page.contentWidth, page.availableWidth)
@@ -36,9 +39,14 @@ ScrollView {
                 GridLayout {
                     objectName: "appearanceThemes"
                     // MUST KILL: the docs* properties look unused; only docs_export.cpp reads them
-                    readonly property string docsSetting: "appearance.theme"
-                    readonly property string docsControl: "choice"
-                    readonly property var docsValues: Theme.themes().map(t => ({value: t.code, label: t.name}))
+                    readonly property var docsEntries: [{
+                        setting: "appearance.theme", control: "choice", label: "Interface theme",
+                        values: Theme.themes().map(t => ({value: t.code, label: t.name}))
+                    }].concat(Object.keys(page.pairSettings).map(type => ({
+                        setting: page.pairSettings[type], control: "choice",
+                        label: "Interface theme (" + type + ", following the system)",
+                        values: Theme.themes().filter(t => t.type === type).map(t => ({value: t.code, label: t.name}))
+                    })))
                     columns: 2
                     columnSpacing: 8
                     rowSpacing: 8
@@ -60,6 +68,7 @@ ScrollView {
                             Accessible.checked: checked
                             onClicked: {
                                 page.dialog.put("appearance.theme", modelData.code)
+                                page.dialog.put(page.pairSettings[modelData.type], modelData.code)
                                 if (page.staged("appearance.followSystem") === true)
                                     page.dialog.put("appearance.followSystem", false)
                             }
@@ -128,7 +137,7 @@ ScrollView {
         SettingsSection {
             objectName: "appearanceAccents"
             title: qsTr("Accent colour")
-            visible: !Theme.highContrast
+            visible: Theme.accentsOf(page.shownTheme).length > 0
             Layout.leftMargin: 24
             Layout.rightMargin: 24
             SettingsRow {
@@ -136,14 +145,14 @@ ScrollView {
                 text: qsTr("Accent")
                 Row {
                     spacing: 8
-                    readonly property var docsEntries: Theme.themes().filter(t => !t.highContrast).map(t => ({
-                        setting: t.dark ? "appearance.darkAccent" : "appearance.lightAccent",
+                    readonly property var docsEntries: [{
+                        setting: "appearance.accents",
                         control: "choice",
-                        label: "Accent (" + t.name + ")",
-                        values: Theme.accents(t.dark).map(a => ({value: a.key, label: a.name}))
-                    }))
+                        label: "Accent",
+                        values: Theme.accents(true).map(a => ({value: a.key, label: a.name}))
+                    }]
                     Repeater {
-                        model: Theme.accents(Theme.dark)
+                        model: Theme.accentsOf(page.shownTheme)
                         delegate: AbstractButton {
                             id: swatch
                             required property var modelData
@@ -151,14 +160,15 @@ ScrollView {
                             width: 24
                             height: 24
                             checkable: false
-                            checked: page.staged(page.accentSetting) === modelData.key
+                            checked: Theme.accentChoice(page.stagedList("appearance.accents"), page.shownTheme) === modelData.key
                             text: modelData.name
                             Accessible.role: Accessible.RadioButton
                             Accessible.name: text
                             Accessible.checked: checked
                             ToolTip.text: qsTr("%1 (contrast %2:1)").arg(modelData.name, modelData.contrast.toFixed(1))
                             ToolTip.visible: hovered
-                            onClicked: page.dialog.put(page.accentSetting, modelData.key)
+                            onClicked: page.dialog.put("appearance.accents",
+                                Theme.withAccentChoice(page.stagedList("appearance.accents"), page.shownTheme, modelData.key))
                             background: Rectangle {
                                 radius: width / 2
                                 color: swatch.modelData.accent
@@ -176,19 +186,18 @@ ScrollView {
         SettingsSection {
             objectName: "appearanceHighContrast"
             title: qsTr("UI colours")
-            visible: Theme.highContrast
+            visible: Theme.picks(page.shownTheme).length > 0
             Layout.leftMargin: 24
             Layout.rightMargin: 24
             Repeater {
-                readonly property var docsEntries: [].concat(...Theme.themes().filter(t => t.highContrast).map(
-                    t => Theme.picks(t.code).map(p => ({setting: p.setting, control: "colour", label: p.name + " (" + t.name + ")"}))))
+                readonly property var docsEntries: [{setting: "appearance.colours", control: "colour", label: "UI colours"}]
                 model: Theme.picks(page.shownTheme)
                 delegate: SettingsRow {
                     id: pick
                     required property var modelData
                     required property int index
-                    objectName: "highContrastPick_" + modelData.setting
-                    readonly property string colour: page.staged(modelData.setting) ?? ""
+                    objectName: "highContrastPick_" + modelData.role
+                    readonly property string colour: Theme.userColour(page.stagedList("appearance.colours"), page.shownTheme, modelData.role)
                     iconRole: index === 0 ? "ui-colours" : ""
                     text: modelData.name
                     Rectangle {
@@ -200,10 +209,11 @@ ScrollView {
                     }
                     Label { text: pick.colour; Layout.preferredWidth: 80 }
                     Button {
-                        objectName: "highContrastChoose_" + pick.modelData.setting
+                        objectName: "highContrastChoose_" + pick.modelData.role
                         text: qsTr("Choose…")
                         Accessible.name: qsTr("Choose %1").arg(pick.modelData.name)
-                        onClicked: page.dialog.pickThemeColour(pick.modelData.setting, pick.colour, this, pick.modelData.name)
+                        onClicked: page.dialog.pickThemeColour(page.shownTheme, pick.modelData.role, pick.colour, this,
+                                                               pick.modelData.name)
                     }
                 }
             }
@@ -212,10 +222,8 @@ ScrollView {
                     objectName: "resetHighContrast"
                     iconRole: "restore-default"
                     text: qsTr("Reset to default")
-                    onClicked: {
-                        for (const p of Theme.picks(page.shownTheme))
-                            page.dialog.put(p.setting, p.defaultColour)
-                    }
+                    onClicked: page.dialog.put("appearance.colours",
+                                               Theme.withoutUserColours(page.stagedList("appearance.colours"), page.shownTheme))
                 }
             }
         }

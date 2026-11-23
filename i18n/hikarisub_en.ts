@@ -1024,6 +1024,58 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.QuickPick</name>
+    <message numerus="yes">
+        <source>Not a line: %1. This document has %n lines.</source>
+        <translation>
+            <numerusform>Not a line: %1. This document has %n line.</numerusform>
+            <numerusform>Not a line: %1. This document has %n lines.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Enter applies “%1” to %n lines</source>
+        <translation>
+            <numerusform>Enter applies “%1” to %n line</numerusform>
+            <numerusform>Enter applies “%1” to %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift+Enter selects its %n lines</source>
+        <translation>
+            <numerusform>Shift+Enter selects its %n line</numerusform>
+            <numerusform>Shift+Enter selects its %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n commands</source>
+        <translation>
+            <numerusform>%n command</numerusform>
+            <numerusform>%n commands</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n files</source>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n results</source>
+        <translation>
+            <numerusform>%n result</numerusform>
+            <numerusform>%n results</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Reports</name>
     <message numerus="yes">
         <source>HikariSub stopped responding for %n seconds</source>
@@ -1260,6 +1312,17 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.StatusBar</name>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation>
+            <numerusform>%n plugin working</numerusform>
+            <numerusform>%n plugins working</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Styles</name>
     <message numerus="yes">
         <source>Apply the changes to the %n selected styles?</source>
@@ -1462,6 +1525,13 @@
         <translation>
             <numerusform>%n gap closed</numerusform>
             <numerusform>%n gaps closed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation>
+            <numerusform>%n overlap closed</numerusform>
+            <numerusform>%n overlaps closed</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1674,17 +1744,6 @@
         <translation>
             <numerusform>The tag takes %n value.</numerusform>
             <numerusform>The tag takes %n values.</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.StatusBar</name>
-    <message numerus="yes">
-        <source>%n plugin(s) working</source>
-        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
-        <translation>
-            <numerusform>%n plugin working</numerusform>
-            <numerusform>%n plugins working</numerusform>
         </translation>
     </message>
 </context>

@@ -1,6 +1,9 @@
 #include "fake_host.h"
 #include "script_client.h"
 
+#include "hikari/api/formats.h"
+#include "hikari/core/ass_save.h"
+
 #include <gtest/gtest.h>
 
 using namespace hikari;
@@ -142,4 +145,70 @@ TEST(PluginsUnavailable, EveryOperationAnswersUnavailableWithoutThePort)
     EXPECT_EQ(code(client.call(aiCaller(), "plugins.list", Json::object())), errors::kUnavailable);
 }
 
+}
+
+TEST_F(Plugins, FormatsListGivesTheBuiltInFormatsThenThePluginsAndDocumentsNameTheirFormat)
+{
+    plugins.pluginFormats = {FormatInfo{"plugin:org.example.stl/ebu-stl", "EBU STL", {"stl"}, true, true, "org.example.stl"}};
+    const Result result = call("formats.list", "{}");
+    ASSERT_TRUE(result) << result.error().message;
+    const auto &formats = result->find("formats")->asArray();
+    ASSERT_EQ(formats.size(), builtInFormats().size() + 1);
+    EXPECT_EQ(formats.front(), *Json::parse(R"({"id": "ass", "title": "Advanced SubStation Alpha",
+        "extensions": ["ass", "ssa"], "import": true, "export": true})"));
+    EXPECT_EQ(formats.back(), *Json::parse(R"({"id": "plugin:org.example.stl/ebu-stl", "title": "EBU STL",
+        "extensions": ["stl"], "import": true, "export": true, "plugin": "org.example.stl"})"));
+
+    host.pluginFormats[host.workspace().tabs().at(1).value] = "plugin:org.example.stl/ebu-stl";
+    const Result listed = call("documents.list", "{}");
+    ASSERT_TRUE(listed) << listed.error().message;
+    const auto &documents = listed->find("documents")->asArray();
+    EXPECT_EQ(documents.at(0).find("format")->asString(), "ass");
+    EXPECT_EQ(documents.at(1).find("format")->asString(), "plugin:org.example.stl/ebu-stl");
+}
+
+namespace {
+
+std::string assOf(const core::Document &document)
+{
+    const auto bytes = core::encodeAss(document);
+    return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+}
+
+}
+
+TEST(FormatImport, LinesStylesAndScriptInfoBecomeAnAssDocument)
+{
+    const auto document = documentFromImport(*Json::parse(R"({
+        "lines": [{"start": 1000, "end": 2500, "style": "Sign", "text": "Hello"}, {"start": 3000, "end": 4000, "text": "Bye", "comment": true}],
+        "styles": [{"name": "Sign", "fontname": "Verdana", "fontsize": "30"}],
+        "info": {"Title": "Imported", "PlayResX": "1920"}})"));
+    ASSERT_TRUE(document) << document.error();
+    const std::string ass = assOf(*document);
+    EXPECT_NE(ass.find("Title: Imported"), std::string::npos) << ass;
+    EXPECT_NE(ass.find("PlayResX: 1920"), std::string::npos) << ass;
+    EXPECT_NE(ass.find("Style: Sign,Verdana,30,"), std::string::npos) << ass;
+    EXPECT_EQ(ass.find("Style: Default,"), std::string::npos) << ass;
+    EXPECT_NE(ass.find("Dialogue: 0,0:00:01.00,0:00:02.50,Sign,,0,0,0,,Hello"), std::string::npos) << ass;
+    EXPECT_NE(ass.find("Comment: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Bye"), std::string::npos) << ass;
+    EXPECT_EQ(document->lines().size(), 2u);
+
+    const auto empty = documentFromImport(Json::object());
+    ASSERT_TRUE(empty);
+    EXPECT_TRUE(empty->lines().empty());
+    EXPECT_NE(assOf(*empty).find("Style: Default,"), std::string::npos);
+}
+
+TEST(FormatImport, WhatDoesNotFitIsNamedWhereTheImporterPutIt)
+{
+    const auto at = [](std::string_view text) {
+        const auto document = documentFromImport(*Json::parse(text));
+        EXPECT_FALSE(document) << text;
+        return document ? std::string() : document.error();
+    };
+    EXPECT_TRUE(at(R"({"lines": [{"text": "a"}, {"start": "soon"}]})").starts_with("/lines/1/start: ")) << at(R"({"lines": [{"text": "a"}, {"start": "soon"}]})");
+    EXPECT_TRUE(at(R"({"lines": [{"id": 4, "text": "a"}]})").starts_with("/lines/0")) << at(R"({"lines": [{"id": 4, "text": "a"}]})");
+    EXPECT_EQ(at(R"({"styles": [{"fontname": "Arial"}]})"), "/styles/0: a Style needs a name");
+    EXPECT_TRUE(at(R"({"info": {"Title": 3}})").starts_with("/info/Title: "));
+    EXPECT_EQ(at(R"({"lines": {}})"), "the importer must return {lines = {…}, styles = {…}, info = {…}}");
 }

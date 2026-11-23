@@ -317,9 +317,9 @@ private slots:
             const QString ui = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_%1.ts").arg(QLatin1String(language));
             const auto label = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language"));
             QVERIFY2(label.has_value(), language);
-            const auto old = tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language (program restart required)"));
-            QVERIFY2(old.has_value(), language);
-            QCOMPARE(old->first, QStringLiteral("vanished"));
+            QCOMPARE(label->first, QString());
+            QVERIFY2(!tsEntry(ui, QStringLiteral("HikariSub.Options"), QStringLiteral("Language (program restart required)")),
+                     language);
             const QString gettext = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_gettext_%1.ts").arg(QLatin1String(language));
             const auto script = tsEntry(gettext, QString::fromLatin1(app::Localisation::kGettextContext),
                                         QStringLiteral("Language (program restart required)"));
@@ -735,7 +735,7 @@ private slots:
         start();
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("Tahoma"));
         QCOMPARE(QGuiApplication::font().pointSize(), 10);
-        const auto statusSize = [](qreal points) { return std::max(points * 10 / 13, 8.0); };
+        const auto statusSize = [](qreal points) { return std::max(points * 11 / 13, 8.0); };
         auto *label = item("selectionStatus");
         QVERIFY(label);
         QTRY_COMPARE(label->property("font").value<QFont>().pointSizeF(), statusSize(10));

@@ -155,6 +155,7 @@ void AgentItemsModel::update(std::vector<std::string> items)
 AgentController::AgentController(Wiring wiring, QObject *parent) : QObject(parent), m_wiring(std::move(wiring))
 {
     connect(&m_wiring.ai, &AiFeatures::switched, this, &AgentController::apply);
+    connect(&m_wiring.ai, &AiFeatures::providersChanged, this, &AgentController::modelsChanged);
     for (const QString &saved : m_wiring.settings.list(kAgentModelsSetting)) {
         const QJsonObject entry = QJsonDocument::fromJson(saved.toUtf8()).object();
         AgentModelList &list = m_agentModels[entry.value(QStringLiteral("agent")).toString().toStdString()];
@@ -162,6 +163,8 @@ AgentController::AgentController(Wiring wiring, QObject *parent) : QObject(paren
             list.models.emplace_back(m[QStringLiteral("id")].toString(), m[QStringLiteral("name")].toString());
     }
     connect(&m_wiring.ai, &AiFeatures::agentEnding, this, [this](const QString &agent) {
+        if (const auto listed = m_agentModels.find(agent.toStdString()); listed != m_agentModels.end())
+            listed->second.asked = false;
         if (m_threads)
             m_threads->endAgent(agent.toStdString());
     });
@@ -487,6 +490,7 @@ void AgentController::loadAgentModels(const QString &agent)
     m_threads->listAgentModels(key, [this, key](std::optional<std::vector<AgentThreads::AgentModel>> models) {
         AgentModelList &done = m_agentModels[key];
         done.loading = false;
+        done.asked = models.has_value();
         if (models) {
             done.models.clear();
             for (const AgentThreads::AgentModel &m : *models)

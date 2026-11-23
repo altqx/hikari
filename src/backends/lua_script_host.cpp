@@ -164,24 +164,41 @@ bool LuaScriptHost::run(int macroIndex)
 
 bool LuaScriptHost::run(int macroIndex, const application::MacroSnapshot &snapshot, bool validateFirst)
 {
-    return send(validateFirst ? lua::Command::RunValidated : lua::Command::Run, macroIndex, snapshot);
+    return send(validateFirst ? lua::Command::RunValidated : lua::Command::Run, macroIndex, m_info.macros.size(),
+                snapshot);
+}
+
+bool LuaScriptHost::runFilter(int filterIndex, const application::MacroSnapshot &snapshot,
+                              const application::DialogRequest &settings)
+{
+    Writer w;
+    w.bytes(lua::encodeDialogRequest(settings));
+    return send(lua::Command::RunFilter, filterIndex, m_info.filters.size(), snapshot, w.take());
+}
+
+bool LuaScriptHost::filterConfig(int filterIndex, const application::MacroSnapshot &snapshot)
+{
+    return send(lua::Command::FilterConfig, filterIndex, m_info.filters.size(), snapshot);
 }
 
 bool LuaScriptHost::validate(int macroIndex, const application::MacroSnapshot &snapshot)
 {
-    return send(lua::Command::Validate, macroIndex, snapshot);
+    return send(lua::Command::Validate, macroIndex, m_info.macros.size(), snapshot);
 }
 
-bool LuaScriptHost::send(lua::Command command, int macroIndex, const application::MacroSnapshot &snapshot)
+bool LuaScriptHost::send(lua::Command command, int index, std::size_t features,
+                         const application::MacroSnapshot &snapshot, const std::vector<std::byte> &prefix)
 {
     m_refusedSize.reset();
-    if (m_state != State::Ready || macroIndex < 0 || static_cast<std::size_t>(macroIndex) >= m_info.macros.size())
+    if (m_state != State::Ready || index < 0 || static_cast<std::size_t>(index) >= features)
         return false;
     m_lastResult.reset();
+    m_lastDialog.reset();
     Writer w;
-    w.i32(static_cast<std::int32_t>(command)).i32(macroIndex);
+    w.i32(static_cast<std::int32_t>(command)).i32(index);
     const auto body = lua::encodeSnapshot(snapshot);
     auto payload = w.take();
+    payload.insert(payload.end(), prefix.begin(), prefix.end());
     payload.insert(payload.end(), body.begin(), body.end());
     if (payload.size() > helper::kMaxPayload) {
         m_refusedSize = payload.size();
@@ -196,6 +213,7 @@ bool LuaScriptHost::send(lua::Command command, int macroIndex, const application
         return false;
     *id = *sent;
     m_runRequest = *sent;
+    m_runCommand = command;
     m_cancelRequested = false;
     m_forceStopOffered = false;
     m_state = State::Running;
@@ -301,7 +319,11 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
                                                                     : RunOutcome::Failed;
         if (outcome == RunOutcome::Ok && m_cancelRequested)
             outcome = RunOutcome::Cancelled;
-        if (outcome == RunOutcome::Ok) {
+        if (outcome == RunOutcome::Ok && m_runCommand == lua::Command::FilterConfig) {
+            m_lastDialog = lua::decodeDialogRequest(event->payload);
+            if (!m_lastDialog)
+                outcome = RunOutcome::Failed;
+        } else if (outcome == RunOutcome::Ok) {
             m_lastResult = lua::decodeMacroResult(event->payload);
             if (!m_lastResult)
                 outcome = RunOutcome::Failed;

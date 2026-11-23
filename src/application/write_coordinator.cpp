@@ -91,6 +91,15 @@ void WriteCoordinator::cancel(PermitId permit)
     m_port.requestCancel(permit);
 }
 
+void WriteCoordinator::abandon(PermitId permit)
+{
+    const auto it = m_permits.find(permit);
+    if (it == m_permits.end() || it->second.started)
+        return;
+    it->second.started = true;
+    complete(permit, WriteOutcome::Failed);
+}
+
 void WriteCoordinator::complete(PermitId permit, WriteOutcome outcome)
 {
     const auto it = m_permits.find(permit);

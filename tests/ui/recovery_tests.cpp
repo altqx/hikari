@@ -12,9 +12,13 @@
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QThread>
+#include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
+#include <algorithm>
+#include <atomic>
 #include <cstdlib>
 
 #ifdef _WIN32
@@ -372,6 +376,59 @@ private slots:
         a.shell().setStatusText(QStringLiteral("set_status_text"));
         QTRY_COMPARE_WITH_TIMEOUT(a.shell().statusText(), QString(), 10000);
         QVERIFY2(clock.elapsed() >= 4900, qPrintable(QString::number(clock.elapsed())));
+    }
+
+    void theAutosaveIntervalSettingSetsTheTimer()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("interval.ass")), "x");
+        app::Application a(options());
+        QCOMPARE(a.autosaveIntervalMs(), 20'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 1);
+        QCOMPARE(a.autosaveIntervalMs(), 5'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 100'000);
+        QCOMPARE(a.autosaveIntervalMs(), 3'600'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 5);
+        QVERIFY(a.openFile(path));
+        a.editor().textEdited(QStringLiteral("y"), 1);
+        QVERIFY(a.editor().commit());
+        const auto document = *a.workspace().editingTarget();
+        QTest::qWait(4'000);
+        QVERIFY(a.autosavePending(document));
+        QTRY_VERIFY_WITH_TIMEOUT(!a.autosavePending(document), 4'000);
+    }
+
+    void aSlowDiskLeavesTheWindowResponsiveWhileAutosaving()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("slow.ass")), "x");
+        app::Application::Options o = options();
+        o.autosaveIntervalMs = 50;
+        app::Application a(o);
+        QVERIFY(a.openFile(path));
+        std::atomic<int> started = 0;
+        a.recoveryWrites().setBeforeEachWrite([&started] {
+            ++started;
+            QThread::msleep(1500);
+        });
+        auto manifestWritten = [&o] {
+            for (QDirIterator it(o.recoveryDir, QDir::Files, QDirIterator::Subdirectories); it.hasNext();)
+                if (it.nextFileInfo().fileName() == QLatin1String("manifest"))
+                    return true;
+            return false;
+        };
+        qint64 longest = 0;
+        QElapsedTimer gap;
+        QTimer tick;
+        tick.setInterval(20);
+        connect(&tick, &QTimer::timeout, this, [&] { longest = std::max(longest, gap.restart()); });
+        gap.start();
+        tick.start();
+        a.editor().textEdited(QStringLiteral("changed on a busy disk"), 22);
+        QVERIFY(a.editor().commit());
+        QTRY_VERIFY_WITH_TIMEOUT(started > 0, 5000);
+        QVERIFY(!manifestWritten());
+        QTRY_VERIFY_WITH_TIMEOUT(manifestWritten(), 10000);
+        QVERIFY2(longest < 500, qPrintable(QString::number(longest)));
+        a.recoveryWrites().setBeforeEachWrite({});
     }
 };
 

@@ -631,6 +631,50 @@ TEST_F(AiFeaturesTest, ANewSidecarSwitchesInOnlyOnceNothingHasBeenBusyForTheIdle
     features.removeBusySource(source);
 }
 
+TEST_F(AiFeaturesTest, OneSidecarServesEveryRequestAcrossChecksThatFindNothingNew)
+{
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    app::AiFeatures::Ports p = ports(true, true);
+    p.timing.checkMs = 150;
+    app::AiFeatures features(settings, std::move(p));
+    backends::ai::AiSidecarHost *host = features.sidecarForAction();
+    ASSERT_NE(host, nullptr);
+    qint64 pid = 0;
+    for (int i = 0; i < 5; ++i) {
+        bool answered = false;
+        features.sidecarForAction()->request("echo", api::Json(i), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });
+        ASSERT_TRUE(waitFor([&] { return answered; }));
+        if (i == 0)
+            pid = host->processId();
+        EXPECT_EQ(features.sidecarForAction(), host);
+        EXPECT_EQ(host->processId(), pid);
+    }
+    const int checks = release.fetches(".json");
+    ASSERT_TRUE(waitFor([&] { return release.fetches(".json") >= checks + 3; }));
+    waitFor([] { return false; }, 500);
+    EXPECT_EQ(features.sidecar(), host);
+    EXPECT_EQ(host->processId(), pid);
+    EXPECT_EQ(counts.sidecarHosts, 1);
+}
+
+TEST_F(AiFeaturesTest, AComponentFirstInstalledByUpdateNowIsCheckedHourlyFromThen)
+{
+    publish(QStringLiteral("1.1.0"));
+    app::AiFeatures::Ports p = ports(false, true);
+    p.timing.checkMs = 200;
+    app::AiFeatures features(settings, std::move(p));
+    EXPECT_FALSE(features.installed());
+    waitFor([] { return false; }, 400);
+    EXPECT_EQ(release.fetches(".json"), 0);
+
+    features.updateNow();
+    ASSERT_TRUE(waitFor([&] { return features.installed(); }));
+    EXPECT_EQ(features.updater()->current()->version, QStringLiteral("1.1.0"));
+    const int afterInstall = release.fetches(".json");
+    EXPECT_TRUE(waitFor([&] { return release.fetches(".json") > afterInstall; }, 2'000));
+}
+
 TEST_F(AiFeaturesTest, ThePolicyKeepsChecksButNeverDownloads)
 {
     settings.set(app::AiFeatures::kAutoUpdateSetting, true);

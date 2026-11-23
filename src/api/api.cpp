@@ -97,9 +97,11 @@ const Registry &Api::registry()
         detail::addNodeOperations(r);
         detail::addEffectsOperations(r);
         detail::addPluginOperations(r);
+        detail::addFormatOperations(r);
         detail::addTypesetOperations(r);
         detail::addProjectOperations(r);
         detail::addVcsOperations(r);
+        detail::addPresenceOperations(r);
         detail::addKaraokeOperations(r);
         detail::addMarkOperations(r);
         detail::addProgramOperations(r);

@@ -2352,7 +2352,7 @@ bool PerspectiveTool::key(const Key &event, VisualHost &host)
 Overlay PerspectiveTool::overlay(const VisualHost &host) const
 {
     follow(host);
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     if (!m_valid)
         return out;

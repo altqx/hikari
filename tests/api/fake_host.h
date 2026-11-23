@@ -235,16 +235,27 @@ public:
 class FakePlugins final : public PluginHost {
 public:
     std::vector<PluginState> plugins() const override { return installed; }
+    std::vector<FormatInfo> formats() const override { return pluginFormats; }
     std::optional<std::string> manifest(std::string_view plugin) const override
     {
         if (plugin != "org.example.word-count")
             return std::nullopt;
         return std::string(R"({"id": "org.example.word-count"})");
     }
-    PluginRun run(std::string_view plugin, std::string_view command) override
+    PluginRun run(std::string_view plugin, std::string_view command, std::string_view via) override
     {
         runs.emplace_back(std::string(plugin) + "/" + std::string(command));
+        vias.emplace_back(via);
         return nextRun;
+    }
+    StatusItemSet setStatusItem(std::string_view plugin, const StatusItemChange &change) override
+    {
+        if (plugin != "org.example.word-count")
+            return StatusItemSet::NotRunning;
+        if (change.item != "words")
+            return StatusItemSet::UnknownItem;
+        statusChanges.push_back(change);
+        return StatusItemSet::Set;
     }
     std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
                                                           const std::vector<PluginFile> &files) override
@@ -288,9 +299,11 @@ public:
     std::vector<PluginState> installed{PluginState{
         "org.example.word-count", "Word count", "0.1.0", "Counts words.", "file", false, true, false, false,
         {PluginCommand{"plugin.org.example.word-count.count", "Count words"}}}};
+    std::vector<FormatInfo> pluginFormats;
     PluginRun nextRun = PluginRun::Ran;
     bool fullTrust = false;
-    std::vector<std::string> runs, reviewed, installs;
+    std::vector<std::string> runs, vias, reviewed, installs;
+    std::vector<StatusItemChange> statusChanges;
     std::vector<PluginFile> scaffolded;
     std::string package;
 };
@@ -449,6 +462,12 @@ public:
             api->selectionChanged(document);
         return true;
     }
+    std::optional<std::string> pluginFormat(application::DocumentId document) const override
+    {
+        const auto it = pluginFormats.find(document.value);
+        return it == pluginFormats.end() ? std::nullopt : std::optional(it->second);
+    }
+    std::map<std::uint64_t, std::string> pluginFormats;
     void committed(application::DocumentId document) override
     {
         ++commits;
