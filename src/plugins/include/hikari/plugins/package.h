@@ -3,6 +3,8 @@
 #include "hikari/plugins/manifest.h"
 
 #include <cstddef>
+#include <expected>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <vector>
@@ -40,6 +42,10 @@ struct Package {
 // icon, screenshot or README.md that breaks the marketplace's media rules (docs/plugins.md), a QML panel's missing
 // file, and an import a QML panel may not make in any .qml or .js file of a package with QML panels.
 std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion);
+
+// A dev plugin's folder as package files. Entries whose name starts with '.' are left out; a symbolic link is refused
+// as BadPath. Reading stops as TooLarge past kMaxPackageFiles files or kMaxPlatformPackageBytes.
+std::expected<std::vector<PackageFile>, PackageProblem> readPluginFolder(const std::filesystem::path &folder);
 
 // The media rules for one file, by its extension; nullopt when it passes. The detail is English and technical.
 std::optional<std::string> iconProblem(const PackageFile &icon);

@@ -320,6 +320,63 @@ private slots:
         QVERIFY(refusal(manager, "hello-1.0.0.hikariplugin").contains(QStringLiteral("plugins.json")));
     }
 
+    void aDevPluginReloadsWhenItsFilesChange()
+    {
+        PluginManager manager(folders());
+        const QString work = m_dir.filePath(QStringLiteral("work/hello"));
+        const auto write = [&](const char *version, const char *extra = "") {
+            QDir().mkpath(work);
+            QFile manifest(work + QStringLiteral("/hikari-plugin.json"));
+            QVERIFY(manifest.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            manifest.write(QByteArray(R"({"id": "com.example.hello", "name": "Hello", "api": 1, "main": "main.lua", "authors": ["Ana"], "version": ")") +
+                           version + "\"" + extra + "}");
+            QFile main(work + QStringLiteral("/main.lua"));
+            QVERIFY(main.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            main.write("return 1");
+        };
+        write("0.1.0");
+
+        const QVariantMap review = manager.reviewDev(QUrl::fromLocalFile(work));
+        QVERIFY2(review.value(QStringLiteral("ok")).toBool(), qPrintable(review.value(QStringLiteral("message")).toString()));
+        QVERIFY(review.value(QStringLiteral("dev")).toBool());
+        QCOMPARE(review.value(QStringLiteral("change")).toString(), QStringLiteral("install"));
+        QSignalSpy reloaded(&manager, &PluginManager::devReloaded);
+        QSignalSpy problem(&manager, &PluginManager::devProblem);
+        QCOMPARE(manager.install(false), QString());
+        QCOMPARE(reloaded.count(), 1);
+        QVariantMap row = only(manager);
+        QCOMPARE(row.value(QStringLiteral("source")).toString(), QStringLiteral("dev"));
+        QCOMPARE(row.value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(QDir::cleanPath(work)));
+        QVERIFY(!QFile::exists(installed("main.lua")));
+
+        write("0.2.0");
+        QTRY_COMPARE(reloaded.count(), 2);
+        QCOMPARE(only(manager).value(QStringLiteral("version")).toString(), QStringLiteral("0.2.0"));
+
+        QFile::remove(work + QStringLiteral("/main.lua"));
+        QTRY_COMPARE(problem.count(), 1);
+        row = only(manager);
+        QCOMPARE(row.value(QStringLiteral("version")).toString(), QStringLiteral("0.2.0"));
+        QVERIFY(!row.value(QStringLiteral("devProblem")).toString().isEmpty());
+
+        write("0.3.0", R"(, "permissions": {"background": "Watches files"})");
+        QTRY_COMPARE(problem.count(), 2);
+        row = only(manager);
+        QVERIFY(row.value(QStringLiteral("devAsks")).toBool());
+        QVERIFY(row.value(QStringLiteral("devProblem")).toString().isEmpty());
+        QCOMPARE(row.value(QStringLiteral("version")).toString(), QStringLiteral("0.2.0"));
+        const QVariantMap again = manager.reviewDev(row.value(QStringLiteral("folder")).toUrl());
+        QCOMPARE(again.value(QStringLiteral("change")).toString(), QStringLiteral("reinstall"));
+        QVERIFY(again.value(QStringLiteral("asksForMore")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        QVERIFY(!only(manager).value(QStringLiteral("devAsks")).toBool());
+        QCOMPARE(only(manager).value(QStringLiteral("version")).toString(), QStringLiteral("0.3.0"));
+
+        QCOMPARE(manager.uninstall(QStringLiteral("com.example.hello"), false), QString());
+        QVERIFY(manager.plugins().isEmpty());
+        QVERIFY(QFile::exists(work + QStringLiteral("/main.lua")));
+    }
+
     void withoutAUserFolderNothingInstalls()
     {
         PluginManager manager({});

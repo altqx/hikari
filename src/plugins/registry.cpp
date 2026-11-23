@@ -14,6 +14,7 @@ namespace {
 using api::Json;
 
 constexpr std::int64_t kFormat = 1;
+constexpr std::string_view kDevPrefix = ".dev/";
 
 bool isPluginId(std::string_view id)
 {
@@ -49,16 +50,23 @@ std::optional<InstalledPlugin> readPlugin(const Json &json)
         plugin.settings = *settings;
     }
     if (const Json *source = json.find("source")) {
-        if (!source->isString() || (source->asString() != "file" && source->asString() != "marketplace"))
+        if (!source->isString())
             return std::nullopt;
-        plugin.source = source->asString() == "marketplace" ? Source::Marketplace : Source::File;
+        const std::string &name = source->asString();
+        if (name == "marketplace")
+            plugin.source = Source::Marketplace;
+        else if (name == "dev")
+            plugin.source = Source::Dev;
+        else if (name != "file")
+            return std::nullopt;
     }
     if (const Json *autoUpdate = json.find("autoUpdate")) {
         if (!autoUpdate->isBool())
             return std::nullopt;
         plugin.autoUpdate = autoUpdate->asBool();
     }
-    for (auto [name, field] : {std::pair{"skip", &plugin.skip}, {"previous", &plugin.previous}, {"held", &plugin.held}})
+    for (auto [name, field] : {std::pair{"skip", &plugin.skip}, {"previous", &plugin.previous}, {"held", &plugin.held},
+                               {"path", &plugin.path}, {"accepted", &plugin.accepted}})
         if (const Json *value = json.find(name)) {
             if (!value->isString())
                 return std::nullopt;
@@ -74,6 +82,18 @@ std::optional<InstalledPlugin> readPlugin(const Json &json)
     return plugin;
 }
 
+bool goodEntry(std::string_view key, const InstalledPlugin &plugin)
+{
+    if (!key.starts_with(kDevPrefix))
+        return isPluginId(key) && plugin.source != Source::Dev;
+    return isPluginId(key.substr(kDevPrefix.size())) && plugin.source == Source::Dev && !plugin.path.empty();
+}
+
+}
+
+std::string devKey(std::string_view id)
+{
+    return std::string(kDevPrefix) + std::string(id);
 }
 
 std::expected<Registry, std::string> loadRegistry(const std::filesystem::path &file)
@@ -95,8 +115,8 @@ std::expected<Registry, std::string> loadRegistry(const std::filesystem::path &f
         return std::unexpected("not a format " + std::to_string(kFormat) + " plugins file");
     Registry registry;
     for (const Json::Member &member : plugins->asObject()) {
-        auto plugin = isPluginId(member.key) ? readPlugin(member.value) : std::nullopt;
-        if (!plugin)
+        auto plugin = readPlugin(member.value);
+        if (!plugin || !goodEntry(member.key, *plugin))
             return std::unexpected("malformed entry \"" + member.key + "\"");
         registry[member.key] = std::move(*plugin);
     }
@@ -118,11 +138,12 @@ bool saveRegistry(const std::filesystem::path &file, const Registry &registry)
         }
         if (!plugin.settings.asObject().empty())
             entry["settings"] = plugin.settings;
-        if (plugin.source == Source::Marketplace)
-            entry["source"] = "marketplace";
+        if (plugin.source != Source::File)
+            entry["source"] = plugin.source == Source::Marketplace ? "marketplace" : "dev";
         if (!plugin.autoUpdate)
             entry["autoUpdate"] = false;
-        for (auto [name, field] : {std::pair{"skip", &plugin.skip}, {"previous", &plugin.previous}, {"held", &plugin.held}})
+        for (auto [name, field] : {std::pair{"skip", &plugin.skip}, {"previous", &plugin.previous}, {"held", &plugin.held},
+                                   {"path", &plugin.path}, {"accepted", &plugin.accepted}})
             if (!field->empty())
                 entry[name] = *field;
         if (plugin.revoked)

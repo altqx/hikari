@@ -923,6 +923,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
+    connect(m_pluginManager.get(), &PluginManager::devReloaded, m_pluginRuntime.get(), &PluginRuntime::reload);
+    connect(m_pluginManager.get(), &PluginManager::devProblem, this,
+            [this](const QString &, const QString &name, const QString &problem) { m_log->log(problem, ui::LogController::Error, name); });
     m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
             [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });

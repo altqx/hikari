@@ -169,10 +169,9 @@ void PluginRuntime::wirePrograms()
             const auto it = m_plugins.find(id);
             if (it == m_plugins.end() || !m_installer)
                 return std::nullopt;
-            const plugins::PluginFolders &f = m_installer->folders();
-            const fs::path own(std::u8string(id.begin(), id.end()));
-            auto folder = [&own](const fs::path &base) { return QString::fromStdU16String((base / own).u16string()); };
-            return PluginPrograms::Plugin{&it->second->manifest, folder(f.plugins), folder(f.data), folder(f.cache),
+            auto folder = [](const fs::path &path) { return QString::fromStdU16String(path.u16string()); };
+            return PluginPrograms::Plugin{&it->second->manifest, folder(m_installer->codeFolder(id)),
+                                          folder(m_installer->dataFolder(id)), folder(m_installer->cacheFolder(id)),
                                           plugins::settingValues(it->second->manifest, storedSettings(id))};
         },
         m_wiring.networkAllowed,
@@ -323,7 +322,7 @@ void PluginRuntime::sync()
                                           ui::LogController::Error, qs(id));
                     continue;
                 }
-                const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
+                const fs::path root = m_installer->codeFolder(id);
                 const bool runs = plugins::pluginRunsAnywhere(id, entry, windows);
                 if (plugins::pluginOn(id, entry, nullptr))
                     userOn.insert(id);
@@ -361,7 +360,7 @@ void PluginRuntime::sync()
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
         const auto keep = wanted.find(it->first);
-        if (keep != wanted.end() && keep->second.version == it->second->manifest.version) {
+        if (keep != wanted.end() && keep->second.version == it->second->manifest.version && !m_reloading.contains(it->first)) {
             ++it;
             continue;
         }
@@ -444,7 +443,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     auto load = [this, raw] {
         protocol::LoadRequest request;
         const plugins::Manifest &m = raw->manifest;
-        request.root = utf8(m_installer->folders().plugins / fs::path(std::u8string(raw->id.begin(), raw->id.end())));
+        request.root = utf8(m_installer->codeFolder(raw->id));
         request.main = m.main;
         request.id = raw->id;
         request.version = m.version;
@@ -460,7 +459,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     PluginProcess *process = raw->process.get();
     process->setBackground(raw->manifest.permissions.background.has_value());
     if (m_wiring.sandbox && m_installer && raw->manifest.tier == plugins::Tier::Restricted) {
-        const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
+        const fs::path root = m_installer->codeFolder(id);
         process->setSandbox(backends::pluginProfile(m_wiring.helperPath, QString::fromStdU16String(root.u16string()), id));
     }
     if (!raw->manifest.mainProgram.empty())
@@ -895,6 +894,13 @@ bool PluginRuntime::run(const QString &commandId)
         return false;
     }
     return process.run(command);
+}
+
+void PluginRuntime::reload(const QString &pluginId)
+{
+    m_reloading.insert(pluginId.toStdString());
+    sync();
+    m_reloading.clear();
 }
 
 void PluginRuntime::restart(const QString &pluginId)

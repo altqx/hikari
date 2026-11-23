@@ -7,11 +7,14 @@
 #include <QCollator>
 #include <QCoreApplication>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QFileSystemWatcher>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QLocale>
+#include <QTimer>
 #include <QUrl>
 #include <private/qzipreader_p.h>
 
@@ -259,6 +262,24 @@ QString problemText(const std::string &problem)
     return QCoreApplication::translate("HikariSub.Plugins", "HikariSub couldn’t finish: %1").arg(text(problem));
 }
 
+QString sourceName(plugins::Source source)
+{
+    switch (source) {
+    case plugins::Source::Marketplace:
+        return QStringLiteral("marketplace");
+    case plugins::Source::Dev:
+        return QStringLiteral("dev");
+    case plugins::Source::File:
+        break;
+    }
+    return QStringLiteral("file");
+}
+
+QString nativePath(const fs::path &path)
+{
+    return QDir::toNativeSeparators(QString::fromStdU16String(path.u16string()));
+}
+
 QString noUserFolder()
 {
     return QCoreApplication::translate("HikariSub.Plugins", "Plugins need a user folder, and this copy has none.");
@@ -375,8 +396,10 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
     return lines;
 }
 
-PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
+PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent), m_devWatcher(new QFileSystemWatcher(this))
 {
+    connect(m_devWatcher, &QFileSystemWatcher::directoryChanged, this, &PluginManager::devFilesChanged);
+    connect(m_devWatcher, &QFileSystemWatcher::fileChanged, this, &PluginManager::devFilesChanged);
     if (!folders.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(folders.plugins), path(folders.data), path(folders.cache),
                                                    path(folders.registry)},
@@ -401,9 +424,9 @@ void PluginManager::refresh()
             m_problem = QCoreApplication::translate("HikariSub.Plugins", "plugins.json in the user folder can’t be read: %1")
                             .arg(text(registry.error()));
         } else {
+            const plugins::Registry overridden = m_installer->overridden().value_or(plugins::Registry{});
             for (const auto &[id, entry] : *registry) {
-                QFile file(QDir(QString::fromStdU16String(m_installer->folders().plugins.u16string()))
-                               .filePath(text(id) + QStringLiteral("/hikari-plugin.json")));
+                QFile file(QString::fromStdU16String((m_installer->codeFolder(id) / "hikari-plugin.json").u16string()));
                 std::optional<plugins::Manifest> manifest;
                 if (file.open(QIODevice::ReadOnly)) {
                     const QByteArray data = file.read(1024 * 1024);
@@ -418,8 +441,7 @@ void PluginManager::refresh()
                     {QStringLiteral("description"), manifest ? text(manifest->description) : QString()},
                     {QStringLiteral("enabled"), entry.enabled},
                     {QStringLiteral("keyId"), keyId(entry.key)},
-                    {QStringLiteral("source"), entry.source == plugins::Source::Marketplace ? QStringLiteral("marketplace")
-                                                                                            : QStringLiteral("file")},
+                    {QStringLiteral("source"), sourceName(entry.source)},
                     {QStringLiteral("unrestricted"), manifest && manifest->tier == plugins::Tier::Unrestricted},
                     {QStringLiteral("official"), m_official.owns(id, entry.key)},
                     {QStringLiteral("icon"), manifest && !manifest->icon.empty()
@@ -437,6 +459,11 @@ void PluginManager::refresh()
                     {QStringLiteral("revoked"), entry.revoked.has_value()},
                     {QStringLiteral("revokedReason"), entry.revoked ? text(entry.revoked->reason) : QString()},
                     {QStringLiteral("lastGood"), entry.revoked ? text(entry.revoked->lastGood) : QString()},
+                    {QStringLiteral("path"), entry.path.empty() ? QString() : nativePath(m_installer->codeFolder(id))},
+                    {QStringLiteral("folder"), entry.path.empty() ? QUrl() : QUrl::fromLocalFile(QString::fromStdU16String(m_installer->codeFolder(id).u16string()))},
+                    {QStringLiteral("overrides"), overridden.contains(id) ? text(overridden.at(id).version) : QString()},
+                    {QStringLiteral("devProblem"), m_devProblems.value(text(id))},
+                    {QStringLiteral("devAsks"), m_devAsks.contains(text(id))},
                 });
             }
         }
@@ -447,6 +474,7 @@ void PluginManager::refresh()
         return collator.compare(a.toMap().value(QStringLiteral("name")).toString(),
                                 b.toMap().value(QStringLiteral("name")).toString()) < 0;
     });
+    watchDevFolders();
     emit pluginsChanged();
 }
 
@@ -565,9 +593,14 @@ QVariantMap PluginManager::describe(const plugins::InstallReview &review) const
         {QStringLiteral("changes"), QVariantList()},
         {QStringLiteral("asksForMore"), false},
     };
+    if (review.source == plugins::Source::Dev) {
+        out.insert(QStringLiteral("dev"), true);
+        out.insert(QStringLiteral("path"), nativePath(m_reviewedFolder));
+    }
     if (review.installedVersion.empty() || !m_installer)
         return out;
-    if (const auto current = m_installer->installedManifest(m.id)) {
+    const auto current = review.source == plugins::Source::Dev ? m_installer->acceptedManifest(m.id) : m_installer->installedManifest(m.id);
+    if (current) {
         out.insert(QStringLiteral("changes"), permissionChanges(*current, m));
         out.insert(QStringLiteral("asksForMore"), plugins::permissionIncrease(*current, m).any());
     }
@@ -607,10 +640,114 @@ QString PluginManager::install(bool retrusted)
 {
     if (!m_installer || !m_review)
         return QCoreApplication::translate("HikariSub.Plugins", "Choose a plugin package first.");
-    const auto done = m_installer->install(*m_review, retrusted);
+    const bool dev = m_review->source == plugins::Source::Dev;
+    const QString id = text(m_review->package.manifest.id);
+    const auto done = dev ? m_installer->installDev(*m_review, m_reviewedFolder) : m_installer->install(*m_review, retrusted);
     m_review.reset();
+    if (done && dev) {
+        m_devProblems.remove(id);
+        m_devAsks.remove(id);
+    }
     refresh();
+    if (done && dev)
+        emit devReloaded(id);
     return done ? QString() : problemText(done.error());
+}
+
+QVariantMap PluginManager::reviewDev(const QUrl &folder)
+{
+    m_review.reset();
+    if (!m_installer)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), noUserFolder()}};
+    m_reviewedFolder = path(folder.isLocalFile() ? folder.toLocalFile() : folder.toString());
+    return reviewed(m_installer->reviewDev(m_reviewedFolder));
+}
+
+void PluginManager::watchDevFolders()
+{
+    QHash<QString, QString> folders;
+    if (const auto registry = m_installer ? m_installer->registry() : std::expected<plugins::Registry, std::string>())
+        for (const auto &[id, entry] : *registry)
+            if (entry.source == plugins::Source::Dev)
+                folders.insert(text(id), QString::fromStdU16String(fs::path(std::u8string(entry.path.begin(), entry.path.end())).u16string()));
+    QStringList paths;
+    for (auto it = folders.cbegin(); it != folders.cend(); ++it) {
+        paths << it.value();
+        QDirIterator files(it.value(), QDir::AllEntries | QDir::NoDotAndDotDot | QDir::NoSymLinks, QDirIterator::Subdirectories);
+        while (files.hasNext()) {
+            const QString file = files.next();
+            if (!file.mid(it.value().size()).contains(QStringLiteral("/.")))
+                paths << file;
+        }
+    }
+    const QStringList watched = m_devWatcher->files() + m_devWatcher->directories();
+    if (!watched.isEmpty())
+        m_devWatcher->removePaths(watched);
+    if (!paths.isEmpty())
+        m_devWatcher->addPaths(paths);
+    for (auto it = m_devTimers.begin(); it != m_devTimers.end();) {
+        if (folders.contains(it.key())) {
+            ++it;
+            continue;
+        }
+        delete it.value();
+        m_devProblems.remove(it.key());
+        m_devAsks.remove(it.key());
+        it = m_devTimers.erase(it);
+    }
+    m_devFolders = std::move(folders);
+}
+
+void PluginManager::devFilesChanged(const QString &changed)
+{
+    for (auto it = m_devFolders.cbegin(); it != m_devFolders.cend(); ++it) {
+        if (changed != it.value() && !changed.startsWith(it.value() + QLatin1Char('/')))
+            continue;
+        QTimer *&timer = m_devTimers[it.key()];
+        if (!timer) {
+            timer = new QTimer(this);
+            timer->setSingleShot(true);
+            timer->setInterval(300);
+            connect(timer, &QTimer::timeout, this, [this, id = it.key()] { reloadDev(id); });
+        }
+        timer->start();
+    }
+}
+
+void PluginManager::reloadDev(const QString &id)
+{
+    const auto registry = m_installer ? m_installer->registry() : std::expected<plugins::Registry, std::string>();
+    const auto entry = registry ? registry->find(id.toStdString()) : plugins::Registry::const_iterator();
+    if (!registry || entry == registry->end() || entry->second.source != plugins::Source::Dev)
+        return;
+    const fs::path folder(std::u8string(entry->second.path.begin(), entry->second.path.end()));
+    const QString name = this->name(id);
+    const auto fail = [&](const QString &problem) {
+        m_devProblems.insert(id, problem);
+        refresh();
+        emit devProblem(id, name, problem);
+    };
+    auto review = m_installer->reviewDev(folder);
+    if (!review)
+        return fail(refusalMessage(review.error()));
+    if (text(review->package.manifest.id) != id)
+        return fail(QCoreApplication::translate("HikariSub.Plugins", "Its manifest now says the id is “%1”. Unload it and load the folder again.")
+                        .arg(text(review->package.manifest.id)));
+    const auto accepted = m_installer->acceptedManifest(id.toStdString());
+    if (!accepted || plugins::permissionIncrease(*accepted, review->package.manifest).any()) {
+        m_devProblems.remove(id);
+        m_devAsks.insert(id);
+        refresh();
+        emit devProblem(id, name, QCoreApplication::translate("HikariSub.Plugins", "It asks for more than you said yes to, so the change waits for you to review it."));
+        return;
+    }
+    const auto done = m_installer->installDev(*review, folder);
+    if (!done)
+        return fail(problemText(done.error()));
+    m_devProblems.remove(id);
+    m_devAsks.remove(id);
+    refresh();
+    emit devReloaded(id);
 }
 
 QString PluginManager::edit(const QString &id, const std::function<void(plugins::InstalledPlugin &)> &change)
@@ -668,7 +805,7 @@ QUrl PluginManager::dataFolder(const QString &id) const
 {
     if (!m_installer)
         return {};
-    const QString folder = QString::fromStdU16String((m_installer->folders().data / path(id)).u16string());
+    const QString folder = QString::fromStdU16String(m_installer->dataFolder(id.toStdString()).u16string());
     if (!QDir().mkpath(folder))
         return {};
     return QUrl::fromLocalFile(folder);
@@ -684,7 +821,7 @@ bool PluginManager::hasData(const QString &id) const
 {
     if (!m_installer)
         return false;
-    const QDir data(QString::fromStdU16String((m_installer->folders().data / path(id)).u16string()));
+    const QDir data(QString::fromStdU16String(m_installer->dataFolder(id.toStdString()).u16string()));
     return data.exists() && !data.isEmpty();
 }
 
