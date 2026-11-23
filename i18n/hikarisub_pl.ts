@@ -17749,6 +17749,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>Działa tylko poza trybem tłumaczenia</translation>
     </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>Motyw kolorów: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>Motyw ikon: %1</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

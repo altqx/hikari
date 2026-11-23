@@ -153,6 +153,82 @@ std::vector<ContentFile> contentFiles(const Json *list)
     return out;
 }
 
+std::vector<ColourTheme> colourThemes(const Json *list)
+{
+    std::vector<ColourTheme> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "type"), text(item, "path")});
+    return out;
+}
+
+std::vector<IconTheme> iconThemes(const Json *list)
+{
+    std::vector<IconTheme> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "path")});
+    return out;
+}
+
+std::vector<OwnIcon> ownIcons(const Json *list)
+{
+    std::vector<OwnIcon> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "path")});
+    return out;
+}
+
+std::optional<ManifestProblem> unknownOwnIcon(const Json *contributes, const Manifest &m)
+{
+    constexpr std::string_view kOwn = "own:";
+    if (!contributes)
+        return std::nullopt;
+    for (const char *list : {"commands", "panels", "statusItems"})
+        if (const Json *items = contributes->find(list))
+            for (std::size_t i = 0; i < items->asArray().size(); ++i) {
+                const std::string icon = text(items->asArray()[i], "icon");
+                if (icon.starts_with(kOwn) &&
+                    std::ranges::find(m.icons, icon.substr(kOwn.size()), &OwnIcon::id) == m.icons.end())
+                    return ManifestProblem{Kind::Schema, "/contributes/" + std::string(list) + "/" + std::to_string(i) + "/icon",
+                                           "names no icon in contributes.icons", 0};
+            }
+    return std::nullopt;
+}
+
+bool holds(const Json *object, std::string_view key)
+{
+    const Json *value = object ? object->find(key) : nullptr;
+    return value && !(value->isArray() && value->asArray().empty()) && !(value->isObject() && value->asObject().empty());
+}
+
+std::optional<ManifestProblem> codeWithoutMain(const Json &json)
+{
+    if (json.find("main"))
+        return std::nullopt;
+    const Json *contributes = json.find("contributes");
+    const Json *permissions = json.find("permissions");
+    const bool programPackage = holds(contributes, "programs");
+    const std::string runsNone = programPackage ? "needs code, and a package of programs runs none"
+                                                : "needs code, and a data-only package runs none";
+    if (text(json, "tier") == "unrestricted")
+        return ManifestProblem{Kind::Schema, "/tier", "only a plugin with a Lua main can be unrestricted", 0};
+    for (const char *list : {"commands", "panels", "menus", "statusItems", "keybindings", "providers", "aiTools", "formats"})
+        if (holds(contributes, list))
+            return ManifestProblem{Kind::Schema, "/contributes/" + std::string(list), runsNone, 0};
+    for (const char *permission : {"background", "presence"})
+        if (holds(permissions, permission))
+            return ManifestProblem{Kind::Schema, "/permissions/" + std::string(permission), runsNone, 0};
+    if (programPackage)
+        return std::nullopt;
+    if (holds(&json, "permissions"))
+        return ManifestProblem{Kind::Schema, "/permissions", "a data-only package asks for no permissions", 0};
+    if (holds(contributes, "settings"))
+        return ManifestProblem{Kind::Schema, "/contributes/settings", "a data-only package has no settings", 0};
+    return std::nullopt;
+}
+
 std::vector<NodePort> nodePorts(const Json *list)
 {
     std::vector<NodePort> out;
@@ -433,6 +509,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.formats = formats(contributes->find("formats"));
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
+        m.themes = colourThemes(contributes->find("themes"));
+        m.iconThemes = iconThemes(contributes->find("iconThemes"));
+        m.icons = ownIcons(contributes->find("icons"));
         m.programs = programs(contributes->find("programs"));
     }
 
@@ -442,7 +521,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.statusItems, "/contributes/statusItems"), badReferences(m),
                          repeated(m.formats, "/contributes/formats"), repeated(m.programs, "/contributes/programs"),
                          repeated(m.styles, "/contributes/styles"),
-                         repeated(m.karaokePresets, "/contributes/karaokePresets")})
+                         repeated(m.karaokePresets, "/contributes/karaokePresets"),
+                         repeated(m.themes, "/contributes/themes"), repeated(m.iconThemes, "/contributes/iconThemes"),
+                         repeated(m.icons, "/contributes/icons"), unknownOwnIcon(json.find("contributes"), m),
+                         codeWithoutMain(json)})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)

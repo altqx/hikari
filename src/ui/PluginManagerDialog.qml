@@ -187,12 +187,14 @@ DialogWindow {
             downgrade: qsTr("Replace “%1” %2 with the older %3?").arg(review.name, review.installedVersion, review.version)
         }
         const tagged = review.changes.map(c => "• " + c.text + " (" + (c.added ? qsTr("New") : qsTr("allowed now")) + ")")
-        const asks = review.permissions.length === 0
+        const asks = review.dataOnly
+                ? (review.adds.length > 0 ? qsTr("What it adds") + "\n• " + review.adds.join("\n• ") : "")
+                : review.permissions.length === 0
                 ? qsTr("It asks for no permissions beyond the active subtitle file.")
                 : review.asksForMore ? qsTr("It asks for more than %1 does").arg(review.installedVersion) + "\n" + tagged.join("\n")
                 : qsTr("It asks for these permissions") + "\n• " + review.permissions.join("\n• ")
         const changelog = (review.changelog || "").length > 0
-                ? "\n\n" + qsTr("Changes in %1").arg(review.version) + "\n" + review.changelog : ""
+                ? qsTr("Changes in %1").arg(review.version) + "\n" + review.changelog : ""
         const held = dialog.rows.find(r => r.id === review.id && r.held === review.version) !== undefined
         const keep = held ? [{ id: "keep", text: qsTr("Keep %1").arg(review.installedVersion), role: "action" }] : []
         const fullAccess = review.marketplace && review.unrestricted
@@ -204,7 +206,7 @@ DialogWindow {
         messages.ask({
             title: titles[review.change],
             text: questions[review.change],
-            detail: trust + "\n\n" + asks + changelog + "\n\n" + dialog.basics,
+            detail: [trust, asks, changelog, review.dataOnly ? "" : dialog.basics].filter(part => part.length > 0).join("\n\n"),
             severity: warn || review.unrestricted ? "warning" : "question",
             choices: [
                 { id: "install", text: review.needsRetrust ? qsTr("Trust and install")

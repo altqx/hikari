@@ -1,6 +1,7 @@
 #include "hikari/app/plugin_content.h"
 
 #include "hikari/app/plugin_nodes.h"
+#include "icon_theme.h"
 
 namespace hikari::app {
 
@@ -24,7 +25,10 @@ void add(std::vector<application::PluginContentFile> &into, const std::vector<pl
 
 plugins::ContentFileChecks contentFileChecks()
 {
-    return {application::styleCatalogueProblem, application::karaokePresetProblem};
+    std::vector<std::string> roles;
+    for (const QString &role : ui::icons::roles())
+        roles.push_back(role.toStdString());
+    return {application::styleCatalogueProblem, application::karaokePresetProblem, std::move(roles)};
 }
 
 bool pluginContentShows(const plugins::InstalledPlugin &entry, const plugins::Manifest &manifest)

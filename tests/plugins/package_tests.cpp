@@ -5,6 +5,9 @@
 
 #include <gtest/gtest.h>
 
+#include <fstream>
+#include <sstream>
+
 using namespace hikari::plugins;
 using hikari::plugins::test::bytes;
 using Kind = PackageProblem::Kind;
@@ -370,4 +373,121 @@ TEST(PluginPackage, TheImportRuleReadsQmlAndScriptsAsWritten)
     for (const auto &[path, text, import] : refused)
         EXPECT_EQ(qmlImportProblem(path, text), std::optional<std::string>(import)) << text;
     EXPECT_TRUE(isQmlSource("a/B.qml") && isQmlSource("a.js") && isQmlSource("a.mjs") && !isQmlSource("a.lua"));
+}
+
+namespace {
+
+std::string builtinTheme(const std::string &name)
+{
+    std::ifstream file(std::string(HIKARI_BUILTIN_THEMES) + "/" + name + ".json", std::ios::binary);
+    std::stringstream text;
+    text << file.rdbuf();
+    return text.str();
+}
+
+std::vector<PackageFile> dataPackage(std::string_view contributes, std::vector<PackageFile> extra)
+{
+    const std::string manifest = R"({"id": "com.example.looks", "name": "Looks", "version": "1.0.0", "api": 1,
+        "authors": ["Ana"], "contributes": )" + std::string(contributes) + "}";
+    std::vector<PackageFile> files{{"hikari-plugin.json", bytes(manifest)}};
+    files.insert(files.end(), extra.begin(), extra.end());
+    return files;
+}
+
+std::string interfaceIcon(std::string_view body = R"(<path fill="none" stroke="currentColor" d="M2 2h12"/>)")
+{
+    return svg(body, R"(viewBox="0 0 16 16")");
+}
+
+PackageProblem refusal(std::vector<PackageFile> files, const ContentFileChecks &checks = {})
+{
+    const auto result = openPackage(std::move(files), 1, checks);
+    EXPECT_FALSE(result);
+    return result ? PackageProblem{} : result.error();
+}
+
+}
+
+TEST(PluginPackage, ADataOnlyPackageNeedsNoMain)
+{
+    const auto package = openPackage(dataPackage(R"({"themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "dusk.json"}]})",
+                                                 {{"dusk.json", bytes(builtinTheme("dark"))}}),
+                                     1);
+    ASSERT_TRUE(package) << package.error().path << " " << package.error().detail;
+    EXPECT_TRUE(package->manifest.dataOnly());
+}
+
+TEST(PluginPackage, AThemeMustLoadAndMatchItsType)
+{
+    constexpr std::string_view dark = R"({"themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "dusk.json"}]})";
+    const PackageProblem missing = refusal(dataPackage(dark, {}));
+    EXPECT_EQ(missing.kind, Kind::MissingContent);
+    EXPECT_EQ(missing.path, "dusk.json");
+
+    const PackageProblem light = refusal(dataPackage(dark, {{"dusk.json", bytes(builtinTheme("light"))}}));
+    EXPECT_EQ(light.kind, Kind::BadContent);
+    EXPECT_EQ(light.detail, "is a light theme, and hikari-plugin.json lists it as dark");
+
+    std::string dim = builtinTheme("dark");
+    const std::size_t muted = dim.find(R"("muted": ")");
+    ASSERT_NE(muted, std::string::npos);
+    dim.replace(muted + 10, 7, "#505050");
+    const PackageProblem contrast = refusal(dataPackage(dark, {{"dusk.json", bytes(dim)}}));
+    EXPECT_EQ(contrast.kind, Kind::BadContent);
+    EXPECT_TRUE(contrast.detail.starts_with("fails the theme check at /roles/muted: ")) << contrast.detail;
+
+    const PackageProblem broken = refusal(dataPackage(dark, {{"dusk.json", bytes("{")}}));
+    EXPECT_EQ(broken.kind, Kind::BadContent);
+    EXPECT_TRUE(broken.detail.starts_with("fails the theme check at /: ")) << broken.detail;
+}
+
+TEST(PluginPackage, AnIconThemeCoversEveryRole)
+{
+    constexpr std::string_view round = R"({"iconThemes": [{"id": "round", "title": "Round", "path": "icons/round"}]})";
+    ContentFileChecks checks;
+    checks.iconRoles = {"open-subtitles", "save"};
+    const PackageFile open{"icons/round/open-subtitles.svg", bytes(interfaceIcon())};
+    const PackageFile save{"icons/round/save.svg", bytes(interfaceIcon())};
+
+    const PackageProblem missing = refusal(dataPackage(round, {open}), checks);
+    EXPECT_EQ(missing.kind, Kind::MissingContent);
+    EXPECT_EQ(missing.path, "icons/round/save.svg");
+    EXPECT_TRUE(openPackage(dataPackage(round, {open, save}), 1, checks));
+    EXPECT_TRUE(openPackage(dataPackage(round, {open, save, {"icons/round/later.svg", bytes(interfaceIcon())}}), 1, checks))
+        << "a role this HikariSub lacks is left alone";
+
+    const PackageProblem coloured =
+        refusal(dataPackage(round, {open, {"icons/round/save.svg", bytes(interfaceIcon(R"(<path fill="#FF0000" d="M0 0h1"/>)"))}}),
+                checks);
+    EXPECT_EQ(coloured.kind, Kind::BadContent);
+    EXPECT_EQ(coloured.path, "icons/round/save.svg");
+    EXPECT_EQ(coloured.detail, "draws fill in #FF0000; an interface icon draws in currentColor only");
+}
+
+TEST(PluginPackage, OwnIconsMustBeThereAndFollowTheIconRules)
+{
+    constexpr std::string_view spark = R"({"icons": [{"id": "spark", "path": "spark.svg"}]})";
+    const PackageProblem missing = refusal(dataPackage(spark, {}));
+    EXPECT_EQ(missing.kind, Kind::MissingContent);
+    EXPECT_EQ(missing.path, "spark.svg");
+    EXPECT_TRUE(openPackage(dataPackage(spark, {{"spark.svg", bytes(interfaceIcon(R"(<g id="accent"><circle fill="currentColor" r="2"/></g>)"))}}), 1));
+    const PackageProblem wide = refusal(dataPackage(spark, {{"spark.svg", bytes(svg("<path/>"))}}));
+    EXPECT_EQ(wide.kind, Kind::BadContent);
+    EXPECT_EQ(wide.detail, "has no viewBox of 0 0 16 16 on its <svg>");
+}
+
+TEST(PluginPackage, InterfaceIconsDrawInCurrentColorOnly)
+{
+    const auto refusal = [](std::string body) { return interfaceIconProblem({"i.svg", bytes(interfaceIcon(body))}); };
+    EXPECT_EQ(refusal(R"(<path fill="none" stroke="currentColor"/><rect fill="CurrentColor" stroke="inherit"/>)"), std::nullopt);
+    EXPECT_EQ(refusal(R"(<path style="fill: none; stroke:currentColor; stroke-width: 1.5"/>)"), std::nullopt);
+    EXPECT_EQ(refusal(R"(<path stroke="red"/>)"), "draws stroke in red; an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal(R"(<path style="stroke-width: 1; fill: #000"/>)"),
+              "draws fill in #000; an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal(R"(<stop stop-color="white"/>)"), "draws stop-color in white; an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal(R"svg(<path fill="url(#g)"/>)svg"), "draws fill in url(#g); an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal("<style>path { fill: red }</style>"), "holds a <style> element");
+    EXPECT_EQ(refusal("<script/>"), "holds a <script> element");
+    EXPECT_EQ(interfaceIconProblem({"i.svg", bytes(svg("", R"(viewBox="0 0 24 24")"))}), "has no viewBox of 0 0 16 16 on its <svg>");
+    EXPECT_EQ(interfaceIconProblem({"i.svg", bytes(svg("", R"(viewBox="0,0,16,16")"))}), std::nullopt);
 }
