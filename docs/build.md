@@ -176,6 +176,8 @@ A development-only Linux preset reloads QML from the source tree while the app r
 - **Host tools:** git, ninja, cl and Python 3.12 or later, checked up front. vcpkg downloads its own CMake, 7-Zip and MSYS2 tools.
 - **Local Windows VM:** [`winix.yaml`](../winix.yaml) runs the same presets through Winix (`provision`, `build`, `test`, `backends`). `tools/winix/msvc.ps1` loads the developer environment and falls back to Visual Studio's bundled Git. `out/` stays in the VM. Qt provisioning there uses a Qt Account login made once inside the VM; the CI secret is never copied into it.
 - **vcpkg binary cache:** `out/sdk/vcpkg-archives`, on every platform, so one directory makes a run warm.
+- **vcpkg source downloads** go through [`cmake/provision/AssetSources.cmake`](../cmake/provision/AssetSources.cmake), on every platform ([#1354](https://github.com/altqx/hikari/issues/1354)). It tries the port's own URL first; for gnu.org it then tries mirrors of the GNU tree. Last comes our copy on the [`vcpkg-assets`](https://github.com/altqx/hikari/releases/tag/vcpkg-assets) pre-release, an asset named by the file's SHA512. Every candidate is checked against the SHA512 vcpkg expects, so a mirror can't change what is built. The release holds only sources whose host has failed CI: so far `soundtouch-soundtouch-2.4.1.tar.gz` (Codeberg). The update checker and the AUR job skip it, since `vcpkg-assets` is not a version tag.
+  - **Adding a source** when its host fails: take the file from a vcpkg `downloads` folder that has it, and check it against the port's `SHA512`. Then run `cmake/provision/fill-asset-mirror.sh <file>...` with a `gh` login that can upload to the release. The script skips files the release already holds.
 
 ## Phase 3 native inputs (B4, 2026-10-03)
 
