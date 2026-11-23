@@ -11623,6 +11623,46 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>ซูม 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>ซูม 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>ซูม 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>ซูมเข้า</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>ซูมออก</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>พอดีกับแผง</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>พิกเซลอุปกรณ์ 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
@@ -11799,6 +11839,14 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;เปิดวิดีโอ…</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>ไฟล์ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>ไฟล์ถัดไป</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>เปิดไฟล์คีย์เฟรม</translation>
     </message>
@@ -11823,6 +11871,18 @@ Failed to copy %2 fonts.</source>
         <translation>ไปข้างหน้าหนึ่งเฟรม</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>เลื่อนวิดีโอถอยหลังถึงจุดเริ่มต้นหรือจุดสิ้นสุดของบรรทัดที่ใกล้ที่สุด</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>เลื่อนวิดีโอไปข้างหน้าถึงจุดเริ่มต้นหรือจุดสิ้นสุดของบรรทัดที่ใกล้ที่สุด</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>พิมพ์เวลาหรือเฟรมที่จะแสดง</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>กำหนดเวลาเริ่มต้นของบรรทัดที่เลือกเป็นเวลาของเฟรมวิดีโอ</translation>
     </message>
@@ -11841,6 +11901,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>ระดับการซูม</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -25463,18 +25527,6 @@ Styles deleted:
         <translation>วิดีโอ</translation>
     </message>
     <message>
-        <source>Video position</source>
-        <translation>ตำแหน่งวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Video times</source>
-        <translation>เวลาของวิดีโอ</translation>
-    </message>
-    <message>
-        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
-    </message>
-    <message>
         <source>Previous file</source>
         <translation>ไฟล์ก่อนหน้า</translation>
     </message>
@@ -25499,6 +25551,15 @@ Styles deleted:
         <translation>หยุด</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%1 เฟรมจากจุดเริ่มต้นของบรรทัด %2 · %3 มิลลิวินาทีจากจุดเริ่มต้น · %4 มิลลิวินาทีจากจุดสิ้นสุด</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>ไฟล์ถัดไป</translation>
     </message>
@@ -25521,6 +25582,11 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>เฟรม %1 / %2</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -25650,6 +25716,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>ระดับการซูม</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -26385,6 +26455,47 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>ไม่ใช่เวลาหรือเฟรม: %1 ลอง %2 หรือหมายเลขเฟรม</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>เวลาวิดีโอ %1 แก้ไขได้</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>พอดี</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>การซูมวิดีโอ %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>การซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>

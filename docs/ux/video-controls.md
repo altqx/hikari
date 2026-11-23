@@ -7,7 +7,7 @@ The owner chose the row from a board on 2026-11-17 ("yes to all lgtm", Q611–Q6
 - Previous/next file leave the row (Q569). They stay in the Video menu, the video's context menu and on `,` and `.` (`VIDEO_PREVIOUS_FILE`, `VIDEO_NEXT_FILE`).
 - Nothing is added that the owner didn't pick (Q570).
 
-The app doesn't change until the code card lands after the beta.4 tag.
+The row, its commands and full screen's copy of it are built in `VideoTimeField.qml`, `VideoZoomReadout.qml` and the Video panel in `Main.qml`. Previous and next file have rows in the Video menu and the video's context menu.
 
 ## The row
 

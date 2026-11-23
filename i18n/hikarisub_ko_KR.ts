@@ -11623,6 +11623,46 @@ Failed to copy %2 fonts.</source>
         <translation>자막 파일을 엽니다</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>확대/축소 50%</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>확대/축소 100%</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>확대/축소 200%</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>패널에 맞추기</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>1:1 장치 픽셀</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>다음 자막 경계</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>이전 자막 경계</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>영상 파일을 엽니다</translation>
     </message>
@@ -11799,6 +11839,14 @@ Failed to copy %2 fonts.</source>
         <translation>영상 열기…[&amp;O]</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>이전 파일</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>다음 파일</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>키 프레임 파일을 엽니다</translation>
     </message>
@@ -11823,6 +11871,18 @@ Failed to copy %2 fonts.</source>
         <translation>다음 프레임으로 이동합니다</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>영상을 바로 앞의 줄 시작 또는 끝으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>영상을 바로 다음의 줄 시작 또는 끝으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>표시할 시간이나 프레임을 입력합니다</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>선택한 줄의 시작 시간을 영상 프레임 시간으로 설정합니다</translation>
     </message>
@@ -11841,6 +11901,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>가로 세로 비율 변경…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>확대/축소 수준</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -25463,18 +25527,6 @@ Styles deleted:
         <translation>영상</translation>
     </message>
     <message>
-        <source>Video position</source>
-        <translation>영상 위치</translation>
-    </message>
-    <message>
-        <source>Video times</source>
-        <translation>영상 시간</translation>
-    </message>
-    <message>
-        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>프레임 시간; 프레임 번호; 줄 시작 프레임부터의 프레임 수; 줄 시작과 끝으로부터의 밀리초</translation>
-    </message>
-    <message>
         <source>Previous file</source>
         <translation>이전 파일</translation>
     </message>
@@ -25499,6 +25551,15 @@ Styles deleted:
         <translation>멈춤</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%2번 줄 시작에서 %1프레임 · 시작에서 %3ms · 끝에서 %4ms</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>다음 파일</translation>
     </message>
@@ -25521,6 +25582,11 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>프레임 %1 / %2</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -25650,6 +25716,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>확대/축소 및 이동 초기화</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>확대/축소 수준</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -26385,6 +26455,47 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>시간이나 프레임이 아닙니다: %1. %2 또는 프레임 번호를 입력해 보십시오.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>영상 시간, %1, 편집 가능</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>맞춤</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <translation>%1%</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>영상 확대/축소, %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>영상 확대/축소</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50%</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100%</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200%</translation>
     </message>
 </context>
 <context>

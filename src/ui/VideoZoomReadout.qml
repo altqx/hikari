@@ -13,8 +13,11 @@ AbstractButton {
     property string itemPrefix: "videoZoomReadout"
     readonly property bool fits: !shell.videoView.zoomed
     readonly property alias menu: levels
-    //: The video zoom readout: %1 the zoom as a whole percentage, as in "200 %"
-    text: fits ? qsTr("Fit") : qsTr("%1 %").arg(shell.videoView.readoutPercent)
+    text: fits
+          //: The video zoom readout while the whole frame fits the panel
+          ? qsTr("Fit")
+          //: The video zoom readout: %1 the zoom as a whole percentage, as in "200 %"
+          : qsTr("%1 %").arg(shell.videoView.readoutPercent)
     enabled: shell.video.hasVideo
     focusPolicy: Qt.TabFocus
     padding: 2
