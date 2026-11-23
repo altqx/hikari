@@ -6,6 +6,10 @@ Where HikariSub's automation API and file formats knowingly differ from what the
 
 `aegisub.set_undo_point(description)` closes an undo step, as in Aegisub 3.5.1. A run applies as one history step for each undo point that closed changes, named "Automation: <description>", then one for the changes after the last point, named after the macro. An undo point with no changes since the last one adds nothing. A run that errors or is cancelled applies no step. Validation and anything outside a macro run raise Aegisub's "Attempt to set an undo point in a context where it makes no sense to do so." It used to do nothing, so every run was one step. Steps keep HikariSub's "Automation: " prefix, which Aegisub doesn't add. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q586 (2026-11-17).
 
+## C06-register-filter
+
+`aegisub.register_filter(name, description, priority, process, config)` registers an export filter, as in Aegisub 3.5.1, and Export as can run it before it writes. The processing function gets the subtitles of a copy of the Document and a table of its settings, keyed by control name; with no config function the table is empty. The config function gets the subtitles read-only and an empty options table, and returns a dialog table, which HikariSub draws inside Export as. A processing function that isn't a function raises "The filter processing function must be a function". `set_undo_point` raises in a filter (C06-set-undo-point). A runtime error in the config function is reported as "Runtime error in Lua config dialog function:" and the step gets an empty table, as Aegisub logs it and shows no dialog. It used to register nothing. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772 (2026-11-18).
+
 ## FA4-getpixel-rgb
 
 `frame:getPixel(x, y)` returns three integers, r, g and b, as arch1t3cht's fork does. It used to return one packed integer (`b * 65536 + g * 256 + r`). Outside the frame it returns nil. [FA4 #561](https://github.com/altqx/hikari/issues/561), owner decision 2026-10-31.
