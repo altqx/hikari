@@ -535,7 +535,7 @@ endforeach()
 add_test(NAME hikari_ui_side_bars_shell_tests.screen2560
     COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> theShippedMiddleKeepsItsAudioAndEditorControls
             swapPutsTheAiSideBarOnTheOtherEdge f6GoesFromTheLeftSideBarThroughTheMiddleToTheRight
-            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle)
+            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle draggingTheInnerEdgeResizesTheSideBar)
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen2560 PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=screen-2560x1440.json" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     LABELS "qttest;offscreen" TIMEOUT 300)

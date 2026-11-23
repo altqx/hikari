@@ -810,11 +810,13 @@ ApplicationWindow {
         if (width !== root.sentShrinkableWidth && Docking.setShrinkableWidth(dockingArea.uniqueName, width))
             root.sentShrinkableWidth = width
     }
-    function sideBarWidth(bar) {
+    function sideBarRoom() {
         const shown = (root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)
         const middleLeast = root.arrangementSettled ? Docking.layoutMinimumSize(dockingArea.uniqueName).width : 0
-        const room = Math.max(SideBarModel.minimumWidth, (root.width - middleLeast) / Math.max(1, shown))
-        return Math.round(Math.min(bar.width, room))
+        return Math.floor(Math.max(SideBarModel.minimumWidth, (root.width - middleLeast) / Math.max(1, shown)))
+    }
+    function sideBarWidth(width) {
+        return Math.round(Math.max(SideBarModel.minimumWidth, Math.min(width, root.sideBarRoom())))
     }
     function showInSideBar(dock, focus) {
         root.setSideBars(SideBarModel.shown(root.sideBarsJson, root.panelName(dock)))
@@ -911,7 +913,8 @@ ApplicationWindow {
             return
         }
         (left ? leftSideBar : rightSideBar).liveWidth = -1
-        root.setSideBars(SideBarModel.widened(root.sideBarsJson, second, width))
+        const kept = width < SideBarModel.minimumWidth ? width : Math.min(width, root.sideBarRoom())
+        root.setSideBars(SideBarModel.widened(root.sideBarsJson, second, kept))
     }
     function sideBarPanelCycle() {
         const leftPanel = leftSideBar.visible && leftSideBar.slot.children.length > 0 ? leftSideBar.slot.children[0] : null
@@ -5763,7 +5766,7 @@ ApplicationWindow {
         readonly property var state: onLeft ? root.leftSideBarState : root.rightSideBarState
         readonly property var dockShown: root.dockList.find(d => root.panelName(d) === shown) ?? null
         anchors { top: parent.top; bottom: parent.bottom }
-        width: liveWidth >= 0 ? Math.max(SideBarModel.minimumWidth, liveWidth) : root.sideBarWidth(state)
+        width: root.sideBarWidth(liveWidth >= 0 ? liveWidth : state.width)
         visible: (onLeft ? root.leftSideBarShown : root.rightSideBarShown) && !root.videoFullscreen.active
         entries: onLeft ? root.leftSideBarEntries : root.rightSideBarEntries
         shown: root.shownInSideBar(state, entries)
