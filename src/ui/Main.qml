@@ -9026,8 +9026,8 @@ ApplicationWindow {
             severity: tab.modified ? "warning" : "info"
             text: tab.modified
                   ? qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8. Reopening drops the changes you made here.")
-                        .arg(tab.title).arg(root.app.encodingSuggestion)
-                  : qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8.").arg(tab.title).arg(root.app.encodingSuggestion)
+                        .arg(tab.title, root.app.encodingSuggestion)
+                  : qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8.").arg(tab.title, root.app.encodingSuggestion)
             onClosed: root.app.dismissEncodingSuggestion()
             Layout.fillWidth: true
             IconTextButton {

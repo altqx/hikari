@@ -8691,6 +8691,10 @@ Failed to copy %2 fonts.</source>
         <translation>முழுத் திரை டைப்செட்டிங்</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>

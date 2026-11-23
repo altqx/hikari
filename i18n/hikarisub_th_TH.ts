@@ -8624,6 +8624,10 @@ Failed to copy %2 fonts.</source>
         <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>

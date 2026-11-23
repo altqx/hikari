@@ -8624,6 +8624,10 @@ Failed to copy %2 fonts.</source>
         <translation>전체 화면 식자</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>인코딩을 지정해 다시 열기…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>

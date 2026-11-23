@@ -8758,6 +8758,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Typesetting na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>Otwórz ponownie z kodowaniem…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
