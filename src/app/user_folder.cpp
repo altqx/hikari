@@ -39,15 +39,30 @@ QByteArray sha256Of(const QString &path)
     return hash.result().toHex();
 }
 
+// QFile::copy syncs each file to disk on Linux, and a first start seeds hundreds (#1334).
+bool copyUnsynced(const QString &source, const QString &target)
+{
+    QFile in(source);
+    QFile out(target);
+    if (!in.open(QIODevice::ReadOnly) || !out.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return false;
+    while (!in.atEnd()) {
+        const QByteArray chunk = in.read(1 << 16);
+        if (chunk.isEmpty() || out.write(chunk) != chunk.size())
+            return false;
+    }
+    return out.flush();
+}
+
 bool copyOver(const QString &source, const QString &target)
 {
     QDir().mkpath(QFileInfo(target).absolutePath());
     const QString part = target + QStringLiteral(".hikari-part");
     QFile::remove(part);
-    if (!QFile::copy(source, part))
+    if (!copyUnsynced(source, part)) {
+        QFile::remove(part);
         return false;
-    // QFile::copy keeps the source's permissions, which may be read-only.
-    QFile::setPermissions(part, QFile::permissions(part) | QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    }
     if (QFileInfo::exists(target) && !QFile::remove(target)) {
         QFile::remove(part);
         return false;

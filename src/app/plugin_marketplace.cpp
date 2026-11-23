@@ -504,7 +504,8 @@ void PluginMarketplace::rebuild()
         const auto installed = registry.find(listing.id);
         QString action = QStringLiteral("install");
         if (!runnable)
-            action = QStringLiteral("incompatible");
+            action = newest->api <= api::kApiVersion && !newest->forThisComputer ? QStringLiteral("unavailable")
+                                                                                 : QStringLiteral("incompatible");
         else if (installed != registry.end())
             action = plugins::compareVersions(runnable->version, installed->second.version) > 0 ? QStringLiteral("update")
                                                                                                  : QStringLiteral("installed");

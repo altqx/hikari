@@ -36,6 +36,7 @@ public:
     QString recovery() const { return m_root + QStringLiteral("/recovery"); }
     QString plugins() const { return m_root + QStringLiteral("/plugins"); }
     QString pluginData() const { return m_root + QStringLiteral("/plugin-data"); }
+    QString pluginPrograms() const { return m_root + QStringLiteral("/plugin-programs"); }
     QString pluginRegistry() const { return m_root + QStringLiteral("/plugins.json"); }
     QString pluginCache() const { return m_cache + QStringLiteral("/plugins"); }
     QString audioCache() const { return m_cache + QStringLiteral("/AudioCache"); }

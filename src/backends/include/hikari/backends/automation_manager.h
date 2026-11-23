@@ -34,6 +34,8 @@ public:
     // Runs the script's export filter; the result lands in host(path)->lastResult().
     bool runFilter(const std::string &path, int filterIndex, const application::MacroSnapshot &snapshot,
                    const application::DialogRequest &settings);
+    // The script's filter config dialog lands in host(path)->lastDialog().
+    bool filterConfig(const std::string &path, int filterIndex, const application::MacroSnapshot &snapshot);
     // Whether the file's mtime differs from the one at last load; false when it cannot be read.
     bool modifiedSinceLoad(const std::string &path) const;
     void cancel() override;

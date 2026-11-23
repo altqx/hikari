@@ -33,6 +33,8 @@ public:
     void recordRenderThread();
     // Call on that render thread before it ends.
     void forgetRenderThread();
+    // From any thread; freezes before it are tagged as the start's.
+    void firstFrameShown() { m_shown.store(true); }
 
 signals:
     // The watched thread answers again after `record.seconds` stuck.
@@ -49,6 +51,7 @@ private:
     std::unique_ptr<Thread> m_watched;
     std::unique_ptr<Thread> m_render;
     std::atomic<std::thread::id> m_renderId;
+    std::atomic<bool> m_shown{false};
     QTimer m_heartbeat;
     std::atomic<qint64> m_beat;
     std::mutex m_mutex;

@@ -417,7 +417,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     m.name = text(json, "name");
     m.version = text(json, "version");
     m.api = json.find("api")->asInt();
-    m.main = text(json, "main");
+    if (const Json *main = json.find("main"); main && main->isObject())
+        m.mainProgram = text(*main, "program");
+    else
+        m.main = text(json, "main");
     m.tier = text(json, "tier") == "unrestricted" ? Tier::Unrestricted : Tier::Restricted;
     for (const Json &author : json.find("authors")->asArray())
         m.authors.push_back(author.asString());
@@ -450,6 +453,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.dictionaries = dictionaries(contributes->find("dictionaries"));
+        m.graphs = contentFiles(contributes->find("graphs"));
+        m.layouts = contentFiles(contributes->find("layouts"));
         m.programs = programs(contributes->find("programs"));
     }
 
@@ -460,7 +465,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.formats, "/contributes/formats"), repeated(m.programs, "/contributes/programs"),
                          repeated(m.styles, "/contributes/styles"),
                          repeated(m.karaokePresets, "/contributes/karaokePresets"),
-                         repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language")})
+                         repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language"),
+                         repeated(m.graphs, "/contributes/graphs"),
+                         repeated(m.layouts, "/contributes/layouts")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
@@ -478,6 +485,13 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (std::size_t i = 0; i < m.programs.size(); ++i)
         if (auto problem = badProgram(m, i))
             return std::unexpected(*problem);
+    if (!m.mainProgram.empty()) {
+        const Program *program = m.program(m.mainProgram);
+        if (!program)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "names no program in contributes.programs", 0});
+        if (!program->api)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "the main program needs \"api\": true", 0});
+    }
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;

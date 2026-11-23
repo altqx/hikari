@@ -1388,7 +1388,7 @@ DialogWindow {
                                 x: 10
                                 y: 6
                                 text: catalogRow.modelData.tier === "project" ? qsTr("This project")
-                                    : catalogRow.modelData.tier === "plugin" ? qsTr("From plugins") : qsTr("Mine")
+                                    : catalogRow.modelData.tier === "plugin" ? qsTr("From plugins") : qsTr("Yours")
                                 font.bold: true
                                 font.pixelSize: 11
                                 color: Theme.muted
@@ -1449,13 +1449,13 @@ DialogWindow {
                         ShellMenuItem {
                             objectName: "copyCatalogToTier"
                             iconRole: "copy-to-tier"
-                            text: catalogTierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+                            text: catalogTierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
                             onTriggered: manager.transferCatalog(false)
                         }
                         ShellMenuItem {
                             objectName: "moveCatalogToTier"
                             iconRole: "move-to-tier"
-                            text: catalogTierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+                            text: catalogTierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
                             enabled: !(catalogTierMenu.fromMine && manager.styles.catalog === "Default")
                             onTriggered: manager.transferCatalog(true)
                         }

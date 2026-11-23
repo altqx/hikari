@@ -461,7 +461,7 @@ std::vector<SettingDefinition> &definitions()
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        {"ai.off", "", Bool, Profile, Mapped, false, false},
+        {"ai.off", "", Bool, Profile, Mapped, false, true},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
         {"ai.webSearch", "", Bool, Profile, Mapped, false, true},
@@ -505,7 +505,7 @@ std::vector<SettingDefinition> &definitions()
         {"export.format", "", String, Profile, Mapped, false, std::string()},
         // Percent of HikariSub legacy's size.
         {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
-        // application::VideoPropertyAction values; video.missingLayoutRes adds 3, set to the PlayRes.
+        // application::VideoPropertyAction values.
         {"video.missingMatrix", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.matrixMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.missingLayoutRes", "", Int, Profile, Mapped, false, std::int64_t{1}},

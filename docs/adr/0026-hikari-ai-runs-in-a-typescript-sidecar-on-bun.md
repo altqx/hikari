@@ -128,7 +128,7 @@ All three follow [opencode PR 58782](https://github.com/anomalyco/opencode/pull/
 ## Download, verification and update
 
 - **A separate download.** The sidecar isn't in the AppImage, deb, rpm, AUR packages, NSIS installer or portable archives. Each HikariSub GitHub release carries one asset per platform, `hikari-ai-<version>-<platform>.gz`. It is a single gzip-compressed executable holding both Bun and the bundle, about 49 MiB on Linux and 52 MiB on Windows (measured on Bun 1.4.4).
-- **When it downloads.** The download happens the first time the user adds a provider or agent, and the user is told what is downloaded and its size. It never happens while "Turn off all AI features" is on.
+- **When it downloads.** AI is off by default ([#1330](https://github.com/altqx/hikari/issues/1330)). Turning it on downloads the AI component at once, and so does the first provider or agent the user adds without one. The user is told what is downloaded and its size. It never happens while "Turn off all AI features" is on.
 - **Integrity.** The asset's SHA-256 and size go in that release's `hikarisub-update.json` ([ADR 0019](0019-installers-and-seamless-updates.md)). This is a new member that only adds, so the manifest stays at schema 1.
   - The app reads the manifest of its own release over HTTPS.
   - Nothing is signed. As with app updates, HTTPS plus SHA-256 is the integrity check.

@@ -172,7 +172,13 @@ void PluginFileRequest::reject()
     }
 }
 
-PluginUi::PluginUi(Deliver deliver, QObject *parent) : QObject(parent), m_deliver(std::move(deliver)) {}
+PluginUi::PluginUi(Deliver deliver, QObject *parent)
+    : QObject(parent), m_deliver(std::move(deliver)),
+      m_popups(new PluginPopups([this](const std::string &plugin, const std::string &event, const std::string &json,
+                                       const std::string &key) { return m_deliver(plugin, event, json, key); },
+                                this))
+{
+}
 
 PluginUi::~PluginUi()
 {
@@ -200,6 +206,7 @@ void PluginUi::setPlugins(std::vector<Plugin> plugins)
         const auto now = next.find(id);
         if (now == next.end() || !now->second.plugin.enabled) {
             closeDialogsOf(id);
+            m_popups->closeOf(id);
             dropFileRequestsOf(id);
         }
         if (now == next.end() || now->second.plugin.version != old.plugin.version ||
@@ -250,6 +257,7 @@ void PluginUi::running(const std::string &plugin)
 void PluginUi::stopped(const std::string &plugin, const QString &status, const QString &reason)
 {
     closeDialogsOf(plugin);
+    m_popups->closeOf(plugin);
     dropFileRequestsOf(plugin);
     const auto it = m_plugins.find(plugin);
     if (it == m_plugins.end())
@@ -370,6 +378,10 @@ void PluginUi::serve(const std::string &plugin, const std::string &operation, co
         m_values[dock] = plugins::inputValues(body);
         this->panel(dock)->setTree(toVariant(body), toVariant(menu).toList());
         reply(result());
+        return;
+    }
+    if (PluginPopups::handles(operation)) {
+        m_popups->serve(plugin, qs(known->second.plugin.name), operation, params, std::move(reply));
         return;
     }
     if (operation == "panels.post") {

@@ -1,13 +1,16 @@
 #include "hikari/app/application.h"
 
+#include "hikari/application/dialog_memory.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/export_steps.h"
+#include "hikari/application/macro_transaction.h"
 #include "hikari/application/export_format_ids.h"
 #include "hikari/application/style_manager.h"
 #include "hikari/backends/text_encoding.h"
 #include "hikari/core/export.h"
 #include "hikari/core/srv3.h"
 #include "hikari/core/text_projection.h"
+#include "automation_dialog_controller.h"
 #include "project_file.h"
 
 #include <QCoreApplication>
@@ -666,9 +669,12 @@ QVariantMap Application::exportAfterSteps(application::DocumentId target, std::s
         else
             *answer = std::move(out);
     };
-    application::runExportSteps(document, recipe, available,
-                                {activeMedia().video->session().aegisubFrameTimes(), m_luaExportFilters.get()},
-                                finished);
+    application::ExportStepsContext context{activeMedia().video->session().aegisubFrameTimes(), m_luaExportFilters.get()};
+    context.started = [self](std::size_t step, std::size_t count, const std::string &name) {
+        if (self)
+            emit self->exportStepStarted(QString::fromStdString(name), int(step) + 1, int(count));
+    };
+    application::runExportSteps(document, recipe, available, context, finished);
     *returned = true;
     if (*answer)
         return **answer;
@@ -699,6 +705,57 @@ QVariantMap Application::exportSteps() const
                            : ui::ExportRecipes::stepsOf(application::recipeFromExportFilters(names, available))},
             {QStringLiteral("recipes"), m_exportRecipes->rows()},
             {QStringLiteral("hasProject"), m_exportRecipes->hasProject()}};
+}
+
+bool Application::askExportStepDialog(const QString &id, const QVariantMap &settings)
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    const auto parts = application::luaStepParts(id.toStdString());
+    if (!session || !parts)
+        return false;
+    application::EditSession copy(session->document());
+    const auto snapshot = application::snapshotForMacro(copy);
+    if (!snapshot)
+        return false;
+    const auto saved = ui::ExportRecipes::recipeOf(
+        QVariantList{QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("settings"), settings}}});
+    QPointer<Application> self(this);
+    return m_luaExportFilters->configure(
+        parts->first, parts->second, *snapshot,
+        [self, id, settings = saved.steps.front().settings](std::expected<application::DialogRequest, std::string> dialog) {
+            if (!self)
+                return;
+            if (!dialog) {
+                emit self->exportStepDialogReady(id, {{QStringLiteral("problem"), QString::fromStdString(dialog.error())}});
+                return;
+            }
+            auto shown = application::initialDialogResult(*dialog);
+            for (std::size_t i = 0; i < dialog->controls.size(); ++i)
+                if (const auto it = settings.find(dialog->controls[i].name); it != settings.end())
+                    if (const auto v = application::dialogValueOf(dialog->controls[i], it->second))
+                        shown.values[i] = *v;
+            int columns = 1;
+            const QVariantList controls = ui::dialogControlRows(*dialog, shown, &columns);
+            self->m_exportStepDialogs[id] = std::move(*dialog);
+            emit self->exportStepDialogReady(id, {{QStringLiteral("controls"), controls}, {QStringLiteral("columns"), columns}});
+        });
+}
+
+QVariantMap Application::exportStepSettings(const QString &id, const QVariantList &values) const
+{
+    const auto dialog = m_exportStepDialogs.find(id);
+    if (dialog == m_exportStepDialogs.end())
+        return {};
+    const auto initial = application::initialDialogResult(dialog->second);
+    application::ExportStep step{id.toStdString()};
+    for (std::size_t i = 0; i < dialog->second.controls.size() && i < std::size_t(values.size()); ++i) {
+        const auto &control = dialog->second.controls[i];
+        if (control.name.empty() || application::dialogValueType(control.kind) == application::DialogValueType::None)
+            continue;
+        step.settings[control.name] = ui::dialogValueFrom(control, values[qsizetype(i)], initial.values[i]);
+    }
+    return ui::ExportRecipes::stepsOf({{step}}).value(0).toMap().value(QStringLiteral("settings")).toMap();
 }
 
 QVariantList Application::exportRecipe(const QString &name, const QString &tier) const
