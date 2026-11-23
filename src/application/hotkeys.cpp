@@ -445,6 +445,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_SELECTED_AUDIO", 5349},
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
+        {"GLOBAL_REOPEN_WITH_ENCODING", 5371},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
 };
 
@@ -860,6 +861,7 @@ constexpr NameRow kNames[] = {
         {5349, "Save audio of selected lines…"},
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
+        {5371, "Reopen with encoding…"},
         {5374, "Full screen typesetting"},
 };
 

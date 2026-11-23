@@ -2523,6 +2523,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     noteLastUsedWindow();
+    emit encodingSuggestionChanged();
     noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
@@ -3619,20 +3620,29 @@ bool Application::acceptFileOnDisk(qulonglong id)
 
 bool Application::reloadTarget()
 {
+    return reloadTarget({}, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"));
+}
+
+bool Application::reloadTarget(const application::ToUtf8 &toUtf8, const QString &title)
+{
     const auto target = m_workspace.editingTarget();
     if (!target)
         return false;
-    auto staged = m_files->stageReload(*target);
+    auto staged = m_files->stageReload(*target, toUtf8);
     if (!staged) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
-                      QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
+        m_log->notice(ui::LogController::Error, title,
+                      staged.error().reason == application::OpenError::NotInEncoding
+                          ? QCoreApplication::translate("HikariSub.Documents",
+                                                        "The file is not text in that encoding; nothing was changed.")
+                          : QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
         return false;
     }
     if (!m_files->activate(std::move(*staged))) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
+        m_log->notice(ui::LogController::Error, title,
                       QCoreApplication::translate("HikariSub.Documents", "The subtitles changed while reloading; nothing was replaced."));
         return false;
     }
+    m_encodingSuggestions.erase(target->value);
     if (auto *session = m_files->session(*target))
         selectLegacyActiveLine(*session);
     recordFileTime(*target);

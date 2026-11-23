@@ -27,4 +27,13 @@ std::optional<std::string> suggestedEncoding(std::span<const std::byte> bytes);
 // UTF-8 without a BOM; nullopt when the bytes are not text in `encoding`.
 std::optional<std::vector<std::byte>> utf8From(std::span<const std::byte> bytes, std::string_view encoding);
 
+struct Encoded {
+    std::vector<std::byte> bytes;
+    std::u32string unencodable; // each character written as the encoding's substitute, once, in order
+};
+
+// UTF-8 `utf8` in `encoding`: a UTF-16 encoding starts with a BOM, any other drops one. nullopt when `utf8` is not
+// UTF-8 or ICU has no such encoding.
+std::optional<Encoded> encodeUtf8(std::span<const std::byte> utf8, std::string_view encoding);
+
 }

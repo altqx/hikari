@@ -122,7 +122,9 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
         if (entry->generation != staged.expectedGeneration || entry->session->revision() != staged.expectedRevision)
             return std::unexpected(OpenError::StaleTarget);
         entry->session = std::make_unique<EditSession>(std::move(staged.load.document));
-        if (!staged.converted)
+        if (staged.converted)
+            entry->session->markUnsaved();
+        else
             entry->session->markSaved(entry->session->contentId());
         entry->knownBytes = std::move(bytes);
         ++entry->generation;

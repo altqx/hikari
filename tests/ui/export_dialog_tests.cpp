@@ -278,6 +278,49 @@ private slots:
         QCOMPARE(part("exportDestination")->property("text").toString(), dir.filePath(QStringLiteral("new.sbv")));
     }
 
+    void aTextExportTakesAnEncodingAndAsksAboutWhatItCannotHold()
+    {
+        QVERIFY(!open("encoded.ass",
+                      "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                      "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                      "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,日本語\n"
+                      "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,café ☃\n")
+                     .isEmpty());
+        openDialog();
+        const QString out = dir.filePath(QStringLiteral("encoded.txt"));
+        choose("vtt", out);
+        QVERIFY(!part("exportEncoding")->isVisible());
+        choose("text", out);
+        QTRY_VERIFY(part("exportEncoding")->isVisible());
+        const QVariantList encodings = part("exportEncoding")->property("model").toList();
+        QCOMPARE(encodings.size(), 17);
+        QCOMPARE(encodings.first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("UTF-8"));
+        QCOMPARE(part("exportEncoding")->property("currentIndex").toInt(), 0);
+        int shiftJis = -1;
+        for (int i = 0; i < encodings.size(); ++i)
+            if (encodings[i].toMap().value(QStringLiteral("name")).toString() == QLatin1String("Shift_JIS"))
+                shiftJis = i;
+        QVERIFY(shiftJis > 0);
+        part("exportEncoding")->setProperty("currentIndex", shiftJis);
+        run();
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = dialog()->findChild<QObject *>(QStringLiteral("exportReplaceQuestion"))) &&
+                    question->property("visible").toBool());
+        QVERIFY(question->property("detail").toString().endsWith(QStringLiteral(": é ☃")));
+        QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QVERIFY(!QFile::exists(out));
+        run();
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("write"))));
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        QVERIFY(contents(out).startsWith(QByteArray("\x93\xfa\x96\x7b\x8c\xea\n" "caf")));
+        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QTRY_VERIFY(!dialog()->property("visible").toBool());
+
+        openDialog();
+        QCOMPARE(part("exportEncoding")->property("currentIndex").toInt(), shiftJis);
+    }
+
     void aFrameRateIsNeededForMicroDvd()
     {
         QVERIFY(!open("fps.ass").isEmpty());
