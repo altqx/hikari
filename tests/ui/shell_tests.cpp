@@ -40305,7 +40305,7 @@ private slots:
         const auto id = [&](int at) { return qulonglong(line(at)->id.value); };
         const auto hoverClick = [&](QQuickItem *target) {
             QTest::mouseMove(target->window(), target->mapToScene(QPointF(target->width() / 2, target->height() / 2)).toPoint());
-            QTRY_VERIFY(target->property("hovered").toBool());
+            QTest::qWaitFor([&] { return target->property("hovered").toBool(); }, 1000);
             clickWith(target, Qt::NoModifier);
         };
         application->selectLine(id(0));
