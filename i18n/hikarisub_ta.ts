@@ -6515,7 +6515,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>No Lines match the filter</source>
-        <translation type="unfinished"></translation>
+        <translation>வடிப்பியுடன் பொருந்தும் வரிகள் இல்லை</translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -6896,7 +6896,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Filter the Grid</source>
-        <translation type="unfinished"></translation>
+        <translation>கட்டத்தை வடிகட்டு</translation>
     </message>
 </context>
 <context>

@@ -6458,7 +6458,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>No Lines match the filter</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่มีบรรทัดที่ตรงกับตัวกรอง</translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -6831,7 +6831,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Filter the Grid</source>
-        <translation type="unfinished"></translation>
+        <translation>กรองตาราง</translation>
     </message>
 </context>
 <context>
