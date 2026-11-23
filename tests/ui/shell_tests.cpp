@@ -23200,7 +23200,7 @@ private slots:
         // MUST KILL: restarts without sound so our playback-failure log window can't steal activation and keys
         restartWithoutSound();
         keysNeverRepeat();
-        window->resize(1280, 800);
+        window->resize(1100, 800);
         QVERIFY(application->openFile(episode));
         auto &audio = application->audio();
         auto &settings = *application->settingsStore();
@@ -23406,14 +23406,14 @@ private slots:
         audio.resetZoom();
         audio.setVolume(50);
 
-        floating->resize(700, 300);
+        floating->resize(650, 300);
         QTRY_VERIFY(row->property("folded").toBool());
         const QStringList narrow = kept();
         QVERIFY(narrow.size() < 10);
         QCOMPARE(narrow, classic.mid(0, narrow.size()));
         computedWidth();
         endsInside();
-        floating->resize(560, 300);
+        floating->resize(520, 300);
         QTRY_VERIFY(kept().size() < narrow.size());
         computedWidth();
         endsInside();
@@ -27070,6 +27070,8 @@ private slots:
     {
         restartWithoutSound();
         keysNeverRepeat();
+        window->resize(1100, 800);
+        QTRY_COMPARE(window->size(), QSize(1100, 800));
         const QString path = writeFile(dir, "karaoke-commands.ass",
                                        "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n");
         QVERIFY(application->openFile(path));
