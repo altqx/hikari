@@ -6843,6 +6843,23 @@ bool Application::swapLines()
     return done;
 }
 
+bool Application::moveLines(bool up)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::moveLines(*session, up, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::canMoveLines(bool up) const
+{
+    const auto *session = targetSession();
+    return session && application::canMoveLines(*session, up, shownLines());
+}
+
 bool Application::makeContinuous(bool withPrevious)
 {
     const auto target = m_workspace.editingTarget();

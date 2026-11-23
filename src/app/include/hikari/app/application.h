@@ -508,6 +508,8 @@ public:
     // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
+    Q_INVOKABLE bool moveLines(bool up);
+    Q_INVOKABLE bool canMoveLines(bool up) const;
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
     Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
     Q_INVOKABLE bool setFpsFromVideo();

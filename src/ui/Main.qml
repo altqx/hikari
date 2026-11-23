@@ -7882,8 +7882,12 @@ ApplicationWindow {
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
                         property bool reviewShown: false
                         property bool hasFolds: false
+                        property bool canMoveUp: false
+                        property bool canMoveDown: false
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
+                            canMoveUp = root.app.canMoveLines(true)
+                            canMoveDown = root.app.canMoveLines(false)
                             canShiftTranslation = root.app.canShiftTranslation()
                             reviewShown = root.review.on && root.review.current.count !== undefined
                             hasFolds = root.app.canConvertFolds()
@@ -8066,6 +8070,22 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_UP"
+                            iconRole: "move-up"
+                            objectName: "moveLinesUp"
+                            text: qsTranslate("HikariSub.Grid", "Move lines up")
+                            enabled: gridMenu.canMoveUp
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_UP")) root.app.moveLines(true)
+                        }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_DOWN"
+                            iconRole: "move-down"
+                            objectName: "moveLinesDown"
+                            text: qsTranslate("HikariSub.Grid", "Move lines down")
+                            enabled: gridMenu.canMoveDown
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_DOWN")) root.app.moveLines(false)
+                        }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
                             iconRole: "continuous-next"
@@ -11572,6 +11592,8 @@ ApplicationWindow {
         case "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME": if (video) root.app.insertLine(true, "frame"); return true
         case "GRID_INSERT_AFTER_WITH_VIDEO_FRAME": if (video) root.app.insertLine(false, "frame"); return true
         case "GRID_SWAP_LINES": root.app.swapLines(); return true
+        case "GRID_MOVE_UP": root.app.moveLines(true); return true
+        case "GRID_MOVE_DOWN": root.app.moveLines(false); return true
         case "GRID_JOIN_LINES": root.app.joinLines("join"); return true
         case "GRID_JOIN_TO_FIRST_LINE": root.app.joinLines("first"); return true
         case "GRID_JOIN_TO_LAST_LINE": root.app.joinLines("last"); return true

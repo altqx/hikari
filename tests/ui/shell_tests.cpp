@@ -3280,6 +3280,41 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Deleting text"));
     }
 
+    void altArrowsMoveTheSelectedLinesInOneStep()
+    {
+        QVERIFY(application->openFile(episode));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto order = [&] {
+            QStringList out;
+            for (const auto *line : session->document().lines())
+                out << text(line);
+            return out;
+        };
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("first"));
+        item("editingGrid")->forceActiveFocus();
+        QVERIFY(!application->canMoveLines(true));
+        QVERIFY(application->canMoveLines(false));
+        const auto steps = session->historySize();
+        press(Qt::Key_Down, Qt::AltModifier);
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("second"), QStringLiteral("first")}));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Moving lines"));
+        QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("first"));
+        press(Qt::Key_Down, Qt::AltModifier);
+        QCOMPARE(session->historySize(), steps + 1);
+        press(Qt::Key_Up, Qt::AltModifier);
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("first"), QStringLiteral("second")}));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(order(), (QStringList{QStringLiteral("second"), QStringLiteral("first")}));
+        auto *up = named("moveLinesUp");
+        QVERIFY(up);
+        QCOMPARE(up->property("text").toString(), QStringLiteral("Move lines up"));
+        QVERIFY(QMetaObject::invokeMethod(up, "triggered"));
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("first"), QStringLiteral("second")}));
+        QCOMPARE(session->historySize(), steps + 2);
+    }
+
     void changedLinesAreMarkedUntilSaved()
     {
         const QString copy = dir.filePath(QStringLiteral("changed.ass"));

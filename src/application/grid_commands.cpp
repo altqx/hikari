@@ -1,10 +1,14 @@
 #include "hikari/application/grid_commands.h"
 
+#include "hikari/core/line_groups.h"
+
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <set>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace hikari::application {
@@ -407,6 +411,138 @@ std::expected<void, CommandRefusal> swapLines(EditSession &session)
     if (activeRow >= 0 && activeRow < static_cast<int>(now.size()))
         s.active = s.anchor = now[static_cast<std::size_t>(activeRow)]->id;
     session.setSelection(s);
+    return {};
+}
+
+namespace {
+
+struct LineTree {
+    static constexpr std::size_t kTop = std::numeric_limits<std::size_t>::max();
+    std::vector<std::size_t> parent;
+    std::vector<std::size_t> spanEnd;
+    std::map<std::size_t, std::vector<std::size_t>> children;
+};
+
+LineTree treeOf(const std::vector<const core::LineRecord *> &lines)
+{
+    LineTree tree;
+    const std::size_t n = lines.size();
+    tree.parent.assign(n, LineTree::kTop);
+    tree.spanEnd.resize(n);
+    std::vector<std::optional<std::size_t>> open;
+    for (std::size_t i = 0; i < n; ++i) {
+        open.resize(core::groupDepth(*lines[i]));
+        for (auto it = open.rbegin(); it != open.rend(); ++it)
+            if (*it) {
+                tree.parent[i] = **it;
+                break;
+            }
+        tree.children[tree.parent[i]].push_back(i);
+        if (lines[i]->group == core::GroupMarker::Description)
+            open.push_back(i);
+    }
+    for (std::size_t i = n; i-- > 0;) {
+        const auto found = tree.children.find(i);
+        tree.spanEnd[i] = found == tree.children.end() ? i + 1 : tree.spanEnd[found->second.back()];
+    }
+    return tree;
+}
+
+void appendSpan(const LineTree &tree, std::size_t item, std::vector<std::size_t> &out)
+{
+    out.push_back(item);
+    if (const auto found = tree.children.find(item); found != tree.children.end())
+        for (const auto child : found->second)
+            appendSpan(tree, child, out);
+}
+
+std::optional<std::vector<core::LineId>> movedOrder(const EditSession &session, bool up, const LineVisible &visible)
+{
+    const auto lines = linesOf(session);
+    const std::size_t n = lines.size();
+    auto tree = treeOf(lines);
+    std::vector<std::size_t> shownBefore(n + 1, 0);
+    for (std::size_t i = 0; i < n; ++i)
+        shownBefore[i + 1] = shownBefore[i] + (!visible || visible(lines[i]->id) ? 1 : 0);
+    auto shown = [&](std::size_t item) { return shownBefore[tree.spanEnd[item]] > shownBefore[item]; };
+
+    std::set<std::size_t> units;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (!session.selection().selected.contains(lines[i]->id) || (visible && !visible(lines[i]->id)))
+            continue;
+        const bool lifts = lines[i]->group != core::GroupMarker::Description && tree.parent[i] != LineTree::kTop;
+        units.insert(lifts ? tree.parent[i] : i);
+    }
+    auto insideAnotherUnit = [&](std::size_t item) {
+        for (auto p = tree.parent[item]; p != LineTree::kTop; p = tree.parent[p])
+            if (units.contains(p))
+                return true;
+        return false;
+    };
+    std::erase_if(units, insideAnotherUnit);
+
+    bool moved = false;
+    for (auto &[parent, items] : tree.children) {
+        std::vector<std::size_t> slots;
+        for (std::size_t k = 0; k < items.size(); ++k)
+            if (shown(items[k]))
+                slots.push_back(k);
+        std::vector<std::size_t> seq;
+        for (const auto k : slots)
+            seq.push_back(items[k]);
+        if (!up)
+            std::ranges::reverse(seq);
+        bool hasPrevious = false;
+        for (std::size_t k = 0; k < seq.size(); ++k) {
+            if (!units.contains(seq[k])) {
+                hasPrevious = true;
+            } else if (hasPrevious) {
+                std::swap(seq[k - 1], seq[k]);
+                moved = true;
+            }
+        }
+        if (!up)
+            std::ranges::reverse(seq);
+        for (std::size_t s = 0; s < slots.size(); ++s)
+            items[slots[s]] = seq[s];
+    }
+    if (!moved)
+        return std::nullopt;
+    std::vector<std::size_t> rows;
+    for (const auto item : tree.children[LineTree::kTop])
+        appendSpan(tree, item, rows);
+    std::vector<core::LineId> order;
+    for (const auto row : rows)
+        order.push_back(lines[row]->id);
+    return order;
+}
+
+}
+
+bool canMoveLines(const EditSession &session, bool up, const LineVisible &visible)
+{
+    return movedOrder(session, up, visible).has_value();
+}
+
+std::expected<void, CommandRefusal> moveLines(EditSession &session, bool up, const LineVisible &visible)
+{
+    const auto order = movedOrder(session, up, visible);
+    if (!order)
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto lines = linesOf(session);
+    std::set<core::LineId> moved;
+    for (std::size_t i = 0; i < lines.size(); ++i)
+        if (lines[i]->id != (*order)[i])
+            moved.insert(lines[i]->id);
+    const std::vector<std::variant<core::LineId, core::LineRecord>> arranged(order->begin(), order->end());
+    const auto ran = session.run(Command{"Moving lines", session.revision(), moved, [&](core::Document &d) {
+                                             if (!d.arrangeLines(arranged))
+                                                 return false;
+                                             d.editLines([&](core::LineRecord &l) { return moved.contains(l.id); });
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
     return {};
 }
 

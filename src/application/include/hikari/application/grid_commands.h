@@ -53,6 +53,11 @@ std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kin
 // Exactly two selected Lines trade places; the active row keeps its position, so the active
 // Line becomes the other one.
 std::expected<void, CommandRefusal> swapLines(EditSession &session);
+// Aegisub's grid/move: each run of shown selected Lines moves one row past the shown row before it
+// (or after it); a run with none stays. A selected group member moves its group, a group moves and
+// is passed as a whole, and nothing leaves its group. One step; the selection stays on the same Lines.
+std::expected<void, CommandRefusal> moveLines(EditSession &session, bool up, const LineVisible &visible = {});
+bool canMoveLines(const EditSession &session, bool up, const LineVisible &visible = {});
 // Each selected Line starts where the Line before it ends, or ends where the Line after it starts.
 std::expected<void, CommandRefusal> makeContinuous(EditSession &session, bool withPrevious, const LineVisible &visible = {});
 
