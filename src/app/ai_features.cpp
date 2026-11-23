@@ -223,6 +223,20 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
     return ports;
 }
 
+void AiFeatures::settleOffDefault(ui::SettingsStore &settings, const Ports &ports)
+{
+    if (settings.contains(kOffSetting))
+        return;
+    const auto hasComponent = [&] {
+        if (ports.localSidecar)
+            return true;
+        return ports.sidecarUpdater && ports.sidecarUpdater()->current().has_value();
+    };
+    const auto hasProvider = [&] { return ports.configStore && ports.configStore()->load().enabled(); };
+    if (hasComponent() || hasProvider())
+        settings.set(kOffSetting, false);
+}
+
 AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent)
     : QObject(parent), m_settings(settings), m_ports(std::move(ports))
 {

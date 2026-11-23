@@ -15,6 +15,13 @@
 
 namespace hikari::ui {
 
+// A script dialog's controls as QML draws them, each showing its value in `shown`; `columns` gets the grid's width.
+QVariantList dialogControlRows(const application::DialogRequest &request, const application::DialogResult &shown,
+                               int *columns = nullptr);
+// What a control's QML value means for the script; `fallback` when it doesn't parse.
+application::DialogValue dialogValueFrom(const application::DialogControl &c, const QVariant &v,
+                                         const application::DialogValue &fallback);
+
 class AutomationDialogController : public QObject {
     Q_OBJECT
     QML_ELEMENT

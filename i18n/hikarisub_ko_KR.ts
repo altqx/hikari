@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>AI 켜기…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>AI를 켤 수 있는 에이전트 패널을 표시합니다</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>에이전트</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>설정 › AI 열기</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>공급자를 추가하기 전에는 아무것도 보내거나 다운로드하지 않습니다.</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -208,6 +212,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>“%1”의 하위 에이전트입니다. 읽기 전용이며, 상위 스레드를 통해 대화하세요.</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>공급자를 추가하기 전에는 아무것도 보내지 않습니다.</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1004,6 +1012,18 @@
     <message>
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI가 꺼져 있습니다</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>에이전트와 AI 작업을 쓰려면 켜세요. 그러면 HikariSub가 AI 구성 요소를 한 번 내려받습니다.</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>AI 켜기</translation>
     </message>
 </context>
 <context>
@@ -4589,12 +4609,290 @@ Output device: %2</source>
         <translation>같은 이름의 파일이 이미 있습니다.</translation>
     </message>
     <message>
+        <source>From this file (Aegisub)</source>
+        <translation>이 파일에서 (Aegisub)</translation>
+    </message>
+    <message>
+        <source>Unsaved steps</source>
+        <translation>저장하지 않은 단계</translation>
+    </message>
+    <message>
+        <source>No steps</source>
+        <translation>단계 없음</translation>
+    </message>
+    <message>
+        <source>The script is busy or isn’t loaded, so its settings can’t be shown.</source>
+        <translation>스크립트가 사용 중이거나 불러오지 않아 설정을 표시할 수 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>태그 종류 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing chosen</source>
+        <translation>선택한 항목 없음</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>가변</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>%1, reversed</source>
+        <translation>%1, 역변환</translation>
+    </message>
+    <message>
+        <source>Templates in this file</source>
+        <translation>파일의 템플릿</translation>
+    </message>
+    <message>
+        <source>Lines whose style is missing</source>
+        <translation>스타일을 찾을 수 없는 줄</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation>이 프로젝트</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>내 레시피</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>기본 제공</translation>
+    </message>
+    <message>
+        <source>Lua · %1</source>
+        <translation>Lua · %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>%n줄 생성됨</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>%n줄 변경됨</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Skipped: its script isn’t loaded</source>
+        <translation>건너뜀: 스크립트를 불러오지 않음</translation>
+    </message>
+    <message>
+        <source>Didn’t run</source>
+        <translation>실행 안 됨</translation>
+    </message>
+    <message>
+        <source>Variable needs a video or timecodes file</source>
+        <translation>가변에는 영상 또는 타임코드 파일이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Enter frame rates above 0</source>
+        <translation>0보다 큰 프레임 속도를 입력하십시오</translation>
+    </message>
+    <message>
+        <source>A macro is running, so the script couldn’t start</source>
+        <translation>매크로가 실행 중이어서 스크립트를 시작하지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Couldn’t apply the script’s changes</source>
+        <translation>스크립트의 변경 사항을 적용하지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Stopped with a script error</source>
+        <translation>스크립트가 오류로 중지되었습니다</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1(%n줄 생성됨)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ran before export: %1.</source>
+        <translation>내보내기 전에 실행함: %1.</translation>
+    </message>
+    <message>
+        <source>Before export · %1 · step %2 of %3</source>
+        <translation>내보내기 전 · %1 · %2/%3단계</translation>
+    </message>
+    <message>
+        <source>Before export: %1</source>
+        <translation>내보내기 전: %1</translation>
+    </message>
+    <message>
+        <source>changed</source>
+        <translation>변경됨</translation>
+    </message>
+    <message>
+        <source>Add steps</source>
+        <translation>단계 추가</translation>
+    </message>
+    <message>
+        <source>Hide steps</source>
+        <translation>단계 숨김</translation>
+    </message>
+    <message>
+        <source>Show steps</source>
+        <translation>단계 표시</translation>
+    </message>
+    <message>
+        <source>Writes the document as it is.</source>
+        <translation>문서를 있는 그대로 내보냅니다.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s recipe of the same name</source>
+        <translation>이름이 같은 프로젝트 레시피에 가려짐</translation>
+    </message>
+    <message>
+        <source>Save recipe…</source>
+        <translation>레시피 저장…</translation>
+    </message>
+    <message>
+        <source>Manage recipes…</source>
+        <translation>레시피 관리…</translation>
+    </message>
+    <message>
+        <source>Run in this order on a copy; the document doesn’t change.</source>
+        <translation>사본에서 이 순서대로 실행하며, 문서는 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Run %1</source>
+        <translation>%1 실행</translation>
+    </message>
+    <message>
+        <source>%1 isn’t loaded · Export skips it</source>
+        <translation>%1 불러오지 않음 · 내보낼 때 건너뜀</translation>
+    </message>
+    <message>
+        <source>Settings for %1</source>
+        <translation>%1 설정</translation>
+    </message>
+    <message>
+        <source>More for %1</source>
+        <translation>%1 추가 작업</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>위로 이동</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>아래로 이동</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>맨 위로 이동</translation>
+    </message>
+    <message>
+        <source>Reset settings</source>
+        <translation>설정 재설정</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>단계 %n개는 스크립트를 불러오지 않아 실행되지 않습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not saved. “%1” failed.</source>
+        <translation>저장되지 않았습니다. “%1” 단계가 실패했습니다.</translation>
+    </message>
+    <message>
+        <source>Turn it off and export</source>
+        <translation>끄고 내보내기</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>Write the file: didn’t run</source>
+        <translation>파일 쓰기: 실행 안 됨</translation>
+    </message>
+    <message>
+        <source>Nothing was written, and the document is unchanged.</source>
+        <translation>아무것도 쓰지 않았습니다. 문서는 바뀌지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Input frame rate</source>
+        <translation>입력 프레임 속도</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>영상에서</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>출력</translation>
+    </message>
+    <message>
+        <source>Variable (the loaded timecodes)</source>
+        <translation>가변(불러온 타임코드)</translation>
+    </message>
+    <message>
+        <source>Constant</source>
+        <translation>고정</translation>
+    </message>
+    <message>
+        <source>Output frame rate</source>
+        <translation>출력 프레임 속도</translation>
+    </message>
+    <message>
+        <source>Reverse the transformation</source>
+        <translation>역변환</translation>
+    </message>
+    <message>
+        <source>Settings from %1</source>
+        <translation>%1의 설정</translation>
+    </message>
+    <message>
+        <source>Asking the script…</source>
+        <translation>스크립트에 묻는 중…</translation>
+    </message>
+    <message>
+        <source>Save recipe</source>
+        <translation>레시피 저장</translation>
+    </message>
+    <message>
+        <source>Recipe name</source>
+        <translation>레시피 이름</translation>
+    </message>
+    <message>
+        <source>A recipe with this name exists; saving replaces it.</source>
+        <translation>같은 이름의 레시피가 있습니다. 저장하면 교체됩니다.</translation>
+    </message>
+    <message>
         <source>Replace</source>
         <translation>바꾸기</translation>
     </message>
     <message>
+        <source>Save</source>
+        <translation>저장</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Manage recipes</source>
+        <translation>레시피 관리</translation>
+    </message>
+    <message>
+        <source>Name of %1</source>
+        <translation>%1의 이름</translation>
+    </message>
+    <message>
+        <source>Delete %1</source>
+        <translation>%1 삭제</translation>
     </message>
     <message>
         <source>Format</source>
@@ -4751,6 +5049,10 @@ Output device: %2</source>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>서식, 색, 위치는 유지되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Before export</source>
+        <translation>내보내기 전</translation>
     </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -15780,10 +16082,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>모든 AI 기능 끄기</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>AI 관련 항목은 표시되거나 다운로드되거나 실행되지 않으며 키체인을 읽지도 않습니다. 공급자, 키, 스레드는 유지되며 AI를 다시 켜면 다시 시작하지 않아도 돌아옵니다.</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>AI가 꺼져 있어도 유지되는 항목</translation>
     </message>
@@ -15802,10 +16100,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>AI가 꺼져 있으면 숨겨지는 항목</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>에이전트 패널, 인라인 AI 작업, 모든 메뉴의 AI 항목</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -15992,6 +16286,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>AI 관련 항목은 다운로드되거나 실행되지 않으며 키체인을 읽지도 않습니다. 공급자, 키, 스레드는 유지되며 AI를 다시 켜면 다시 시작하지 않아도 돌아옵니다.</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>인라인 AI 작업, 모든 메뉴의 AI 항목. 에이전트 패널에는 AI를 켜는 버튼만 표시됩니다.</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -17843,6 +18145,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>it couldn’t be kept.</source>
         <translation>저장할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>이 플러그인은 프로그램 %1(이)며, 이 컴퓨터에서는 사용할 수 없습니다.</translation>
     </message>
 </context>
 <context>
@@ -28595,6 +28901,15 @@ do not work on comments</source>
         <translation>레이아웃은 %1에 보관됩니다.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>파일을 읽을 수 없음</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>%1에 저장된 패널 레이아웃을 사용하지 않았습니다(이유: %2).</translation>
     </message>
@@ -28773,6 +29088,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>사용할 수 없음: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>플러그인과 함께 제공되므로 여기에서 변경할 수 없습니다. 다른 이름으로 레이아웃 저장…을 사용하면 사본이 따로 보관됩니다.</translation>
     </message>
     <message>
         <source>Rename</source>

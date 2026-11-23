@@ -1187,7 +1187,7 @@ Item {
             key: "ai.aiFeatures"
             ruled: false
             AiCheck { setting: "ai.off"; text: qsTr("Turn off all AI features"); font.bold: true }
-            Note { text: qsTr("Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.") }
+            Note { text: qsTr("Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.") }
         }
 
         ColumnLayout {
@@ -1201,7 +1201,7 @@ Item {
                      items: [qsTr("Your providers, and their keys in the keychain"), qsTr("Your agent threads"),
                              qsTr("Downloaded AI component")]},
                     {title: qsTr("Hidden while AI is off"),
-                     items: [qsTr("The agent panel, inline AI actions and AI rows in every menu"),
+                     items: [qsTr("Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on."),
                              qsTr("AI commands in command search, their shortcuts and toolbar buttons"),
                              qsTr("AI in Getting started and What’s new"),
                              qsTr("MCP server, which stops listening")]}

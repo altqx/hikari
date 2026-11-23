@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>Włącz AI…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>Pokazuje panel agenta, w którym można włączyć AI</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>Agent</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>Otwórz Ustawienia › AI</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>Nic nie jest wysyłane ani pobierane, dopóki go nie dodasz.</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -210,6 +214,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>Podagent wątku „%1”. Tylko do odczytu; rozmawiaj z nim przez wątek nadrzędny.</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>Nic nie jest wysyłane, dopóki go nie dodasz.</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1030,6 +1038,18 @@
     <message>
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI jest wyłączone</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>Włącz je, aby używać agentów i akcji AI. HikariSub pobierze wtedy jeden raz komponent AI.</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>Włącz AI</translation>
     </message>
 </context>
 <context>
@@ -4669,12 +4689,300 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Plik o tej nazwie już istnieje.</translation>
     </message>
     <message>
+        <source>From this file (Aegisub)</source>
+        <translation>Z tego pliku (Aegisub)</translation>
+    </message>
+    <message>
+        <source>Unsaved steps</source>
+        <translation>Niezapisane kroki</translation>
+    </message>
+    <message>
+        <source>No steps</source>
+        <translation>Brak kroków</translation>
+    </message>
+    <message>
+        <source>The script is busy or isn’t loaded, so its settings can’t be shown.</source>
+        <translation>Skrypt jest zajęty lub nie jest wczytany, więc nie można pokazać jego ustawień.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>%n rodzaj tagów</numerusform>
+            <numerusform>%n rodzaje tagów</numerusform>
+            <numerusform>%n rodzajów tagów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing chosen</source>
+        <translation>Nic nie wybrano</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>Zmienna</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>%1, reversed</source>
+        <translation>%1, odwrotnie</translation>
+    </message>
+    <message>
+        <source>Templates in this file</source>
+        <translation>Szablony z pliku</translation>
+    </message>
+    <message>
+        <source>Lines whose style is missing</source>
+        <translation>Linijki z brakującym stylem</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation>Ten projekt</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>Wbudowany</translation>
+    </message>
+    <message>
+        <source>Lua · %1</source>
+        <translation>Lua · %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>Utworzono %n linijkę</numerusform>
+            <numerusform>Utworzono %n linijki</numerusform>
+            <numerusform>Utworzono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>Zmieniono %n linijkę</numerusform>
+            <numerusform>Zmieniono %n linijki</numerusform>
+            <numerusform>Zmieniono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Skipped: its script isn’t loaded</source>
+        <translation>Pominięto: jego skrypt nie jest wczytany</translation>
+    </message>
+    <message>
+        <source>Didn’t run</source>
+        <translation>Nie uruchomiono</translation>
+    </message>
+    <message>
+        <source>Variable needs a video or timecodes file</source>
+        <translation>Zmienna wymaga wideo lub pliku kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Enter frame rates above 0</source>
+        <translation>Wpisz liczby klatek na sekundę większe od 0</translation>
+    </message>
+    <message>
+        <source>A macro is running, so the script couldn’t start</source>
+        <translation>Działa makro, więc nie można było uruchomić skryptu</translation>
+    </message>
+    <message>
+        <source>Couldn’t apply the script’s changes</source>
+        <translation>Nie można było zastosować zmian skryptu</translation>
+    </message>
+    <message>
+        <source>Stopped with a script error</source>
+        <translation>Skrypt zatrzymał się z błędem</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (utworzono %n linijkę)</numerusform>
+            <numerusform>%1 (utworzono %n linijki)</numerusform>
+            <numerusform>%1 (utworzono %n linijek)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ran before export: %1.</source>
+        <translation>Uruchomiono przed eksportem: %1.</translation>
+    </message>
+    <message>
+        <source>Before export · %1 · step %2 of %3</source>
+        <translation>Przed eksportem · %1 · krok %2 z %3</translation>
+    </message>
+    <message>
+        <source>Before export: %1</source>
+        <translation>Przed eksportem: %1</translation>
+    </message>
+    <message>
+        <source>changed</source>
+        <translation>zmieniony</translation>
+    </message>
+    <message>
+        <source>Add steps</source>
+        <translation>Dodaj kroki</translation>
+    </message>
+    <message>
+        <source>Hide steps</source>
+        <translation>Ukryj kroki</translation>
+    </message>
+    <message>
+        <source>Show steps</source>
+        <translation>Pokaż kroki</translation>
+    </message>
+    <message>
+        <source>Writes the document as it is.</source>
+        <translation>Zapisuje dokument bez zmian.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s recipe of the same name</source>
+        <translation>Ukryty przez przepis projektu o tej samej nazwie</translation>
+    </message>
+    <message>
+        <source>Save recipe…</source>
+        <translation>Zapisz przepis…</translation>
+    </message>
+    <message>
+        <source>Manage recipes…</source>
+        <translation>Zarządzaj przepisami…</translation>
+    </message>
+    <message>
+        <source>Run in this order on a copy; the document doesn’t change.</source>
+        <translation>Uruchamiane w tej kolejności na kopii; dokument się nie zmienia.</translation>
+    </message>
+    <message>
+        <source>Run %1</source>
+        <translation>Uruchom: %1</translation>
+    </message>
+    <message>
+        <source>%1 isn’t loaded · Export skips it</source>
+        <translation>%1 nie jest wczytany · Eksport go pominie</translation>
+    </message>
+    <message>
+        <source>Settings for %1</source>
+        <translation>Ustawienia dla: %1</translation>
+    </message>
+    <message>
+        <source>More for %1</source>
+        <translation>Więcej dla: %1</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Przenieś w górę</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Przenieś w dół</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>Przesuń na początek</translation>
+    </message>
+    <message>
+        <source>Reset settings</source>
+        <translation>Przywróć ustawienia</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n krok nie zostanie uruchomiony: jego skrypt nie jest wczytany.</numerusform>
+            <numerusform>%n kroki nie zostaną uruchomione: ich skrypty nie są wczytane.</numerusform>
+            <numerusform>%n kroków nie zostanie uruchomionych: ich skrypty nie są wczytane.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not saved. “%1” failed.</source>
+        <translation>Nie zapisano. Krok „%1” nie powiódł się.</translation>
+    </message>
+    <message>
+        <source>Turn it off and export</source>
+        <translation>Wyłącz go i eksportuj</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Write the file: didn’t run</source>
+        <translation>Zapis pliku: nie uruchomiono</translation>
+    </message>
+    <message>
+        <source>Nothing was written, and the document is unchanged.</source>
+        <translation>Nic nie zapisano. Dokument się nie zmienił.</translation>
+    </message>
+    <message>
+        <source>Input frame rate</source>
+        <translation>Wejściowa liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>Z wideo</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>Wyjście</translation>
+    </message>
+    <message>
+        <source>Variable (the loaded timecodes)</source>
+        <translation>Zmienna (wczytane kody czasowe)</translation>
+    </message>
+    <message>
+        <source>Constant</source>
+        <translation>Stała</translation>
+    </message>
+    <message>
+        <source>Output frame rate</source>
+        <translation>Wyjściowa liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Reverse the transformation</source>
+        <translation>Odwróć przekształcenie</translation>
+    </message>
+    <message>
+        <source>Settings from %1</source>
+        <translation>Ustawienia z %1</translation>
+    </message>
+    <message>
+        <source>Asking the script…</source>
+        <translation>Odpytywanie skryptu…</translation>
+    </message>
+    <message>
+        <source>Save recipe</source>
+        <translation>Zapisz przepis</translation>
+    </message>
+    <message>
+        <source>Recipe name</source>
+        <translation>Nazwa przepisu</translation>
+    </message>
+    <message>
+        <source>A recipe with this name exists; saving replaces it.</source>
+        <translation>Przepis o tej nazwie już istnieje; zapisanie go zastąpi.</translation>
+    </message>
+    <message>
         <source>Replace</source>
         <translation>Zastąp</translation>
     </message>
     <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Manage recipes</source>
+        <translation>Zarządzaj przepisami</translation>
+    </message>
+    <message>
+        <source>Name of %1</source>
+        <translation>Nazwa: %1</translation>
+    </message>
+    <message>
+        <source>Delete %1</source>
+        <translation>Usuń %1</translation>
     </message>
     <message>
         <source>Format</source>
@@ -4831,6 +5139,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
+    </message>
+    <message>
+        <source>Before export</source>
+        <translation>Przed eksportem</translation>
     </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -16030,10 +16342,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wyłącz wszystkie funkcje AI</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>Nic związanego z AI nie jest wyświetlane, pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>Zachowane, gdy AI jest wyłączone</translation>
     </message>
@@ -16052,10 +16360,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>Ukryte, gdy AI jest wyłączone</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>Panel agenta, akcje AI w tekście i pozycje AI we wszystkich menu</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -16244,6 +16548,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>Nic związanego z AI nie jest pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>Akcje AI w tekście i pozycje AI we wszystkich menu. Panel agenta pokazuje tylko przycisk włączenia AI.</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -18101,6 +18413,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>it couldn’t be kept.</source>
         <translation>nie można go zapisać.</translation>
+    </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>Ta wtyczka to program %1, który jest niedostępny na tym komputerze.</translation>
     </message>
 </context>
 <context>
@@ -29071,6 +29387,15 @@ nie działają na komentarzach</translation>
         <translation>Układ zachowano w %1.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>nie można odczytać pliku</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>Układ paneli zapisany w %1 nie został użyty, ponieważ %2.</translation>
     </message>
@@ -29249,6 +29574,10 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cannot be used: %1</source>
         <translation>Nie można użyć: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>Pochodzi z wtyczki, więc nie można go tu zmienić. Zapisz układ jako… tworzy Twoją własną kopię.</translation>
     </message>
     <message>
         <source>Rename</source>

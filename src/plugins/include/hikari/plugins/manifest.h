@@ -165,7 +165,8 @@ struct Manifest {
     std::string name;
     std::string version;
     std::int64_t api = 1;
-    std::string main;
+    std::string main;        // the Lua main file, or empty
+    std::string mainProgram; // a program plugin's program id, or empty
     Tier tier = Tier::Restricted;
     std::vector<std::string> authors;
     std::string description;
@@ -189,6 +190,7 @@ struct Manifest {
     std::vector<ContentFile> karaokePresets;
     std::vector<Dictionary> dictionaries;
     std::vector<ContentFile> graphs;
+    std::vector<ContentFile> layouts;
 
     bool hasQmlPanels() const;
     const Program *program(std::string_view id) const;

@@ -280,7 +280,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(bake.page, OptionsPage::Grid);
     ASSERT_NE(findSetting("grid.splitFramesBakeAnimations"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("grid.splitFramesBakeAnimations")->defaultValue), true);
-    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", false}, std::pair{"ai.autoUpdate", true},
+    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", true}, std::pair{"ai.autoUpdate", true},
                                                             std::pair{"ai.promptCaching", true}}) {
         const auto &binding = all[std::size(kLegacy) + 44 + i++];
         EXPECT_EQ(binding.setting, id);

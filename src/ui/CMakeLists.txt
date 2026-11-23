@@ -46,7 +46,7 @@ get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DI
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 target_link_libraries(hikari_ui PUBLIC Hikari::tomlplusplus)
 hikari_module(hikari_ui ALLOW hikari_application hikari_core hikari_themes "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
-list(APPEND hikari_ui_qml_files AutomationNotices.qml)
+list(APPEND hikari_ui_qml_files AutomationNotices.qml ScriptDialogControls.qml BeforeExportSteps.qml)
 list(APPEND hikari_ui_qml_files AutomationResetDialog.qml)
 list(APPEND hikari_ui_qml_files FileChooser.qml FolderChooser.qml)
 list(APPEND hikari_ui_qml_files AutomationProgress.qml RunLogLine.qml PluginJobCards.qml)
@@ -72,7 +72,7 @@ list(APPEND hikari_ui_qml_files FontCatalogBar.qml FontCatalogWindow.qml FontsFr
 set_source_files_properties(FontWindows.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 list(APPEND hikari_ui_qml_files FilterChip.qml FontResolutionNote.qml FontWindows.qml)
 list(APPEND hikari_ui_qml_files MatroskaSubtitles.qml)
-list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
+list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AgentPanelOff.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 list(APPEND hikari_ui_qml_files VisualToolOption.qml VisualToolDialogs.qml)
