@@ -293,7 +293,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Align to video…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Track colour…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Find fade…"),
-    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import legacy settings…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import settings…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Lock layout"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open timecodes…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save timecodes…"),

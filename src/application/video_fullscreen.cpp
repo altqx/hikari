@@ -55,6 +55,21 @@ FullscreenBarMode nextFullscreenBarMode(FullscreenBarMode mode)
     return FullscreenBarMode::Auto;
 }
 
+FullscreenBarPosition fullscreenBarPosition(std::int64_t setting)
+{
+    return setting == 1 ? FullscreenBarPosition::Over : FullscreenBarPosition::Below;
+}
+
+bool fullscreenStripReserved(FullscreenBarPosition position, FullscreenBarMode mode)
+{
+    return position == FullscreenBarPosition::Below && mode != FullscreenBarMode::Never;
+}
+
+FullscreenMode fullscreenMode(std::int64_t setting)
+{
+    return setting == 1 ? FullscreenMode::Typesetting : FullscreenMode::Simple;
+}
+
 bool fullscreenIdle(const FullscreenBarState &state)
 {
     return !state.awake && state.playing && !state.menuOpen && !state.pointerOverBar;
@@ -68,6 +83,11 @@ bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state)
     case FullscreenBarMode::Auto: break;
     }
     return !fullscreenIdle(state);
+}
+
+bool fullscreenPointerHidden(bool hideWithBar, const FullscreenBarState &state)
+{
+    return hideWithBar && fullscreenIdle(state);
 }
 
 std::string fullscreenLineText(std::string_view text)
@@ -164,6 +184,31 @@ std::string tmpTime(std::int64_t ms)
 std::string fullscreenProgressText(std::int64_t positionMs, std::int64_t durationMs)
 {
     return tmpTime(positionMs) + " / " + tmpTime(durationMs);
+}
+
+std::string fullscreenTimecode(std::int64_t ms)
+{
+    const std::int64_t cs = std::max<std::int64_t>(0, ms) / 10;
+    char buffer[32];
+    std::snprintf(buffer, sizeof buffer, "%lld:%02lld:%02lld.%02lld", static_cast<long long>(cs / 360000),
+                  static_cast<long long>(cs / 6000 % 60), static_cast<long long>(cs / 100 % 60),
+                  static_cast<long long>(cs % 100));
+    return buffer;
+}
+
+std::vector<int> fullscreenKeyframeTicks(const std::vector<int> &keyframes, int frameCount, int width)
+{
+    std::vector<int> ticks;
+    if (frameCount < 2 || width < 1)
+        return ticks;
+    for (const int k : keyframes) {
+        if (k < 0 || k >= frameCount)
+            continue;
+        const int x = static_cast<int>(static_cast<std::int64_t>(k) * (width - 1) / (frameCount - 1));
+        if (ticks.empty() || ticks.back() < x)
+            ticks.push_back(x);
+    }
+    return ticks;
 }
 
 FullscreenProgressBar fullscreenProgressBar(int clientWidth, int textWidth, int textHeight, std::int64_t timeMs,

@@ -6032,6 +6032,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>Importuj moje dawne ustawienia</translation>
     </message>
@@ -6046,6 +6050,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Set up from scratch</source>
         <translation>Skonfiguruj od zera</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6142,14 +6150,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>Duże wideo z narzędziami wizualnymi i panelem Style.</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>Później: Ustawienia › Ogólne › Importuj ustawienia starej wersji…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>Zacznij od ustawień domyślnych HikariSub. Ustawienia › Ogólne › Importuj ustawienia starej wersji… pozwoli przenieść je później.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -8266,10 +8266,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Znajdź pojawianie i zanikanie…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>Importuj ustawienia starej wersji…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8324,6 +8320,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Change aspect ratio…</source>
         <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -14108,6 +14108,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Otwórz folder użytkownika</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>Ukrywaj tagi</translation>
     </message>
@@ -14266,6 +14270,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>ASS tag replacement</source>
         <translation>Znak podmiany tagów ASS</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -14738,10 +14802,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>Importuj ustawienia starej wersji…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -16645,15 +16705,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -20480,10 +20532,6 @@ ponieważ została zmieniona.</translation>
         <translation>Nie można zapisać migawki</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>Importuj ustawienia starszej wersji</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>Konflikt</translation>
     </message>
@@ -20508,20 +20556,8 @@ ponieważ została zmieniona.</translation>
         <translation>Przywrócić ustawienia sprzed ostatniego importu?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>Zaczną obowiązywać przy następnym uruchomieniu HikariSub. Instalacja starszej wersji nie zostanie zmieniona.</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>Ustawienia zmienione przez Ciebie od tamtej pory również wrócą do poprzednich wartości: %1. Instalacja starszej wersji nie zostanie zmieniona.</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>Wybierz folder instalacji starszej wersji</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20556,10 +20592,6 @@ ponieważ została zmieniona.</translation>
         <translation>Import</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>Instalacja</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>Przegląd</translation>
     </message>
@@ -20568,20 +20600,36 @@ ponieważ została zmieniona.</translation>
         <translation>Krok %1 z 3: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>Wybierz instalację starszej wersji, z której chcesz zaimportować ustawienia</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>Instalacje HikariSub 0.0.x znalezione na tym komputerze. Nic w nich nie zostanie zmienione.</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>Instalacje starszej wersji</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>Nie znaleziono instalacji starszej wersji. Wybierz jej folder.</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20608,8 +20656,8 @@ ponieważ została zmieniona.</translation>
         <translation>Przejrzyj, co zaimportować</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>Konflikt to ustawienie, które instalacja starszej wersji ma ustawione inaczej niż Ty. Proponowany wybór jest zaznaczony; odznacz to, co chcesz zachować.</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20716,8 +20764,8 @@ ponieważ została zmieniona.</translation>
         <translation>Do zaimportowania: %1 z %2 zmian, bez zmian: %3, nierozstrzygnięte: %4, wykluczone: %5, przestarzałe: %6</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>Obok programu nie znaleziono ustawień starszej wersji. Wybierz folder instalacji starszej wersji.</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
@@ -25833,10 +25881,6 @@ Usunięte style:
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation>Wyłącz pełny ekran</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>Pełny ekran</translation>
     </message>
@@ -25921,22 +25965,59 @@ Usunięte style:
         <translation>Wideo na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>Naciśnij Esc, aby wyjść z pełnego ekranu</translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation>Poprzedni plik wideo</translation>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>Linijka %1, %2: %3</translation>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Visual tools</source>
         <translation>Narzędzia wizualne</translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25956,32 +26037,48 @@ Usunięte style:
         <translation>Pasek pełnego ekranu</translation>
     </message>
     <message>
-        <source>Full screen bar: %1</source>
-        <translation>Pasek pełnego ekranu: %1</translation>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show when the pointer moves</source>
-        <translation>Pokazuj przy ruchu wskaźnika</translation>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always show</source>
-        <translation>Zawsze pokazuj</translation>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never show</source>
-        <translation>Nigdy nie pokazuj</translation>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation>Pokazuj przy ruchu wskaźnika, ukrywaj przy bezczynności</translation>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation>Zachowaj pasek; obraz kończy się nad nim</translation>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>Tylko obraz</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>
