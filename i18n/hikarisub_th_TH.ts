@@ -28371,11 +28371,11 @@ do not work on comments</source>
     <message>
         <source>%1 (%2)</source>
         <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>the file can’t be read</source>
-        <translation type="unfinished"></translation>
+        <translation>อ่านไฟล์ไม่ได้</translation>
     </message>
     <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
@@ -28559,7 +28559,7 @@ do not work on comments</source>
     </message>
     <message>
         <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
-        <translation type="unfinished"></translation>
+        <translation>มาพร้อมกับปลั๊กอิน จึงเปลี่ยนแปลงที่นี่ไม่ได้ บันทึกเค้าโครงเป็น… จะเก็บสำเนาของคุณเองไว้</translation>
     </message>
     <message>
         <source>Rename</source>

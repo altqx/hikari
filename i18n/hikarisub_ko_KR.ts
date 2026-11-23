@@ -28371,11 +28371,11 @@ do not work on comments</source>
     <message>
         <source>%1 (%2)</source>
         <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>the file can’t be read</source>
-        <translation type="unfinished"></translation>
+        <translation>파일을 읽을 수 없음</translation>
     </message>
     <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
@@ -28559,7 +28559,7 @@ do not work on comments</source>
     </message>
     <message>
         <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
-        <translation type="unfinished"></translation>
+        <translation>플러그인과 함께 제공되므로 여기에서 변경할 수 없습니다. 다른 이름으로 레이아웃 저장…을 사용하면 사본이 따로 보관됩니다.</translation>
     </message>
     <message>
         <source>Rename</source>
