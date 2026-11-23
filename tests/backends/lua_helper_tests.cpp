@@ -2404,3 +2404,98 @@ TEST_F(LuaHelper, UndoPointsAreDroppedWithAFailedRunAndRefusedInValidation)
         QStringLiteral("Attempt to set an undo point in a context where it makes no sense to do so.")))
         << run.message.toStdString();
 }
+
+TEST_F(LuaHelper, RegisteredFiltersAreListedWithTheirPriorities)
+{
+    auto host = load(fixture("export_filters.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    using hikari::application::ScriptFilter;
+    EXPECT_TRUE(host->info().macros.empty());
+    EXPECT_EQ(host->info().filters,
+              (std::vector<ScriptFilter>{{"Shout", "Upper-cases every line", 1500, true},
+                                         {"Drop the first line", "", -10, false},
+                                         {"Undo point", "", 0, false},
+                                         {"Broken config", "", 0, true},
+                                         {"Edits while configuring", "", 0, true}}));
+}
+
+TEST_F(LuaHelper, AFilterGetsItsSettingsAndChangesTheCopy)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    auto host = load(fixture("export_filters.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+
+    run = {};
+    ASSERT_TRUE(host->filterConfig(0, *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(host->lastDialog());
+    auto settings = *host->lastDialog();
+    ASSERT_EQ(settings.controls.size(), 3u);
+    EXPECT_EQ(settings.controls[0].label, "Prefix (" + std::to_string(snapshot->info.size() + snapshot->styles.size() +
+                                                                        snapshot->dialogues.size()) +
+                                              " lines, 0 options)");
+    EXPECT_EQ(settings.controls[1].text, "> ");
+    EXPECT_TRUE(settings.controls[2].checked);
+
+    settings.controls[1].text = "* ";
+    run = {};
+    ASSERT_TRUE(host->runFilter(0, *snapshot, settings));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(host->lastResult());
+    std::vector<std::string> filtered;
+    for (const auto &d : host->lastResult()->dialogues)
+        filtered.push_back(d.text);
+    EXPECT_EQ(filtered, (std::vector<std::string>{"* ONE!", "* TWO!", "* THREE!"}));
+    EXPECT_FALSE(host->lastResult()->selected);
+
+    run = {};
+    ASSERT_TRUE(host->runFilter(1, *snapshot, {}));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(host->lastResult()->dialogues.size(), 2u);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "two");
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two", "three"}));
+}
+
+TEST_F(LuaHelper, FilterConfigWithoutAFunctionIsEmptyAndErrorsAreReported)
+{
+    auto session = macroSession();
+    auto host = load(fixture("export_filters.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    const auto finish = [&](bool sent) {
+        return sent && waitFor([&] { return run.outcome.has_value(); });
+    };
+
+    run = {};
+    ASSERT_TRUE(finish(host->filterConfig(1, *snapshot)));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_TRUE(host->lastDialog()->controls.empty());
+
+    run = {};
+    ASSERT_TRUE(finish(host->filterConfig(3, *snapshot)));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.startsWith(QStringLiteral("Runtime error in Lua config dialog function:\n")))
+        << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains(QStringLiteral("no dialog today"))) << run.message.toStdString();
+
+    run = {};
+    ASSERT_TRUE(finish(host->filterConfig(4, *snapshot)));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+
+    run = {};
+    ASSERT_TRUE(finish(host->runFilter(2, *snapshot, {})));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(
+        QStringLiteral("Attempt to set an undo point in a context where it makes no sense to do so.")))
+        << run.message.toStdString();
+
+    EXPECT_FALSE(host->runFilter(5, *snapshot, {}));
+    EXPECT_FALSE(host->filterConfig(-1, *snapshot));
+}
