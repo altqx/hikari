@@ -356,6 +356,8 @@ public:
     // and {sources}: "project" or "local" for each one a project file sets. Empty without a Project.
     Q_INVOKABLE QVariantMap openProjectSettings(int shellWindow);
     Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
+    // Projectable settings the window's Project sets that wait for trust (ADR 0030).
+    Q_INVOKABLE QStringList projectWaitsForTrust(int shellWindow) const;
     // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
     Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
     // The Project is untrusted and holds scripts (.hikari/automation/), a [plugins] table or AI keys it names.
@@ -833,6 +835,11 @@ public:
     // Writes only controls whose value differs from the stored one. resetAll: every
     // setting but the appearance, hotkeys and recent files goes back to its default first.
     Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // The controls' values as openSettingsDialog() gives them, after a change from outside the window.
+    Q_INVOKABLE QVariantMap currentSettings();
+    // Opens in the system's editor: "settings" (settings.toml), "hotkeys", "plugins" (plugins.json) or
+    // "project" (the window's .hikari/project.toml), or "local" (project.local.toml).
+    Q_INVOKABLE void openSettingsFile(int shellWindow, const QString &file);
     // Due after the first start; Finish, Skip setup, Close and Esc mark it done.
     Q_INVOKABLE bool gettingStartedDue() const;
     // As openSettingsDialog(), plus legacy: whether a HikariSub legacy installation was

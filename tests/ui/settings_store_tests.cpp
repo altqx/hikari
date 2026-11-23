@@ -14,6 +14,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLockFile>
+#include <QSaveFile>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -814,6 +815,40 @@ private slots:
         other->remove(*application::findSetting("audio.volume"));
         other->flush();
         QCOMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ndelay = 5\n"));
+    }
+
+    void handEditsShowWhileItRuns()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        SettingsStore store(file);
+        store.set("audio.volume", 70);
+        store.sync();
+        QSignalSpy changed(&store, &SettingsStore::changed);
+
+        writeAll(file, "version = 1\n\n[audio]\nvolume = 40\n");
+        QTRY_COMPARE(store.integer("audio.volume"), 40);
+        QVERIFY(changed.contains(QVariantList{QStringLiteral("audio.volume")}));
+
+        writeAll(file, "version = 1\n[audio\n");
+        QTRY_VERIFY(!store.fileProblem().isEmpty());
+        QCOMPARE(store.integer("audio.volume"), 40);
+        store.set("audio.delay", 5);
+        store.sync();
+        QCOMPARE(readAll(file), QByteArray("version = 1\n[audio\n"));
+
+        QSaveFile replaced(file);
+        QVERIFY(replaced.open(QIODevice::WriteOnly));
+        replaced.write("version = 1\n\n[audio]\nvolume = 30\n");
+        QVERIFY(replaced.commit());
+        QTRY_VERIFY(store.fileProblem().isEmpty());
+        QCOMPARE(store.integer("audio.volume"), 30);
+        QCOMPARE(store.integer("audio.delay"), 5);
+        store.sync();
+        QTRY_COMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ndelay = 5\nvolume = 30\n"));
+
+        writeAll(file, "version = 1\n\n[audio]\nvolume = 20\n");
+        QTRY_COMPARE(store.integer("audio.volume"), 20);
     }
 
     void aHikariIniThatCannotBeReadIsNotConverted()

@@ -416,8 +416,8 @@ hikari_add_qttest(hikari_ui_inline_ai_tests SOURCES inline_ai_tests.cpp
 target_compile_definitions(hikari_ui_inline_ai_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_inline_ai_tests hikari_fake_ai_sidecar)
-hikari_add_gtest(hikari_ui_setting_labels_tests SOURCES setting_labels_tests.cpp LIBRARIES hikari_ui LABELS ui)
-target_compile_definitions(hikari_ui_setting_labels_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+hikari_add_gtest(hikari_ui_settings_catalogue_tests SOURCES settings_catalogue_tests.cpp LIBRARIES hikari_ui LABELS ui)
+target_compile_definitions(hikari_ui_settings_catalogue_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_features_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"

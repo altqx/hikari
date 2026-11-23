@@ -13,6 +13,13 @@ GridLayout {
     readonly property var values: dialog.values
     readonly property bool on: values["privacy.discordPresence"] === true
     readonly property bool wide: width >= 760
+    property Flickable scroller: null
+    readonly property real previewShift: {
+        if (!wide || !scroller)
+            return 0
+        const top = scroller.contentY - mapToItem(scroller.contentItem, 0, 0).y
+        return Math.max(0, Math.min(top, height - previewColumn.height))
+    }
     readonly property var preview: app ? app.presencePreview(values) : ({})
     readonly property var placeholders: ["mode", "file", "project", "show", "episode", "title", "plugin"]
     readonly property var modeColours: ({
@@ -323,7 +330,9 @@ GridLayout {
     }
 
     ColumnLayout {
+        id: previewColumn
         objectName: "discordPreview"
+        transform: Translate { y: discord.previewShift }
         spacing: 8
         Layout.row: 0
         Layout.column: discord.wide ? 1 : 0

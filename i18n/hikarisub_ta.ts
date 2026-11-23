@@ -1627,8 +1627,16 @@ Output device: %2</source>
         <translation type="unfinished">திட்டப்பணி</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>Hidden by the project’s copy</source>
@@ -1667,15 +1675,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4904,6 +4904,10 @@ Output device: %2</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
+    </message>
+    <message>
         <source>Refresh fonts</source>
         <translation>எழுத்துருக்களைப் புதுப்பி</translation>
     </message>
@@ -5090,8 +5094,12 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Copy to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>%1, hidden by the project’s copy</source>
@@ -5178,15 +5186,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7241,6 +7241,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shortcut “%1” is invalid</source>
         <translation>“%1” குறுக்குவிசை செல்லாதது</translation>
+    </message>
+    <message>
+        <source>Also on %1</source>
+        <translation>%1 இலும் உள்ளது</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -11496,8 +11500,8 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">திட்டப்பணி</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
     </message>
     <message>
         <source>Save</source>
@@ -11508,16 +11512,16 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 in mine</source>
-        <translation type="unfinished"></translation>
+        <source>%1 in yours</source>
+        <translation>உங்களுடையவற்றில் %1</translation>
     </message>
     <message>
         <source>Save to project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save to mine</source>
-        <translation type="unfinished"></translation>
+        <source>Save to yours</source>
+        <translation>உங்களுடையவற்றில் சேமி</translation>
     </message>
     <message>
         <source>Where to save</source>
@@ -13630,7 +13634,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Apply</source>
-        <translation>பயன்படுத்து</translation>
+        <translation type="vanished">பயன்படுத்து</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -13642,7 +13646,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>OK</source>
-        <translation>சரி</translation>
+        <translation type="vanished">சரி</translation>
     </message>
     <message>
         <source>Font size</source>
@@ -13922,7 +13926,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
-        <translation>சரி அல்லது பயன்படுத்து அழுத்தும்போது ஒவ்வொரு பக்கமும் இயல்புநிலைக்குத் திரும்பும்; ரத்துசெய் உங்கள் அமைப்புகளை அப்படியே வைக்கும். குறுக்குவிசைகளும் தோற்றமும் மாறாது: அவற்றை அவற்றுக்கான பக்கங்களில் தனியாக மீட்டமைக்கவும்.</translation>
+        <translation type="vanished">சரி அல்லது பயன்படுத்து அழுத்தும்போது ஒவ்வொரு பக்கமும் இயல்புநிலைக்குத் திரும்பும்; ரத்துசெய் உங்கள் அமைப்புகளை அப்படியே வைக்கும். குறுக்குவிசைகளும் தோற்றமும் மாறாது: அவற்றை அவற்றுக்கான பக்கங்களில் தனியாக மீட்டமைக்கவும்.</translation>
     </message>
     <message>
         <source>Reset all</source>
@@ -13934,19 +13938,19 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Resets the settings on this page to their defaults</source>
-        <translation>காட்டப்படும் பக்கத்தின் அமைப்புகள் இயல்புநிலைக்குத் திரும்பும்</translation>
+        <translation type="vanished">காட்டப்படும் பக்கத்தின் அமைப்புகள் இயல்புநிலைக்குத் திரும்பும்</translation>
     </message>
     <message>
         <source>More resets</source>
-        <translation>மேலும் மீட்டமைப்புகள்</translation>
+        <translation type="vanished">மேலும் மீட்டமைப்புகள்</translation>
     </message>
     <message>
         <source>Reset this page</source>
-        <translation>இந்தப் பக்கத்தை மீட்டமை</translation>
+        <translation type="vanished">இந்தப் பக்கத்தை மீட்டமை</translation>
     </message>
     <message>
         <source>Reset all settings…</source>
-        <translation>எல்லா அமைப்புகளையும் மீட்டமை…</translation>
+        <translation type="vanished">எல்லா அமைப்புகளையும் மீட்டமை…</translation>
     </message>
     <message>
         <source>Interface language</source>
@@ -14144,6 +14148,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>செயலில் உள்ள வரி</translation>
     </message>
     <message>
+        <source>Export</source>
+        <translation>ஏற்றுமதி</translation>
+    </message>
+    <message>
+        <source>Keys</source>
+        <translation>விசைகள்</translation>
+    </message>
+    <message>
+        <source>Discord</source>
+        <translation>Discord</translation>
+    </message>
+    <message>
+        <source>Glossary</source>
+        <translation>சொற்களஞ்சியம்</translation>
+    </message>
+    <message>
         <source>Change the active line when adding to the selection</source>
         <translation>தேர்வில் சேர்க்கும்போது செயலில் உள்ள வரியை மாற்று</translation>
     </message>
@@ -14154,6 +14174,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>முழுத் திரையிலிருந்து வெளியேறிய பின் தெரியும் வரியைக் கண்டுபிடி</translation>
+    </message>
+    <message>
+        <source>Activities</source>
+        <translation>செயல்பாடுகள்</translation>
     </message>
     <message>
         <source>Columns</source>
@@ -14370,6 +14394,97 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>நடுப் பொத்தானால் இழுத்தால் படம் நகரும். தொடுதிட்டில் கிள்ளினால் சுட்டியைச் சுற்றிப் பெரிதாக்கும்.</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
+        <translation>ஒரு திட்டப்பணியால் “%1” ஐ அமைக்க முடியாது, எனவே இது உங்களுடையவை தாவலில் திறக்கிறது.</translation>
+    </message>
+    <message>
+        <source>This window has no project, so the link opens the Yours tab.</source>
+        <translation>இந்தச் சாளரத்தில் திட்டப்பணி இல்லை, எனவே இணைப்பு உங்களுடையவை தாவலைத் திறக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Waits for trust</source>
+        <translation>நம்பிக்கைக்காகக் காத்திருக்கிறது</translation>
+    </message>
+    <message>
+        <source>Reset the settings on %1 to their defaults?</source>
+        <translation>%1 இல் உள்ள அமைப்புகளை இயல்புநிலைக்கு மீட்டமைக்கவா?</translation>
+    </message>
+    <message>
+        <source>Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
+        <translation>குறுக்குவிசைகளும் தோற்றமும் அப்படியே இருக்கும்: அவற்றை அவற்றின் சொந்தப் பக்கங்களில் மீட்டமைக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>செருகுநிரல்கள்</translation>
+    </message>
+    <message>
+        <source>Reset all…</source>
+        <translation>அனைத்தையும் மீட்டமை…</translation>
+    </message>
+    <message>
+        <source>Resets every setting but the shortcuts and the appearance</source>
+        <translation>குறுக்குவிசைகள் மற்றும் தோற்றம் தவிர ஒவ்வொரு அமைப்பையும் மீட்டமைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Write</source>
+        <translation>எழுது</translation>
+    </message>
+    <message>
+        <source>Write %1</source>
+        <translation>%1 ஐ எழுது</translation>
+    </message>
+    <message>
+        <source>Open settings file</source>
+        <translation>அமைப்புகள் கோப்பைத் திற</translation>
+    </message>
+    <message>
+        <source>Search settings</source>
+        <translation>அமைப்புகளைத் தேடு</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>வடிப்பி</translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation>மாற்றியமைக்கப்பட்ட</translation>
+    </message>
+    <message>
+        <source>Plugin</source>
+        <translation>செருகுநிரல்</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n setting(s) match</source>
+        <translation>
+            <numerusform>%n அமைப்பு பொருந்துகிறது</numerusform>
+            <numerusform>%n அமைப்புகள் பொருந்துகின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Settings contents</source>
+        <translation>அமைப்புகளின் உள்ளடக்கம்</translation>
+    </message>
+    <message>
+        <source>Reset page…</source>
+        <translation>பக்கத்தை மீட்டமை…</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps the last values it could read, and your changes here wait until it reads again.</source>
+        <translation>HikariSub தன்னால் கடைசியாகப் படிக்க முடிந்த மதிப்புகளை வைத்திருக்கிறது; அது மீண்டும் படிக்கும் வரை இங்குள்ள உங்கள் மாற்றங்கள் காத்திருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Nothing is changed here.</source>
+        <translation>இங்கே எதுவும் மாற்றப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>No settings match “%1”.</source>
+        <translation>“%1” உடன் எந்த அமைப்பும் பொருந்தவில்லை.</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -14697,7 +14812,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Set shortcuts</source>
-        <translation>குறுக்குவிசைகளை அமை</translation>
+        <translation type="vanished">குறுக்குவிசைகளை அமை</translation>
     </message>
     <message>
         <source>Global shortcuts</source>
@@ -14784,6 +14899,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>முதலில் பயன்படுத்து அல்லது ரத்துசெய் அழுத்தவும்: இறக்குமதி உடனே சேர்க்கப்படும்</translation>
     </message>
     <message>
+        <source>Macro</source>
+        <translation>குறுநிரல்</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>மூலம்</translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation>முரண்பாடுகள்</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -14822,6 +14949,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Checking</source>
         <translation>சரிபார்த்தல்</translation>
+    </message>
+    <message>
+        <source>Translator model</source>
+        <translation>மொழிபெயர்ப்பாளர் மாதிரி</translation>
+    </message>
+    <message>
+        <source>Reviewer model</source>
+        <translation>மதிப்பாய்வாளர் மாதிரி</translation>
+    </message>
+    <message>
+        <source>Never send to AI</source>
+        <translation>AI க்கு ஒருபோதும் அனுப்ப வேண்டாம்</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
@@ -15062,6 +15201,33 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Import legacy shortcuts</source>
         <translation>பழைய குறுக்குவிசைகளை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>No plugin has settings.</source>
+        <translation>எந்தச் செருகுநிரலுக்கும் அமைப்புகள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Plugins…</source>
+        <translation>செருகுநிரல்கள்…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n shortcuts</source>
+        <translation>
+            <numerusform>அனைத்து %n குறுக்குவிசையையும் காட்டு</numerusform>
+            <numerusform>அனைத்து %n குறுக்குவிசைகளையும் காட்டு</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Manage plugin…</source>
+        <translation>செருகுநிரலை நிர்வகி…</translation>
+    </message>
+    <message>
+        <source>%1 is turned off. Its settings apply when it’s on.</source>
+        <translation>%1 முடக்கப்பட்டுள்ளது. அது இயக்கத்தில் இருக்கும்போது அதன் அமைப்புகள் பொருந்தும்.</translation>
+    </message>
+    <message>
+        <source>Enter a number.</source>
+        <translation>ஓர் எண்ணை உள்ளிடவும்.</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -15578,10 +15744,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Project</source>
         <translation type="unfinished">திட்டப்பணி</translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Built in</source>
@@ -16516,6 +16678,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
+    </message>
+    <message>
         <source>Add an MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16690,6 +16856,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Downloading the AI component · %1 of %2 MB</source>
         <translation>AI கூறைப் பதிவிறக்குகிறது · %2 MB இல் %1</translation>
+    </message>
+    <message>
+        <source>Changed</source>
+        <translation>மாற்றப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>%1 ஐ மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>உங்களுடையதைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>இயல்புநிலைக்கு மீட்டமை</translation>
+    </message>
+    <message>
+        <source>%1 options</source>
+        <translation>%1 விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Copy setting id</source>
+        <translation>அமைப்பு ஐடியை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy link</source>
+        <translation>இணைப்பை நகலெடு</translation>
+    </message>
+    <message>
+        <source>settings.toml has an error on line %1.</source>
+        <translation>settings.toml இல் வரி %1 இல் பிழை உள்ளது.</translation>
     </message>
 </context>
 <context>
@@ -17340,6 +17542,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அமைப்புகள்</translation>
     </message>
     <message>
+        <source>Open in Settings…</source>
+        <translation>அமைப்புகளில் திற…</translation>
+    </message>
+    <message>
         <source>Update from file…</source>
         <translation>கோப்பிலிருந்து புதுப்பி…</translation>
     </message>
@@ -17353,7 +17559,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Setting not kept</source>
-        <translation>அமைப்பு வைக்கப்படவில்லை</translation>
+        <translation type="vanished">அமைப்பு வைக்கப்படவில்லை</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -17381,6 +17587,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Close</source>
         <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Also in Settings › Updates and privacy</source>
+        <translation>அமைப்புகள் › புதுப்பிப்புகளும் தனியுரிமையும் பகுதியிலும் உள்ளது</translation>
     </message>
     <message>
         <source>Choose a plugin package</source>
@@ -17951,7 +18161,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Project</source>
-        <translation>திட்டப்பணி</translation>
+        <translation type="vanished">திட்டப்பணி</translation>
     </message>
     <message>
         <source>Uses yours</source>
@@ -17964,6 +18174,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Set in project.local.toml</source>
         <translation>project.local.toml இல் அமைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Project: %1</source>
+        <translation>திட்டப்பணி: %1</translation>
     </message>
     <message>
         <source>Not set</source>
@@ -17999,7 +18213,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>project.toml could not be written, so some Project settings were not saved.</source>
-        <translation>project.toml ஐ எழுத முடியவில்லை, எனவே சில திட்டப்பணி அமைப்புகள் சேமிக்கப்படவில்லை.</translation>
+        <translation type="vanished">project.toml ஐ எழுத முடியவில்லை, எனவே சில திட்டப்பணி அமைப்புகள் சேமிக்கப்படவில்லை.</translation>
     </message>
     <message>
         <source>Saving a file writes the switched-on fields into its Script Info.</source>
@@ -18122,23 +18336,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Discord</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In this project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Details (first line)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>State (second line)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21802,10 +22004,6 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>From plugins</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21814,15 +22012,7 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21996,8 +22186,20 @@ because it was edited.</source>
         <translation>பயன்படுத்து</translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
+    </message>
+    <message>
         <source>New catalogue</source>
         <translation>புதிய பட்டியல்</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -24664,8 +24866,8 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -24676,6 +24878,14 @@ Styles deleted:
         <translation>முன்னமைவை மறுபெயரிடு…</translation>
     </message>
     <message>
+        <source>Copy to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
+    </message>
+    <message>
         <source>Delete preset…</source>
         <translation>முன்னமைவை நீக்கு…</translation>
     </message>
@@ -24684,15 +24894,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27178,8 +27380,16 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>yours</source>
@@ -27279,15 +27489,7 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28696,8 +28898,8 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>உங்களுடையவை</translation>
     </message>
     <message>
         <source>Where to save</source>
@@ -28756,15 +28958,15 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
+        <source>Copy to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
     </message>
     <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
