@@ -44,6 +44,28 @@ struct Command {
     bool palette = true;
 };
 
+enum class MenuLocation { Grid, LineEditor, MenuBar };
+
+struct MenuPlacement {
+    std::string command;
+    MenuLocation location = MenuLocation::MenuBar;
+    std::string group;
+};
+
+struct StatusItem {
+    std::string id;
+    std::string title;
+    std::string text;
+    std::string icon;
+    std::string tooltip;
+    std::string command; // empty: not a button
+};
+
+struct Keybinding {
+    std::string command;
+    std::string key; // Qt's portable text
+};
+
 enum class PanelArea { Left, Right, Bottom };
 
 struct Panel {
@@ -156,6 +178,9 @@ struct Manifest {
     Permissions permissions;
     std::vector<Command> commands;
     std::vector<Panel> panels;
+    std::vector<MenuPlacement> menus;
+    std::vector<StatusItem> statusItems;
+    std::vector<Keybinding> keybindings;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
     std::vector<FormatContribution> formats;
@@ -172,7 +197,7 @@ struct Manifest {
 std::string_view manifestSchema();
 
 struct ManifestProblem {
-    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust };
+    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust, UnknownCommand, DuplicateKey };
     Kind kind = Kind::Schema;
     std::string at;     // a JSON pointer into the manifest
     std::string detail; // English, technical: the parser's or validator's words

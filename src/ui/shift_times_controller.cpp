@@ -161,9 +161,9 @@ void ShiftTimesController::load()
         savePresets();
         m_store->reset(QStringLiteral("shiftTimes.profiles"));
     } else {
-        m_shiftPresets.of(Tier::Mine) = readPresets(m_store->list(kShiftPresets));
+        m_shiftPresets.of(Tier::Mine) = presetsOfRows(m_store->list(kShiftPresets));
     }
-    m_postprocessorPresets.of(Tier::Mine) = readPresets(m_store->list(kPostprocessorPresets));
+    m_postprocessorPresets.of(Tier::Mine) = presetsOfRows(m_store->list(kPostprocessorPresets));
     m_shiftPreset = m_store->text("shiftTimes.preset");
     m_postprocessorPreset = m_store->text("postprocessor.preset");
     m_timingPreset = m_store->text("postprocessor.timingPreset");
@@ -270,22 +270,6 @@ QStringList ShiftTimesController::names(const TieredPresets &presets)
     return out;
 }
 
-QList<NamedPreset> ShiftTimesController::readPresets(const QStringList &stored)
-{
-    QJsonArray presets;
-    for (const QString &s : stored)
-        presets.append(QJsonDocument::fromJson(s.toUtf8()).object());
-    return ui::presetsOf(presets);
-}
-
-QStringList ShiftTimesController::writePresets(const QList<NamedPreset> &presets)
-{
-    QStringList out;
-    for (const auto &p : jsonOf(presets))
-        out << QString::fromUtf8(QJsonDocument(p.toObject()).toJson(QJsonDocument::Compact));
-    return out;
-}
-
 TieredPresets *ShiftTimesController::presetsOf(const QString &tool)
 {
     return tool == QLatin1String("postprocessor") ? &m_postprocessorPresets : &m_shiftPresets;
@@ -318,8 +302,8 @@ void ShiftTimesController::setProjectRoot(const QString &root)
 
 void ShiftTimesController::loadProjectPresets()
 {
-    m_shiftPresets.of(Tier::Project) = readPresets(m_projectFile.list(kShiftPresets));
-    m_postprocessorPresets.of(Tier::Project) = readPresets(m_projectFile.list(kPostprocessorPresets));
+    m_shiftPresets.of(Tier::Project) = presetsOfRows(m_projectFile.list(kShiftPresets));
+    m_postprocessorPresets.of(Tier::Project) = presetsOfRows(m_projectFile.list(kPostprocessorPresets));
     m_shiftPresetTier = m_shiftPresets.find(m_shiftPreset).value_or(Tier::Mine);
     m_postprocessorPresetTier = m_postprocessorPresets.find(m_postprocessorPreset).value_or(Tier::Mine);
 }
@@ -467,15 +451,15 @@ void ShiftTimesController::save() const
 
 void ShiftTimesController::savePresets()
 {
-    m_store->set(kShiftPresets, writePresets(m_shiftPresets.of(Tier::Mine)));
-    m_store->set(kPostprocessorPresets, writePresets(m_postprocessorPresets.of(Tier::Mine)));
+    m_store->set(kShiftPresets, rowsOf(m_shiftPresets.of(Tier::Mine)));
+    m_store->set(kPostprocessorPresets, rowsOf(m_postprocessorPresets.of(Tier::Mine)));
     m_store->set("shiftTimes.preset", m_shiftPreset);
     m_store->set("postprocessor.preset", m_postprocessorPreset);
     m_store->set("postprocessor.timingPreset", m_timingPreset);
     if (!hasProject())
         return;
     const auto project = [this](const char *id, const TieredPresets &presets) {
-        if (const QStringList rows = writePresets(presets.of(Tier::Project)); rows != m_projectFile.list(id))
+        if (const QStringList rows = rowsOf(presets.of(Tier::Project)); rows != m_projectFile.list(id))
             m_projectFile.set(id, rows);
     };
     project(kShiftPresets, m_shiftPresets);

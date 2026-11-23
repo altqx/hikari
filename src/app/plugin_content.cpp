@@ -11,11 +11,17 @@ std::u8string u8(const std::string &s)
     return {s.begin(), s.end()};
 }
 
+std::filesystem::path inPackage(const std::filesystem::path &root, const std::string &path)
+{
+    auto out = root / std::filesystem::path(u8(path));
+    return out.make_preferred();
+}
+
 void add(std::vector<application::PluginContentFile> &into, const std::vector<plugins::ContentFile> &files,
          const std::string &id, const plugins::Manifest &manifest, const std::filesystem::path &root)
 {
     for (const plugins::ContentFile &file : files)
-        into.push_back({id, u8(manifest.name), u8(file.title), root / std::filesystem::path(u8(file.path))});
+        into.push_back({id, u8(manifest.name), u8(file.title), inPackage(root, file.path)});
 }
 
 }
@@ -39,8 +45,7 @@ void addPluginContent(application::PluginContent &into, const std::string &id, c
     for (const plugins::Dictionary &dictionary : manifest.dictionaries)
         into.dictionaries.push_back({id, u8(manifest.name), u8(dictionary.title),
                                      std::u16string(dictionary.language.begin(), dictionary.language.end()),
-                                     root / std::filesystem::path(u8(dictionary.aff)),
-                                     root / std::filesystem::path(u8(dictionary.dic))});
+                                     inPackage(root, dictionary.aff), inPackage(root, dictionary.dic)});
 }
 
 }
