@@ -7,6 +7,7 @@
 #include "hikari/app/plugin_files.h"
 #include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_network.h"
+#include "hikari/app/plugin_program_downloads.h"
 #include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/plugin_process.h"
@@ -56,6 +57,7 @@ class PluginRuntime : public QObject {
     // timer callback or a job runs too.
     Q_PROPERTY(QVariantList working READ working NOTIFY workingChanged)
     Q_PROPERTY(int marksRevision READ marksRevision NOTIFY marksChanged)
+    Q_PROPERTY(int programsRevision READ programsRevision NOTIFY programsChanged)
     Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
     // Restricted plugins run in an operating-system sandbox here.
     Q_PROPERTY(bool sandboxed READ sandboxed CONSTANT)
@@ -138,6 +140,10 @@ public:
     Q_INVOKABLE void cancelJob(const QString &pluginId);
     // Per Document the plugin marks Lines in: {document, file, count}.
     Q_INVOKABLE QVariantList marks(const QString &pluginId) const;
+    // Each program for the plugin's details: {title, state, problem}; state is ready, unavailable, missing or downloading.
+    Q_INVOKABLE QVariantList programs(const QString &pluginId) const;
+    Q_INVOKABLE void downloadPrograms(const QString &pluginId);
+    int programsRevision() const { return m_programsRevision; }
     Q_INVOKABLE void clearMarks(const QString &pluginId, double document);
     int marksRevision() const { return m_marksRevision; }
     void rowMarksChanged()
@@ -181,6 +187,7 @@ signals:
     void conditionsChanged();
     void windowsChanged();
     void jobsChanged();
+    void programsChanged();
     void workingChanged();
     void marksChanged();
     // The plugin finished a command or an event, or stopped.
@@ -225,6 +232,7 @@ private:
     std::unique_ptr<QNetworkAccessManager> m_ownNetwork;
     PluginNetwork *m_network = nullptr;
     std::unique_ptr<PluginFiles> m_files;
+    std::unique_ptr<PluginProgramDownloads> m_downloads;
     std::map<int, std::optional<plugins::ProjectPlugins>> m_windows;
     std::set<std::string> m_userOn;
     std::map<int, std::set<std::string>> m_onIn; // by window, as of the last sync
@@ -237,6 +245,7 @@ private:
     };
     std::vector<Job> m_jobs;
     int m_marksRevision = 0;
+    int m_programsRevision = 0;
     void endJob(const std::string &plugin);
     void rework();
     QVariantList m_working;

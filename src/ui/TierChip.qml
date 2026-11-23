@@ -9,7 +9,7 @@ Rectangle {
     property string tier: "mine"
     property bool onAccent: false
     readonly property bool project: tier === "project"
-    readonly property string text: project ? qsTr("Project") : qsTr("Mine")
+    readonly property string text: project ? qsTr("Project") : qsTr("Yours")
     implicitWidth: row.implicitWidth + 12
     implicitHeight: 20
     radius: 10

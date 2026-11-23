@@ -25,6 +25,7 @@ struct Record {
     QList<Frame> frames;
     int seconds = 0;   // a freeze only: how long the window has not answered
     QList<Frame> renderFrames; // a freeze only: the window's render thread, when it has one
+    bool startup = false;      // a freeze only: before the window's first frame
     bool freeze() const { return mechanism == QLatin1String("watchdog"); }
 };
 

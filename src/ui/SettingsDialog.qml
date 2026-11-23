@@ -15,6 +15,7 @@ DialogWindow {
     property var ai: null
     property var inlineAi: null
     property var skills: null
+    property var pluginManager: null
     property TagButtonsController tagButtons: null
     property var importer: null
     property string legacyNotFound: ""
@@ -24,7 +25,8 @@ DialogWindow {
     modal: true
     resizable: true
     flush: true
-    defaultButton: okButton
+    defaultButton: closeButton
+    initialFocus: searchField
     property var values: ({})
     property var languages: []
     property var dictionaries: []
@@ -35,36 +37,41 @@ DialogWindow {
     property var outputDevices: []
     property ToastStack notices: null
     property var tagButtonList: []
-    property bool resetAllStaged: false
     property int shellWindow: 0
     property bool hasProject: false
     property bool projectTab: false
+    property var projectWaiting: []
     property var overrides: []
+    property var changedIds: []
+    property var projectValues: ({})
+    property var projectYours: ({})
+    property var projectSources: ({})
+    property string query: ""
+    property string landingNote: ""
+    property string flashSetting: ""
+    property var rowItems: ({})
+    property var sectionItems: ({})
+    property var folded: ({})
+    property string currentNode: ""
+    readonly property string currentPage: currentNode.split(".")[0]
+    readonly property bool searching: query.trim().length > 0
+    readonly property var pluginRows: {
+        const out = []
+        for (const plugin of pluginManager ? pluginManager.plugins : [])
+            for (const s of plugin.settings ?? [])
+                out.push({ setting: "plugin." + plugin.id + "." + s.id, plugin: plugin.id, pluginName: plugin.name,
+                           label: s.title ?? s.id, description: s.description ?? "", keywords: s.keywords ?? [],
+                           projectable: s.scope !== "user" && s.type !== "secret" })
+        return out
+    }
+    readonly property var pluginsWithSettings: (pluginManager ? pluginManager.plugins : []).filter(p => (p.settings ?? []).length > 0)
+    readonly property var found: SettingsCatalogue.search(query, pluginRows, projectTab ? Object.keys(projectSources).filter(id => projectSources[id] === "project") : changedIds, projectTab)
+    readonly property var catalogue: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.pages() : [])
     signal reloaded()
     signal creditsRequested()
     signal legacyImportRequested()
     signal legacyRollBackRequested()
     readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
-
-    // MUST KILL: the page ids must match the C++ OptionsPage ids (and "hotkeys")
-    readonly property var pages: [
-        {id: "general", name: qsTr("General"), iconRole: "settings"},
-        {id: "appearance", name: qsTr("Appearance"), iconRole: "appearance"},
-        {id: "lineEditor", name: qsTr("Line editor"), iconRole: "editor"},
-        {id: "editing", name: qsTr("Editing"), iconRole: "cycle-values"},
-        {id: "spelling", name: qsTr("Spelling and grammar"), iconRole: "spellchecker"},
-        {id: "grid", name: qsTr("Grid"), iconRole: "settings-grid"},
-        {id: "video", name: qsTr("Video"), iconRole: "settings-video"},
-        {id: "audio", name: qsTr("Audio"), iconRole: "settings-audio"},
-        {id: "conversion", name: qsTr("Conversion"), iconRole: "convert"},
-        {id: "subtitleProperties", name: qsTr("Script properties"), iconRole: "script-properties"},
-        {id: "automation", name: qsTr("Automation"), iconRole: "automation"},
-        {id: "hotkeys", name: qsTr("Shortcuts"), iconRole: "hotkeys"},
-        {id: "ai", name: qsTr("AI"), iconRole: "ai-assistant"},
-        {id: "updates", name: qsTr("Updates and privacy"), iconRole: "check-updates"}
-    ]
-    readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
-    function pageIndex(id) { return pages.findIndex(p => p.id === id) }
 
     function openDialog(page, filter, projectPage) {
         const r = app.openSettingsDialog()
@@ -76,12 +83,11 @@ DialogWindow {
         rendererLabels = r.rendererLabels
         outputDevices = r.outputDevices
         values = r.values
-        resetAllStaged = false
         hasProject = app.projectRoot(shellWindow).length > 0
-        projectTab = false
-        overrides = hasProject ? app.projectOverrides(shellWindow) : []
+        projectTab = hasProject && projectPage !== undefined
+        refreshChanged()
         if (hasProject)
-            projectPages.load()
+            loadProject()
         copyTagButtons()
         legacyNotFound = ""
         if (importer && importer.available) {
@@ -90,28 +96,247 @@ DialogWindow {
                 legacyNotFound = importer.status
         }
         reloaded()
-        hotkeyFilter.currentIndex = 0
-        hotkeySearch.text = ""
-        const shown = pageIndex(page ?? (settings ? settings.value("workspace.settingsPage") : ""))
-        pageList.currentIndex = shown >= 0 ? shown : 0
+        opened()
         if (filter !== undefined) {
-            hotkeyFilter.currentIndex = filter
-            hotkeys.filter(hotkeyFilter.currentIndex)
+            hotkeyFilter.currentIndex = Math.max(0, hotkeyFilter.modes.indexOf(filter))
+            hotkeys.filter(filter)
         }
+        const firstOpen = !visible
         open()
-        rememberPage()
-        if (hasProject && projectPage !== undefined) {
-            projectTab = true
-            projectPages.showPage(projectPage)
+        if (firstOpen || page !== undefined || projectPage !== undefined) {
+            query = ""
+            landingNote = ""
+            Qt.callLater(() => dialog.showNode(projectPage ?? page ?? (settings ? settings.value("workspace.settingsPage") : "general")))
         }
         if (notices)
             for (const warning of r.warnings)
                 notices.post("warning", qsTr("Settings"), warning)
     }
-    function rememberPage() {
-        if (visible && settings && pageList.currentIndex >= 0)
-            settings.setValue("workspace.settingsPage", pages[pageList.currentIndex].id)
+    // A setting link: opens the window at the row, never changing a value.
+    function openSetting(setting, project) {
+        openDialog()
+        searchField.text = ""
+        landingNote = ""
+        const projectOk = project && hasProject && (setting.length === 0 || isProjectable(setting))
+        if (project && !projectOk)
+            landingNote = hasProject ? qsTr("A project can’t set “%1”, so it opens on the Yours tab.").arg(setting)
+                                     : qsTr("This window has no project, so the link opens the Yours tab.")
+        projectTab = projectOk
+        if (setting.length === 0)
+            return
+        if (!rowItem(setting) && !SettingsCatalogue.sectionOf(setting).length && !pluginRows.some(r => r.setting === setting)) {
+            searchField.text = setting
+            return
+        }
+        Qt.callLater(() => dialog.land(setting))
     }
+    function land(setting) {
+        const section = SettingsCatalogue.sectionOf(setting) || pluginSection(setting)
+        unfold(section.split(".")[0])
+        const item = rowItem(setting)
+        if (!item)
+            return
+        scrollTo(item, rowsView.height / 3)
+        flashSetting = setting
+        flashEnd.restart()
+        const control = firstControl(item)
+        if (control)
+            control.forceActiveFocus(Qt.OtherFocusReason)
+        item.Accessible.announce(item.text)
+    }
+    function pluginSection(setting) {
+        const r = pluginRows.find(r => r.setting === setting)
+        return r ? "plugins." + r.plugin : ""
+    }
+    function firstControl(item) {
+        for (const child of item.children ?? []) {
+            if (child.activeFocusOnTab && child.visible && child.enabled && child.objectName.startsWith("setting_"))
+                return child
+            const deeper = firstControl(child)
+            if (deeper)
+                return deeper
+        }
+        return null
+    }
+    function isProjectable(setting) {
+        if (setting.startsWith("plugin."))
+            return pluginRows.some(r => r.setting === setting && r.projectable)
+        return SettingsCatalogue.projectable(setting)
+    }
+    function tabKey(key, project) { return (project ? "project:" : "") + key }
+    function registerRow(setting, item, project) {
+        rowItems[tabKey(setting, project)] = item
+    }
+    function registerSection(key, item, project) {
+        sectionItems[tabKey(key, project)] = item
+    }
+    function rowItem(setting) { return rowItems[tabKey(setting, projectTab)] }
+    function shows(setting) {
+        if (projectTab && !isProjectable(setting))
+            return false
+        return !searching || found.settings[setting] === true
+    }
+    function sectionShown(key) {
+        const section = sectionInfo(key)
+        if (section && !(projectTab ? section.project : section.yours))
+            return false
+        return !searching || (found.sections[key] ?? 0) > 0
+    }
+    function pageShown(page) {
+        if (!searching)
+            return projectTab ? pageHasProjectSections(page) : true
+        return (found.pages[page] ?? 0) > 0
+    }
+    function pageHasProjectSections(page) {
+        if (page === "plugins")
+            return pluginsWithSettings.some(p => pluginRows.some(r => r.plugin === p.id && r.projectable))
+        const p = catalogue.find(p => p.id === page)
+        return p !== undefined && p.sections.some(s => s.project)
+    }
+    function sectionInfo(key) {
+        const page = catalogue.find(p => p.id === key.split(".")[0])
+        return page ? page.sections.find(s => s.id === key) : undefined
+    }
+
+    function refreshChanged() {
+        changedIds = settings ? settings.changedSettings() : []
+        overrides = hasProject ? app.projectOverrides(shellWindow) : []
+    }
+    function loadProject() {
+        const r = app.openProjectSettings(shellWindow)
+        projectValues = r.values ?? {}
+        projectYours = r.yours ?? {}
+        projectSources = r.sources ?? {}
+        projectWaiting = app.projectWaitsForTrust(shellWindow)
+        overrides = app.projectOverrides(shellWindow)
+        projectPages.load()
+    }
+    function isChanged(ids) {
+        if (projectTab)
+            return ids.some(id => projectSources[id] === "project")
+        return ids.some(id => changedIds.includes(id) || (id.startsWith("plugin.") && pluginChanged(id)))
+    }
+    function pluginChanged(id) {
+        const r = pluginSetting(id)
+        return r !== undefined && r.value !== undefined && JSON.stringify(r.value) !== JSON.stringify(r.default)
+    }
+    function pluginSetting(id) {
+        for (const plugin of pluginManager ? pluginManager.plugins : [])
+            for (const s of plugin.settings ?? [])
+                if ("plugin." + plugin.id + "." + s.id === id)
+                    return s
+        return undefined
+    }
+    // {text, link?, readOnly?, warning?} or null: where else the row's setting is set.
+    function elsewhere(setting) {
+        if (!hasProject || setting.startsWith("plugin."))
+            return null
+        if (!projectTab)
+            return overrides.includes(setting) ? { text: qsTranslate("HikariSub.Project", "Set in this project"), link: "project" } : null
+        const source = projectSources[setting]
+        if (source === "local")
+            return { text: qsTranslate("HikariSub.Project", "Set in project.local.toml"), readOnly: true }
+        if (source === "project" && projectWaiting.includes(setting))
+            return { text: qsTr("Waits for trust"), warning: true, link: "trust" }
+        if (source === "project")
+            return { text: qsTranslate("HikariSub.Project", "Set in this project") }
+        return { text: qsTranslate("HikariSub.Project", "Uses yours"), link: "yours" }
+    }
+    function follow(link, setting) {
+        if (link === "trust") {
+            projectTab = false
+            Qt.callLater(() => dialog.showNode("general.trustedFolders"))
+            return
+        }
+        projectTab = link === "project"
+        Qt.callLater(() => dialog.land(setting))
+    }
+
+    // Changes apply at once: a staged value is written as soon as a control changes.
+    function put(setting, value) {
+        const v = Object.assign({}, values)
+        v[setting] = value
+        values = v
+        app.applySettings(values, false)
+        if (setting.startsWith("appearance."))
+            Theme.endPreview()
+        refreshChanged()
+    }
+    function projectPut(setting, value) {
+        const v = Object.assign({}, projectValues)
+        v[setting] = value
+        projectValues = v
+        const changed = {}
+        changed[setting] = value
+        app.applyProjectSettings(shellWindow, changed, [])
+        loadProject()
+    }
+    function resetSetting(ids) {
+        if (projectTab) {
+            app.applyProjectSettings(shellWindow, {}, ids)
+            loadProject()
+            reloaded()
+            return
+        }
+        for (const id of ids) {
+            if (id.startsWith("plugin.")) {
+                const parts = id.split(".")
+                const s = pluginSetting(id)
+                if (s)
+                    pluginManager.setSetting(parts[1], parts.slice(2).join("."), JSON.stringify(s.default))
+                continue
+            }
+            settings.reset(id)
+        }
+        values = app.currentSettings()
+        refreshChanged()
+        reloaded()
+    }
+    function copyText(text) { app.copyText(text) }
+    function linkTo(setting) { return "hikarisub://settings/" + setting + (projectTab ? "?scope=project" : "") }
+    function openSettingsFile(setting) {
+        if (projectTab)
+            app.openSettingsFile(shellWindow, setting && projectSources[setting] === "local" ? "local" : "project")
+        else if ((setting ?? "").startsWith("plugin.") || currentNode.startsWith("plugins"))
+            app.openSettingsFile(shellWindow, "plugins")
+        else if (currentNode === "hotkeys")
+            app.openSettingsFile(shellWindow, "hotkeys")
+        else
+            app.openSettingsFile(shellWindow, "settings")
+    }
+    Connections {
+        target: dialog.settings
+        function onChanged(id) {
+            if (!dialog.visible || reloadValues.running)
+                return
+            reloadValues.restart()
+        }
+    }
+    Timer {
+        id: reloadValues
+        interval: 0
+        onTriggered: {
+            const current = dialog.app.currentSettings()
+            dialog.refreshChanged()
+            if (JSON.stringify(current) === JSON.stringify(dialog.values))
+                return
+            dialog.values = current
+            dialog.reloaded()
+        }
+    }
+    Timer {
+        id: flashEnd
+        interval: 50
+        onTriggered: dialog.flashSetting = ""
+    }
+    Connections {
+        target: dialog.hotkeys
+        function onRowsChanged() {
+            if (dialog.visible && dialog.hotkeys.optionsModified)
+                dialog.hotkeys.commitOptions()
+        }
+    }
+
     Connections {
         target: dialog.app
         function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
@@ -131,13 +356,6 @@ DialogWindow {
         questionLoader.active = true
         questionLoader.item.ask(options, done)
     }
-    function put(setting, value) {
-        const v = Object.assign({}, values)
-        v[setting] = value
-        values = v
-        if (setting.startsWith("appearance."))
-            Theme.preview(values)
-    }
     function pickThemeColour(theme, role, colour, anchor, name) {
         themeColourPopover.openFor(anchor, themeColourTarget, () => {
             const now = colour
@@ -149,38 +367,37 @@ DialogWindow {
             return { r: c.r, g: c.g, b: c.b, a: 0 }
         }, { title: name, alpha: false, focus: anchor })
     }
-    function apply() {
-        aiPage.commit()
-        app.applySettings(values, resetAllStaged)
-        resetAllStaged = false
-        commitTagButtons()
-        applyProject()
-    }
-    function applyProject() {
-        if (!hasProject)
-            return
-        projectPages.apply()
-        overrides = app.projectOverrides(shellWindow)
-    }
-    function resetPage() {
-        if (currentPage === "hotkeys") {
+    function resetPage(page) {
+        if (page === "hotkeys") {
             hotkeys.optionsResetAll()
             return
         }
-        values = app.resetSettingsPage(values, currentPage)
-        if (currentPage === "appearance")
-            Theme.preview(values)
-        if (currentPage === "lineEditor")
+        values = app.resetSettingsPage(values, page)
+        app.applySettings(values, false)
+        if (page === "lineEditor") {
             tagButtonList = []
-        if (currentPage === "conversion")
+            commitTagButtons()
+        }
+        if (page === "conversion")
             styles = app.settingsStyles()
+        refreshChanged()
         reloaded()
+    }
+    function askResetPage(page) {
+        const name = catalogue.find(p => p.id === page)?.name ?? ""
+        ask({
+            title: qsTr("Reset page"),
+            text: qsTr("Reset the settings on %1 to their defaults?").arg(name),
+            severity: "warning",
+            choices: [{ id: "reset", text: qsTr("Reset page"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, answer => { if (answer === "reset") dialog.resetPage(page) })
     }
     function resetAll() {
         ask({
             title: qsTr("Reset all settings"),
             text: qsTr("Reset all settings to their defaults?"),
-            detail: qsTr("Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages."),
+            detail: qsTr("Shortcuts and the appearance stay as they are: reset them on their own pages."),
             severity: "warning",
             choices: [
                 { id: "reset", text: qsTr("Reset all"), role: "destructive" },
@@ -190,8 +407,10 @@ DialogWindow {
             if (answer !== "reset")
                 return
             dialog.values = dialog.app.resetSettings(dialog.values)
-            dialog.resetAllStaged = true
+            dialog.app.applySettings(dialog.values, true)
+            dialog.values = dialog.app.currentSettings()
             dialog.copyTagButtons()
+            dialog.refreshChanged()
             dialog.reloaded()
         })
     }
@@ -217,12 +436,14 @@ DialogWindow {
             list[index] = b
         tagButtonList = list
         tagButtonRows.currentIndex = index < 0 ? list.length - 1 : index
+        commitTagButtons()
     }
     function removeTagButton(index) {
         const list = tagButtonList.slice()
         list.splice(index, 1)
         tagButtonList = list
         tagButtonRows.currentIndex = Math.min(index, list.length - 1)
+        commitTagButtons()
     }
     function moveTagButton(index, step) {
         const list = tagButtonList.slice()
@@ -231,6 +452,7 @@ DialogWindow {
         list[index + step] = b
         tagButtonList = list
         tagButtonRows.currentIndex = index + step
+        commitTagButtons()
     }
     readonly property color warningColour: Theme.warning
     function mapHotkey(from) {
@@ -249,154 +471,191 @@ DialogWindow {
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
         styles = r.styles
+        put("convert.styleCatalog", values["convert.styleCatalog"])
         values = Object.assign({}, values, r.values)
+        app.applySettings(values, false)
         reloaded()
     }
 
-    onAccepted: {
-        aiPage.commit()
-        app.applySettings(values, resetAllStaged)
-        resetAllStaged = false
-        commitTagButtons()
-        applyProject()
-    }
     onVisibleChanged: if (!visible) {
         Theme.endPreview()
         aiPage.closeForm()
     }
 
+    // The tree: pages, their sections, then Plugins with one node per plugin.
+    readonly property var treeRows: {
+        const out = []
+        const add = (page, name, icon, sections) => {
+            if (!pageShown(page))
+                return
+            const shownSections = sections.filter(s => sectionShown(s.id))
+            const open = searching || folded[page] === false
+            out.push({ id: page, name: name, icon: icon, depth: 0, folded: !open, foldable: shownSections.length > 0,
+                       count: searching ? (found.pages[page] ?? 0) : -1 })
+            if (open)
+                for (const s of shownSections)
+                    out.push({ id: s.id, name: s.title, icon: "", depth: 1, folded: false, foldable: false,
+                               count: searching ? (found.sections[s.id] ?? 0) : -1 })
+        }
+        for (const p of catalogue)
+            add(p.id, p.name, p.icon, p.sections)
+        add("plugins", qsTr("Plugins"), "plugins", pluginsWithSettings.map(p => ({ id: "plugins." + p.id, title: p.name, project: true, yours: true })))
+        return out
+    }
+    function unfold(page) {
+        const f = Object.assign({}, folded)
+        f[page] = false
+        folded = f
+    }
+    function toggleFold(page) {
+        const f = Object.assign({}, folded)
+        f[page] = f[page] === false
+        folded = f
+    }
+    function showNode(id) {
+        if (!id)
+            return
+        const page = id.split(".")[0]
+        unfold(page)
+        const item = id.includes(".") ? sectionItems[tabKey(id, projectTab)] : pageItems[tabKey(page, projectTab)]
+        if (item)
+            scrollTo(item, 0)
+        currentNode = id
+        if (settings && !projectTab)
+            settings.setValue("workspace.settingsPage", page)
+    }
+    readonly property var pageItems: ({})
+    function scrollTo(item, offset) {
+        const y = item.mapToItem(rowsColumn, 0, 0).y
+        rowsView.contentItem.contentY = Math.max(0, Math.min(y - offset, rowsColumn.height - rowsView.height))
+    }
+    function followScroll() {
+        const top = rowsView.contentItem.contentY + 8
+        let best = ""
+        let bestY = -1
+        for (const tabbed in sectionItems) {
+            if (tabbed.startsWith("project:") !== projectTab)
+                continue
+            const key = tabbed.replace("project:", "")
+            const item = sectionItems[tabbed]
+            if (!item || !item.visible)
+                continue
+            const y = item.mapToItem(rowsColumn, 0, 0).y
+            if (y <= top && y > bestY) {
+                best = key
+                bestY = y
+            }
+        }
+        if (best.length > 0 && best !== currentNode) {
+            currentNode = best
+            if (settings && !projectTab)
+                settings.setValue("workspace.settingsPage", best.split(".")[0])
+        }
+    }
+
     leadingActions: [
-        RowLayout {
-            spacing: 2
+        IconTextButton {
+            objectName: "settingsResetAll"
+            iconRole: "restore-default"
+            text: qsTr("Reset all…")
             visible: !dialog.projectTab
-            IconTextButton {
-                objectName: "settingsResetPage"
-                iconRole: "restore-default"
-                text: qsTr("Reset page")
-                tip: qsTr("Resets the settings on this page to their defaults")
-                onClicked: dialog.resetPage()
-            }
-            IconToolButton {
-                id: resetMenuButton
-                objectName: "settingsResetMenu"
-                iconRole: "chevron-down"
-                text: qsTr("More resets")
-                onClicked: resetMenu.popup(resetMenuButton, 0, resetMenuButton.height)
-            }
-            ShellMenu {
-                id: resetMenu
-                ShellMenuItem {
-                    objectName: "settingsResetThisPage"
-                    iconRole: "restore-default"
-                    text: qsTr("Reset this page")
-                    onTriggered: dialog.resetPage()
-                }
-                ShellMenuItem {
-                    objectName: "settingsResetAll"
-                    iconRole: "restore-default"
-                    text: qsTr("Reset all settings…")
-                    onTriggered: dialog.resetAll()
-                }
-            }
+            tip: qsTr("Resets every setting but the shortcuts and the appearance")
+            onClicked: dialog.resetAll()
         }
     ]
     buttons: [
         PrimaryButton {
-            id: okButton
-            objectName: "settingsOk"
-            text: qsTr("OK")
+            id: closeButton
+            objectName: "settingsClose"
+            text: qsTr("Close")
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-            onClicked: dialog.accept()
-        },
-        Button {
-            objectName: "settingsCancel"
-            text: qsTr("Cancel")
-            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-            onClicked: dialog.reject()
-        },
-        Button {
-            objectName: "settingsApply"
-            text: qsTr("Apply")
-            DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole
-            onClicked: dialog.apply()
+            onClicked: dialog.close()
         }
     ]
 
-    component SettingsPage: ScrollView {
+    component SettingsPage: ColumnLayout {
         id: settingsPage
+        required property string page
         default property alias content: pageColumn.data
-        contentWidth: availableWidth
-        contentHeight: pageColumn.implicitHeight + 44
+        visible: dialog.pageShown(page)
+        spacing: 12
+        Layout.fillWidth: true
+        Component.onCompleted: dialog.pageItems[dialog.tabKey(page, false)] = settingsPage
+        Label {
+            objectName: "settingsPageHeading"
+            text: dialog.catalogue.find(p => p.id === settingsPage.page)?.name ?? (settingsPage.page === "plugins" ? qsTr("Plugins") : "")
+            font.pixelSize: 20
+            font.weight: Font.DemiBold
+            color: Theme.text
+            Accessible.role: Accessible.Heading
+            Layout.topMargin: 12
+        }
         ColumnLayout {
             id: pageColumn
-            x: 24
-            y: 20
-            width: settingsPage.availableWidth - 48
-            spacing: 16
+            spacing: 24
+            Layout.fillWidth: true
         }
     }
-    component OverriddenNote: SettingNote {
-        required property string overriddenId
-        objectName: "overridden_" + overriddenId
-        visible: dialog.overrides.includes(overriddenId)
-        text: qsTranslate("HikariSub.Project", "Overridden in this project")
+    component Section: SettingsSection {
+        host: dialog
     }
-    component CreditRow: ColumnLayout {
+    component CreditRow: SettingsRow {
         id: creditRow
         required property var modelData
         readonly property string key: "scriptProperties." + modelData.id
-        spacing: 0
-        Layout.fillWidth: true
-        RowLayout {
-            Layout.fillWidth: true
-            SettingCheck {
-                setting: creditRow.key + "On"
-                text: creditRow.modelData.name
-                Layout.fillWidth: false
-                Layout.preferredWidth: 160
-            }
-            SettingText {
-                readonly property string docsLabel: creditRow.modelData.name
-                setting: creditRow.key
-                Accessible.name: creditRow.modelData.name
-                Layout.fillWidth: true
-            }
+        host: dialog
+        setting: key
+        settings: [key, key + "On"]
+        text: modelData.name
+        note: ""
+        CheckBox {
+            id: creditOn
+            objectName: "setting_" + creditRow.key + "On"
+            text: qsTr("Write")
+            Accessible.name: qsTr("Write %1").arg(creditRow.modelData.name)
+            function refresh() { checked = dialog.values[creditRow.key + "On"] === true }
+            Component.onCompleted: refresh()
+            Connections { target: dialog; function onReloaded() { creditOn.refresh() } }
+            onToggled: dialog.put(creditRow.key + "On", checked)
         }
-        SettingNote {
-            objectName: "overridden_" + creditRow.key
-            visible: dialog.overrides.includes(creditRow.key) || dialog.overrides.includes(creditRow.key + "On")
-            text: qsTranslate("HikariSub.Project", "Overridden in this project")
-            Layout.topMargin: 2
+        SettingText {
+            setting: creditRow.key
+            Accessible.name: creditRow.modelData.name
+            Layout.fillWidth: true
         }
     }
     component SettingNote: Label {
         color: Theme.muted
+        font.pixelSize: 12
         wrapMode: Text.Wrap
-        Layout.leftMargin: 24
-        Layout.topMargin: -5
         Layout.fillWidth: true
     }
-    component SettingCheck: CheckBox {
-        id: check
-        required property string setting
+    component SettingCheck: SettingsRow {
+        id: checkRow
         property string tip
-        objectName: "setting_" + setting
-        leftPadding: 1
-        spacing: 9
-        Layout.fillWidth: text.length > 0
-        Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
-        Accessible.name: text
-        Accessible.description: tip
-        ToolTip.text: tip
-        ToolTip.visible: hovered && tip !== ""
-        function refresh() { checked = dialog.values[setting] === true }
-        Component.onCompleted: {
-            if (contentItem && contentItem.wrapMode !== undefined)
-                contentItem.wrapMode = Text.Wrap
-            refresh()
+        property alias checked: check.checked
+        host: dialog
+        inline: true
+        CheckBox {
+            id: check
+            objectName: "setting_" + checkRow.setting
+            text: checkRow.text
+            leftPadding: 1
+            spacing: 9
+            Layout.fillWidth: true
+            Accessible.name: text
+            Accessible.description: checkRow.note
+            ToolTip.text: checkRow.tip
+            ToolTip.visible: hovered && checkRow.tip !== ""
+            function refresh() { checked = dialog.values[checkRow.setting] === true }
+            Component.onCompleted: {
+                if (contentItem && contentItem.wrapMode !== undefined)
+                    contentItem.wrapMode = Text.Wrap
+                refresh()
+            }
+            Connections { target: dialog; function onReloaded() { check.refresh() } }
+            onToggled: dialog.put(checkRow.setting, checked)
         }
-        Connections { target: dialog; function onReloaded() { check.refresh() } }
-        onToggled: dialog.put(setting, checked)
     }
     component SettingNumber: RowLayout {
         id: numberRow
@@ -413,14 +672,22 @@ DialogWindow {
             from: numberRow.from
             to: numberRow.to
             editable: true
-            Accessible.name: numberRow.name
+            Accessible.name: numberRow.name || (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.label(numberRow.setting) : "")
+            Accessible.description: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.description(numberRow.setting) : "")
             Layout.preferredWidth: 120
             ToolTip.text: numberRow.tip
             ToolTip.visible: hovered && numberRow.tip !== ""
             function refresh() { value = dialog.values[numberRow.setting] ?? 0 }
             Component.onCompleted: refresh()
             Connections { target: dialog; function onReloaded() { spin.refresh() } }
-            onValueModified: dialog.put(numberRow.setting, value)
+            onValueModified: typing.restart()
+            Timer {
+                id: typing
+                interval: 500
+                onTriggered: dialog.put(numberRow.setting, spin.value)
+            }
+            onActiveFocusChanged: if (!activeFocus && typing.running) { typing.stop(); typing.triggered() }
+            Keys.onReturnPressed: event => { event.accepted = false; if (typing.running) { typing.stop(); typing.triggered() } }
         }
         Label {
             visible: numberRow.unit.length > 0
@@ -431,18 +698,42 @@ DialogWindow {
     component SettingText: TextField {
         id: field
         required property string setting
+        property string before: ""
         objectName: "setting_" + setting
         Layout.preferredWidth: 260
+        Accessible.description: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.description(setting) : "")
         function refresh() { text = dialog.values[setting] ?? "" }
+        function commit() {
+            typing.stop()
+            if ((dialog.values[setting] ?? "") !== text)
+                dialog.put(setting, text)
+        }
         Component.onCompleted: refresh()
-        Connections { target: dialog; function onReloaded() { field.refresh() } }
-        onTextEdited: dialog.put(setting, text)
+        Connections { target: dialog; function onReloaded() { if (!field.activeFocus) field.refresh() } }
+        onTextEdited: typing.restart()
+        onEditingFinished: commit()
+        onActiveFocusChanged: if (activeFocus) before = text
+        Keys.onEscapePressed: event => {
+            if (text === before) {
+                event.accepted = false
+                return
+            }
+            typing.stop()
+            text = before
+            commit()
+        }
+        Timer {
+            id: typing
+            interval: 500
+            onTriggered: field.commit()
+        }
     }
     component SettingChoice: ComboBox {
         id: choice
         required property string setting
         objectName: "setting_" + setting
         Layout.preferredWidth: 260
+        Accessible.description: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.description(setting) : "")
         signal chosen(int index)
         function refresh() {
             const v = dialog.values[setting] ?? -1
@@ -487,16 +778,187 @@ DialogWindow {
             onValueModified: dialog.put(fontRow.sizeSetting, value)
         }
     }
+    // A setting with no control yet: its value, read-only.
+    component ValueRow: SettingsRow {
+        id: valueRow
+        host: dialog
+        TextField {
+            objectName: "setting_" + valueRow.setting
+            readOnly: true
+            selectByMouse: true
+            text: {
+                dialog.changedIds
+                const v = dialog.settings ? dialog.settings.value(valueRow.setting) : ""
+                return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+            }
+            Layout.fillWidth: true
+            Accessible.name: valueRow.text
+        }
+        IconTextButton {
+            iconRole: "folder-open"
+            text: qsTr("Open settings file")
+            onClicked: dialog.openSettingsFile(valueRow.setting)
+        }
+    }
+    // A setting with no options binding, written straight to settings.toml.
+    component StoreCheck: SettingsRow {
+        id: storeCheck
+        host: dialog
+        inline: true
+        CheckBox {
+            objectName: "setting_" + storeCheck.setting
+            text: storeCheck.text
+            leftPadding: 1
+            spacing: 9
+            Accessible.name: text
+            Accessible.description: storeCheck.note
+            checked: {
+                dialog.changedIds
+                return dialog.settings ? dialog.settings.value(storeCheck.setting) === true : false
+            }
+            onToggled: {
+                dialog.settings.setValue(storeCheck.setting, checked)
+                dialog.refreshChanged()
+            }
+        }
+    }
+    component StoreText: SettingsRow {
+        id: storeText
+        property string placeholder
+        host: dialog
+        TextField {
+            id: storeField
+            objectName: "setting_" + storeText.setting
+            placeholderText: storeText.placeholder
+            Layout.preferredWidth: 260
+            Accessible.name: storeText.text
+            function refresh() { text = dialog.settings ? dialog.settings.value(storeText.setting) ?? "" : "" }
+            function commit() {
+                storeTyping.stop()
+                if (dialog.settings.value(storeText.setting) !== text.trim()) {
+                    dialog.settings.setValue(storeText.setting, text.trim())
+                    dialog.refreshChanged()
+                }
+            }
+            Component.onCompleted: refresh()
+            Connections { target: dialog; function onReloaded() { if (!storeField.activeFocus) storeField.refresh() } }
+            onTextEdited: storeTyping.restart()
+            onEditingFinished: commit()
+            Timer {
+                id: storeTyping
+                interval: 500
+                onTriggered: storeField.commit()
+            }
+        }
+    }
 
     ColumnLayout {
         spacing: 0
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.preferredWidth: 960
+        Layout.preferredHeight: 560
+        Layout.minimumWidth: 720
+        Layout.minimumHeight: 360
+
+        Rectangle {
+            color: Theme.panel
+            Layout.fillWidth: true
+            implicitHeight: 40
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 12
+                anchors.rightMargin: 12
+                spacing: 8
+                TextField {
+                    id: searchField
+                    objectName: "settingsSearch"
+                    placeholderText: qsTr("Search settings")
+                    leftPadding: 30
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Search settings")
+                    onTextChanged: searchSettle.restart()
+                    Keys.onEscapePressed: event => {
+                        if (text.length === 0) {
+                            event.accepted = false
+                            return
+                        }
+                        text = ""
+                    }
+                    Keys.onPressed: event => {
+                        if (event.key !== Qt.Key_Backspace || selectedText.length > 0)
+                            return
+                        const before = text.slice(0, cursorPosition)
+                        const token = before.match(/@[a-z]+(:[^ ]*)? ?$/)
+                        if (!token)
+                            return
+                        const at = cursorPosition - token[0].length
+                        text = text.slice(0, at) + text.slice(cursorPosition)
+                        cursorPosition = at
+                        event.accepted = true
+                    }
+                    Icon {
+                        iconRole: "search"
+                        color: Theme.muted
+                        x: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                IconToolButton {
+                    id: filterButton
+                    objectName: "settingsFilter"
+                    iconRole: "filter"
+                    text: qsTr("Filter")
+                    onClicked: filterMenu.popup(filterButton, 0, filterButton.height)
+                }
+                ShellMenu {
+                    id: filterMenu
+                    ShellMenuItem {
+                        objectName: "settingsFilterModified"
+                        iconRole: "document-modified"
+                        text: qsTr("Modified")
+                        onTriggered: dialog.addToken("@modified")
+                    }
+                    ShellMenu {
+                        objectName: "settingsFilterPlugin"
+                        iconRole: "plugins"
+                        title: qsTr("Plugin")
+                        enabled: dialog.pluginsWithSettings.length > 0
+                        Repeater {
+                            model: dialog.pluginsWithSettings
+                            ShellMenuItem {
+                                required property var modelData
+                                iconRole: "plugins"
+                                text: modelData.name
+                                onTriggered: dialog.addToken("@plugin:" + modelData.id)
+                            }
+                        }
+                    }
+                }
+                IconTextButton {
+                    objectName: "settingsOpenFile"
+                    iconRole: "folder-open"
+                    text: qsTr("Open settings file")
+                    onClicked: dialog.openSettingsFile("")
+                }
+            }
+        }
+        Timer {
+            id: searchSettle
+            interval: 150
+            onTriggered: {
+                dialog.query = searchField.text
+                if (dialog.searching)
+                    searchField.Accessible.announce(dialog.found.count === 0 ? noResults.text : qsTr("%n setting(s) match", "", dialog.found.count))
+            }
+        }
         TabBar {
+            id: scopeTabs
             objectName: "settingsScope"
             visible: dialog.hasProject
             currentIndex: dialog.projectTab ? 1 : 0
             Layout.leftMargin: 12
+            Layout.preferredHeight: 30
             TabButton {
                 objectName: "settingsScopeYours"
                 text: qsTranslate("HikariSub.Project", "Yours")
@@ -505,84 +967,114 @@ DialogWindow {
             }
             TabButton {
                 objectName: "settingsScopeProject"
-                text: qsTranslate("HikariSub.Project", "Project")
+                text: qsTranslate("HikariSub.Project", "Project: %1").arg(dialog.hasProject ? dialog.app.projectName(dialog.shellWindow) : "")
                 width: implicitWidth
                 onClicked: dialog.projectTab = true
             }
         }
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
-        ProjectSettingsPages {
-            id: projectPages
-            app: dialog.app
-            shellWindow: dialog.shellWindow
-            dictionaries: dialog.dictionaries
-            visible: dialog.projectTab
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredWidth: 880
-            Layout.preferredHeight: 528
-        }
         RowLayout {
             spacing: 0
-            visible: !dialog.projectTab
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredWidth: 880
-            Layout.preferredHeight: 528
 
             Rectangle {
                 color: Theme.background
                 Layout.preferredWidth: 220
                 Layout.fillHeight: true
                 ListView {
-                    id: pageList
+                    id: tree
                     objectName: "settingsPages"
                     anchors.fill: parent
                     anchors.rightMargin: 1
                     topMargin: 8
                     clip: true
-                    model: dialog.pages
-                    keyNavigationEnabled: true
+                    model: dialog.treeRows
                     activeFocusOnTab: true
-                    Accessible.role: Accessible.PageTabList
-                    Accessible.name: dialog.title
-                    onCurrentIndexChanged: dialog.rememberPage()
+                    currentIndex: dialog.treeRows.findIndex(r => r.id === dialog.currentNode)
+                    Accessible.role: Accessible.Tree
+                    Accessible.name: qsTr("Settings contents")
+                    Keys.onPressed: event => {
+                        const r = dialog.treeRows[currentIndex]
+                        if (!r)
+                            return
+                        if (event.key === Qt.Key_Down || event.key === Qt.Key_Up) {
+                            const next = Math.max(0, Math.min(count - 1, currentIndex + (event.key === Qt.Key_Down ? 1 : -1)))
+                            dialog.currentNode = dialog.treeRows[next].id
+                        } else if (event.key === Qt.Key_Right && r.depth === 0 && r.folded) {
+                            dialog.unfold(r.id)
+                        } else if (event.key === Qt.Key_Left && r.depth === 0 && !r.folded) {
+                            dialog.toggleFold(r.id)
+                        } else if (event.key === Qt.Key_Left && r.depth === 1) {
+                            dialog.currentNode = r.id.split(".")[0]
+                        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            dialog.showNode(r.id)
+                        } else {
+                            return
+                        }
+                        event.accepted = true
+                    }
                     delegate: ItemDelegate {
-                        id: pageItem
+                        id: node
                         required property var modelData
                         required property int index
-                        objectName: "settingsPage_" + modelData.id
+                        objectName: modelData.depth === 0 ? "settingsPage_" + modelData.id : "settingsSection_" + modelData.id
                         width: ListView.view.width
-                        height: 36
+                        height: 24
                         highlighted: ListView.isCurrentItem
                         text: modelData.name
-                        leftPadding: 16
-                        rightPadding: 12
+                        leftPadding: 8 + 12 * modelData.depth
+                        rightPadding: 8
                         focusPolicy: Qt.NoFocus
-                        onClicked: pageList.currentIndex = index
-                        Accessible.role: Accessible.PageTab
+                        onClicked: dialog.showNode(modelData.id)
+                        Accessible.role: Accessible.TreeItem
                         Accessible.name: text
                         Accessible.selected: highlighted
+                        Accessible.expandable: modelData.foldable
+                        Accessible.expanded: !modelData.folded
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            enabled: node.modelData.depth === 0 && node.modelData.id !== "plugins" && !dialog.projectTab
+                            onTapped: { pageMenu.page = node.modelData.id; pageMenu.popup() }
+                        }
                         background: Rectangle {
-                            color: pageItem.highlighted ? Theme.select : pageItem.hovered ? Theme.raised : "transparent"
-                            Rectangle {
-                                visible: pageItem.highlighted
-                                width: 3
-                                height: parent.height
-                                color: Theme.accent
-                            }
+                            color: node.highlighted ? Theme.select : node.hovered ? Theme.raised : "transparent"
                         }
                         contentItem: RowLayout {
-                            spacing: 12
-                            Icon { objectName: "settingsPageIcon"; iconRole: pageItem.modelData.iconRole }
+                            spacing: 6
+                            Icon {
+                                visible: node.modelData.foldable
+                                iconRole: node.modelData.folded ? "chevron-right" : "chevron-down"
+                                TapHandler { onTapped: dialog.toggleFold(node.modelData.id) }
+                            }
+                            Item { visible: !node.modelData.foldable && node.modelData.depth === 0; implicitWidth: 16 }
+                            Icon {
+                                objectName: "settingsPageIcon"
+                                visible: node.modelData.depth === 0
+                                iconRole: node.modelData.icon
+                            }
                             Label {
-                                text: pageItem.text
-                                font.bold: pageItem.highlighted
+                                text: node.text
                                 color: Theme.text
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
+                            Label {
+                                visible: node.modelData.count >= 0
+                                text: node.modelData.count
+                                color: Theme.muted
+                            }
                         }
+                    }
+                }
+                ShellMenu {
+                    id: pageMenu
+                    property string page
+                    ShellMenuItem {
+                        objectName: "settingsResetPage"
+                        iconRole: "restore-default"
+                        text: qsTr("Reset page…")
+                        onTriggered: dialog.askResetPage(pageMenu.page)
                     }
                 }
                 Rectangle {
@@ -592,22 +1084,75 @@ DialogWindow {
                     color: Theme.line
                 }
             }
-            StackLayout {
-                id: pageStack
-                objectName: "settingsPageStack"
-                currentIndex: pageList.currentIndex
+            Rectangle {
+                color: Theme.panel
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-
+                ScrollView {
+                    id: rowsView
+                    objectName: "settingsRows"
+                    anchors.fill: parent
+                    // MUST KILL: narrowest is copied in later because binding to the column's minimum width loops
+                    property real narrowest: 0
+                    contentWidth: Math.max(availableWidth, narrowest)
+                    contentHeight: rowsColumn.implicitHeight + 48
+                    Connections {
+                        target: rowsView.contentItem
+                        function onContentYChanged() { dialog.followScroll() }
+                    }
+                    ColumnLayout {
+                        id: rowsColumn
+                        x: 24
+                        y: 12
+                        width: rowsView.contentWidth - 48
+                        spacing: 24
+                        onImplicitWidthChanged: Qt.callLater(() => rowsView.narrowest = Layout.minimumWidth + 48)
+                        InlineBar {
+                            objectName: "settingsFileProblem"
+                            visible: !dialog.projectTab && dialog.settings !== null && dialog.settings.fileProblem.length > 0
+                            severity: "error"
+                            closable: false
+                            text: dialog.settings ? dialog.settings.fileProblem + " " + qsTr("HikariSub keeps the last values it could read, and your changes here wait until it reads again.") : ""
+                            Layout.fillWidth: true
+                        }
+                        InlineBar {
+                            objectName: "settingsLandingNote"
+                            visible: dialog.landingNote.length > 0
+                            severity: "info"
+                            text: dialog.landingNote
+                            onClosed: dialog.landingNote = ""
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            id: noResults
+                            objectName: "settingsNoResults"
+                            visible: dialog.searching && dialog.found.count === 0
+                            text: dialog.found.modified && dialog.query.replace("@modified", "").trim().length === 0
+                                  ? qsTr("Nothing is changed here.")
+                                  : qsTr("No settings match “%1”.").arg(dialog.query.trim())
+                            color: Theme.muted
+                        }
+                        ProjectSettingsPages {
+                            id: projectPages
+                            dialog: dialog
+                            visible: dialog.projectTab
+                            Layout.fillWidth: true
+                        }
+                        ColumnLayout {
+                            id: yoursPages
+                            visible: !dialog.projectTab
+                            spacing: 24
+                            Layout.fillWidth: true
                 SettingsPage {
+                    page: "general"
                     objectName: "settingsPageGeneral"
-                    SettingsSection {
+                    Section {
+                        key: "general.language"
                         objectName: "settingsLanguageGroup"
-                        title: qsTr("Language")
                         ruled: false
                         SettingsRow {
-                            iconRole: "language"
-                            text: qsTr("Interface language")
+                            host: dialog
+                            setting: "program.language"
                             SettingChoice {
                                 setting: "program.language"
                                 model: dialog.languages
@@ -615,44 +1160,42 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Tabs")
-                        SettingCheck { setting: "subtitles.openInNewTab"; text: qsTr("Always open subtitles in a new tab") }
+                    Section {
+                        key: "general.tabs"
+                        SettingCheck { setting: "subtitles.openInNewTab" }
                         SettingsRow {
-                            iconRole: "tab-name-length"
-                            text: qsTr("Tab name length")
+                            host: dialog
+                            setting: "program.tabTextMaxChars"
                             SettingNumber {
                                 setting: "program.tabTextMaxChars"; from: 20; to: 150; unit: qsTr("characters")
                                 name: qsTr("Tab name length"); tip: qsTr("Number of tab name characters. Range from 20 to 150")
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Saving")
+                    Section {
+                        key: "general.saving"
                         SettingsRow {
-                            iconRole: "autosave"
-                            text: qsTr("Autosave files kept")
+                            host: dialog
+                            setting: "autosave.maxFiles"
                             SettingNumber {
                                 setting: "autosave.maxFiles"; from: 2; to: 1000000; name: qsTr("Autosave files kept")
                                 tip: qsTr("Number of autosaves can be set from 2 to 1000000")
                             }
                         }
                         SettingsRow {
-                            iconRole: "autosave"
-                            text: qsTr("Autosave every")
+                            host: dialog
+                            setting: "autosave.intervalSeconds"
                             SettingNumber {
                                 setting: "autosave.intervalSeconds"; from: 5; to: 3600; unit: qsTr("seconds")
                                 name: qsTr("Autosave every"); tip: qsTr("Seconds from a change to its autosave. Range from 5 to 3600")
                             }
                         }
                     }
-                    SettingsSection {
+                    Section {
+                        key: "general.notices"
                         objectName: "settingsNoticesGroup"
-                        title: qsTr("Notices")
-                        SettingCheck { setting: "notices.toasts"; text: qsTr("Show notices as toasts") }
-                        SettingNote { text: qsTr("Off: notices go to the Log only.") }
+                        SettingCheck { setting: "notices.toasts" }
                         SettingsRow {
-                            iconRole: "notices"
                             text: qsTr("Questions hidden with “Don’t ask again”")
                             IconTextButton {
                                 iconRole: "notices"
@@ -663,12 +1206,11 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Folders")
+                    Section {
+                        key: "general.folders"
                         SettingsRow {
                             objectName: "settingsUserFolderRow"
                             visible: (dialog.app.userFolder || "").length > 0
-                            iconRole: "folder-open"
                             text: qsTr("User folder")
                             TextField {
                                 objectName: "settingsUserFolderPath"
@@ -687,8 +1229,8 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
-                            iconRole: "folder-open"
-                            text: qsTr("Fonts folder")
+                            host: dialog
+                            setting: "fonts.externalDirectory"
                             SettingText { id: fontsFolder; setting: "fonts.externalDirectory"; Accessible.name: qsTr("Fonts folder") }
                             IconTextButton {
                                 iconRole: "folder-open"
@@ -698,9 +1240,9 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
+                    Section {
+                        key: "general.trustedFolders"
                         objectName: "settingsTrustedFolders"
-                        title: qsTr("Trusted folders")
                         SettingNote { text: qsTr("HikariSub trusts these folders and the folders inside them: scripts a subtitle file names load without asking, and a file inside a Project opens the Project.") }
                         Label {
                             objectName: "settingsTrustedFoldersEmpty"
@@ -737,11 +1279,10 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
+                    Section {
+                        key: "general.legacy"
                         objectName: "settingsLegacyGroup"
-                        title: qsTr("Legacy")
                         SettingsRow {
-                            iconRole: "import"
                             text: qsTr("HikariSub 0.0.x")
                             IconTextButton {
                                 iconRole: "import"
@@ -764,7 +1305,6 @@ DialogWindow {
                             text: dialog.legacyNotFound
                         }
                         SettingsRow {
-                            iconRole: "hotkeys"
                             text: qsTr("Script shortcuts")
                             IconTextButton {
                                 objectName: "hotkeyImportLegacy"
@@ -779,31 +1319,39 @@ DialogWindow {
                     }
                 }
 
-                AppearancePage { dialog: dialog }
+                SettingsPage {
+                    page: "appearance"
+                    objectName: "settingsPageAppearance"
+                    AppearancePage { dialog: dialog }
+                }
 
                 SettingsPage {
+                    page: "lineEditor"
                     objectName: "settingsPageLineEditor"
-                    SettingsSection {
-                        title: qsTr("Display")
+                    Section {
+                        key: "lineEditor.display"
                         ruled: false
-                        SettingCheck { setting: "editor.hideTags"; text: qsTr("Hide tags") }
-                        SettingCheck { setting: "editor.timesToFramesSwitch"; text: qsTr("Show video frames instead of times") }
-                        SettingNote { text: qsTr("In the line editor and the grid.") }
+                        SettingCheck { setting: "editor.hideTags" }
+                        SettingCheck { setting: "editor.timesToFramesSwitch" }
                     }
-                    SettingsSection {
-                        title: qsTr("Editing")
-                        SettingCheck { setting: "editor.dontGoToNextLineOnTimesEdit"; text: qsTr("Stay on the line when editing times") }
-                        SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
+                    Section {
+                        key: "lineEditor.editing"
+                        SettingCheck { setting: "editor.dontGoToNextLineOnTimesEdit" }
+                        SettingCheck { setting: "editor.allowNumpadHotkeys" }
                         SettingCheck { setting: "editor.softLineBreak"; text: qsTr("Shift+Enter inserts a soft line break (%1)").arg("\\n") }
                     }
-                    SettingsSection {
-                        title: qsTr("Translation mode")
-                        SettingCheck { setting: "translation.showOriginal"; text: qsTr("Show the original") }
-                        SettingCheck { setting: "translation.hideOriginalOnVideo"; text: qsTr("Hide the original on the video") }
+                    Section {
+                        key: "lineEditor.translationMode"
+                        SettingCheck { setting: "translation.showOriginal" }
+                        SettingCheck { setting: "translation.hideOriginalOnVideo" }
+                        StoreCheck { setting: "translation.autoMoveTagsFromOriginal" }
+                        StoreText { setting: "translation.sourceLanguage"; placeholder: qsTranslate("HikariSub.Project", "Detect") }
+                        StoreText { setting: "translation.targetLanguage" }
+                        ValueRow { setting: "translation.glossary" }
                     }
-                    SettingsSection {
+                    Section {
+                        key: "lineEditor.tagButtons"
                         objectName: "settingsTagButtons"
-                        title: qsTr("Tag buttons")
                         visible: dialog.tagButtons !== null
                         ColumnLayout {
                             spacing: 4
@@ -923,21 +1471,24 @@ DialogWindow {
                     }
                 }
 
-                CycleValuesPage { dialog: dialog }
+                SettingsPage {
+                    page: "editing"
+                    objectName: "settingsPageEditing"
+                    CycleValuesPage { dialog: dialog }
+                }
 
                 SettingsPage {
+                    page: "spelling"
                     id: spellingPage
                     objectName: "settingsPageSpelling"
                     readonly property bool grammarOn: (dialog.values["grammar.language"] ?? 0) > 0
-                    SettingsSection {
-                        title: qsTr("Spelling")
+                    Section {
+                        key: "spelling.spelling"
                         ruled: false
-                        SettingCheck { setting: "editor.spellchecker"; text: qsTr("Check spelling") }
-                        OverriddenNote { overriddenId: "editor.spellchecker" }
+                        SettingCheck { setting: "editor.spellchecker" }
                         SettingsRow {
-                            iconRole: "dictionary"
-                            text: qsTr("Primary language")
-                            note: qsTr("Words in other languages are checked with the other installed dictionaries for their script. Words in a script with no dictionary are not marked.")
+                            host: dialog
+                            setting: "editor.dictionaryLanguage"
                             SettingChoice {
                                 setting: "editor.dictionaryLanguage"
                                 model: dialog.dictionaries
@@ -947,15 +1498,13 @@ DialogWindow {
                                 Accessible.name: qsTr("Primary language")
                             }
                         }
-                        OverriddenNote { overriddenId: "editor.dictionaryLanguage" }
-                        SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions on double-click") }
+                        SettingCheck { setting: "editor.suggestionsOnDoubleClick" }
                     }
-                    SettingsSection {
-                        title: qsTr("Grammar")
+                    Section {
+                        key: "spelling.grammar"
                         SettingsRow {
-                            iconRole: "spellchecker"
-                            text: qsTr("Grammar check")
-                            note: qsTr("Harper checks the Text field (the Translated field in translation mode) after you stop typing. It runs as a separate program only while grammar check is on.")
+                            host: dialog
+                            setting: "grammar.language"
                             SettingChoice {
                                 setting: "grammar.language"
                                 model: [qsTr("Off"), qsTr("English (US)"), qsTr("English (UK)"), qsTr("English (Canada)"),
@@ -963,15 +1512,14 @@ DialogWindow {
                                 Accessible.name: qsTr("Grammar check")
                             }
                         }
-                        OverriddenNote { overriddenId: "grammar.language" }
                         SettingNote {
                             visible: spellingPage.grammarOn && dialog.values["editor.spellchecker"] === true
                             text: qsTr("While spelling is checked, Harper leaves spelling to the dictionary above, so a word is never marked twice.")
                         }
                     }
-                    SettingsSection {
+                    Section {
+                        key: "spelling.ruleGroups"
                         objectName: "settingsGrammarGroups"
-                        title: qsTr("Rule groups")
                         SettingNote {
                             visible: !spellingPage.grammarOn
                             text: qsTr("Choose an English above to switch them.")
@@ -1055,76 +1603,80 @@ DialogWindow {
                 }
 
                 SettingsPage {
+                    page: "grid"
                     objectName: "settingsPageGrid"
-                    SettingsSection {
-                        title: qsTr("Active line")
+                    Section {
+                        key: "grid.activeLine"
                         ruled: false
-                        SettingCheck { setting: "grid.changeActiveOnSelection"; text: qsTr("Change the active line when adding to the selection") }
-                        SettingCheck { setting: "grid.duplicationDontChangeSelection"; text: qsTr("Keep the selection when duplicating lines") }
-                        SettingCheck { setting: "grid.setVisibleLineAfterFullScreen"; text: qsTr("Find the visible line after leaving full screen") }
+                        SettingCheck { setting: "grid.changeActiveOnSelection" }
+                        SettingCheck { setting: "grid.duplicationDontChangeSelection" }
+                        SettingCheck { setting: "grid.setVisibleLineAfterFullScreen" }
                     }
-                    SettingsSection {
-                        title: qsTr("Columns")
-                        SettingCheck { setting: "grid.autoHideColumns"; text: qsTr("Hide empty columns") }
+                    Section {
+                        key: "grid.columns"
+                        SettingCheck { setting: "grid.autoHideColumns" }
                     }
-                    SettingsSection {
-                        title: qsTr("Counting")
-                        SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps"; text: qsTr("Count spaces and punctuation for wraps") }
-                        SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
+                    Section {
+                        key: "grid.counting"
+                        SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps" }
+                        SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps" }
                         SettingsRow {
-                            text: qsTr("CPS warning")
-                            note: qsTr("Lines that read faster are tinted, more strongly up to the error level.")
-                            SettingNumber { setting: "grid.cpsWarning"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS warning") }
+                            host: dialog
+                            setting: "grid.cpsWarning"
+                            SettingNumber { setting: "grid.cpsWarning"; from: 1; to: 100; unit: qsTr("CPS") }
                         }
                         SettingsRow {
-                            text: qsTr("CPS error")
-                            SettingNumber { setting: "grid.cpsError"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS error") }
+                            host: dialog
+                            setting: "grid.cpsError"
+                            SettingNumber { setting: "grid.cpsError"; from: 1; to: 100; unit: qsTr("CPS") }
                         }
                         SettingsRow {
-                            text: qsTr("Characters per line")
-                            SettingNumber { setting: "grid.lineLength"; from: 1; to: 1000; name: qsTr("Characters per line") }
+                            host: dialog
+                            setting: "grid.lineLength"
+                            SettingNumber { setting: "grid.lineLength"; from: 1; to: 1000 }
                         }
                         SettingsRow {
-                            text: qsTr("Lines")
-                            note: qsTr("A subtitle file can set its own limits in Script properties.")
-                            SettingNumber { setting: "grid.maxLines"; from: 1; to: 20; name: qsTr("Lines") }
+                            host: dialog
+                            setting: "grid.maxLines"
+                            SettingNumber { setting: "grid.maxLines"; from: 1; to: 20 }
                         }
-                        SettingCheck { setting: "problems.reading"; text: qsTr("Show reading-limit problems") }
+                        SettingCheck { setting: "problems.reading" }
                     }
-                    SettingsSection {
-                        title: qsTr("Splitting")
-                        SettingCheck { setting: "grid.splitFramesBakeAnimations"; text: qsTr("Bake animations when splitting into frames") }
+                    Section {
+                        key: "grid.splitting"
+                        SettingCheck { setting: "grid.splitFramesBakeAnimations" }
                     }
-                    SettingsSection {
-                        title: qsTr("New lines")
+                    Section {
+                        key: "grid.newLines"
                         SettingsRow {
-                            iconRole: "time-offset-start"
-                            text: qsTr("Start frame offset")
+                            host: dialog
+                            setting: "grid.insertStartOffset"
                             SettingNumber { setting: "grid.insertStartOffset"; from: -100000; to: 100000; unit: qsTr("ms"); name: qsTr("Start frame offset") }
                         }
                         SettingsRow {
-                            iconRole: "time-offset-end"
-                            text: qsTr("End frame offset")
+                            host: dialog
+                            setting: "grid.insertEndOffset"
                             SettingNumber { setting: "grid.insertEndOffset"; from: -100000; to: 100000; unit: qsTr("ms"); name: qsTr("End frame offset") }
                         }
                         SettingsRow {
-                            iconRole: "hide-tags"
-                            text: qsTr("ASS tag replacement")
+                            host: dialog
+                            setting: "grid.tagsSwapCharacter"
                             SettingText { setting: "grid.tagsSwapCharacter"; Layout.preferredWidth: 120; Accessible.name: qsTr("ASS tag replacement") }
                         }
                     }
                 }
 
                 SettingsPage {
+                    page: "video"
                     objectName: "settingsPageVideo"
-                    SettingsSection {
+                    Section {
+                        key: "video.fullscreen"
                         objectName: "settingsFullscreen"
-                        title: qsTr("Full screen")
                         ruled: false
                         SettingsRow {
+                            host: dialog
+                            setting: "video.fullscreenBarPosition"
                             iconRole: "fullscreen"
-                            text: qsTr("Bar position")
-                            note: qsTr("Below keeps the whole picture in view; the bar sits in the black strip under it.")
                             SettingChoice {
                                 setting: "video.fullscreenBarPosition"
                                 model: [qsTr("Below the picture (letterbox)"), qsTr("Over the picture")]
@@ -1132,19 +1684,20 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
+                            host: dialog
+                            setting: "video.fullscreenBar"
                             iconRole: "show-toolbar"
-                            text: qsTr("Show bar")
-                            note: qsTr("Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.")
                             SettingChoice {
                                 setting: "video.fullscreenBar"
                                 model: [qsTr("Auto-hide"), qsTr("Always"), qsTr("Never")]
                                 Accessible.name: qsTr("Show bar")
                             }
                         }
-                        SettingCheck { setting: "video.fullscreenHidePointer"; text: qsTr("Hide the pointer with the bar") }
-                        SettingCheck { setting: "video.fullscreenOverlays"; text: qsTr("Show the render time and position overlays") }
+                        SettingCheck { setting: "video.fullscreenHidePointer" }
+                        SettingCheck { setting: "video.fullscreenOverlays" }
                         SettingsRow {
-                            text: qsTr("Opens in")
+                            host: dialog
+                            setting: "video.fullscreenOpensIn"
                             SettingChoice {
                                 setting: "video.fullscreenOpensIn"
                                 model: [qsTr("Simple"), qsTr("Typesetting")]
@@ -1152,13 +1705,14 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Playback")
-                        SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
-                        SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from the context menu in full screen") }
-                        SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line’s time") }
+                    Section {
+                        key: "video.playback"
+                        SettingCheck { setting: "video.pauseOnClick" }
+                        SettingCheck { setting: "video.fullScreenOnStart" }
+                        SettingCheck { setting: "video.openAtActiveLine" }
                         SettingsRow {
-                            iconRole: "video-to-start-time"
+                            host: dialog
+                            setting: "video.moveToActiveLine"
                             text: dialog.follow.seekName
                             SettingChoice {
                                 setting: "video.moveToActiveLine"
@@ -1167,7 +1721,8 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
-                            iconRole: "play-line"
+                            host: dialog
+                            setting: "video.playAfterSelection"
                             text: dialog.follow.playName
                             SettingChoice {
                                 setting: "video.playAfterSelection"
@@ -1195,13 +1750,13 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Subtitles on video")
+                    Section {
+                        key: "video.subtitlesOnVideo"
                         SettingsRow {
+                            host: dialog
+                            setting: "video.subtitleProvider"
                             objectName: "settingsRendererGroup"
                             visible: dialog.renderers.length > 1
-                            iconRole: "renderer"
-                            text: qsTr("Subtitle display filter")
                             SettingChoice {
                                 setting: "video.subtitleProvider"
                                 model: dialog.rendererLabels
@@ -1209,12 +1764,12 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
-                            iconRole: "preview-resolution"
+                            host: dialog
+                            setting: "video.previewSubtitlesAt"
                             id: previewAtRow
                             objectName: "settingsPreviewSubtitlesAt"
                             readonly property bool libass: dialog.renderers.length < 2
                                 || dialog.renderers[dialog.values["video.subtitleProvider"] ?? -1] === "libass"
-                            text: qsTr("Preview subtitles at")
                             note: libass ? qsTr("Screen size draws subtitles at the size the picture takes on screen, so they stay sharp on large and high-DPI screens. The script’s layout is the same either way. Also used by the previews in the Style manager, the font picker and the Template editor.")
                                          : qsTr("Video resolution only with this filter.")
                             SettingChoice {
@@ -1224,38 +1779,34 @@ DialogWindow {
                                 Accessible.name: qsTr("Preview subtitles at")
                             }
                         }
-                        SettingCheck { setting: "video.disableLiveEditing"; text: qsTr("Turn off the edits preview") }
-                        SettingNote { text: qsTr("Applies when the tab opens again.") }
+                        SettingCheck { setting: "video.disableLiveEditing" }
                     }
-                    SettingsSection {
-                        title: qsTr("Decoding")
+                    Section {
+                        key: "video.decoding"
                         SettingsRow {
-                            iconRole: "video-seek"
-                            text: qsTr("Seeking method")
-                            note: qsTr("Applies when the video opens again.")
+                            host: dialog
+                            setting: "video.ffms2Seeking"
                             SettingChoice {
                                 setting: "video.ffms2Seeking"
                                 model: [qsTr("Linear"), qsTr("Normal"), qsTr("Unsafe (always fast)"), qsTr("Aggressive (fast in rewind)")]
                                 Accessible.name: qsTr("Seeking method")
                             }
                         }
-                        SettingCheck { setting: "video.gpuConversion"; text: qsTr("Convert video colours on the GPU") }
-                        SettingNote { text: qsTr("Applies when the video opens again.") }
+                        SettingCheck { setting: "video.gpuConversion" }
                         SettingsRow {
-                            iconRole: "video-streams"
-                            text: qsTr("Preferred audio")
-                            note: qsTr("Separated by semicolons.")
+                            host: dialog
+                            setting: "video.acceptedAudioStream"
                             SettingText { setting: "video.acceptedAudioStream"; Accessible.name: qsTr("Preferred audio") }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("View")
+                    Section {
+                        key: "video.view"
                         SettingsRow {
+                            host: dialog
+                            setting: "video.zoomModel"
                             id: zoomModelRow
                             objectName: "settingsZoomModel"
-                            iconRole: "zoom-reset"
                             readonly property bool aegisub: (dialog.values["video.zoomModel"] ?? 0) === 0
-                            text: qsTr("Zoom and pan")
                             note: aegisub ? qsTr("Middle-drag pans. A touchpad pinch zooms around the pointer.")
                                           : qsTr("The wheel zooms around the pointer. Zoom video shows a frame to drag.")
                             SettingChoice {
@@ -1288,8 +1839,8 @@ DialogWindow {
                             text: qsTr("A visual tool that uses the wheel, or drags with the middle button, keeps it.")
                         }
                         SettingsRow {
-                            iconRole: "zoom"
-                            text: qsTr("Start zoom")
+                            host: dialog
+                            setting: "video.zoomPercent"
                             // MUST KILL: video.zoomPercent is a number edited as text
                             SettingText {
                                 setting: "video.zoomPercent"
@@ -1301,22 +1852,22 @@ DialogWindow {
                             Label { text: "%"; color: Theme.muted }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Visual tools")
+                    Section {
+                        key: "video.visualTools"
                         SettingsRow {
-                            iconRole: "vector-point"
-                            text: qsTr("Handle size")
+                            host: dialog
+                            setting: "video.handleSize"
                             SettingNumber {
                                 setting: "video.handleSize"; from: 50; to: 400; unit: "%"
                                 name: qsTr("Handle size"); tip: qsTr("Size of the visual tools’ handles. Range from 50 to 400")
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Script resolution")
-                        SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off the visual tools warning") }
-                        SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Don’t warn about a resolution mismatch") }
-                        SettingCheck { setting: "automation.scriptResolutionFromVideo"; text: qsTr("Set a missing script resolution from the video without asking") }
+                    Section {
+                        key: "video.scriptResolution"
+                        SettingCheck { setting: "video.visualWarningsOff" }
+                        SettingCheck { setting: "video.dontAskForBadResolution" }
+                        SettingCheck { setting: "automation.scriptResolutionFromVideo" }
                         Repeater {
                             model: [
                                 { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
@@ -1330,7 +1881,6 @@ DialogWindow {
                             ]
                             SettingsRow {
                                 required property var modelData
-                                iconRole: "script-properties"
                                 text: modelData.text
                                 SettingChoice {
                                     setting: modelData.setting
@@ -1340,20 +1890,21 @@ DialogWindow {
                             }
                         }
                         SettingNote { text: qsTr("Checked when a video opens.") }
-                        SettingCheck { setting: "video.untaggedMatrixWarning"; text: qsTr("Warn when the video has no colour matrix tag") }
-                        SettingCheck { setting: "video.hdrWarning"; text: qsTr("Warn when the video has HDR or wide-gamut colours") }
+                        SettingCheck { setting: "video.untaggedMatrixWarning" }
+                        SettingCheck { setting: "video.hdrWarning" }
                     }
                 }
 
                 SettingsPage {
+                    page: "audio"
                     objectName: "settingsPageAudio"
-                    SettingsSection {
+                    Section {
+                        key: "audio.output"
                         objectName: "audioOutputBox"
-                        title: qsTr("Output")
                         ruled: false
                         SettingsRow {
-                            iconRole: "audio-device"
-                            text: qsTr("Device")
+                            host: dialog
+                            setting: "audio.outputDevice"
                             SettingChoice {
                                 setting: "audio.outputDevice"
                                 model: dialog.outputDevices
@@ -1382,60 +1933,57 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Playback")
+                    Section {
+                        key: "audio.playback"
                         SettingsRow {
-                            iconRole: "audio-delay"
-                            text: qsTr("Audio delay")
+                            host: dialog
+                            setting: "audio.delay"
                             SettingNumber { setting: "audio.delay"; from: -50000000; to: 50000000; unit: qsTr("ms"); name: qsTr("Audio delay") }
                         }
                         SettingsRow {
-                            iconRole: "play-before-mark"
-                            text: qsTr("Play around the marker")
+                            host: dialog
+                            setting: "audio.markPlayTime"
                             SettingNumber { setting: "audio.markPlayTime"; from: 400; to: 5000; unit: qsTr("ms"); name: qsTr("Play around the marker") }
                         }
                         SettingsRow {
-                            iconRole: "lead-in"
                             text: qsTr("Lead-in and lead-out")
                             SettingNumber { setting: "audio.leadInValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-in") }
                             SettingNumber { setting: "audio.leadOutValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-out") }
                         }
                         SettingsRow {
-                            iconRole: "audio-commit-default"
-                            text: qsTr("Default line duration")
+                            host: dialog
+                            setting: "audio.defaultDuration"
                             SettingNumber { setting: "audio.defaultDuration"; from: 100; to: 60000; unit: qsTr("ms"); name: qsTr("Default line duration") }
                         }
-                        SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
-                        SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
-                        SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
+                        SettingCheck { setting: "audio.lockScrollOnCursor" }
+                        SettingCheck { setting: "audio.dontPlayWhenLineChanges" }
+                        SettingCheck { setting: "audio.autoFocus" }
                         SettingsRow {
-                            iconRole: "hotkeys"
-                            text: qsTr("Timing keys work in every panel")
+                            host: dialog
+                            setting: "audio.timingKeysEverywhere"
                             SettingChoice {
                                 setting: "audio.timingKeysEverywhere"
                                 model: [qsTr("Never"), qsTr("In the Timing layout"), qsTr("Always")]
                                 Accessible.name: qsTr("Timing keys work in every panel")
                             }
                         }
-                        SettingNote { text: qsTr("The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.") }
-                        SettingCheck { setting: "audio.playMono"; text: qsTr("Play in mono") }
-                        SettingNote { text: qsTr("Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.") }
+                        SettingCheck { setting: "audio.playMono" }
                     }
-                    SettingsSection {
-                        title: qsTr("Display")
-                        SettingCheck { setting: "audio.drawTimeCursor"; text: qsTr("Show the time beside the cursor") }
-                        SettingCheck { setting: "audio.drawSecondaryLines"; text: qsTr("Show seconds markers") }
-                        SettingCheck { setting: "audio.drawSelectionBackground"; text: qsTr("Show the selection background") }
-                        SettingCheck { setting: "audio.drawVideoPosition"; text: qsTr("Show the video position") }
-                        SettingCheck { setting: "audio.drawKeyframes"; text: qsTr("Show keyframes") }
+                    Section {
+                        key: "audio.display"
+                        SettingCheck { setting: "audio.drawTimeCursor" }
+                        SettingCheck { setting: "audio.drawSecondaryLines" }
+                        SettingCheck { setting: "audio.drawSelectionBackground" }
+                        SettingCheck { setting: "audio.drawVideoPosition" }
+                        SettingCheck { setting: "audio.drawKeyframes" }
                         SettingsRow {
-                            iconRole: "boundary-thickness"
-                            text: qsTr("Line boundaries thickness")
+                            host: dialog
+                            setting: "audio.lineBoundariesThickness"
                             SettingNumber { setting: "audio.lineBoundariesThickness"; from: 1; to: 5; name: qsTr("Line boundaries thickness") }
                         }
                         SettingsRow {
-                            iconRole: "inactive-lines"
-                            text: qsTr("Inactive lines")
+                            host: dialog
+                            setting: "audio.inactiveLinesDisplayMode"
                             SettingChoice {
                                 setting: "audio.inactiveLinesDisplayMode"
                                 model: [qsTr("None"), qsTr("Before and after the active"), qsTr("All visible")]
@@ -1443,8 +1991,8 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
-                            iconRole: "spectrum-nonlinear"
-                            text: qsTr("Frequency curve")
+                            host: dialog
+                            setting: "audio.spectrumCurve"
                             SettingChoice {
                                 setting: "audio.spectrumCurve"
                                 model: [qsTr("Linear"), qsTr("Speech"), qsTr("Logarithmic")]
@@ -1452,23 +2000,23 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Snapping")
-                        SettingCheck { setting: "audio.snapToKeyframes"; text: qsTr("Snap to keyframes") }
-                        SettingCheck { setting: "audio.snapToOtherLines"; text: qsTr("Snap to other lines") }
+                    Section {
+                        key: "audio.snapping"
+                        SettingCheck { setting: "audio.snapToKeyframes" }
+                        SettingCheck { setting: "audio.snapToOtherLines" }
                     }
-                    SettingsSection {
-                        title: qsTr("Karaoke")
-                        SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every “n” with the previous syllable") }
-                        SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
-                        SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
+                    Section {
+                        key: "audio.karaoke"
+                        SettingCheck { setting: "audio.mergeEveryNWithSyllable" }
+                        SettingCheck { setting: "audio.karaokeMoveOnClick" }
+                        SettingCheck { setting: "audio.karaokeDoubleConsonantApart" }
                         SettingCheck {
                             setting: "audio.karaokeThaiClusters"
-                            text: qsTr("Split Thai into character clusters")
                             tip: qsTr("Auto split gives each Thai character cluster its own syllable, so กิน becomes กิ|น. Turn it off to keep each Thai word one syllable.")
                         }
                         SettingsRow {
-                            iconRole: "karaoke"
+                            host: dialog
+                            setting: "audio.karaokeKfThreshold"
                             text: qsTr("Long syllables for %1").arg("\\kf")
                             SettingNumber {
                                 setting: "audio.karaokeKfThreshold"; from: 10; to: 10000; unit: qsTr("cs"); name: qsTr("Long syllables for %1").arg("\\kf")
@@ -1476,12 +2024,12 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Cache")
-                        SettingCheck { setting: "audio.ramCache"; text: qsTr("Load audio into RAM") }
+                    Section {
+                        key: "audio.cache"
+                        SettingCheck { setting: "audio.ramCache" }
                         SettingsRow {
-                            iconRole: "cache"
-                            text: qsTr("Cache files kept")
+                            host: dialog
+                            setting: "audio.cacheFilesLimit"
                             note: qsTr("0 keeps them all.")
                             SettingNumber {
                                 setting: "audio.cacheFilesLimit"; from: 0; to: 10000; unit: qsTr("files"); name: qsTr("Cache files kept")
@@ -1492,13 +2040,14 @@ DialogWindow {
                 }
 
                 SettingsPage {
+                    page: "conversion"
                     objectName: "settingsPageConversion"
-                    SettingsSection {
-                        title: qsTr("Style")
+                    Section {
+                        key: "conversion.style"
                         ruled: false
                         SettingsRow {
-                            iconRole: "styles"
-                            text: qsTr("Catalogue")
+                            host: dialog
+                            setting: "convert.styleCatalog"
                             SettingChoice {
                                 setting: "convert.styleCatalog"
                                 model: dialog.catalogs
@@ -1507,8 +2056,8 @@ DialogWindow {
                             }
                         }
                         SettingsRow {
-                            iconRole: "styles"
-                            text: qsTr("Style")
+                            host: dialog
+                            setting: "convert.style"
                             SettingChoice {
                                 setting: "convert.style"
                                 model: dialog.styles
@@ -1516,10 +2065,9 @@ DialogWindow {
                             }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Timing")
+                    Section {
+                        key: "conversion.timing"
                         SettingsRow {
-                            iconRole: "fps"
                             text: qsTr("Frame rate")
                             ComboBox {
                                 id: fpsBox
@@ -1535,35 +2083,59 @@ DialogWindow {
                                 onEditTextChanged: if (activeFocus) dialog.put("convert.fps", editText)
                             }
                         }
-                        SettingCheck { setting: "convert.fpsFromVideo"; text: qsTr("Frame rate from the video") }
-                        SettingCheck { setting: "convert.newEndTimes"; text: qsTr("New end times") }
+                        SettingCheck { setting: "convert.fpsFromVideo" }
+                        SettingCheck { setting: "convert.newEndTimes" }
                         SettingsRow {
-                            iconRole: "time-per-letter"
-                            text: qsTr("Time per letter")
+                            host: dialog
+                            setting: "convert.timePerCharacter"
                             SettingNumber { setting: "convert.timePerCharacter"; from: 30; to: 1000; unit: qsTr("ms"); name: qsTr("Time per letter") }
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("ASS")
+                    Section {
+                        key: "conversion.ass"
                         SettingsRow {
-                            iconRole: "resample"
                             text: qsTr("Resolution")
                             SettingNumber { setting: "convert.resolutionWidth"; from: 1; to: 3000; name: qsTr("Width") }
                             Label { text: "×"; color: Theme.muted }
                             SettingNumber { setting: "convert.resolutionHeight"; from: 1; to: 3000; name: qsTr("Height") }
                         }
                         SettingsRow {
-                            iconRole: "tags-insert"
-                            text: qsTr("Tags at the start of each line")
+                            host: dialog
+                            setting: "convert.assTagsToInsertInLine"
                             SettingText { setting: "convert.assTagsToInsertInLine"; Accessible.name: qsTr("Tags at the start of each line") }
+                        }
+                    }
+                    Section {
+                        key: "conversion.export"
+                        SettingsRow {
+                            host: dialog
+                            setting: "export.format"
+                            ComboBox {
+                                id: exportFormat
+                                objectName: "setting_export.format"
+                                model: projectPages.exportFormats
+                                textRole: "text"
+                                Layout.preferredWidth: 260
+                                Accessible.name: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.label("export.format") : "")
+                                currentIndex: {
+                                    dialog.changedIds
+                                    const v = dialog.settings ? dialog.settings.value("export.format") : ""
+                                    return Math.max(0, projectPages.exportFormats.findIndex(f => f.id === v))
+                                }
+                                onActivated: index => {
+                                    dialog.settings.setValue("export.format", projectPages.exportFormats[index].id)
+                                    dialog.refreshChanged()
+                                }
+                            }
                         }
                     }
                 }
 
                 SettingsPage {
+                    page: "subtitleProperties"
                     objectName: "settingsPageSubtitleProperties"
-                    SettingsSection {
-                        title: qsTranslate("HikariSub.ScriptProperties", "Credits")
+                    Section {
+                        key: "subtitleProperties.credits"
                         ruled: false
                         Label {
                             text: qsTranslate("HikariSub.Project", "Saving a file writes the switched-on fields into its Script Info.")
@@ -1577,37 +2149,34 @@ DialogWindow {
                         }
                         SettingCheck {
                             setting: "scriptProperties.askForChange"
-                            text: qsTranslate("HikariSub.Project", "Ask before changing them on save")
                         }
-                        OverriddenNote { overriddenId: "scriptProperties.askForChange" }
                     }
-                    SettingsSection {
-                        title: qsTr("Files")
-                        SettingCheck { setting: "subtitles.layoutInFile"; text: qsTr("Save the panel layout in subtitle files") }
+                    Section {
+                        key: "subtitleProperties.files"
+                        SettingCheck { setting: "subtitles.layoutInFile" }
                     }
                 }
 
                 SettingsPage {
+                    page: "automation"
                     objectName: "settingsPageAutomation"
-                    SettingsSection {
-                        title: qsTr("Debugging")
+                    Section {
+                        key: "automation.debugging"
                         ruled: false
                         SettingsRow {
-                            iconRole: "automation"
-                            text: qsTr("Lua trace level")
+                            host: dialog
+                            setting: "automation.traceLevel"
                             SettingNumber { setting: "automation.traceLevel"; from: 0; to: 5; name: qsTr("Lua trace level") }
                         }
                     }
-                    SettingsSection {
+                    Section {
+                        key: "automation.scriptDialogs"
                         objectName: "settingsScriptDialogsGroup"
-                        title: qsTr("Script dialogs")
-                        SettingCheck { setting: "automation.fillLastAnswers"; text: qsTr("Fill in my last answers") }
-                        SettingNote { text: qsTr("Script dialogs open with the answers you gave last time. A value the script works out itself, from the selection say, still wins. Off: they open with the script’s values, and ⋯ › Last used fills yours in.") }
+                        SettingCheck { setting: "automation.fillLastAnswers" }
                     }
-                    SettingsSection {
-                        title: qsTr("Kept answers and presets")
+                    Section {
+                        key: "automation.keptAnswersAndPresets"
                         SettingsRow {
-                            iconRole: "dialog-memory"
                             text: qsTr("Last answers")
                             note: qsTr("Presets are kept; delete them from a dialog’s ⋯ menu.")
                             IconTextButton {
@@ -1621,254 +2190,298 @@ DialogWindow {
                     }
                 }
 
-                Item {
-                    objectName: "settingsPageHotkeys"
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 24
-                        anchors.rightMargin: 24
-                        anchors.topMargin: 20
-                        anchors.bottomMargin: 20
-                        spacing: 10
-                        RowLayout {
-                            spacing: 8
-                            Layout.fillWidth: true
-                            ComboBox {
-                                id: hotkeyFilter
-                                objectName: "hotkeyFilter"
-                                Layout.preferredWidth: 200
-                                model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Grid shortcuts"),
-                                        qsTr("Line editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio shortcuts"),
-                                        qsTr("Automation shortcuts"), qsTr("Plugin shortcuts")]
-                                ToolTip.text: qsTr("Filtering mode")
-                                ToolTip.visible: hovered
-                                Accessible.name: qsTr("Choose filtering")
-                                onActivated: index => dialog.hotkeys.filter(index)
-                            }
-                            TextField {
-                                id: hotkeySearch
-                                objectName: "hotkeySearch"
-                                placeholderText: qsTr("Search shortcuts")
-                                leftPadding: 30
+                SettingsPage {
+                    page: "hotkeys"
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.max(360, rowsView.height - 96)
+                        objectName: "settingsPageHotkeys"
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 24
+                            anchors.rightMargin: 24
+                            anchors.topMargin: 20
+                            anchors.bottomMargin: 20
+                            spacing: 10
+                            RowLayout {
+                                spacing: 8
                                 Layout.fillWidth: true
-                                Accessible.name: qsTr("Search shortcuts")
-                                onTextChanged: if (dialog.hotkeys) dialog.hotkeys.search(text)
-                                Icon {
-                                    iconRole: "search"
-                                    color: Theme.muted
-                                    x: 8
-                                    anchors.verticalCenter: parent.verticalCenter
+                                ComboBox {
+                                    id: hotkeyFilter
+                                    objectName: "hotkeyFilter"
+                                    Layout.preferredWidth: 200
+                                    // MUST KILL: the area modes are HotkeyList's filter ints without 1, which Source replaced
+                                    readonly property var modes: [0, 2, 3, 4, 5, 6, 7, 8]
+                                    model: [qsTr("All"), qsTr("Global shortcuts"), qsTr("Grid shortcuts"),
+                                            qsTr("Line editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio shortcuts"),
+                                            qsTr("Automation shortcuts"), qsTr("Plugin shortcuts")]
+                                    ToolTip.text: qsTr("Filtering mode")
+                                    ToolTip.visible: hovered
+                                    Accessible.name: qsTr("Choose filtering")
+                                    onActivated: index => dialog.hotkeys.filter(modes[index])
                                 }
-                            }
-                        }
-                        ListView {
-                            id: hotkeyList
-                            objectName: "hotkeyList"
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            clip: true
-                            focus: true
-                            model: dialog.hotkeys ? dialog.hotkeys.rows : []
-                            readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
-                            ScrollBar.vertical: ScrollBar {}
-                            Accessible.name: qsTr("Shortcuts")
-                            // MUST KILL: contexts is indexed by a magic window int, 5 standing for Automation
-                            readonly property var contexts: [qsTr("Global"), qsTr("Grid"), qsTr("Line editor"),
-                                                             qsTr("Video"), qsTr("Audio"), qsTr("Automation")]
-                            function contextOf(row) { return row.script !== undefined ? 5 : row.context }
-                            readonly property bool gutter: dialog.hotkeys ? dialog.hotkeys.listFiltered && hotkeySearch.text.length === 0
-                                                                          : false
-                            component BlockBox: Label {
-                                // MUST KILL: block is a magic int (0 none, 1 rows hidden, else rows shown)
-                                property int block: 0
-                                property int position: -1
-                                visible: block !== 0 && hotkeyList.gutter
-                                text: block === 1 ? "+" : "−"
-                                horizontalAlignment: Text.AlignHCenter
-                                width: 13
-                                Accessible.role: Accessible.Button
-                                Accessible.name: block === 1 ? qsTr("Show hidden rows") : qsTr("Hide the rows shown")
-                                MouseArea {
-                                    anchors.fill: parent
-                                    onClicked: dialog.hotkeys.toggleBlock(parent.position)
+                                ComboBox {
+                                    id: hotkeySource
+                                    objectName: "hotkeySource"
+                                    Layout.preferredWidth: 140
+                                    model: [qsTr("All"), qsTr("Built-in"), qsTranslate("HikariSub.Project", "Yours"), qsTr("Plugin"), qsTr("Macro")]
+                                    ToolTip.text: qsTr("Source")
+                                    ToolTip.visible: hovered
+                                    Accessible.name: qsTr("Source")
+                                    onActivated: index => dialog.hotkeys.filterSource(index)
                                 }
-                            }
-                            Rectangle {
-                                parent: hotkeyList
-                                anchors.fill: parent
-                                z: -1
-                                color: Theme.field
-                                border.color: Theme.line
-                            }
-                            header: Rectangle {
-                                width: hotkeyList.width
-                                height: 26
-                                color: Theme.raised
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 10
-                                    anchors.rightMargin: 10
-                                    BlockBox {
-                                        objectName: "hotkeyTopBlock"
-                                        block: dialog.hotkeys ? dialog.hotkeys.topBlock : 0
-                                        Layout.preferredWidth: hotkeyList.gutter ? 13 : 0
+                                CheckBox {
+                                    id: hotkeyConflicts
+                                    objectName: "hotkeyConflicts"
+                                    text: qsTr("Conflicts")
+                                    Accessible.name: text
+                                    onToggled: dialog.hotkeys.filterConflicts(checked)
+                                }
+                                TextField {
+                                    id: hotkeySearch
+                                    objectName: "hotkeySearch"
+                                    placeholderText: qsTr("Search shortcuts")
+                                    leftPadding: 30
+                                    Layout.fillWidth: true
+                                    Accessible.name: qsTr("Search shortcuts")
+                                    onTextChanged: if (dialog.hotkeys) dialog.hotkeys.search(text)
+                                    Icon {
+                                        iconRole: "search"
+                                        color: Theme.muted
+                                        x: 8
+                                        anchors.verticalCenter: parent.verticalCenter
                                     }
-                                    Label { text: qsTr("Function"); color: Theme.muted; Layout.preferredWidth: hotkeyList.width * 0.65 }
-                                    Label { text: qsTr("Shortcut"); color: Theme.muted; Layout.fillWidth: true }
                                 }
-                                Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
                             }
-                            delegate: Column {
-                                id: hotkeyEntry
-                                required property var modelData
-                                required property int index
-                                width: hotkeyList.width
-                                readonly property bool headed: index === 0
-                                    || hotkeyList.contextOf(hotkeyList.model[index - 1]) !== hotkeyList.contextOf(modelData)
-                                Label {
-                                    objectName: "hotkeyHeading"
-                                    visible: hotkeyEntry.headed
-                                    text: hotkeyList.contexts[hotkeyList.contextOf(hotkeyEntry.modelData)] ?? ""
-                                    font.bold: true
-                                    color: Theme.muted
-                                    leftPadding: 10
-                                    topPadding: 6
-                                    bottomPadding: 2
-                                    Accessible.role: Accessible.Heading
+                            ListView {
+                                id: hotkeyList
+                                objectName: "hotkeyList"
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                clip: true
+                                focus: true
+                                model: dialog.hotkeys ? dialog.hotkeys.rows : []
+                                readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
+                                ScrollBar.vertical: ScrollBar {}
+                                Accessible.name: qsTr("Shortcuts")
+                                // MUST KILL: contexts is indexed by a magic window int, 5 standing for Automation
+                                readonly property var contexts: [qsTr("Global"), qsTr("Grid"), qsTr("Line editor"),
+                                                                 qsTr("Video"), qsTr("Audio"), qsTr("Automation")]
+                                function contextOf(row) { return row.script !== undefined ? 5 : row.context }
+                                readonly property bool gutter: dialog.hotkeys ? dialog.hotkeys.listFiltered && hotkeySearch.text.length === 0
+                                                                              : false
+                                component BlockBox: Label {
+                                    // MUST KILL: block is a magic int (0 none, 1 rows hidden, else rows shown)
+                                    property int block: 0
+                                    property int position: -1
+                                    visible: block !== 0 && hotkeyList.gutter
+                                    text: block === 1 ? "+" : "−"
+                                    horizontalAlignment: Text.AlignHCenter
+                                    width: 13
+                                    Accessible.role: Accessible.Button
+                                    Accessible.name: block === 1 ? qsTr("Show hidden rows") : qsTr("Hide the rows shown")
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        onClicked: dialog.hotkeys.toggleBlock(parent.position)
+                                    }
                                 }
-                                ItemDelegate {
-                                    id: hotkeyRow
-                                    readonly property var modelData: hotkeyEntry.modelData
-                                    readonly property int index: hotkeyEntry.index
+                                Rectangle {
+                                    parent: hotkeyList
+                                    anchors.fill: parent
+                                    z: -1
+                                    color: Theme.field
+                                    border.color: Theme.line
+                                }
+                                header: Rectangle {
                                     width: hotkeyList.width
-                                    highlighted: index === hotkeyList.selectedRow
-                                    leftPadding: 22
-                                    onClicked: {
-                                        hotkeyList.forceActiveFocus()
-                                        dialog.hotkeys.select(index)
+                                    height: 26
+                                    color: Theme.raised
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        BlockBox {
+                                            objectName: "hotkeyTopBlock"
+                                            block: dialog.hotkeys ? dialog.hotkeys.topBlock : 0
+                                            Layout.preferredWidth: hotkeyList.gutter ? 13 : 0
+                                        }
+                                        Label { text: qsTr("Function"); color: Theme.muted; Layout.preferredWidth: hotkeyList.width * 0.65 }
+                                        Label { text: qsTr("Shortcut"); color: Theme.muted; Layout.fillWidth: true }
                                     }
-                                    onDoubleClicked: {
-                                        dialog.hotkeys.select(index)
-                                        dialog.mapHotkey(hotkeyRow)
+                                    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
+                                }
+                                delegate: Column {
+                                    id: hotkeyEntry
+                                    required property var modelData
+                                    required property int index
+                                    width: hotkeyList.width
+                                    readonly property bool headed: index === 0
+                                        || hotkeyList.contextOf(hotkeyList.model[index - 1]) !== hotkeyList.contextOf(modelData)
+                                    Label {
+                                        objectName: "hotkeyHeading"
+                                        visible: hotkeyEntry.headed
+                                        text: hotkeyList.contexts[hotkeyList.contextOf(hotkeyEntry.modelData)] ?? ""
+                                        font.bold: true
+                                        color: Theme.muted
+                                        leftPadding: 10
+                                        topPadding: 6
+                                        bottomPadding: 2
+                                        Accessible.role: Accessible.Heading
                                     }
-                                    readonly property bool macro: modelData.script !== undefined
-                                    Accessible.name: (macro ? modelData.script + " " + modelData.macro : modelData.text) + " " + modelData.accel
-                                                     + (macro && modelData.note.length > 0 ? ", " + modelData.note : "")
-                                    background: Rectangle {
-                                        color: hotkeyRow.highlighted ? Theme.select : "transparent"
-                                        Rectangle { visible: hotkeyRow.highlighted; width: 3; height: parent.height; color: Theme.accent }
-                                    }
-                                    contentItem: RowLayout {
-                                        Item {
-                                            visible: hotkeyList.gutter
-                                            Layout.preferredWidth: 13
-                                            Layout.fillHeight: true
-                                            Rectangle {
-                                                visible: hotkeyRow.modelData.inBlock
-                                                x: 6; width: 1; height: parent.height
-                                                color: Theme.text
+                                    ItemDelegate {
+                                        id: hotkeyRow
+                                        readonly property var modelData: hotkeyEntry.modelData
+                                        readonly property int index: hotkeyEntry.index
+                                        width: hotkeyList.width
+                                        highlighted: index === hotkeyList.selectedRow
+                                        leftPadding: 22
+                                        onClicked: {
+                                            hotkeyList.forceActiveFocus()
+                                            dialog.hotkeys.select(index)
+                                        }
+                                        onDoubleClicked: {
+                                            dialog.hotkeys.select(index)
+                                            dialog.mapHotkey(hotkeyRow)
+                                        }
+                                        readonly property bool macro: modelData.script !== undefined
+                                        Accessible.name: (macro ? modelData.script + " " + modelData.macro : modelData.text) + " " + modelData.accel
+                                                         + (macro && modelData.note.length > 0 ? ", " + modelData.note : "")
+                                        background: Rectangle {
+                                            color: hotkeyRow.highlighted ? Theme.select : "transparent"
+                                            Rectangle { visible: hotkeyRow.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                                        }
+                                        contentItem: RowLayout {
+                                            Item {
+                                                visible: hotkeyList.gutter
+                                                Layout.preferredWidth: 13
+                                                Layout.fillHeight: true
+                                                Rectangle {
+                                                    visible: hotkeyRow.modelData.inBlock
+                                                    x: 6; width: 1; height: parent.height
+                                                    color: Theme.text
+                                                }
+                                            }
+                                            Label {
+                                                id: hotkeyText
+                                                objectName: "hotkeyText"
+                                                text: hotkeyRow.macro
+                                                      ? (modelData.macro.length > 0 ? modelData.script + " › " + modelData.macro
+                                                                                    : modelData.script + " › " + qsTr("Missing macro"))
+                                                      : modelData.name
+                                                color: modelData.textModified && !hotkeyRow.macro ? dialog.warningColour : Theme.text
+                                                elide: Text.ElideRight
+                                                Layout.preferredWidth: hotkeyList.width * 0.65 - hotkeyRow.leftPadding + 10
+                                                HoverHandler { id: textHover }
+                                                ToolTip.visible: textHover.hovered && truncated
+                                                ToolTip.text: (hotkeyRow.macro ? hotkeyText.text : modelData.text).substring(0, 1000)
+                                            }
+                                            Label {
+                                                id: hotkeyKeys
+                                                objectName: "hotkeyKeys"
+                                                text: hotkeyRow.macro && modelData.note.length > 0
+                                                      ? (modelData.accel.length > 0 ? modelData.accel + " · " + modelData.note : modelData.note)
+                                                      : modelData.accel
+                                                color: modelData.keyModified || (hotkeyRow.macro && modelData.note.length > 0) ? dialog.warningColour
+                                                     : Theme.muted
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                                HoverHandler { id: keysHover }
+                                                ToolTip.visible: keysHover.hovered && truncated
+                                                ToolTip.text: hotkeyKeys.text
                                             }
                                         }
-                                        Label {
-                                            id: hotkeyText
-                                            objectName: "hotkeyText"
-                                            text: hotkeyRow.macro
-                                                  ? (modelData.macro.length > 0 ? modelData.script + " › " + modelData.macro
-                                                                                : modelData.script + " › " + qsTr("Missing macro"))
-                                                  : modelData.name
-                                            color: modelData.textModified && !hotkeyRow.macro ? dialog.warningColour : Theme.text
-                                            elide: Text.ElideRight
-                                            Layout.preferredWidth: hotkeyList.width * 0.65 - hotkeyRow.leftPadding + 10
-                                            HoverHandler { id: textHover }
-                                            ToolTip.visible: textHover.hovered && truncated
-                                            ToolTip.text: (hotkeyRow.macro ? hotkeyText.text : modelData.text).substring(0, 1000)
-                                        }
-                                        Label {
-                                            id: hotkeyKeys
-                                            objectName: "hotkeyKeys"
-                                            text: hotkeyRow.macro && modelData.note.length > 0
-                                                  ? (modelData.accel.length > 0 ? modelData.accel + " · " + modelData.note : modelData.note)
-                                                  : modelData.accel
-                                            color: modelData.keyModified || (hotkeyRow.macro && modelData.note.length > 0) ? dialog.warningColour
-                                                 : Theme.muted
-                                            elide: Text.ElideRight
-                                            Layout.fillWidth: true
-                                            HoverHandler { id: keysHover }
-                                            ToolTip.visible: keysHover.hovered && truncated
-                                            ToolTip.text: hotkeyKeys.text
+                                        BlockBox {
+                                            objectName: "hotkeyBlock" + hotkeyRow.index
+                                            block: hotkeyRow.modelData.block
+                                            position: hotkeyRow.index
+                                            y: hotkeyRow.height - height / 2
+                                            z: 1
                                         }
                                     }
-                                    BlockBox {
-                                        objectName: "hotkeyBlock" + hotkeyRow.index
-                                        block: hotkeyRow.modelData.block
-                                        position: hotkeyRow.index
-                                        y: hotkeyRow.height - height / 2
-                                        z: 1
+                                    Label {
+                                        objectName: "hotkeyClash"
+                                        visible: (hotkeyEntry.modelData.clash ?? "").length > 0
+                                        text: hotkeyEntry.modelData.clash ?? ""
+                                        color: Theme.muted
+                                        font.underline: true
+                                        leftPadding: 22
+                                        width: hotkeyList.width
+                                        elide: Text.ElideRight
+                                        Accessible.role: Accessible.Link
+                                        Accessible.name: text
+                                        TapHandler {
+                                            cursorShape: Qt.PointingHandCursor
+                                            onTapped: {
+                                                const other = (hotkeyEntry.modelData.clashRows ?? [])[0]
+                                                const at = hotkeyList.model.findIndex(r => r.row === other)
+                                                if (at >= 0) {
+                                                    dialog.hotkeys.select(at)
+                                                    hotkeyList.positionViewAtIndex(at, ListView.Contain)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
+                                function ownKey(event) {
+                                    const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+                                    return (mods === Qt.ControlModifier && (event.key === Qt.Key_Z || event.key === Qt.Key_Y))
+                                        || (mods === 0 && (event.key === Qt.Key_Up || event.key === Qt.Key_Down))
+                                }
+                                Keys.onShortcutOverride: event => event.accepted = ownKey(event)
+                                Keys.onPressed: event => {
+                                    const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+                                    if (mods === Qt.ControlModifier && event.key === Qt.Key_Z)
+                                        dialog.hotkeys.optionsUndo()
+                                    else if (mods === Qt.ControlModifier && event.key === Qt.Key_Y)
+                                        dialog.hotkeys.optionsRedo()
+                                    else if (mods === 0 && event.key === Qt.Key_Up)
+                                        dialog.hotkeys.select(dialog.hotkeys.selected - 1)
+                                    else if (mods === 0 && event.key === Qt.Key_Down)
+                                        dialog.hotkeys.select(dialog.hotkeys.selected + 1)
+                                    else
+                                        return
+                                    event.accepted = true
+                                }
                             }
-                            function ownKey(event) {
-                                const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
-                                return (mods === Qt.ControlModifier && (event.key === Qt.Key_Z || event.key === Qt.Key_Y))
-                                    || (mods === 0 && (event.key === Qt.Key_Up || event.key === Qt.Key_Down))
+                            RowLayout {
+                                spacing: 8
+                                IconTextButton {
+                                    iconRole: "hotkeys"
+                                    id: hotkeyMapButton
+                                    objectName: "hotkeyMap"
+                                    text: qsTr("Map shortcut…")
+                                    enabled: dialog.hotkeys.mapProblem.length === 0
+                                    onClicked: dialog.mapHotkey(hotkeyMapButton)
+                                }
+                                IconTextButton {
+                                    iconRole: "restore-default"
+                                    objectName: "hotkeyRestore"
+                                    text: qsTr("Restore default")
+                                    onClicked: dialog.hotkeys.optionsReset()
+                                }
+                                IconTextButton { objectName: "hotkeyRemove"; iconRole: "delete"; text: qsTr("Delete"); onClicked: dialog.hotkeys.optionsDelete() }
                             }
-                            Keys.onShortcutOverride: event => event.accepted = ownKey(event)
-                            Keys.onPressed: event => {
-                                const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
-                                if (mods === Qt.ControlModifier && event.key === Qt.Key_Z)
-                                    dialog.hotkeys.optionsUndo()
-                                else if (mods === Qt.ControlModifier && event.key === Qt.Key_Y)
-                                    dialog.hotkeys.optionsRedo()
-                                else if (mods === 0 && event.key === Qt.Key_Up)
-                                    dialog.hotkeys.select(dialog.hotkeys.selected - 1)
-                                else if (mods === 0 && event.key === Qt.Key_Down)
-                                    dialog.hotkeys.select(dialog.hotkeys.selected + 1)
-                                else
-                                    return
-                                event.accepted = true
-                            }
-                        }
-                        RowLayout {
-                            spacing: 8
-                            IconTextButton {
-                                iconRole: "hotkeys"
-                                id: hotkeyMapButton
-                                objectName: "hotkeyMap"
-                                text: qsTr("Map shortcut…")
-                                enabled: dialog.hotkeys.mapProblem.length === 0
-                                onClicked: dialog.mapHotkey(hotkeyMapButton)
-                            }
-                            IconTextButton {
-                                iconRole: "restore-default"
-                                objectName: "hotkeyRestore"
-                                text: qsTr("Restore default")
-                                onClicked: dialog.hotkeys.optionsReset()
-                            }
-                            IconTextButton { objectName: "hotkeyRemove"; iconRole: "delete"; text: qsTr("Delete"); onClicked: dialog.hotkeys.optionsDelete() }
                         }
                     }
                 }
 
-                SettingsAiPage { id: aiPage; dialog: dialog }
+                SettingsPage {
+                    page: "ai"
+                    SettingsAiPage { id: aiPage; dialog: dialog }
+                }
 
                 SettingsPage {
+                    page: "updates"
                     objectName: "settingsPageUpdates"
-                    SettingsSection {
-                        title: qsTr("Checking")
+                    Section {
+                        key: "updates.checking"
                         ruled: false
-                        SettingCheck { setting: "updater.autoCheck"; text: qsTr("Check for updates automatically") }
-                        SettingNote { text: qsTr("At most once a day, when HikariSub starts.") }
+                        SettingCheck { setting: "updater.autoCheck" }
                         SettingCheck {
                             setting: "updater.checkForStable"
                             visible: !dialog.updates || dialog.updates.stableOnlyOption
-                            text: qsTr("Stable versions only")
-                        }
-                        SettingNote {
-                            visible: !dialog.updates || dialog.updates.stableOnlyOption
-                            text: qsTr("Off: prereleases (beta versions) are offered too.")
                         }
                         SettingsRow {
-                            iconRole: "skip-version"
                             // MUST KILL: the docs* properties are read by name by the docs export
                             readonly property string docsSetting: "updater.skippedVersion"
                             readonly property string docsControl: "readonly"
@@ -1891,12 +2504,11 @@ DialogWindow {
                             text: qsTr("Skip this version hides one version; a newer one is offered again.")
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Installing")
+                    Section {
+                        key: "updates.installing"
                         SettingCheck {
                             setting: "updater.autoInstall"
                             visible: !dialog.updates || dialog.updates.installsUpdates
-                            text: qsTr("Install updates automatically")
                         }
                         SettingNote {
                             objectName: "settingsInstallNote"
@@ -1909,10 +2521,14 @@ DialogWindow {
                             Layout.topMargin: !dialog.updates || dialog.updates.installsUpdates ? -5 : 0
                         }
                     }
-                    SettingsSection {
-                        title: qsTr("Privacy")
-                        SettingCheck { setting: "privacy.usageData"; text: qsTr("Send anonymous usage data") }
-                        SettingNote { text: qsTr("Which features are used, errors and crashes, and how fast things open. Never your files, their names or what is in them.") }
+                    Section {
+                        key: "updates.plugins"
+                        StoreCheck { setting: "plugins.checkUpdates" }
+                        StoreCheck { setting: "plugins.autoUpdate" }
+                    }
+                    Section {
+                        key: "updates.privacy"
+                        SettingCheck { setting: "privacy.usageData" }
                         LinkButton {
                             objectName: "settingsWhatIsSent"
                             iconRole: "help"
@@ -1923,21 +2539,297 @@ DialogWindow {
                         SettingCheck {
                             setting: "privacy.alwaysSendCrashReports"
                             visible: !dialog.crashReports || dialog.crashReports.canSend
-                            text: qsTr("Always send crash reports")
                         }
-                        SettingNote {
-                            visible: !dialog.crashReports || dialog.crashReports.canSend
-                            text: qsTr("After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.")
+                        SettingCheck { setting: "plugins.network" }
+                    }
+                    Section {
+                        key: "updates.discord"
+                        DiscordSettingsSection { dialog: dialog; scroller: rowsView.contentItem }
+                    }
+                }
+
                         }
-                        DiscordSettingsSection { dialog: dialog }
-                        SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
-                        SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
+                        SettingsPage {
+                            page: "plugins"
+                            objectName: "settingsPagePlugins"
+                            visible: !dialog.projectTab && (dialog.searching ? (dialog.found.pages["plugins"] ?? 0) > 0 : true)
+                            RowLayout {
+                                objectName: "settingsNoPluginSettings"
+                                visible: dialog.pluginsWithSettings.length === 0
+                                spacing: 8
+                                Label {
+                                    text: qsTr("No plugin has settings.")
+                                    color: Theme.muted
+                                }
+                                IconTextButton {
+                                    iconRole: "plugins"
+                                    text: qsTr("Plugins…")
+                                    onClicked: dialog.pluginsRequested("")
+                                }
+                            }
+                            Repeater {
+                                model: dialog.pluginsWithSettings
+                                PluginSection {}
+                            }
+                        }
+                        ColumnLayout {
+                            objectName: "settingsShortcutResults"
+                            visible: dialog.searching && !dialog.projectTab && dialog.commandMatches.length > 0
+                            spacing: 8
+                            Layout.fillWidth: true
+                            Label {
+                                text: qsTr("Shortcuts")
+                                font.bold: true
+                                color: Theme.text
+                            }
+                            Repeater {
+                                model: dialog.commandMatches.slice(0, 5)
+                                RowLayout {
+                                    required property var modelData
+                                    spacing: 8
+                                    Layout.fillWidth: true
+                                    Label { text: modelData.name; color: Theme.text; Layout.fillWidth: true }
+                                    Label { text: modelData.keys.join(", "); color: Theme.muted }
+                                }
+                            }
+                            LinkButton {
+                                objectName: "settingsShowAllShortcuts"
+                                iconRole: "hotkeys"
+                                text: qsTr("Show all %n shortcuts", "", dialog.commandMatches.length)
+                                onClicked: dialog.showShortcutsFor(dialog.query)
+                            }
+                        }
                     }
                 }
             }
         }
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
     }
+
+    signal opened()
+    signal pluginsRequested(string plugin)
+    readonly property var commandMatches: {
+        const words = query.split(" ").filter(w => w.length > 0 && !w.startsWith("@"))
+        if (words.length === 0 || !hotkeys)
+            return []
+        return hotkeys.matching(words.join(" "))
+    }
+    function showShortcutsFor(text) {
+        searchField.text = ""
+        query = ""
+        hotkeySearch.text = text
+        showNode("hotkeys")
+    }
+    function addToken(token) {
+        if (searchField.text.split(" ").includes(token))
+            return
+        searchField.text = (token + " " + searchField.text.trim()).trim() + " "
+        searchField.forceActiveFocus()
+        searchField.cursorPosition = searchField.text.length
+    }
+    Shortcut {
+        sequences: [StandardKey.Find]
+        context: Qt.WindowShortcut
+        onActivated: searchField.forceActiveFocus(Qt.ShortcutFocusReason)
+    }
+
+    component PluginSection: ColumnLayout {
+        id: pluginSection
+        required property var modelData
+        readonly property string key: "plugins." + modelData.id
+        readonly property var groups: {
+            const rows = (modelData.settings ?? []).slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            const out = []
+            for (const s of rows) {
+                const name = s.group ?? ""
+                let g = out.find(g => g.name === name)
+                if (!g) {
+                    g = { name: name, settings: [] }
+                    out.push(g)
+                }
+                g.settings.push(s)
+            }
+            return out
+        }
+        objectName: "pluginSettings_" + modelData.id
+        visible: dialog.sectionShown(key)
+        spacing: 12
+        Layout.fillWidth: true
+        Component.onCompleted: dialog.registerSection(key, pluginSection, false)
+        RowLayout {
+            spacing: 10
+            Layout.fillWidth: true
+            Image {
+                visible: (pluginSection.modelData.icon ?? "").length > 0
+                source: pluginSection.modelData.icon ?? ""
+                sourceSize.width: 32
+                sourceSize.height: 32
+                Layout.preferredWidth: 32
+                Layout.preferredHeight: 32
+            }
+            ColumnLayout {
+                spacing: 2
+                Layout.fillWidth: true
+                Label {
+                    text: pluginSection.modelData.name
+                    font.bold: true
+                    color: Theme.text
+                    Accessible.role: Accessible.Heading
+                }
+                Label {
+                    text: [pluginSection.modelData.version, pluginSection.modelData.description].filter(t => (t ?? "").length > 0).join(" · ")
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+            }
+            IconTextButton {
+                objectName: "pluginSettingsManage"
+                iconRole: "plugins"
+                text: qsTr("Manage plugin…")
+                onClicked: dialog.pluginsRequested(pluginSection.modelData.id)
+            }
+        }
+        Label {
+            visible: pluginSection.modelData.enabled !== true
+            text: qsTr("%1 is turned off. Its settings apply when it’s on.").arg(pluginSection.modelData.name)
+            color: Theme.muted
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Repeater {
+            model: pluginSection.groups
+            ColumnLayout {
+                id: group
+                required property var modelData
+                spacing: 12
+                Layout.fillWidth: true
+                Label {
+                    visible: group.modelData.name.length > 0
+                    text: group.modelData.name
+                    font.bold: true
+                    color: Theme.text
+                }
+                Repeater {
+                    model: group.modelData.settings
+                    PluginSettingRow { plugin: pluginSection.modelData.id }
+                }
+            }
+        }
+    }
+    component PluginSettingRow: SettingsRow {
+        id: pluginRow
+        required property var modelData
+        required property string plugin
+        property string problem: ""
+        readonly property string type: modelData.type
+        readonly property bool deprecated: (modelData.deprecated ?? "").length > 0
+        host: dialog
+        setting: "plugin." + plugin + "." + modelData.id
+        text: modelData.title ?? modelData.id
+        note: deprecated ? modelData.deprecated : (modelData.description ?? "")
+        inline: type === "boolean"
+        visible: dialog.shows(setting) && (!deprecated || dialog.pluginChanged(setting))
+        function keep(value) {
+            problem = dialog.pluginManager.setSetting(plugin, modelData.id, JSON.stringify(value))
+            if (problem.length > 0)
+                pluginField.Accessible.announce(problem, Accessible.Assertive)
+        }
+        Item {
+            id: pluginField
+            implicitWidth: control.item ? control.item.implicitWidth : 0
+            implicitHeight: control.item ? control.item.implicitHeight : 0
+            Layout.fillWidth: pluginRow.type === "string" || pluginRow.type === "list" || pluginRow.type === "secret"
+            Loader {
+                id: control
+                width: parent.width
+                sourceComponent: pluginRow.type === "boolean" ? boolControl
+                               : pluginRow.type === "choice" ? choiceControl
+                               : pluginRow.type === "integer" || pluginRow.type === "number" ? numberControl
+                               : pluginRow.type === "string" ? stringControl : valueControl
+            }
+        }
+        Label {
+            visible: pluginRow.problem.length > 0
+            text: pluginRow.problem
+            color: Theme.danger
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Component {
+            id: boolControl
+            CheckBox {
+                objectName: "setting_" + pluginRow.setting
+                text: pluginRow.text
+                leftPadding: 1
+                spacing: 9
+                checked: pluginRow.modelData.value === true
+                Accessible.name: text
+                Accessible.description: pluginRow.note
+                onToggled: pluginRow.keep(checked)
+            }
+        }
+        Component {
+            id: choiceControl
+            ComboBox {
+                objectName: "setting_" + pluginRow.setting
+                model: (pluginRow.modelData.options ?? []).map(o => typeof o === "object" ? o.title : o)
+                currentIndex: (pluginRow.modelData.options ?? []).findIndex(o => (typeof o === "object" ? o.value : o) === pluginRow.modelData.value)
+                Accessible.name: pluginRow.text
+                onActivated: index => {
+                    const o = pluginRow.modelData.options[index]
+                    pluginRow.keep(typeof o === "object" ? o.value : o)
+                }
+            }
+        }
+        Component {
+            id: numberControl
+            TextField {
+                objectName: "setting_" + pluginRow.setting
+                text: String(pluginRow.modelData.value ?? "")
+                inputMethodHints: Qt.ImhFormattedNumbersOnly
+                Accessible.name: pluginRow.text
+                onEditingFinished: {
+                    const n = Number(text)
+                    if (text.trim().length === 0 || isNaN(n) || (pluginRow.type === "integer" && !Number.isInteger(n))) {
+                        pluginRow.problem = qsTr("Enter a number.")
+                        Accessible.announce(pluginRow.problem, Accessible.Assertive)
+                        return
+                    }
+                    if (n !== pluginRow.modelData.value)
+                        pluginRow.keep(n)
+                }
+            }
+        }
+        Component {
+            id: stringControl
+            TextField {
+                objectName: "setting_" + pluginRow.setting
+                text: pluginRow.modelData.value ?? ""
+                Accessible.name: pluginRow.text
+                onEditingFinished: if (text !== pluginRow.modelData.value) pluginRow.keep(text)
+            }
+        }
+        Component {
+            id: valueControl
+            RowLayout {
+                spacing: 8
+                TextField {
+                    objectName: "setting_" + pluginRow.setting
+                    readOnly: true
+                    text: pluginRow.type === "secret" ? "" : JSON.stringify(pluginRow.modelData.value ?? null)
+                    Layout.fillWidth: true
+                    Accessible.name: pluginRow.text
+                }
+                IconTextButton {
+                    iconRole: "folder-open"
+                    text: qsTr("Open settings file")
+                    onClicked: dialog.openSettingsFile(pluginRow.setting)
+                }
+            }
+        }
+    }
+
 
     FolderChooser {
         id: fontsFolderDialog
@@ -2015,3 +2907,4 @@ DialogWindow {
         }
     }
 }
+

@@ -13,7 +13,7 @@ ShellMenu {
     property string itemPrefix: objectName
     readonly property string tier: hasProject ? remembered : "mine"
     property string projectText: qsTr("Save to project")
-    property string mineText: qsTr("Save to mine")
+    property string mineText: qsTr("Save to yours")
     readonly property string saveText: tier === "project" ? projectText : mineText
     property string remembered: readTier()
 

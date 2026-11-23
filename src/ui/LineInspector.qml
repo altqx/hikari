@@ -17,9 +17,20 @@ ColumnLayout {
     readonly property bool wide: step === "wide"
     spacing: 6
     readonly property int slotSpacing: 8
-    readonly property int timeWidth: 90
+    readonly property int timeWidth: Math.ceil(timeMetrics.advanceWidth) + startField.leftPadding + startField.rightPadding + 2
     readonly property int marginWidth: 56
     readonly property int marginMinimum: 48
+    readonly property font labelFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    readonly property font valueFont: {
+        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        f.features = { "tnum": 1 }
+        return f
+    }
+    TextMetrics {
+        id: timeMetrics
+        font: inspector.valueFont
+        text: "0:00:00.00"
+    }
     readonly property real wideMinimum: rowsMinimum(wideRows)
     readonly property real mediumMinimum: rowsMinimum(mediumRows)
     readonly property real minimumWidth: rowsMinimum(narrowRows)
@@ -59,6 +70,7 @@ ColumnLayout {
         property int numberRole: -1
         signal applied(string text)
         text: value
+        font: inspector.valueFont
         Layout.preferredWidth: 90
         onValueChanged: {
             text = value
@@ -125,6 +137,7 @@ ColumnLayout {
         mouseForm: inspector.editor.timeCtrlForm
         frames: inspector.editor.framesShown
         text: value
+        font: inspector.valueFont
         Layout.preferredWidth: inspector.timeWidth
         Layout.minimumWidth: inspector.timeWidth
         Layout.fillWidth: !inspector.wide
@@ -183,7 +196,7 @@ ColumnLayout {
         editable: true
         currentIndex: -1
         Layout.fillWidth: true
-        Layout.minimumWidth: 56
+        Layout.minimumWidth: 52
         validator: RegularExpressionValidator { regularExpression: /[^,]*/ }
         function sync() {
             if (editText === value)
@@ -224,12 +237,13 @@ ColumnLayout {
         property real minimum
         default property alias controls: box.data
         readonly property real smallest: (label.length > 0 ? Math.ceil(name.implicitWidth) + spacing : 0) + Math.ceil(minimum)
-        spacing: 5
+        spacing: 4
         Label {
             id: name
             objectName: slot.objectName + "Label"
             visible: slot.label.length > 0
             text: slot.label
+            font: inspector.labelFont
             color: Theme.muted
             Layout.alignment: Qt.AlignVCenter
         }
@@ -291,6 +305,9 @@ ColumnLayout {
         Layout.preferredWidth: 0
         Layout.preferredHeight: 0
 
+        Label {
+            id: fontSource
+        }
         Half {
             id: commentSlot
             objectName: "commentSlot"
@@ -299,6 +316,10 @@ ColumnLayout {
                 id: comment
                 objectName: "commentBox"
                 text: qsTr("Comment")
+                topPadding: 4
+                bottomPadding: 4
+                leftPadding: 0
+                rightPadding: 0
                 checked: inspector.editor.comment
                 enabled: inspector.editor.editable && inspector.editor.assFields
                 focusPolicy: Qt.TabFocus

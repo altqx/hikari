@@ -615,6 +615,59 @@ TEST(Hotkeys, FilterModesAndSelection)
     EXPECT_EQ(list.shown().size(), 408u);
 }
 
+TEST(Hotkeys, SourceAndConflictsFilters)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    auto live = defaultHotkeys();
+    std::vector<HotkeyId> global;
+    for (const auto &[key, hotkey] : live)
+        if (key.type == GlobalHotkey && !hotkey.accel.empty() && key.id < kFirstScriptHotkey)
+            global.push_back(key);
+    ASSERT_GE(global.size(), 2u);
+    const HotkeyId kept = global[0], moved = global[1];
+    live[moved].accel = live[kept].accel;
+    live[HotkeyId{kFirstScriptHotkey, GlobalHotkey}] = Hotkey{"Script macro.lua-0", "Ctrl-Alt-M"};
+    live[HotkeyId{kFirstScriptHotkey + 1, GlobalHotkey}] = Hotkey{"plugin.com.example.hello.greet", "Ctrl-Alt-H"};
+    list.build(live);
+    const auto rowOf = [&](const HotkeyId &key) {
+        for (std::size_t i = 0; i < list.rowCount(); ++i)
+            if (list.row(int(i)).key == key)
+                return int(i);
+        return -1;
+    };
+    const auto shows = [&](const HotkeyId &key) { return std::ranges::contains(list.shown(), rowOf(key)); };
+    const auto names = [&] {
+        std::vector<std::string> out;
+        for (const int i : list.shown())
+            out.push_back(list.row(i).name);
+        return out;
+    };
+
+    list.filterSource(1);
+    EXPECT_TRUE(shows(kept));
+    EXPECT_FALSE(shows(moved));
+    EXPECT_TRUE(list.filtered());
+    list.filterSource(2);
+    EXPECT_TRUE(shows(moved));
+    EXPECT_FALSE(shows(kept));
+    list.filterSource(3);
+    EXPECT_EQ(names(), std::vector<std::string>{"plugin.com.example.hello.greet"});
+    list.filterSource(4);
+    EXPECT_EQ(names(), std::vector<std::string>{"Script macro.lua-0"});
+    list.filterSource(0);
+    EXPECT_EQ(list.shown().size(), list.rowCount());
+
+    list.filterConflicts(true);
+    EXPECT_TRUE(list.conflictsOnly());
+    EXPECT_TRUE(shows(kept));
+    EXPECT_TRUE(shows(moved));
+    EXPECT_FALSE(shows(HotkeyId{kFirstScriptHotkey, GlobalHotkey}));
+    EXPECT_TRUE(std::ranges::contains(list.clashes(rowOf(kept)), rowOf(moved)));
+    list.filterConflicts(false);
+    EXPECT_EQ(list.shown().size(), list.rowCount());
+}
+
 TEST(Hotkeys, SearchNarrowsTheFilter)
 {
     HotkeyMap copy;

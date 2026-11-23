@@ -142,6 +142,7 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "settings.list": { group: "app" },
     "settings.get": { group: "app" },
     "settings.set": { group: "app" },
+    "settings.open": { group: "app" },
 };
 
 /**

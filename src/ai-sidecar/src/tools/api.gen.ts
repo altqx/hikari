@@ -136,7 +136,7 @@ export type Edit = {
     value: string | null;
 };
 
-export type SettingValue = boolean | number | string | string[];
+export type SettingValue = boolean | number | number | string | string[];
 
 export type NodePort = {
     name: string;
@@ -424,7 +424,7 @@ export type PanelsListResult = {
     })[];
 };
 
-/** Settings with their type, scope, default and current value. */
+/** Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>. */
 export type SettingsListParams = {
     /** Only ids starting with it, e.g. grid. */
     prefix?: string;
@@ -433,10 +433,16 @@ export type SettingsListParams = {
 export type SettingsListResult = {
     settings: ({
         setting: string;
-        type: "boolean" | "integer" | "string" | "stringList";
+        type: "boolean" | "integer" | "number" | "string" | "stringList";
         scope: "profile" | "collections" | "workspace";
         default: SettingValue;
         value: SettingValue;
+        /** The name the Settings window shows, in the UI language. */
+        title?: string;
+        /** app, or the id of the plugin whose setting it is. */
+        source?: string;
+        /** Whether a Project can override it on the Project tab. */
+        projectable?: boolean;
     })[];
 };
 
@@ -500,6 +506,18 @@ export type PanelsFocusResult = {
     open: boolean;
     floating: boolean;
     focused: boolean;
+};
+
+/** Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting. */
+export type SettingsOpenParams = {
+    /** A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>. */
+    setting?: string;
+    /** The tab; yours when omitted. */
+    scope?: "yours" | "project";
+};
+
+export type SettingsOpenResult = {
+    opened: true;
 };
 
 /** Changes a setting; the value must have the setting's type. */
@@ -2022,6 +2040,7 @@ export interface Operations {
     "panels.open": { access: "write"; params: PanelsOpenParams; result: PanelsOpenResult };
     "panels.close": { access: "write"; params: PanelsCloseParams; result: PanelsCloseResult };
     "panels.focus": { access: "write"; params: PanelsFocusParams; result: PanelsFocusResult };
+    "settings.open": { access: "write"; params: SettingsOpenParams; result: SettingsOpenResult };
     "settings.set": { access: "write"; params: SettingsSetParams; result: SettingsSetResult };
     "document.apply": { access: "write"; params: DocumentApplyParams; result: DocumentApplyResult };
     "selection.set": { access: "write"; params: SelectionSetParams; result: SelectionSetResult };

@@ -35,7 +35,8 @@ class ApiHost final : public QObject,
                       public api::ProjectHost,
                       public api::TranslationHost,
                       public api::EffectsHost,
-                      public api::KeyframeHost {
+                      public api::KeyframeHost,
+                      public api::SettingsHost {
     Q_OBJECT
     // (command, run) => null for a command the shell cannot run; else
     // {enabled, reason} without run, or whether it ran.
@@ -76,6 +77,10 @@ public:
             setKeyframes;
         application::RowMarks *marks = nullptr;
         application::VcsPort *vcs = nullptr;
+        std::function<std::vector<api::PluginSettingState>()> pluginSettings;
+        // Why the value was refused; nullopt once it is kept.
+        std::function<std::optional<std::string>(std::string_view plugin, std::string_view setting, const api::Json &value)>
+            setPluginSetting;
         api::ProgramHost *programs = nullptr;
         api::PresenceHost *presence = nullptr;
         application::Problems *problems = nullptr;
@@ -126,6 +131,16 @@ public:
     std::vector<std::string> aiExclude(const std::string &root) const override;
     std::optional<std::string> setKeyframes(const std::vector<std::int64_t> &frames,
                                             const std::optional<std::string> &file) override;
+
+    std::string title(std::string_view setting) const override;
+    std::vector<api::PluginSettingState> pluginSettings() const override;
+    std::optional<std::string> setPluginSetting(std::string_view plugin, std::string_view setting,
+                                                const api::Json &value) override;
+    void open(std::string_view setting, bool project) override;
+
+signals:
+    // settings.open: the shell window serving the API shows the setting.
+    void settingsOpenRequested(const QString &setting, bool project);
 
 private:
     struct Seen {

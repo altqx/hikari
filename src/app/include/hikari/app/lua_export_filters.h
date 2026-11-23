@@ -14,8 +14,12 @@ public:
     bool available(const std::string &scriptFile, const std::string &filterName) const override;
     bool run(const std::string &scriptFile, const std::string &filterName, const application::MacroSnapshot &snapshot,
              const application::DialogRequest &settings, Done done) override;
+    bool configure(const std::string &scriptFile, const std::string &filterName,
+                   const application::MacroSnapshot &snapshot, DialogDone done) override;
 
 private:
+    template <class Start, class Finish> bool start(const std::string &scriptFile, const std::string &filterName,
+                                                    Start begin, Finish finish);
     struct Target {
         std::string path;
         int index = -1;
