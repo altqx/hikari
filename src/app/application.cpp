@@ -4938,6 +4938,8 @@ application::LineVisible Application::actionLines(const application::EditSession
 {
     if (m_gridFilter->ignoreInActions())
         return {};
+    if (&session == targetSession() && !shell().gridFilterText().isEmpty())
+        return shownLines();
     std::set<core::LineId> hidden;
     for (const auto *line : session.document().lines())
         if (line->visibility == core::LineVisibility::Hidden)

@@ -16383,6 +16383,157 @@ private slots:
         QCOMPARE(grid->markWidth(), 0.0);
     }
 
+    void gridHeaderFilterNarrowsTheGridOverTheStyleFilterWithoutAnUndoStep()
+    {
+        const QString path = dir.filePath(QStringLiteral("gridfilter.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\nStyle: Sign,Arial,20\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Sign,,0,0,0,,two\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        }
+        QVERIFY(application->openFile(path));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        auto *rows = shell.lines();
+        QCOMPARE(rows->rowCount(), 3);
+        const auto steps = session->historySize();
+        auto *field = item("gridFilter");
+        QVERIFY(field);
+        field->forceActiveFocus();
+        QTest::keyClicks(window, "T");
+        QCOMPARE(shell.gridFilterText(), QStringLiteral("T"));
+        QTRY_COMPARE(rows->rowCount(), 2);
+        QCOMPARE(session->historySize(), steps);
+        auto &filter = application->gridFilter();
+        auto restore = qScopeGuard([&] { filter.setStyle(QStringLiteral("Sign"), false); });
+        filter.setStyle(QStringLiteral("Sign"), true);
+        QVERIFY(application->filterLines());
+        QTRY_COMPARE(rows->rowCount(), 1);
+        QVERIFY(field->hasActiveFocus());
+        press(Qt::Key_Escape);
+        QCOMPARE(shell.gridFilterText(), QString());
+        QTRY_COMPARE(rows->rowCount(), 2);
+        QVERIFY(field->hasActiveFocus());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!field->hasActiveFocus());
+        QVERIFY(application->turnOffFiltering());
+        QTRY_COMPARE(rows->rowCount(), 3);
+    }
+
+    void gridHeaderFilterShowsAnEmptyStateAndEnterGoesToTheFirstShownLine()
+    {
+        const QString path = writeFile(dir, "gridfilter2.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        QVERIFY(application->openFile(path));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *field = item("gridFilter");
+        auto *empty = item("gridEmptyState");
+        QVERIFY(!empty->isVisible());
+        field->forceActiveFocus();
+        QTest::keyClicks(window, "zz");
+        QTRY_VERIFY(empty->isVisible());
+        QCOMPARE(empty->property("text").toString(), QStringLiteral("No Lines match the filter"));
+        application->shell().setGridFilterText(QStringLiteral("hre"));
+        QTRY_VERIFY(!empty->isVisible());
+        press(Qt::Key_Return);
+        QTRY_COMPARE(session->selection().active, session->document().lines()[2]->id);
+        QTRY_VERIFY(item("editingGrid")->hasActiveFocus());
+        application->shell().setGridFilterText({});
+    }
+
+    void gridHeaderFilterKeepsAnEditedLineAndUndoRechecksIt()
+    {
+        const QString path = writeFile(dir, "gridfilter3.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        const auto one = session->document().lines()[0]->id;
+        const auto two = session->document().lines()[1]->id;
+        session->setSelection(application::Selection{two, {two}, two, {}});
+        application->editor().reloadFromSession();
+        shell.setGridFilterText(QStringLiteral("two"));
+        QTRY_COMPARE(shell.lines()->rowCount(), 1);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("two"));
+        keysNeverRepeat();
+        text->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(text, "selectAll"));
+        QTest::keyClicks(window, "deux");
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        QVERIFY(application->editor().commit());
+        QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"deux"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"two"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        session->setSelection(application::Selection{one, {one}, one, {}});
+        application->editor().reloadFromSession();
+        shell.setGridFilterText(QStringLiteral("o"));
+        QTRY_COMPARE(shell.lines()->rowCount(), 2);
+        shell.setGridFilterText({});
+    }
+
+    void gridHeaderFilterHidesLinesFromActionsUnlessFilteringIsIgnored()
+    {
+        const QString path = writeFile(dir, "gridfilter4.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        auto &filter = application->gridFilter();
+        std::set<core::LineId> all;
+        for (const auto *line : session->document().lines())
+            all.insert(line->id);
+        session->setSelection(application::Selection{*all.begin(), all, *all.begin(), {}});
+        application->editor().reloadFromSession();
+        shell.setGridFilterText(QStringLiteral("t"));
+        auto restore = qScopeGuard([&] {
+            shell.setGridFilterText({});
+            filter.setIgnoreInActions(false);
+        });
+        QTRY_COMPARE(shell.lines()->rowCount(), 2);
+        QVERIFY(shell.selectionStatus().contains(QStringLiteral("(1 hidden)")));
+
+        QVERIFY(application->copyLines());
+        QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",one")));
+
+        const QVariantMap findE{{QStringLiteral("find"), QStringLiteral("e")},
+                                {QStringLiteral("field"), 0},
+                                {QStringLiteral("mode"), 0},
+                                {QStringLiteral("action"), 0}};
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("1 lines selected."));
+
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restoreShift = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        auto settings = before;
+        settings.insert(QStringLiteral("timeMs"), 1000);
+        settings.insert(QStringLiteral("forward"), true);
+        settings.insert(QStringLiteral("whichLines"), 0);
+        settings.insert(QStringLiteral("whichTimes"), 0);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000);
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 4'000'000);
+
+        filter.setIgnoreInActions(true);
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("2 lines selected."));
+        QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 2'000'000);
+        application->editor().discard();
+    }
+
     void groupRowMenuOpensFromTheKeyboard()
     {
         const QString path = writeFile(dir, "g9k.ass",
