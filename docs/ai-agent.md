@@ -108,7 +108,7 @@ Each thread has a mode. Qt decides every write a session sends, so a sidecar tha
 | Full access | Everything runs, except the always-ask list, [AI-written Lua](#ai-written-lua) and [plugin installs](#ai-written-plugins). |
 
 - **Private settings.** `settings_list` and `settings_get` never show a thread or an MCP agent the `privacy.*` settings (the usage data ID among them) or the `recent.*` lists (recent-file paths and times). Folder settings stay readable. Plugins still read them.
-- Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close`, `panels.focus`, `marks.set`, `marks.clear` and `status_items.set`, which change no content and no setting. Grid row marks and status bar items are never saved and aren't an undo step; only plugins can set them.
+- Reads never ask. Neither do `selection.set`, `panels.open`, `panels.close`, `panels.focus`, `settings.open`, `marks.set`, `marks.clear` and `status_items.set`, which change no content and no setting. Grid row marks and status bar items are never saved and aren't an undo step; only plugins can set them.
 - `typeset.apply` isn't on the always-ask list: it changes the Document only after its render check passes, and asks as other writes do ([#1002](https://github.com/altqx/hikari/issues/1002)). Through MCP it is refused like every write but `document.apply`.
 - `karaoke.apply_template` changes the Document like `typeset.apply` and asks as other writes do.
 - `translation.project_write` follows the thread mode and isn't on the always-ask list: it writes only Honya's four project files in the document's own project folder ([AI translation](ai-translation.md)). No agent tool offers it; a translation run uses it after its Lines are written.

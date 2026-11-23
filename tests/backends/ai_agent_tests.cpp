@@ -262,7 +262,7 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
                                              "karaoke.align", "karaoke.apply_template", "marks.clear", "marks.set",
                                              "panels.close", "panels.focus", "panels.open", "plugins.install", "plugins.run",
                                              "plugins.scaffold", "presence.set_text", "programs.run", "programs.send",
-                                             "programs.start", "programs.stop", "selection.set", "settings.set", "status_items.set",
+                                             "programs.start", "programs.stop", "selection.set", "settings.open", "settings.set", "status_items.set",
                                              "translation.project_write", "typeset.apply", "video.set_keyframes"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
