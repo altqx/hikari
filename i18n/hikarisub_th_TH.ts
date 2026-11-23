@@ -3005,6 +3005,50 @@ Output device: %2</source>
         <translation>เปลี่ยนความละเอียดของคำบรรยายให้ตรงกับวิดีโอหรือไม่? ทำภายหลังได้ด้วยคำบรรยาย › เปลี่ยนความละเอียดของคำบรรยาย</translation>
     </message>
     <message>
+        <source>Text keeps its proportions. Positions follow the new picture.</source>
+        <translation>ข้อความคงสัดส่วนไว้ ตำแหน่งเปลี่ยนตามภาพใหม่</translation>
+    </message>
+    <message>
+        <source>Text stretches with the picture.</source>
+        <translation>ข้อความยืดไปพร้อมกับภาพ</translation>
+    </message>
+    <message>
+        <source>The video adds bars around the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>วิดีโอเพิ่มแถบรอบภาพที่ใช้ทำคำบรรยาย ป้ายข้อความยังคงอยู่บนสิ่งที่ระบุ</translation>
+    </message>
+    <message>
+        <source>The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>วิดีโอตัดขอบของภาพที่ใช้ทำคำบรรยายออก ป้ายข้อความยังคงอยู่บนสิ่งที่ระบุ</translation>
+    </message>
+    <message>
+        <source>Custom edges. Text keeps its proportions.</source>
+        <translation>ขอบกำหนดเอง ข้อความคงสัดส่วนไว้</translation>
+    </message>
+    <message>
+        <source>Left %1</source>
+        <translation>ซ้าย %1</translation>
+    </message>
+    <message>
+        <source>Right %1</source>
+        <translation>ขวา %1</translation>
+    </message>
+    <message>
+        <source>Top %1</source>
+        <translation>บน %1</translation>
+    </message>
+    <message>
+        <source>Bottom %1</source>
+        <translation>ล่าง %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>%1 (video)</source>
+        <translation>%1 (วิดีโอ)</translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>คำบรรยาย</translation>
     </message>
@@ -3061,8 +3105,76 @@ Output device: %2</source>
         <translation>คงไว้</translation>
     </message>
     <message>
+        <source>Letterbox</source>
+        <translation>เติมแถบ</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation>ครอบตัด</translation>
+    </message>
+    <message>
         <source>The aspect ratio changes from %1 to %2.</source>
         <translation>อัตราส่วนภาพเปลี่ยนจาก %1 เป็น %2</translation>
+    </message>
+    <message>
+        <source>Edges</source>
+        <translation>ขอบ</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>ซ้าย</translation>
+    </message>
+    <message>
+        <source>Left edge</source>
+        <translation>ขอบซ้าย</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>ขวา</translation>
+    </message>
+    <message>
+        <source>Right edge</source>
+        <translation>ขอบขวา</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>บน</translation>
+    </message>
+    <message>
+        <source>Top edge</source>
+        <translation>ขอบบน</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>ล่าง</translation>
+    </message>
+    <message>
+        <source>Bottom edge</source>
+        <translation>ขอบล่าง</translation>
+    </message>
+    <message>
+        <source>Same on both sides</source>
+        <translation>เท่ากันทั้งสองด้าน</translation>
+    </message>
+    <message>
+        <source>Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.</source>
+        <translation>จำนวนที่เพิ่ม (+) หรือตัดออก (−) จากแต่ละขอบของภาพคำบรรยายก่อนปรับขนาด</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix</source>
+        <translation>เมทริกซ์ YCbCr</translation>
+    </message>
+    <message>
+        <source>Colours are converted so that they look the same under the new matrix.</source>
+        <translation>สีจะถูกแปลงให้ดูเหมือนเดิมภายใต้เมทริกซ์ใหม่</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix to convert from.</source>
+        <translation>คำบรรยายไม่มีเมทริกซ์ YCbCr ให้แปลง</translation>
     </message>
     <message>
         <source>Adjust 3D rotations</source>

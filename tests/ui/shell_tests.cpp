@@ -10425,6 +10425,145 @@ private slots:
         application->editor().discard();
     }
 
+    void resampleLetterboxesCropsAndConvertsTheMatrix()
+    {
+        if (application->resampleValues().value(QStringLiteral("hasVideo")).toBool())
+            QVERIFY(application->video().unloadVideo());
+        const QString path = dir.filePath(QStringLiteral("resample-edges.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1440\nPlayResY: 1080\nYCbCr Matrix: TV.601\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(100,50)\\c&H0000FF&}a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+        QObject *resample = nullptr;
+        QTRY_VERIFY((resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"))) &&
+                    resample->property("visible").toBool());
+        auto value = [&](const char *name) { return dialogItem("resampleDialog", name)->property("value").toInt(); };
+        auto hint = [&] { return dialogItem("resampleDialog", "resampleAspectHint")->property("text").toString(); };
+        dialogItem("resampleDialog", "resampleWidth")->setProperty("value", 1920);
+        dialogItem("resampleDialog", "resampleHeight")->setProperty("value", 1080);
+        QTRY_VERIFY(dialogItem("resampleDialog", "resampleAspectSection")->isVisible());
+        QVERIFY(dialogItem("resampleDialog", "resampleEdges")->isVisible());
+        QCOMPARE(hint(), QStringLiteral("Text keeps its proportions. Positions follow the new picture."));
+
+        resample->setProperty("aspect", QStringLiteral("letterbox"));
+        QCOMPARE(value("resampleEdgeLeft"), 240);
+        QCOMPARE(value("resampleEdgeRight"), 240);
+        QCOMPARE(value("resampleEdgeTop"), 0);
+        QCOMPARE(hint(), QStringLiteral("The video adds bars around the picture the subtitles were made for. Signs stay on "
+                                        "what they mark."));
+        QCOMPARE(resample->property("edgesSummary").toString(), QStringLiteral("Left 240 · Right 240"));
+        resample->setProperty("aspect", QStringLiteral("crop"));
+        QCOMPARE(value("resampleEdgeLeft"), 0);
+        QCOMPARE(value("resampleEdgeTop"), -135);
+        QCOMPARE(value("resampleEdgeBottom"), -135);
+
+        dialogItem("resampleDialog", "resampleEdges")->setProperty("expanded", true);
+        QVERIFY(!dialogItem("resampleDialog", "resampleEdgeBottom")->property("enabled").toBool());
+        auto *dialogWindow = qobject_cast<QQuickWindow *>(resample);
+        dialogWindow->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(dialogWindow));
+        auto *topEditor = dialogItem("resampleDialog", "resampleEdgeTop")->property("contentItem").value<QQuickItem *>();
+        topEditor->forceActiveFocus();
+        QTRY_VERIFY(topEditor->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(topEditor, "selectAll"));
+        for (const char c : {'1', '0'})
+            QTest::keyClick(dialogWindow, c);
+        QTest::keyClick(dialogWindow, Qt::Key_Tab);
+        QTRY_COMPARE(resample->property("aspect").toString(), QStringLiteral("custom"));
+        QVERIFY(resample->property("visible").toBool());
+        QCOMPARE(value("resampleEdgeTop"), 10);
+        QCOMPARE(value("resampleEdgeBottom"), 10);
+        QCOMPARE(hint(), QStringLiteral("Custom edges. Text keeps its proportions."));
+
+        resample->setProperty("aspect", QStringLiteral("letterbox"));
+        const auto choices = resample->property("matrixChoices").toList();
+        QCOMPARE(choices.first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Keep TV.601"));
+        int tv709 = -1;
+        for (int i = 0; i < choices.size(); ++i)
+            if (choices.at(i).toMap().value(QStringLiteral("value")).toString() == QLatin1String("TV.709"))
+                tv709 = i;
+        QVERIFY(tv709 > 0);
+        dialogItem("resampleDialog", "resampleMatrix")->setProperty("currentIndex", tv709);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
+        QTRY_VERIFY(!resample->property("visible").toBool());
+        QCOMPARE(session->historySize(), steps + 1);
+        const auto &text = session->document().lines()[0]->text;
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())),
+                 QStringLiteral("{\\pos(340,50)\\c&H0019FF&}a"));
+        QCOMPARE(session->document().scriptInfo(u8"YCbCr Matrix"), std::optional(std::u8string(u8"TV.709")));
+        QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"1920")));
+        application->editor().discard();
+    }
+
+    void resampleScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1366, 768);
+        if (application->resampleValues().value(QStringLiteral("hasVideo")).toBool())
+            QVERIFY(application->video().unloadVideo());
+        const QString path = dir.filePath(QStringLiteral("resample-shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1440\nPlayResY: 1080\nYCbCr Matrix: TV.601\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+        QObject *resample = nullptr;
+        QTRY_VERIFY((resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"))) &&
+                    resample->property("visible").toBool());
+        dialogItem("resampleDialog", "resampleWidth")->setProperty("value", 1920);
+        dialogItem("resampleDialog", "resampleHeight")->setProperty("value", 1080);
+        QCOMPARE(dialogItem("resampleDialog", "resampleSubsWidth")->property("value").toInt(), 1440);
+        QTRY_VERIFY(dialogItem("resampleDialog", "resampleAspectSection")->isVisible());
+        resample->setProperty("aspect", QStringLiteral("letterbox"));
+        QQuickItem *segments = dialogItem("resampleDialog", "resampleAspect");
+        QQuickItem *hint = dialogItem("resampleDialog", "resampleAspectHint");
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            for (const bool expanded : {false, true}) {
+                dialogItem("resampleDialog", "resampleEdges")->setProperty("expanded", expanded);
+                QVERIFY(QQuickTest::qWaitForPolish(hint->window()));
+                QTest::qWait(300);
+                QVERIFY(hint->window()->grabWindow().save(out + QStringLiteral("/resample-letterbox-") +
+                                                          (expanded ? QStringLiteral("edges-") : QString()) + theme +
+                                                          QStringLiteral(".png")));
+                const QString widths = QStringLiteral("%1: window %2, segments %3/%4, hint %5/%6")
+                                           .arg(theme)
+                                           .arg(hint->window()->width())
+                                           .arg(segments->width())
+                                           .arg(segments->implicitWidth())
+                                           .arg(hint->width())
+                                           .arg(hint->implicitWidth());
+                qInfo().noquote() << widths;
+                QVERIFY2(segments->width() >= segments->implicitWidth(), qPrintable(widths));
+                QVERIFY2(hint->property("lineCount").toInt() == 1, qPrintable(widths));
+            }
+        }
+        QVERIFY(QMetaObject::invokeMethod(resample, "reject"));
+        QTRY_VERIFY(!resample->property("visible").toBool());
+    }
+
     void resampleAdjustsThreeDRotations()
     {
         const QString path = dir.filePath(QStringLiteral("resample-3d.ass"));
