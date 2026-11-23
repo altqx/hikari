@@ -56,7 +56,8 @@ ShellMenu {
             required property int index
             objectName: layoutMenu.prefix + "Saved" + index
             text: modelData.name
-            iconRole: layoutMenu.layouts.hasProject ? (modelData.tier === "project" ? "project" : "mine") : ""
+            iconRole: modelData.tier === "plugin" ? "plugins"
+                    : layoutMenu.layouts.hasProject ? (modelData.tier === "project" ? "project" : "mine") : ""
             reason: modelData.hidden ? qsTr("Hidden by the project’s copy") : ""
             enabled: modelData.usable && !modelData.hidden && !layoutMenu.layouts.locked
             checked: !modelData.hidden && layoutMenu.layouts.layout === modelData.name

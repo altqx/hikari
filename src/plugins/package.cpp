@@ -3,6 +3,7 @@
 #include "media.h"
 #include "hikari/api/file_names.h"
 
+#include "hikari/plugins/archive.h"
 #include "hikari/plugins/qml_imports.h"
 #include "hikari/themes/theme.h"
 
@@ -12,33 +13,6 @@
 namespace hikari::plugins {
 
 namespace {
-
-bool allowedChar(char c)
-{
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == ' ' || c == '_' ||
-           c == '.' || c == '-' || c == '+';
-}
-
-bool goodPart(std::string_view part)
-{
-    return !part.empty() && part != "." && part != ".." && part.size() <= 255 &&
-           std::all_of(part.begin(), part.end(), allowedChar) && !part.ends_with('.') && !part.ends_with(' ') &&
-           !api::reservedOnWindows(part);
-}
-
-bool goodPath(std::string_view path)
-{
-    if (path.empty() || path.size() > 400)
-        return false;
-    while (true) {
-        const std::size_t slash = path.find('/');
-        if (!goodPart(path.substr(0, slash)))
-            return false;
-        if (slash == std::string_view::npos)
-            return true;
-        path.remove_prefix(slash + 1);
-    }
-}
 
 std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::vector<PackageFile> &files)
 {
@@ -55,17 +29,36 @@ std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::ve
     return std::nullopt;
 }
 
-std::optional<PackageProblem> contentProblem(const std::vector<ContentFile> &content, const ContentFileCheck &check,
+std::optional<PackageProblem> contentProblem(const std::string &path, const ContentFileCheck &check,
                                             const std::vector<PackageFile> &files)
 {
     using Kind = PackageProblem::Kind;
-    for (const ContentFile &item : content) {
-        const auto file = std::ranges::find(files, item.path, &PackageFile::path);
-        if (file == files.end())
-            return PackageProblem{Kind::MissingContent, item.path, {}, {}};
-        if (check)
-            if (auto refused = check(file->data))
-                return PackageProblem{Kind::BadContent, item.path, {}, std::move(*refused)};
+    const auto file = std::ranges::find(files, path, &PackageFile::path);
+    if (file == files.end())
+        return PackageProblem{Kind::MissingContent, path, {}, {}};
+    if (check)
+        if (auto refused = check(file->data))
+            return PackageProblem{Kind::BadContent, path, {}, std::move(*refused)};
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> contentProblem(const std::vector<ContentFile> &content, const ContentFileCheck &check,
+                                            const std::vector<PackageFile> &files)
+{
+    for (const ContentFile &item : content)
+        if (auto problem = contentProblem(item.path, check, files))
+            return problem;
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> dictionaryProblem(const std::vector<Dictionary> &dictionaries,
+                                               const ContentFileChecks &checks, const std::vector<PackageFile> &files)
+{
+    for (const Dictionary &dictionary : dictionaries) {
+        if (auto problem = contentProblem(dictionary.aff, checks.dictionaryAff, files))
+            return problem;
+        if (auto problem = contentProblem(dictionary.dic, checks.dictionaryDic, files))
+            return problem;
     }
     return std::nullopt;
 }
@@ -126,9 +119,9 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     const PackageFile *manifestFile = nullptr;
     for (const PackageFile &file : files) {
         total += file.data.size();
-        if (total > kMaxPackageBytes)
-            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
-        if (!goodPath(file.path) || !seen.insert(api::lowered(file.path)).second)
+        if (total > kMaxPlatformPackageBytes)
+            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}, {}, kMaxPlatformPackageBytes});
+        if (!goodPackagePath(file.path) || !seen.insert(api::lowered(file.path)).second)
             return std::unexpected(PackageProblem{Kind::BadPath, file.path, {}});
         if (file.path == kManifestName)
             manifestFile = &file;
@@ -147,15 +140,34 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     auto manifest = parseManifest(std::string_view(reinterpret_cast<const char *>(bytes.data()), bytes.size()), apiVersion);
     if (!manifest)
         return std::unexpected(PackageProblem{Kind::Manifest, std::string(kManifestName), manifest.error()});
-    if (!manifest->main.empty() &&
-        std::none_of(files.begin(), files.end(), [&](const PackageFile &f) { return f.path == manifest->main; }))
+    const auto holds = [&](const std::string &path) {
+        return std::ranges::any_of(files, [&](const PackageFile &f) { return f.path == path; });
+    };
+    if (!manifest->main.empty() && !holds(manifest->main))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
+    if (const Program *main = manifest->program(manifest->mainProgram);
+        main && !main->platforms.contains(std::string(thisPlatform())))
+        return std::unexpected(PackageProblem{Kind::MainProgramUnavailable, main->title, {}});
+    bool forOnePlatform = false;
+    for (const Program &program : manifest->programs)
+        for (const auto &[platform, run] : program.platforms) {
+            if (run.download || holds(run.path))
+                continue;
+            if (platform == thisPlatform())
+                return std::unexpected(PackageProblem{Kind::MissingProgram, run.path, {}});
+            forOnePlatform = true;
+        }
+    if (total > kMaxPackageBytes && !forOnePlatform)
+        return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
     if (auto problem = mediaProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
     if (auto problem = qmlProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
     for (auto problem : {contentProblem(manifest->styles, checks.styleCatalogue, files),
                          contentProblem(manifest->karaokePresets, checks.karaokePreset, files),
+                         dictionaryProblem(manifest->dictionaries, checks, files),
+                         contentProblem(manifest->graphs, checks.graph, files),
+                         contentProblem(manifest->layouts, checks.layout, files),
                          themeProblem(manifest->themes, files), interfaceIconsProblem(*manifest, checks.iconRoles, files)})
         if (problem)
             return std::unexpected(std::move(*problem));

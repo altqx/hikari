@@ -152,6 +152,14 @@ struct ContentFile {
     std::string path;  // a package path
 };
 
+// A Hunspell pair the spell checker offers after the user's and the bundled dictionaries.
+struct Dictionary {
+    std::string language; // the Hunspell name, such as en_US
+    std::string title;
+    std::string aff; // package paths
+    std::string dic;
+};
+
 struct ColourTheme {
     std::string id;
     std::string title;
@@ -175,7 +183,8 @@ struct Manifest {
     std::string name;
     std::string version;
     std::int64_t api = 1;
-    std::string main;
+    std::string main;        // the Lua main file, or empty
+    std::string mainProgram; // a program plugin's program id, or empty
     Tier tier = Tier::Restricted;
     std::vector<std::string> authors;
     std::string description;
@@ -197,6 +206,9 @@ struct Manifest {
     std::vector<Program> programs;
     std::vector<ContentFile> styles;
     std::vector<ContentFile> karaokePresets;
+    std::vector<Dictionary> dictionaries;
+    std::vector<ContentFile> graphs;
+    std::vector<ContentFile> layouts;
     std::vector<ColourTheme> themes;
     std::vector<IconTheme> iconThemes;
     std::vector<OwnIcon> icons;

@@ -57,7 +57,7 @@ TEST(ApiRegistry, ReadsAreMarkedRead)
 TEST(ApiRegistry, WritesAreMarkedWrite)
 {
     for (const char *name : {"document.apply", "selection.set", "commands.run", "panels.open", "panels.close",
-                             "panels.focus", "settings.set", "files.write"}) {
+                             "panels.focus", "settings.set", "settings.open", "files.write"}) {
         const Operation *op = Api::registry().find(name);
         ASSERT_TRUE(op) << name;
         EXPECT_EQ(op->access, Access::Write) << name;
@@ -264,6 +264,23 @@ TEST_F(ApiScripts, AnAiCallerCannotReadPrivacyOrRecentSettingsAndAPluginCan)
         EXPECT_TRUE(client.call(pluginCaller(), "settings.get", get)) << id;
     }
     EXPECT_TRUE(client.call(ai, "settings.get", params(R"({"settings": ["fontCollector.directory"]})")));
+}
+
+TEST_F(ApiScripts, SettingsOpenShowsTheSettingAndAnAiCallerCannotOpenAPrivateOne)
+{
+    ASSERT_TRUE(client.call(pluginCaller(), "settings.open", params(R"({"setting": "editor.spellchecker", "scope": "project"})")));
+    ASSERT_TRUE(client.call(pluginCaller(), "settings.open", Json::object()));
+    EXPECT_EQ(host.settingsWindow.opened,
+              (std::vector<std::pair<std::string, bool>>{{"editor.spellchecker", true}, {"", false}}));
+
+    Caller ai = aiCaller();
+    ai.reviewed = true;
+    const Result refused = client.call(ai, "settings.open", params(R"({"setting": "privacy.usageData"})"));
+    ASSERT_FALSE(refused);
+    EXPECT_EQ(refused.error().code, errors::kRefused);
+    EXPECT_EQ(*refused.error().data.find("reason"), Json("private"));
+    EXPECT_TRUE(client.call(pluginCaller(), "settings.open", params(R"({"setting": "privacy.usageData"})")));
+    EXPECT_EQ(host.settingsWindow.opened.size(), 3u);
 }
 
 TEST_F(ApiScripts, AStaleRevisionChangesNothing)

@@ -101,6 +101,7 @@ The style button opens a popover over the line box. It has a filter field (type 
   - Shift+Enter goes back a Line.
   - Esc closes the popover.
   - A line at the popover's foot says what Enter will do: 'Enter applies "Sign" to line 46 and goes to 47.'
+  - The style goes to the active Line alone: with several Lines selected in the Grid, the selection narrows to the active Line first, as Aegisub's Styling Assistant does.
 - **Order (Q624):** when several Lines are picked, the step goes through the picked Lines in Grid order. Otherwise it goes through every Line in Grid order.
 - **The Styles panel** gets the same toggle with the same behaviour.
 

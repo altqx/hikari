@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <functional>
 #include <set>
 
 namespace hikari::plugins {
@@ -150,6 +151,15 @@ std::vector<ContentFile> contentFiles(const Json *list)
     if (list && list->isArray())
         for (const Json &item : list->asArray())
             out.push_back({text(item, "id"), text(item, "title"), text(item, "path")});
+    return out;
+}
+
+std::vector<Dictionary> dictionaries(const Json *list)
+{
+    std::vector<Dictionary> out;
+    if (list && list->isArray())
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "language"), text(item, "title"), text(item, "aff"), text(item, "dic")});
     return out;
 }
 
@@ -366,14 +376,20 @@ std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
     return std::nullopt;
 }
 
-template <typename Items>
-std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
+template <typename Items, typename Key>
+std::optional<ManifestProblem> repeated(const Items &items, const std::string &at, Key key, std::string_view field)
 {
     std::set<std::string> seen;
     for (std::size_t i = 0; i < items.size(); ++i)
-        if (!seen.insert(items[i].id).second)
-            return ManifestProblem{Kind::DuplicateId, at + "/" + std::to_string(i) + "/id", items[i].id, 0};
+        if (const std::string &value = std::invoke(key, items[i]); !seen.insert(value).second)
+            return ManifestProblem{Kind::DuplicateId, at + "/" + std::to_string(i) + "/" + std::string(field), value, 0};
     return std::nullopt;
+}
+
+template <typename Items>
+std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
+{
+    return repeated(items, at, &Items::value_type::id, "id");
 }
 
 SettingType settingType(std::string_view type)
@@ -477,7 +493,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     m.name = text(json, "name");
     m.version = text(json, "version");
     m.api = json.find("api")->asInt();
-    m.main = text(json, "main");
+    if (const Json *main = json.find("main"); main && main->isObject())
+        m.mainProgram = text(*main, "program");
+    else
+        m.main = text(json, "main");
     m.tier = text(json, "tier") == "unrestricted" ? Tier::Unrestricted : Tier::Restricted;
     for (const Json &author : json.find("authors")->asArray())
         m.authors.push_back(author.asString());
@@ -509,6 +528,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.formats = formats(contributes->find("formats"));
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
+        m.dictionaries = dictionaries(contributes->find("dictionaries"));
+        m.graphs = contentFiles(contributes->find("graphs"));
+        m.layouts = contentFiles(contributes->find("layouts"));
         m.themes = colourThemes(contributes->find("themes"));
         m.iconThemes = iconThemes(contributes->find("iconThemes"));
         m.icons = ownIcons(contributes->find("icons"));
@@ -522,6 +544,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.formats, "/contributes/formats"), repeated(m.programs, "/contributes/programs"),
                          repeated(m.styles, "/contributes/styles"),
                          repeated(m.karaokePresets, "/contributes/karaokePresets"),
+                         repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language"),
+                         repeated(m.graphs, "/contributes/graphs"),
+                         repeated(m.layouts, "/contributes/layouts"),
                          repeated(m.themes, "/contributes/themes"), repeated(m.iconThemes, "/contributes/iconThemes"),
                          repeated(m.icons, "/contributes/icons"), unknownOwnIcon(json.find("contributes"), m),
                          codeWithoutMain(json)})
@@ -542,6 +567,13 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (std::size_t i = 0; i < m.programs.size(); ++i)
         if (auto problem = badProgram(m, i))
             return std::unexpected(*problem);
+    if (!m.mainProgram.empty()) {
+        const Program *program = m.program(m.mainProgram);
+        if (!program)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "names no program in contributes.programs", 0});
+        if (!program->api)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "the main program needs \"api\": true", 0});
+    }
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;

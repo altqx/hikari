@@ -23,13 +23,16 @@ One-shot AI actions on the Lines you chose, with no agent thread ([AI8 #436](htt
 | Action | Role | Asks |
 | --- | --- | --- |
 | Rewrite… | Chat | An instruction, with the last 5 as chips |
-| Shorten to 15 CPS | Chat | Nothing; sends only the Lines over 15 CPS |
+| Shorten to <CPS warning> CPS | Chat | Nothing; sends only the Lines over the CPS warning |
 | Fix spelling and grammar | Reviewer | Nothing |
+| Suggest synonyms | Chat | Nothing; Line editor only, for one word ([#1218](https://github.com/altqx/hikari/issues/1218)) |
 | Translate to <language> | Translator | Nothing; the language is the Project's target language, else **Translate to** in Settings. Both Translate actions send the Project's source language when it has one |
 | Translate to… | Translator | A language |
 | Your actions | Their own role | Nothing, or their instruction when **Ask each time** is on |
 
-Each role falls back to Chat. Every action changes only the Text, except Translate in Translation mode, which writes the Translated text. Both Translate actions run the [translation pipeline](ai-translation.md) as one request, not one request per Line. 15 CPS is the limit the Grid and the Line editor already use; there is no setting for it.
+**Suggest synonyms** shows only in the Line editor's menus, when the selection is one whole word, or the caret is in one, outside override blocks. Opening it sends that word with the Line (tags stripped) and the usual context Lines, and lists up to 8 replacements as they come, or "No synonyms". Choosing one replaces only that word as one History step, "AI: Synonym", and one review turn. It does this in every mode, Manual included, because the user picked the exact word; a Line edited in the meantime is left alone. It counts toward the daily cap.
+
+Each role falls back to Chat. Every action changes only the Text, except Translate in Translation mode, which writes the Translated text. Both Translate actions run the [translation pipeline](ai-translation.md) as one request, not one request per Line. The CPS warning is the [reading limit](ux/grid-operations.md#reading-limits) the Grid and the Line editor use, so a subtitle file's own limit applies.
 
 ## What is sent
 
@@ -67,6 +70,6 @@ No new event; the two commands send `command_used` as every command does.
 
 ## Tests
 
-- `hikari_application_ai_inline_tests`: skip rules, masking and unmasking, the prompt, spans, reading answers.
+- `hikari_application_ai_inline_tests`: the synonyms prompt and reading its answer, skip rules, masking and unmasking, the prompt, spans, reading answers.
 - `hikari_backends_ai_inline_run_tests`: one request per Line, dropped tags, failures, Stop, the daily cap, dropping a Line, no model, unknown prices, the request shape.
-- `hikari_ui_inline_ai_tests`: the menus with AI on and off, and with only an agent CLI found, Auto's one turn and one History step, Manual's Apply with an out-of-date Line, Discard.
+- `hikari_ui_inline_ai_tests`: Suggest synonyms (the word, the list, one History step in Manual, a changed Line), the menus with AI on and off, and with only an agent CLI found, Auto's one turn and one History step, Manual's Apply with an out-of-date Line, Discard.

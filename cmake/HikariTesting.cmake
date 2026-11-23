@@ -30,6 +30,7 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_shell_tests.hotkeys3
     # On xcb the fullscreen rail took the hover from the picture.
     hikari_ui_shell_tests.video
+    hikari_ui_shell_tests.video2
     # A restart after Cancel stalled harper-ls under xcb.
     hikari_ui_grammar_tests
     # The progress card's timer fired only under X11.

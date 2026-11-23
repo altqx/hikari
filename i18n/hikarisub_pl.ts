@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>Włącz AI…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>Pokazuje panel agenta, w którym można włączyć AI</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>Agent</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>Otwórz Ustawienia › AI</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>Nic nie jest wysyłane ani pobierane, dopóki go nie dodasz.</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -210,6 +214,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>Podagent wątku „%1”. Tylko do odczytu; rozmawiaj z nim przez wątek nadrzędny.</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>Nic nie jest wysyłane, dopóki go nie dodasz.</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1031,6 +1039,18 @@
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI jest wyłączone</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>Włącz je, aby używać agentów i akcji AI. HikariSub pobierze wtedy jeden raz komponent AI.</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>Włącz AI</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -1640,8 +1660,16 @@ Urządzenie wyjściowe: %2</translation>
         <translation type="unfinished">Projekt</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>Kopiuj do Twoich</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>Przenieś do Twoich</translation>
     </message>
     <message>
         <source>Hidden by the project’s copy</source>
@@ -1680,15 +1708,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3053,6 +3073,50 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Przeskalować napisy do wideo? Można to zrobić także później: Napisy › Zmień rozdzielczość napisów.</translation>
     </message>
     <message>
+        <source>Text keeps its proportions. Positions follow the new picture.</source>
+        <translation>Tekst zachowuje proporcje. Pozycje podążają za nowym obrazem.</translation>
+    </message>
+    <message>
+        <source>Text stretches with the picture.</source>
+        <translation>Tekst rozciąga się razem z obrazem.</translation>
+    </message>
+    <message>
+        <source>The video adds bars around the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>Wideo dodaje pasy wokół obrazu, do którego powstały napisy. Napisy ekranowe zostają na tym, co oznaczają.</translation>
+    </message>
+    <message>
+        <source>The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>Wideo przycina krawędzie obrazu, do którego powstały napisy. Napisy ekranowe zostają na tym, co oznaczają.</translation>
+    </message>
+    <message>
+        <source>Custom edges. Text keeps its proportions.</source>
+        <translation>Własne krawędzie. Tekst zachowuje proporcje.</translation>
+    </message>
+    <message>
+        <source>Left %1</source>
+        <translation>Lewa %1</translation>
+    </message>
+    <message>
+        <source>Right %1</source>
+        <translation>Prawa %1</translation>
+    </message>
+    <message>
+        <source>Top %1</source>
+        <translation>Górna %1</translation>
+    </message>
+    <message>
+        <source>Bottom %1</source>
+        <translation>Dolna %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>%1 (video)</source>
+        <translation>%1 (wideo)</translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>Napisy</translation>
     </message>
@@ -3109,8 +3173,76 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zachowaj</translation>
     </message>
     <message>
+        <source>Letterbox</source>
+        <translation>Pasy</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation>Przytnij</translation>
+    </message>
+    <message>
         <source>The aspect ratio changes from %1 to %2.</source>
         <translation>Proporcje obrazu zmieniają się z %1 na %2.</translation>
+    </message>
+    <message>
+        <source>Edges</source>
+        <translation>Krawędzie</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>Lewa</translation>
+    </message>
+    <message>
+        <source>Left edge</source>
+        <translation>Lewa krawędź</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>Prawa</translation>
+    </message>
+    <message>
+        <source>Right edge</source>
+        <translation>Prawa krawędź</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>Górna</translation>
+    </message>
+    <message>
+        <source>Top edge</source>
+        <translation>Górna krawędź</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>Dolna</translation>
+    </message>
+    <message>
+        <source>Bottom edge</source>
+        <translation>Dolna krawędź</translation>
+    </message>
+    <message>
+        <source>Same on both sides</source>
+        <translation>Tak samo po obu stronach</translation>
+    </message>
+    <message>
+        <source>Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.</source>
+        <translation>Dodawane do (+) lub odcinane od (−) każdej krawędzi obrazu napisów przed skalowaniem.</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix</source>
+        <translation>Macierz YCbCr</translation>
+    </message>
+    <message>
+        <source>Colours are converted so that they look the same under the new matrix.</source>
+        <translation>Kolory są konwertowane tak, aby wyglądały tak samo w nowej macierzy.</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix to convert from.</source>
+        <translation>Napisy nie mają macierzy YCbCr, z której można konwertować.</translation>
     </message>
     <message>
         <source>Adjust 3D rotations</source>
@@ -3915,14 +4047,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>różne</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>Liczba znaków w każdym wierszu. Nie więcej niż 43 znaki, najwyżej 2 wiersze.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>Znaki na sekundę. Nie więcej niż 15.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>Pokaż czasy</translation>
     </message>
@@ -4338,6 +4462,18 @@ Urządzenie wyjściowe: %2</translation>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>Tag zaczyna się od ukośnika odwrotnego, na przykład \blur2</translation>
     </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersz.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersze.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wierszy.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>Znaki na sekundę. Wartość powinna wynosić %1 lub mniej.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Explorer</name>
@@ -4665,12 +4801,300 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Plik o tej nazwie już istnieje.</translation>
     </message>
     <message>
+        <source>From this file (Aegisub)</source>
+        <translation>Z tego pliku (Aegisub)</translation>
+    </message>
+    <message>
+        <source>Unsaved steps</source>
+        <translation>Niezapisane kroki</translation>
+    </message>
+    <message>
+        <source>No steps</source>
+        <translation>Brak kroków</translation>
+    </message>
+    <message>
+        <source>The script is busy or isn’t loaded, so its settings can’t be shown.</source>
+        <translation>Skrypt jest zajęty lub nie jest wczytany, więc nie można pokazać jego ustawień.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>%n rodzaj tagów</numerusform>
+            <numerusform>%n rodzaje tagów</numerusform>
+            <numerusform>%n rodzajów tagów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing chosen</source>
+        <translation>Nic nie wybrano</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>Zmienna</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>%1, reversed</source>
+        <translation>%1, odwrotnie</translation>
+    </message>
+    <message>
+        <source>Templates in this file</source>
+        <translation>Szablony z pliku</translation>
+    </message>
+    <message>
+        <source>Lines whose style is missing</source>
+        <translation>Linijki z brakującym stylem</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation>Ten projekt</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>Wbudowany</translation>
+    </message>
+    <message>
+        <source>Lua · %1</source>
+        <translation>Lua · %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>Utworzono %n linijkę</numerusform>
+            <numerusform>Utworzono %n linijki</numerusform>
+            <numerusform>Utworzono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>Zmieniono %n linijkę</numerusform>
+            <numerusform>Zmieniono %n linijki</numerusform>
+            <numerusform>Zmieniono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Skipped: its script isn’t loaded</source>
+        <translation>Pominięto: jego skrypt nie jest wczytany</translation>
+    </message>
+    <message>
+        <source>Didn’t run</source>
+        <translation>Nie uruchomiono</translation>
+    </message>
+    <message>
+        <source>Variable needs a video or timecodes file</source>
+        <translation>Zmienna wymaga wideo lub pliku kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Enter frame rates above 0</source>
+        <translation>Wpisz liczby klatek na sekundę większe od 0</translation>
+    </message>
+    <message>
+        <source>A macro is running, so the script couldn’t start</source>
+        <translation>Działa makro, więc nie można było uruchomić skryptu</translation>
+    </message>
+    <message>
+        <source>Couldn’t apply the script’s changes</source>
+        <translation>Nie można było zastosować zmian skryptu</translation>
+    </message>
+    <message>
+        <source>Stopped with a script error</source>
+        <translation>Skrypt zatrzymał się z błędem</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (utworzono %n linijkę)</numerusform>
+            <numerusform>%1 (utworzono %n linijki)</numerusform>
+            <numerusform>%1 (utworzono %n linijek)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ran before export: %1.</source>
+        <translation>Uruchomiono przed eksportem: %1.</translation>
+    </message>
+    <message>
+        <source>Before export · %1 · step %2 of %3</source>
+        <translation>Przed eksportem · %1 · krok %2 z %3</translation>
+    </message>
+    <message>
+        <source>Before export: %1</source>
+        <translation>Przed eksportem: %1</translation>
+    </message>
+    <message>
+        <source>changed</source>
+        <translation>zmieniony</translation>
+    </message>
+    <message>
+        <source>Add steps</source>
+        <translation>Dodaj kroki</translation>
+    </message>
+    <message>
+        <source>Hide steps</source>
+        <translation>Ukryj kroki</translation>
+    </message>
+    <message>
+        <source>Show steps</source>
+        <translation>Pokaż kroki</translation>
+    </message>
+    <message>
+        <source>Writes the document as it is.</source>
+        <translation>Zapisuje dokument bez zmian.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s recipe of the same name</source>
+        <translation>Ukryty przez przepis projektu o tej samej nazwie</translation>
+    </message>
+    <message>
+        <source>Save recipe…</source>
+        <translation>Zapisz przepis…</translation>
+    </message>
+    <message>
+        <source>Manage recipes…</source>
+        <translation>Zarządzaj przepisami…</translation>
+    </message>
+    <message>
+        <source>Run in this order on a copy; the document doesn’t change.</source>
+        <translation>Uruchamiane w tej kolejności na kopii; dokument się nie zmienia.</translation>
+    </message>
+    <message>
+        <source>Run %1</source>
+        <translation>Uruchom: %1</translation>
+    </message>
+    <message>
+        <source>%1 isn’t loaded · Export skips it</source>
+        <translation>%1 nie jest wczytany · Eksport go pominie</translation>
+    </message>
+    <message>
+        <source>Settings for %1</source>
+        <translation>Ustawienia dla: %1</translation>
+    </message>
+    <message>
+        <source>More for %1</source>
+        <translation>Więcej dla: %1</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Przenieś w górę</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Przenieś w dół</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>Przesuń na początek</translation>
+    </message>
+    <message>
+        <source>Reset settings</source>
+        <translation>Przywróć ustawienia</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n krok nie zostanie uruchomiony: jego skrypt nie jest wczytany.</numerusform>
+            <numerusform>%n kroki nie zostaną uruchomione: ich skrypty nie są wczytane.</numerusform>
+            <numerusform>%n kroków nie zostanie uruchomionych: ich skrypty nie są wczytane.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not saved. “%1” failed.</source>
+        <translation>Nie zapisano. Krok „%1” nie powiódł się.</translation>
+    </message>
+    <message>
+        <source>Turn it off and export</source>
+        <translation>Wyłącz go i eksportuj</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Write the file: didn’t run</source>
+        <translation>Zapis pliku: nie uruchomiono</translation>
+    </message>
+    <message>
+        <source>Nothing was written, and the document is unchanged.</source>
+        <translation>Nic nie zapisano. Dokument się nie zmienił.</translation>
+    </message>
+    <message>
+        <source>Input frame rate</source>
+        <translation>Wejściowa liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>Z wideo</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>Wyjście</translation>
+    </message>
+    <message>
+        <source>Variable (the loaded timecodes)</source>
+        <translation>Zmienna (wczytane kody czasowe)</translation>
+    </message>
+    <message>
+        <source>Constant</source>
+        <translation>Stała</translation>
+    </message>
+    <message>
+        <source>Output frame rate</source>
+        <translation>Wyjściowa liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Reverse the transformation</source>
+        <translation>Odwróć przekształcenie</translation>
+    </message>
+    <message>
+        <source>Settings from %1</source>
+        <translation>Ustawienia z %1</translation>
+    </message>
+    <message>
+        <source>Asking the script…</source>
+        <translation>Odpytywanie skryptu…</translation>
+    </message>
+    <message>
+        <source>Save recipe</source>
+        <translation>Zapisz przepis</translation>
+    </message>
+    <message>
+        <source>Recipe name</source>
+        <translation>Nazwa przepisu</translation>
+    </message>
+    <message>
+        <source>A recipe with this name exists; saving replaces it.</source>
+        <translation>Przepis o tej nazwie już istnieje; zapisanie go zastąpi.</translation>
+    </message>
+    <message>
         <source>Replace</source>
         <translation>Zastąp</translation>
     </message>
     <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Manage recipes</source>
+        <translation>Zarządzaj przepisami</translation>
+    </message>
+    <message>
+        <source>Name of %1</source>
+        <translation>Nazwa: %1</translation>
+    </message>
+    <message>
+        <source>Delete %1</source>
+        <translation>Usuń %1</translation>
     </message>
     <message>
         <source>Format</source>
@@ -4828,6 +5252,10 @@ Urządzenie wyjściowe: %2</translation>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
     </message>
+    <message>
+        <source>Before export</source>
+        <translation>Przed eksportem</translation>
+    </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
         <translation>
@@ -4942,6 +5370,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Delete</source>
         <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
     </message>
     <message>
         <source>Refresh fonts</source>
@@ -5136,8 +5568,12 @@ Urządzenie wyjściowe: %2</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Copy to yours</source>
+        <translation>Kopiuj do Twoich</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>Przenieś do Twoich</translation>
     </message>
     <message>
         <source>%1, hidden by the project’s copy</source>
@@ -5224,15 +5660,7 @@ Urządzenie wyjściowe: %2</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6571,6 +6999,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message>
+        <source>No lines match the filter</source>
+        <translation>Brak linijek pasujących do filtra</translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>Opis grupy linijek</translation>
     </message>
@@ -6955,6 +7387,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Filter the Grid</source>
+        <translation>Filtruj listę napisów</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7296,6 +7732,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Shortcut “%1” is invalid</source>
         <translation>Skrót “%1” nie jest prawidłowy</translation>
+    </message>
+    <message>
+        <source>Also on %1</source>
+        <translation>Także na %1</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -8945,6 +9385,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>Synonim</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8971,6 +9415,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>Zaproponuj synonimy</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>Brak synonimów dla “%1”</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>Nie można zaproponować synonimów: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>Osiągnięto dzisiejszy limit kosztów.</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>Szukanie synonimów…</translation>
     </message>
     <message>
         <source>Translate to %1</source>
@@ -10793,12 +11257,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Macierz YCbCr wideo (%1) różni się od macierzy napisów (%2).</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo. Jeśli kolory napisów dopasowano do wideo %1, przekonwertuj je, aby wyglądały tak samo w tym wideo.</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo.</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>Przekonwertuj kolory i ustaw %1</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -11557,8 +12029,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished">Projekt</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>Twoje</translation>
     </message>
     <message>
         <source>Save</source>
@@ -11569,16 +12041,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 in mine</source>
-        <translation type="unfinished"></translation>
+        <source>%1 in yours</source>
+        <translation>%1 w Twoich</translation>
     </message>
     <message>
         <source>Save to project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save to mine</source>
-        <translation type="unfinished"></translation>
+        <source>Save to yours</source>
+        <translation>Zapisz w Twoich</translation>
     </message>
     <message>
         <source>Where to save</source>
@@ -13701,7 +14173,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Apply</source>
-        <translation>Zastosuj</translation>
+        <translation type="vanished">Zastosuj</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -13713,7 +14185,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>OK</source>
-        <translation>OK</translation>
+        <translation type="vanished">OK</translation>
     </message>
     <message>
         <source>Font size</source>
@@ -13993,7 +14465,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
-        <translation>Każda strona wróci do wartości domyślnych po naciśnięciu OK lub Zastosuj; Anuluj zachowuje ustawienia. Skróty klawiszowe i wygląd pozostają bez zmian: przywróć je na ich własnych stronach.</translation>
+        <translation type="vanished">Każda strona wróci do wartości domyślnych po naciśnięciu OK lub Zastosuj; Anuluj zachowuje ustawienia. Skróty klawiszowe i wygląd pozostają bez zmian: przywróć je na ich własnych stronach.</translation>
     </message>
     <message>
         <source>Reset all</source>
@@ -14005,19 +14477,19 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Resets the settings on this page to their defaults</source>
-        <translation>Przywraca domyślne wartości ustawień wyświetlanej strony</translation>
+        <translation type="vanished">Przywraca domyślne wartości ustawień wyświetlanej strony</translation>
     </message>
     <message>
         <source>More resets</source>
-        <translation>Więcej opcji przywracania</translation>
+        <translation type="vanished">Więcej opcji przywracania</translation>
     </message>
     <message>
         <source>Reset this page</source>
-        <translation>Przywróć tę stronę</translation>
+        <translation type="vanished">Przywróć tę stronę</translation>
     </message>
     <message>
         <source>Reset all settings…</source>
-        <translation>Przywróć wszystkie ustawienia…</translation>
+        <translation type="vanished">Przywróć wszystkie ustawienia…</translation>
     </message>
     <message>
         <source>Interface language</source>
@@ -14216,6 +14688,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Aktywna linijka</translation>
     </message>
     <message>
+        <source>Export</source>
+        <translation>Eksport</translation>
+    </message>
+    <message>
+        <source>Keys</source>
+        <translation>Klawisze</translation>
+    </message>
+    <message>
+        <source>Discord</source>
+        <translation>Discord</translation>
+    </message>
+    <message>
+        <source>Glossary</source>
+        <translation>Glosariusz</translation>
+    </message>
+    <message>
         <source>Change the active line when adding to the selection</source>
         <translation>Zmieniaj aktywną linijkę przy dodawaniu do zaznaczenia</translation>
     </message>
@@ -14226,6 +14714,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
+    </message>
+    <message>
+        <source>Activities</source>
+        <translation>Aktywności</translation>
     </message>
     <message>
         <source>Columns</source>
@@ -14246,6 +14738,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Count spaces and punctuation for CPS</source>
         <translation>Licz spacje i interpunkcję w CPS</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>Linijki czytane szybciej są zabarwiane, coraz mocniej aż do poziomu błędu.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>Plik napisów może ustawić własne limity we właściwościach skryptu.</translation>
     </message>
     <message>
         <source>Splitting</source>
@@ -14277,35 +14797,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Pełny ekran</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie paska</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem cały obraz pozostaje widoczny, a pasek znajduje się w czarnym pasie pod nim.</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem (letterbox)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>Na obrazie</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj pasek</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie pokazuje pasek, gdy wskaźnik się porusza lub zostanie naciśnięty klawisz, i ukrywa go 2 sekundy później podczas odtwarzania. Pod obrazem pas pozostaje zarezerwowany.</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14317,23 +14837,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukrywaj wskaźnik razem z paskiem</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj nakładki czasu renderowania i pozycji</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryb przy otwarciu</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -14414,6 +14934,98 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>Przeciąganie środkowym przyciskiem przesuwa obraz. Uszczypnięcie na touchpadzie powiększa wokół wskaźnika.</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
+        <translation>Projekt nie może ustawić “%1”, więc otwiera się na karcie Twoje.</translation>
+    </message>
+    <message>
+        <source>This window has no project, so the link opens the Yours tab.</source>
+        <translation>To okno nie ma projektu, więc link otwiera kartę Twoje.</translation>
+    </message>
+    <message>
+        <source>Waits for trust</source>
+        <translation>Czeka na zaufanie</translation>
+    </message>
+    <message>
+        <source>Reset the settings on %1 to their defaults?</source>
+        <translation>Przywrócić domyślne wartości ustawień na stronie %1?</translation>
+    </message>
+    <message>
+        <source>Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
+        <translation>Skróty klawiszowe i wygląd zostają bez zmian: przywróć je na ich własnych stronach.</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>Wtyczki</translation>
+    </message>
+    <message>
+        <source>Reset all…</source>
+        <translation>Przywróć wszystko…</translation>
+    </message>
+    <message>
+        <source>Resets every setting but the shortcuts and the appearance</source>
+        <translation>Przywraca wszystkie ustawienia oprócz skrótów klawiszowych i wyglądu</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Write</source>
+        <translation>Zapisuj</translation>
+    </message>
+    <message>
+        <source>Write %1</source>
+        <translation>Zapisuj: %1</translation>
+    </message>
+    <message>
+        <source>Open settings file</source>
+        <translation>Otwórz plik ustawień</translation>
+    </message>
+    <message>
+        <source>Search settings</source>
+        <translation>Szukaj ustawień</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>Filtr</translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation>Zmodyfikowane</translation>
+    </message>
+    <message>
+        <source>Plugin</source>
+        <translation>Wtyczka</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n setting(s) match</source>
+        <translation>
+            <numerusform>Pasuje %n ustawienie</numerusform>
+            <numerusform>Pasują %n ustawienia</numerusform>
+            <numerusform>Pasuje %n ustawień</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Settings contents</source>
+        <translation>Spis ustawień</translation>
+    </message>
+    <message>
+        <source>Reset page…</source>
+        <translation>Przywróć stronę…</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps the last values it could read, and your changes here wait until it reads again.</source>
+        <translation>HikariSub zachowuje ostatnie wartości, które udało się odczytać, a Twoje zmiany tutaj czekają, aż odczyta plik ponownie.</translation>
+    </message>
+    <message>
+        <source>Nothing is changed here.</source>
+        <translation>Nic tu nie zmieniono.</translation>
+    </message>
+    <message>
+        <source>No settings match “%1”.</source>
+        <translation>Żadne ustawienie nie pasuje do “%1”.</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -14514,6 +15126,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>Zachowaj macierz napisów</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>Przekonwertuj kolory i ustaw jak w wideo</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>
@@ -14737,7 +15353,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Set shortcuts</source>
-        <translation>Ustawione skróty</translation>
+        <translation type="vanished">Ustawione skróty</translation>
     </message>
     <message>
         <source>Global shortcuts</source>
@@ -14824,6 +15440,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
     </message>
     <message>
+        <source>Macro</source>
+        <translation>Makro</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>Źródło</translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation>Konflikty</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -14862,6 +15490,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Checking</source>
         <translation>Sprawdzanie</translation>
+    </message>
+    <message>
+        <source>Translator model</source>
+        <translation>Model tłumacza</translation>
+    </message>
+    <message>
+        <source>Reviewer model</source>
+        <translation>Model recenzenta</translation>
+    </message>
+    <message>
+        <source>Never send to AI</source>
+        <translation>Nigdy nie wysyłaj do AI</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
@@ -15104,6 +15744,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Importuj skróty ze starej wersji</translation>
     </message>
     <message>
+        <source>No plugin has settings.</source>
+        <translation>Żadna wtyczka nie ma ustawień.</translation>
+    </message>
+    <message>
+        <source>Plugins…</source>
+        <translation>Wtyczki…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n shortcuts</source>
+        <translation>
+            <numerusform>Pokaż %n skrót</numerusform>
+            <numerusform>Pokaż wszystkie %n skróty</numerusform>
+            <numerusform>Pokaż wszystkie %n skrótów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Manage plugin…</source>
+        <translation>Zarządzaj wtyczką…</translation>
+    </message>
+    <message>
+        <source>%1 is turned off. Its settings apply when it’s on.</source>
+        <translation>%1 jest wyłączona. Jej ustawienia działają, gdy jest włączona.</translation>
+    </message>
+    <message>
+        <source>Enter a number.</source>
+        <translation>Wpisz liczbę.</translation>
+    </message>
+    <message>
         <source>The file could not be read.</source>
         <translation>Nie można odczytać pliku.</translation>
     </message>
@@ -15174,6 +15842,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A built-in theme could not be read, so Dark is shown.</source>
         <translation>Nie udało się odczytać wbudowanego motywu, więc jest wyświetlany motyw Ciemny.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s spelling dictionary: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
@@ -15621,10 +16294,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">Projekt</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Built in</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15785,10 +16454,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wyłącz wszystkie funkcje AI</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>Nic związanego z AI nie jest wyświetlane, pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>Zachowane, gdy AI jest wyłączone</translation>
     </message>
@@ -15807,10 +16472,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>Ukryte, gdy AI jest wyłączone</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>Panel agenta, akcje AI w tekście i pozycje AI we wszystkich menu</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -15999,6 +16660,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>Nic związanego z AI nie jest pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>Akcje AI w tekście i pozycje AI we wszystkich menu. Panel agenta pokazuje tylko przycisk włączenia AI.</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -16561,6 +17230,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
         <source>Add an MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16735,6 +17408,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Downloading the AI component · %1 of %2 MB</source>
         <translation>Pobieranie komponentu AI · %1 z %2 MB</translation>
+    </message>
+    <message>
+        <source>Changed</source>
+        <translation>Zmienione</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>Przywróć %1</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>Użyj Twojej wartości</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>Przywróć domyślne</translation>
+    </message>
+    <message>
+        <source>%1 options</source>
+        <translation>Opcje: %1</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>Przywróć</translation>
+    </message>
+    <message>
+        <source>Copy setting id</source>
+        <translation>Kopiuj identyfikator ustawienia</translation>
+    </message>
+    <message>
+        <source>Copy link</source>
+        <translation>Kopiuj link</translation>
+    </message>
+    <message>
+        <source>settings.toml has an error on line %1.</source>
+        <translation>settings.toml ma błąd w wierszu %1.</translation>
     </message>
 </context>
 <context>
@@ -17385,6 +18094,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Ustawienia</translation>
     </message>
     <message>
+        <source>Open in Settings…</source>
+        <translation>Otwórz w Ustawieniach…</translation>
+    </message>
+    <message>
         <source>Update from file…</source>
         <translation>Aktualizuj z pliku…</translation>
     </message>
@@ -17398,7 +18111,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Setting not kept</source>
-        <translation>Nie zachowano ustawienia</translation>
+        <translation type="vanished">Nie zachowano ustawienia</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -17427,6 +18140,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Close</source>
         <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Also in Settings › Updates and privacy</source>
+        <translation>Także w Ustawienia › Aktualizacje i prywatność</translation>
     </message>
     <message>
         <source>Choose a plugin package</source>
@@ -17750,6 +18467,70 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Działa tylko poza trybem tłumaczenia</translation>
     </message>
     <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>Pakiet nie zawiera programu %1 dla tego komputera.</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>Pobiera %1 z %2 (%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>Niedostępna na tym komputerze</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>Programy</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>Program %1 jest niedostępny na tym komputerze</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>Program %1 nie został pobrany</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>Pobieranie programu %1…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>Pobierz teraz</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>Pobiera programy potrzebne wtyczce %1</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>Programy wtyczki nie zostały pobrane: opcja „Pozwól wtyczkom łączyć się z internetem” jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>Nie można pobrać programu %1: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>to nie jest plik wskazany przez wtyczkę.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>nie można go rozpakować (%1).</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>nie zawiera %1.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>nie można go zapisać.</translation>
+    </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>Ta wtyczka to program %1, który jest niedostępny na tym komputerze.</translation>
+    </message>
+    <message>
         <source>Colour theme: %1</source>
         <translation>Motyw kolorów: %1</translation>
     </message>
@@ -17945,7 +18726,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Project</source>
-        <translation>Projekt</translation>
+        <translation type="vanished">Projekt</translation>
     </message>
     <message>
         <source>Uses yours</source>
@@ -17958,6 +18739,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Set in project.local.toml</source>
         <translation>Ustawione w project.local.toml</translation>
+    </message>
+    <message>
+        <source>Project: %1</source>
+        <translation>Projekt: %1</translation>
     </message>
     <message>
         <source>Not set</source>
@@ -17993,7 +18778,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>project.toml could not be written, so some Project settings were not saved.</source>
-        <translation>Nie udało się zapisać project.toml, więc część ustawień projektu nie została zapisana.</translation>
+        <translation type="vanished">Nie udało się zapisać project.toml, więc część ustawień projektu nie została zapisana.</translation>
     </message>
     <message>
         <source>Saving a file writes the switched-on fields into its Script Info.</source>
@@ -18116,23 +18901,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Discord</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In this project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Details (first line)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>State (second line)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18480,6 +19253,26 @@ Linijki [Sekcja] je grupują.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Back</source>
+        <translation>Wstecz</translation>
+    </message>
+    <message>
+        <source>Back (Alt+Left)</source>
+        <translation>Wstecz (Alt+Left)</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n picked</source>
+        <translation>
+            <numerusform>Wybrano: %n</numerusform>
+            <numerusform>Wybrano: %n</numerusform>
+            <numerusform>Wybrano: %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
         <source>unavailable: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18662,6 +19455,14 @@ Linijki [Sekcja] je grupują.</translation>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
     </message>
 </context>
 <context>
@@ -19490,6 +20291,30 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Rendering</source>
         <translation>Renderowanie</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>Limity czytania</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>Używaj moich ustawień</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
     </message>
     <message>
         <source>Save</source>
@@ -21829,10 +22654,6 @@ ponieważ została zmieniona.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>From plugins</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21841,15 +22662,7 @@ ponieważ została zmieniona.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22025,8 +22838,20 @@ ponieważ została zmieniona.</translation>
         <translation>Zastosuj</translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
         <source>New catalogue</source>
         <translation>Nowy katalog</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>Kopiuj do Twoich</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>Przenieś do Twoich</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -22196,6 +23021,14 @@ Usunięte style:
         <translation>Filtruj</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>Przechodzenie przez linijki</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>Przechodzenie przez linijki: Enter stosuje styl i przechodzi do następnej linijki, Shift+Enter wraca</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>Styl</translation>
     </message>
@@ -22250,6 +23083,20 @@ Usunięte style:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter stosuje “%1” do linijki %2 i przechodzi do %3.</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter stosuje “%1” do linijki %2.</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>Wybierz styl</translation>
     </message>
 </context>
 <context>
@@ -24715,8 +25562,8 @@ Usunięte style:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>Twoje</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -24727,6 +25574,14 @@ Usunięte style:
         <translation>Zmień nazwę presetu…</translation>
     </message>
     <message>
+        <source>Copy to yours</source>
+        <translation>Kopiuj do Twoich</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>Przenieś do Twoich</translation>
+    </message>
+    <message>
         <source>Delete preset…</source>
         <translation>Usuń preset…</translation>
     </message>
@@ -24735,15 +25590,7 @@ Usunięte style:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26062,16 +26909,16 @@ Usunięte style:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>Przewijanie…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zdekodować klatki %1 z %2. Odtwarzanie zostało zatrzymane.</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przewiń do innego czasu lub naciśnij Esc, aby wyjść z pełnego ekranu.</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -26080,24 +26927,24 @@ Usunięte style:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasek przewijania</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Brak linijki w tym czasie</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas wideo, %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyjdź z pełnego ekranu</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -26118,21 +26965,34 @@ Usunięte style:
         <translation>Linijka %1 z %2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>Styl: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>Wybierz styl linijki</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter stosuje · Esc cofa</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>Tekst linijki %1</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty: przełącza na oglądanie na pełnym ekranie · klatka pozostaje na miejscu</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting: przełącza na typesetting na pełnym ekranie · klatka pozostaje na miejscu</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -26153,35 +27013,35 @@ Usunięte style:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>Nigdy</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie paska</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem (letterbox)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>Na obrazie</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj pasek</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuje pasek, gdy wskaźnik się porusza lub zostanie naciśnięty klawisz; ukrywa go 2 sekundy później podczas odtwarzania</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -26189,11 +27049,11 @@ Usunięte style:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze pokazuj pasek</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia pełnego ekranu…</translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -27256,8 +28116,16 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>Kopiuj do Twoich</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>Przenieś do Twoich</translation>
     </message>
     <message>
         <source>yours</source>
@@ -27357,15 +28225,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28682,6 +29542,15 @@ nie działają na komentarzach</translation>
         <translation>Układ zachowano w %1.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>nie można odczytać pliku</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>Układ paneli zapisany w %1 nie został użyty, ponieważ %2.</translation>
     </message>
@@ -28774,8 +29643,8 @@ nie działają na komentarzach</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>Twoje</translation>
     </message>
     <message>
         <source>Where to save</source>
@@ -28834,15 +29703,15 @@ nie działają na komentarzach</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
+        <source>Copy to yours</source>
+        <translation>Kopiuj do Twoich</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>Przenieś do Twoich</translation>
     </message>
     <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28860,6 +29729,10 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cannot be used: %1</source>
         <translation>Nie można użyć: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>Pochodzi z wtyczki, więc nie można go tu zmienić. Zapisz układ jako… tworzy Twoją własną kopię.</translation>
     </message>
     <message>
         <source>Rename</source>

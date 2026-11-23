@@ -119,6 +119,8 @@ public:
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
     static Ports defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion);
+    /// Keeps AI on for a profile that never set `ai.off` but has the AI component or a provider. Reads no keychain.
+    static void settleOffDefault(ui::SettingsStore &settings, const Ports &ports);
 
     AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent = nullptr);
     ~AiFeatures() override;

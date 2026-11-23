@@ -290,6 +290,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Editor</name>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n line.</numerusform>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n lines.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Export</name>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -317,6 +327,41 @@
         <translation>
             <numerusform>Style options for %n style saved in the subtitle file.</numerusform>
             <numerusform>Style options for %n styles saved in the subtitle file.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>%n tag kind</numerusform>
+            <numerusform>%n tag kinds</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>%n line made</numerusform>
+            <numerusform>%n lines made</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>%n line changed</numerusform>
+            <numerusform>%n lines changed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (%n line made)</numerusform>
+            <numerusform>%1 (%n lines made)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n step won’t run: its script isn’t loaded.</numerusform>
+            <numerusform>%n steps won’t run: their scripts aren’t loaded.</numerusform>
         </translation>
     </message>
 </context>
@@ -849,10 +894,24 @@
 <context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
+        <source>%n setting(s) match</source>
+        <translation>
+            <numerusform>%n setting matches</numerusform>
+            <numerusform>%n settings match</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n rules</source>
         <translation>
             <numerusform>%n rule</numerusform>
             <numerusform>%n rules</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n shortcuts</source>
+        <translation>
+            <numerusform>Show the %n shortcut</numerusform>
+            <numerusform>Show all %n shortcuts</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1072,6 +1131,13 @@
         <translation>
             <numerusform>%n result</numerusform>
             <numerusform>%n results</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n picked</source>
+        <translation>
+            <numerusform>%n picked</numerusform>
+            <numerusform>%n picked</numerusform>
         </translation>
     </message>
 </context>

@@ -222,6 +222,8 @@ AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, AiMcpServers *mcpServer
         emit switched();
         emit providersChanged();
         emit componentsChanged();
+        if (m_features.on() && m_features.updater() && !m_features.installed())
+            installComponent();
     });
     connect(&m_features, &AiFeatures::componentsChanged, this, &AiSettings::componentsChanged);
     connect(&m_features, &AiFeatures::providersChanged, this, &AiSettings::providersChanged);
