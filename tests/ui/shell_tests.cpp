@@ -8486,6 +8486,12 @@ private slots:
         auto *grid = item("editingGrid");
         grid->forceActiveFocus(Qt::TabFocusReason);
         QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        const auto focusName = [this] {
+            return window->activeFocusItem() ? window->activeFocusItem()->objectName().toUtf8() : QByteArray("none");
+        };
+        QQuickItem *filter = item("gridFilter");
+        press(Qt::Key_Tab, Qt::ShiftModifier);
+        QTRY_VERIFY2(filter->hasActiveFocus(), focusName().constData());
         press(Qt::Key_Tab, Qt::ShiftModifier);
         QQuickItem *header = dockHeader(QStringLiteral("Grid"));
         QQuickItem *tab = header->property("currentTab").value<QQuickItem *>();
@@ -8515,6 +8521,10 @@ private slots:
         QTRY_VERIFY(button->hasActiveFocus());
         press(Qt::Key_Left);
         QTRY_VERIFY(tab->hasActiveFocus());
+        press(Qt::Key_Tab);
+        QTRY_VERIFY2(filter->hasActiveFocus(), focusName().constData());
+        press(Qt::Key_Tab, Qt::ShiftModifier);
+        QTRY_VERIFY2(tab->hasActiveFocus(), focusName().constData());
         press(Qt::Key_F6);
         QTRY_COMPARE(focusedPanel(), QStringLiteral("referencePanel"));
     }
