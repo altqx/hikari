@@ -38,7 +38,11 @@ Q760. While a turn runs:
 
 ## Panel states
 
-With no provider and no agent, the panel's empty state keeps today's words: the `ai-assistant` glyph, "Add a provider to use the agent", the paragraph on where the agent runs, **Open Settings › AI** (primary) and "Nothing is sent or downloaded until you add one."
+With no provider and no agent, the panel's empty state keeps today's words: the `ai-assistant` glyph, "Add a provider to use the agent", the paragraph on where the agent runs, **Open Settings › AI** (primary) and "Nothing is sent until you add one." Turning AI on already downloads the AI component, so the line no longer says nothing downloads.
+
+**With AI off** (owner Q801 B, [#1330](https://github.com/altqx/hikari/issues/1330)), the panel stays in View › Panels and shows only one card: the `ai-assistant` glyph, "AI is off", "Turn it on to use agents and AI actions. HikariSub then downloads the AI component once." in `muted`, and **Turn on AI** (primary), which turns AI on at once. Edit › Turn on AI… sits where Edit › Review ▸ is while AI is on, and shows this panel.
+
+**While the AI component downloads**, or after its download failed, a strip under the header says "Getting the AI component: %1 of %2 MB", or "The AI component didn’t download. Check your connection and try again." with **Retry**.
 
 ## Discord
 

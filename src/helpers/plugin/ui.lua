@@ -1,5 +1,5 @@
 local hikari, ui, listen = ...
-local error, type = error, type
+local error, pairs, type = error, pairs, type
 
 local function needId(what, id)
     if type(id) ~= "string" or id == "" then
@@ -52,3 +52,75 @@ hikari.dialogs = {
         listen("dialog:" .. dialog, fn)
     end,
 }
+
+local function needSpec(what, spec)
+    if type(spec) ~= "table" then
+        error(what .. " needs a table", 3)
+    end
+end
+
+local function withId(key, id, fields)
+    local params = { [key] = id }
+    for k, v in pairs(fields) do
+        params[k] = v
+    end
+    return params
+end
+
+local function asked(name, spec)
+    local answer = answered(ui(name, spec))
+    if not answer.cancelled then
+        return answer
+    end
+    if answer.back then
+        return nil, "back"
+    end
+    if answer.button then
+        return nil, "button", answer.button
+    end
+    return nil
+end
+
+local function live(name, key)
+    return {
+        open = function(spec)
+            spec = spec or {}
+            needSpec("hikari." .. name .. ".open", spec)
+            return answered(ui(name .. ".open", spec))[key]
+        end,
+        update = function(id, fields)
+            needId("hikari." .. name .. ".update", id)
+            needSpec("hikari." .. name .. ".update", fields)
+            answered(ui(name .. ".update", withId(key, id, fields)))
+        end,
+        close = function(id)
+            needId("hikari." .. name .. ".close", id)
+            answered(ui(name .. ".close", { [key] = id }))
+        end,
+        on = function(id, fn)
+            needId("hikari." .. name .. ".on", id)
+            listen(name .. ":" .. id, fn)
+        end,
+    }
+end
+
+hikari.quick_pick = live("quick_pick", "pick")
+hikari.quick_pick.ask = function(spec)
+    needSpec("hikari.quick_pick.ask", spec)
+    local answer, why, button = asked("quick_pick.ask", spec)
+    if answer then
+        return answer.items
+    end
+    return nil, why, button
+end
+
+hikari.input_box = live("input_box", "box")
+hikari.input_box.ask = function(spec)
+    spec = spec or {}
+    needSpec("hikari.input_box.ask", spec)
+    local answer, why = asked("input_box.ask", spec)
+    if answer then
+        return answer.value
+    end
+    return nil, why
+end

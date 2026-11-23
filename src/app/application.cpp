@@ -818,7 +818,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks, m_git.get(), m_pluginPrograms.get(), m_presence.get()});
+        &m_rowMarks, m_git.get(),
+        [this] { return m_pluginManager ? m_pluginManager->settingStates() : std::vector<api::PluginSettingState>{}; },
+        [this](std::string_view plugin, std::string_view setting, const api::Json &value) -> std::optional<std::string> {
+            if (!m_pluginManager)
+                return "No plugin settings are available.";
+            const QString refused = m_pluginManager->setSetting(QString::fromUtf8(plugin.data(), qsizetype(plugin.size())),
+                                                                QString::fromUtf8(setting.data(), qsizetype(setting.size())),
+                                                                QString::fromStdString(value.dump()));
+            return refused.isEmpty() ? std::nullopt : std::optional(refused.toStdString());
+        },
+        m_pluginPrograms.get(), m_presence.get()});
     m_apiHost->setPluginFormat([this](application::DocumentId document) { return fileFormat(document); });
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
@@ -840,6 +850,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
         return m_crashReports && m_crashReports->aiComponentFailed(version, reason);
     };
+    AiFeatures::settleOffDefault(*m_settings, aiPorts);
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder),
@@ -948,6 +959,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
     QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
+    connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::showPluginContent);
+    QMetaObject::invokeMethod(this, &Application::showPluginContent, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
@@ -2144,6 +2157,13 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
             showVideoSubtitles();
     });
     connect(m_automation.get(), &AutomationShell::progressChanged, editor, [editor] { editor->refresh(); });
+}
+
+void Application::showPluginContent()
+{
+    for (WindowViews *views : allViews())
+        if (views->nodeEffects)
+            views->nodeEffects->pluginContentChanged();
 }
 
 void Application::makeNodeEffects(WindowViews &v, int shellWindow)
@@ -7578,6 +7598,33 @@ QVariantMap Application::openSettingsDialog()
             {QStringLiteral("warnings"), warnings}};
 }
 
+QVariantMap Application::currentSettings()
+{
+    auto values = toVariant(application::openOptionsDialog(m_settings->settings(), m_optionsLists).state);
+    addAppearance(values);
+    for (const char *id : {"notices.hiddenQuestions", "automation.dialogAnswers", "trust.folders"})
+        values.insert(QLatin1String(id), m_settings->list(id));
+    values.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), m_settings->list(AiFeatures::kCustomAgentsSetting));
+    return values;
+}
+
+void Application::openSettingsFile(int shellWindow, const QString &file)
+{
+    QString path;
+    if (file == QLatin1String("plugins"))
+        path = m_pluginManager ? m_pluginManager->registryFile() : QString();
+    else if (file == QLatin1String("project") || file == QLatin1String("local")) {
+        if (const auto *project = views(shellWindow).settings->project())
+            path = project->path(file == QLatin1String("local") ? ui::ProjectFile::Local : ui::ProjectFile::Shared);
+    } else
+        path = m_settings->filePath(file);
+    if (path.isEmpty())
+        return;
+    if (!QFileInfo::exists(path))
+        m_settings->sync();
+    backends::desktop::openUrl(QUrl::fromLocalFile(QFileInfo::exists(path) ? path : QFileInfo(path).absolutePath()));
+}
+
 QString Application::outputDeviceLabel(const application::OutputDeviceChoice &choice)
 {
     using Kind = application::OutputDeviceChoice::Kind;
@@ -7692,7 +7739,8 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
 namespace {
 
 // Projectable settings the Options dialog doesn't hold.
-constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage",
+constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage", "translation.glossary",
+                                               "translation.translator", "translation.reviewer", "ai.exclude",
                                                "translation.targetLanguage", "export.format", "privacy.discordProject",
                                                "privacy.discordShow"};
 
@@ -7740,6 +7788,16 @@ QStringList Application::projectOverrides(int shellWindow) const
     const auto &window = *views(shellWindow).settings;
     for (const auto &setting : application::settingDefinitions())
         if (setting.projectable && window.overridden(setting.id))
+            ids << qs(setting.id);
+    return ids;
+}
+
+QStringList Application::projectWaitsForTrust(int shellWindow) const
+{
+    QStringList ids;
+    const auto &window = *views(shellWindow).settings;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.projectable && window.waitsForTrust(setting.id))
             ids << qs(setting.id);
     return ids;
 }

@@ -170,6 +170,8 @@ const Table &table()
                                           {QStringLiteral("crashed_version"), pattern(kVersion)},
                                           {QStringLiteral("report_id"), pattern(kUuid)},
                                           {QStringLiteral("freeze_seconds"), {Rule::Count, {}, {}}},
+                                          {QStringLiteral("freeze_phase"),
+                                           oneOf({QStringLiteral("startup"), QStringLiteral("running")})},
                                           {QStringLiteral("$debug_images"), {Rule::DebugImages, {}, {}}}});
         std::map<QString, Rule> report{
             {QStringLiteral("report_id"), pattern(kUuid)},

@@ -56,8 +56,10 @@ QVariant shownOf(const application::DialogControl &c, const application::DialogV
     return {};
 }
 
-application::DialogValue valueFrom(const application::DialogControl &c, const QVariant &v,
-                                   const application::DialogValue &fallback)
+}
+
+application::DialogValue dialogValueFrom(const application::DialogControl &c, const QVariant &v,
+                                         const application::DialogValue &fallback)
 {
     switch (application::dialogValueType(c.kind)) {
     case DialogValueType::None:
@@ -86,40 +88,28 @@ application::DialogValue valueFrom(const application::DialogControl &c, const QV
     return fallback;
 }
 
-}
-
-AutomationDialogController::AutomationDialogController(QObject *parent) : QObject(parent) {}
-
-void AutomationDialogController::present(const QString &title, const application::DialogRequest &request,
-                                         Reply reply, const QString &source, Shown shown)
+QVariantList dialogControlRows(const application::DialogRequest &request, const application::DialogResult &shown,
+                               int *columns)
 {
-    m_request = request;
-    m_reply = std::move(reply);
-    m_title = title;
-    m_memoryKey = shown.memoryKey;
-    m_notice = shown.notice;
-    m_shown = application::initialDialogResult(request);
-    if (shown.values)
-        for (std::size_t i = 0; i < m_shown.values.size() && i < shown.values->values.size(); ++i)
-            if (const auto v = application::dialogValueOf(request.controls[i], shown.values->values[i]))
-                m_shown.values[i] = *v;
-    m_controls.clear();
-    m_columns = 1;
+    QVariantList rows;
+    int width = 1;
     for (std::size_t at = 0; at < request.controls.size(); ++at) {
         application::DialogControl c = request.controls[at];
-        const application::DialogValue &value = m_shown.values[at];
-        if (const auto *s = std::get_if<std::string>(&value))
-            c.text = *s;
-        else if (const auto *i = std::get_if<int>(&value))
-            c.intValue = *i;
-        else if (const auto *d = std::get_if<double>(&value))
-            c.number = *d;
-        else if (const auto *b = std::get_if<bool>(&value))
-            c.checked = *b;
+        if (at < shown.values.size()) {
+            const application::DialogValue &value = shown.values[at];
+            if (const auto *s = std::get_if<std::string>(&value))
+                c.text = *s;
+            else if (const auto *i = std::get_if<int>(&value))
+                c.intValue = *i;
+            else if (const auto *d = std::get_if<double>(&value))
+                c.number = *d;
+            else if (const auto *b = std::get_if<bool>(&value))
+                c.checked = *b;
+        }
         QStringList items;
         for (const auto &item : c.items)
             items << QString::fromStdString(item);
-        m_controls << QVariantMap{
+        rows << QVariantMap{
             {QStringLiteral("kind"), QString::fromStdString(c.kind)},
             {QStringLiteral("name"), QString::fromStdString(c.name)},
             {QStringLiteral("hint"), QString::fromStdString(c.hint)},
@@ -140,8 +130,29 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("checked"), c.checked},
             {QStringLiteral("items"), items},
         };
-        m_columns = std::max(m_columns, std::clamp(c.x, 0, kGridCells - 1) + std::clamp(c.width, 1, kGridCells));
+        width = std::max(width, std::clamp(c.x, 0, kGridCells - 1) + std::clamp(c.width, 1, kGridCells));
     }
+    if (columns)
+        *columns = width;
+    return rows;
+}
+
+AutomationDialogController::AutomationDialogController(QObject *parent) : QObject(parent) {}
+
+void AutomationDialogController::present(const QString &title, const application::DialogRequest &request,
+                                         Reply reply, const QString &source, Shown shown)
+{
+    m_request = request;
+    m_reply = std::move(reply);
+    m_title = title;
+    m_memoryKey = shown.memoryKey;
+    m_notice = shown.notice;
+    m_shown = application::initialDialogResult(request);
+    if (shown.values)
+        for (std::size_t i = 0; i < m_shown.values.size() && i < shown.values->values.size(); ++i)
+            if (const auto v = application::dialogValueOf(request.controls[i], shown.values->values[i]))
+                m_shown.values[i] = *v;
+    m_controls = dialogControlRows(request, m_shown, &m_columns);
     m_buttons.clear();
     if (request.buttons.empty())
         m_buttons << QCoreApplication::translate("HikariSub.Automation", "OK")
@@ -182,7 +193,7 @@ application::DialogResult AutomationDialogController::resultOf(int pressed, cons
     DialogResult result = m_shown;
     result.pressed = pressed >= 0 && pressed < m_buttons.size() ? pressed : -1;
     for (std::size_t i = 0; i < m_request.controls.size() && i < static_cast<std::size_t>(values.size()); ++i)
-        result.values[i] = valueFrom(m_request.controls[i], values[static_cast<qsizetype>(i)], m_shown.values[i]);
+        result.values[i] = dialogValueFrom(m_request.controls[i], values[static_cast<qsizetype>(i)], m_shown.values[i]);
     return result;
 }
 
@@ -252,7 +263,7 @@ bool AutomationDialogController::differs(int index, const QVariant &value) const
     if (application::dialogValueType(c.kind) == DialogValueType::None)
         return false;
     const auto script = application::initialDialogResult(m_request).values[static_cast<std::size_t>(index)];
-    return valueFrom(c, value, script) != valueFrom(c, shownOf(c, script), script);
+    return dialogValueFrom(c, value, script) != dialogValueFrom(c, shownOf(c, script), script);
 }
 
 QString AutomationDialogController::scriptValueText(int index) const
@@ -260,7 +271,7 @@ QString AutomationDialogController::scriptValueText(int index) const
     if (index < 0 || static_cast<std::size_t>(index) >= m_request.controls.size())
         return {};
     const auto &c = m_request.controls[static_cast<std::size_t>(index)];
-    const auto value = valueFrom(c, shownOf(c, application::initialDialogResult(m_request).values[static_cast<std::size_t>(index)]), {});
+    const auto value = dialogValueFrom(c, shownOf(c, application::initialDialogResult(m_request).values[static_cast<std::size_t>(index)]), {});
     if (const auto *s = std::get_if<std::string>(&value))
         return s->empty() ? QCoreApplication::translate("HikariSub.Automation", "empty value") : QString::fromStdString(*s);
     if (const auto *i = std::get_if<int>(&value))

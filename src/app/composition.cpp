@@ -273,7 +273,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         options.automationReset = resetAutomationFolder(userFolder.root(), QDate::currentDate());
     options.userFolderSeed = userFolder.seed(bundledFolder());
     options.userFolder = userFolder.root();
-    options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry()};
+    options.plugins = {userFolder.plugins(), userFolder.pluginData(), userFolder.pluginCache(), userFolder.pluginRegistry(),
+                       userFolder.pluginPrograms()};
     options.gettingStarted = true;
     options.askVideoProperties = true;
     options.settingsFile = userFolder.settingsFile();
@@ -369,6 +370,9 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                          [dog = watchdog.get()] { dog->recordRenderThread(); }, Qt::DirectConnection);
         QObject::connect(window, &QQuickWindow::sceneGraphInvalidated, watchdog.get(),
                          [dog = watchdog.get()] { dog->forgetRenderThread(); }, Qt::DirectConnection);
+        QObject::connect(window, &QQuickWindow::frameSwapped, watchdog.get(),
+                         [dog = watchdog.get()] { dog->firstFrameShown(); },
+                         Qt::ConnectionType(Qt::DirectConnection | Qt::SingleShotConnection));
     }
     if (mode == StartupMode::ExitAfterWindowCreated) {
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });

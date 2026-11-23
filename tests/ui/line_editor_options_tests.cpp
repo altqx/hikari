@@ -166,7 +166,7 @@ class LineEditorOptionsTest : public QObject {
         QVERIFY(check);
         QCOMPARE(check->property("checked").toBool(), expectedBefore);
         QVERIFY(QMetaObject::invokeMethod(check, "click"));
-        auto *ok = findItem(content, QStringLiteral("settingsOk"));
+        auto *ok = findItem(content, QStringLiteral("settingsClose"));
         QVERIFY(ok && QMetaObject::invokeMethod(ok, "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -510,8 +510,8 @@ private slots:
         fillTagButton(popover, QStringLiteral("Three"), QStringLiteral("\\u1"), "tagIcon_tag-underline");
         QCOMPARE(list->property("count").toInt(), 2);
         QCOMPARE(buttons.count(), 2);
-        QCOMPARE(buttons.button(0).name, QStringLiteral("One"));
-        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsOk")), "click"));
+        QCOMPARE(buttons.button(0).name, QStringLiteral("Two"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsClose")), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(buttons.count(), 2);
         QCOMPARE(buttons.button(0).name, QStringLiteral("Two"));
