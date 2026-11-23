@@ -29965,6 +29965,7 @@ private slots:
 
     void visualScaleAndRotationsThroughThePanel()
     {
+        widenForTheInspectorBar();
         using namespace application::visual;
         QVERIFY(application->openFile(visualDocument(
             "transform.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}third\n")));
@@ -32955,7 +32956,7 @@ private slots:
             QCOMPARE(icon(button), QLatin1String(e.role));
             QCOMPARE(name(button), QLatin1String(e.name));
             QCOMPARE(button->property("display").toInt(), 0);
-            QCOMPARE(QSizeF(button->implicitWidth(), button->implicitHeight()), QSizeF(26, 26));
+            QCOMPARE(QSizeF(button->implicitWidth(), button->implicitHeight()), QSizeF(24, 24));
         }
         for (const auto &[object, tip] : {std::pair{"audioMore", "More options"}, std::pair{"audioWaveformMode", "Waveform"},
                                           std::pair{"audioSpectrumMode", "Spectrum"}, std::pair{"audioAutoScroll", "Auto-scroll"},
