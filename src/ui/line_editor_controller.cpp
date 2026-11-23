@@ -2511,24 +2511,36 @@ bool LineEditorController::alignmentMixed() const
     return mixed;
 }
 
+application::ReadingLimits LineEditorController::readingLimits() const
+{
+    const auto *s = session();
+    return s ? application::readingLimits(s->document(), options().limits) : options().limits;
+}
+
+MeasureOptions LineEditorController::measureOptions() const
+{
+    const auto o = options();
+    const auto limits = readingLimits();
+    return {o.allCharsForCps, o.allCharsForWraps, limits.lineLength, limits.maxLines};
+}
+
 QString LineEditorController::charsText() const
 {
+    const auto limits = readingLimits();
     const auto r = record();
     if (!r)
-        return QStringLiteral("0/86");
+        return QStringLiteral("0/") + QString::number(limits.lineLength * limits.maxLines);
     if (r->comment)
         return {};
     const bool translated = translationMode() && !r->translation.empty();
-    const auto o = options();
-    const auto m = measureLine(qs(translated ? r->translation : r->text), session()->document().format(),
-                               MeasureOptions{o.allCharsForCps, o.allCharsForWraps});
+    const auto m = measureLine(qs(translated ? r->translation : r->text), session()->document().format(), measureOptions());
     QString wraps = m.wraps + QLatin1Char('/');
     if (wraps.size() >= 50) {
         const QString head = wraps.left(50);
         const qsizetype slash = head.lastIndexOf(QLatin1Char('/'));
         wraps = (slash < 0 ? QString() : head.left(slash)) + QStringLiteral("/.../");
     }
-    return wraps + QStringLiteral("43");
+    return wraps + QString::number(limits.lineLength);
 }
 
 bool LineEditorController::charsWarning() const
@@ -2537,20 +2549,17 @@ bool LineEditorController::charsWarning() const
     if (!r || r->comment)
         return false;
     const bool translated = translationMode() && !r->translation.empty();
-    const auto o = options();
-    return measureLine(qs(translated ? r->translation : r->text), session()->document().format(),
-                       MeasureOptions{o.allCharsForCps, o.allCharsForWraps})
+    return measureLine(qs(translated ? r->translation : r->text), session()->document().format(), measureOptions())
         .badWraps;
 }
 
 namespace {
 
 int editorCps(const core::LineRecord &text, const core::LineRecord &times, bool translationMode,
-              core::SubtitleFormat format, const LineEditorController::Options &o)
+              core::SubtitleFormat format, const MeasureOptions &o)
 {
     const bool translated = translationMode && !text.translation.empty();
-    const auto m = measureLine(qs(translated ? text.translation : text.text), format,
-                               MeasureOptions{o.allCharsForCps, o.allCharsForWraps});
+    const auto m = measureLine(qs(translated ? text.translation : text.text), format, o);
     return legacyCps(m.chars, times.start.value.microseconds() / 1000, times.end.value.microseconds() / 1000);
 }
 
@@ -2558,25 +2567,27 @@ int editorCps(const core::LineRecord &text, const core::LineRecord &times, bool 
 
 QString LineEditorController::cpsText() const
 {
+    const QString limit = QLatin1Char('/') + QString::number(cpsLimit());
     const auto r = record();
     if (!r)
-        return QStringLiteral("0/15");
+        return QStringLiteral("0") + limit;
     if (r->comment)
         return {};
-    const auto o = options();
-    const auto times = o.liveEditing ? r : committedRecord();
-    return QString::number(editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), o))
-        + QStringLiteral("/15");
+    const auto times = options().liveEditing ? r : committedRecord();
+    return QString::number(editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(),
+                                     measureOptions())) +
+           limit;
 }
 
-bool LineEditorController::cpsWarning() const
+double LineEditorController::cpsSeverity() const
 {
     const auto r = record();
     if (!r || r->comment)
-        return false;
-    const auto o = options();
-    const auto times = o.liveEditing ? r : committedRecord();
-    return editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), o) > 15;
+        return 0;
+    const auto times = options().liveEditing ? r : committedRecord();
+    return application::cpsSeverity(
+        readingLimits(),
+        editorCps(*r, times ? *times : *r, translationMode(), session()->document().format(), measureOptions()));
 }
 
 void LineEditorController::setVideoTimebase(std::optional<application::LegacyTimebase> timebase)

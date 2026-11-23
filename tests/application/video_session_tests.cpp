@@ -45,6 +45,35 @@ TEST(MediaAssociation, ComesFromTheDocumentsOwnScriptInfo)
     EXPECT_FALSE(none.offersAnything());
 }
 
+TEST(MediaAssociation, ProjectGarbageComesBeforeScriptInfo)
+{
+    const auto doc = load("[Script Info]\nVideo File: old.mkv\nAudio File: old.wav\n\n[Aegisub Project Garbage]\n"
+                          "Audio File: ../media/ep1.mkv\nVideo File: ../media/ep1.mkv\nKeyframes File: ep1_kf.txt\n");
+    const std::set<std::string> files{"/subs/../media/ep1.mkv", "/subs/ep1_kf.txt", "/subs/old.mkv"};
+    const auto a = resolveMediaAssociations(doc, "/subs/ep1.ass", [&](const std::string &p) { return files.contains(p); }, false);
+    ASSERT_TRUE(a.video && a.audio && a.keyframes);
+    EXPECT_EQ(a.video->resolved, "/subs/../media/ep1.mkv");
+    EXPECT_EQ(a.audio->authored, "../media/ep1.mkv");
+    EXPECT_EQ(a.keyframes->resolved, "/subs/ep1_kf.txt");
+}
+
+TEST(MediaAssociation, TheSavedViewReadsAegisubsKeys)
+{
+    const auto view = savedView(load("[Script Info]\nActive Line: 9\n\n[Aegisub Project Garbage]\nVideo AR Mode: 4\n"
+                                      "Video AR Value: 2.400000\nScroll Position: 27\nActive Line: 38\nVideo Position: 562\n"));
+    EXPECT_EQ(view.activeLine, 38);
+    EXPECT_EQ(view.scroll, 27);
+    EXPECT_EQ(view.videoFrame, 562);
+    ASSERT_TRUE(view.aspect);
+    EXPECT_DOUBLE_EQ(*view.aspect, 2.4);
+    EXPECT_DOUBLE_EQ(*savedView(load("[Aegisub Project Garbage]\nVideo AR Mode: 1\n")).aspect, 4.0 / 3.0);
+    EXPECT_DOUBLE_EQ(*savedView(load("[Aegisub Project Garbage]\nVideo AR Mode: 2\n")).aspect, 16.0 / 9.0);
+    EXPECT_DOUBLE_EQ(*savedView(load("[Aegisub Project Garbage]\nVideo AR Mode: 3\n")).aspect, 2.35);
+    const auto old = savedView(load("[Script Info]\nActive Line: 9\n"));
+    EXPECT_EQ(old.activeLine, 9);
+    EXPECT_FALSE(old.aspect || old.scroll || old.videoFrame);
+}
+
 TEST(MediaAssociation, WindowsDriveLettersAreAbsolute)
 {
     const auto doc = load("[Script Info]\nVideo File: D:\\media\\ep1.mkv\nAudio File: sub\\ep1.wav\n");
