@@ -397,45 +397,61 @@ std::shared_ptr<ListFile> ListFile::make(QString path, QString legacy, const Lis
 }
 
 ListFile::ListFile(QString path, QString legacy, const ListFormat &format, Convert convert, Report report)
-    : m_path(std::move(path)), m_legacy(std::move(legacy)), m_format(format), m_convert(std::move(convert)),
-      m_report(std::move(report))
+    : m_disk{std::move(path), std::move(legacy), &format, std::move(convert)}, m_report(std::move(report))
 {
 }
 
 ListFile::~ListFile()
 {
+    if (m_inFlight && m_queue)
+        m_queue->finishWrites();
+    m_writeHere = true;
     if (m_pending)
         writePending();
 }
 
-std::optional<ParseFailure> ListFile::parse(std::string_view text, toml::table &into) const
+std::optional<ParseFailure> ListFile::Disk::parse(std::string_view text, toml::table &into) const
 {
     auto parsed = parseTomlFile(text, kVersion);
     if (auto *failure = std::get_if<ParseFailure>(&parsed))
         return *failure;
     auto &table = std::get<toml::table>(parsed);
-    if (const toml::node *items = table.get(m_format.array)) {
+    if (const toml::node *items = table.get(format->array)) {
         if (!items->is_array()) {
             const auto &place = items->source().begin;
             return ParseFailure{static_cast<int>(place.line), static_cast<int>(place.column),
-                                "\"" + std::string(m_format.array) + "\" is not a list of tables."};
+                                "\"" + std::string(format->array) + "\" is not a list of tables."};
         }
-        if (auto failure = m_format.check(*items->as_array()))
+        if (auto failure = format->check(*items->as_array()))
             return failure;
     }
     into = std::move(table);
     return std::nullopt;
 }
 
-void ListFile::problem(application::FileProblem problem)
+void ListFile::report(const std::vector<Event> &events)
 {
-    if (m_report.problem)
-        m_report.problem(problem);
+    for (const Event &event : events) {
+        switch (event.kind) {
+        case Event::Converted:
+            if (m_report.converted)
+                m_report.converted(pathOf(m_disk.legacy), pathOf(m_disk.path));
+            break;
+        case Event::Problem:
+            if (m_report.problem)
+                m_report.problem(event.problem);
+            break;
+        case Event::Replaced:
+            if (m_report.replaced)
+                m_report.replaced(event.problem);
+            break;
+        }
+    }
 }
 
-std::unique_ptr<QLockFile> ListFile::lockFolder() const
+std::unique_ptr<QLockFile> ListFile::Disk::lockFolder() const
 {
-    const QString folder = QFileInfo(m_path).absolutePath();
+    const QString folder = QFileInfo(path).absolutePath();
     QDir().mkpath(folder);
     auto lock = std::make_unique<QLockFile>(folder + QStringLiteral("/.settings.lock"));
     if (!lock->tryLock(2000) && lock->error() == QLockFile::LockFailedError)
@@ -445,93 +461,98 @@ std::unique_ptr<QLockFile> ListFile::lockFolder() const
 
 void ListFile::convert()
 {
-    m_deferred = false;
-    if (m_legacy.isEmpty() || m_converted || QFileInfo::exists(m_path) || !QFileInfo::exists(m_legacy))
+    waitForBackground();
+    m_state.deferred = false;
+    if (m_disk.legacy.isEmpty() || m_state.converted || QFileInfo::exists(m_disk.path) ||
+        !QFileInfo::exists(m_disk.legacy))
         return;
-    const auto lock = lockFolder();
-    m_deferred = !lock;
-    if (lock)
-        convertLocked();
+    const auto lock = m_disk.lockFolder();
+    m_state.deferred = !lock;
+    if (!lock)
+        return;
+    std::vector<Event> events;
+    convertLocked(m_disk, m_state, events);
+    report(events);
 }
 
-void ListFile::convertLocked()
+void ListFile::convertLocked(const Disk &disk, State &state, std::vector<Event> &events)
 {
-    m_deferred = false;
-    if (m_legacy.isEmpty() || m_converted)
+    state.deferred = false;
+    if (disk.legacy.isEmpty() || state.converted)
         return;
     std::optional<toml::array> items;
     bool unreadable = false;
-    const auto conversion = application::convertOnce(pathOf(m_path), pathOf(m_legacy), [&] {
-        if (m_convert)
-            items = m_convert(pathOf(m_legacy));
+    const auto conversion = application::convertOnce(pathOf(disk.path), pathOf(disk.legacy), [&] {
+        if (disk.convert)
+            items = disk.convert(pathOf(disk.legacy));
         if (!items) {
             unreadable = true;
             return false;
         }
-        return application::writeFileAtomically(pathOf(m_path), listFileText(m_format, *items), pathOf(m_legacy));
+        return application::writeFileAtomically(pathOf(disk.path), listFileText(*disk.format, *items),
+                                                pathOf(disk.legacy));
     });
     if (conversion == application::Conversion::Converted) {
-        m_writable = true;
-        if (m_report.converted)
-            m_report.converted(pathOf(m_legacy), pathOf(m_path));
+        state.writable = true;
+        events.push_back({Event::Converted, {}});
     } else if (unreadable) {
-        m_writable = false;
-        if (!std::exchange(m_reportedUnreadable, true))
-            problem({pathOf(m_legacy), {}, {0, 0, "It could not be read."}});
+        state.writable = false;
+        if (!std::exchange(state.reportedUnreadable, true))
+            events.push_back({Event::Problem, {pathOf(disk.legacy), {}, {0, 0, "It could not be read."}}});
     } else if (conversion == application::Conversion::Failed) {
-        m_converted = std::move(items);
+        state.converted = std::move(items);
     }
 }
 
 std::optional<toml::array> ListFile::read()
 {
     convert();
-    if (!m_writable)
+    if (!m_state.writable)
         return std::nullopt;
     if (m_pending)
         return *m_pending;
-    if (m_converted)
-        return *m_converted;
-    if (m_deferred)
-        return m_convert ? m_convert(pathOf(m_legacy)) : std::nullopt;
+    if (m_state.converted)
+        return *m_state.converted;
+    if (m_state.deferred)
+        return m_disk.convert ? m_disk.convert(pathOf(m_disk.legacy)) : std::nullopt;
     toml::table table;
-    const auto load =
-        application::loadOwnedFile(pathOf(m_path), [&](std::string_view text) { return parse(text, table); });
+    const auto load = application::loadOwnedFile(pathOf(m_disk.path),
+                                                 [&](std::string_view text) { return m_disk.parse(text, table); });
     if (load.state == application::FileState::Missing)
         return std::nullopt;
     if (load.problem) {
-        m_writable = !load.problem->keptAs.empty();
-        problem(*load.problem);
+        m_state.writable = !load.problem->keptAs.empty();
+        report({{Event::Problem, *load.problem}});
         return std::nullopt;
     }
-    if (auto *items = table[m_format.array].as_array())
+    if (auto *items = table[m_disk.format->array].as_array())
         return std::move(*items);
     return toml::array();
 }
 
-toml::table ListFile::merged(toml::array items, toml::table onDisk) const
+toml::table ListFile::Disk::merged(toml::array items, toml::table onDisk) const
 {
     std::map<std::string, std::vector<const toml::table *>> before;
-    if (const auto *old = onDisk[m_format.array].as_array())
+    if (const auto *old = onDisk[format->array].as_array())
         for (const auto &node : *old)
             if (const auto *item = node.as_table())
-                before[item->get(m_format.name) ? item->get(m_format.name)->value_or(std::string()) : std::string()]
+                before[item->get(format->name) ? item->get(format->name)->value_or(std::string()) : std::string()]
                     .push_back(item);
     std::map<std::string, std::size_t> seen;
     for (auto &node : items) {
         auto *item = node.as_table();
         if (!item)
             continue;
-        const std::string name = item->get(m_format.name) ? item->get(m_format.name)->value_or(std::string()) : "";
+        const std::string name = item->get(format->name) ? item->get(format->name)->value_or(std::string()) : "";
         const auto it = before.find(name);
         const std::size_t k = seen[name]++;
         if (it == before.end() || k >= it->second.size())
             continue;
         for (const auto &[key, value] : *it->second[k])
-            if (std::ranges::find(m_format.keys, key.str()) == m_format.keys.end() && !item->contains(key.str()))
+            if (std::ranges::find(format->keys, key.str()) == format->keys.end() && !item->contains(key.str()))
                 item->insert(key, value);
     }
-    onDisk.insert_or_assign(m_format.array, std::move(items));
+    onDisk.insert_or_assign(format->array, std::move(items));
     return onDisk;
 }
 
@@ -543,53 +564,115 @@ ListFile::Write ListFile::write(toml::array items)
 
 bool ListFile::flush()
 {
-    return !m_pending || writePending() != Write::Waiting;
+    const bool wasHere = std::exchange(m_writeHere, true);
+    waitForBackground();
+    const bool done = !m_pending || writePending() != Write::Waiting;
+    m_writeHere = wasHere;
+    return done;
+}
+
+void ListFile::writeInBackground(FileWriteQueue &queue, std::function<void(Write)> written)
+{
+    m_queue = &queue;
+    m_written = std::move(written);
 }
 
 ListFile::Write ListFile::writePending()
 {
-    std::unique_ptr<QLockFile> lock;
-    if (m_writable) {
-        lock = lockFolder();
-        if (!lock) {
-            retryLater();
-            return Write::Waiting;
-        }
-        convertLocked();
+    if (m_queue && !m_writeHere) {
+        if (!m_inFlight)
+            startInBackground();
+        return Write::Waiting;
     }
-    if (!m_writable) {
-        m_pending.reset();
-        return Write::Failed;
-    }
-    toml::array items = std::move(*m_pending);
+    Attempt next{std::move(*m_pending), m_state, {}};
     m_pending.reset();
-    if (m_converted) {
-        const std::string text = listFileText(m_format, items);
-        const auto conversion = application::convertOnce(pathOf(m_path), pathOf(m_legacy), [&] {
-            return application::writeFileAtomically(pathOf(m_path), text, pathOf(m_legacy));
+    attempt(m_disk, next);
+    return finish(std::move(next));
+}
+
+void ListFile::attempt(const Disk &disk, Attempt &a)
+{
+    std::unique_ptr<QLockFile> lock;
+    if (a.state.writable) {
+        lock = disk.lockFolder();
+        if (!lock) {
+            a.result = Write::Waiting;
+            return;
+        }
+        convertLocked(disk, a.state, a.events);
+    }
+    a.result = Write::Failed;
+    if (!a.state.writable)
+        return;
+    if (a.state.converted) {
+        const std::string text = listFileText(*disk.format, a.items);
+        const auto conversion = application::convertOnce(pathOf(disk.path), pathOf(disk.legacy), [&] {
+            return application::writeFileAtomically(pathOf(disk.path), text, pathOf(disk.legacy));
         });
         if (conversion == application::Conversion::Failed) {
-            m_converted = std::move(items);
-            return Write::Failed;
+            a.state.converted = std::move(a.items);
+            return;
         }
-        m_converted.reset();
-        if (conversion == application::Conversion::Converted)
-            return Write::Written;
+        a.state.converted.reset();
+        if (conversion == application::Conversion::Converted) {
+            a.result = Write::Written;
+            return;
+        }
     }
     toml::table onDisk;
-    const auto load =
-        application::loadOwnedFile(pathOf(m_path), [&](std::string_view text) { return parse(text, onDisk); });
+    const auto load = application::loadOwnedFile(pathOf(disk.path),
+                                                 [&](std::string_view text) { return disk.parse(text, onDisk); });
     if (load.problem) {
-        m_writable = !load.problem->keptAs.empty();
-        if (!m_writable) {
-            problem(*load.problem);
-            return Write::Failed;
-        }
-        if (m_report.replaced)
-            m_report.replaced(*load.problem);
+        a.state.writable = !load.problem->keptAs.empty();
+        a.events.push_back({a.state.writable ? Event::Replaced : Event::Problem, *load.problem});
+        if (!a.state.writable)
+            return;
     }
-    const std::string text = formatTomlFile(merged(std::move(items), std::move(onDisk)), kVersion);
-    return application::writeFileAtomically(pathOf(m_path), text) ? Write::Written : Write::Failed;
+    const std::string text = formatTomlFile(disk.merged(std::move(a.items), std::move(onDisk)), kVersion);
+    if (application::writeFileAtomically(pathOf(disk.path), text))
+        a.result = Write::Written;
+}
+
+ListFile::Write ListFile::finish(Attempt a)
+{
+    m_state = std::move(a.state);
+    report(a.events);
+    if (a.result == Write::Waiting) {
+        if (!m_pending)
+            m_pending = std::move(a.items);
+        retryLater();
+    }
+    return a.result;
+}
+
+void ListFile::startInBackground()
+{
+    m_inFlight = true;
+    auto next = std::make_shared<Attempt>(Attempt{std::move(*m_pending), m_state, {}});
+    m_pending.reset();
+    m_queue->put(m_disk.path, [disk = m_disk, next] {
+        attempt(disk, *next);
+        return next->result == Write::Written;
+    }, [self = weak_from_this(), next](bool) {
+        if (const auto file = self.lock())
+            file->finishInBackground(std::move(*next));
+    });
+}
+
+void ListFile::finishInBackground(Attempt a)
+{
+    m_inFlight = false;
+    const Write result = finish(std::move(a));
+    if (m_written)
+        m_written(result);
+    if (m_pending && result != Write::Waiting && !m_writeHere)
+        writePending();
+}
+
+void ListFile::waitForBackground()
+{
+    while (m_inFlight && m_queue)
+        m_queue->finishWrites();
 }
 
 void ListFile::retryLater()
@@ -601,7 +684,8 @@ void ListFile::retryLater()
     QTimer::singleShot(1000, QCoreApplication::instance(), [self] {
         if (auto file = self.lock()) {
             file->m_retryQueued = false;
-            file->flush();
+            if (file->m_pending)
+                file->writePending();
         }
     });
 }

@@ -283,6 +283,67 @@ TEST_F(PluginFeatures, MarksRefuseOtherCallersAndUnknownLines)
               errors::kInvalidParams);
 }
 
+TEST_F(PluginFeatures, ProblemsBelongToTheCallingPluginAndListInDocumentOrder)
+{
+    const auto revision = [&] { return std::to_string(host.target()->revision()); };
+    const Result set = call("problems.set", R"({"revision": )" + revision() + R"(, "problems": [
+        {"line": 3, "from": 0, "to": 7, "severity": "warning", "message": "Second"},
+        {"line": 1, "from": 6, "to": 11, "severity": "error", "message": "First", "code": "rule",
+         "fixes": [{"title": "Use here", "edits": [{"from": 6, "to": 11, "insert": "here"}]}]}]})");
+    ASSERT_TRUE(set) << set.error().message;
+    EXPECT_EQ(set->find("count")->asInt(), 2);
+    ASSERT_TRUE(call("problems.set", R"({"revision": )" + revision() + R"(, "set": "style", "problems": [
+        {"line": 1, "severity": "hint", "message": "Other"}]})", Caller{"plugin:example.other", "Other", false}));
+
+    const Result list = call("problems.list", "{}", aiCaller());
+    ASSERT_TRUE(list) << list.error().message;
+    const Json::Array &problems = list->find("problems")->asArray();
+    ASSERT_EQ(problems.size(), 3u);
+    EXPECT_EQ(problems[0].find("message")->asString(), "Other");
+    EXPECT_EQ(problems[1].find("message")->asString(), "First");
+    EXPECT_EQ(problems[1].find("source")->find("id")->asString(), "example.chains");
+    EXPECT_EQ(problems[2].find("message")->asString(), "Second");
+    EXPECT_EQ(call("problems.list", R"({"severity": "warning"})")->find("problems")->asArray().size(), 2u);
+
+    ASSERT_TRUE(call("problems.clear", "{}", Caller{"plugin:example.other", "Other", false}));
+    EXPECT_EQ(call("problems.list", "{}")->find("problems")->asArray().size(), 2u);
+}
+
+TEST_F(PluginFeatures, AQuickFixIsOneUndoStepAndGoesStaleWhenTheLineChanges)
+{
+    const auto document = *host.workspace().editingTarget();
+    const auto revision = [&] { return std::to_string(host.target()->revision()); };
+    ASSERT_TRUE(call("problems.set", R"({"revision": )" + revision() + R"(, "problems": [
+        {"line": 1, "from": 6, "to": 11, "severity": "error", "message": "First",
+         "fixes": [{"title": "Use here", "edits": [{"from": 6, "to": 11, "insert": "here"}]}]}]})"));
+    const std::string id = call("problems.list", "{}")->find("problems")->asArray()[0].find("id")->asString();
+    const Result fixed = call("problems.fix", R"({"problem": ")" + id + R"(", "fix": 0})", aiCaller());
+    ASSERT_TRUE(fixed) << fixed.error().message;
+    EXPECT_EQ(host.target()->document().lines()[0]->text, u8"Hello here");
+
+    ASSERT_TRUE(call("problems.set", R"({"revision": )" + revision() + R"(, "problems": [
+        {"line": 3, "from": 0, "to": 7, "severity": "error", "message": "x",
+         "fixes": [{"title": "t", "edits": [{"from": 0, "to": 7, "insert": "Admiral"}]}]}]})"));
+    const std::string later = call("problems.list", "{}")->find("problems")->asArray()[0].find("id")->asString();
+    host.problems.refresh(document, host.target()->document());
+    EXPECT_EQ(code(call("problems.fix", R"({"problem": "nope", "fix": 0})")), errors::kNotFound);
+    EXPECT_EQ(code(call("problems.fix", R"({"problem": ")" + later + R"(", "fix": 3})")), errors::kInvalidParams);
+}
+
+TEST_F(PluginFeatures, ProblemsRefuseOtherCallersBadRangesAndAMovedRevision)
+{
+    const auto revision = std::to_string(host.target()->revision());
+    EXPECT_EQ(code(call("problems.set", R"({"revision": )" + revision + R"(, "problems": []})", aiCaller())),
+              errors::kNotGranted);
+    EXPECT_EQ(code(call("problems.set", R"({"revision": )" + revision + R"(, "problems": [
+        {"line": 1, "from": 3, "severity": "error", "message": "x"}]})")), errors::kInvalidParams);
+    EXPECT_EQ(code(call("problems.set", R"({"revision": )" + revision + R"(, "problems": [
+        {"line": 1, "from": 3, "to": 99, "severity": "error", "message": "x"}]})")), errors::kInvalidParams);
+    EXPECT_EQ(code(call("problems.set", R"({"revision": )" + revision + R"(, "problems": [
+        {"line": 99, "severity": "error", "message": "x"}]})")), errors::kNotFound);
+    EXPECT_EQ(code(call("problems.set", R"({"revision": 999999, "problems": []})")), errors::kStaleRevision);
+}
+
 TEST_F(PluginFeatures, FramesComeScaledAsLumaOrBgra)
 {
     const Result bgra = call("video.frames", R"({"from": 2, "to": 6, "stride": 2, "maxEdge": 64, "format": "bgra"})");
@@ -562,4 +623,54 @@ TEST_F(PluginFeatures, GroupsAreForPluginsOnly)
     for (const Caller &caller : {aiCaller(), Caller{"mcp:c", "C"}})
         EXPECT_EQ(code(call("document.group_begin", R"({"name": "x"})", caller)), errors::kNotGranted) << caller.id;
     EXPECT_EQ(code(call("document.group_end", "{}")), errors::kInvalidParams);
+}
+
+TEST_F(PluginFeatures, APluginCommandWhoseConditionsFailIsListedDisabledAndRefused)
+{
+    PluginCommand &count = host.fakePlugins.installed[0].commands[0];
+    count.enabled = false;
+    count.disabledReason = "Needs a selection";
+    const Result listed = call("commands.list", R"({"query": "word-count"})");
+    ASSERT_TRUE(listed);
+    const Json &entry = listed->find("commands")->asArray().at(0);
+    EXPECT_FALSE(entry.find("enabled")->asBool());
+    EXPECT_EQ(entry.find("disabledReason")->asString(), "Needs a selection");
+
+    host.fakePlugins.nextRun = PluginRun::Disabled;
+    for (const auto &[operation, params] :
+         {std::pair{"commands.run", R"({"command": "plugin.org.example.word-count.count"})"},
+          std::pair{"plugins.run", R"({"plugin": "org.example.word-count", "command": "count"})"}}) {
+        const Result refused = call(operation, params);
+        EXPECT_EQ(code(refused), errors::kRefused) << operation;
+        EXPECT_EQ(reason(refused), "disabled") << operation;
+        EXPECT_EQ(refused.error().message, "Needs a selection") << operation;
+    }
+}
+
+TEST_F(PluginFeatures, AHandlerLearnsWhetherAnAiOrAnotherCallerRanIt)
+{
+    ASSERT_TRUE(call("commands.run", R"({"command": "plugin.org.example.word-count.count"})"));
+    Caller ai{"ai:agent", "Hikari AI", false};
+    ai.reviewed = true;
+    ASSERT_TRUE(call("plugins.run", R"({"plugin": "org.example.word-count", "command": "count"})", ai));
+    EXPECT_EQ(host.fakePlugins.vias, (std::vector<std::string>{"api", "ai"}));
+}
+
+TEST_F(PluginFeatures, StatusItemsChangeOnlyForTheirPlugin)
+{
+    const Caller wordCount{"plugin:org.example.word-count", "Word count", false};
+    const Result set = call("status_items.set", R"({"item": "words", "text": "12 words", "tone": "warning"})", wordCount);
+    ASSERT_TRUE(set) << set.error().message;
+    EXPECT_EQ(set->find("item")->asString(), "words");
+    ASSERT_EQ(host.fakePlugins.statusChanges.size(), 1u);
+    const StatusItemChange &change = host.fakePlugins.statusChanges[0];
+    EXPECT_EQ(change.text, "12 words");
+    EXPECT_EQ(change.tone, "warning");
+    EXPECT_FALSE(change.icon);
+    EXPECT_FALSE(change.visible);
+
+    EXPECT_EQ(code(call("status_items.set", R"({"item": "lines"})", wordCount)), errors::kNotFound);
+    EXPECT_EQ(code(call("status_items.set", R"({"item": "words"})", Caller{"ai:agent", "Hikari AI", false})),
+              errors::kNotGranted);
+    EXPECT_EQ(code(call("status_items.set", R"({"item": "words", "tone": "loud"})", wordCount)), errors::kInvalidParams);
 }

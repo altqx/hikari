@@ -17,23 +17,21 @@ Rectangle {
     readonly property var workingPlugins: pluginRuntime ? pluginRuntime.working.filter(w => w.background) : []
     onWorkingPluginsChanged: if (workingPlugins.length === 0) workingPopover.revert()
     signal reviewClicked()
+    // PluginRuntime.statusItems rows shown in this window.
+    property var pluginItems: []
+    // PluginRuntime.statusItemTitles rows, for the menu that hides them.
+    property var pluginTitles: []
+    property var hiddenItems: []
+    signal pluginItemClicked(var item)
+    signal pluginItemHidden(string key, bool hidden)
     readonly property color warningColour: Theme.warning
     default property alias trailing: trailingItems.data
 
     // Qt.application.font is read once; a Label's font follows the program font live.
-    readonly property font statusFont: {
-        const base = fontSource.font
-        const f = Qt.font({family: base.family})
-        // A QML font's pointSize is QFont's pointSizeF.
-        if (base.pointSize > 0)
-            f.pointSize = Math.max(base.pointSize * 10 / 13, 8)
-        else
-            f.pixelSize = Math.max(Math.round(base.pixelSize * 10 / 13), 11)
-        return f
-    }
+    readonly property font statusFont: TypeRoles.sized(fontSource.font, 11, Font.Normal)
 
-    implicitHeight: row.implicitHeight + 14
-    color: palette.window
+    implicitHeight: Math.max(Theme.statusBarHeight, row.implicitHeight)
+    color: Theme.background
     Accessible.role: Accessible.StatusBar
     Accessible.name: qsTr("Status bar")
 
@@ -45,7 +43,7 @@ Rectangle {
     Rectangle {
         anchors { left: parent.left; right: parent.right; top: parent.top }
         height: 1
-        color: bar.palette.mid
+        color: Theme.line
     }
 
     component Field: Label {
@@ -55,7 +53,7 @@ Rectangle {
         property bool warning: false
         visible: stretch > 0 || text.length > 0
         font: bar.statusFont
-        color: warning ? bar.warningColour : bar.palette.windowText
+        color: warning ? bar.warningColour : Theme.muted
         elide: Text.ElideRight
         maximumLineCount: 1
         verticalAlignment: Text.AlignVCenter
@@ -77,14 +75,13 @@ Rectangle {
         anchors.fill: parent
         anchors.leftMargin: 12
         anchors.rightMargin: 12
-        anchors.topMargin: 7
-        anchors.bottomMargin: 7
-        spacing: 14
+        spacing: 16
 
         ToolButton {
             id: pluginsWorking
             objectName: "statusPluginsWorking"
             visible: bar.workingPlugins.length > 0
+            focusPolicy: Qt.NoFocus
             padding: 0
             Layout.fillHeight: true
             //: The status bar's busy icon: how many background plugins are working
@@ -156,8 +153,76 @@ Rectangle {
         Row {
             id: trailingItems
             objectName: "statusTrailing"
-            visible: children.length > 0
+            visible: pluginItemsRepeater.count > 0 || children.length > 1
+            spacing: 14
             Layout.alignment: Qt.AlignVCenter
+            Repeater {
+                id: pluginItemsRepeater
+                model: bar.pluginItems.filter(item => bar.hiddenItems.indexOf(item.key) < 0)
+                delegate: AbstractButton {
+                    id: pluginItem
+                    required property var modelData
+                    objectName: "pluginStatus_" + modelData.key
+                    readonly property bool runs: modelData.command.length > 0
+                    readonly property color tone: modelData.tone === "danger" ? Theme.danger
+                                                  : modelData.tone === "warning" ? bar.warningColour : bar.palette.windowText
+                    enabled: runs
+                    focusPolicy: runs ? Qt.TabFocus : Qt.NoFocus
+                    hoverEnabled: true
+                    implicitWidth: content.implicitWidth
+                    implicitHeight: content.implicitHeight
+                    Accessible.role: runs ? Accessible.Button : Accessible.StaticText
+                    Accessible.name: modelData.title + (modelData.text.length > 0 ? ": " + modelData.text : "")
+                    Accessible.description: modelData.tooltip
+                    ToolTip.visible: hovered && modelData.tooltip.length > 0
+                    ToolTip.text: modelData.pluginName + ": " + modelData.tooltip
+                    onClicked: bar.pluginItemClicked(modelData)
+                    contentItem: Row {
+                        id: content
+                        spacing: 4
+                        Icon {
+                            iconRole: pluginItem.modelData.icon
+                            size: 14
+                            visible: pluginItem.modelData.icon.length > 0
+                            color: pluginItem.tone
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        Label {
+                            text: pluginItem.modelData.text
+                            visible: text.length > 0
+                            font: bar.statusFont
+                            color: pluginItem.tone
+                            textFormat: Text.PlainText
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.RightButton
+        enabled: bar.pluginTitles.length > 0
+        onTapped: eventPoint => statusBarMenu.popup(eventPoint.position.x, eventPoint.position.y)
+    }
+
+    ShellMenu {
+        id: statusBarMenu
+        objectName: "statusBarMenu"
+        Instantiator {
+            model: bar.pluginTitles
+            delegate: ShellMenuItem {
+                required property var modelData
+                objectName: "statusItemToggle_" + modelData.key
+                text: modelData.title
+                help: modelData.pluginName
+                checkable: true
+                checked: bar.hiddenItems.indexOf(modelData.key) < 0
+                onTriggered: bar.pluginItemHidden(modelData.key, !checked)
+            }
+            onObjectAdded: (index, object) => statusBarMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => statusBarMenu.removeItem(object)
         }
     }
 

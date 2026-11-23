@@ -144,6 +144,7 @@ public:
     const std::vector<int> &keyframes() const { return m_keyframes; }
     // Replaces the video's own until the next video opens.
     void setKeyframes(std::vector<int> frames);
+    void restoreVideoKeyframes() { m_keyframes = m_videoKeyframes; }
     // Frame times that replace the video's own for everything but decoding, kept with or without
     // a video until replaced; nullopt goes back to the video's.
     void setFrameTimes(std::optional<AegisubFrameTimes> times);
@@ -201,6 +202,8 @@ public:
     // While playing, playback goes on from its start. False outside the video.
     bool seekFrame(int index);
     std::optional<int> shownFrame() const { return m_shown ? std::optional(m_shown->index) : std::nullopt; }
+    // The requested frame when the source could not decode it; cleared by the next request.
+    std::optional<int> failedFrame() const { return m_failedFrame; }
     std::optional<core::DocumentTime> frameStart(int index) const;
     // nullopt past the last frame's start.
     std::optional<int> frameAtOrAfter(core::DocumentTime time) const;
@@ -227,6 +230,7 @@ private:
     State m_state = State::Closed;
     std::string m_path;
     std::optional<SourceError> m_error;
+    std::optional<int> m_failedFrame;
     std::vector<core::DocumentTime> m_starts; // subtitle times: the replaced frame times, else m_streamStarts
     std::optional<core::FrameTimeline> m_timeline;
     std::vector<core::DocumentTime> m_streamStarts; // the player's and decoder's
@@ -267,6 +271,7 @@ private:
     bool startPlayback(std::int64_t fromUs);
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
     std::vector<int> m_keyframes;
+    std::vector<int> m_videoKeyframes;
     bool m_hasAudio = false;
     int m_audioTrack = -1;
     int m_audioOrdinal = -1; // the track among the audio tracks (the general player's numbering)

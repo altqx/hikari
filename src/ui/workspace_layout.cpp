@@ -3,6 +3,8 @@
 #include "docking.h"
 #include "tiered_presets.h"
 
+#include "hikari/application/plugin_content.h"
+
 #include <kddockwidgets/LayoutSaver.h>
 #include <kddockwidgets/core/DockRegistry.h>
 #include <kddockwidgets/core/DockWidget.h>
@@ -63,6 +65,11 @@ std::optional<QByteArray> readFile(const QString &path, bool *unreadable = nullp
 bool sameLayoutName(const QString &a, const QString &b)
 {
     return a.compare(b, Qt::CaseInsensitive) == 0;
+}
+
+QString fromU8(const std::u8string &s)
+{
+    return QString::fromUtf8(s.data(), qsizetype(s.size()));
 }
 
 bool keepAside(const QString &path, const QString &kept)
@@ -1171,25 +1178,44 @@ bool WorkspaceLayoutController::save()
     return write({m_preset, tabPayload(), m_layout, m_locked});
 }
 
+bool WorkspaceLayoutController::writable(const WorkspaceArrangement &arrangement) const
+{
+    return !m_file.isEmpty() && !m_fileLocked && !m_restoring && m_loaded && !m_quitting &&
+           arrangement.payload != m_lastSaved;
+}
+
 bool WorkspaceLayoutController::write(const WorkspaceArrangement &arrangement)
 {
-    if (m_file.isEmpty() || m_fileLocked || m_restoring || !m_loaded || m_quitting)
+    if (!writable(arrangement))
         return false;
-    if (arrangement.payload == m_lastSaved)
-        return false;
-    if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
-        writeAtomically(backupFile(), *old);
+    m_lastSaved = arrangement.payload;
+    m_writes.put(m_file, fileWrite(arrangement),
+                 [this, payload = arrangement.payload](bool written) { wrote(payload, written); });
+    return true;
+}
+
+FileWriteQueue::Write WorkspaceLayoutController::fileWrite(const WorkspaceArrangement &arrangement) const
+{
+    return [file = m_file, backup = backupFile(),
+            bytes = envelope(arrangement.payload, arrangement.preset, arrangement.layout, arrangement.locked)] {
+        if (const auto old = readFile(file); old && payloadOf(*old, nullptr))
+            writeAtomically(backup, *old);
+        return writeAtomically(file, bytes);
+    };
+}
+
+void WorkspaceLayoutController::wrote(const QByteArray &payload, bool written)
+{
     const QString failure = QCoreApplication::translate("HikariSub.Workspace", "The panel layout could not be written to %1.")
                                 .arg(QDir::toNativeSeparators(m_file));
-    if (!writeAtomically(m_file, envelope(arrangement.payload, arrangement.preset, arrangement.layout, arrangement.locked))) {
+    if (written) {
+        m_panelNotices.removeAll(failure);
+    } else {
         addPanelNotice(failure);
-        emit changed();
-        return false;
+        if (m_lastSaved == payload)
+            m_lastSaved.clear();
     }
-    m_panelNotices.removeAll(failure);
-    m_lastSaved = arrangement.payload;
     emit changed();
-    return true;
 }
 
 bool WorkspaceLayoutController::saveForQuit()
@@ -1206,7 +1232,13 @@ bool WorkspaceLayoutController::saveForQuit(const WorkspaceArrangement &active)
     WorkspaceArrangement placed = active;
     if (m_loaded && !placed.payload.isEmpty())
         placed.payload = onMainWindowOf(placed.payload, serialiseWindow());
-    const bool saved = write(placed);
+    m_writes.finishWrites();
+    bool saved = writable(placed);
+    if (saved) {
+        saved = fileWrite(placed)();
+        m_lastSaved = placed.payload;
+        wrote(placed.payload, saved);
+    }
     if (m_beforeNodeEffects && !nodeEffectsFile().isEmpty())
         writeAtomically(nodeEffectsFile(), envelope(serialiseWindow()));
     if (m_loaded)
@@ -1344,6 +1376,7 @@ bool WorkspaceLayoutController::hasBackup() const
 
 bool WorkspaceLayoutController::restoreBackup()
 {
+    m_writes.finishWrites();
     const auto bytes = readFile(backupFile());
     QString preset, layout;
     bool locked = false;
@@ -1595,7 +1628,30 @@ bool WorkspaceLayoutController::setFileArrangement(std::uint64_t tab, const QByt
 
 QString WorkspaceLayoutController::knownLayout(const QString &name) const
 {
-    return savedLayoutIndex(name) >= 0 ? savedLayoutNamed(name) : QString();
+    if (savedLayoutIndex(name) >= 0)
+        return savedLayoutNamed(name);
+    if (const PluginLayout *plugin = pluginLayoutNamed(name))
+        return plugin->name;
+    return m_pluginLayoutsPending ? name.trimmed() : QString();
+}
+
+const WorkspaceLayoutController::PluginLayout *WorkspaceLayoutController::pluginLayoutNamed(const QString &name) const
+{
+    if (savedLayoutIndex(name) >= 0)
+        return nullptr;
+    const QString wanted = name.trimmed();
+    const auto found = std::ranges::find_if(m_pluginLayouts, [&](const PluginLayout &l) { return sameLayoutName(l.name, wanted); });
+    return found == m_pluginLayouts.end() ? nullptr : &*found;
+}
+
+const WorkspaceArrangement *WorkspaceLayoutController::arrangementNamed(const QString &name) const
+{
+    if (const int index = savedLayoutIndex(name); index >= 0) {
+        const auto &arrangement = m_saved[static_cast<std::size_t>(index)].arrangement;
+        return arrangement ? &*arrangement : nullptr;
+    }
+    const PluginLayout *plugin = pluginLayoutNamed(name);
+    return plugin && plugin->arrangement ? &*plugin->arrangement : nullptr;
 }
 
 void WorkspaceLayoutController::reservePresetNames(const QStringList &names)
@@ -1617,6 +1673,12 @@ void WorkspaceLayoutController::reloadSavedLayouts()
     emit changed();
 }
 
+void WorkspaceLayoutController::pluginLayoutsRead()
+{
+    m_pluginLayoutsPending = false;
+    reloadSavedLayouts();
+}
+
 void WorkspaceLayoutController::readSavedLayouts()
 {
     m_saved.clear();
@@ -1624,6 +1686,27 @@ void WorkspaceLayoutController::readSavedLayouts()
     auto project = readLayoutsFile(m_projectSavedFile, m_projectLocked);
     auto mine = readLayoutsFile(m_savedFile, m_savedLocked);
     m_saved = application::combineTiers(std::move(project), std::move(mine), &SavedLayout::name, sameLayoutName);
+    readPluginLayouts();
+}
+
+void WorkspaceLayoutController::readPluginLayouts()
+{
+    m_pluginLayouts.clear();
+    for (const application::PluginContentFile &file : application::pluginContent().layouts) {
+        PluginLayout layout;
+        layout.plugin = fromU8(file.pluginName);
+        //: A plugin's layout in the layout lists: %1 is its title, %2 the plugin's name.
+        layout.name = QCoreApplication::translate("HikariSub.Workspace", "%1 (%2)").arg(fromU8(file.title), layout.plugin);
+        if (std::ranges::any_of(m_pluginLayouts, [&](const PluginLayout &l) { return sameLayoutName(l.name, layout.name); }))
+            continue;
+        if (const auto bytes = readFile(QString::fromStdU16String(file.file.u16string())))
+            layout.arrangement = WorkspaceArrangement::parse(*bytes, &layout.problem);
+        else
+            layout.problem = QCoreApplication::translate("HikariSub.Workspace", "the file can’t be read");
+        if (layout.arrangement)
+            layout.arrangement->layout = layout.name;
+        m_pluginLayouts.push_back(std::move(layout));
+    }
 }
 
 std::vector<WorkspaceLayoutController::SavedLayout> WorkspaceLayoutController::readLayoutsFile(const QString &path,
@@ -1864,12 +1947,20 @@ QVariantList WorkspaceLayoutController::savedLayouts() const
                             {QStringLiteral("problem"), saved.problem},
                             {QStringLiteral("tier"), tierText(saved.mark.tier)},
                             {QStringLiteral("hidden"), saved.mark.hidden}};
+    for (const PluginLayout &layout : m_pluginLayouts)
+        if (pluginLayoutNamed(layout.name) == &layout)
+            rows << QVariantMap{{QStringLiteral("name"), layout.name},
+                                {QStringLiteral("usable"), layout.arrangement.has_value()},
+                                {QStringLiteral("problem"), layout.problem},
+                                {QStringLiteral("tier"), QStringLiteral("plugin")},
+                                {QStringLiteral("plugin"), layout.plugin},
+                                {QStringLiteral("hidden"), false}};
     return rows;
 }
 
 QString WorkspaceLayoutController::layout() const
 {
-    return savedLayoutIndex(m_layout) >= 0 ? savedLayoutNamed(m_layout) : QString();
+    return knownLayout(m_layout);
 }
 
 QString WorkspaceLayoutController::layoutLabel() const
@@ -1975,11 +2066,8 @@ bool WorkspaceLayoutController::applySavedLayout(const QString &name)
 
 bool WorkspaceLayoutController::applySavedArrangement(const QString &name)
 {
-    const int index = savedLayoutIndex(name);
-    if (index < 0 || !m_loaded || m_default.isEmpty())
-        return false;
-    const auto &arrangement = m_saved[static_cast<std::size_t>(index)].arrangement;
-    if (!arrangement)
+    const WorkspaceArrangement *arrangement = arrangementNamed(name);
+    if (!arrangement || !m_loaded || m_default.isEmpty())
         return false;
     dismissPanelNotice();
     const bool shown = showArrangement(*arrangement);
@@ -1991,7 +2079,7 @@ bool WorkspaceLayoutController::resetCurrentLayout()
 {
     if (m_beforeNodeEffects)
         return resetLayout();
-    if (const QString saved = layout(); !saved.isEmpty() && m_saved[static_cast<std::size_t>(savedLayoutIndex(saved))].arrangement)
+    if (const QString saved = layout(); !saved.isEmpty() && arrangementNamed(saved))
         return applySavedArrangement(saved);
     return applyPresetArrangement(m_preset);
 }

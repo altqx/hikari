@@ -145,6 +145,50 @@ TEST_P(TimingHelpers, AnEdgeWithNoKeyframeThatWayChangesNothingAndRecordsNoStep)
     EXPECT_EQ(frames(1), (F{310, 400}));
 }
 
+TEST_P(TimingHelpers, SnapToSceneSetsOneLineToTheSceneAroundTheVideoFrame)
+{
+    load(standard);
+    select({1}, 1);
+    const auto before = steps();
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 140));
+    EXPECT_EQ(steps(), before + 1);
+    EXPECT_EQ(frames(1), (F{130, 200}));
+    EXPECT_EQ(frames(0), (F{24, 72}));
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 96));
+    EXPECT_EQ(frames(1), (F{96, 130}));
+}
+
+TEST_P(TimingHelpers, SnapToSceneSnapsEachSelectedLineToTheSceneHoldingItsStart)
+{
+    load(standard);
+    select({0, 1, 3}, 1);
+    const auto before = steps();
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 5));
+    EXPECT_EQ(steps(), before + 1);
+    EXPECT_EQ(frames(0), (F{0, 48}));
+    EXPECT_EQ(frames(1), (F{96, 130}));
+    EXPECT_EQ(frames(3), (F{130, 200}));
+}
+
+TEST_P(TimingHelpers, SnapToSceneRunsToTheVideoEndAfterTheLastKeyframe)
+{
+    load({{310, 400}});
+    select({0}, 0);
+    ASSERT_TRUE(snapToScene(*session, tb(), keyframes, 350));
+    EXPECT_EQ(startMs(0), startOf(300));
+    EXPECT_EQ(endMs(0), startOf(tb().frameCount()));
+}
+
+TEST_P(TimingHelpers, SnapToSceneNeedsKeyframesAndRecordsNoStepWhenNothingMoves)
+{
+    load({{130, 200}});
+    select({0}, 0);
+    const auto before = steps();
+    EXPECT_FALSE(snapToScene(*session, tb(), {}, 140));
+    EXPECT_FALSE(snapToScene(*session, tb(), keyframes, 140));
+    EXPECT_EQ(steps(), before);
+}
+
 TEST_P(TimingHelpers, LeadInStopsAtThePreviousUncommentedEndAndAtZero)
 {
     load(standard);
@@ -204,6 +248,48 @@ TEST_P(TimingHelpers, NudgesOneEdgeByWholeFrames)
     ASSERT_TRUE(nudgeEdgeByFrames(*session, tb(), TimingEdge::Start, -100));
     EXPECT_EQ(frames(0), (F{0, 72}));
     EXPECT_FALSE(nudgeEdgeByFrames(*session, tb(), TimingEdge::Start, -1));
+}
+
+TEST_P(TimingHelpers, ShiftingWhatFollowsMovesEveryLineBelowTheSelectionInTheSameStep)
+{
+    load(standard);
+    select({1}, 1);
+    const auto before = steps();
+    ASSERT_TRUE(nudgeEdgeByFrames(*session, tb(), TimingEdge::End, 2, true));
+    EXPECT_EQ(steps(), before + 1);
+    EXPECT_EQ(frames(0), (F{24, 72}));
+    EXPECT_EQ(frames(1), (F{100, 162}));
+    EXPECT_EQ(frames(2), (F{162, 172}));
+    EXPECT_EQ(frames(3), (F{177, 232}));
+    ASSERT_TRUE(nudgeEdgeByFrames(*session, tb(), TimingEdge::End, -1, true));
+    EXPECT_EQ(frames(1), (F{100, 161}));
+    EXPECT_EQ(frames(3), (F{176, 231}));
+}
+
+TEST(TimingHelpersMs, WithoutAnExactTimebaseTheEdgeMovesByMilliseconds)
+{
+    std::string text = "[Events]\n"
+                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,b\n";
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    EditSession session(core::loadAss(bytes).document);
+    const auto a = session.document().lines()[0]->id;
+    session.setSelection(Selection{a, {a}, a, {}});
+    const auto ms = [&](std::size_t row, bool end) {
+        const auto &l = *session.document().lines()[row];
+        return static_cast<int>((end ? l.end : l.start).value.microseconds() / 1000);
+    };
+    ASSERT_TRUE(nudgeEdgeByMs(session, TimingEdge::End, 10, false));
+    EXPECT_EQ(ms(0, true), 2010);
+    EXPECT_EQ(ms(1, false), 3000);
+    ASSERT_TRUE(nudgeEdgeByMs(session, TimingEdge::End, -20, true));
+    EXPECT_EQ(ms(0, true), 1990);
+    EXPECT_EQ(ms(1, false), 2980);
+    EXPECT_EQ(ms(1, true), 3980);
+    ASSERT_TRUE(nudgeEdgeByMs(session, TimingEdge::Start, 5000, false));
+    EXPECT_EQ(ms(0, false), 1980);
+    EXPECT_FALSE(nudgeEdgeByMs(session, TimingEdge::End, -10, false));
 }
 
 TEST_P(TimingHelpers, ExtendsTheUncommentedNeighbourToTheActiveLine)
@@ -320,6 +406,18 @@ TEST_P(TimingHelpers, AssistantAcceptRefusesAnEndBeforeTheStart)
     auto s = *suggestTiming(session->document(), id(0), tb(), keyframes, assistant());
     s.endMs = s.startMs - 10;
     EXPECT_FALSE(acceptTiming(*session, s));
+}
+
+TEST_P(TimingHelpers, TheSelectedSpanRunsFromTheEarliestStartToTheLatestEnd)
+{
+    load(standard);
+    select({3, 1}, 3);
+    const auto span = selectedLinesSpan(*session);
+    ASSERT_TRUE(span.has_value());
+    EXPECT_EQ(span->startMs, startMs(1));
+    EXPECT_EQ(span->endMs, endMs(3));
+    session->setSelection(Selection{});
+    EXPECT_FALSE(selectedLinesSpan(*session).has_value());
 }
 
 INSTANTIATE_TEST_SUITE_P(Timebases, TimingHelpers,

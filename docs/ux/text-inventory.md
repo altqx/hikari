@@ -34,7 +34,7 @@ The naming list below comes from that reading, and from the menu inventory ([con
 | Font chooser | "Font selection" (command 3000, Line editor strip, the window's title) | Choose font… (command); Choose font (window) |
 | Audio commit | "Commit", "Auto-commit", "Commit options", "Next after commit", "Go to the next line after commit"; "Automatically apply changes", "Go to the next line after applying changes" (M3) | Apply changes, Apply changes automatically, Go to the next line after applying (rec. 3) |
 | Line timing mode | "Line" (audio toolbar), "Line timing" (M3) | Line timing |
-| Non-linear spectrum | "Speech" (audio toolbar), "Speech (non-linear spectrum)" (M3) | Speech spectrum |
+| Non-linear spectrum | "Speech" (audio toolbar), "Frequency curve ▸ Speech" (M3), "Frequency curve" (Settings › Audio) | Speech |
 | Float a panel | "Undock" (panel ⋯ R10), "Float" (View › Panels) | Float (rec. 4) |
 | Close a panel | "Close" (panel ⋯), "Hide" (View › Panels) | Close (rec. 4) |
 | Show a file's folder | "Show in folder" (Home), "Open the folder containing the subtitles", "Open video containing folder", "Open audio containing folder", "Open keyframes containing folder" (tab menu R11), "Open folder" | Show in folder; Show subtitles / video / audio / keyframes in folder |

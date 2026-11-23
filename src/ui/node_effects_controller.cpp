@@ -5,6 +5,7 @@
 
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/application/node_graph_library.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/application/typesetting_graphs.h"
 
@@ -16,7 +17,9 @@
 #include <algorithm>
 #include <charconv>
 #include <cmath>
+#include <fstream>
 #include <limits>
+#include <sstream>
 
 namespace hikari::ui {
 
@@ -915,6 +918,22 @@ QStringList NodeEffectsController::library() const
     return out;
 }
 
+QVariantList NodeEffectsController::pluginLibrary()
+{
+    QVariantList out;
+    const auto graphs = application::pluginContent().graphs;
+    for (auto from = graphs.begin(); from != graphs.end();) {
+        const auto to = std::find_if(from, graphs.end(), [&](const auto &graph) { return graph.plugin != from->plugin; });
+        QVariantList group;
+        for (auto graph = from; graph != to; ++graph)
+            group << QVariantMap{{QStringLiteral("title"), qstr(graph->title)},
+                                 {QStringLiteral("file"), QString::fromStdU16String(graph->file.u16string())}};
+        out << QVariantMap{{QStringLiteral("name"), qstr(from->pluginName)}, {QStringLiteral("graphs"), group}};
+        from = to;
+    }
+    return out;
+}
+
 QVariantList NodeEffectsController::sources() const
 {
     QVariantList out;
@@ -1542,13 +1561,33 @@ bool NodeEffectsController::addTypesettingGraph(int index)
 
 bool NodeEffectsController::addFromLibrary(const QString &libraryName)
 {
+    if (m_libraryFolder.empty())
+        return false;
+    return addLibraryGraph(application::NodeGraphLibrary(m_libraryFolder).load(wide(libraryName)), wide(libraryName));
+}
+
+bool NodeEffectsController::addFromPlugin(const QString &file)
+{
+    const auto graphs = application::pluginContent().graphs;
+    const auto graph = std::ranges::find(graphs, std::filesystem::path(file.toStdU16String()),
+                                         &application::PluginContentFile::file);
+    if (graph == graphs.end())
+        return false;
+    std::ifstream in(graph->file, std::ios::binary);
+    if (!in)
+        return false;
+    std::stringstream text;
+    text << in.rdbuf();
+    return addLibraryGraph(application::parseGraph(text.str()), graph->title);
+}
+
+bool NodeEffectsController::addLibraryGraph(const std::expected<application::NodeGraph, application::GraphProblem> &graph,
+                                            std::u8string_view title)
+{
     const core::Document *doc = document();
-    if (!doc || m_libraryFolder.empty())
+    if (!doc || !graph)
         return false;
-    const auto graph = application::NodeGraphLibrary(m_libraryFolder).load(wide(libraryName));
-    if (!graph)
-        return false;
-    const std::u8string name = application::freeGraphName(*doc, wide(libraryName));
+    const std::u8string name = application::freeGraphName(*doc, title);
     const std::u8string style = defaultStyle(*doc, m_sources, m_source);
     std::optional<core::LineId> added;
     const bool done = runGraphCommand([&](application::EditSession &s) {

@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QSaveFile>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -54,6 +55,7 @@ void Application::trackVideoSources(WindowMedia &media)
         if (const auto tab = m_workspace.currentTab(media.window))
             if (const auto it = m_tabMedia.find(tab->value); it != m_tabMedia.end() && !it->second.video.isEmpty()) {
                 it->second.video.clear();
+                it->second.videoDropped = true;
                 it->second.position = 0;
                 emit tabsChanged();
             }
@@ -172,8 +174,52 @@ std::optional<std::string> Application::setKeyframesFromApi(const std::vector<st
     if (const auto target = m_workspace.editingTarget())
         m_tabMedia[target->value].keyframes.clear();
     video.setKeyframes(std::vector<int>(frames.begin(), frames.end()));
+    emit keyframesChanged();
     refreshViews();
     return std::nullopt;
+}
+
+QString Application::keyframesFile() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+    return it == m_tabMedia.end() ? QString() : it->second.keyframes;
+}
+
+QString Application::saveKeyframesFile(const QUrl &file)
+{
+    const auto &video = activeMedia().video->session();
+    if (video.state() != application::VideoSession::State::Ready || video.keyframes().empty())
+        return QCoreApplication::translate("HikariSub.Video", "There are no keyframes to save");
+    const QString local = file.isLocalFile() ? file.toLocalFile() : file.toString();
+    const auto &frames = video.keyframes();
+    const std::string text = application::formatKeyframes(std::vector<std::int64_t>(frames.begin(), frames.end()));
+    QSaveFile out(local);
+    if (!out.open(QIODevice::WriteOnly) || out.write(text.data(), static_cast<qint64>(text.size())) != static_cast<qint64>(text.size()) ||
+        !out.commit())
+        return QCoreApplication::translate("HikariSub.Video", "Could not save the keyframes file %1").arg(QDir::toNativeSeparators(local));
+    rememberRecentKeyframes(local);
+    return {};
+}
+
+void Application::closeKeyframes()
+{
+    const auto target = m_workspace.editingTarget();
+    const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+    if (it == m_tabMedia.end() || it->second.keyframes.isEmpty())
+        return;
+    it->second.keyframes.clear();
+    it->second.keyframesDropped = true;
+    auto &media = activeMedia();
+    media.pendingKeyframes.clear();
+    if (auto &video = media.video->session(); video.state() == application::VideoSession::State::Ready)
+        video.restoreVideoKeyframes();
+    else if (media.audio) {
+        media.audio->setKeyframes({});
+        media.audio->setKeyframeSnapTimes({});
+    }
+    emit keyframesChanged();
+    refreshViews();
 }
 
 QUrl Application::videoDialogFolder() const

@@ -101,6 +101,7 @@ The style button opens a popover over the line box. It has a filter field (type 
   - Shift+Enter goes back a Line.
   - Esc closes the popover.
   - A line at the popover's foot says what Enter will do: 'Enter applies "Sign" to line 46 and goes to 47.'
+  - The style goes to the active Line alone: with several Lines selected in the Grid, the selection narrows to the active Line first, as Aegisub's Styling Assistant does.
 - **Order (Q624):** when several Lines are picked, the step goes through the picked Lines in Grid order. Otherwise it goes through every Line in Grid order.
 - **The Styles panel** gets the same toggle with the same behaviour.
 
@@ -128,24 +129,26 @@ The style button opens a popover over the line box. It has a filter field (type 
 
 ## Tool names and hints
 
-The hints are **drafts**. Each code card checks its tool's hint and handle names against the tool's code, modifier keys included, before shipping them, and changes the wording to match the code.
+The hints and handle names below were checked against each tool's code, modifier keys included, in [#1208](https://github.com/altqx/hikari/issues/1208)'s first part. A tool whose behaviour changes updates its row.
 
-| Today (menus, commands) | Rail name | One-line hint (draft) | Handles named in the inspector |
+| Today (menus, commands) | Rail name | One-line hint | Handles named in the inspector |
 | --- | --- | --- | --- |
-| Position pointer | Pointer | Point at the picture to read a position. Copy video position copies it. | — |
-| Text positioning | Position | Drag to place the line. Shift-drag locks to one axis. | Position |
-| Text moving | Move | Drag the start or end point. The line travels between them over the times below. | Start point, End point, Path |
-| Text scaling | Scale | Drag the handles to stretch the text across or up. | Width, Height, Both |
-| Text Z rotation | Rotate | Drag round the origin to turn the text. Drag the origin to move it. | Origin, Angle |
-| Text X / Y rotation | Tilt X / Y | Drag to tilt the text in depth. Drag the origin to move it. | Origin, Tilt grid |
-| Perspective | Perspective | Drag the four corners to lay the text onto a surface. | Corners |
-| Rectangle clipping | Rectangle clip | Drag a box. Only what is inside shows. Drag its corners or edges to change it. | Corners, Edges |
-| Vector clipping | Vector clip | Click to add points, drag points and handles. Only what is inside shows. Freehand: hold and draw. | Point, Curve handle, Segment |
-| Vector drawing | Drawing | Click to add points to the drawing. Drag to reshape it. | Point, Curve handle |
-| Position shifter | Shift positions | Drag to move every position in the line together. | Offset |
-| Hydra | All tags | Choose a tag, then drag to change it on the frame. | Depends on the tag |
-| Gradient | Gradient | Drag across the text to set where the colours change. | Start, End, Steps |
-| Text on path | Text on path | Draw a path. The text follows it. | Path points |
+| Position pointer | Pointer | Point at the picture to read a position. Ctrl-click puts the line there. | — |
+| Text positioning | Position | Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer. | Position · square |
+| Text moving | Move | Drag the start or end point; right-drag sets the end. The line travels between them. | Start point · square, End point · circle, Path · arrow, Current position · cross |
+| Text scaling | Scale | Drag to stretch across, right-drag to stretch up. Shift-drag scales both. | Width, Height, Both · arrow |
+| Text Z rotation | Rotate | Drag round the origin to turn the text. Drag the origin to move it. | Origin · cross, Angle · line |
+| Text X / Y rotation | Tilt X / Y | Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it. | Origin · cross, Tilt grid · outline |
+| Perspective | Perspective | Drag the corners to lay the text on a surface. Drag inside to move it. | Corners · square, Plane corners · circle, Origin · cross |
+| Rectangle clipping | Rectangle clip | Drag a box. Only what is inside shows. Drag its edges to resize, inside to move. | Edges and corners · outline |
+| Vector clipping | Vector clip | Click to add points, drag them to reshape. Only what is inside shows. | Point · square, Curve handle · circle |
+| Vector drawing | Drawing | Click to add points, drag them to reshape. Or pick a shape and drag a box. | Point · square, Curve handle · circle |
+| Position shifter | Shift positions | Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis. | Position and move start · square, Move end · circle, Origin · cross, Clip and drawing · outline |
+| Hydra | All tags | Choose a tag, then drag sideways on the picture to change it. Shift for small steps. | Changed line · outline |
+| Gradient | Gradient | Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies. | Start and end, Skew, P1, P2 and P3 · square |
+| Text on path | Text on path | Click to add path points, drag them to shape the path. The text follows; Enter applies. | Point · square, Curve handle · circle |
+
+The freehand stroke (Q622) adds "Freehand: hold and draw." to Vector clip and Drawing when it lands.
 
 The strings live in `HikariSub.VisualTools`, next to the tools' own.
 

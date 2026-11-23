@@ -136,7 +136,7 @@ export type Edit = {
     value: string | null;
 };
 
-export type SettingValue = boolean | number | string | string[];
+export type SettingValue = boolean | number | number | string | string[];
 
 export type NodePort = {
     name: string;
@@ -188,6 +188,43 @@ export type DialogControl = {
 
 export type DialogAnswer = unknown | unknown;
 
+export type Problem = {
+    /** Given by problems.list; problems.set ignores it. */
+    id?: string;
+    /** Absent only for a QC note that matches no Line. */
+    line?: LineId;
+    /** A QC note's time in milliseconds; problems.set ignores it. */
+    time?: number;
+    /** text when omitted. */
+    field?: "text" | "translation";
+    /** UTF-16 offset in the field; with to, the squiggle. The whole Line when omitted. */
+    from?: number;
+    to?: number;
+    severity: "error" | "warning" | "info" | "hint";
+    message: string;
+    /** The check's own name, such as a grammar rule. */
+    code?: string;
+    /** Given by problems.list. */
+    source?: {
+        kind: "qc" | "plugin" | "server";
+        /** qc, a plugin id, or plugin:<plugin id>/<server id>. */
+        id: string;
+        /** The plugin's own source name from problems.set, or a QC note's section. */
+        set?: string;
+        /** What the problems list shows. */
+        name: string;
+    };
+    fixes?: ({
+        title: string;
+        /** Replacements in this Line's field, by UTF-16 offsets in the text the problem was set against. */
+        edits: ({
+            from: number;
+            to: number;
+            insert: string;
+        })[];
+    })[];
+};
+
 /** A theme role, so the mark follows the theme and high contrast. */
 export type MarkColour = "accent" | "warning" | "danger" | "success" | "muted";
 
@@ -202,7 +239,8 @@ export type DocumentsListResult = {
         document?: DocumentId;
         title?: string;
         path?: string | null;
-        format?: "ass" | "srt" | "tmplayer" | "microdvd" | "mpl2" | "text";
+        /** A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. */
+        format?: string;
         revision?: Revision;
         editingTarget?: boolean;
         /** The protected comparison reference. */
@@ -223,7 +261,8 @@ export type DocumentsGetResult = {
     document?: DocumentId;
     title?: string;
     path?: string | null;
-    format?: "ass" | "srt" | "tmplayer" | "microdvd" | "mpl2" | "text";
+    /** A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. */
+    format?: string;
     revision?: Revision;
     editingTarget?: boolean;
     /** The protected comparison reference. */
@@ -385,7 +424,7 @@ export type PanelsListResult = {
     })[];
 };
 
-/** Settings with their type, scope, default and current value. */
+/** Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>. */
 export type SettingsListParams = {
     /** Only ids starting with it, e.g. grid. */
     prefix?: string;
@@ -394,10 +433,16 @@ export type SettingsListParams = {
 export type SettingsListResult = {
     settings: ({
         setting: string;
-        type: "boolean" | "integer" | "string" | "stringList";
+        type: "boolean" | "integer" | "number" | "string" | "stringList";
         scope: "profile" | "collections" | "workspace";
         default: SettingValue;
         value: SettingValue;
+        /** The name the Settings window shows, in the UI language. */
+        title?: string;
+        /** app, or the id of the plugin whose setting it is. */
+        source?: string;
+        /** Whether a Project can override it on the Project tab. */
+        projectable?: boolean;
     })[];
 };
 
@@ -461,6 +506,18 @@ export type PanelsFocusResult = {
     open: boolean;
     floating: boolean;
     focused: boolean;
+};
+
+/** Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting. */
+export type SettingsOpenParams = {
+    /** A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>. */
+    setting?: string;
+    /** The tab; yours when omitted. */
+    scope?: "yours" | "project";
+};
+
+export type SettingsOpenResult = {
+    opened: true;
 };
 
 /** Changes a setting; the value must have the setting's type. */
@@ -1203,6 +1260,39 @@ export type PluginsRunResult = {
     ran: true;
 };
 
+/** Changes one of the caller's status bar items. Plugins only. */
+export type StatusItemsSetParams = {
+    /** An id from contributes.statusItems. */
+    item: string;
+    /** Empty: icon only. */
+    text?: string;
+    /** An icon role or own:<id>; empty: text only. */
+    icon?: string;
+    tooltip?: string;
+    tone?: "normal" | "warning" | "danger";
+    visible?: boolean;
+};
+
+export type StatusItemsSetResult = {
+    item: string;
+};
+
+/** The subtitle formats HikariSub can open and export, built-in and from plugins. */
+export type FormatsListParams = Record<string, never>;
+
+export type FormatsListResult = {
+    formats: ({
+        /** ass, srt, … or plugin:<plugin id>/<format id>. */
+        id: string;
+        title: string;
+        extensions: string[];
+        import: boolean;
+        export: boolean;
+        /** The plugin's id, for a plugin format. */
+        plugin?: string;
+    })[];
+};
+
 /** The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. */
 export type TypesetPerspectiveParams = {
     /** Defaults to the active Document. */
@@ -1487,6 +1577,14 @@ export type VcsShowResult = {
     text: string;
 };
 
+/** Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only. */
+export type PresenceSetTextParams = {
+    /** Plain text; empty clears it. */
+    text: string;
+};
+
+export type PresenceSetTextResult = Record<string, never>;
+
 /** A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. */
 export type KaraokeSyllablesParams = {
     /** Defaults to the active Document. */
@@ -1719,6 +1817,70 @@ export type MarksListResult = {
     })[];
 };
 
+/** The problems on a Document: the open QC notes and the problems plugins set, in Document order, then by from, those with no Line last. */
+export type ProblemsListParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** These Lines only. */
+    lines?: LineId[];
+    /** This severity and worse only. */
+    severity?: "error" | "warning" | "info" | "hint";
+    /** One source id only. */
+    source?: string;
+};
+
+export type ProblemsListResult = {
+    document: DocumentId;
+    revision: Revision;
+    problems: Problem[];
+};
+
+/** Replaces the caller's problems under one set on a Document. Never saved and not an undo step; they go when the plugin stops, the Document closes, or their Line or field changes. Plugins only. */
+export type ProblemsSetParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** The revision the offsets were measured on; stale_revision when it moved. */
+    revision: Revision;
+    /** The plugin's own name for this group of checks; default when omitted. */
+    set?: string;
+    problems: Problem[];
+};
+
+export type ProblemsSetResult = {
+    document: DocumentId;
+    count: number;
+};
+
+/** Removes the caller's problems. Plugins only. */
+export type ProblemsClearParams = {
+    /** Every Document when omitted. */
+    document?: DocumentId;
+    /** Every set of the caller's when omitted. */
+    set?: string;
+};
+
+export type ProblemsClearResult = {
+    cleared: number;
+};
+
+/** Applies one of a problem's quick fixes through document.apply, as one undo step named after the problem's source and the fix; stale_revision when its Line changed since the problem was set. */
+export type ProblemsFixParams = {
+    /** Defaults to the active Document. */
+    document?: DocumentId;
+    /** An id from problems.list. */
+    problem: string;
+    /** The fix's index. */
+    fix: number;
+};
+
+export type ProblemsFixResult = {
+    revision: Revision;
+    /** New Lines, in edit order. */
+    inserted: LineId[];
+    /** False when the edits changed nothing: no undo step was added. */
+    changed: boolean;
+};
+
 /** Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only. */
 export type ProgramsRunParams = {
     program: string;
@@ -1784,6 +1946,13 @@ export type DocumentChangedEvent = {
     revision: Revision;
     /** The History step now current. */
     step: string;
+};
+
+/** The problems on a Document changed: a source set or cleared them, an edit or a deleted Line dropped some, a plugin stopped, or the open QC notes changed. */
+export type ProblemsChangedEvent = {
+    document: DocumentId;
+    /** The ids of the sources whose problems changed: qc or a plugin id. */
+    sources: string[];
 };
 
 /** A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged. */
@@ -1871,6 +2040,7 @@ export interface Operations {
     "panels.open": { access: "write"; params: PanelsOpenParams; result: PanelsOpenResult };
     "panels.close": { access: "write"; params: PanelsCloseParams; result: PanelsCloseResult };
     "panels.focus": { access: "write"; params: PanelsFocusParams; result: PanelsFocusResult };
+    "settings.open": { access: "write"; params: SettingsOpenParams; result: SettingsOpenResult };
     "settings.set": { access: "write"; params: SettingsSetParams; result: SettingsSetResult };
     "document.apply": { access: "write"; params: DocumentApplyParams; result: DocumentApplyResult };
     "selection.set": { access: "write"; params: SelectionSetParams; result: SelectionSetResult };
@@ -1911,6 +2081,8 @@ export interface Operations {
     "plugins.review": { access: "read"; params: PluginsReviewParams; result: PluginsReviewResult };
     "plugins.install": { access: "write"; params: PluginsInstallParams; result: PluginsInstallResult };
     "plugins.run": { access: "write"; params: PluginsRunParams; result: PluginsRunResult };
+    "status_items.set": { access: "write"; params: StatusItemsSetParams; result: StatusItemsSetResult };
+    "formats.list": { access: "read"; params: FormatsListParams; result: FormatsListResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
     "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };
     "typeset.drawing": { access: "read"; params: TypesetDrawingParams; result: TypesetDrawingResult };
@@ -1921,6 +2093,7 @@ export interface Operations {
     "project.info": { access: "read"; params: ProjectInfoParams; result: ProjectInfoResult };
     "vcs.refs": { access: "read"; params: VcsRefsParams; result: VcsRefsResult };
     "vcs.show": { access: "read"; params: VcsShowParams; result: VcsShowResult };
+    "presence.set_text": { access: "write"; params: PresenceSetTextParams; result: PresenceSetTextResult };
     "karaoke.syllables": { access: "read"; params: KaraokeSyllablesParams; result: KaraokeSyllablesResult };
     "karaoke.split": { access: "read"; params: KaraokeSplitParams; result: KaraokeSplitResult };
     "karaoke.time": { access: "read"; params: KaraokeTimeParams; result: KaraokeTimeResult };
@@ -1935,6 +2108,10 @@ export interface Operations {
     "marks.set": { access: "write"; params: MarksSetParams; result: MarksSetResult };
     "marks.clear": { access: "write"; params: MarksClearParams; result: MarksClearResult };
     "marks.list": { access: "read"; params: MarksListParams; result: MarksListResult };
+    "problems.list": { access: "read"; params: ProblemsListParams; result: ProblemsListResult };
+    "problems.set": { access: "write"; params: ProblemsSetParams; result: ProblemsSetResult };
+    "problems.clear": { access: "write"; params: ProblemsClearParams; result: ProblemsClearResult };
+    "problems.fix": { access: "write"; params: ProblemsFixParams; result: ProblemsFixResult };
     "programs.run": { access: "write"; params: ProgramsRunParams; result: ProgramsRunResult };
     "programs.start": { access: "write"; params: ProgramsStartParams; result: ProgramsStartResult };
     "programs.send": { access: "write"; params: ProgramsSendParams; result: ProgramsSendResult };
@@ -1946,6 +2123,7 @@ export type OperationName = keyof Operations;
 export interface Events {
     "project.changed": ProjectChangedEvent;
     "document.changed": DocumentChangedEvent;
+    "problems.changed": ProblemsChangedEvent;
     "program.output": ProgramOutputEvent;
     "program.exited": ProgramExitedEvent;
     "document.saved": DocumentSavedEvent;

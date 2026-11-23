@@ -11,8 +11,8 @@
 
 namespace hikari::ui {
 
-// A Project's presets tier: .hikari/presets.toml, holding automation.dialogPresets, shiftTimes.presets and
-// postprocessor.presets as settings.toml holds them. Made on the first write.
+// A Project's presets tier: .hikari/presets.toml, holding automation.dialogPresets, shiftTimes.presets,
+// postprocessor.presets and export.recipes as settings.toml holds them. Made on the first write.
 class PresetsFile {
 public:
     static constexpr std::int64_t kVersion = 1;

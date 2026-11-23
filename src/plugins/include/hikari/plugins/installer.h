@@ -41,6 +41,8 @@ struct InstallReview {
 class Installer {
 public:
     Installer(PluginFolders folders, std::int64_t apiVersion);
+    // How each content pack file is read at review; unset, a file is only checked to be there.
+    void checkContentWith(ContentFileChecks checks) { m_contentChecks = std::move(checks); }
 
     const PluginFolders &folders() const { return m_folders; }
     std::expected<Registry, std::string> registry() const;
@@ -86,6 +88,7 @@ private:
 
     PluginFolders m_folders;
     std::int64_t m_apiVersion;
+    ContentFileChecks m_contentChecks;
 };
 
 }

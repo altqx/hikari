@@ -83,8 +83,11 @@ class AgentController final : public QObject {
     Q_PROPERTY(QVariantList agents READ agents NOTIFY modelsChanged FINAL)
     // Bumps whenever an agent's model list or its loading changes.
     Q_PROPERTY(int agentModelsRevision READ agentModelsRevision NOTIFY agentModelsChanged FINAL)
+    Q_PROPERTY(bool agentModelsLoading READ agentModelsLoading NOTIFY agentModelsChanged FINAL)
     /// The model a new thread starts with, or empty when none is configured.
     Q_PROPERTY(QString defaultModelText READ defaultModelText NOTIFY modelsChanged FINAL)
+    /// That model's value, or empty.
+    Q_PROPERTY(QString defaultModel READ defaultModel NOTIFY modelsChanged FINAL)
     // The open tabs @ can attach: [{id, title}], without the active one.
     Q_PROPERTY(QVariantList attachable READ attachable NOTIFY threadChanged FINAL)
     Q_PROPERTY(QString activeTitle READ activeTitle NOTIFY threadChanged FINAL)
@@ -109,6 +112,9 @@ public:
         AutomationShell *automation = nullptr;
         // The active window's Project folder; empty without one.
         std::function<QString()> project;
+        // Settings › AI's last known key and sign-in state; unset knows none.
+        std::function<bool(const QString &providerId)> lacksKey;
+        std::function<bool()> codexSignedOut;
     };
 
     static constexpr const char *kModeSetting = "ai.agent.mode";
@@ -118,6 +124,8 @@ public:
     static constexpr const char *kAutoCompactSetting = "ai.agent.autoCompact";
     static constexpr const char *kFullAccessWarnedSetting = "ai.agent.fullAccessWarned";
     static constexpr const char *kAgentModelsSetting = "ai.agent.models";
+    static constexpr const char *kRecentModelsSetting = "ai.models.recent";
+    static constexpr int kRecentModels = 5;
 
     explicit AgentController(Wiring wiring, QObject *parent = nullptr);
     ~AgentController() override;
@@ -130,12 +138,18 @@ public:
     QObject *items() { return &m_items; }
     QVariantList models() const;
     QString defaultModelText() const;
+    QString defaultModel() const;
     QVariantList agents() const;
     int agentModelsRevision() const { return m_agentModelsRevision; }
     /// {loading, models: [{value, text}]}: the agent's last known list, while a fresh one may be loading.
     Q_INVOKABLE QVariantMap agentModels(const QString &agent) const;
     /// Asks a found agent for its models, once per run.
     Q_INVOKABLE void loadAgentModels(const QString &agent);
+    /// Asks again after a failed load.
+    Q_INVOKABLE void retryAgentModels(const QString &agent);
+    bool agentModelsLoading() const;
+    /// The model picker's items, `current` being marked; see modelPickerItems.
+    Q_INVOKABLE QVariantList pickerItems(const QString &current, const QString &filter) const;
     QVariantList attachable() const;
     QString activeTitle() const;
     bool costMeter() const;
@@ -172,7 +186,7 @@ public:
     Q_INVOKABLE void newThreadFromSummary();
     /// "manual", "auto" or "full".
     Q_INVOKABLE void setMode(const QString &mode);
-    /// A value from `models`.
+    /// A value from `models`; it goes first in `ai.models.recent`.
     Q_INVOKABLE void setModel(const QString &value);
     /// "allowOnce", "allowInThread" or "deny".
     /// `answer`: allowOnce, allowInThread, deny; for a proposal apply, decline or askAgain.
@@ -211,6 +225,7 @@ private:
     void apply();
     /// The first installed agent, which a thread falls back to when no provider has a Chat model.
     std::optional<application::ai::ModelRef> foundAgent() const;
+    std::optional<application::ai::ModelRef> defaultRef() const;
     QString modelTextOf(const application::ai::ModelRef &ref) const;
     void fallBackToAnAgent(const std::string &thread);
     void select(std::string id);
@@ -228,6 +243,7 @@ private:
         std::vector<std::pair<QString, QString>> models;
         bool loading = false;
         bool asked = false;
+        std::optional<QString> failure;
     };
     AgentModelList &agentModelList(const std::string &agent);
     bool agentFound(const std::string &agent) const;

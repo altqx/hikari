@@ -1,6 +1,9 @@
 #include "hikari/app/plugin_manager.h"
 
+#include "hikari/app/plugin_content.h"
+
 #include "hikari/api/api.h"
+#include "plugin_variant.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include <QBuffer>
@@ -11,6 +14,7 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QKeySequence>
 #include <QLocale>
 #include <QUrl>
 #include <private/qzipreader_p.h>
@@ -108,6 +112,12 @@ QString manifestMessage(const ManifestProblem &problem)
             .arg(api::kApiVersion);
     case ManifestProblem::Kind::QmlNeedsFullTrust:
         return QCoreApplication::translate("HikariSub.Plugins", "Only Full trust plugins can ship QML panels.");
+    case ManifestProblem::Kind::UnknownCommand:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.")
+            .arg(text(problem.detail), at);
+    case ManifestProblem::Kind::DuplicateKey:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json binds %1 twice, at %2.")
+            .arg(text(problem.detail), at);
     case ManifestProblem::Kind::Schema:
     case ManifestProblem::Kind::BadDefault:
         break;
@@ -143,6 +153,11 @@ QString packageMessage(const PackageProblem &problem)
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its panel file, %1.").arg(text(problem.path));
     case PackageProblem::Kind::QmlImport:
         return QCoreApplication::translate("HikariSub.Plugins", "%1 imports %2, which plugin panels can’t use.")
+            .arg(text(problem.path), text(problem.detail));
+    case PackageProblem::Kind::MissingContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its content file, %1.").arg(text(problem.path));
+    case PackageProblem::Kind::BadContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package’s content file %1 can’t be read: it %2.")
             .arg(text(problem.path), text(problem.detail));
     case PackageProblem::Kind::Manifest:
         break;
@@ -186,7 +201,7 @@ QString refusalMessage(const InstallRefusal &refusal)
 QStringList permissionLines(const plugins::Manifest &manifest)
 {
     return app::permissionLines(manifest.tier == plugins::Tier::Unrestricted, manifest.permissions, manifest.hasQmlPanels(),
-                                manifest.programs);
+                                manifest.programs, manifest.mcpServers);
 }
 
 QVariantList folderRows(const plugins::Manifest &manifest, const std::map<std::string, plugins::FileGrant> &grants)
@@ -218,10 +233,18 @@ QString authorsText(const plugins::Manifest &manifest)
 QStringList contributionLines(const plugins::Manifest &manifest)
 {
     QStringList lines;
-    for (const plugins::Contribution &command : manifest.commands)
+    for (const plugins::Command &command : manifest.commands)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Command: %1").arg(text(command.title));
     for (const plugins::Panel &panel : manifest.panels)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Panel: %1").arg(text(panel.title));
+    for (const plugins::StatusItem &item : manifest.statusItems)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Status bar item: %1").arg(text(item.title));
+    for (const plugins::Keybinding &binding : manifest.keybindings) {
+        const auto command = std::ranges::find(manifest.commands, binding.command, &plugins::Command::id);
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Shortcut: %1 for %2")
+                     .arg(QKeySequence::fromString(text(binding.key), QKeySequence::PortableText).toString(QKeySequence::NativeText),
+                          text(command->title));
+    }
     return lines;
 }
 
@@ -308,6 +331,10 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
         added << asksMore([](const plugins::Program &p) { return p.network; });
     if (std::ranges::any_of(next.programs, isLowIntegrity))
         added << asksMore(isLowIntegrity);
+    if (next.permissions.presence)
+        added << more.presence;
+    if (!next.mcpServers.empty())
+        added << !more.mcpServers.empty();
     for (const plugins::FileGrantRequest &request : next.permissions.files)
         added << (std::ranges::find(more.files, request.id) != more.files.end());
     const QStringList lines = permissionLines(next);
@@ -320,7 +347,7 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
 }
 
 QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bool qmlPanels,
-                            const std::vector<plugins::Program> &programs)
+                            const std::vector<plugins::Program> &programs, const std::vector<plugins::McpServer> &mcpServers)
 {
     QStringList lines;
     if (unrestricted)
@@ -359,6 +386,15 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
         lines << QCoreApplication::translate("HikariSub.Plugins", "Connects to the internet");
     if (std::ranges::any_of(programs, isLowIntegrity))
         lines << QCoreApplication::translate("HikariSub.Plugins", "Can read your files");
+    if (p.presence)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Set text in your Discord status: %1").arg(text(*p.presence));
+    if (!mcpServers.empty()) {
+        QStringList titles;
+        for (const plugins::McpServer &server : mcpServers)
+            titles << text(server.title);
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Offers MCP servers in Settings › AI, off until you turn them on: %1")
+                     .arg(titles.join(QStringLiteral(", ")));
+    }
     for (const plugins::FileGrantRequest &f : p.files)
         lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
                              : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))
@@ -366,12 +402,14 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
     return lines;
 }
 
-PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
+PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent), m_registryFile(folders.registry)
 {
     if (!folders.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(folders.plugins), path(folders.data), path(folders.cache),
                                                    path(folders.registry)},
                             api::kApiVersion);
+    if (m_installer)
+        m_installer->checkContentWith(contentFileChecks());
     refresh();
 }
 
@@ -592,6 +630,28 @@ QString PluginManager::setSetting(const QString &id, const QString &setting, con
     refresh();
     emit settingChanged(id, setting, json);
     return {};
+}
+
+std::vector<api::PluginSettingState> PluginManager::settingStates() const
+{
+    std::vector<api::PluginSettingState> out;
+    for (const QVariant &row : m_rows) {
+        const QVariantMap plugin = row.toMap();
+        if (!plugin.value(QStringLiteral("enabled")).toBool())
+            continue;
+        for (const QVariant &entry : plugin.value(QStringLiteral("settings")).toList()) {
+            const QVariantMap setting = entry.toMap();
+            const QString type = setting.value(QStringLiteral("type")).toString();
+            const bool secret = type == QLatin1String("secret");
+            out.push_back({plugin.value(QStringLiteral("id")).toString().toStdString(),
+                           setting.value(QStringLiteral("id")).toString().toStdString(),
+                           setting.value(QStringLiteral("title")).toString().toStdString(), type.toStdString(),
+                           setting.value(QStringLiteral("scope")).toString() != QLatin1String("user") && !secret,
+                           secret ? api::Json() : fromVariant(setting.value(QStringLiteral("default"))),
+                           secret ? api::Json() : fromVariant(setting.value(QStringLiteral("value")))});
+        }
+    }
+    return out;
 }
 
 QString PluginManager::install(bool retrusted)

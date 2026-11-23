@@ -290,6 +290,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Editor</name>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n line.</numerusform>
+            <numerusform>Number of characters in each line. Keep it at %1 or under, in at most %n lines.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Export</name>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -317,6 +327,41 @@
         <translation>
             <numerusform>Style options for %n style saved in the subtitle file.</numerusform>
             <numerusform>Style options for %n styles saved in the subtitle file.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>%n tag kind</numerusform>
+            <numerusform>%n tag kinds</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>%n line made</numerusform>
+            <numerusform>%n lines made</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>%n line changed</numerusform>
+            <numerusform>%n lines changed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (%n line made)</numerusform>
+            <numerusform>%1 (%n lines made)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n step won’t run: its script isn’t loaded.</numerusform>
+            <numerusform>%n steps won’t run: their scripts aren’t loaded.</numerusform>
         </translation>
     </message>
 </context>
@@ -477,6 +522,42 @@
         <translation>
             <numerusform>%n fold was skipped: it overlaps a line group or does not pair.</numerusform>
             <numerusform>%n folds were skipped: they overlap a line group or do not pair.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n error</numerusform>
+            <numerusform>%n errors</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n warning</numerusform>
+            <numerusform>%n warnings</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>%n info</numerusform>
+            <numerusform>%n info</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>%n hint</numerusform>
+            <numerusform>%n hints</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>%n problem: %1</numerusform>
+            <numerusform>%n problems: %1</numerusform>
         </translation>
     </message>
 </context>
@@ -849,10 +930,24 @@
 <context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
+        <source>%n setting(s) match</source>
+        <translation>
+            <numerusform>%n setting matches</numerusform>
+            <numerusform>%n settings match</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n rules</source>
         <translation>
             <numerusform>%n rule</numerusform>
             <numerusform>%n rules</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n shortcuts</source>
+        <translation>
+            <numerusform>Show the %n shortcut</numerusform>
+            <numerusform>Show all %n shortcuts</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1016,10 +1111,90 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problems</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Export %n note(s)…</source>
         <translation>
             <numerusform>Export %n note…</numerusform>
             <numerusform>Export %n notes…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · %n fix</numerusform>
+            <numerusform>%1 · %n fixes</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n line; the limit is %1.</numerusform>
+            <numerusform>%n lines; the limit is %1.</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.QuickPick</name>
+    <message numerus="yes">
+        <source>Not a line: %1. This document has %n lines.</source>
+        <translation>
+            <numerusform>Not a line: %1. This document has %n line.</numerusform>
+            <numerusform>Not a line: %1. This document has %n lines.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Enter applies “%1” to %n lines</source>
+        <translation>
+            <numerusform>Enter applies “%1” to %n line</numerusform>
+            <numerusform>Enter applies “%1” to %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Shift+Enter selects its %n lines</source>
+        <translation>
+            <numerusform>Shift+Enter selects its %n line</numerusform>
+            <numerusform>Shift+Enter selects its %n lines</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n commands</source>
+        <translation>
+            <numerusform>%n command</numerusform>
+            <numerusform>%n commands</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n files</source>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n results</source>
+        <translation>
+            <numerusform>%n result</numerusform>
+            <numerusform>%n results</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n picked</source>
+        <translation>
+            <numerusform>%n picked</numerusform>
+            <numerusform>%n picked</numerusform>
         </translation>
     </message>
 </context>
@@ -1260,6 +1435,17 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.StatusBar</name>
+    <message numerus="yes">
+        <source>%n plugin(s) working</source>
+        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
+        <translation>
+            <numerusform>%n plugin working</numerusform>
+            <numerusform>%n plugins working</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Styles</name>
     <message numerus="yes">
         <source>Apply the changes to the %n selected styles?</source>
@@ -1462,6 +1648,13 @@
         <translation>
             <numerusform>%n gap closed</numerusform>
             <numerusform>%n gaps closed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation>
+            <numerusform>%n overlap closed</numerusform>
+            <numerusform>%n overlaps closed</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1674,17 +1867,6 @@
         <translation>
             <numerusform>The tag takes %n value.</numerusform>
             <numerusform>The tag takes %n values.</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
-    <name>HikariSub.StatusBar</name>
-    <message numerus="yes">
-        <source>%n plugin(s) working</source>
-        <extracomment>The status bar&apos;s busy icon: how many background plugins are working</extracomment>
-        <translation>
-            <numerusform>%n plugin working</numerusform>
-            <numerusform>%n plugins working</numerusform>
         </translation>
     </message>
 </context>

@@ -57,7 +57,37 @@ TEST(VideoFullscreenBar, ModesFromTheSettingAndTheirCycle)
     EXPECT_EQ(nextFullscreenBarMode(FullscreenBarMode::Auto), FullscreenBarMode::Always);
     EXPECT_EQ(nextFullscreenBarMode(FullscreenBarMode::Always), FullscreenBarMode::Never);
     EXPECT_EQ(nextFullscreenBarMode(FullscreenBarMode::Never), FullscreenBarMode::Auto);
-    EXPECT_EQ(kFullscreenBarIdleMs, 1500);
+    EXPECT_EQ(kFullscreenBarIdleMs, 2000);
+}
+
+TEST(VideoFullscreenBar, PositionsAndModesFromTheirSettings)
+{
+    EXPECT_EQ(fullscreenBarPosition(0), FullscreenBarPosition::Below);
+    EXPECT_EQ(fullscreenBarPosition(1), FullscreenBarPosition::Over);
+    EXPECT_EQ(fullscreenBarPosition(-1), FullscreenBarPosition::Below);
+    EXPECT_EQ(fullscreenBarPosition(2), FullscreenBarPosition::Below);
+    EXPECT_EQ(fullscreenMode(0), FullscreenMode::Simple);
+    EXPECT_EQ(fullscreenMode(1), FullscreenMode::Typesetting);
+    EXPECT_EQ(fullscreenMode(-1), FullscreenMode::Simple);
+    EXPECT_EQ(fullscreenMode(2), FullscreenMode::Simple);
+}
+
+TEST(VideoFullscreenBar, BelowThePictureKeepsTheStripsRoomUnlessNever)
+{
+    EXPECT_TRUE(fullscreenStripReserved(FullscreenBarPosition::Below, FullscreenBarMode::Auto));
+    EXPECT_TRUE(fullscreenStripReserved(FullscreenBarPosition::Below, FullscreenBarMode::Always));
+    EXPECT_FALSE(fullscreenStripReserved(FullscreenBarPosition::Below, FullscreenBarMode::Never));
+    for (const auto mode : {FullscreenBarMode::Auto, FullscreenBarMode::Always, FullscreenBarMode::Never})
+        EXPECT_FALSE(fullscreenStripReserved(FullscreenBarPosition::Over, mode));
+}
+
+TEST(VideoFullscreenBar, ThePointerHidesWithTheBarOnlyWhenAsked)
+{
+    const FullscreenBarState idle{false, true, false, false};
+    const FullscreenBarState paused{false, false, false, false};
+    EXPECT_TRUE(fullscreenPointerHidden(true, idle));
+    EXPECT_FALSE(fullscreenPointerHidden(false, idle));
+    EXPECT_FALSE(fullscreenPointerHidden(true, paused));
 }
 
 TEST(VideoFullscreenBar, AutoHidesOnlyWhenNothingHoldsIt)
@@ -171,4 +201,21 @@ TEST(VideoFullscreenProgress, TheBarInTheTopRightCorner)
     EXPECT_EQ(bar.textRight, 1915);
     EXPECT_EQ(fullscreenProgressBar(1920, 160, 20, 500, 0).barRight, 1757 + 156);
     EXPECT_EQ(fullscreenProgressBar(1920, 160, 20, 2000, 2000).barRight, 1757 + 156);
+}
+
+TEST(VideoFullscreenStrip, TimecodesInHoursMinutesSecondsAndCentiseconds)
+{
+    EXPECT_EQ(fullscreenTimecode(0), "0:00:00.00");
+    EXPECT_EQ(fullscreenTimecode(214429), "0:03:34.42");
+    EXPECT_EQ(fullscreenTimecode(3600000 + 61009), "1:01:01.00");
+    EXPECT_EQ(fullscreenTimecode(-5), "0:00:00.00");
+}
+
+TEST(VideoFullscreenStrip, KeyframeTicksSpreadOverTheSeekBarOncePerPixel)
+{
+    EXPECT_EQ(fullscreenKeyframeTicks({0, 50, 100}, 101, 11), (std::vector<int>{0, 5, 10}));
+    EXPECT_EQ(fullscreenKeyframeTicks({0, 1, 2, 3, 100}, 101, 11), (std::vector<int>{0, 10}));
+    EXPECT_EQ(fullscreenKeyframeTicks({-1, 101, 40}, 101, 101), (std::vector<int>{40}));
+    EXPECT_TRUE(fullscreenKeyframeTicks({0, 5}, 1, 100).empty());
+    EXPECT_TRUE(fullscreenKeyframeTicks({0, 5}, 10, 0).empty());
 }

@@ -38,6 +38,9 @@ std::vector<std::byte> encodeInfo(const ScriptInfo &info)
     w.i32(static_cast<std::int32_t>(info.loadedFiles.size()));
     for (const auto &f : info.loadedFiles)
         w.str(f);
+    w.i32(static_cast<std::int32_t>(info.filters.size()));
+    for (const auto &f : info.filters)
+        w.str(f.name).str(f.description).i32(f.priority).u8(f.hasConfig);
     return w.take();
 }
 
@@ -65,6 +68,17 @@ std::optional<ScriptInfo> decodeInfo(const std::vector<std::byte> &payload)
         return std::nullopt;
     for (std::size_t i = 0; i < *files; ++i)
         info.loadedFiles.push_back(r.str());
+    const auto filters = count(r, payload.size());
+    if (!filters)
+        return std::nullopt;
+    for (std::size_t i = 0; i < *filters; ++i) {
+        application::ScriptFilter f;
+        f.name = r.str();
+        f.description = r.str();
+        f.priority = r.i32();
+        f.hasConfig = r.u8() != 0;
+        info.filters.push_back(std::move(f));
+    }
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return info;
@@ -322,6 +336,12 @@ std::vector<std::byte> encodeMacroResult(const application::MacroResult &result)
     }
     w.u8(result.active.has_value()).i32(result.active.value_or(0));
     w.u8(result.valid).str(result.validationError).str(result.report);
+    w.i32(static_cast<std::int32_t>(result.undoSteps.size()));
+    for (const auto &step : result.undoSteps) {
+        w.str(step.description);
+        writeLists(w, step.info, step.styles, step.dialogues);
+    }
+    w.str(result.undoDescription);
     return w.take();
 }
 
@@ -347,9 +367,57 @@ std::optional<application::MacroResult> decodeMacroResult(const std::vector<std:
     result.valid = r.u8() != 0;
     result.validationError = r.str();
     result.report = r.str();
+    const auto steps = count(r, payload.size());
+    if (!steps)
+        return std::nullopt;
+    for (std::size_t i = 0; i < *steps && r.ok(); ++i) {
+        application::MacroUndoStep step;
+        step.description = r.str();
+        if (!readLists(r, payload.size(), step.info, step.styles, step.dialogues))
+            return std::nullopt;
+        result.undoSteps.push_back(std::move(step));
+    }
+    result.undoDescription = r.str();
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return result;
+}
+
+std::vector<std::byte> encodeMacroChecks(const std::vector<application::MacroCheck> &checks)
+{
+    Writer w;
+    w.i32(static_cast<std::int32_t>(checks.size()));
+    for (const auto &c : checks)
+        w.i32(c.index).i32(static_cast<std::int32_t>(c.verdict)).str(c.help).u8(c.active.has_value()).u8(
+            c.active.value_or(false));
+    return w.take();
+}
+
+std::optional<std::vector<application::MacroCheck>> decodeMacroChecks(const std::vector<std::byte> &payload)
+{
+    using Verdict = application::MacroCheck::Verdict;
+    Reader r(payload);
+    const auto n = count(r, payload.size());
+    if (!n)
+        return std::nullopt;
+    std::vector<application::MacroCheck> checks;
+    for (std::size_t i = 0; i < *n && r.ok(); ++i) {
+        application::MacroCheck c;
+        c.index = r.i32();
+        const std::int32_t verdict = r.i32();
+        if (verdict < static_cast<std::int32_t>(Verdict::Valid) || verdict > static_cast<std::int32_t>(Verdict::TooSlow))
+            return std::nullopt;
+        c.verdict = static_cast<Verdict>(verdict);
+        c.help = r.str();
+        const bool hasActive = r.u8() != 0;
+        const bool active = r.u8() != 0;
+        if (hasActive)
+            c.active = active;
+        checks.push_back(std::move(c));
+    }
+    if (!r.ok() || !r.atEnd())
+        return std::nullopt;
+    return checks;
 }
 
 namespace {

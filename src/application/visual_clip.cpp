@@ -600,7 +600,7 @@ bool RectangleClipTool::key(const Key &event, VisualHost &host)
 
 Overlay RectangleClipTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     if (!m_showClip)
         return out;
@@ -838,7 +838,7 @@ bool VectorClipTool::key(const Key &event, VisualHost &host)
 
 Overlay VectorClipTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     m_editor.draw(out, frame(host));
     return out;

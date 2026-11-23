@@ -17,12 +17,13 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `api.version` | read | 1 | The API version: it grows by one with each release that adds to the API. |
 | `commands.list` | read | 1 | The commands of menus, toolbars and shortcuts, with their enabled state and keys. |
 | `panels.list` | read | 1 | The workspace panels and whether each is open, floating or focused. |
-| `settings.list` | read | 1 | Settings with their type, scope, default and current value. |
+| `settings.list` | read | 1 | Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>. |
 | `settings.get` | read | 1 | The current values of the settings named. |
 | `commands.run` | write | 1 | Runs an enabled command as its menu item, toolbar button or shortcut would. |
 | `panels.open` | write | 1 | Opens a panel where the layout keeps it. |
 | `panels.close` | write | 1 | Closes a panel. |
 | `panels.focus` | write | 1 | Opens a panel if needed and gives it the keyboard focus. |
+| `settings.open` | write | 1 | Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting. |
 | `settings.set` | write | 1 | Changes a setting; the value must have the setting's type. |
 | `document.apply` | write | 1 | Applies edits prepared against a revision as one undo step; a stale revision changes nothing. |
 | `selection.set` | write | 1 | Selects Lines and makes one active, as a click in the Grid would; never an undo step. |
@@ -63,6 +64,8 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `plugins.review` | read | 1 | What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files. |
 | `plugins.install` | write | 1 | Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time. |
 | `plugins.run` | write | 1 | Runs an installed plugin's command as its menu item would. |
+| `status_items.set` | write | 1 | Changes one of the caller's status bar items. Plugins only. |
+| `formats.list` | read | 1 | The subtitle formats HikariSub can open and export, built-in and from plugins. |
 | `typeset.perspective` | read | 1 | The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. |
 | `typeset.clip` | read | 1 | The Line's text with its first clip replaced by a rectangle or a vector clip. |
 | `typeset.drawing` | read | 1 | The Line's text with its first drawing replaced by a shape (\p1), placed at a position with an alignment. |
@@ -73,6 +76,7 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `project.info` | read | 1 | The Project of the window the user works in, or null. |
 | `vcs.refs` | read | 1 | The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only. |
 | `vcs.show` | read | 1 | The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only. |
+| `presence.set_text` | write | 1 | Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only. |
 | `karaoke.syllables` | read | 1 | A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms. |
 | `karaoke.split` | read | 1 | Splits Lines without \k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \k tags keep them. |
 | `karaoke.time` | read | 1 | Times a Line's existing syllables: each syllable's end in ms, in order; the \k tags are rewritten. |
@@ -87,6 +91,10 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `marks.set` | write | 1 | Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only. |
 | `marks.clear` | write | 1 | Removes the caller's Grid row marks. Plugins only. |
 | `marks.list` | read | 1 | The caller's Grid row marks on a Document. Plugins only. |
+| `problems.list` | read | 1 | The problems on a Document: the open QC notes and the problems plugins set, in Document order, then by from, those with no Line last. |
+| `problems.set` | write | 1 | Replaces the caller's problems under one set on a Document. Never saved and not an undo step; they go when the plugin stops, the Document closes, or their Line or field changes. Plugins only. |
+| `problems.clear` | write | 1 | Removes the caller's problems. Plugins only. |
+| `problems.fix` | write | 1 | Applies one of a problem's quick fixes through document.apply, as one undo step named after the problem's source and the fix; stale_revision when its Line changed since the problem was set. |
 | `programs.run` | write | 1 | Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only. |
 | `programs.start` | write | 1 | Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only. |
 | `programs.send` | write | 1 | Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only. |
@@ -108,7 +116,7 @@ The open Documents, in tab order, with the protected reference last.
 | `documents[].document` | [DocumentId](#documentid) |  |  |
 | `documents[].title` | string |  |  |
 | `documents[].path` | string or null |  |  |
-| `documents[].format` | one of `ass`, `srt`, `tmplayer`, `microdvd`, `mpl2` or `text` |  |  |
+| `documents[].format` | string |  | A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. |
 | `documents[].revision` | [Revision](#revision) |  |  |
 | `documents[].editingTarget` | boolean |  |  |
 | `documents[].reference` | boolean |  | The protected comparison reference. |
@@ -134,7 +142,7 @@ One Document's summary, Line and Style counts and its pending Line editor draft.
 | `document` | [DocumentId](#documentid) |  |  |
 | `title` | string |  |  |
 | `path` | string or null |  |  |
-| `format` | one of `ass`, `srt`, `tmplayer`, `microdvd`, `mpl2` or `text` |  |  |
+| `format` | string |  | A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. |
 | `revision` | [Revision](#revision) |  |  |
 | `editingTarget` | boolean |  |  |
 | `reference` | boolean |  | The protected comparison reference. |
@@ -347,7 +355,7 @@ The workspace panels and whether each is open, floating or focused.
 
 Read. Since version 1.
 
-Settings with their type, scope, default and current value.
+Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>.
 
 **Parameters**
 
@@ -361,10 +369,13 @@ Settings with their type, scope, default and current value.
 | --- | --- | --- | --- |
 | `settings` | array of objects | yes |  |
 | `settings[].setting` | string | yes |  |
-| `settings[].type` | one of `boolean`, `integer`, `string` or `stringList` | yes |  |
+| `settings[].type` | one of `boolean`, `integer`, `number`, `string` or `stringList` | yes |  |
 | `settings[].scope` | one of `profile`, `collections` or `workspace` | yes |  |
 | `settings[].default` | [SettingValue](#settingvalue) | yes |  |
 | `settings[].value` | [SettingValue](#settingvalue) | yes |  |
+| `settings[].title` | string |  | The name the Settings window shows, in the UI language. |
+| `settings[].source` | string |  | app, or the id of the plugin whose setting it is. |
+| `settings[].projectable` | boolean |  | Whether a Project can override it on the Project tab. |
 
 ### `settings.get`
 
@@ -468,6 +479,25 @@ Opens a panel if needed and gives it the keyboard focus.
 | `open` | boolean | yes |  |
 | `floating` | boolean | yes |  |
 | `focused` | boolean | yes |  |
+
+### `settings.open`
+
+Write. Since version 1.
+
+Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `setting` | string |  | A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>. `pattern`: `"^[A-Za-z0-9_.-]{1,200}$"`. |
+| `scope` | one of `yours` or `project` |  | The tab; yours when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `opened` | `true` | yes |  |
 
 ### `settings.set`
 
@@ -1422,6 +1452,49 @@ Runs an installed plugin's command as its menu item would.
 | --- | --- | --- | --- |
 | `ran` | `true` | yes |  |
 
+### `status_items.set`
+
+Write. Since version 1.
+
+Changes one of the caller's status bar items. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `item` | string | yes | An id from contributes.statusItems. At most 64 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `text` | string |  | Empty: icon only. At most 40 characters. |
+| `icon` | string |  | An icon role or own:<id>; empty: text only. At most 68 characters. `pattern`: `"^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$"`. |
+| `tooltip` | string |  | At most 300 characters. |
+| `tone` | one of `normal`, `warning` or `danger` |  |  |
+| `visible` | boolean |  |  |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `item` | string | yes |  |
+
+### `formats.list`
+
+Read. Since version 1.
+
+The subtitle formats HikariSub can open and export, built-in and from plugins.
+
+**Parameters**: none.
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `formats` | array of objects | yes |  |
+| `formats[].id` | string | yes | ass, srt, … or plugin:<plugin id>/<format id>. |
+| `formats[].title` | string | yes |  |
+| `formats[].extensions` | array of string | yes |  |
+| `formats[].import` | boolean | yes |  |
+| `formats[].export` | boolean | yes |  |
+| `formats[].plugin` | string |  | The plugin's id, for a plugin format. |
+
 ### `typeset.perspective`
 
 Read. Since version 1.
@@ -1691,6 +1764,20 @@ The Document's file as a git branch, tag or commit has it. Plugins whose manifes
 | `commit` | string | yes |  |
 | `path` | string | yes | The Document's path in the repository, '/'-separated. |
 | `text` | string | yes | The file at that commit, as UTF-8. |
+
+### `presence.set_text`
+
+Write. Since version 1.
+
+Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `text` | string | yes | Plain text; empty clears it. At most 64 characters. `pattern`: `"^[^\\u0000-\\u001F\\u007F]*$"`. |
+
+**Result**: none.
 
 ### `karaoke.syllables`
 
@@ -2009,6 +2096,92 @@ The caller's Grid row marks on a Document. Plugins only.
 | `marks[].colour` | [MarkColour](#markcolour) | yes |  |
 | `marks[].tooltip` | string | yes | What the mark means; shown on hover after the plugin's name and read by screen readers. 1 to 200 characters. |
 
+### `problems.list`
+
+Read. Since version 1.
+
+The problems on a Document: the open QC notes and the problems plugins set, in Document order, then by from, those with no Line last.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) |  | These Lines only. At most 20000 items. |
+| `severity` | one of `error`, `warning`, `info` or `hint` |  | This severity and worse only. |
+| `source` | string |  | One source id only. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `problems` | array of [Problem](#problem) | yes |  |
+
+### `problems.set`
+
+Write. Since version 1.
+
+Replaces the caller's problems under one set on a Document. Never saved and not an undo step; they go when the plugin stops, the Document closes, or their Line or field changes. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `revision` | [Revision](#revision) | yes | The revision the offsets were measured on; stale_revision when it moved. |
+| `set` | string |  | The plugin's own name for this group of checks; default when omitted. At most 64 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `problems` | array of [Problem](#problem) | yes | At most 20000 items. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `count` | integer | yes | At least 0. |
+
+### `problems.clear`
+
+Write. Since version 1.
+
+Removes the caller's problems. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Every Document when omitted. |
+| `set` | string |  | Every set of the caller's when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `cleared` | integer | yes | At least 0. |
+
+### `problems.fix`
+
+Write. Since version 1.
+
+Applies one of a problem's quick fixes through document.apply, as one undo step named after the problem's source and the fix; stale_revision when its Line changed since the problem was set.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `problem` | string | yes | An id from problems.list. |
+| `fix` | integer | yes | The fix's index. At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `revision` | [Revision](#revision) | yes |  |
+| `inserted` | array of [LineId](#lineid) | yes | New Lines, in edit order. |
+| `changed` | boolean | yes | False when the edits changed nothing: no undo step was added. |
+
 ### `programs.run`
 
 Write. Since version 1.
@@ -2121,6 +2294,19 @@ A Document's content changed: a commit, Undo or Redo.
 | `document` | [DocumentId](#documentid) | yes |  |
 | `revision` | [Revision](#revision) | yes |  |
 | `step` | string | yes | The History step now current. |
+
+### `problems.changed`
+
+Since version 1.
+
+The problems on a Document changed: a source set or cleared them, an edit or a deleted Line dropped some, a plugin stopped, or the open QC notes changed.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `sources` | array of string | yes | The ids of the sources whose problems changed: qc or a plugin id. |
 
 ### `program.output`
 
@@ -2433,7 +2619,7 @@ One of:
 
 ### SettingValue
 
-Type: boolean, integer, string or array of string.
+Type: boolean, integer, number, string or array of string.
 
 ### NodePort
 
@@ -2500,6 +2686,31 @@ One of:
 | `controls` | array of [DialogControl](#dialogcontrol) |  | The dialog's value-bearing controls, in order. Without a key, the answer fills the dialog of the script being run whose controls have these kinds and names; the other fields don't count. At most 256 items. |
 | `values` | object of string, number or boolean by name | yes | The answered values by control name. |
 | `button` | string |  | The pressed button's label; empty when the dialog was closed. |
+
+### Problem
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `id` | string |  | Given by problems.list; problems.set ignores it. At most 64 characters. |
+| `line` | [LineId](#lineid) |  | Absent only for a QC note that matches no Line. |
+| `time` | integer |  | A QC note's time in milliseconds; problems.set ignores it. |
+| `field` | one of `text` or `translation` |  | text when omitted. |
+| `from` | integer |  | UTF-16 offset in the field; with to, the squiggle. The whole Line when omitted. At least 0. |
+| `to` | integer |  | At least 0. |
+| `severity` | one of `error`, `warning`, `info` or `hint` | yes |  |
+| `message` | string | yes | 1 to 500 characters. |
+| `code` | string |  | The check's own name, such as a grammar rule. 1 to 64 characters. |
+| `source` | object |  | Given by problems.list. |
+| `source.kind` | one of `qc`, `plugin` or `server` | yes |  |
+| `source.id` | string | yes | qc, a plugin id, or plugin:<plugin id>/<server id>. |
+| `source.set` | string |  | The plugin's own source name from problems.set, or a QC note's section. |
+| `source.name` | string | yes | What the problems list shows. |
+| `fixes` | array of objects |  | At most 8 items. |
+| `fixes[].title` | string | yes | 1 to 100 characters. |
+| `fixes[].edits` | array of objects | yes | Replacements in this Line's field, by UTF-16 offsets in the text the problem was set against. 1 to 64 items. |
+| `fixes[].edits[].from` | integer | yes | At least 0. |
+| `fixes[].edits[].to` | integer | yes | At least 0. |
+| `fixes[].edits[].insert` | string | yes | At most 10000 characters. |
 
 ### MarkColour
 

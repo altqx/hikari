@@ -6,6 +6,7 @@
 #include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/node_graph.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/backends/karaoke_preview_runner.h"
@@ -24,7 +25,9 @@
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
 #include <QQuickView>
+#include <QScopeGuard>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <algorithm>
@@ -3268,6 +3271,32 @@ private slots:
         QVERIFY(!editor->insertPreset(-1));
         QVERIFY(!editor->insertPreset(static_cast<int>(presets.size())));
         QCOMPARE(editor->templateCount() + editor->codeCount(), 0);
+    }
+
+    void aPluginsPresetsFollowTheBuiltInOnes()
+    {
+        QTemporaryDir dir;
+        QVERIFY(QFile::copy(QStringLiteral(":/hikari/ui/karaoke-presets/01-classic-fill.ass"), dir.filePath(QStringLiteral("fill.ass"))));
+        application::setPluginContent(
+            {{}, {{"com.example.kit", u8"Kit", {}, std::filesystem::path(dir.filePath(QStringLiteral("fill.ass")).toStdU16String())}}});
+        const auto reset = qScopeGuard([] { application::setPluginContent({}); });
+        QSignalSpy refreshed(editor.get(), &TemplateEditorController::presetsChanged);
+        editor->refreshPresets();
+        QCOMPARE(refreshed.count(), 1);
+
+        const QVariantList presets = TemplateEditorController::presets();
+        QCOMPARE(presets.size(), 21);
+        const QVariantMap plugin = presets.last().toMap();
+        QCOMPARE(plugin.value(QStringLiteral("title")).toString(),
+                 presets.first().toMap().value(QStringLiteral("title")).toString() + QStringLiteral(" (Kit)"));
+        QCOMPARE(plugin.value(QStringLiteral("description")).toString(),
+                 presets.first().toMap().value(QStringLiteral("description")).toString());
+        QCOMPARE(plugin.value(QStringLiteral("plugin")).toString(), QStringLiteral("Kit"));
+        QVERIFY(!plugin.contains(QStringLiteral("file")));
+
+        openDocument(presetFixture(), true);
+        QVERIFY(editor->insertPreset(20));
+        QVERIFY(editor->templateCount() + editor->codeCount() > 0);
     }
 
     static int presetIndex(const QString &file)

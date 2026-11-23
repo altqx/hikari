@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/api/api.h"
+#include "hikari/backends/program_process.h"
 #include "hikari/plugins/manifest.h"
 
 #include <QDateTime>
@@ -12,10 +13,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-
-namespace hikari::backends {
-class ProgramProcess;
-}
 
 namespace hikari::app {
 
@@ -48,12 +45,17 @@ public:
     // A program plugin's main program, ready to start in its sandbox.
     std::expected<std::unique_ptr<backends::ProgramProcess>, api::Error> prepare(const std::string &pluginId,
                                                                                  const std::string &programId) const;
+    // How a program starts in its sandbox, for a starter of its own, such as an MCP server's.
+    std::expected<backends::ProgramProcess::Options, api::Error> options(const std::string &pluginId,
+                                                                       const std::string &programId) const;
     // Its stderr line in the Log panel, at most 20 lines a minute for each plugin.
     void logLine(const std::string &pluginId, const QString &line);
     std::size_t started(const std::string &pluginId) const;
 
 private:
     struct Running;
+    std::expected<backends::ProgramProcess::Options, api::Error> launchOptions(const std::string &pluginId,
+                                                                             const api::ProgramCall &call) const;
     std::expected<std::unique_ptr<backends::ProgramProcess>, api::Error> launch(const std::string &pluginId,
                                                                                 const api::ProgramCall &call) const;
     Running *find(const api::Caller &caller, const std::string &process);

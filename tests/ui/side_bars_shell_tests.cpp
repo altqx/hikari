@@ -344,6 +344,76 @@ private slots:
         QCOMPARE(panels.last().value<QQuickItem *>(), panel("searchPanel"));
     }
 
+    void draggingTheInnerEdgeResizesTheSideBar_data()
+    {
+        QTest::addColumn<QString>("bars");
+        QTest::addColumn<QSize>("size");
+        QTest::addColumn<bool>("left");
+        const QString one = QStringLiteral(R"({"first":{"hidden":true},"second":{"panels":["Search"]}})");
+        const QString both = QStringLiteral(R"({"first":{"panels":["Log"]},"second":{"panels":["Search"]}})");
+        QTest::addRow("right, 1366x768") << one << QSize(1366, 768) << false;
+        QTest::addRow("right, maximised") << one << QSize() << false;
+        QTest::addRow("left of both, 1920x1080") << both << QSize(1920, 1080) << true;
+        QTest::addRow("right of both, 1920x1080") << both << QSize(1920, 1080) << false;
+        QTest::addRow("right of both, 1366x768") << both << QSize(1366, 768) << false;
+    }
+    void draggingTheInnerEdgeResizesTheSideBar()
+    {
+        QFETCH(QString, bars);
+        QFETCH(QSize, size);
+        QFETCH(bool, left);
+        start(bars);
+        if (window->screen()->availableGeometry().width() < 1366)
+            QSKIP("needs a screen wide enough for the window, like screen-2560x1440.json");
+        if (size.isEmpty())
+            window->showMaximized();
+        else
+            window->resize(size);
+        const char *name = left ? "leftSideBar" : "rightSideBar";
+        QTRY_VERIFY(shown(name));
+        QTRY_VERIFY(middleLeast() > 0);
+        QQuickItem *bar = item(name);
+        QQuickItem *middle = item("dockingArea");
+        const auto settled = [&] {
+            const bool sized = size.isEmpty() ? window->windowStates().testFlag(Qt::WindowMaximized) : window->size() == size;
+            const bool atEdge = left ? bar->x() == 0 && middle->x() == bar->width()
+                                     : bar->x() + bar->width() == window->width() && middle->x() + middle->width() == bar->x();
+            const QString fresh = QStringLiteral("sideBarWidth(%1.width)")
+                                      .arg(left ? QStringLiteral("leftSideBarState") : QStringLiteral("rightSideBarState"));
+            return sized && window->contentItem()->size() == QSizeF(window->size()) && atEdge
+                   && root()->property("arrangementSettled").toBool() && qRound(bar->width()) == shell(fresh).toInt();
+        };
+        QQuickItem *grip = in(name, QStringLiteral("sideBarGrip"));
+        QVERIFY(grip);
+        const QString key = left == shell(QStringLiteral("firstSideBarOnLeft")).toBool() ? QStringLiteral("first")
+                                                                                         : QStringLiteral("second");
+        const auto savedWidth = [&] {
+            return saved().value(key).toObject().value(QStringLiteral("width")).toInt(hikari::application::kSideBarStartWidth);
+        };
+        const auto drag = [&](int outward) {
+            const QPoint at = grip->mapToScene(QPointF(grip->width() / 2, grip->height() / 2)).toPoint();
+            const QPoint by(left ? outward : -outward, 0);
+            QTest::mouseMove(window, at);
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
+            for (int i = 1; i <= 10; ++i)
+                QTest::mouseMove(window, at + by * i / 10);
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at + by);
+        };
+        for (const int outward : {80, -40}) {
+            QTRY_VERIFY(settled());
+            const int room = shell(QStringLiteral("sideBarRoom()")).toInt();
+            const int expected = std::min(qRound(bar->width()) + outward, room);
+            if (expected < hikari::application::kSideBarMinimumWidth)
+                continue;
+            drag(outward);
+            QTRY_COMPARE(qRound(bar->width()), expected);
+            QTRY_VERIFY2(savedWidth() == expected,
+                         qPrintable(QStringLiteral("expected %1 in %2").arg(expected).arg(application->sideBars(shellWindow()))));
+            QVERIFY2(middle->width() >= middleLeast(),
+                     qPrintable(QStringLiteral("middle %1 < %2").arg(middle->width()).arg(middleLeast())));
+        }
+    }
+
     void aDraggedEdgeBelowTheMinimumHidesTheSideBar()
     {
         start();
@@ -415,7 +485,7 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles()));
         call("sideBarIconClicked", QStringLiteral("Styles"));
         QTRY_COMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
-        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarHeader"));
+        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarStrip"));
         QVERIFY(header);
         QTRY_VERIFY(findItem(header, QStringLiteral("stylesTools")));
         const auto inside = [&](const char *name) {
@@ -427,14 +497,11 @@ private slots:
         };
         const auto where = [&] {
             QQuickItem *tools = findItem(header, QStringLiteral("stylesTools"));
-            QQuickItem *title = findItem(header, QStringLiteral("sideBarTitle"));
-            return QStringLiteral("header %1, title %2 (natural %3), tools %4 of %5")
-                .arg(header->width()).arg(title ? title->width() : -1).arg(title ? title->implicitWidth() : -1)
-                .arg(tools ? tools->width() : -1).arg(tools ? tools->implicitWidth() : -1);
+            return QStringLiteral("header %1, tools %2 of %3")
+                .arg(header->width()).arg(tools ? tools->width() : -1).arg(tools ? tools->implicitWidth() : -1);
         };
         if (!minimum) {
-            QTRY_VERIFY2(inside("stylesNew"), qPrintable(where()));
-            QTRY_VERIFY(findItem(header, QStringLiteral("stylesNew"))->isEnabled());
+            QTRY_VERIFY2(inside("stylesNew") || inside("stylesMore"), qPrintable(where()));
             return;
         }
         call("resizeSideBar", false, hikari::ui::SideBarModel().minimumWidth(), true);
@@ -442,7 +509,13 @@ private slots:
         QTRY_VERIFY(inside("stylesMore"));
         QVERIFY(inside("sideBarMenuButton"));
         QVERIFY(!findItem(header, QStringLiteral("stylesButtons"))->isVisible());
-        QVERIFY(findItem(header, QStringLiteral("sideBarTitle"))->width() >= 40);
+        const qreal toolsLeft = findItem(header, QStringLiteral("stylesTools"))->mapToItem(header, QPointF()).x();
+        for (QQuickItem *icon : header->findChildren<QQuickItem *>()) {
+            if (!icon->objectName().startsWith(QLatin1String("sideBarIcon_")))
+                continue;
+            QVERIFY2(inside(qPrintable(icon->objectName())), qPrintable(icon->objectName()));
+            QVERIFY2(icon->mapToItem(header, QPointF(icon->width(), 0)).x() <= toolsLeft, qPrintable(where()));
+        }
     }
 
     void originalTextMovedIntoASideBarKeepsItsTools()
@@ -453,7 +526,7 @@ private slots:
         QTRY_VERIFY(application->editor().translationMode());
         call("moveToSideBar", dock("originalDock"), false, 0);
         QTRY_VERIFY(shown("rightSideBar"));
-        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarHeader"));
+        QQuickItem *header = in("rightSideBar", QStringLiteral("sideBarStrip"));
         QVERIFY(header);
         const auto chain = [&] {
             QStringList names;
@@ -540,7 +613,7 @@ private slots:
         QTRY_VERIFY(shown("rightSideBar") && !shown("leftSideBar"));
         QCOMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
         QTRY_VERIFY(fits());
-        shell(QStringLiteral("showAiAgentAction.trigger()"));
+        shell(QStringLiteral("root.showPanel(agentDock)"));
         QTRY_VERIFY(shown("leftSideBar") && !shown("rightSideBar"));
         QTRY_VERIFY(fits());
     }

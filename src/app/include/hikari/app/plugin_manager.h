@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/api/host.h"
 #include "hikari/plugins/installer.h"
 #include "hikari/plugins/marketplace.h"
 
@@ -15,7 +16,8 @@ namespace hikari::app {
 
 // The plugin manager's permission lines, as the install question lists them.
 QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions, bool qmlPanels = false,
-                            const std::vector<plugins::Program> &programs = {});
+                            const std::vector<plugins::Program> &programs = {},
+                            const std::vector<plugins::McpServer> &mcpServers = {});
 
 class PluginManager : public QObject {
     Q_OBJECT
@@ -35,6 +37,8 @@ public:
     explicit PluginManager(Folders folders, QObject *parent = nullptr);
 
     bool available() const { return m_installer.has_value(); }
+    // plugins.json; empty without a user folder.
+    const QString &registryFile() const { return m_registryFile; }
     const plugins::OfficialAuthor &officialAuthor() const { return m_official; }
     void setOfficialAuthor(plugins::OfficialAuthor official);
     // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file" or "marketplace"),
@@ -84,6 +88,8 @@ public:
     Q_INVOKABLE QString setEnabled(const QString &id, bool enabled);
     // `json` is the value as JSON text; "" when it is kept, else why not.
     Q_INVOKABLE QString setSetting(const QString &id, const QString &setting, const QString &json);
+    // The settings of the plugins that are turned on.
+    std::vector<api::PluginSettingState> settingStates() const;
     Q_INVOKABLE bool hasData(const QString &id) const;
     // The plugin's data folder, made when missing; empty when it can't be.
     QUrl dataFolder(const QString &id) const;
@@ -109,6 +115,7 @@ private:
     plugins::OfficialAuthor m_official = plugins::OfficialAuthor::hikarisub();
     QVariantList m_rows;
     QString m_problem;
+    QString m_registryFile;
 };
 
 }

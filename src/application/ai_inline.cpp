@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstdio>
 
 namespace hikari::application::ai_inline {
@@ -154,6 +155,61 @@ std::string withBreaks(std::string_view text)
     return out;
 }
 
+std::string context(const core::LineRecord &line, const Neighbours &neighbours)
+{
+    std::string out;
+    if (!line.style.empty())
+        out += "Style: " + str(line.style) + "\n";
+    if (!line.actor.empty())
+        out += "Speaker: " + str(line.actor) + "\n";
+    out += "Time: " + clock(msOf(line.start)) + " to " + clock(msOf(line.end)) + " (" +
+           seconds(msOf(line.end) - msOf(line.start)) + " s)\n";
+    if (!neighbours.before.empty()) {
+        out += "\nLines before:\n";
+        for (const std::u8string &n : neighbours.before)
+            out += str(n) + "\n";
+    }
+    if (!neighbours.after.empty()) {
+        out += "\nLines after:\n";
+        for (const std::u8string &n : neighbours.after)
+            out += str(n) + "\n";
+    }
+    return out;
+}
+
+std::string lowered(std::string_view s)
+{
+    std::string out(s);
+    std::ranges::transform(out, out.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return out;
+}
+
+std::string withoutListMark(std::string line)
+{
+    std::size_t at = 0;
+    while (at < line.size() && std::isdigit(static_cast<unsigned char>(line[at])))
+        ++at;
+    if (at > 0 && at < line.size() && (line[at] == '.' || line[at] == ')'))
+        line.erase(0, at + 1);
+    else if (line.starts_with("- ") || line.starts_with("* "))
+        line.erase(0, 2);
+    else if (line.starts_with("\xE2\x80\xA2"))
+        line.erase(0, 3);
+    line = trimmed(line);
+    line = unwrapped(std::move(line), "\"", "\"");
+    if (line.size() >= 6)
+        line = unwrapped(std::move(line), "\xE2\x80\x9C", "\xE2\x80\x9D");
+    return trimmed(line);
+}
+
+constexpr std::string_view kSynonymsSystem =
+    "You suggest replacements for one word of a subtitle Line for HikariSub, a subtitle editor. Answer with up to 8 "
+    "replacements, best first, one per line, and nothing else: no numbers, no notes, no explanation.\n"
+    "- Each replacement must fit the sentence as it stands: the same part of speech, tense, number, case and "
+    "register, in the Line's language. A short phrase is fine when no single word fits.\n"
+    "- The Lines before and after are context only.\n"
+    "- If nothing fits, answer with nothing.";
+
 std::string task(const Ask &ask, const core::LineRecord &line, bool part)
 {
     const std::string what = part ? "the part inside <edit>" : "the Line";
@@ -280,24 +336,7 @@ Prepared prepare(const Ask &ask, const core::LineRecord &line, const Neighbours 
     out.tags = std::move(masked.tags);
     out.system = std::string(kSystem);
 
-    std::string user = "Task: " + task(ask, line, part) + "\n\n";
-    if (!line.style.empty())
-        user += "Style: " + str(line.style) + "\n";
-    if (!line.actor.empty())
-        user += "Speaker: " + str(line.actor) + "\n";
-    user += "Time: " + clock(msOf(line.start)) + " to " + clock(msOf(line.end)) + " (" +
-            seconds(msOf(line.end) - msOf(line.start)) + " s)\n";
-    if (!neighbours.before.empty()) {
-        user += "\nLines before:\n";
-        for (const std::u8string &n : neighbours.before)
-            user += str(n) + "\n";
-    }
-    if (!neighbours.after.empty()) {
-        user += "\nLines after:\n";
-        for (const std::u8string &n : neighbours.after)
-            user += str(n) + "\n";
-    }
-    user += "\nThe Line:\n<line>";
+    std::string user = "Task: " + task(ask, line, part) + "\n\n" + context(line, neighbours) + "\nThe Line:\n<line>";
     if (part)
         user += str(stripped(out.prefix)) + "<edit>" + str(masked.text) + "</edit>" + str(stripped(out.suffix));
     else
@@ -306,6 +345,43 @@ Prepared prepare(const Ask &ask, const core::LineRecord &line, const Neighbours 
     if (part)
         user += "\nAnswer with only the new text of the part inside <edit>.";
     out.user = std::move(user);
+    return out;
+}
+
+Prepared prepareSynonyms(const core::LineRecord &line, const Neighbours &neighbours,
+                         std::pair<std::size_t, std::size_t> word)
+{
+    const std::u8string_view text = line.text;
+    Prepared out;
+    out.prefix = text.substr(0, word.first);
+    out.sent = text.substr(word.first, word.second - word.first);
+    out.suffix = text.substr(word.second);
+    out.system = std::string(kSynonymsSystem);
+    out.user = "Task: suggest replacements for the word inside <word>.\n\n" + context(line, neighbours) +
+               "\nThe Line:\n<line>" + str(stripped(out.prefix)) + "<word>" + str(out.sent) + "</word>" +
+               str(stripped(out.suffix)) + "</line>\n";
+    return out;
+}
+
+std::vector<std::u8string> readSynonyms(std::string_view answer, std::u8string_view word)
+{
+    std::vector<std::u8string> out;
+    std::vector<std::string> seen{lowered(str(word))};
+    const std::string text = fenceless(trimmed(answer));
+    std::size_t from = 0;
+    while (from <= text.size() && out.size() < kMaxSynonyms) {
+        const std::size_t end = std::min(text.find('\n', from), text.size());
+        const std::string candidate = withoutListMark(text.substr(from, end - from));
+        from = end + 1;
+        if (candidate.empty() || candidate.size() > kMaxSynonymBytes ||
+            candidate.find_first_of("{}\\<>") != std::string::npos || candidate.find(str(kOpen)) != std::string::npos)
+            continue;
+        std::string key = lowered(candidate);
+        if (std::ranges::find(seen, key) != seen.end())
+            continue;
+        seen.push_back(std::move(key));
+        out.push_back(u8(candidate));
+    }
     return out;
 }
 

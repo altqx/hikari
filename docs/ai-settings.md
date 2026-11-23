@@ -6,12 +6,12 @@ The AI tab of Settings ([AI20 #649](https://github.com/altqx/hikari/issues/649))
 
 | Section | What | Saved |
 | --- | --- | --- |
-| AI features | **Turn off all AI features** (`ai.off`, off by default) | On OK or Apply, like every other setting |
+| AI features | **Turn off all AI features** (`ai.off`, on by default since [#1330](https://github.com/altqx/hikari/issues/1330)) | On OK or Apply, like every other setting |
 | Providers | Add, edit, test and delete providers | At once (see below) |
 | Models | Chat, Translator, Reviewer, Vision and Judge. Every role but Chat can be "Same as chat"; Vision lists only models that read images. Refresh models fetches every provider's catalogue again | On OK or Apply |
 | Web search | **Let AI search the web** (`ai.webSearch`, on by default), how each provider searches, and **Search service** (`ai.searchService`: None, Brave Search, Tavily, Exa or Firecrawl) with its key | The switch and the service on OK or Apply; the key once its test passes, or on Add anyway |
 | External agents | Claude Code and Codex: each found on `PATH` with its version, a badge and Update now (AI24b), and for Codex HikariSub's own ChatGPT sign-in (AI6) | At once (see below) |
-| MCP | **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`), which offers the AI component's download when it isn't installed; **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`); **Let them read your skills** (`ai.mcp.skills`, [skills](ai-skills.md#outside-hikari-ais-own-threads)); **Copy setup** and **Reset token** ([MCP server](ai-mcp.md#settings--ai)); **MCP servers** for the agent (`ai.mcp.servers`, [MCP servers](ai-mcp-clients.md#settings--ai)) | The check boxes on OK or Apply; the download, Reset token and the servers at once |
+| MCP | **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`), which offers the AI component's download when it isn't installed; **Also listen on http://127.0.0.1:<port>** (`ai.mcp.http`); **Let them read your skills** (`ai.mcp.skills`, [skills](ai-skills.md#outside-hikari-ais-own-threads)); **Copy setup** and **Reset token** ([MCP server](ai-mcp.md#settings--ai)); **MCP servers** for the agent (`ai.mcp.servers`, and `ai.mcp.pluginServers` for [plugin servers](ai-mcp-clients.md#plugin-servers); [MCP servers](ai-mcp-clients.md#settings--ai)) | The check boxes on OK or Apply; the download, Reset token and the servers at once |
 | Inline actions | Your [inline actions](ai-inline-actions.md) (`ai.inline.actions`: add, edit, move and delete), **Translate to** (`ai.inline.translateTo`, English) and **Lines of context** (`ai.inline.contextLines`, 0–5, 2) | The actions at once, like providers; the rest on OK or Apply |
 | AI components | The AI component's version, its Bun and provider libraries, the update status with Check now and Update now, What's new, the rollback notice, and **Update AI components automatically** (`ai.autoUpdate`, on by default) (AI24b) | The switch on OK or Apply; the buttons at once |
 | Privacy | **Use prompt caching** (`ai.promptCaching`, on by default), the What is sent to providers link, and a line that says whether the AI component runs in its sandbox here; "isn’t sandboxed on this system" shows in the warning colour where the sandbox can’t apply ([ADR 0029](adr/0029-the-ai-sidecar-runs-in-an-os-sandbox.md)) | On OK or Apply |
@@ -24,7 +24,12 @@ The Agent section arrives with AI7 below Models, and AI13 added MCP servers to t
 
 Checking the box folds the rest of the page away at once and lists what is kept (providers, keys, threads, the downloaded AI component) and what is hidden. OK or Apply then turns AI off without a restart: `AiFeatures` destroys its objects and stops the sidecar ([architecture](architecture.md#ai)). Unchecking it and pressing OK or Apply brings everything back. While the box is unchecked but not yet applied, the page says to press OK or Apply.
 
-With AI off, `AiSettings` lists no providers and refuses every action, and nothing reads the keychain, downloads or starts.
+With AI off, `AiSettings` lists no providers and refuses every action, and nothing reads the keychain, downloads or starts. The Agent panel stays, with only its "AI is off" card and **Turn on AI**, and Edit › Turn on AI… shows it ([Agent panel](ux/agent-panel.md#panel-states)).
+
+- **Off by default** (owner, [#1330](https://github.com/altqx/hikari/issues/1330)). A new profile starts with AI off.
+- **Profiles from before.** At start, a profile that never set `ai.off` keeps AI on when the AI component is installed (or the build runs its own) or `providers.json` lists a provider; `AiFeatures::settleOffDefault` then stores `ai.off = false`. It reads no keychain.
+- **Turning AI on**, from the box with OK or Apply or from the Agent panel's card, downloads the AI component at once when none is installed, whatever **Update AI components automatically** says. Its progress, failure and Retry show in AI components and in a strip at the top of the Agent panel.
+- **Reset page or Reset all** removes `ai.off`, so AI turns off at once. At the next start the profile is settled again, so AI comes back on if the AI component or a provider is still there.
 
 ## Providers
 
@@ -89,7 +94,8 @@ Each row names the program and the path `PATH` gives, with a badge ([#744](https
 The section sits between External agents and Privacy, and folds away with the rest of the page while AI is off. Builds with `HIKARI_AI_LOCAL_SIDECAR` don't show it.
 
 - **What it lists:** the AI component's version, "Runs on Bun 1.4.4", the provider libraries (Anthropic, OpenAI and Google Gen AI with their versions), and the status. **What's new** opens the `ai-channel` release.
-- **The status:** "Up to date · checked 12 minutes ago", "Checking…", "1.5.0 is available · 3.1 MB" with **Update now**, "Downloading 1.5.0 · 1.2 of 3.1 MB" with Cancel, or "1.5.0 is ready · starts once AI has been idle for 2 minutes". **Check now** reads the channel at once.
+- **Without a component on disk** ([#1331](https://github.com/altqx/hikari/issues/1331)): the version rows hide and the status says "Not installed" with **Install**, the same download as a first provider's. While it runs the status is "Downloading the AI component · 12.3 of 54.7 MB" with Cancel; a failed download shows why, with **Retry**. Check now and Update now show only once a component is installed.
+- **The status:** "Installed" until a check has run, then "Up to date · checked 12 minutes ago", "Checking…", "1.5.0 is available · 3.1 MB" with **Update now**, "Downloading 1.5.0 · 1.2 of 3.1 MB" with Cancel, or "1.5.0 is ready · starts once AI has been idle for 2 minutes". **Check now** reads the channel at once.
 - **When a check fails:** "Couldn't check: no connection", with when it last worked; "Couldn’t check: bad signature", which keeps the current version and installs nothing from that list; and "Newest this HikariSub runs" with "Update HikariSub to get newer AI features." when the channel has a newer component only a newer app runs.
 - **Update AI components automatically** (`ai.autoUpdate`) is on by default. With it off, the hourly check still runs and Update now downloads. A machine policy ([ADR 0031](adr/0031-the-ai-sidecar-updates-on-its-own.md)) holds it off, says "Your administrator turned automatic updates off on this computer.", and leaves Check now and Update now working.
 - **Turning it off:** clear **File › Settings › AI › AI components › Update AI components automatically**, then OK or Apply.

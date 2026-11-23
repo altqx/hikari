@@ -522,6 +522,143 @@
         "access"
       ],
       "additionalProperties": false
+    },
+    "Problem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Given by problems.list; problems.set ignores it."
+        },
+        "line": {
+          "$ref": "#/$defs/LineId",
+          "description": "Absent only for a QC note that matches no Line."
+        },
+        "time": {
+          "type": "integer",
+          "description": "A QC note's time in milliseconds; problems.set ignores it."
+        },
+        "field": {
+          "enum": [
+            "text",
+            "translation"
+          ],
+          "description": "text when omitted."
+        },
+        "from": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "UTF-16 offset in the field; with to, the squiggle. The whole Line when omitted."
+        },
+        "to": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warning",
+            "info",
+            "hint"
+          ]
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "The check's own name, such as a grammar rule."
+        },
+        "source": {
+          "type": "object",
+          "description": "Given by problems.list.",
+          "properties": {
+            "kind": {
+              "enum": [
+                "qc",
+                "plugin",
+                "server"
+              ]
+            },
+            "id": {
+              "type": "string",
+              "description": "qc, a plugin id, or plugin:<plugin id>/<server id>."
+            },
+            "set": {
+              "type": "string",
+              "description": "The plugin's own source name from problems.set, or a QC note's section."
+            },
+            "name": {
+              "type": "string",
+              "description": "What the problems list shows."
+            }
+          },
+          "required": [
+            "kind",
+            "id",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "fixes": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "edits": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "description": "Replacements in this Line's field, by UTF-16 offsets in the text the problem was set against.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "to": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "insert": {
+                      "type": "string",
+                      "maxLength": 10000
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to",
+                    "insert"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "title",
+              "edits"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "severity",
+        "message"
+      ],
+      "additionalProperties": false
     }
   },
   "operations": [
@@ -555,14 +692,8 @@
                   ]
                 },
                 "format": {
-                  "enum": [
-                    "ass",
-                    "srt",
-                    "tmplayer",
-                    "microdvd",
-                    "mpl2",
-                    "text"
-                  ]
+                  "type": "string",
+                  "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
                 },
                 "revision": {
                   "$ref": "#/$defs/Revision"
@@ -623,14 +754,8 @@
             ]
           },
           "format": {
-            "enum": [
-              "ass",
-              "srt",
-              "tmplayer",
-              "microdvd",
-              "mpl2",
-              "text"
-            ]
+            "type": "string",
+            "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
           },
           "revision": {
             "$ref": "#/$defs/Revision"
@@ -1196,6 +1321,7 @@
                   "enum": [
                     "boolean",
                     "integer",
+                    "number",
                     "string",
                     "stringList"
                   ]
@@ -2115,6 +2241,265 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "problems.list",
+      "access": "read",
+      "summary": "The problems on a Document: the open QC notes and the problems plugins set, in Document order, then by from, those with no Line last.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "maxItems": 20000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "These Lines only."
+          },
+          "severity": {
+            "enum": [
+              "error",
+              "warning",
+              "info",
+              "hint"
+            ],
+            "description": "This severity and worse only."
+          },
+          "source": {
+            "type": "string",
+            "description": "One source id only."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Problem"
+            }
+          }
+        },
+        "required": [
+          "document",
+          "revision",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "problems.set",
+      "access": "write",
+      "summary": "Replaces the caller's problems under one set on a Document. Never saved and not an undo step; they go when the plugin stops, the Document closes, or their Line or field changes. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision",
+            "description": "The revision the offsets were measured on; stale_revision when it moved."
+          },
+          "set": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64,
+            "description": "The plugin's own name for this group of checks; default when omitted."
+          },
+          "problems": {
+            "type": "array",
+            "maxItems": 20000,
+            "items": {
+              "$ref": "#/$defs/Problem"
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "problems"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "document",
+          "count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "problems.clear",
+      "access": "write",
+      "summary": "Removes the caller's problems. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Every Document when omitted."
+          },
+          "set": {
+            "type": "string",
+            "description": "Every set of the caller's when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "cleared": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "cleared"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "problems.fix",
+      "access": "write",
+      "summary": "Applies one of a problem's quick fixes through document.apply, as one undo step named after the problem's source and the fix; stale_revision when its Line changed since the problem was set.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "problem": {
+            "type": "string",
+            "description": "An id from problems.list."
+          },
+          "fix": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The fix's index."
+          }
+        },
+        "required": [
+          "problem",
+          "fix"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "inserted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "New Lines, in edit order."
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "False when the edits changed nothing: no undo step was added."
+          }
+        },
+        "required": [
+          "revision",
+          "inserted",
+          "changed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "status_items.set",
+      "access": "write",
+      "summary": "Changes one of the caller's status bar items. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64,
+            "description": "An id from contributes.statusItems."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Empty: icon only."
+          },
+          "icon": {
+            "type": "string",
+            "maxLength": 68,
+            "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$",
+            "description": "An icon role or own:<id>; empty: text only."
+          },
+          "tooltip": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "tone": {
+            "enum": [
+              "normal",
+              "warning",
+              "danger"
+            ]
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "events": [
@@ -2140,6 +2525,31 @@
           "document",
           "revision",
           "step"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "problems.changed",
+      "summary": "The problems on a Document changed: a source set or cleared them, an edit or a deleted Line dropped some, a plugin stopped, or the open QC notes changed.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ids of the sources whose problems changed: qc or a plugin id."
+          }
+        },
+        "required": [
+          "document",
+          "sources"
         ],
         "additionalProperties": false
       }

@@ -2334,3 +2334,264 @@ TEST_F(LuaHelper, ADocumentOverTheFrameLimitIsRefusedWithItsSize)
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
     EXPECT_FALSE(host->refusedSize());
 }
+
+TEST_F(LuaHelper, UndoPointsSplitTheRunIntoNamedSteps)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    auto host = load(fixture("undo_points.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    auto runNamed = [&](const char *name) -> std::optional<MacroSnapshot> {
+        run = {};
+        auto snapshot = snapshotForMacro(session);
+        if (!snapshot || !host->run(macro(*host, name), *snapshot, true) ||
+            !waitFor([&] { return run.outcome.has_value(); }))
+            return std::nullopt;
+        return *snapshot;
+    };
+    const auto steps = session.historySize();
+
+    auto snapshot = runNamed("Two steps");
+    ASSERT_TRUE(snapshot);
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(host->lastResult()->undoSteps.size(), 1u);
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Two steps"));
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"first", "second", "three", "added"}));
+    ASSERT_EQ(session.historySize(), steps + 2);
+    EXPECT_EQ(session.history()[steps].name, "Automation: First step");
+    EXPECT_EQ(session.history()[steps + 1].name, "Automation: Two steps");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"first", "two", "three", "added"}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two", "three"}));
+
+    snapshot = runNamed("Named last");
+    ASSERT_TRUE(snapshot);
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_TRUE(host->lastResult()->undoSteps.empty());
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Named last"));
+    EXPECT_EQ(session.history().back().name, "Automation: Named step");
+    ASSERT_TRUE(session.undo());
+
+    const auto before = session.historySize();
+    snapshot = runNamed("Only an undo point");
+    ASSERT_TRUE(snapshot);
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Only an undo point"));
+    EXPECT_EQ(session.historySize(), before);
+}
+
+TEST_F(LuaHelper, UndoPointsAreDroppedWithAFailedRunAndRefusedInValidation)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    auto host = load(fixture("undo_points.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Step then error"), *snapshot, true));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(QStringLiteral("broke after a step"))) << run.message.toStdString();
+
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Undo point while validating"), *snapshot, true));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.contains(
+        QStringLiteral("Attempt to set an undo point in a context where it makes no sense to do so.")))
+        << run.message.toStdString();
+}
+
+TEST_F(LuaHelper, RegisteredFiltersAreListedWithTheirPriorities)
+{
+    auto host = load(fixture("export_filters.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    using hikari::application::ScriptFilter;
+    EXPECT_TRUE(host->info().macros.empty());
+    EXPECT_EQ(host->info().filters,
+              (std::vector<ScriptFilter>{{"Shout", "Upper-cases every line", 1500, true},
+                                         {"Drop the first line", "", -10, false},
+                                         {"Undo point", "", 0, false},
+                                         {"Broken config", "", 0, true},
+                                         {"Edits while configuring", "", 0, true}}));
+}
+
+TEST_F(LuaHelper, AFilterGetsItsSettingsAndChangesTheCopy)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    auto host = load(fixture("export_filters.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+
+    run = {};
+    ASSERT_TRUE(host->filterConfig(0, *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(host->lastDialog());
+    auto settings = *host->lastDialog();
+    ASSERT_EQ(settings.controls.size(), 3u);
+    EXPECT_EQ(settings.controls[0].label, "Prefix (" + std::to_string(snapshot->info.size() + snapshot->styles.size() +
+                                                                        snapshot->dialogues.size()) +
+                                              " lines, 0 options)");
+    EXPECT_EQ(settings.controls[1].text, "> ");
+    EXPECT_TRUE(settings.controls[2].checked);
+
+    settings.controls[1].text = "* ";
+    run = {};
+    ASSERT_TRUE(host->runFilter(0, *snapshot, settings));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(host->lastResult());
+    std::vector<std::string> filtered;
+    for (const auto &d : host->lastResult()->dialogues)
+        filtered.push_back(d.text);
+    EXPECT_EQ(filtered, (std::vector<std::string>{"* ONE!", "* TWO!", "* THREE!"}));
+    EXPECT_FALSE(host->lastResult()->selected);
+
+    run = {};
+    ASSERT_TRUE(host->runFilter(1, *snapshot, {}));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(host->lastResult()->dialogues.size(), 2u);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "two");
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two", "three"}));
+}
+
+TEST_F(LuaHelper, FilterConfigWithoutAFunctionIsEmptyAndErrorsAreReported)
+{
+    auto session = macroSession();
+    auto host = load(fixture("export_filters.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    const auto finish = [&](bool sent) {
+        return sent && waitFor([&] { return run.outcome.has_value(); });
+    };
+
+    run = {};
+    ASSERT_TRUE(finish(host->filterConfig(1, *snapshot)));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_TRUE(host->lastDialog()->controls.empty());
+
+    run = {};
+    ASSERT_TRUE(finish(host->filterConfig(3, *snapshot)));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.startsWith(QStringLiteral("Runtime error in Lua config dialog function:\n")))
+        << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains(QStringLiteral("no dialog today"))) << run.message.toStdString();
+
+    run = {};
+    ASSERT_TRUE(finish(host->filterConfig(4, *snapshot)));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+
+    run = {};
+    ASSERT_TRUE(finish(host->runFilter(2, *snapshot, {})));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains(
+        QStringLiteral("Attempt to set an undo point in a context where it makes no sense to do so.")))
+        << run.message.toStdString();
+
+    EXPECT_FALSE(host->runFilter(5, *snapshot, {}));
+    EXPECT_FALSE(host->filterConfig(-1, *snapshot));
+}
+
+const hikari::application::MacroCheck *checkOf(const LuaScriptHost &host, const std::string &name)
+{
+    for (const auto &c : *host.lastChecks())
+        if (host.info().macros[static_cast<std::size_t>(c.index)].name == name)
+            return &c;
+    return nullptr;
+}
+
+TEST_F(LuaHelper, ACheckAnswersEachMacrosValidationAndIsActiveWithinItsBudget)
+{
+    using namespace hikari::application;
+    using Verdict = MacroCheck::Verdict;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1}, l2{2};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("checks.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_TRUE(host->info().macros[static_cast<std::size_t>(macro(*host, "Toggle"))].hasIsActive);
+    const auto before = texts(session);
+    auto check = [&] {
+        const auto snapshot = macroSnapshotOf(session.document(), session.selection());
+        return host->check(snapshot, std::chrono::milliseconds(300)) &&
+               waitFor([&] { return !host->checking(); });
+    };
+
+    QElapsedTimer timer;
+    timer.start();
+    ASSERT_TRUE(check());
+    EXPECT_LT(timer.elapsed(), 5'000) << "the endless validation stops at its budget";
+    EXPECT_EQ(host->state(), LuaScriptHost::State::Ready);
+    ASSERT_TRUE(host->lastChecks());
+    EXPECT_EQ(host->lastChecks()->size(), 6u) << "Plain has neither function";
+    EXPECT_FALSE(checkOf(*host, "Plain"));
+
+    const auto *oneLine = checkOf(*host, "One line");
+    ASSERT_TRUE(oneLine);
+    EXPECT_EQ(oneLine->verdict, Verdict::Valid);
+    EXPECT_EQ(oneLine->help, "Select one line");
+    EXPECT_FALSE(oneLine->active);
+    EXPECT_EQ(checkOf(*host, "Toggle")->verdict, Verdict::Valid);
+    EXPECT_EQ(checkOf(*host, "Toggle")->active, std::optional<bool>(true));
+    EXPECT_EQ(checkOf(*host, "Forever")->verdict, Verdict::TooSlow);
+    const auto *raises = checkOf(*host, "Raises");
+    EXPECT_EQ(raises->verdict, Verdict::Failed);
+    EXPECT_NE(raises->help.find("validation broke"), std::string::npos) << raises->help;
+    EXPECT_FALSE(raises->active) << "an isactive that raises shows no mark";
+    const auto *dialog = checkOf(*host, "Shows a dialog");
+    EXPECT_EQ(dialog->verdict, Verdict::Failed);
+    EXPECT_NE(dialog->help.find("can't be shown while the menu checks"), std::string::npos) << dialog->help;
+    EXPECT_EQ(checkOf(*host, "Edits")->verdict, Verdict::Valid);
+    EXPECT_EQ(texts(session), before) << "a check's edits are dropped";
+
+    session.setSelection(Selection{l1, {l1, l2}});
+    ASSERT_TRUE(check());
+    EXPECT_EQ(checkOf(*host, "One line")->verdict, Verdict::Invalid);
+    EXPECT_EQ(checkOf(*host, "One line")->help, "Select one line");
+    session.setSelection(Selection{l1, {l2}});
+    ASSERT_TRUE(check());
+    EXPECT_EQ(checkOf(*host, "Toggle")->active, std::optional<bool>(false));
+
+    run = {};
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot && host->run(macro(*host, "Plain"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(host->lastResult()->dialogues[1].text, "plain ran");
+}
+
+TEST_F(LuaHelper, ARunSentDuringACheckStopsTheCheckAndRuns)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("checks.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    int finishedChecks = 0;
+    QObject::connect(host.get(), &LuaScriptHost::checkFinished, [&] { ++finishedChecks; });
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    ASSERT_TRUE(host->check(*snapshot, std::chrono::milliseconds(60'000)));
+    EXPECT_TRUE(host->checking());
+    EXPECT_FALSE(host->check(*snapshot, std::chrono::milliseconds(60'000))) << "one check at a time";
+
+    QElapsedTimer timer;
+    timer.start();
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Plain"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }, 20'000));
+    EXPECT_LT(timer.elapsed(), 10'000);
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(finishedChecks, 1);
+    EXPECT_FALSE(host->checking());
+    EXPECT_FALSE(host->lastChecks()) << "a stopped check has no answers";
+}

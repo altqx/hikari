@@ -248,13 +248,14 @@ private slots:
         for (const application::SettingDefinition &definition : application::settingDefinitions())
             if (definition.id.starts_with("appearance."))
                 QVERIFY2(byKey.contains(qs(definition.id)), definition.id.data());
-        QCOMPARE(byKey.value(QStringLiteral("appearance.lightAccent")).value(QStringLiteral("label")).toString(),
-                 QStringLiteral("Accent (Light)"));
-        QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("label")).toString(),
-                 QStringLiteral("Border colour (High contrast black)"));
-        QCOMPARE(byKey.value(QStringLiteral("appearance.highContrastBlack.border")).value(QStringLiteral("section")).toString(),
+        QCOMPARE(byKey.value(QStringLiteral("appearance.accents")).value(QStringLiteral("label")).toString(),
+                 QStringLiteral("Accent"));
+        QVERIFY(!byKey.value(QStringLiteral("appearance.accents")).value(QStringLiteral("values")).toArray().isEmpty());
+        QCOMPARE(byKey.value(QStringLiteral("appearance.colours")).value(QStringLiteral("section")).toString(),
                  QStringLiteral("UI colours"));
-        QVERIFY(!byKey.value(QStringLiteral("appearance.darkAccent")).value(QStringLiteral("values")).toArray().isEmpty());
+        const QJsonArray darkPair = byKey.value(QStringLiteral("appearance.darkTheme")).value(QStringLiteral("values")).toArray();
+        QCOMPARE(darkPair.size(), 1);
+        QCOMPARE(darkPair.first().toObject().value(QStringLiteral("value")).toString(), QStringLiteral("dark"));
         const QJsonObject player = byKey.value(QStringLiteral("video.playbackPlayer"));
         QCOMPARE(player.value(QStringLiteral("platform")).toString(), QStringLiteral("windows"));
         QCOMPARE(player.value(QStringLiteral("page")).toString(), QStringLiteral("video"));

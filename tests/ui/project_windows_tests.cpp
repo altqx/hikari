@@ -673,7 +673,7 @@ private slots:
         const QString exported = show + QStringLiteral("/done.ass");
         application->settingsStore()->setValue(
             QStringLiteral("export.choices"),
-            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"mdvd\",\"fps\":25}"),
+            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"microdvd\",\"fps\":25}"),
                         QStringLiteral("\t{\"format\":\"sbv\",\"lines\":\"selected\"}")});
         const auto setup = [&] { return application->exportSetup(); };
         const auto format = [&] { return setup().value(QStringLiteral("format")).toString(); };
@@ -697,9 +697,120 @@ private slots:
             if (tabs[i].toMap().value(QStringLiteral("title")).toString().contains(QStringLiteral("done.ass")))
                 application->selectTab(i);
         QTRY_COMPARE(setup().value(QStringLiteral("name")).toString(), QStringLiteral("done"));
-        QCOMPARE(format(), QStringLiteral("mdvd"));
+        QCOMPARE(format(), QStringLiteral("microdvd"));
         QCOMPARE(option("fps").toDouble(), 25.0);
-        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("mdvd"));
+        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("microdvd"));
+    }
+
+    void beta4ExportChoicesKeepTheirFormat_data()
+    {
+        QTest::addColumn<QString>("old");
+        QTest::addColumn<QString>("current");
+        QTest::newRow("txt") << QStringLiteral("txt") << QStringLiteral("text");
+        QTest::newRow("mdvd") << QStringLiteral("mdvd") << QStringLiteral("microdvd");
+        QTest::newRow("tmp") << QStringLiteral("tmp") << QStringLiteral("tmplayer");
+    }
+
+    void beta4ExportChoicesKeepTheirFormat()
+    {
+        QFETCH(QString, old);
+        QFETCH(QString, current);
+        start();
+        const QString plain = folder("plain");
+        const QString episode = QFileInfo(writeAss(plain + QStringLiteral("/ep01.ass"), "one")).absoluteFilePath();
+        const QString other = QFileInfo(plain + QStringLiteral("/ep02.ass")).absoluteFilePath();
+        const QString row = QStringLiteral("\t{\"format\":\"%1\",\"fps\":25}").arg(old);
+        application->settingsStore()->setValue(QStringLiteral("export.choices"), QStringList{episode + row, other + row, row});
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(episode));
+        const QVariantMap setup = application->exportSetup();
+        QCOMPARE(setup.value(QStringLiteral("format")).toString(), current);
+
+        const QString out = plain + QStringLiteral("/ep01.") + setup.value(QStringLiteral("extensions")).toMap().value(current).toString();
+        const QVariantMap result =
+            application->exportTo(QUrl::fromLocalFile(out), current, setup.value(QStringLiteral("options")).toMap());
+        QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(result.value(QStringLiteral("problem")).toString()));
+        const QStringList saved = application->settingsStore()->list("export.choices");
+        QCOMPARE(saved.size(), 3);
+        for (const QString &entry : saved) {
+            QVERIFY2(entry.contains(QStringLiteral("\"format\":\"%1\"").arg(current)), qPrintable(entry));
+            QVERIFY2(!entry.contains(QStringLiteral("\"format\":\"%1\"").arg(old)), qPrintable(entry));
+        }
+    }
+
+    void beforeExportStepsChangeOnlyTheCopyAndTheNextSaveNamesThem()
+    {
+        start();
+        const QString plain = folder("plain");
+        const QString episode = QFileInfo(writeAss(plain + QStringLiteral("/ep01.ass"), "hi")).absoluteFilePath();
+        QVERIFY(application->openFile(episode));
+        const QVariantMap lists = application->exportSteps();
+        QVERIFY(lists.value(QStringLiteral("fromFile")).toList().isEmpty());
+        QVariantList steps = lists.value(QStringLiteral("newList")).toList();
+        for (QVariant &step : steps) {
+            QVariantMap m = step.toMap();
+            QVERIFY(!m.value(QStringLiteral("on")).toBool());
+            if (m.value(QStringLiteral("id")) == QStringLiteral("transform-frame-rate")) {
+                QVariantMap settings = m.value(QStringLiteral("settings")).toMap();
+                settings.insert(QStringLiteral("input"), 25);
+                settings.insert(QStringLiteral("output"), QStringLiteral("constant"));
+                settings.insert(QStringLiteral("outputFps"), 50);
+                m.insert(QStringLiteral("settings"), settings);
+                m.insert(QStringLiteral("on"), true);
+            }
+            step = m;
+        }
+        QVariantMap options = application->exportSetup().value(QStringLiteral("options")).toMap();
+        options.insert(QStringLiteral("steps"), steps);
+        const QString out = plain + QStringLiteral("/ep01.srt");
+        QVariantMap result = application->exportTo(QUrl::fromLocalFile(out), QStringLiteral("srt"), options);
+        QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(result.value(QStringLiteral("problem")).toString()));
+        const QVariantMap ran = result.value(QStringLiteral("steps")).toList().value(0).toMap();
+        QCOMPARE(ran.value(QStringLiteral("id")).toString(), QStringLiteral("transform-frame-rate"));
+        QCOMPARE(ran.value(QStringLiteral("state")).toString(), QStringLiteral("done"));
+        QVERIFY2(!readAll(out).contains("00:00:01,000"), readAll(out).constData());
+
+        options.remove(QStringLiteral("steps"));
+        options.insert(QStringLiteral("replace"), true);
+        QVERIFY(application->exportTo(QUrl::fromLocalFile(out), QStringLiteral("srt"), options).value(QStringLiteral("ok")).toBool());
+        QVERIFY2(readAll(out).contains("00:00:00,000 --> 00:00:01,000"), readAll(out).constData());
+
+        const QVariantList fromFile = application->exportSteps().value(QStringLiteral("fromFile")).toList();
+        QCOMPARE(fromFile.size(), 1);
+        QCOMPARE(fromFile.value(0).toMap().value(QStringLiteral("id")).toString(), QStringLiteral("transform-frame-rate"));
+        QVERIFY(application->saveDocument(application->workspace().editingTarget()->value));
+        application->waitForWrites();
+        QVERIFY2(readAll(episode).contains("Export Filters: Transform Framerate"), readAll(episode).constData());
+        QVERIFY(readAll(episode).contains("0:00:00.00,0:00:01.00"));
+    }
+
+    void aFailingBeforeExportStepWritesNothing()
+    {
+        start();
+        const QString plain = folder("plain");
+        const QString episode = QFileInfo(writeAss(plain + QStringLiteral("/ep01.ass"), "hi")).absoluteFilePath();
+        QVERIFY(application->openFile(episode));
+        QVariantMap options = application->exportSetup().value(QStringLiteral("options")).toMap();
+        options.insert(QStringLiteral("steps"),
+                       QVariantList{QVariantMap{{QStringLiteral("id"), QStringLiteral("fix-styles")}, {QStringLiteral("on"), true}},
+                                    QVariantMap{{QStringLiteral("id"), QStringLiteral("transform-frame-rate")},
+                                                {QStringLiteral("on"), true},
+                                                {QStringLiteral("settings"),
+                                                 QVariantMap{{QStringLiteral("input"), 25},
+                                                             {QStringLiteral("output"), QStringLiteral("constant")},
+                                                             {QStringLiteral("outputFps"), 0}}}},
+                                    QVariantMap{{QStringLiteral("id"), QStringLiteral("remove-tags")}, {QStringLiteral("on"), true}}});
+        const QString out = plain + QStringLiteral("/ep01.srt");
+        const QVariantMap result = application->exportTo(QUrl::fromLocalFile(out), QStringLiteral("srt"), options);
+        QVERIFY(!result.value(QStringLiteral("ok")).toBool());
+        QVERIFY(result.value(QStringLiteral("stepsFailed")).toBool());
+        QStringList states;
+        for (const QVariant &step : result.value(QStringLiteral("steps")).toList())
+            states << step.toMap().value(QStringLiteral("state")).toString() + u'/' +
+                          step.toMap().value(QStringLiteral("problem")).toString();
+        QCOMPARE(states, (QStringList{QStringLiteral("done/"), QStringLiteral("failed/badFrameRate"), QStringLiteral("notRun/")}));
+        QVERIFY(!QFile::exists(out));
+        QVERIFY(application->exportSteps().value(QStringLiteral("fromFile")).toList().isEmpty());
     }
 
     void theProjectsTargetLanguageIsInlineTranslatesDefault()
@@ -829,25 +940,31 @@ private slots:
             QQuickItem *found = item(content, QLatin1String(name));
             return found && found->isVisible();
         };
-        const auto text = [&](const char *name) { return item(content, QLatin1String(name))->property("text").toString(); };
+        const auto elsewhere = [&](const char *setting) {
+            QVariant found;
+            QMetaObject::invokeMethod(settings, "elsewhere", Q_RETURN_ARG(QVariant, found),
+                                      Q_ARG(QVariant, QString::fromLatin1(setting)));
+            return found.toMap().value(QStringLiteral("text")).toString();
+        };
+        const auto projectPut = [&](const char *setting, const QVariant &value) {
+            return QMetaObject::invokeMethod(settings, "projectPut", Q_ARG(QVariant, QString::fromLatin1(setting)),
+                                             Q_ARG(QVariant, value));
+        };
         QVERIFY(shown("settingsScope"));
-        QTRY_VERIFY(shown("overridden_editor.spellchecker"));
-        QVERIFY(shown("overridden_grammar.language"));
-        QVERIFY(!shown("overridden_editor.dictionaryLanguage"));
+        QTRY_COMPARE(elsewhere("editor.spellchecker"), QStringLiteral("Set in this project"));
+        QCOMPARE(elsewhere("grammar.language"), QStringLiteral("Set in this project"));
+        QVERIFY(elsewhere("editor.dictionaryLanguage").isEmpty());
 
         settings->setProperty("projectTab", true);
         QTRY_VERIFY(shown("projectSettings"));
-        QCOMPARE(text("projectState_editor.spellchecker"), QStringLiteral("Set in this project"));
-        QCOMPARE(text("projectState_grammar.language"), QStringLiteral("Set in project.local.toml"));
+        QCOMPARE(elsewhere("editor.spellchecker"), QStringLiteral("Set in this project"));
+        QCOMPARE(elsewhere("grammar.language"), QStringLiteral("Set in project.local.toml"));
         QVERIFY(!item(content, QStringLiteral("project_grammar.language"))->isEnabled());
-        QCOMPARE(text("projectState_scriptProperties.title"), QStringLiteral("Uses yours"));
-        QQuickItem *pages = item(content, QStringLiteral("projectSettings"));
-        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("scriptProperties.title")),
-                                          Q_ARG(QVariant, QStringLiteral("Show"))));
-        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("scriptProperties.titleOn")),
-                                          Q_ARG(QVariant, true)));
-        QVERIFY(QMetaObject::invokeMethod(pages, "useYours", Q_ARG(QVariant, QStringLiteral("editor.spellchecker"))));
-        QVERIFY(QMetaObject::invokeMethod(settings, "apply"));
+        QCOMPARE(elsewhere("scriptProperties.title"), QStringLiteral("Uses yours"));
+        QVERIFY(projectPut("scriptProperties.title", QStringLiteral("Show")));
+        QVERIFY(projectPut("scriptProperties.titleOn", true));
+        QVERIFY(QMetaObject::invokeMethod(settings, "resetSetting",
+                                          Q_ARG(QVariant, QStringList{QStringLiteral("editor.spellchecker")})));
 
         QByteArray shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
         QVERIFY2(shared.contains("# Shared by the team."), shared);
@@ -859,17 +976,16 @@ private slots:
         QVERIFY(overrides.contains(QStringLiteral("scriptProperties.title")));
         QVERIFY(overrides.contains(QStringLiteral("grammar.language")));
         QVERIFY(!overrides.contains(QStringLiteral("editor.spellchecker")));
-        QCOMPARE(text("projectState_scriptProperties.title"), QStringLiteral("Set in this project"));
+        QCOMPARE(elsewhere("scriptProperties.title"), QStringLiteral("Set in this project"));
         QVERIFY(QMetaObject::invokeMethod(shell(w), "openSettings", Q_ARG(QVariant, QStringLiteral("subtitleProperties")),
                                           Q_ARG(QVariant, QVariant())));
-        QTRY_VERIFY(shown("overridden_scriptProperties.title"));
-        QVERIFY(!shown("overridden_scriptProperties.script"));
-        QVERIFY(!shown("overridden_scriptProperties.askForChange"));
+        settings->setProperty("projectTab", false);
+        QTRY_COMPARE(elsewhere("scriptProperties.title"), QStringLiteral("Set in this project"));
+        QVERIFY(elsewhere("scriptProperties.script").isEmpty());
+        QVERIFY(elsewhere("scriptProperties.askForChange").isEmpty());
         settings->setProperty("projectTab", true);
 
-        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("editor.spellchecker")),
-                                          Q_ARG(QVariant, false)));
-        QVERIFY(QMetaObject::invokeMethod(settings, "apply"));
+        QVERIFY(projectPut("editor.spellchecker", false));
         shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
         QVERIFY2(shared.contains("spellchecker = false"), shared);
         QVERIFY(application->settingsStore()->value(QStringLiteral("editor.spellchecker")).toBool());
@@ -1184,7 +1300,7 @@ private slots:
         auto *mine = popover->findChild<QObject *>(QStringLiteral("newCatalogSaveMine"));
         QVERIFY(mine);
         QVERIFY(QMetaObject::invokeMethod(mine, "triggered"));
-        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
         QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("styleCatalogs\tmine")));
         item(popoverContent, QStringLiteral("newCatalogName"))->setProperty("text", QStringLiteral("Personal"));
         QVERIFY(QMetaObject::invokeMethod(create, "click"));
@@ -1195,7 +1311,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
         QTRY_VERIFY(popover->property("opened").toBool());
-        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
     }
 
     void fontCatalogsAndLayoutsHaveAProjectTier()
@@ -1390,7 +1506,7 @@ private slots:
 
         QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late"), QStringLiteral("mine")));
         QCOMPARE(shift.settings().timeMs, 100);
-        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Mine"));
+        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Yours"));
         QTRY_VERIFY(!named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
         QVERIFY(!named(shell(w), "shiftDeletePreset")->property("enabled").toBool());
         QCOMPARE(named(shell(w), "shiftCopyPresetToTier")->property("text").toString(), QStringLiteral("Copy to project"));
@@ -1424,7 +1540,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(popover, "openFor", Q_ARG(QVariant, QString())));
         QTRY_VERIFY(popover->property("opened").toBool());
         QVERIFY(QMetaObject::invokeMethod(popover->findChild<QObject *>(QStringLiteral("shiftPresetSaveTierMine")), "triggered"));
-        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to yours"));
         QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("shiftPresets\tmine")));
         QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
     }

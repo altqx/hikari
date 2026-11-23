@@ -87,7 +87,7 @@ FocusScope {
         }
         panel.agent.setMode(m)
     }
-    function modelItemName(value) { return "agentModel_" + value.replace("\t", "/") }
+    readonly property string currentModel: hasThread ? (thread.model ?? "") : agent.defaultModel
     function chooseModel(value) {
         if (!hasThread)
             agent.newThread()
@@ -410,6 +410,32 @@ FocusScope {
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
 
         RowLayout {
+            id: componentStrip
+            objectName: "agentComponentStrip"
+            readonly property bool failed: (panel.download.error ?? "").length > 0 && panel.download.needed === true
+            visible: panel.download.active === true || failed
+            Layout.fillWidth: true
+            Layout.margins: 8
+            spacing: 6
+            Icon { iconRole: componentStrip.failed ? "notice-error" : "notice-info"; size: 14 }
+            Label {
+                objectName: "agentComponentStripText"
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: componentStrip.failed ? qsTr("The AI component didn’t download. Check your connection and try again.")
+                      : qsTr("Getting the AI component: %1 of %2 MB").arg(Math.round((panel.download.received || 0) / 1000000),
+                                                                           Math.round((panel.download.size || 0) / 1000000))
+            }
+            Button {
+                objectName: "agentComponentRetry"
+                visible: componentStrip.failed && !!panel.aiSettings
+                text: qsTr("Retry")
+                onClicked: panel.aiSettings.installComponent()
+            }
+        }
+
+        RowLayout {
             objectName: "agentChildBanner"
             visible: panel.agent.ready && panel.isChild && !panel.showingThreads
             Layout.fillWidth: true
@@ -457,7 +483,7 @@ FocusScope {
                 onClicked: panel.settingsRequested()
             }
             Label {
-                text: qsTr("Nothing is sent or downloaded until you add one.")
+                text: qsTr("Nothing is sent until you add one.")
                 color: Theme.muted
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -930,7 +956,7 @@ FocusScope {
                         Accessible.description: modelText
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Model")
-                        onClicked: modelMenu.openAbove(this)
+                        onClicked: modelPicker.openFor(this)
                     }
                     ChooserButton {
                         id: modeButton
@@ -1117,63 +1143,32 @@ FocusScope {
         }
     }
 
-    PanelMenu {
-        id: modelMenu
-        objectName: "agentModelMenu"
-        Instantiator {
-            model: panel.agent.agents
-            delegate: ShellMenu {
-                id: agentModelMenu
-                required property var modelData
-                readonly property var listed: panel.agent.agentModelsRevision >= 0 ? panel.agent.agentModels(modelData.agent) : ({})
-                objectName: "agentModelMenu_" + modelData.agent
-                iconRole: "ai-assistant"
-                title: modelData.text
-                onAboutToShow: panel.agent.loadAgentModels(modelData.agent)
-                MenuRadioItem {
-                    objectName: panel.modelItemName(agentModelMenu.modelData.value)
-                    text: qsTr("Agent default")
-                    checked: panel.hasThread && panel.thread.model === agentModelMenu.modelData.value
-                    onTriggered: panel.chooseModel(agentModelMenu.modelData.value)
-                }
-                Repeater {
-                    model: agentModelMenu.listed.models ?? []
-                    delegate: MenuRadioItem {
-                        required property var modelData
-                        objectName: panel.modelItemName(modelData.value)
-                        text: modelData.text
-                        checked: panel.hasThread && panel.thread.model === modelData.value
-                        onTriggered: panel.chooseModel(modelData.value)
-                    }
-                }
-                ShellMenuItem {
-                    objectName: "agentModelsLoading_" + agentModelMenu.modelData.agent
-                    text: qsTr("Loading models…")
-                    enabled: false
-                    visible: agentModelMenu.listed.loading === true
-                    height: visible ? implicitHeight : 0
-                }
-            }
-            onObjectAdded: (index, object) => modelMenu.insertMenu(index, object)
-            onObjectRemoved: (index, object) => modelMenu.removeMenu(object)
+    ModelPicker {
+        id: modelPicker
+        objectName: "agentModelPicker"
+        within: panel
+        busy: panel.agent.agentModelsLoading
+        itemsFor: filter => panel.agent.pickerItems(panel.currentModel, filter)
+        function openFor(control) {
+            for (const a of panel.agent.agents)
+                panel.agent.loadAgentModels(a.agent)
+            openAt(control)
         }
-        Repeater {
-            model: panel.agent.models.filter(m => !m.agent)
-            delegate: MenuRadioItem {
-                required property var modelData
-                objectName: panel.modelItemName(modelData.value)
-                text: modelData.text
-                detailText: modelData.provider
-                checked: panel.hasThread && panel.thread.model === modelData.value
-                onTriggered: panel.chooseModel(modelData.value)
-            }
+        onChosen: value => {
+            panel.chooseModel(value)
+            composer.forceActiveFocus()
         }
-        MenuSeparator {}
-        ShellMenuItem {
-            iconRole: "settings"
-            objectName: "agentModelSettings"
-            text: qsTr("Settings › AI")
-            onTriggered: panel.settingsRequested()
+        onActionRequested: (action, key) => {
+            if (action === "retry")
+                panel.agent.retryAgentModels(key)
+            else
+                panel.settingsRequested()
+        }
+        Connections {
+            target: panel.agent
+            function onModelsChanged() { modelPicker.refresh() }
+            function onAgentModelsChanged() { modelPicker.refresh() }
+            function onThreadChanged() { modelPicker.refresh() }
         }
     }
 
@@ -1820,7 +1815,7 @@ FocusScope {
              : qsTr("Allow this action?")
     }
     function settingTitle(item) {
-        const name = SettingLabels.of(item.setting ?? "")
+        const name = SettingsCatalogue.label(item.setting ?? "")
         if (name.length === 0)
             return qsTr("Change a setting")
         return item.value === "true" ? qsTr("Turn on “%1”").arg(name)
@@ -1874,7 +1869,7 @@ FocusScope {
             }
             Label {
                 objectName: "agentAskSetting"
-                visible: ask.item.area === "setting" && SettingLabels.of(ask.item.setting ?? "").length === 0
+                visible: ask.item.area === "setting" && SettingsCatalogue.label(ask.item.setting ?? "").length === 0
                 Layout.fillWidth: true
                 wrapMode: Text.WrapAnywhere
                 textFormat: Text.PlainText

@@ -14,6 +14,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLockFile>
+#include <QSaveFile>
 #include <QSettings>
 #include <QSignalSpy>
 #include <QTemporaryDir>
@@ -131,7 +132,8 @@ private slots:
         const toml::table settings = tomlOf(file);
         QCOMPARE(settings["grid"]["hideColumns"].value_or(std::int64_t{0}),
                  std::get<std::int64_t>(sampleFor(*application::findSetting("grid.hideColumns"))));
-        QVERIFY(settings["appearance"]["highContrastBlack"]["accent"].is_string());
+        QVERIFY(settings["appearance"]["colours"].is_array());
+        QVERIFY(settings["appearance"]["darkTheme"].is_string());
         QVERIFY(settings["toolbar"]["actions"].is_array());
         QVERIFY(settings["editor"]["tagButton"].is_array());
         QVERIFY(!settings["program"]["theme"]);
@@ -627,7 +629,7 @@ private slots:
         }
         {
             SettingsStore store(file);
-            QCOMPARE(store.text("appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
+            QCOMPARE(store.list("appearance.colours"), QStringList{QStringLiteral("highContrastBlack/accent=#00FF00")});
             QVERIFY(store.boolean("audio.spectrumOn"));
             QCOMPARE(store.integer("workspace.audioBoxHeight"), 230);
         }
@@ -655,6 +657,24 @@ private slots:
         writeAll(file, "version = 1\n\n[automation]\ntrustedFolders = [\"/old\"]\n\n[trust]\nfolders = [\"/new\"]\n");
         SettingsStore store(file);
         QCOMPARE(store.list("trust.folders"), QStringList{QStringLiteral("/new")});
+    }
+
+    void oldAccentAndColourSettingsFoldIntoTheThemeLists()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        writeAll(file, "version = 1\n\n[appearance]\ntheme = \"light\"\nlightAccent = \"blue\"\ndarkAccent = \"purple\"\n"
+                       "accents = [\"dark=red\"]\n\n[appearance.highContrastWhite]\nborder = \"#123456\"\n");
+        {
+            SettingsStore store(file);
+            QCOMPARE(store.list("appearance.accents"), (QStringList{QStringLiteral("dark=red"), QStringLiteral("light=blue")}));
+            QCOMPARE(store.list("appearance.colours"), QStringList{QStringLiteral("highContrastWhite/line=#123456")});
+            QCOMPARE(store.text("appearance.theme"), QStringLiteral("light"));
+        }
+        const QByteArray text = readAll(file);
+        QVERIFY(!text.contains("lightAccent"));
+        QVERIFY(!text.contains("darkAccent"));
+        QVERIFY(!text.contains("border"));
     }
 
     void anInisTrustedScriptFoldersBecomeTrustedFolders()
@@ -795,6 +815,40 @@ private slots:
         other->remove(*application::findSetting("audio.volume"));
         other->flush();
         QCOMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ndelay = 5\n"));
+    }
+
+    void handEditsShowWhileItRuns()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("settings.toml"));
+        SettingsStore store(file);
+        store.set("audio.volume", 70);
+        store.sync();
+        QSignalSpy changed(&store, &SettingsStore::changed);
+
+        writeAll(file, "version = 1\n\n[audio]\nvolume = 40\n");
+        QTRY_COMPARE(store.integer("audio.volume"), 40);
+        QVERIFY(changed.contains(QVariantList{QStringLiteral("audio.volume")}));
+
+        writeAll(file, "version = 1\n[audio\n");
+        QTRY_VERIFY(!store.fileProblem().isEmpty());
+        QCOMPARE(store.integer("audio.volume"), 40);
+        store.set("audio.delay", 5);
+        store.sync();
+        QCOMPARE(readAll(file), QByteArray("version = 1\n[audio\n"));
+
+        QSaveFile replaced(file);
+        QVERIFY(replaced.open(QIODevice::WriteOnly));
+        replaced.write("version = 1\n\n[audio]\nvolume = 30\n");
+        QVERIFY(replaced.commit());
+        QTRY_VERIFY(store.fileProblem().isEmpty());
+        QCOMPARE(store.integer("audio.volume"), 30);
+        QCOMPARE(store.integer("audio.delay"), 5);
+        store.sync();
+        QTRY_COMPARE(readAll(file), QByteArray("version = 1\n\n[audio]\ndelay = 5\nvolume = 30\n"));
+
+        writeAll(file, "version = 1\n\n[audio]\nvolume = 20\n");
+        QTRY_COMPARE(store.integer("audio.volume"), 20);
     }
 
     void aHikariIniThatCannotBeReadIsNotConverted()

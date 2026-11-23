@@ -12,9 +12,9 @@ export const kGroups = {
         "furigana; the karaoke check; the templater's preview and apply; the user's own forced aligner.",
     automation: "Automation macros and AI-written Lua.",
     effects: "The node-effect editor's node types and graphs.",
-    plugins: "Plugins: the installed ones, their manifests and commands; scaffolding a new one from the guide's " +
-        "template and installing it once the user approves.",
-    app: "Workspace panels and settings.",
+    plugins: "Plugins: the installed ones, their manifests, commands and subtitle formats; scaffolding a new one " +
+        "from the guide's template and installing it once the user approves.",
+    app: "Workspace panels and settings, and the Problems list with its quick fixes.",
 } as const;
 export type Group = keyof typeof kGroups;
 
@@ -118,6 +118,7 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "effects.save": { group: "effects" },
     "effects.apply": { group: "effects" },
     "plugins.list": { group: "plugins" },
+    "formats.list": { group: "plugins" },
     "plugins.manifest": { group: "plugins" },
     "plugins.scaffold": {
         group: "plugins",
@@ -132,6 +133,8 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
             "every install asks, in every mode. A declined install answers what the user said.",
     },
     "plugins.run": { group: "plugins" },
+    "problems.list": { group: "app" },
+    "problems.fix": { group: "app" },
     "panels.list": { group: "app" },
     "panels.open": { group: "app" },
     "panels.close": { group: "app" },
@@ -139,6 +142,7 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
     "settings.list": { group: "app" },
     "settings.get": { group: "app" },
     "settings.set": { group: "app" },
+    "settings.open": { group: "app" },
 };
 
 /**
@@ -149,8 +153,9 @@ const kPlacements: Partial<Record<OperationName, Placement>> = {
  */
 const kUnoffered: readonly OperationName[] = ["commands.list", "skills.list", "skills.read", "api.version", "project.info",
     "translation.project_write", "video.frames", "automation.run_macro", "vcs.refs", "vcs.show", "marks.set",
-    "marks.clear", "marks.list", "document.group_begin", "document.group_end", "programs.run", "programs.start",
-    "programs.send", "programs.stop"];
+    "marks.clear", "marks.list", "presence.set_text", "document.group_begin", "document.group_end", "programs.run",
+    "programs.start", "programs.send", "programs.stop", "problems.set", "problems.clear",
+    "status_items.set"];
 
 /** MCP's Tool, as `tools/list` gives it. */
 export interface Tool {

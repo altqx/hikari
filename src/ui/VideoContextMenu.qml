@@ -16,6 +16,7 @@ ShellMenu {
     signal openVideoRequested()
     signal openSubtitlesRequested()
     signal aspectRatioRequested()
+    signal fullscreenSettingsRequested()
 
     property var filters: []
     property var streams: []
@@ -320,6 +321,7 @@ ShellMenu {
         shortcutText: videoMenu.fullscreen ? MenuKeys.text("VIDEO_FULLSCREEN_BAR", 3) : ""
         controller: videoMenu.shell.videoFullscreen
         itemPrefix: videoMenu.itemPrefix + "FullscreenBar"
+        onSettingsRequested: videoMenu.fullscreenSettingsRequested()
     }
     ShellMenuItem {
         iconRole: "aspect-ratio"

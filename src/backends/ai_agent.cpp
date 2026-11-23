@@ -82,8 +82,8 @@ constexpr std::array kRiskySettingPrefixes{
     RiskyName{"ai.", Risk::AiSettings, "It changes an AI setting."},
 };
 
-constexpr std::array<std::string_view, 6> kViewWrites{"selection.set", "panels.open", "panels.close", "panels.focus",
-                                                     "marks.set",     "marks.clear"};
+constexpr std::array<std::string_view, 7> kViewWrites{"selection.set", "panels.open", "panels.close",   "panels.focus",
+                                                     "marks.set",     "marks.clear", "status_items.set"};
 
 std::string stringAt(const Json &object, std::string_view key)
 {
@@ -361,6 +361,8 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
         return {Risk::Programs, "It runs a plugin's command."};
     if (operation == "automation.run_macro")
         return {Risk::Programs, "It runs an Automation macro, a Lua script you installed."};
+    if (operation == "presence.set_text")
+        return {Risk::Network, "It shows text in your Discord status, which other people can see."};
     if (operation != "settings.set")
         return {};
     const std::string setting = stringAt(params, "setting");
@@ -912,11 +914,13 @@ void AgentThreads::send(const std::string &id, std::string text, Json extraParts
 
 void AgentThreads::listAgentModels(const std::string &agent, AgentModelsDone done, int timeoutMs)
 {
-    if (m_wiring.agentRefusal && !m_wiring.agentRefusal(agent).empty())
-        return done(std::nullopt);
+    using Kind = AgentModelsFailure::Kind;
+    if (m_wiring.agentRefusal)
+        if (std::string refusal = m_wiring.agentRefusal(agent); !refusal.empty())
+            return done(std::unexpected(AgentModelsFailure{Kind::Refused, std::move(refusal)}));
     AiSidecarHost *h = host(true);
     if (!h)
-        return done(std::nullopt);
+        return done(std::unexpected(AgentModelsFailure{Kind::NoComponent, {}}));
     const std::string session = "models:" + agent;
     h->request("session/new",
                Json::object({{"sessionId", session},
@@ -927,7 +931,7 @@ void AgentThreads::listAgentModels(const std::string &agent, AgentModelsDone don
                [](SidecarResult) {});
     auto answered = std::make_shared<bool>(false);
     auto answer = [this, alive = std::weak_ptr(m_alive), h = QPointer(h), session, answered,
-                   done = std::move(done)](std::optional<std::vector<AgentModel>> models) {
+                   done = std::move(done)](AgentModels models) {
         if (*answered || !alive.lock())
             return;
         *answered = true;
@@ -937,9 +941,11 @@ void AgentThreads::listAgentModels(const std::string &agent, AgentModelsDone don
     };
     const std::uint64_t request = h->request(
         "_hikari/session.models", Json::object({{"sessionId", session}}), [answer](SidecarResult result) {
-            const Json *list = result ? result->find("models") : nullptr;
+            if (!result)
+                return answer(std::unexpected(AgentModelsFailure{Kind::Failed, result.error().message}));
+            const Json *list = result->find("models");
             if (!list || !list->isArray())
-                return answer(std::nullopt);
+                return answer(std::unexpected(AgentModelsFailure{Kind::Failed, {}}));
             std::vector<AgentModel> models;
             for (const Json &m : list->asArray()) {
                 std::string id = stringAt(m, "id");
@@ -951,9 +957,9 @@ void AgentThreads::listAgentModels(const std::string &agent, AgentModelsDone don
             answer(std::move(models));
         });
     QTimer::singleShot(timeoutMs, this, [h = QPointer(h), request, answer] {
+        answer(std::unexpected(AgentModelsFailure{Kind::TimedOut, {}}));
         if (h)
             h->cancel(request);
-        answer(std::nullopt);
     });
 }
 

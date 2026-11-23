@@ -55,7 +55,7 @@ class AiSettings final : public QObject {
     Q_PROPERTY(QVariantMap search READ search NOTIFY searchChanged)
     /// False where the OS sandbox can't apply, so the page says the AI component isn't sandboxed.
     Q_PROPERTY(bool sandboxed READ sandboxed NOTIFY switched)
-    /// The AI components section: {present, version, runtime, anthropic, openai, google, available, availableBytes,
+    /// The AI components section: {present, installed, version, runtime, anthropic, openai, google, available, availableBytes,
     /// staged, newerNeedsApp, checkedAt, state, received, total, error, policyOff, rollback}. state is "", "checking"
     /// or "downloading"; error is a download error's id; rollback is {version, to, reportSent} or empty.
     Q_PROPERTY(QVariantMap components READ components NOTIFY componentsChanged)
@@ -90,6 +90,13 @@ public:
     QObject *acp() const;
     QObject *mcpServers() const;
 
+    /// The provider's last test, request or sign-out failed on its key. Reads no keychain.
+    bool lacksKey(const QString &providerId) const;
+    /// A check or a sign-out this run found no ChatGPT sign-in for Codex. Reads no keychain.
+    bool codexSignedOut() const { return m_codex.signedIn == false; }
+    /// The model picker for a role row: the providers' models, the role's own being current. Vision lists only
+    /// models that read images; every role but Chat starts with "Same as chat".
+    Q_INVOKABLE QVariantList rolePickerItems(const QString &role, const QString &current, const QString &filter) const;
     /// {id, preset, name, baseUrl, wire, needsKey} of an added provider, for its edit form.
     Q_INVOKABLE QVariantMap form(const QString &providerId) const;
     /// The id saving a new provider of `preset` gives it: the preset's id, then `-2`, `-3`. Projects name models by it.
@@ -221,7 +228,8 @@ private:
         QString path;
         QString version;
         bool canImport = false;
-        bool signedIn = false;
+        /// Unset until a check or a sign-in says.
+        std::optional<bool> signedIn;
         QString email;
         QString state;
         QString userCode;

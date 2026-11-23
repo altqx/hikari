@@ -3,7 +3,9 @@
 #include "hikari/application/owned_file.h"
 #include "hikari/application/settings.h"
 
+#include <QFileSystemWatcher>
 #include <QObject>
+#include <QTimer>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
@@ -21,6 +23,8 @@ class SettingsStore : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("Provided by the application composition")
+    // Why settings.toml can't be read after a hand edit; empty while it reads.
+    Q_PROPERTY(QString fileProblem READ fileProblem NOTIFY fileProblemChanged)
 public:
     explicit SettingsStore(QString file = {}, QObject *parent = nullptr);
     ~SettingsStore() override;
@@ -35,6 +39,13 @@ public:
     Q_INVOKABLE bool setValue(const QString &id, const QVariant &value);
     Q_INVOKABLE void reset(const QString &id);
     Q_INVOKABLE void resetAll();
+    // Its stored value isn't the default.
+    Q_INVOKABLE bool differs(const QString &id) const;
+    Q_INVOKABLE QStringList changedSettings() const;
+    // "settings" or "hotkeys"; empty without files.
+    Q_INVOKABLE QString filePath(const QString &file) const;
+    QString fileProblem() const { return m_fileProblem; }
+    void reloadFile();
     void sync();
     std::vector<application::FileProblem> problems() const;
     bool converted() const;
@@ -54,12 +65,16 @@ public:
 
 signals:
     void changed(const QString &id);
+    void fileProblemChanged();
 
 private:
     QString m_file;
     std::shared_ptr<application::SettingsStorage> m_storage;
     std::shared_ptr<SettingsFiles> m_files;
     std::unique_ptr<application::Settings> m_settings;
+    QFileSystemWatcher m_watcher;
+    QTimer m_reload;
+    QString m_fileProblem;
 };
 
 }

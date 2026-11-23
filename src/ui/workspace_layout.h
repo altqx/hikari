@@ -1,5 +1,6 @@
 #pragma once
 
+#include "file_write_queue.h"
 #include "hikari/application/tiers.h"
 
 #include <QByteArray>
@@ -106,6 +107,8 @@ public:
     void retranslate() { emit changed(); }
     void reservePresetNames(const QStringList &names);
     void reloadSavedLayouts();
+    void waitForPluginLayouts() { m_pluginLayoutsPending = true; }
+    void pluginLayoutsRead();
     const QStringList &reservedPresetNames() const { return m_reservedNames; }
     Q_INVOKABLE bool resetCurrentLayout();
     // `tier` "project" or "mine"; empty is Mine.
@@ -158,6 +161,7 @@ public:
     bool menuHasFocus() const { return m_menuHasFocus; }
     bool modalOpen() const { return m_modalOpen; }
     bool hasBackup() const;
+    FileWriteQueue &fileWrites() { return m_writes; }
 
     static QByteArray envelope(const QByteArray &payload, const QString &preset = QStringLiteral("Editing"),
                                const QString &layout = {}, bool locked = false);
@@ -188,7 +192,10 @@ private:
     QByteArray serialiseWindow() const;
     bool restoreWindow(const QByteArray &payload, int options) const;
     bool restoreSavedFile();
+    bool writable(const WorkspaceArrangement &arrangement) const;
     bool write(const WorkspaceArrangement &arrangement);
+    FileWriteQueue::Write fileWrite(const WorkspaceArrangement &arrangement) const;
+    void wrote(const QByteArray &payload, bool written);
     bool buildPreset(const QString &name, bool inPlace);
     bool showArrangement(const WorkspaceArrangement &arrangement);
     WorkspaceArrangement shownArrangement() const;
@@ -209,6 +216,7 @@ private:
         application::TierMark mark;
     };
     void readSavedLayouts();
+    void readPluginLayouts();
     std::vector<SavedLayout> readLayoutsFile(const QString &path, bool &locked);
     void lockSavedLayouts(const QString &path, bool &locked);
     bool writeSavedLayouts();
@@ -219,8 +227,18 @@ private:
     QString sendLayout(const QString &name, const QString &from, const QVariantList &choices, bool move);
     void renameLayoutOrigin(const QString &from, const QString &to);
     QString knownLayout(const QString &name) const;
+    const WorkspaceArrangement *arrangementNamed(const QString &name) const;
     QStringList m_reservedNames;
     std::vector<SavedLayout> m_saved;
+    struct PluginLayout {
+        QString name;
+        QString plugin;
+        std::optional<WorkspaceArrangement> arrangement;
+        QString problem;
+    };
+    std::vector<PluginLayout> m_pluginLayouts;
+    bool m_pluginLayoutsPending = false;
+    const PluginLayout *pluginLayoutNamed(const QString &name) const;
     QString m_savedFile;
     bool m_savedLocked = false;
     QString m_projectSavedFile;
@@ -270,6 +288,7 @@ private:
     bool m_modalOpen = false;
     QTimer m_screenCheck;
     std::optional<QByteArray> m_beforeNodeEffects;
+    FileWriteQueue m_writes;
 };
 
 }

@@ -7,6 +7,8 @@
 #include <QJsonDocument>
 #include <QMetaObject>
 
+#include <expected>
+
 namespace hikari::backends {
 
 using helper::Outcome;
@@ -37,11 +39,50 @@ QJsonValue parsed(const std::string &json)
     return document.isArray() ? document.array().first() : QJsonValue();
 }
 
+QString sourceKey(const QString &source)
+{
+    if (source == QLatin1String("panel") || source == QLatin1String("dialog"))
+        return source;
+    if (source == QLatin1String("quick_pick"))
+        return QStringLiteral("pick");
+    if (source == QLatin1String("input_box"))
+        return QStringLiteral("box");
+    return {};
+}
+
+std::vector<std::byte> bytesOf(const QByteArray &data)
+{
+    const auto *first = reinterpret_cast<const std::byte *>(data.constData());
+    return {first, first + data.size()};
+}
+
 std::vector<std::byte> bytesOf(const QString &text)
 {
-    const QByteArray utf8 = text.toUtf8();
-    const auto *first = reinterpret_cast<const std::byte *>(utf8.constData());
-    return {first, first + utf8.size()};
+    return bytesOf(text.toUtf8());
+}
+
+std::expected<std::vector<std::byte>, QString> exported(const QJsonValue &result)
+{
+    const QJsonObject file = result.toObject();
+    const QJsonValue data = file.value(QStringLiteral("data"));
+    const QString encoding = file.value(QStringLiteral("encoding")).toString(QStringLiteral("utf8"));
+    if (!data.isString())
+        return std::unexpected(QStringLiteral("an export must answer {data, encoding} with the file as a string"));
+    if (encoding == QLatin1String("utf8"))
+        return bytesOf(data.toString());
+    if (encoding != QLatin1String("base64"))
+        return std::unexpected(QStringLiteral("an export's encoding must be \"utf8\" or \"base64\""));
+    auto decoded = QByteArray::fromBase64Encoding(data.toString().toLatin1(), QByteArray::AbortOnBase64DecodingErrors);
+    if (!decoded)
+        return std::unexpected(QStringLiteral("the export's file isn't base64"));
+    return bytesOf(*decoded);
+}
+
+std::expected<std::vector<std::byte>, QString> imported(const QJsonValue &result)
+{
+    if (!result.isObject())
+        return std::unexpected(QStringLiteral("an import must answer {lines, styles, info}"));
+    return bytesOf(QJsonDocument(result.toObject()).toJson(QJsonDocument::Compact));
 }
 
 std::vector<std::byte> named(Service service, const std::string &name, const std::string &json)
@@ -156,7 +197,7 @@ std::expected<std::uint64_t, helper::HostError> ProgramPluginLink::send(std::vec
     Reader in(payload);
     QString method;
     QJsonObject params;
-    bool load = false;
+    auto reply = Pending::Reply::Plain;
     if (isEvent) {
         const QString event = QString::fromStdString(in.str());
         const QJsonValue data = parsed(in.str());
@@ -164,10 +205,11 @@ std::expected<std::uint64_t, helper::HostError> ProgramPluginLink::send(std::vec
             const QJsonObject change = data.toObject();
             m_settings.insert(change.value(QStringLiteral("id")).toString(), change.value(QStringLiteral("value")));
         }
-        if (event.startsWith(QLatin1String("panel:")) || event.startsWith(QLatin1String("dialog:"))) {
-            const qsizetype colon = event.indexOf(QLatin1Char(':'));
-            method = event.left(colon);
-            params = {{method, event.mid(colon + 1)}, {QStringLiteral("event"), data}};
+        const qsizetype colon = event.indexOf(QLatin1Char(':'));
+        const QString source = event.left(colon);
+        if (const QString key = sourceKey(source); colon > 0 && !key.isEmpty()) {
+            method = source;
+            params = {{key, event.mid(colon + 1)}, {QStringLiteral("event"), data}};
         } else {
             method = QStringLiteral("event");
             params = {{QStringLiteral("name"), event}, {QStringLiteral("data"), data}};
@@ -186,7 +228,7 @@ std::expected<std::uint64_t, helper::HostError> ProgramPluginLink::send(std::vec
             }
             m_commands = loadRequest->commands;
             m_settings = parsed(loadRequest->settings).toObject();
-            load = true;
+            reply = Pending::Reply::Load;
             method = QStringLiteral("initialize");
             params = {{QStringLiteral("protocol"), 1},
                       {QStringLiteral("api"), 1},
@@ -197,14 +239,33 @@ std::expected<std::uint64_t, helper::HostError> ProgramPluginLink::send(std::vec
             m_initializeTimer.start(m_limits.initializeMs);
         } else if (command == plugin::Command::Run) {
             method = QStringLiteral("command");
-            params = {{QStringLiteral("command"), QString::fromStdString(in.str())}, {QStringLiteral("args"), QJsonValue::Null}};
+            const QString id = QString::fromStdString(in.str());
+            const QJsonObject call = parsed(in.str()).toObject();
+            params = {{QStringLiteral("command"), id},
+                      {QStringLiteral("args"), call.value(QStringLiteral("args")).isUndefined() ? QJsonValue::Null : call.value(QStringLiteral("args"))},
+                      {QStringLiteral("context"), call.value(QStringLiteral("context")).toObject()}};
+        } else if (command == plugin::Command::Export) {
+            reply = Pending::Reply::Export;
+            method = QStringLiteral("export");
+            const QString format = QString::fromStdString(in.str());
+            const QJsonValue document = parsed(in.str());
+            params = {{QStringLiteral("format"), format}, {QStringLiteral("document"), document},
+                      {QStringLiteral("options"), parsed(in.str())}};
+        } else if (command == plugin::Command::Import) {
+            reply = Pending::Reply::Import;
+            method = QStringLiteral("import");
+            const QString format = QString::fromStdString(in.str());
+            const std::string data = in.str();
+            params = {{QStringLiteral("format"), format},
+                      {QStringLiteral("data"), QString::fromLatin1(QByteArray::fromStdString(data).toBase64())},
+                      {QStringLiteral("name"), QString::fromStdString(in.str())}};
         } else {
             deliver(handler, helper::Event{helper::Kind::Terminal, Outcome::Unsupported, {}, 0});
             return request;
         }
     }
     const std::int64_t id = m_nextId++;
-    m_pending.emplace(id, Pending{request, std::move(handler), load});
+    m_pending.emplace(id, Pending{request, std::move(handler), reply});
     m_open = request;
     send(QJsonObject{{QStringLiteral("jsonrpc"), QStringLiteral("2.0")}, {QStringLiteral("id"), double(id)},
                      {QStringLiteral("method"), method}, {QStringLiteral("params"), params}});
@@ -294,9 +355,14 @@ void ProgramPluginLink::onAnswer(std::int64_t id, const QJsonObject &message)
     if (error.isObject()) {
         event.outcome = Outcome::Failed;
         event.payload = bytesOf(error.toObject().value(QStringLiteral("message")).toString());
-    } else if (pending.load) {
+    } else if (pending.reply == Pending::Reply::Load) {
         m_initializeTimer.stop();
         event.payload = plugin::encodeStrings(m_commands);
+    } else if (pending.reply != Pending::Reply::Plain) {
+        auto made = pending.reply == Pending::Reply::Export ? exported(message.value(QStringLiteral("result")))
+                                                            : imported(message.value(QStringLiteral("result")));
+        event.outcome = made ? Outcome::Ok : Outcome::Failed;
+        event.payload = made ? std::move(*made) : bytesOf(made.error());
     }
     pending.handler(event);
 }

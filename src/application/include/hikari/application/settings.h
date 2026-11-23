@@ -148,6 +148,15 @@ struct RenamedSetting {
     std::string_view to;
 };
 std::span<const RenamedSetting> renamedSettings();
+// Setting ids whose value became the entry "<entryKey>=<value>" of the list setting `to`.
+struct FoldedSetting {
+    std::string_view from;
+    std::string_view to;
+    std::string_view entryKey;
+};
+std::span<const FoldedSetting> foldedSettings();
+// `list` with the folded value, unless it has an entry for the key already.
+std::vector<std::string> foldInto(std::vector<std::string> list, const FoldedSetting &folded, std::string_view value);
 // Withdrawn setting ids a profile may still hold (the INI store drops them).
 std::span<const std::string_view> retiredSettings();
 // "#RRGGBB" or "#RRGGBBAA" as 0xAARRGGBB; nullopt otherwise.

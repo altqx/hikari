@@ -78,7 +78,7 @@ A prefix at the start of the field switches what is searched. A space after the 
 | `view ` | Panels and layouts | Shows and focuses the panel, or switches to the layout | Q664; the same word as VS Code |
 | `?` | The prefixes themselves, one row each | Puts that prefix in the field | As VS Code |
 
-**`:` Lines.** The row shows the Line's number, its start time in `muted` monospace and its text, elided. A number past the end is the validation line "Not a line: 500. This Document has 412 lines." With no number yet, the foot says "Type a line number, 1 to 412."
+**`:` Lines.** The row shows the Line's number, its start time in `muted` monospace and its text, elided. A number past the end is the validation line "Not a line: 500. This document has 412 lines." With no number yet, the foot says "Type a line number, 1 to 412."
 
 **`@` Times and frames.** One row says where Enter goes: "Go to 0:03:40.00 (frame 5280)". Input it can't read gives Jump to's validation line, with Jump to's wording. Without a video, a time selects the first Line showing at that time, or the next one after it, and a frame or step is refused: "Frames need a video."
 
@@ -119,6 +119,10 @@ The palette and Quick Open are uses of one component. App flows and plugins get 
   - Tab moves from the field into the list; there Space toggles the current row and Ctrl+A picks every row shown. Typing a letter goes back to the field.
   - Enter, from the field or the list, answers with the picked set. Items can start picked.
 - **Busy**: while the caller is still filling the list or checking input, a 2-unit `accent` bar runs along the field's bottom edge. The list keeps what it has.
+
+### Anchored at a control
+
+A caller can open the frame at a control instead of under the title bar. It opens above the control when there's more room above, and below it otherwise, with its leading edge on the control's, moved left as needed to stay inside the area the caller gives. The caller gives the width. The [model picker](agent-panel.md#the-model-picker) opens this way.
 
 ### The input box
 
