@@ -6459,6 +6459,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>No lines match the filter</source>
+        <translation>필터와 일치하는 줄 없음</translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>줄 그룹 설명</translation>
     </message>
@@ -6826,6 +6830,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter the Grid</source>
+        <translation>자막 목록 필터</translation>
     </message>
 </context>
 <context>

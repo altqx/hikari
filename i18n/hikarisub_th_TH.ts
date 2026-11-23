@@ -6459,6 +6459,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>No lines match the filter</source>
+        <translation>ไม่มีบรรทัดที่ตรงกับตัวกรอง</translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>คำอธิบายกลุ่มบรรทัด</translation>
     </message>
@@ -6826,6 +6830,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter the Grid</source>
+        <translation>กรองตาราง</translation>
     </message>
 </context>
 <context>

@@ -8241,10 +8241,21 @@ ApplicationWindow {
                 Label {
                     objectName: "gridEmptyState"
                     anchors.centerIn: parent
-                    visible: !shell.hasEditingTarget
-                    text: qsTranslate("HikariSub.Grid", "No document open")
+                    visible: !shell.hasEditingTarget || shell.gridFilterMatchesNothing
+                    text: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "No lines match the filter")
+                                                 : qsTranslate("HikariSub.Grid", "No document open")
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true
+                }
+                GridFilterField {
+                    id: gridFilterField
+                    shell: root.shell
+                    onLeave: toFirstLine => {
+                        const first = toFirstLine ? root.shell.firstShownLine() : undefined
+                        if (first !== undefined)
+                            root.app.selectLine(first)
+                        root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    }
                 }
             }
         }
@@ -8738,7 +8749,7 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader(root.engineName("Grid"), true, null)
+            Docking.setPanelHeader(root.engineName("Grid"), true, gridFilterField)
             Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
             Docking.setPanelHeader(root.engineName("Search"), true, null)
             Docking.setPanelHeader(root.engineName("Log"), true, null)

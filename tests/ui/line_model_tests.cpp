@@ -51,6 +51,9 @@ private slots:
         filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
         model.setSelection({core::LineId{1}, {core::LineId{1}, core::LineId{2}}}, core::LineId{1});
         model.setDocument(load(kLines));
+        filter.setText(QStringLiteral("a"));
+        model.setDocument(load(kLines));
+        filter.setText({});
         filter.setPredicate({});
     }
 
@@ -284,6 +287,88 @@ private slots:
         off.removeScriptInfo(u8"TLMode");
         model.setDocument(off);
         QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Gate"));
+    }
+
+    void textFilterMatchesTextWithoutTagsActorEffectAndStyle()
+    {
+        LineTableModel model;
+        model.setDocument(load("[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,{\\an8}Charlie\n"
+                               "Comment: 0,0:00:03.00,0:00:04.00,Default,Note,0,0,0,,alpha\n"
+                               "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,fx,bravo\n"));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        const auto shown = [&](const QString &text) {
+            filter.setText(text);
+            QList<qulonglong> ids;
+            for (int row = 0; row < filter.rowCount(); ++row)
+                ids << idAt(filter, row);
+            return ids;
+        };
+        QCOMPARE(shown(QStringLiteral("cHARL")), QList<qulonglong>{1});
+        QCOMPARE(shown(QStringLiteral("an8")), QList<qulonglong>{});
+        QCOMPARE(shown(QStringLiteral("NOTE")), QList<qulonglong>{2});
+        QCOMPARE(shown(QStringLiteral("fx")), QList<qulonglong>{3});
+        QCOMPARE(shown(QStringLiteral("sign")), QList<qulonglong>{1});
+        QCOMPARE(shown(QString()), (QList<qulonglong>{1, 2, 3}));
+    }
+
+    void textFilterAndsWithTheVisibilityFilterAndClearingRestoresIt()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
+        filter.setText(QStringLiteral("A"));
+        QCOMPARE(filter.rowCount(), 2);
+        filter.setText(QStringLiteral("alpha"));
+        QCOMPARE(filter.rowCount(), 0);
+        filter.setText({});
+        QCOMPARE(filter.rowCount(), 2);
+        QCOMPARE(idAt(filter, 0), 1ULL);
+        QCOMPARE(idAt(filter, 1), 3ULL);
+    }
+
+    void textFilterMatchesTheTranslationInTranslationMode()
+    {
+        LineTableModel model;
+        model.setDocument(load("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Wall\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n"));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        filter.setText(QStringLiteral("brama"));
+        QCOMPARE(filter.rowCount(), 1);
+        filter.setText(QStringLiteral("gate"));
+        QCOMPARE(filter.rowCount(), 1);
+        filter.setText(QStringLiteral("wall"));
+        QCOMPARE(filter.rowCount(), 1);
+    }
+
+    void textFilterKeepsAMatchingActiveLineShownWhileItIsActive()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        QAbstractItemModelTester tester(&filter, QAbstractItemModelTester::FailureReportingMode::QtTest);
+        model.setSelection({core::LineId{3}, {core::LineId{3}}}, core::LineId{3});
+        filter.setText(QStringLiteral("bravo"));
+        QCOMPARE(filter.rowCount(), 1);
+        auto edited = std::string(kLines);
+        edited.replace(edited.find("bravo"), 5, "delta");
+        model.setDocument(load(edited));
+        QCOMPARE(filter.rowCount(), 1);
+        QCOMPARE(idAt(filter, 0), 3ULL);
+        model.setSelection({core::LineId{1}, {core::LineId{1}}}, core::LineId{1});
+        QCOMPARE(filter.rowCount(), 0);
+        filter.setText(QStringLiteral("charlie"));
+        model.setSelection({core::LineId{3}, {core::LineId{3}}}, core::LineId{3});
+        QCOMPARE(filter.rowCount(), 1);
+        QCOMPARE(idAt(filter, 0), 1ULL);
     }
 
     void identitySurvivesFilteringAndSorting()
