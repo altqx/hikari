@@ -1614,15 +1614,7 @@ Output device: %2</source>
         <translation type="unfinished">โปรเจกต์</translation>
     </message>
     <message>
-        <source>Yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy to yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to yours</source>
+        <source>Mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1662,7 +1654,15 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4858,10 +4858,6 @@ Output device: %2</source>
         <translation>ลบ</translation>
     </message>
     <message>
-        <source>Yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Refresh fonts</source>
         <translation>รีเฟรชแบบอักษร</translation>
     </message>
@@ -5042,11 +5038,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to yours</source>
+        <source>Mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5134,7 +5126,15 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7166,10 +7166,6 @@ Failed to copy %2 fonts.</source>
         <translation>ปุ่มลัด “%1” ไม่ถูกต้อง</translation>
     </message>
     <message>
-        <source>Also on %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1 takes it</source>
         <translation>%1 ได้ปุ่มนี้ไป</translation>
     </message>
@@ -8556,6 +8552,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen typesetting</source>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Global</source>
@@ -11349,7 +11349,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">โปรเจกต์</translation>
     </message>
     <message>
-        <source>Yours</source>
+        <source>Mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11361,7 +11361,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 in yours</source>
+        <source>%1 in mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11369,7 +11369,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save to yours</source>
+        <source>Save to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13473,7 +13473,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Apply</source>
-        <translation type="vanished">นำไปใช้</translation>
+        <translation>นำไปใช้</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -13485,7 +13485,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>OK</source>
-        <translation type="vanished">ตกลง</translation>
+        <translation>ตกลง</translation>
     </message>
     <message>
         <source>Font size</source>
@@ -13765,7 +13765,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
-        <translation type="vanished">ทุกหน้าจะกลับเป็นค่าเริ่มต้นเมื่อคุณกด “ตกลง” หรือ “นำไปใช้” ส่วน “ยกเลิก” จะคงการตั้งค่าของคุณไว้ ปุ่มลัดและลักษณะที่ปรากฏจะคงเดิม: รีเซ็ตได้ในหน้าของรายการนั้นเอง</translation>
+        <translation>ทุกหน้าจะกลับเป็นค่าเริ่มต้นเมื่อคุณกด “ตกลง” หรือ “นำไปใช้” ส่วน “ยกเลิก” จะคงการตั้งค่าของคุณไว้ ปุ่มลัดและลักษณะที่ปรากฏจะคงเดิม: รีเซ็ตได้ในหน้าของรายการนั้นเอง</translation>
     </message>
     <message>
         <source>Reset all</source>
@@ -13777,19 +13777,19 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Resets the settings on this page to their defaults</source>
-        <translation type="vanished">รีเซ็ตการตั้งค่าของหน้าที่แสดงอยู่กลับเป็นค่าเริ่มต้น</translation>
+        <translation>รีเซ็ตการตั้งค่าของหน้าที่แสดงอยู่กลับเป็นค่าเริ่มต้น</translation>
     </message>
     <message>
         <source>More resets</source>
-        <translation type="vanished">การรีเซ็ตเพิ่มเติม</translation>
+        <translation>การรีเซ็ตเพิ่มเติม</translation>
     </message>
     <message>
         <source>Reset this page</source>
-        <translation type="vanished">รีเซ็ตหน้านี้</translation>
+        <translation>รีเซ็ตหน้านี้</translation>
     </message>
     <message>
         <source>Reset all settings…</source>
-        <translation type="vanished">รีเซ็ตการตั้งค่าทั้งหมด…</translation>
+        <translation>รีเซ็ตการตั้งค่าทั้งหมด…</translation>
     </message>
     <message>
         <source>Interface language</source>
@@ -13986,22 +13986,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>บรรทัดปัจจุบัน</translation>
     </message>
     <message>
-        <source>Export</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Discord</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Glossary</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Change the active line when adding to the selection</source>
         <translation>เปลี่ยนบรรทัดปัจจุบันเมื่อเพิ่มลงในส่วนที่เลือก</translation>
     </message>
@@ -14012,10 +13996,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>เลื่อนไปยังบรรทัดที่มองเห็นหลังออกจากโหมดเต็มหน้าจอ</translation>
-    </message>
-    <message>
-        <source>Activities</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Columns</source>
@@ -14064,6 +14044,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>ASS tag replacement</source>
         <translation>การแทนที่แท็ก ASS</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -14144,96 +14184,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>ลากด้วยปุ่มกลางเพื่อเลื่อนภาพ การจีบนิ้วบนทัชแพดจะซูมรอบตัวชี้</translation>
-    </message>
-    <message>
-        <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This window has no project, so the link opens the Yours tab.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Waits for trust</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset the settings on %1 to their defaults?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Plugins</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset all…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resets every setting but the shortcuts and the appearance</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Write</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Write %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Open settings file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Filter</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Modified</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Plugin</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n setting(s) match</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Settings contents</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset page…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HikariSub keeps the last values it could read, and your changes here wait until it reads again.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing is changed here.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No settings match “%1”.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -14557,7 +14507,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Set shortcuts</source>
-        <translation type="vanished">ตั้งค่าปุ่มลัด</translation>
+        <translation>ตั้งค่าปุ่มลัด</translation>
     </message>
     <message>
         <source>Global shortcuts</source>
@@ -14644,18 +14594,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
     </message>
     <message>
-        <source>Macro</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Source</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Conflicts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -14694,18 +14632,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Checking</source>
         <translation>การตรวจหา</translation>
-    </message>
-    <message>
-        <source>Translator model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reviewer model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Never send to AI</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
@@ -14946,32 +14872,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Import legacy shortcuts</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม</translation>
-    </message>
-    <message>
-        <source>No plugin has settings.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Plugins…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>Show all %n shortcuts</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Manage plugin…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 is turned off. Its settings apply when it’s on.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enter a number.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -15477,6 +15377,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Project</source>
         <translation type="unfinished">โปรเจกต์</translation>
+    </message>
+    <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Built in</source>
@@ -16407,10 +16311,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Add an MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16559,15 +16459,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -16575,40 +16467,24 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Changed</source>
-        <translation type="unfinished"></translation>
+        <source>Not installed</source>
+        <translation>ยังไม่ได้ติดตั้ง</translation>
     </message>
     <message>
-        <source>Reset %1</source>
-        <translation type="unfinished"></translation>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
     </message>
     <message>
-        <source>Use yours</source>
-        <translation type="unfinished"></translation>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
     </message>
     <message>
-        <source>Reset to the default</source>
-        <translation type="unfinished"></translation>
+        <source>Retry</source>
+        <translation>ลองอีกครั้ง</translation>
     </message>
     <message>
-        <source>%1 options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy setting id</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy link</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>settings.toml has an error on line %1.</source>
-        <translation type="unfinished"></translation>
+        <source>Downloading the AI component · %1 of %2 MB</source>
+        <translation>กำลังดาวน์โหลดคอมโพเนนต์ AI · %1 จาก %2 MB</translation>
     </message>
 </context>
 <context>
@@ -17259,10 +17135,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>การตั้งค่า</translation>
     </message>
     <message>
-        <source>Open in Settings…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Update from file…</source>
         <translation>อัปเดตจากไฟล์…</translation>
     </message>
@@ -17276,7 +17148,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Setting not kept</source>
-        <translation type="vanished">ไม่ได้เก็บการตั้งค่า</translation>
+        <translation>ไม่ได้เก็บการตั้งค่า</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -17303,10 +17175,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Close</source>
         <translation>ปิด</translation>
-    </message>
-    <message>
-        <source>Also in Settings › Updates and privacy</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose a plugin package</source>
@@ -17553,6 +17421,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json อ้างถึงคำสั่ง “%1” ที่ %2 ซึ่งไม่ได้ประกาศไว้</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json กำหนด %1 ซ้ำสองครั้ง ที่ %2</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>รายการในแถบสถานะ: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>ปุ่มลัด: %1 สำหรับ %2</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 ถูกใช้โดย %2 แล้ว</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>ต้องมีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>ต้องมีการเลือก</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีการเลือก</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>ต้องเลือกตั้งแต่สองบรรทัดขึ้นไป</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>ทำงานได้เฉพาะเมื่อเลือกบรรทัดเดียวหรือไม่ได้เลือก</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>ต้องมีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>ต้องมีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>ต้องเป็นบรรทัดคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>ทำงานได้เฉพาะบนบรรทัดที่ไม่มีคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>ต้องอยู่ในโหมดการแปล</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>ทำงานได้เฉพาะนอกโหมดการแปล</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -17741,7 +17685,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Project</source>
-        <translation type="vanished">โปรเจกต์</translation>
+        <translation>โปรเจกต์</translation>
     </message>
     <message>
         <source>Uses yours</source>
@@ -17754,10 +17698,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Set in project.local.toml</source>
         <translation>ตั้งไว้ใน project.local.toml</translation>
-    </message>
-    <message>
-        <source>Project: %1</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Not set</source>
@@ -17793,7 +17733,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>project.toml could not be written, so some Project settings were not saved.</source>
-        <translation type="vanished">เขียน project.toml ไม่ได้ การตั้งค่าโปรเจกต์บางรายการจึงไม่ได้บันทึก</translation>
+        <translation>เขียน project.toml ไม่ได้ การตั้งค่าโปรเจกต์บางรายการจึงไม่ได้บันทึก</translation>
     </message>
     <message>
         <source>Saving a file writes the switched-on fields into its Script Info.</source>
@@ -17916,11 +17856,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Discord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>In this project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details (first line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>State (second line)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21503,6 +21455,10 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>From plugins</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21511,7 +21467,15 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21683,20 +21647,8 @@ because it was edited.</source>
         <translation>นำไปใช้</translation>
     </message>
     <message>
-        <source>Yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>New catalogue</source>
         <translation>แคตตาล็อกใหม่</translation>
-    </message>
-    <message>
-        <source>Copy to yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to yours</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -24341,7 +24293,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yours</source>
+        <source>Mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24353,14 +24305,6 @@ Styles deleted:
         <translation>เปลี่ยนชื่อพรีเซ็ต…</translation>
     </message>
     <message>
-        <source>Copy to yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Delete preset…</source>
         <translation>ลบพรีเซ็ต…</translation>
     </message>
@@ -24369,7 +24313,15 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -25396,6 +25348,14 @@ Styles deleted:
         <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
+        <translation>เปิดวิดีโอแบบเต็มหน้าจอ โดยมีเครื่องมือภาพ บรรทัดปัจจุบัน และเครื่องมือของบรรทัดอยู่ด้านข้าง</translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>วิดีโอ</translation>
     </message>
@@ -25565,10 +25525,6 @@ Styles deleted:
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation>ออกจากโหมดเต็มหน้าจอ</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>เต็มหน้าจอ</translation>
     </message>
@@ -25653,22 +25609,78 @@ Styles deleted:
         <translation>วิดีโอเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>กด Esc เพื่อออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation>ไฟล์วิดีโอก่อนหน้า</translation>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>บรรทัด %1 %2: %3</translation>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Visual tools</source>
-        <translation>เครื่องมือภาพ</translation>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
+        <source>Video status</source>
+        <translation>สถานะวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame %1</source>
+        <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
+        <translation>เฟรม %1</translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
+        <translation>บรรทัด %1 จาก %2</translation>
+    </message>
+    <message>
+        <source>Line %1 text</source>
+        <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
+        <translation>ข้อความบรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25688,32 +25700,48 @@ Styles deleted:
         <translation>แถบเต็มหน้าจอ</translation>
     </message>
     <message>
-        <source>Full screen bar: %1</source>
-        <translation>แถบเต็มหน้าจอ: %1</translation>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show when the pointer moves</source>
-        <translation>แสดงเมื่อขยับตัวชี้</translation>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always show</source>
-        <translation>แสดงเสมอ</translation>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never show</source>
-        <translation>ไม่แสดง</translation>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation>แสดงเมื่อขยับตัวชี้ ซ่อนเมื่อไม่มีการใช้งาน</translation>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation>คงแถบไว้ ภาพจะสิ้นสุดเหนือแถบ</translation>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>ภาพเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -26022,6 +26050,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>บรรทัด %1: %2</translation>
     </message>
     <message>
@@ -26271,6 +26300,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Move</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ย้าย</translation>
     </message>
     <message>
@@ -26366,6 +26396,32 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Changes the active line</source>
         <translation>เปลี่ยนบรรทัดปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>On the frame</source>
+        <translation>บนเฟรม</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Apply to</source>
+        <translation>นำไปใช้กับ</translation>
+    </message>
+    <message>
+        <source>This line</source>
+        <translation>บรรทัดนี้</translation>
+    </message>
+    <message>
+        <source>Picked lines (%1)</source>
+        <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
+        <translation>บรรทัดที่ตรึงไว้ (%1)</translation>
+    </message>
+    <message>
+        <source>Picks the selected lines: the tools edit them, not the active line</source>
+        <translation>ตรึงบรรทัดที่เลือก: เครื่องมือจะแก้ไขบรรทัดเหล่านั้น ไม่ใช่บรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>More options</source>
@@ -26724,15 +26780,7 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy to yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to yours</source>
+        <source>Mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26777,6 +26825,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Drawing</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ภาพวาด</translation>
     </message>
     <message>
@@ -26832,7 +26881,15 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy to mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26932,6 +26989,10 @@ or codecs or a splitter may be missing</source>
         <translation>รูปร่าง: %1</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>เครื่องมือภาพ</translation>
+    </message>
+    <message>
         <source>More tools</source>
         <translation>เครื่องมือเพิ่มเติม</translation>
     </message>
@@ -26985,6 +27046,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Gradient</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ไล่ระดับ</translation>
     </message>
     <message>
@@ -27044,12 +27106,220 @@ or codecs or a splitter may be missing</source>
         <translation>ไฮดรา</translation>
     </message>
     <message>
+        <source>Pointer</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ตัวบ่งชี้ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ปรับขนาด</translation>
+    </message>
+    <message>
+        <source>Tilt X / Y</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>หมุนตามแกน X / Y</translation>
+    </message>
+    <message>
+        <source>Rectangle clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>คลิปสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Vector clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>คลิปเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Shift positions</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>เลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>All tags</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ไฮดรา</translation>
+    </message>
+    <message>
         <source>Perspective</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>เพอร์สเปกทีฟ</translation>
     </message>
     <message>
         <source>Text on path</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ข้อความตามเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
+        <translation>ชี้ที่ภาพเพื่ออ่านตำแหน่ง Ctrl+คลิกเพื่อวางบรรทัดที่นั่น</translation>
+    </message>
+    <message>
+        <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
+        <translation>ลากเพื่อวางบรรทัด Shift+ลากเพื่อล็อกไว้ที่แกนเดียว คลิกขวาเพื่อวางบรรทัดที่ตัวชี้</translation>
+    </message>
+    <message>
+        <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
+        <translation>ลากจุดเริ่มต้นหรือจุดสิ้นสุด ลากด้วยปุ่มขวาเพื่อกำหนดจุดสิ้นสุด บรรทัดจะเคลื่อนที่ระหว่างสองจุดนี้</translation>
+    </message>
+    <message>
+        <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
+        <translation>ลากเพื่อยืดแนวนอน ลากด้วยปุ่มขวาเพื่อยืดแนวตั้ง Shift+ลากเพื่อปรับขนาดทั้งสองแนว</translation>
+    </message>
+    <message>
+        <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
+        <translation>ลากรอบจุดศูนย์กลางเพื่อหมุนข้อความ ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
+    </message>
+    <message>
+        <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
+        <translation>ลากไปด้านข้างเพื่อหมุนตามแกน Y ลากด้วยปุ่มขวาขึ้นหรือลงเพื่อหมุนตามแกน X ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
+    </message>
+    <message>
+        <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบ จะแสดงเฉพาะส่วนที่อยู่ข้างใน ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง จะแสดงเฉพาะส่วนที่อยู่ข้างใน</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง หรือเลือกรูปร่างแล้วลากสร้างกรอบ</translation>
+    </message>
+    <message>
+        <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
+        <translation>ลากเพื่อย้ายตำแหน่ง คลิป และจุดศูนย์กลางของบรรทัดที่ตรึงไว้พร้อมกัน กด Shift เพื่อล็อกแกน</translation>
+    </message>
+    <message>
+        <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
+        <translation>เลือกแท็ก แล้วลากไปด้านข้างบนภาพเพื่อเปลี่ยนค่า กด Shift เพื่อปรับทีละน้อย</translation>
+    </message>
+    <message>
+        <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
+        <translation>ลากมุมเพื่อวางข้อความบนพื้นผิว ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
+        <translation>ลากผ่านข้อความเพื่อกำหนดทิศทางการไล่ระดับ ลากปลายเพื่อปรับ กด Enter เพื่อนำไปใช้</translation>
+    </message>
+    <message>
+        <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
+        <translation>คลิกเพื่อเพิ่มจุดเส้นทาง ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง กด Enter เพื่อนำไปใช้</translation>
+    </message>
+    <message>
+        <source>square</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>สี่เหลี่ยมจัตุรัส</translation>
+    </message>
+    <message>
+        <source>circle</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>วงกลม</translation>
+    </message>
+    <message>
+        <source>cross</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>กากบาท</translation>
+    </message>
+    <message>
+        <source>line</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>เส้น</translation>
+    </message>
+    <message>
+        <source>arrow</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>ลูกศร</translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Start point</source>
+        <translation>จุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>End point</source>
+        <translation>จุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>เส้นทาง</translation>
+    </message>
+    <message>
+        <source>Current position</source>
+        <translation>ตำแหน่งปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation>ความกว้าง</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation>ความสูง</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>ทั้งสอง</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>มุม</translation>
+    </message>
+    <message>
+        <source>Tilt grid</source>
+        <translation>กริดการเอียง</translation>
+    </message>
+    <message>
+        <source>Edges and corners</source>
+        <translation>ขอบและมุม</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>จุด</translation>
+    </message>
+    <message>
+        <source>Curve handle</source>
+        <translation>จุดควบคุมเส้นโค้ง</translation>
+    </message>
+    <message>
+        <source>Position and move start</source>
+        <translation>ตำแหน่งและจุดเริ่มการเคลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Move end</source>
+        <translation>จุดสิ้นสุดการเคลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Clip and drawing</source>
+        <translation>คลิปและภาพวาด</translation>
+    </message>
+    <message>
+        <source>Changed line</source>
+        <translation>บรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Corners</source>
+        <translation>มุม</translation>
+    </message>
+    <message>
+        <source>Plane corners</source>
+        <translation>มุมระนาบ</translation>
+    </message>
+    <message>
+        <source>Start and end</source>
+        <translation>จุดเริ่มต้นและจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>P1, P2 and P3</source>
+        <translation>P1, P2 และ P3</translation>
     </message>
     <message>
         <source>\org mode</source>
@@ -27411,6 +27681,7 @@ increasing or decreasing the value.</source>
     </message>
     <message>
         <source>Rotate</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>หมุน</translation>
     </message>
     <message>
@@ -28027,7 +28298,7 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Yours</source>
+        <source>Mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28087,15 +28358,15 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to yours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to yours</source>
+        <source>Copy to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

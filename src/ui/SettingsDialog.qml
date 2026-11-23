@@ -1649,8 +1649,43 @@ DialogWindow {
                     page: "video"
                     objectName: "settingsPageVideo"
                     Section {
-                        key: "video.playback"
+                        key: "video.fullscreen"
+                        objectName: "settingsFullscreen"
                         ruled: false
+                        SettingsRow {
+                            host: dialog
+                            setting: "video.fullscreenBarPosition"
+                            iconRole: "fullscreen"
+                            SettingChoice {
+                                setting: "video.fullscreenBarPosition"
+                                model: [qsTr("Below the picture (letterbox)"), qsTr("Over the picture")]
+                                Accessible.name: qsTr("Bar position")
+                            }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "video.fullscreenBar"
+                            iconRole: "show-toolbar"
+                            SettingChoice {
+                                setting: "video.fullscreenBar"
+                                model: [qsTr("Auto-hide"), qsTr("Always"), qsTr("Never")]
+                                Accessible.name: qsTr("Show bar")
+                            }
+                        }
+                        SettingCheck { setting: "video.fullscreenHidePointer" }
+                        SettingCheck { setting: "video.fullscreenOverlays" }
+                        SettingsRow {
+                            host: dialog
+                            setting: "video.fullscreenOpensIn"
+                            SettingChoice {
+                                setting: "video.fullscreenOpensIn"
+                                model: [qsTr("Simple"), qsTr("Typesetting")]
+                                Accessible.name: qsTr("Opens in")
+                            }
+                        }
+                    }
+                    Section {
+                        key: "video.playback"
                         SettingCheck { setting: "video.pauseOnClick" }
                         SettingCheck { setting: "video.fullScreenOnStart" }
                         SettingCheck { setting: "video.openAtActiveLine" }

@@ -9,6 +9,30 @@ namespace hikari::application {
 
 namespace {
 
+constexpr std::u8string_view kKey = u8"Automation Scripts";
+
+}
+
+std::optional<std::string> documentScriptsValue(const core::Document &document)
+{
+    auto value = document.projectGarbage(kKey);
+    if (!value)
+        value = document.scriptInfo(kKey);
+    if (!value)
+        return std::nullopt;
+    return std::string(value->begin(), value->end());
+}
+
+bool setDocumentScriptsValue(core::Document &document, const std::string &value)
+{
+    const std::u8string text(value.begin(), value.end());
+    if (document.scriptInfo(kKey) && !document.setScriptInfo(kKey, text))
+        return false;
+    return document.setProjectGarbage(kKey, text);
+}
+
+namespace {
+
 std::string_view trimLeft(std::string_view s)
 {
     while (!s.empty() && (s.front() == ' ' || (s.front() >= '\t' && s.front() <= '\r')))

@@ -108,19 +108,22 @@ protected:
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Play"; })
                                ? "paused" : "not paused");
-        const std::string before = getStringProperty("videoFullscreen/fullscreenTimes", "text");
+        const std::string before = getStringProperty("videoFullscreen/fullscreenTime", "text");
         wait(200ms);
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Right, spix::KeyModifiers::None);
-        note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTimes", "text") != before; })
+        note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTime", "text") != before; })
                                ? "stepped" : "not stepped");
-        const auto mode = [&] { return getStringProperty("videoFullscreen/fullscreenBarMode", "text"); };
+        const auto mode = [&] {
+            const std::string shown = getStringProperty("videoFullscreen/videoFullscreenPanel", "showBar");
+            return shown == "0" ? std::string("Auto") : shown == "1" ? std::string("Always") : shown == "2" ? std::string("Never") : shown;
+        };
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Always show"; }) ? "always" : "not always: " + mode());
+        note(waitFor([&] { return mode() == "Always"; }) ? "always" : "not always: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Never show" && !existsAndVisible("videoFullscreen/videoFullscreenPanel"); })
+        note(waitFor([&] { return mode() == "Never" && !existsAndVisible("videoFullscreen/videoFullscreenPanel"); })
                  ? "never" : "not never: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
-        note(waitFor([&] { return mode() == "Show when the pointer moves"; }) ? "auto" : "not auto: " + mode());
+        note(waitFor([&] { return mode() == "Auto"; }) ? "auto" : "not auto: " + mode());
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         const std::string blank = std::to_string(int(Qt::BlankCursor));
         note(waitFor([&] {

@@ -141,9 +141,9 @@ bool PluginProcess::enqueue(Unit unit)
     return true;
 }
 
-bool PluginProcess::run(const std::string &command)
+bool PluginProcess::run(const std::string &command, const std::string &call)
 {
-    return enqueue(Unit{Unit::Kind::Command, command, {}, {}, {}});
+    return enqueue(Unit{Unit::Kind::Command, command, call, {}, {}});
 }
 
 bool PluginProcess::exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson,
@@ -204,7 +204,7 @@ void PluginProcess::next()
         payload = plugin::encodeLoad(m_load());
     } else if (unit.kind == Unit::Kind::Command) {
         Writer w;
-        w.i32(static_cast<std::int32_t>(plugin::Command::Run)).str(unit.name);
+        w.i32(static_cast<std::int32_t>(plugin::Command::Run)).str(unit.name).str(unit.json);
         payload = w.take();
     } else if (unit.kind == Unit::Kind::Timer) {
         Writer w;

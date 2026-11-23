@@ -9,12 +9,19 @@ Frame {
     objectName: "visualToolRail"
     required property VisualToolsController tools
     property var keyOf: symbol => ""
-    padding: 1
-    implicitWidth: 30 + leftPadding + rightPadding
-    implicitHeight: tools.railOrder.length * 29 - 1 + 2 + topPadding + bottomPadding
+    property bool named: false
+    readonly property alias list: namedList
+    padding: named ? 0 : 1
+    implicitWidth: named ? 188 : 30 + leftPadding + rightPadding
+    implicitHeight: named ? namedList.contentHeight : tools.railOrder.length * 29 - 1 + 2 + topPadding + bottomPadding
+    Binding {
+        target: rail.background
+        property: "visible"
+        value: !rail.named
+    }
 
     readonly property int slots: Math.max(1, Math.floor((availableHeight - 2 + familyColumn.spacing) / (28 + familyColumn.spacing)))
-    readonly property bool overflows: tools.railOrder.length > slots
+    readonly property bool overflows: !named && tools.railOrder.length > slots
     readonly property var shown: {
         const order = tools.railOrder
         if (!overflows)
@@ -27,8 +34,103 @@ Frame {
     readonly property var folded: tools.railOrder.filter(f => !shown.includes(f))
     readonly property bool menuOpen: moreMenu.opened
 
+    VisualToolTexts {
+        id: texts
+    }
+    ListView {
+        id: namedList
+        objectName: "visualToolList"
+        anchors.fill: parent
+        visible: rail.named
+        enabled: rail.named
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+        keyNavigationEnabled: false
+        activeFocusOnTab: false
+        currentIndex: Math.max(0, model.findIndex(r => r.family === rail.tools.activeFamily))
+        model: {
+            const rows = []
+            texts.groups.forEach((g, i) => g.forEach((f, j) => rows.push({ family: f, split: i > 0 && j === 0 })))
+            return rows
+        }
+        Accessible.role: Accessible.List
+        Accessible.name: qsTr("Visual tools")
+        Keys.onUpPressed: currentIndex = Math.max(0, currentIndex - 1)
+        Keys.onDownPressed: currentIndex = Math.min(count - 1, currentIndex + 1)
+        Keys.onReturnPressed: rail.tools.selectFamily(model[currentIndex].family)
+        Keys.onEnterPressed: rail.tools.selectFamily(model[currentIndex].family)
+        Keys.onSpacePressed: rail.tools.selectFamily(model[currentIndex].family)
+        delegate: ItemDelegate {
+            id: row
+            required property var modelData
+            required property int index
+            readonly property int family: modelData.family
+            readonly property bool chosen: rail.tools.activeFamily === family
+            objectName: "visualToolRow" + family
+            width: ListView.view.width
+            height: 28 + topInset
+            topInset: modelData.split ? 1 : 0
+            topPadding: topInset
+            leftPadding: 10
+            rightPadding: 8
+            enabled: rail.tools.railEnabled && (rail.tools.families[family]?.available ?? false)
+            focusPolicy: Qt.NoFocus
+            text: rail.tools.families[family]?.name ?? ""
+            Accessible.role: Accessible.ListItem
+            Accessible.name: text
+            Accessible.selectable: true
+            Accessible.selected: chosen
+            ToolTip.visible: hovered
+            ToolTip.text: rail.tipOf(family)
+            ToolTip.delay: 600
+            onClicked: rail.tools.selectFamily(family)
+            background: Item {
+                Rectangle {
+                    visible: row.modelData.split
+                    width: parent.width
+                    height: 1
+                    color: Theme.line
+                }
+                Rectangle {
+                    y: row.topInset
+                    width: parent.width
+                    height: parent.height - row.topInset
+                    color: row.chosen ? Theme.select : row.down ? Theme.pressed : row.hovered ? Theme.hover : "transparent"
+                    border.width: row.chosen && Theme.highContrast ? 1 : 0
+                    border.color: Theme.accent
+                }
+                Rectangle {
+                    y: row.topInset
+                    width: parent.width
+                    height: parent.height - row.topInset
+                    visible: namedList.activeFocus && namedList.currentIndex === row.index
+                    color: "transparent"
+                    border.color: Theme.focus
+                }
+            }
+            contentItem: RowLayout {
+                spacing: 8
+                Icon {
+                    objectName: "visualToolRowIcon" + row.family
+                    // MUST KILL: iconRole list repeats application::visual::Family order, and icon_tests parses this one line
+                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient", "tool-text-on-path"][row.family] ?? ""
+                    enabled: row.enabled
+                }
+                Label {
+                    objectName: "visualToolRowName" + row.family
+                    Layout.fillWidth: true
+                    text: texts.shortName(row.family)
+                    font.weight: row.chosen ? Font.DemiBold : Font.Normal
+                    color: row.enabled ? Theme.text : Theme.disabled
+                    elide: Text.ElideRight
+                }
+            }
+        }
+    }
+
     ColumnLayout {
         id: familyColumn
+        visible: !rail.named
         x: 1
         y: 1
         width: 28

@@ -14,6 +14,7 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QKeySequence>
 #include <QUrl>
 #include <private/qzipreader_p.h>
 
@@ -110,6 +111,12 @@ QString manifestMessage(const ManifestProblem &problem)
             .arg(api::kApiVersion);
     case ManifestProblem::Kind::QmlNeedsFullTrust:
         return QCoreApplication::translate("HikariSub.Plugins", "Only Full trust plugins can ship QML panels.");
+    case ManifestProblem::Kind::UnknownCommand:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.")
+            .arg(text(problem.detail), at);
+    case ManifestProblem::Kind::DuplicateKey:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json binds %1 twice, at %2.")
+            .arg(text(problem.detail), at);
     case ManifestProblem::Kind::Schema:
     case ManifestProblem::Kind::BadDefault:
         break;
@@ -223,6 +230,14 @@ QStringList contributionLines(const plugins::Manifest &manifest)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Command: %1").arg(text(command.title));
     for (const plugins::Panel &panel : manifest.panels)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Panel: %1").arg(text(panel.title));
+    for (const plugins::StatusItem &item : manifest.statusItems)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Status bar item: %1").arg(text(item.title));
+    for (const plugins::Keybinding &binding : manifest.keybindings) {
+        const auto command = std::ranges::find(manifest.commands, binding.command, &plugins::Command::id);
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Shortcut: %1 for %2")
+                     .arg(QKeySequence::fromString(text(binding.key), QKeySequence::PortableText).toString(QKeySequence::NativeText),
+                          text(command->title));
+    }
     return lines;
 }
 

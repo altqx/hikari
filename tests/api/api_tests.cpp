@@ -22,7 +22,7 @@ TEST(ApiRegistry, EveryOperationIsWellFormed)
     ASSERT_FALSE(registry.operations().empty());
     for (const Json::Member &def : registry.defs().asObject())
         EXPECT_FALSE(checkSchema(def.value, registry.defs())) << def.key << ": " << *checkSchema(def.value, registry.defs());
-    const auto name = *hikari::regex::Pattern::compile("[a-z]+(\\.[a-z_]+)+");
+    const auto name = *hikari::regex::Pattern::compile("[a-z]+(_[a-z]+)*(\\.[a-z_]+)+");
     std::set<std::string> seen;
     for (const Operation &op : registry.operations()) {
         EXPECT_TRUE(name.match(op.name)) << op.name;

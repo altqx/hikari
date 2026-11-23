@@ -264,6 +264,13 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
         setAccels();
     });
     connect(&m_scripts, &AutomationHotkeysController::bindingsChanged, this, &HotkeysController::relistMacros);
+    m_scripts.setBuiltInOwner([this](const std::string &keys) {
+        const std::string accel = application::accelOfQtKeys(keys);
+        for (const auto &[key, hotkey] : m_installed)
+            if (key.id < application::kFirstScriptHotkey && sameChord(hotkey.accel, accel))
+                return commandName(key.id);
+        return QString();
+    });
     QCoreApplication::instance()->installEventFilter(this);
 }
 

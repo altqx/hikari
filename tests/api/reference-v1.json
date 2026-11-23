@@ -2104,6 +2104,64 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "status_items.set",
+      "access": "write",
+      "summary": "Changes one of the caller's status bar items. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64,
+            "description": "An id from contributes.statusItems."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Empty: icon only."
+          },
+          "icon": {
+            "type": "string",
+            "maxLength": 68,
+            "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$",
+            "description": "An icon role or own:<id>; empty: text only."
+          },
+          "tooltip": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "tone": {
+            "enum": [
+              "normal",
+              "warning",
+              "danger"
+            ]
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "events": [
