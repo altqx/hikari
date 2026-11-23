@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Shapes
 import QtQuick.Dialogs
 import Hikari.Ui
+import HikariStyle as Style
 import com.kdab.dockwidgets 2.0 as KDDW
 
 ApplicationWindow {
@@ -398,7 +399,8 @@ ApplicationWindow {
     function defaultLayout() {
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
-        dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
+        dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
+                                  Qt.size(Math.round(dockingArea.width * 0.56), 0))
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
         dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
         originalDock.close()
@@ -6340,25 +6342,30 @@ ApplicationWindow {
                     id: audioButtons
                     objectName: "audioButtons"
                     visible: root.audio.loaded
+                    implicitHeight: 28
                     height: visible ? implicitHeight : 0
                     spacing: 2
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
+                    readonly property int buttonSize: 24
+                    readonly property int chevronWidth: 16
+                    readonly property int splitWidth: buttonSize + chevronWidth
+                    readonly property int groupGap: 6
                     readonly property bool folded: width < transportWidth(shownExtras)
-                                                           + (root.audio.karaoke ? audioSwitches.modesWidth + 26 + spacing
+                                                           + (root.audio.karaoke ? audioSwitches.modesWidth + buttonSize + spacing
                                                                                  : audioSwitches.fullWidth)
                                                            + audioTail.unfoldedWidth + 3 * spacing
                     readonly property bool togglesFolded: folded
                         || width < transportWidth(shownExtras) + audioSwitches.fullWidth + audioTail.unfoldedWidth + 3 * spacing
                     readonly property bool splitArrowFolded: folded
                         || root.audio.karaoke && width < transportWidth(shownExtras) + audioSwitches.modesWidth
-                                                        + audioSwitches.splitArrowWidth + 26 + spacing
+                                                        + audioSwitches.splitArrowWidth + buttonSize + spacing
                                                         + audioTail.unfoldedWidth + 3 * spacing
-                    readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + 26 + 3 * spacing
+                    readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + buttonSize + 3 * spacing
                     readonly property var shownExtras: audioPanel.extraOrder.filter(id => audioPanel.shows(id))
                     readonly property var kept: {
                         if (!folded)
                             return shownExtras
-                        const room = width - audioTail.unfoldedWidth - 26 - 3 * spacing
+                        const room = width - audioTail.unfoldedWidth - buttonSize - 3 * spacing
                         let k = shownExtras.length
                         while (k > 0 && transportWidth(shownExtras.slice(0, k)) > room)
                             --k
@@ -6366,23 +6373,24 @@ ApplicationWindow {
                     }
                     function keeps(id) { return kept.indexOf(id) >= 0 }
                     function foldsOut(id) { return audioPanel.shows(id) && !keeps(id) }
-                    // MUST KILL: transportWidth hardcodes the row's item widths (button 26, split button 39, separator 5)
+                    // MUST KILL: transportWidth repeats the transport row's layout to size it before it is shown
                     function transportWidth(extras) {
                         const around = audioPanel.shows("playAround")
                         const marks = extras.filter(id => id === "beforeMark" || id === "afterMark").length
                         const plays = extras.filter(id => audioPanel.playExtras.indexOf(id) >= 0).length
-                        const widths = [26, 26, 26, 26, 26, 5]
+                        const b = buttonSize
+                        const widths = [b, b, b, b, b, groupGap]
                         if (around)
-                            widths.push(39)
+                            widths.push(splitWidth)
                         if (marks > 0 && around)
-                            widths.push(5)
+                            widths.push(groupGap)
                         if (plays > marks && (around || marks > 0))
-                            widths.push(5)
+                            widths.push(groupGap)
                         for (let i = 0; i < extras.length; ++i)
-                            widths.push(26)
+                            widths.push(b)
                         if (around || plays > 0)
-                            widths.push(5)
-                        widths.push(26, 26, 39)
+                            widths.push(groupGap)
+                        widths.push(b, b, splitWidth)
                         return widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * spacing
                     }
                     component AudioButton: ToolButton {
@@ -6393,13 +6401,13 @@ ApplicationWindow {
                         property string iconRole: ""
                         signal run()
                         focusPolicy: Qt.NoFocus
-                        padding: 5
+                        padding: 4
                         display: AbstractButton.IconOnly
                         contentItem: Icon {
                             iconRole: audioButton.iconRole
                         }
-                        implicitHeight: 26
-                        implicitWidth: 26
+                        implicitHeight: audioButtons.buttonSize
+                        implicitWidth: audioButtons.buttonSize
                         Accessible.name: tip
                         ToolTip.text: symbol.length ? audioPanel.audioTip(tip, symbol, altSymbol) : tip
                         ToolTip.visible: hovered
@@ -6407,12 +6415,6 @@ ApplicationWindow {
                             if (symbol.length && root.hotkeyGesture(symbol, 4, true, altSymbol.length > 0))
                                 return
                             run()
-                        }
-                        Rectangle {
-                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                            height: 2
-                            color: Theme.accent
-                            visible: audioButton.checked
                         }
                     }
                     component AudioSegment: AudioButton {
@@ -6422,7 +6424,7 @@ ApplicationWindow {
                         Accessible.checkable: true
                         Accessible.checked: checked
                         background: Rectangle {
-                            color: segment.checked ? Theme.select : segment.hovered ? Theme.raised : "transparent"
+                            color: segment.checked ? Theme.select : segment.hovered ? Theme.hover : "transparent"
                             Rectangle {
                                 width: 1
                                 height: parent.height
@@ -6434,33 +6436,15 @@ ApplicationWindow {
                     component AudioSwitch: Rectangle {
                         default property alias segments: switchRow.data
                         implicitWidth: switchRow.implicitWidth + 2
-                        implicitHeight: 28
+                        implicitHeight: audioButtons.buttonSize + 2
                         color: "transparent"
-                        radius: 3
-                        border.color: Theme.control
+                        radius: Theme.radius
+                        border.color: Theme.line
+                        clip: true
                         Accessible.role: Accessible.Grouping
                         Row {
                             id: switchRow
                             anchors { fill: parent; margins: 1 }
-                        }
-                    }
-                    component AudioArrow: Canvas {
-                        implicitWidth: 8
-                        implicitHeight: 8
-                        readonly property color ink: enabled ? Theme.text : Theme.disabled
-                        onInkChanged: requestPaint()
-                        onPaint: {
-                            const ctx = getContext("2d")
-                            ctx.reset()
-                            ctx.strokeStyle = ink
-                            ctx.lineWidth = 1
-                            ctx.lineCap = "round"
-                            ctx.lineJoin = "round"
-                            ctx.beginPath()
-                            ctx.moveTo(1.5, 3)
-                            ctx.lineTo(4, 5.5)
-                            ctx.lineTo(6.5, 3)
-                            ctx.stroke()
                         }
                     }
                     component AudioSplitButton: Row {
@@ -6473,7 +6457,7 @@ ApplicationWindow {
                         property string menuTip
                         property Menu menu
                         property string faceText: tip
-                        property real arrowWidth: 13
+                        property real arrowWidth: audioButtons.chevronWidth
                         property bool arrowShown: true
                         property alias checkable: splitFace.checkable
                         property alias checked: splitFace.checked
@@ -6496,7 +6480,7 @@ ApplicationWindow {
                             visible: split.arrowShown
                             focusPolicy: Qt.NoFocus
                             implicitWidth: split.arrowWidth
-                            implicitHeight: 26
+                            implicitHeight: audioButtons.buttonSize
                             padding: 0
                             down: split.menu !== null && split.menu.visible
                             display: AbstractButton.IconOnly
@@ -6506,8 +6490,9 @@ ApplicationWindow {
                             ToolTip.text: split.menuTip
                             ToolTip.visible: hovered
                             contentItem: Item {
-                                AudioArrow {
+                                Style.Chevron {
                                     anchors.centerIn: parent
+                                    color: parent.enabled ? Theme.text : Theme.disabled
                                 }
                             }
                             onClicked: split.menu.popup(splitFace, 0, splitFace.height)
@@ -6528,12 +6513,8 @@ ApplicationWindow {
                             font.bold: true
                         }
                     }
-                    component AudioSeparator: Rectangle {
-                        implicitWidth: 1
-                        implicitHeight: 18
-                        Layout.leftMargin: 2
-                        Layout.rightMargin: 2
-                        color: Theme.line
+                    component AudioSeparator: Item {
+                        implicitWidth: audioButtons.groupGap
                     }
                     component TapOptionsMenu: ShellMenu {
                         id: tapMenu
@@ -6859,9 +6840,11 @@ ApplicationWindow {
                         visible: !audioButtons.folded
                         spacing: 2
                         // MUST KILL: modesWidth and fullWidth hardcode the switches' and toggles' widths
-                        readonly property real modesWidth: 2 * 54 + 2 * spacing + (root.audio.karaoke ? 26 + 39 + 2 * spacing : 0)
-                        readonly property real splitArrowWidth: root.audio.karaoke ? 9 : 0
-                        readonly property real fullWidth: modesWidth + splitArrowWidth + 5 + 3 * 26 + 4 * spacing
+                        readonly property real switchWidth: 2 * audioButtons.buttonSize + 2
+                        readonly property real modesWidth: 2 * switchWidth + 2 * spacing
+                                                           + (root.audio.karaoke ? audioButtons.buttonSize + audioButtons.splitWidth + 2 * spacing : 0)
+                        readonly property real splitArrowWidth: root.audio.karaoke ? audioButtons.chevronWidth : 0
+                        readonly property real fullWidth: modesWidth + splitArrowWidth + audioButtons.groupGap + 3 * audioButtons.buttonSize + 4 * spacing
                         AudioSwitch {
                             AudioSegment {
                                 objectName: "audioLineMode"
@@ -6891,7 +6874,6 @@ ApplicationWindow {
                             tip: faceText
                             menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
                             menu: audioKaraokeMenu
-                            arrowWidth: 9
                             arrowShown: !audioButtons.splitArrowFolded
                             onToggled: {
                                 root.audio.toggleKaraokeSplitMode()
@@ -6987,7 +6969,7 @@ ApplicationWindow {
                     RowLayout {
                         id: audioTail
                         spacing: 2
-                        readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 2 * 26 + 3 * spacing
+                        readonly property real unfoldedWidth: audioButtons.groupGap + audioZoomButton.implicitWidth + 2 * audioButtons.buttonSize + 3 * spacing
                         AudioSeparator {}
                         AudioButton {
                             id: audioMoreButton
@@ -7247,7 +7229,7 @@ ApplicationWindow {
                             id: audioZoomButton
                             objectName: "audioZoom"
                             focusPolicy: Qt.NoFocus
-                            implicitHeight: 26
+                            implicitHeight: audioButtons.buttonSize
                             leftPadding: 4
                             rightPadding: 6
                             down: audioZoomMenu.visible
@@ -7263,6 +7245,7 @@ ApplicationWindow {
                                 Label {
                                     objectName: "audioZoomReadout"
                                     text: audioPanel.magnificationText
+                                    color: Theme.muted
                                     font.features: ({ "tnum": 1 })
                                 }
                             }

@@ -8,6 +8,7 @@ ToolButton {
     property string tip: text
     property int iconSize: 16
     display: AbstractButton.IconOnly
+    padding: 4
     contentItem: Icon {
         iconRole: button.iconRole
         size: button.iconSize
