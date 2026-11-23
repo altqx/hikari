@@ -283,6 +283,11 @@ void Application::loadAssociations(application::DocumentId document, const appli
     if (!load.video.empty()) {
         media.video = QDir::toNativeSeparators(qs(load.video));
         media.position = 0;
+        if (auto *session = m_files->session(document)) {
+            const auto view = application::savedView(session->document());
+            media.fileFrame = view.videoFrame;
+            media.fileAspect = view.aspect;
+        }
         if (shown) {
             if (!load.videoAudio)
                 activeMedia().keepTabAudio = media.video;
@@ -294,6 +299,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         const QString path = audio.startsWith(QLatin1String("dummy")) ? audio : QDir::toNativeSeparators(audio);
         media.audio = path;
         media.audioFromVideo = false;
+        media.openedAudio = path;
         if (shown)
             activeMedia().audio->openAudio(path);
     }

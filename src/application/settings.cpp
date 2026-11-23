@@ -296,6 +296,7 @@ std::vector<SettingDefinition> &definitions()
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // One "<picker>\t<folder URL>" row per picker.
         {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        {"statusBar.hiddenItems", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // One "<list>\t<project|mine>" row per tiered list: where New and Save as save.
         {"workspace.saveTiers", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
@@ -402,6 +403,7 @@ std::vector<SettingDefinition> &definitions()
         {"postprocessor.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.preset", "", String, Profile, Mapped, false, std::string()},
         {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
+        {"export.recipes", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
         {"qcNotes.hideDone", "", Bool, Profile, Mapped, false, false},
@@ -424,6 +426,12 @@ std::vector<SettingDefinition> &definitions()
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
         // 0 Auto, 1 Always, 2 Never.
         {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // 0 below the picture (letterbox), 1 over it.
+        {"video.fullscreenBarPosition", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        {"video.fullscreenHidePointer", "", Bool, Profile, Mapped, false, true},
+        {"video.fullscreenOverlays", "", Bool, Profile, Mapped, false, true},
+        // 0 Simple, 1 Typesetting.
+        {"video.fullscreenOpensIn", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
         // visual::ZoomModel and visual::ScrollAction values.

@@ -5,7 +5,8 @@
 // Requests start with an i32 Command:
 //   Load: a LoadRequest. Runs the main file once. Terminal Ok carries an i32 count and the
 //         command ids that have handlers; Failed carries the error text. A helper loads once.
-//   Run:  str command id, as the manifest declares it. Terminal Ok, or Failed with the error text.
+//   Run:  str command id, as the manifest declares it; str JSON {args, context}, the handler's two
+//         arguments. Terminal Ok, or Failed with the error text.
 //   Timer: i64 timer id, u8 last (the timer won't fire again). Runs its callback; Terminal as Run.
 //   Export: str format id, str JSON snapshot, str JSON options. Terminal Ok carries the file's bytes;
 //         Failed carries the error text.

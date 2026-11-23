@@ -611,8 +611,8 @@ Application::Application(QObject *parent) : Application(Options{}, parent) {}
 
 Application::Application(Options options, QObject *parent) : QObject(parent)
 {
-    application::setInstalledVersion(
-        (options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion).toStdString());
+    const QString appVersion = options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion;
+    application::setInstalledVersion(appVersion.toStdString());
     // MUST KILL: read before anything below may write a settings file
     const bool firstStart = !options.settingsFile.isEmpty() && !ui::SettingsStore::filesExist(options.settingsFile);
     m_reader = backends::makeFileReader();
@@ -735,6 +735,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
+    m_exportRecipes = std::make_unique<ui::ExportRecipes>(*m_settings);
+    m_luaExportFilters = std::make_unique<LuaExportFilters>(*m_automation);
     m_selectOptions = m_settings->integer("selectLines.options");
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
@@ -745,6 +747,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     choosePlayer();
     setUpTranslationControls();
     setUpFileArrangements();
+    m_files->setGeneratorVersion(toU8(appVersion));
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     m_automation->setLog([this](const QString &line, AutomationShell::LogLine kind) {
@@ -933,9 +936,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
-    m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
-    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
-            [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    m_automationHotkeys->setPluginRunner(
+        [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
+        m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands());
+        m_automationHotkeys->setPluginDefaults(m_pluginRuntime->keybindings());
+    });
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
@@ -2302,9 +2308,7 @@ void selectLegacyActiveLine(application::EditSession &session)
         return;
     std::size_t active = 0;
     if (session.document().format() == core::SubtitleFormat::Ass) {
-        const auto value = session.document().scriptInfo(u8"Active Line").value_or(std::u8string());
-        const std::string text(value.begin(), value.end());
-        const long n = std::strtol(text.c_str(), nullptr, 10);
+        const long n = application::savedView(session.document()).activeLine.value_or(0);
         if (n > 0 && static_cast<std::size_t>(n) < lines.size())
             active = static_cast<std::size_t>(n);
     }
@@ -2533,6 +2537,8 @@ void Application::refreshViews()
         m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
+    if (m_exportRecipes)
+        m_exportRecipes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -4196,7 +4202,7 @@ bool Application::autosave(application::DocumentId document, bool now)
     if (layout)
         saved.setHikariProperty(application::kLayoutKey, *layout);
     m_files->applyProjectGarbage(document, m_files->destination(document).value_or(application::DestinationKey{}),
-                                 saved);
+                                 saved, activeLine);
     content.bytes = core::encodeSubtitle(saved, m_files->saveOptions());
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
@@ -4220,7 +4226,7 @@ bool Application::autosave(application::DocumentId document, bool now)
     auto write = [store = *m_recovery, key, content = std::move(content)]() mutable { return store.write(key, content); };
     auto wrote = [this, document, activeLine](bool written) {
         if (auto *s = m_files->session(document); written && activeLine && s)
-            s->amendScriptInfo(application::kActiveLineKey, *activeLine);
+            application::amendActiveLine(*s, *activeLine);
     };
     if (!now) {
         m_recoveryWrites.put(QString::fromStdString(key), std::move(write), std::move(wrote));
@@ -7235,11 +7241,11 @@ void Application::settingChanged(const QString &id)
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
-    else if (id == QLatin1String("autosave.intervalSeconds"))
+    else if (id == QLatin1String("autosave.intervalSeconds")) {
         for (auto &[document, timer] : m_autosaveTimers)
             if (timer)
                 timer->setInterval(autosaveIntervalMs());
-    else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
+    } else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         for (auto *views : allViews())
             views->shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.columnWidths") && !m_resettingSettings)

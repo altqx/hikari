@@ -27,6 +27,7 @@
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/app/lua_export_filters.h"
 #include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
@@ -80,6 +81,7 @@
 #include "colour_picker_controller.h"
 #include "workspace_layout.h"
 #include "shift_times_controller.h"
+#include "export_recipes.h"
 #include "tag_buttons_controller.h"
 #include "grid_filter_controller.h"
 #include "visual_tools_controller.h"
@@ -720,8 +722,19 @@ public:
     // target's last export choice, else the last export's; empty without an editing target.
     Q_INVOKABLE QVariantMap exportSetup() const;
     // Writes a copy of the editing target (its Document is never changed) and remembers the choice.
-    // {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number, losses}]}.
+    // options.steps, [{id, on, settings}], run on the copy first for HikariSub's own formats; a failing step
+    // writes nothing. {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number,
+    // losses}]}, both with steps: [{id, name, state, lines, problem, error}] when steps ran and stepsFailed when
+    // one failed; {pending} while a Lua step runs, the result then coming from pluginExportFinished.
     Q_INVOKABLE QVariantMap exportTo(const QUrl &file, const QString &format, const QVariantMap &options);
+    // Before export's lists for the editing target: {available: [{id, name, priority, hasConfig, script}],
+    // newList, fromFile (empty without an Export Filters line): [{id, on, settings}], recipes: [{name, tier,
+    // hidden}], hasProject}.
+    Q_INVOKABLE QVariantMap exportSteps() const;
+    Q_INVOKABLE QVariantList exportRecipe(const QString &name, const QString &tier) const;
+    Q_INVOKABLE bool saveExportRecipe(const QString &name, const QString &tier, const QVariantList &steps);
+    Q_INVOKABLE bool removeExportRecipe(const QString &name, const QString &tier);
+    Q_INVOKABLE bool renameExportRecipe(const QString &tier, const QString &from, const QString &to);
     // The panel's values: {scope ("document", "openDocuments", "folder"),
     // replaceShown, find, replace, styles, filters, folder, field ("text", "style",
     // "actor", "effect"), lines ("all", "selected", "fromSelection"), matchCase, regex,
@@ -1212,6 +1225,10 @@ private:
     std::optional<api::Json> formatSnapshot(application::DocumentId document, const std::optional<std::set<core::LineId>> &only);
     // A format call's options: {frameRate, video, path}; frameRate < 1: the video's, else null.
     api::Json formatOptions(double frameRate, const QString &path) const;
+    struct ExportWrite;
+    QVariantMap writeExport(application::DocumentId target, const ExportWrite &write, const core::Document &document);
+    QVariantMap exportAfterSteps(application::DocumentId target, std::shared_ptr<ExportWrite> write,
+                                 const application::ExportRecipe &recipe, const core::Document &document);
     QVariantMap exportPluginFormat(application::DocumentId target, const PluginRuntime::Format &format, const QString &path,
                                    const QVariantMap &values);
     QVariantMap exportThroughPlugin(application::DocumentId document, const PluginRuntime::Format &format, const QString &path,
@@ -1525,6 +1542,9 @@ private:
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
+    std::unique_ptr<ui::ExportRecipes> m_exportRecipes;
+    std::unique_ptr<LuaExportFilters> m_luaExportFilters;
+    std::map<std::uint64_t, std::string> m_exportFiltersToSave;
     int m_selectOptions = 0;
     std::optional<core::ConversionOptions> assConversionOptions() const;
     std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
@@ -1839,6 +1859,11 @@ private:
         bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
+        QString openedAudio;
+        bool videoDropped = false;
+        bool audioDropped = false;
+        std::optional<int> fileFrame;
+        std::optional<double> fileAspect; // width / height
     };
     struct UnresolvedRestore {
         application::DocumentId document;

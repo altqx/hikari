@@ -10,6 +10,9 @@
 #include "hikari/application/recent_files.h"
 #include "hikari/application/row_marks.h"
 #include "hikari/plugins/registry.h"
+#include "hikari/application/settings.h"
+
+#include "settings_store.h"
 
 #include <QDir>
 #include <QFile>
@@ -80,6 +83,31 @@ class PluginRuntimeTests : public QObject {
                   extra + "}");
         write(folder + QStringLiteral("/main.lua"), main);
         m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), enabled}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+    }
+
+    void installMarks()
+    {
+        const QString folder = folders().plugins + QStringLiteral("/com.example.marks");
+        write(folder + QStringLiteral("/hikari-plugin.json"), R"({"id": "com.example.marks", "name": "Marks", "version": "1.0.0",
+            "api": 1, "main": "main.lua", "authors": ["Ana"], "contributes": {
+            "commands": [{"id": "greet", "title": "Say hello", "icon": "plugins", "when": ["selection", "!video"]},
+                         {"id": "spin", "title": "Spin"}],
+            "menus": [{"command": "greet", "location": "grid.context", "group": "a"},
+                      {"command": "spin", "location": "grid.context", "group": "b"},
+                      {"command": "spin", "location": "menuBar"}],
+            "statusItems": [{"id": "count", "title": "Count", "text": "0", "tooltip": "Lines", "command": "spin"}],
+            "keybindings": [{"command": "greet", "key": "Ctrl+Alt+K"}, {"command": "spin", "key": "Ctrl+S"}]}})");
+        write(folder + QStringLiteral("/main.lua"), R"~(
+            hikari.commands.register('greet', function(args, context) hikari.notify('via ' .. context.via) end)
+            hikari.commands.register('spin', function(args, context)
+                hikari.status.set('count', {text = 'spun', tone = 'danger'})
+                hikari.notify('spun via ' .. context.via)
+            end)
+        )~");
+        m_registry[QStringLiteral("com.example.marks")] =
+            QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
         write(folders().registry,
               QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
     }
@@ -1654,6 +1682,121 @@ end)
         QVERIFY2(noticed.first().at(3).toString().startsWith(QStringLiteral("Cues couldn’t open this file: ")),
                  qPrintable(noticed.first().at(3).toString()));
         QVERIFY(noticed.first().at(3).toString().contains(QStringLiteral("no cues in empty.cue")));
+    }
+
+    void menusFollowTheManifestAndConditionsDisableACommand()
+    {
+        installMarks();
+        ui::LogController log;
+        QSignalSpy noticed(&log, &ui::LogController::noticed);
+        app::PluginRuntime::Wiring w{QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {}};
+        w.activeWindow = [] { return 0; };
+        app::PluginRuntime runtime(std::move(w));
+        runtime.sync();
+        const QString greet = QStringLiteral("plugin.com.example.marks.greet");
+        const QString spin = QStringLiteral("plugin.com.example.marks.spin");
+        QCOMPARE(runtime.commands().first().toMap().value(QStringLiteral("icon")).toString(), QStringLiteral("plugins"));
+        QStringList placed;
+        for (const QVariant &v : runtime.menuItems()) {
+            const QVariantMap item = v.toMap();
+            placed << item.value(QStringLiteral("location")).toString() + u' ' + item.value(QStringLiteral("name")).toString() +
+                          u' ' + item.value(QStringLiteral("group")).toString();
+        }
+        QCOMPARE(placed, (QStringList{QStringLiteral("grid.context pluginMenu_com.example.marks_greet a"),
+                                      QStringLiteral("grid.context pluginMenu_com.example.marks_spin b"),
+                                      QStringLiteral("menuBar pluginMenu_com.example.marks_spin ")}));
+
+        QCOMPARE(runtime.disabledReason(greet), QStringLiteral("Needs a selection"));
+        QVERIFY(!runtime.run(greet, QStringLiteral("menu")));
+        QSignalSpy conditions(&runtime, &app::PluginRuntime::conditionsChanged);
+        runtime.setConditions(0, {{QStringLiteral("selectedLines"), 1}, {QStringLiteral("video"), true}});
+        QCOMPARE(conditions.size(), 1);
+        QCOMPARE(runtime.disabledReason(greet), QStringLiteral("Works only without an open video"));
+        runtime.setConditions(1, {{QStringLiteral("selectedLines"), 1}});
+        QCOMPARE(runtime.disabledReason(greet, 1), QString());
+        QCOMPARE(runtime.disabledReason(greet), QStringLiteral("Works only without an open video"));
+        runtime.setConditions(0, {{QStringLiteral("selectedLines"), 2}});
+        QCOMPARE(runtime.disabledReason(greet), QString());
+        QCOMPARE(runtime.disabledReason(spin), QString());
+        QVERIFY(runtime.run(greet, QStringLiteral("menu")));
+        QVERIFY(runtime.run(spin, QStringLiteral("status")));
+        QTRY_COMPARE(noticed.size(), 2);
+        QCOMPARE(noticed.at(0).at(3).toString(), QStringLiteral("via menu"));
+        QCOMPARE(noticed.at(1).at(3).toString(), QStringLiteral("spun via status"));
+    }
+
+    void statusItemsChangeThroughTheApiAndGoWhenThePluginStops()
+    {
+        installMarks();
+        ui::LogController log;
+        app::PluginRuntime runtime({QStringLiteral(HIKARI_PLUGIN_HELPER), folders(), nullptr, &log, {}, {}});
+        runtime.sync();
+        QTRY_COMPARE(runtime.statusItems().size(), qsizetype(1));
+        QVariantMap item = runtime.statusItems().first().toMap();
+        QCOMPARE(item.value(QStringLiteral("key")).toString(), QStringLiteral("com.example.marks/count"));
+        QCOMPARE(item.value(QStringLiteral("text")).toString(), QStringLiteral("0"));
+        QCOMPARE(item.value(QStringLiteral("command")).toString(), QStringLiteral("plugin.com.example.marks.spin"));
+        QCOMPARE(runtime.statusItemTitles().size(), qsizetype(1));
+
+        api::StatusItemChange change;
+        change.item = "count";
+        change.text = "12 lines";
+        change.tone = "warning";
+        QCOMPARE(runtime.setStatusItem("com.example.marks", change), api::StatusItemSet::Set);
+        item = runtime.statusItems().first().toMap();
+        QCOMPARE(item.value(QStringLiteral("text")).toString(), QStringLiteral("12 lines"));
+        QCOMPARE(item.value(QStringLiteral("tone")).toString(), QStringLiteral("warning"));
+        change = {};
+        change.item = "count";
+        change.text = "";
+        QCOMPARE(runtime.setStatusItem("com.example.marks", change), api::StatusItemSet::Empty);
+        change.item = "lines";
+        QCOMPARE(runtime.setStatusItem("com.example.marks", change), api::StatusItemSet::UnknownItem);
+        change = {};
+        change.item = "count";
+        change.visible = false;
+        QCOMPARE(runtime.setStatusItem("com.example.marks", change), api::StatusItemSet::Set);
+        QVERIFY(runtime.statusItems().isEmpty());
+        QCOMPARE(runtime.statusItemTitles().size(), qsizetype(1));
+
+        runtime.forceStop(QStringLiteral("com.example.marks"));
+        QTRY_VERIFY(runtime.statusItemTitles().isEmpty());
+        QCOMPARE(runtime.setStatusItem("com.example.marks", change), api::StatusItemSet::NotRunning);
+    }
+
+    void aDefaultShortcutAppliesUnlessTakenOrCleared()
+    {
+        installMarks();
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.plugins = folders();
+        app::Application a(o);
+        QTRY_COMPARE(a.pluginRuntime()->commands().size(), 2);
+        const QString greet = QStringLiteral("plugin.com.example.marks.greet");
+        const QString spin = QStringLiteral("plugin.com.example.marks.spin");
+        auto &shortcuts = a.automationHotkeys();
+        QCOMPARE(shortcuts.keys().value(greet).toString(), QStringLiteral("Ctrl+Alt+K"));
+        QVERIFY(!shortcuts.keys().contains(spin));
+        QVERIFY(shortcuts.takenDefaults().value(spin).toString().contains(QStringLiteral(" is taken by ")));
+        QVERIFY(!shortcuts.takenDefaults().contains(greet));
+        QVERIFY(std::ranges::any_of(shortcuts.shortcuts(), [&](const QVariant &v) {
+            return v.toMap().value(QStringLiteral("legacyName")).toString() == greet;
+        }));
+        QVERIFY(a.settingsStore()->list(application::kAutomationHotkeysSetting.data()).isEmpty());
+
+        QTRY_COMPARE(a.pluginRuntime()->statusItems().size(), qsizetype(1));
+        QVERIFY(a.pluginRuntime()->run(spin, QStringLiteral("status")));
+        QTRY_COMPARE(a.pluginRuntime()->statusItems().first().toMap().value(QStringLiteral("text")).toString(),
+                     QStringLiteral("spun"));
+        QCOMPARE(a.pluginRuntime()->statusItems().first().toMap().value(QStringLiteral("tone")).toString(),
+                 QStringLiteral("danger"));
+
+        shortcuts.clearKeys(greet);
+        QVERIFY(!shortcuts.keys().contains(greet));
+        const QStringList rows = a.settingsStore()->list(application::kAutomationHotkeysSetting.data());
+        QCOMPARE(rows.size(), qsizetype(1));
+        QCOMPARE(rows.first().split(u'\t').mid(0, 2), (QStringList{greet, QString()}));
     }
 };
 

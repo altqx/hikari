@@ -144,6 +144,8 @@ void Application::applyWindowProject(int shellWindow)
         m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects->root(m_workspace.activeWindow()));
+    if (m_exportRecipes)
+        m_exportRecipes->setProjectRoot(m_projects->root(m_workspace.activeWindow()));
     const bool moveTags = v.settings->settings().boolean("translation.autoMoveTagsFromOriginal");
     v.editor->setMoveTags(moveTags);
     v.shell->setRunMarks(moveTags);

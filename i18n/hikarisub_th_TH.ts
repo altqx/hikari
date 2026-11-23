@@ -5922,6 +5922,10 @@ Failed to copy %2 fonts.</source>
         <translation>มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>นำเข้าการตั้งค่าเดิมของฉัน</translation>
     </message>
@@ -5936,6 +5940,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>ตั้งค่าใหม่ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6032,14 +6040,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>วิดีโอขนาดใหญ่พร้อมเครื่องมือภาพและแผงสไตล์</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>ภายหลัง: การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>เริ่มจากค่าเริ่มต้นของ HikariSub การตั้งค่า › ทั่วไป › นำเข้าการตั้งค่ารุ่นเดิม… ยังนำการตั้งค่าเดิมมาใช้ภายหลังได้</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -8134,10 +8134,6 @@ Failed to copy %2 fonts.</source>
         <translation>หาการจาง…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8192,6 +8188,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -8552,6 +8552,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen typesetting</source>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Global</source>
@@ -13888,6 +13892,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เปิดโฟลเดอร์ผู้ใช้</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>ซ่อนแท็ก</translation>
     </message>
@@ -14044,6 +14052,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>ASS tag replacement</source>
         <translation>การแทนที่แท็ก ASS</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -14520,10 +14588,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -16407,20 +16471,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not installed</source>
+        <translation>ยังไม่ได้ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>ติดตั้ง</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>ติดตั้งแล้ว</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Downloading the AI component · %1 of %2 MB</source>
+        <translation>กำลังดาวน์โหลดคอมโพเนนต์ AI · %1 จาก %2 MB</translation>
     </message>
 </context>
 <context>
@@ -17356,6 +17432,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json อ้างถึงคำสั่ง “%1” ที่ %2 ซึ่งไม่ได้ประกาศไว้</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json กำหนด %1 ซ้ำสองครั้ง ที่ %2</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>รายการในแถบสถานะ: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>ปุ่มลัด: %1 สำหรับ %2</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 ถูกใช้โดย %2 แล้ว</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>ต้องมีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>ต้องมีการเลือก</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีการเลือก</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>ต้องเลือกตั้งแต่สองบรรทัดขึ้นไป</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>ทำงานได้เฉพาะเมื่อเลือกบรรทัดเดียวหรือไม่ได้เลือก</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>ต้องมีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>ต้องมีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>ต้องเป็นบรรทัดคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>ทำงานได้เฉพาะบนบรรทัดที่ไม่มีคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>ต้องอยู่ในโหมดการแปล</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>ทำงานได้เฉพาะนอกโหมดการแปล</translation>
     </message>
 </context>
 <context>
@@ -20132,10 +20284,6 @@ because it was edited.</source>
         <translation>ไม่สามารถเขียนสแนปช็อต</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>นำเข้าการตั้งค่ารุ่นเดิม</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>ขัดแย้ง</translation>
     </message>
@@ -20160,20 +20308,8 @@ because it was edited.</source>
         <translation>กลับไปใช้การตั้งค่าก่อนการนำเข้าครั้งล่าสุดหรือไม่?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>การตั้งค่าจะมีผลเมื่อเริ่ม HikariSub ครั้งถัดไป การติดตั้งรุ่นเดิมจะไม่ถูกเปลี่ยนแปลง</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>การตั้งค่าที่คุณเปลี่ยนหลังจากนั้นจะย้อนกลับด้วย: %1 การติดตั้งรุ่นเดิมจะไม่ถูกเปลี่ยนแปลง</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>เลือกโฟลเดอร์ของการติดตั้งรุ่นเดิม</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20208,10 +20344,6 @@ because it was edited.</source>
         <translation>นำเข้า</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>การติดตั้ง</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>ตรวจทาน</translation>
     </message>
@@ -20220,20 +20352,36 @@ because it was edited.</source>
         <translation>ขั้นตอนที่ %1 จาก 3: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>เลือกการติดตั้งรุ่นเดิมที่จะนำเข้า</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>การติดตั้ง HikariSub 0.0.x ที่พบในคอมพิวเตอร์นี้ จะไม่มีสิ่งใดในการติดตั้งเหล่านั้นถูกเปลี่ยนแปลง</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>การติดตั้งรุ่นเดิม</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>ไม่พบการติดตั้งรุ่นเดิม เลือกโฟลเดอร์ของการติดตั้ง</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20260,8 +20408,8 @@ because it was edited.</source>
         <translation>ตรวจทานสิ่งที่จะนำเข้า</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>ความขัดแย้งคือการตั้งค่าที่การติดตั้งรุ่นเดิมกำหนดไว้ต่างจากของคุณ ตัวเลือกที่แนะนำถูกเลือกไว้แล้ว ยกเลิกเครื่องหมายรายการที่คุณต้องการคงไว้</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20364,8 +20512,8 @@ because it was edited.</source>
         <translation>นำเข้า %1 จาก %2 การเปลี่ยนแปลง, ไม่เปลี่ยน %3, ระบุไม่ได้ %4, ไม่รวม %5, เลิกใช้แล้ว %6</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>ไม่พบการตั้งค่ารุ่นเดิมข้างโปรแกรม เลือกโฟลเดอร์ของการติดตั้งรุ่นเดิม</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
@@ -25212,6 +25360,14 @@ Styles deleted:
         <translation>เล่นหรือหยุดชั่วคราว</translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
+        <translation>เปิดวิดีโอแบบเต็มหน้าจอ โดยมีเครื่องมือภาพ บรรทัดปัจจุบัน และเครื่องมือของบรรทัดอยู่ด้านข้าง</translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>วิดีโอ</translation>
     </message>
@@ -25381,10 +25537,6 @@ Styles deleted:
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation>ออกจากโหมดเต็มหน้าจอ</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>เต็มหน้าจอ</translation>
     </message>
@@ -25469,22 +25621,78 @@ Styles deleted:
         <translation>วิดีโอเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>กด Esc เพื่อออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation>ไฟล์วิดีโอก่อนหน้า</translation>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>บรรทัด %1 %2: %3</translation>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Visual tools</source>
-        <translation>เครื่องมือภาพ</translation>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>ไทป์เซ็ต</translation>
+    </message>
+    <message>
+        <source>Video status</source>
+        <translation>สถานะวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame %1</source>
+        <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
+        <translation>เฟรม %1</translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
+        <translation>บรรทัด %1 จาก %2</translation>
+    </message>
+    <message>
+        <source>Line %1 text</source>
+        <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
+        <translation>ข้อความบรรทัด %1</translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25504,32 +25712,48 @@ Styles deleted:
         <translation>แถบเต็มหน้าจอ</translation>
     </message>
     <message>
-        <source>Full screen bar: %1</source>
-        <translation>แถบเต็มหน้าจอ: %1</translation>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show when the pointer moves</source>
-        <translation>แสดงเมื่อขยับตัวชี้</translation>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always show</source>
-        <translation>แสดงเสมอ</translation>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never show</source>
-        <translation>ไม่แสดง</translation>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation>แสดงเมื่อขยับตัวชี้ ซ่อนเมื่อไม่มีการใช้งาน</translation>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation>คงแถบไว้ ภาพจะสิ้นสุดเหนือแถบ</translation>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>ภาพเท่านั้น</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -25838,6 +26062,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>บรรทัด %1: %2</translation>
     </message>
     <message>
@@ -26087,6 +26312,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Move</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ย้าย</translation>
     </message>
     <message>
@@ -26182,6 +26408,32 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Changes the active line</source>
         <translation>เปลี่ยนบรรทัดปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>On the frame</source>
+        <translation>บนเฟรม</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Apply to</source>
+        <translation>นำไปใช้กับ</translation>
+    </message>
+    <message>
+        <source>This line</source>
+        <translation>บรรทัดนี้</translation>
+    </message>
+    <message>
+        <source>Picked lines (%1)</source>
+        <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
+        <translation>บรรทัดที่ตรึงไว้ (%1)</translation>
+    </message>
+    <message>
+        <source>Picks the selected lines: the tools edit them, not the active line</source>
+        <translation>ตรึงบรรทัดที่เลือก: เครื่องมือจะแก้ไขบรรทัดเหล่านั้น ไม่ใช่บรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>More options</source>
@@ -26585,6 +26837,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Drawing</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ภาพวาด</translation>
     </message>
     <message>
@@ -26748,6 +27001,10 @@ or codecs or a splitter may be missing</source>
         <translation>รูปร่าง: %1</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>เครื่องมือภาพ</translation>
+    </message>
+    <message>
         <source>More tools</source>
         <translation>เครื่องมือเพิ่มเติม</translation>
     </message>
@@ -26801,6 +27058,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Gradient</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ไล่ระดับ</translation>
     </message>
     <message>
@@ -26860,12 +27118,220 @@ or codecs or a splitter may be missing</source>
         <translation>ไฮดรา</translation>
     </message>
     <message>
+        <source>Pointer</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ตัวบ่งชี้ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ปรับขนาด</translation>
+    </message>
+    <message>
+        <source>Tilt X / Y</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>หมุนตามแกน X / Y</translation>
+    </message>
+    <message>
+        <source>Rectangle clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>คลิปสี่เหลี่ยม</translation>
+    </message>
+    <message>
+        <source>Vector clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>คลิปเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>Shift positions</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>เลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>All tags</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>ไฮดรา</translation>
+    </message>
+    <message>
         <source>Perspective</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>เพอร์สเปกทีฟ</translation>
     </message>
     <message>
         <source>Text on path</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>ข้อความตามเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
+        <translation>ชี้ที่ภาพเพื่ออ่านตำแหน่ง Ctrl+คลิกเพื่อวางบรรทัดที่นั่น</translation>
+    </message>
+    <message>
+        <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
+        <translation>ลากเพื่อวางบรรทัด Shift+ลากเพื่อล็อกไว้ที่แกนเดียว คลิกขวาเพื่อวางบรรทัดที่ตัวชี้</translation>
+    </message>
+    <message>
+        <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
+        <translation>ลากจุดเริ่มต้นหรือจุดสิ้นสุด ลากด้วยปุ่มขวาเพื่อกำหนดจุดสิ้นสุด บรรทัดจะเคลื่อนที่ระหว่างสองจุดนี้</translation>
+    </message>
+    <message>
+        <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
+        <translation>ลากเพื่อยืดแนวนอน ลากด้วยปุ่มขวาเพื่อยืดแนวตั้ง Shift+ลากเพื่อปรับขนาดทั้งสองแนว</translation>
+    </message>
+    <message>
+        <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
+        <translation>ลากรอบจุดศูนย์กลางเพื่อหมุนข้อความ ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
+    </message>
+    <message>
+        <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
+        <translation>ลากไปด้านข้างเพื่อหมุนตามแกน Y ลากด้วยปุ่มขวาขึ้นหรือลงเพื่อหมุนตามแกน X ลากจุดศูนย์กลางเพื่อย้ายจุดนั้น</translation>
+    </message>
+    <message>
+        <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบ จะแสดงเฉพาะส่วนที่อยู่ข้างใน ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง จะแสดงเฉพาะส่วนที่อยู่ข้างใน</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
+        <translation>คลิกเพื่อเพิ่มจุด ลากจุดเพื่อปรับรูปร่าง หรือเลือกรูปร่างแล้วลากสร้างกรอบ</translation>
+    </message>
+    <message>
+        <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
+        <translation>ลากเพื่อย้ายตำแหน่ง คลิป และจุดศูนย์กลางของบรรทัดที่ตรึงไว้พร้อมกัน กด Shift เพื่อล็อกแกน</translation>
+    </message>
+    <message>
+        <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
+        <translation>เลือกแท็ก แล้วลากไปด้านข้างบนภาพเพื่อเปลี่ยนค่า กด Shift เพื่อปรับทีละน้อย</translation>
+    </message>
+    <message>
+        <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
+        <translation>ลากมุมเพื่อวางข้อความบนพื้นผิว ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
+        <translation>ลากผ่านข้อความเพื่อกำหนดทิศทางการไล่ระดับ ลากปลายเพื่อปรับ กด Enter เพื่อนำไปใช้</translation>
+    </message>
+    <message>
+        <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
+        <translation>คลิกเพื่อเพิ่มจุดเส้นทาง ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง กด Enter เพื่อนำไปใช้</translation>
+    </message>
+    <message>
+        <source>square</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>สี่เหลี่ยมจัตุรัส</translation>
+    </message>
+    <message>
+        <source>circle</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>วงกลม</translation>
+    </message>
+    <message>
+        <source>cross</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>กากบาท</translation>
+    </message>
+    <message>
+        <source>line</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>เส้น</translation>
+    </message>
+    <message>
+        <source>arrow</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>ลูกศร</translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Start point</source>
+        <translation>จุดเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>End point</source>
+        <translation>จุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>เส้นทาง</translation>
+    </message>
+    <message>
+        <source>Current position</source>
+        <translation>ตำแหน่งปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation>ความกว้าง</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation>ความสูง</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>ทั้งสอง</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>มุม</translation>
+    </message>
+    <message>
+        <source>Tilt grid</source>
+        <translation>กริดการเอียง</translation>
+    </message>
+    <message>
+        <source>Edges and corners</source>
+        <translation>ขอบและมุม</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>จุด</translation>
+    </message>
+    <message>
+        <source>Curve handle</source>
+        <translation>จุดควบคุมเส้นโค้ง</translation>
+    </message>
+    <message>
+        <source>Position and move start</source>
+        <translation>ตำแหน่งและจุดเริ่มการเคลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Move end</source>
+        <translation>จุดสิ้นสุดการเคลื่อนตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Clip and drawing</source>
+        <translation>คลิปและภาพวาด</translation>
+    </message>
+    <message>
+        <source>Changed line</source>
+        <translation>บรรทัดที่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Corners</source>
+        <translation>มุม</translation>
+    </message>
+    <message>
+        <source>Plane corners</source>
+        <translation>มุมระนาบ</translation>
+    </message>
+    <message>
+        <source>Start and end</source>
+        <translation>จุดเริ่มต้นและจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>P1, P2 and P3</source>
+        <translation>P1, P2 และ P3</translation>
     </message>
     <message>
         <source>\org mode</source>
@@ -27227,6 +27693,7 @@ increasing or decreasing the value.</source>
     </message>
     <message>
         <source>Rotate</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>หมุน</translation>
     </message>
     <message>
