@@ -16589,23 +16589,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not installed</source>
-        <translation type="unfinished"></translation>
+        <translation>நிறுவப்படவில்லை</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished"></translation>
+        <translation>நிறுவு</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>நிறுவப்பட்டது</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>மீண்டும் முயல்</translation>
     </message>
     <message>
         <source>Downloading the AI component · %1 of %2 MB</source>
-        <translation type="unfinished"></translation>
+        <translation>AI கூறைப் பதிவிறக்குகிறது · %2 MB இல் %1</translation>
     </message>
 </context>
 <context>

@@ -16464,23 +16464,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not installed</source>
-        <translation type="unfinished"></translation>
+        <translation>설치되지 않음</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished"></translation>
+        <translation>설치</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>설치됨</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>다시 시도</translation>
     </message>
     <message>
         <source>Downloading the AI component · %1 of %2 MB</source>
-        <translation type="unfinished"></translation>
+        <translation>AI 구성 요소 다운로드 중 · %1/%2MB</translation>
     </message>
 </context>
 <context>

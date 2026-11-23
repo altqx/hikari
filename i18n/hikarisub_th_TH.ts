@@ -16464,23 +16464,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not installed</source>
-        <translation type="unfinished"></translation>
+        <translation>ยังไม่ได้ติดตั้ง</translation>
     </message>
     <message>
         <source>Install</source>
-        <translation type="unfinished"></translation>
+        <translation>ติดตั้ง</translation>
     </message>
     <message>
         <source>Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>ติดตั้งแล้ว</translation>
     </message>
     <message>
         <source>Retry</source>
-        <translation type="unfinished"></translation>
+        <translation>ลองอีกครั้ง</translation>
     </message>
     <message>
         <source>Downloading the AI component · %1 of %2 MB</source>
-        <translation type="unfinished"></translation>
+        <translation>กำลังดาวน์โหลดคอมโพเนนต์ AI · %1 จาก %2 MB</translation>
     </message>
 </context>
 <context>
