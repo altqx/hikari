@@ -5704,6 +5704,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Umieszcza w archiwum zip każdy plik czcionki używanej w napisach.</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>Tworzy w folderze dowiązanie do każdego pliku czcionki używanej w napisach. Dowiązania przestaną działać, jeśli czcionki zostaną przeniesione lub usunięte.</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>Zapisanie nowego archiwum zastąpi ten plik.</translation>
     </message>
@@ -5740,8 +5744,16 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Kopiuj do folderu</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>Dowiąż w folderze</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>Archiwum zip</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>Czcionki z pliku MKV są kopiowane: nie ma pliku, do którego można by się dowiązać.</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5780,6 +5792,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Gotowe do zapisu: %1</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>Gotowe do dowiązania w: %1</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>Gotowe do skopiowania do: %1</translation>
     </message>
@@ -5792,12 +5808,20 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Skopiuj, oznaczając jako niekompletne</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>Dowiąż, oznaczając jako niekompletne</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>Zapisz archiwum</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>Kopiuj czcionki</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>Dowiąż czcionki</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -6092,6 +6116,22 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie można spakować czcionki “%1”.</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>Dowiązano czcionkę “%1”.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>Nie można dowiązać czcionki “%1”: włącz tryb dewelopera lub użyj folderu na dysku z czcionką.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>Nie można dowiązać czcionki “%1”.</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>Wybierz folder, w którym mają zostać dowiązane czcionki</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>Brak wczytanych napisów. Wczytaj napisy albo odznacz tę opcję.</translation>
     </message>
@@ -6187,12 +6227,24 @@ Urządzenie wyjściowe: %2</translation>
         <translation>skopiowano</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>Skopiowano %1 bez pliku do dowiązania.</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>Zakończono, dowiązano %1.</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>Zakończono, %1 %2.</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>Nieznalezione %1.</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>Niedowiązane %1.</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6217,6 +6269,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>Wynik oznaczono jako niekompletny (“%1”).</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>Zakończono pomyślnie, dowiązano %1.</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6245,6 +6301,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>Do archiwum “%2” zostaną dodane %1.</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>W “%2” zostaną dowiązane %1.</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>

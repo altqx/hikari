@@ -5649,6 +5649,10 @@ Output device: %2</source>
         <translation>வசன வரிகள் பயன்படுத்தும் ஒவ்வொரு எழுத்துருக் கோப்பையும் ஒரு zip காப்பகத்தில் வைக்கிறது.</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>வசன வரிகள் பயன்படுத்தும் ஒவ்வொரு எழுத்துருக் கோப்பையும் கோப்புறையில் இணைக்கிறது. எழுத்துருக்கள் நகர்த்தப்பட்டாலோ நீக்கப்பட்டாலோ இணைப்புகள் உடையும்.</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>புதிய காப்பகத்தை எழுதினால் அது மாற்றப்படும்.</translation>
     </message>
@@ -5683,8 +5687,16 @@ Output device: %2</source>
         <translation>கோப்புறைக்கு நகலெடு</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>கோப்புறையில் இணை</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>Zip காப்பகம்</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>MKV கோப்பின் எழுத்துருக்கள் நகலெடுக்கப்படும்: இணைக்கக் கோப்பு இல்லை.</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5723,6 +5735,10 @@ Output device: %2</source>
         <translation>%1 ஐ எழுதத் தயார்</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>%1 இல் இணைக்கத் தயார்</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>%1 க்கு நகலெடுக்கத் தயார்</translation>
     </message>
@@ -5735,12 +5751,20 @@ Output device: %2</source>
         <translation>முழுமையற்றது எனக் குறித்து நகலெடு</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>முழுமையற்றது எனக் குறித்து இணை</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>காப்பகத்தை எழுது</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>எழுத்துருக்களை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>எழுத்துருக்களை இணை</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -6033,6 +6057,22 @@ Output device: %2</source>
         <translation>“%1” எழுத்துருவை zip இல் சுருக்க முடியாது.</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>“%1” எழுத்துரு இணைக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>“%1” எழுத்துருவை இணைக்க முடியவில்லை: டெவலப்பர் பயன்முறையை இயக்கவும், அல்லது எழுத்துருவின் இயக்ககத்தில் உள்ள கோப்புறையைப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>“%1” எழுத்துருவை இணைக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>நீங்கள் எழுத்துருக்களை இணைக்க விரும்பும் கோப்புறையைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>வசன வரிகள் எதுவும் ஏற்றப்படவில்லை. வசன வரிகள் ஏற்றவும் அல்லது இந்த விருப்பத்தை தேர்வுநீக்கவும்.</translation>
     </message>
@@ -6128,12 +6168,24 @@ Output device: %2</source>
         <translation>நகலெடுக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>இணைக்கக் கோப்பு இல்லாத %1 நகலெடுக்கப்பட்டன.</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>முடிந்தது, %1 இணைக்கப்பட்டன.</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>முடிந்தது, %1 %2.</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>%1 கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>%1 ஐ இணைக்க முடியாது.</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6158,6 +6210,10 @@ Output device: %2</source>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>வெளியீடு முழுமையற்றது எனக் குறிக்கப்பட்டுள்ளது (“%1”).</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>வெற்றிகரமாக முடிந்தது, %1 இணைக்கப்பட்டன.</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6186,6 +6242,10 @@ Output device: %2</source>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>%1 ஐ “%2” காப்பகத்தில் சேர்க்கத் தயார்.</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>%1 ஐ “%2” இல் இணைக்கத் தயார்.</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
