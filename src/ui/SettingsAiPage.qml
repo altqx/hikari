@@ -253,7 +253,14 @@ ScrollView {
             return qsTr("Up to date · checked %n hour(s) ago", "", hours)
         return qsTr("Up to date · checked %1").arg(new Date(ms).toLocaleString(Qt.locale(), Locale.ShortFormat))
     }
-    function componentStatus(c) {
+    function componentStatus(c, d) {
+        if (c.installed !== true) {
+            if (d.active)
+                return { tone: "muted", text: qsTr("Downloading the AI component · %1 of %2 MB").arg(tenths(d.received || 0), tenths(d.size || 0)) }
+            if (d.error)
+                return { tone: "bad", text: failureText(d.error, 0) }
+            return { tone: "muted", text: qsTr("Not installed") }
+        }
         if (c.state === "checking")
             return { tone: "muted", text: qsTr("Checking…") }
         if (c.state === "downloading")
@@ -268,10 +275,10 @@ ScrollView {
             return { tone: "warn", text: qsTr("%1 is available · %2 MB").arg(c.available, tenths(c.availableBytes)) }
         if (c.newerNeedsApp)
             return { tone: "ok", text: qsTr("Newest this HikariSub runs") }
-        return { tone: "ok", text: c.checkedAt ? checkedText(c.checkedAt) : qsTr("Up to date") }
+        return { tone: "ok", text: c.checkedAt ? checkedText(c.checkedAt) : qsTr("Installed") }
     }
     function componentNote(c) {
-        if (c.state)
+        if (c.installed !== true || c.state)
             return ""
         if (c.error === "downloadNetwork" || c.error === "downloadManifest")
             return c.checkedAt ? qsTr("Last checked %1. HikariSub tries again in an hour.").arg(new Date(c.checkedAt).toLocaleString(Qt.locale(), Locale.ShortFormat))
@@ -2797,7 +2804,9 @@ ScrollView {
             id: componentsSection
             objectName: "aiComponents"
             readonly property var c: page.components
-            readonly property var status: page.componentStatus(c)
+            readonly property var installing: page.ai ? page.ai.download : ({})
+            readonly property bool installed: c.installed === true
+            readonly property var status: page.componentStatus(c, installing)
             readonly property var rollback: c.rollback ?? ({})
             visible: page.live && c.present === true
             title: qsTr("AI components")
@@ -2843,8 +2852,8 @@ ScrollView {
                 columnSpacing: 16
                 rowSpacing: 8
                 Layout.fillWidth: true
-                Label { text: qsTr("AI component"); color: Theme.muted }
-                Label { objectName: "aiComponentVersion"; text: componentsSection.c.version ?? ""; textFormat: Text.PlainText }
+                Label { visible: componentsSection.installed; text: qsTr("AI component"); color: Theme.muted }
+                Label { visible: componentsSection.installed; objectName: "aiComponentVersion"; text: componentsSection.c.version ?? ""; textFormat: Text.PlainText }
                 Label { visible: !!componentsSection.c.runtime; text: qsTr("Runs on"); color: Theme.muted }
                 Label { visible: !!componentsSection.c.runtime; text: "Bun " + componentsSection.c.runtime; textFormat: Text.PlainText }
                 Label { visible: libraries.text !== ""; text: qsTr("Provider libraries"); color: Theme.muted }
@@ -2861,9 +2870,9 @@ ScrollView {
                 RowLayout {
                     spacing: 8
                     Layout.fillWidth: true
-                    BusyIcon { visible: !!componentsSection.c.state }
+                    BusyIcon { visible: !!componentsSection.c.state || !!componentsSection.installing.active }
                     Rectangle {
-                        visible: !componentsSection.c.state
+                        visible: !componentsSection.c.state && !componentsSection.installing.active
                         implicitWidth: 8
                         implicitHeight: 8
                         radius: 4
@@ -2880,23 +2889,30 @@ ScrollView {
                     }
                     IconTextButton {
                         objectName: "aiComponentCheck"
-                        visible: !componentsSection.c.state
+                        visible: componentsSection.installed && !componentsSection.c.state
                         iconRole: "refresh"
                         text: qsTr("Check now")
                         onClicked: page.ai.checkComponents()
                     }
                     PrimaryButton {
                         objectName: "aiComponentUpdate"
-                        visible: !componentsSection.c.state && !componentsSection.c.error && !!componentsSection.c.available
-                                 && !componentsSection.c.staged
+                        visible: componentsSection.installed && !componentsSection.c.state && !componentsSection.c.error
+                                 && !!componentsSection.c.available && !componentsSection.c.staged
                         text: qsTr("Update now")
                         onClicked: page.ai.updateComponents()
                     }
+                    PrimaryButton {
+                        objectName: "aiComponentInstall"
+                        visible: !componentsSection.installed && !componentsSection.installing.active
+                        text: componentsSection.installing.error ? qsTr("Retry") : qsTr("Install")
+                        onClicked: page.ai.installComponent()
+                    }
                     Button {
                         objectName: "aiComponentCancel"
-                        visible: componentsSection.c.state === "downloading"
+                        visible: componentsSection.installed ? componentsSection.c.state === "downloading"
+                                                             : !!componentsSection.installing.active
                         text: qsTr("Cancel")
-                        onClicked: page.ai.cancelComponents()
+                        onClicked: componentsSection.installed ? page.ai.cancelComponents() : page.ai.cancelComponent()
                     }
                 }
                 Item { visible: componentNote.visible; implicitWidth: 1 }

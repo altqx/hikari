@@ -242,10 +242,20 @@ public:
             return std::nullopt;
         return std::string(R"({"id": "org.example.word-count"})");
     }
-    PluginRun run(std::string_view plugin, std::string_view command) override
+    PluginRun run(std::string_view plugin, std::string_view command, std::string_view via) override
     {
         runs.emplace_back(std::string(plugin) + "/" + std::string(command));
+        vias.emplace_back(via);
         return nextRun;
+    }
+    StatusItemSet setStatusItem(std::string_view plugin, const StatusItemChange &change) override
+    {
+        if (plugin != "org.example.word-count")
+            return StatusItemSet::NotRunning;
+        if (change.item != "words")
+            return StatusItemSet::UnknownItem;
+        statusChanges.push_back(change);
+        return StatusItemSet::Set;
     }
     std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
                                                           const std::vector<PluginFile> &files) override
@@ -292,7 +302,8 @@ public:
     std::vector<FormatInfo> pluginFormats;
     PluginRun nextRun = PluginRun::Ran;
     bool fullTrust = false;
-    std::vector<std::string> runs, reviewed, installs;
+    std::vector<std::string> runs, vias, reviewed, installs;
+    std::vector<StatusItemChange> statusChanges;
     std::vector<PluginFile> scaffolded;
     std::string package;
 };

@@ -296,6 +296,7 @@ std::vector<SettingDefinition> &definitions()
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // One "<picker>\t<folder URL>" row per picker.
         {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        {"statusBar.hiddenItems", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // One "<list>\t<project|mine>" row per tiered list: where New and Save as save.
         {"workspace.saveTiers", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
@@ -402,6 +403,7 @@ std::vector<SettingDefinition> &definitions()
         {"postprocessor.presets", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.preset", "", String, Profile, Mapped, false, std::string()},
         {"postprocessor.timingPreset", "", String, Profile, Mapped, false, std::string()},
+        {"export.recipes", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"postprocessor.whichLines", "", Int, Profile, Mapped, false, std::int64_t{0}},
         {"postprocessor.styles", "", String, Profile, Mapped, false, std::string()},
         {"qcNotes.hideDone", "", Bool, Profile, Mapped, false, false},
@@ -419,6 +421,10 @@ std::vector<SettingDefinition> &definitions()
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         {"grid.columnWidths", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
+        {"grid.cpsWarning", "", Int, Profile, Mapped, false, std::int64_t{15}},
+        {"grid.cpsError", "", Int, Profile, Mapped, false, std::int64_t{30}},
+        {"grid.lineLength", "", Int, Profile, Mapped, false, std::int64_t{43}},
+        {"grid.maxLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
         // Setting ids the Karaoke layout turned on and nobody changed since.
         {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},

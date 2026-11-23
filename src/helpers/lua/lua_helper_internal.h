@@ -46,5 +46,7 @@ std::optional<std::vector<std::string>> styleFields(lua_State *L);
 // Adds a macro whose run and validate functions are C functions, as aegisub.register_macro would.
 void registerMacro(lua_State *L, const std::string &name, const std::string &description, lua_CFunction run,
                    lua_CFunction validate);
+void registerFilter(lua_State *L, const std::string &name, const std::string &description, int priority,
+                    lua_CFunction run);
 
 }
