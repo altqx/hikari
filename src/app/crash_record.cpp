@@ -525,6 +525,8 @@ std::optional<Record> read(const QString &path)
             record.mechanism = value;
         else if (key == QLatin1String("seconds") && seconds.match(value).hasMatch())
             record.seconds = value.toInt();
+        else if (key == QLatin1String("phase") && value == QLatin1String("startup"))
+            record.startup = true;
         else if ((key == QLatin1String("frame") && record.frames.size() < kMaxFrames) ||
                  (key == QLatin1String("render-frame") && record.renderFrames.size() < kMaxFrames)) {
             const QStringList parts = value.split(QLatin1Char(' '));
@@ -546,7 +548,7 @@ std::optional<Record> read(const QString &path)
     if (record.type.isEmpty() || record.mechanism.isEmpty() || record.version.isEmpty())
         return std::nullopt;
     if (record.freeze() != (record.type == QLatin1String(kFreezeType)) ||
-        (!record.freeze() && (record.seconds || !record.renderFrames.isEmpty())))
+        (!record.freeze() && (record.seconds || !record.renderFrames.isEmpty() || record.startup)))
         return std::nullopt;
     return record;
 }
@@ -557,6 +559,8 @@ bool write(const QString &path, const Record &record)
                       "\nmechanism " + record.mechanism.toLatin1() + '\n';
     if (record.freeze())
         text += "seconds " + QByteArray::number(record.seconds) + '\n';
+    if (record.freeze() && record.startup)
+        text += "phase startup\n";
     const auto add = [&text](const QByteArray &key, const QList<Frame> &frames) {
         for (const Frame &frame : frames.mid(0, kMaxFrames)) {
             text += key + ' ' + frame.module.toLatin1() + " 0x" + QByteArray::number(frame.offset, 16);

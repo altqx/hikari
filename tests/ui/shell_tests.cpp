@@ -9226,6 +9226,53 @@ private slots:
         application->editor().discard();
     }
 
+    void scriptPropertiesGiveTheFileItsOwnReadingLimits()
+    {
+        QVERIFY(application->openFile(writeStyled("limits.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,much too fast here\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *cps = item<QObject>("cpsCounter");
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
+        auto *root = engine->rootObjects().first();
+        QVariant opened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
+        QTRY_VERIFY(dialog && dialog->property("visible").toBool());
+        auto *useMine = dialogItem("scriptPropertiesDialog", "propUseMyLimits");
+        auto *warning = dialogItem("scriptPropertiesDialog", "propCpsWarning");
+        QVERIFY(useMine->property("checked").toBool());
+        QVERIFY(!warning->isEnabled());
+        QCOMPARE(warning->property("value").toInt(), 15);
+        QVERIFY(QMetaObject::invokeMethod(useMine, "click"));
+        QVERIFY(warning->isEnabled());
+        warning->setProperty("value", 12);
+        QVERIFY(QMetaObject::invokeMethod(warning, "valueModified"));
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        const auto &d = session->document();
+        QCOMPARE(d.scriptInfo(u8"Hikari CPS Warning"), std::optional<std::u8string>(u8"12"));
+        QCOMPARE(d.scriptInfo(u8"Hikari CPS Error"), std::optional<std::u8string>(u8"30"));
+        QCOMPARE(d.scriptInfo(u8"Hikari Line Length"), std::optional<std::u8string>(u8"43"));
+        QCOMPARE(d.scriptInfo(u8"Hikari Max Lines"), std::optional<std::u8string>(u8"2"));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/12"));
+        QVERIFY(application->editor().cpsWarning());
+
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(!useMine->property("checked").toBool());
+        QCOMPARE(warning->property("value").toInt(), 12);
+        QVERIFY(QMetaObject::invokeMethod(useMine, "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QVERIFY(!session->document().scriptInfo(u8"Hikari CPS Warning"));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
+        application->editor().discard();
+    }
+
     void scriptPropertiesMoreHoldsSynchPointAndUpdateDetails()
     {
         const QString path = dir.filePath(QStringLiteral("synched.ass"));
@@ -16389,6 +16436,155 @@ private slots:
         QCOMPARE(grid->markWidth(), 0.0);
     }
 
+    void gridHeaderFilterNarrowsTheGridOverTheStyleFilterWithoutAnUndoStep()
+    {
+        const QString path = dir.filePath(QStringLiteral("gridfilter.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\nStyle: Sign,Arial,20\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Sign,,0,0,0,,two\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        }
+        QVERIFY(application->openFile(path));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        auto *rows = shell.lines();
+        QCOMPARE(rows->rowCount(), 3);
+        const auto steps = session->historySize();
+        auto *field = item("gridFilter");
+        QVERIFY(field);
+        field->forceActiveFocus();
+        typeText(QStringLiteral("O"));
+        QCOMPARE(shell.gridFilterText(), QStringLiteral("O"));
+        QTRY_COMPARE(rows->rowCount(), 2);
+        QCOMPARE(session->historySize(), steps);
+        auto &filter = application->gridFilter();
+        auto restore = qScopeGuard([&] { filter.setStyle(QStringLiteral("Sign"), false); });
+        filter.setStyle(QStringLiteral("Sign"), true);
+        QVERIFY(application->filterLines());
+        QTRY_COMPARE(rows->rowCount(), 1);
+        QVERIFY(field->hasActiveFocus());
+        press(Qt::Key_Escape);
+        QCOMPARE(shell.gridFilterText(), QString());
+        QTRY_COMPARE(rows->rowCount(), 2);
+        QVERIFY(field->hasActiveFocus());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!field->hasActiveFocus());
+        QVERIFY(application->turnOffFiltering());
+        QTRY_COMPARE(rows->rowCount(), 3);
+    }
+
+    void gridHeaderFilterShowsAnEmptyStateAndEnterGoesToTheFirstShownLine()
+    {
+        const QString path = writeFile(dir, "gridfilter2.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        QVERIFY(application->openFile(path));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *field = item("gridFilter");
+        auto *empty = item("gridEmptyState");
+        QVERIFY(!empty->isVisible());
+        field->forceActiveFocus();
+        typeText(QStringLiteral("zz"));
+        QTRY_VERIFY(empty->isVisible());
+        QCOMPARE(empty->property("text").toString(), QStringLiteral("No lines match the filter"));
+        application->shell().setGridFilterText(QStringLiteral("hre"));
+        QTRY_VERIFY(!empty->isVisible());
+        press(Qt::Key_Return);
+        QTRY_COMPARE(session->selection().active, session->document().lines()[2]->id);
+        QTRY_VERIFY(item("editingGrid")->hasActiveFocus());
+        application->shell().setGridFilterText({});
+    }
+
+    void gridHeaderFilterKeepsAnEditedLineAndUndoRechecksIt()
+    {
+        const QString path = writeFile(dir, "gridfilter3.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        const auto one = session->document().lines()[0]->id;
+        const auto two = session->document().lines()[1]->id;
+        application->selectLine(two.value);
+        shell.setGridFilterText(QStringLiteral("two"));
+        QTRY_COMPARE(shell.lines()->rowCount(), 1);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("two"));
+        keysNeverRepeat();
+        text->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(text, "selectAll"));
+        typeText(QStringLiteral("deux"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        QVERIFY(application->editor().commit());
+        QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"deux"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"two"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        application->selectLine(one.value);
+        shell.setGridFilterText(QStringLiteral("o"));
+        QTRY_COMPARE(shell.lines()->rowCount(), 2);
+        shell.setGridFilterText({});
+    }
+
+    void gridHeaderFilterHidesLinesFromActionsUnlessFilteringIsIgnored()
+    {
+        const QString path = writeFile(dir, "gridfilter4.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        auto &filter = application->gridFilter();
+        const auto startOf = [&](int row) { return session->document().lines()[std::size_t(row)]->start.value.microseconds(); };
+        application->selectAllLines();
+        QCOMPARE(session->selection().selected.size(), std::size_t(3));
+        shell.setGridFilterText(QStringLiteral("o"));
+        auto restore = qScopeGuard([&] {
+            shell.setGridFilterText({});
+            filter.setIgnoreInActions(false);
+        });
+        QTRY_COMPARE(shell.lines()->rowCount(), 2);
+        QCOMPARE(session->selection().selected.size(), std::size_t(3));
+        QVERIFY(shell.selectionStatus().contains(QStringLiteral("(1 hidden)")));
+
+        QVERIFY(application->copyLines());
+        QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",three")));
+
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restoreShift = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        auto settings = before;
+        settings.insert(QStringLiteral("timeMs"), 1000);
+        settings.insert(QStringLiteral("forward"), true);
+        settings.insert(QStringLiteral("whichLines"), 0);
+        settings.insert(QStringLiteral("whichTimes"), 0);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
+        QCOMPARE(startOf(0), 2'000'000);
+        QCOMPARE(startOf(1), 4'000'000);
+        QCOMPARE(startOf(2), 5'000'000);
+        filter.setIgnoreInActions(true);
+        QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
+        QCOMPARE(startOf(2), 6'000'000);
+
+        const QVariantMap findE{{QStringLiteral("find"), QStringLiteral("e")},
+                                {QStringLiteral("field"), 0},
+                                {QStringLiteral("mode"), 0},
+                                {QStringLiteral("action"), 0}};
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("2 lines selected."));
+        filter.setIgnoreInActions(false);
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("1 lines selected."));
+        application->editor().discard();
+    }
+
     void groupRowMenuOpensFromTheKeyboard()
     {
         const QString path = writeFile(dir, "g9k.ass",
@@ -19414,6 +19610,10 @@ private slots:
               {"grid.autoHideColumns", "Hide empty columns"},
               {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
               {"grid.calcSpacesAndPunctuationForCps", "Count spaces and punctuation for CPS"},
+              {"grid.cpsWarning", nullptr},
+              {"grid.cpsError", nullptr},
+              {"grid.lineLength", nullptr},
+              {"grid.maxLines", nullptr},
               {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr},
@@ -35718,6 +35918,18 @@ private slots:
         QTRY_VERIFY(application->editor().charsWarning());
         QTRY_VERIFY(item("charsCounterWarning")->isVisible());
         application->editor().discard();
+
+        application->settingsStore()->setValue(QStringLiteral("grid.cpsWarning"), 10);
+        application->settingsStore()->setValue(QStringLiteral("grid.cpsError"), 14);
+        application->settingsStore()->setValue(QStringLiteral("grid.lineLength"), 8);
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/10"));
+        QCOMPARE(chars->property("text").toString(), QStringLiteral("5/10/8"));
+        QVERIFY(application->editor().cpsError());
+        QVERIFY(application->editor().charsWarning());
+        QTRY_COMPARE(item("cpsCounterValue")->property("color").value<QColor>(), ui::theme::current().roles.danger);
+        for (const char *id : {"grid.cpsWarning", "grid.cpsError", "grid.lineLength"})
+            application->settingsStore()->reset(QLatin1String(id));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
     }
 
     void squeezeTheLineEditor()
@@ -36776,7 +36988,7 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[Events]\n"
                     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                    "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,line\n");
+                    "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,{\\c&H0000FF&}line\n");
         }
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -36833,6 +37045,21 @@ private slots:
         }, 500));
         QVERIFY(info(u8"YCbCr Matrix").isEmpty());
         QCOMPARE(application::sessionVideoMatrix(*session), "TV.601");
+
+        QVERIFY(application::setMatrix(*session, "TV.601"));
+        QVERIFY(application->video().reloadVideo());
+        QVERIFY(asked("YCbCr matrix mismatch"));
+        const auto choices = box->property("choices").toList();
+        QCOMPARE(choices.size(), 3);
+        QCOMPARE(choices.at(1).toMap().value(QStringLiteral("isDefault")).toBool(), true);
+        QCOMPARE(choices.at(2).toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Convert colours and set to TV.709"));
+        answer("convert", true);
+        QTRY_COMPARE(info(u8"YCbCr Matrix"), QStringLiteral("TV.709"));
+        QCOMPARE(session->history().back().name, std::string(application::kMatrixConversionStep));
+        QVERIFY(session->document().lines().front()->text == u8"{\\c&H0019FF&}line");
+        QCOMPARE(application->settingsStore()->integer("video.matrixMismatch"),
+                 int(application::VideoPropertyAction::ConvertColours));
         application->editor().discard();
     }
 

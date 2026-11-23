@@ -3915,14 +3915,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>różne</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>Liczba znaków w każdym wierszu. Nie więcej niż 43 znaki, najwyżej 2 wiersze.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>Znaki na sekundę. Nie więcej niż 15.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>Pokaż czasy</translation>
     </message>
@@ -4337,6 +4329,18 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>Tag zaczyna się od ukośnika odwrotnego, na przykład \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersz.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersze.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wierszy.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>Znaki na sekundę. Wartość powinna wynosić %1 lub mniej.</translation>
     </message>
 </context>
 <context>
@@ -6571,6 +6575,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message>
+        <source>No lines match the filter</source>
+        <translation>Brak linijek pasujących do filtra</translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>Opis grupy linijek</translation>
     </message>
@@ -6954,6 +6962,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter the Grid</source>
+        <translation>Filtruj listę napisów</translation>
     </message>
 </context>
 <context>
@@ -8945,6 +8957,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>Synonim</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8971,6 +8987,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>Zaproponuj synonimy</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>Brak synonimów dla “%1”</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>Nie można zaproponować synonimów: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>Osiągnięto dzisiejszy limit kosztów.</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>Szukanie synonimów…</translation>
     </message>
     <message>
         <source>Translate to %1</source>
@@ -10793,12 +10829,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Macierz YCbCr wideo (%1) różni się od macierzy napisów (%2).</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo. Jeśli kolory napisów dopasowano do wideo %1, przekonwertuj je, aby wyglądały tak samo w tym wideo.</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo.</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>Przekonwertuj kolory i ustaw %1</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14248,6 +14292,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Licz spacje i interpunkcję w CPS</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>Linijki czytane szybciej są zabarwiane, coraz mocniej aż do poziomu błędu.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>Plik napisów może ustawić własne limity we właściwościach skryptu.</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>Dzielenie</translation>
     </message>
@@ -14514,6 +14586,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>Zachowaj macierz napisów</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>Przekonwertuj kolory i ustaw jak w wideo</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>
@@ -17754,6 +17830,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>Działa tylko poza trybem tłumaczenia</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>Pakiet nie zawiera programu %1 dla tego komputera.</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>Pobiera %1 z %2 (%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>Niedostępna na tym komputerze</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>Programy</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>Program %1 jest niedostępny na tym komputerze</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>Program %1 nie został pobrany</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>Pobieranie programu %1…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>Pobierz teraz</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>Pobiera programy potrzebne wtyczce %1</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>Programy wtyczki nie zostały pobrane: opcja „Pozwól wtyczkom łączyć się z internetem” jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>Nie można pobrać programu %1: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>to nie jest plik wskazany przez wtyczkę.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>nie można go rozpakować (%1).</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>nie zawiera %1.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>nie można go zapisać.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -19487,6 +19623,30 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Rendering</source>
         <translation>Renderowanie</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>Limity czytania</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>Używaj moich ustawień</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
     </message>
     <message>
         <source>Save</source>

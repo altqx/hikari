@@ -24,6 +24,33 @@ ShellController::ShellController(application::Workspace &workspace, QObject *par
 {
     m_shown.setLineModel(&m_lines);
     m_shown.setPredicate([](const core::LineRecord &line) { return line.visibility != core::LineVisibility::Hidden; });
+    connect(&m_shown, &QAbstractItemModel::rowsInserted, this, &ShellController::gridFilterChanged);
+    connect(&m_shown, &QAbstractItemModel::rowsRemoved, this, &ShellController::gridFilterChanged);
+    connect(&m_shown, &QAbstractItemModel::modelReset, this, &ShellController::gridFilterChanged);
+    connect(&m_shown, &QAbstractItemModel::layoutChanged, this, &ShellController::gridFilterChanged);
+}
+
+void ShellController::setGridFilterText(const QString &text)
+{
+    if (text == m_shown.text())
+        return;
+    m_shown.setText(text);
+    countSelection(m_lines.selection());
+    emit gridFilterChanged();
+    emit activeLineChanged();
+}
+
+QVariant ShellController::firstShownLine() const
+{
+    if (m_shown.rowCount() == 0)
+        return {};
+    const auto id = m_lines.lineAt(m_shown.mapToSource(m_shown.index(0, 0)).row());
+    return id ? QVariant::fromValue<qulonglong>(id->value) : QVariant();
+}
+
+bool ShellController::gridFilterMatchesNothing() const
+{
+    return !m_shown.text().isEmpty() && m_shown.rowCount() == 0 && m_lines.rowCount() > 0;
 }
 
 void ShellController::refresh(const core::Document *target, const core::Document *reference)
@@ -178,14 +205,18 @@ void ShellController::setSelection(const application::Selection &selection)
     m_activeText = record ? qs(record->text) : QString();
     m_activeStyle = record ? qs(record->style) : QString();
     m_activeNumber = record ? *row + 1 : 0;
+    countSelection(selection);
+    emit activeLineChanged();
+}
+
+void ShellController::countSelection(const application::Selection &selection)
+{
     const auto shown = actionLines();
     const std::set<core::LineId> shownSet(shown.begin(), shown.end());
-    const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(),
-                                      [&](core::LineId id) { return !shownSet.contains(id); });
     m_selectedCount = static_cast<qsizetype>(selection.selected.size());
-    m_hiddenCount = hidden;
+    m_hiddenCount = std::count_if(selection.selected.begin(), selection.selected.end(),
+                                  [&](core::LineId id) { return !shownSet.contains(id); });
     m_selectionStatus = selectionText();
-    emit activeLineChanged();
 }
 
 QString ShellController::selectionText() const

@@ -1,10 +1,12 @@
 #include "hikari/application/video_properties.h"
 
+#include "hikari/application/matrix_conversion.h"
 #include "hikari/application/video_matrix.h"
 
 #include <array>
 #include <cmath>
 #include <cstdlib>
+#include <set>
 
 namespace hikari::application {
 
@@ -85,8 +87,10 @@ MatrixCheck checkMatrix(const core::Document &document, std::string_view recomme
     check.script = text(written);
     if (!written || !namesMatrix(check.script))
         check.question = MatrixQuestion::Missing;
-    else if (check.script != "None" && check.script != recommended)
+    else if (check.script != "None" && check.script != recommended) {
         check.question = MatrixQuestion::Mismatch;
+        check.convertible = MatrixConversion::between(check.script, recommended).has_value();
+    }
     return check;
 }
 
@@ -122,6 +126,24 @@ std::expected<void, CommandRefusal> setMatrix(EditSession &session, std::string_
     if (!ran)
         return std::unexpected(ran.error());
     return {};
+}
+
+std::expected<void, CommandRefusal> convertMatrix(EditSession &session, std::string_view matrix)
+{
+    const auto &document = session.document();
+    const auto written = document.scriptInfo(u8"YCbCr Matrix");
+    const auto conversion = document.format() == core::SubtitleFormat::Ass && written
+                                ? MatrixConversion::between(text(written), matrix)
+                                : std::nullopt;
+    if (!conversion)
+        return std::unexpected(CommandRefusal::Invalid);
+    std::set<core::LineId> touches;
+    for (const auto *line : document.lines())
+        touches.insert(line->id);
+    return session.run(Command{std::string(kMatrixConversionStep), session.revision(), touches, [&](core::Document &d) {
+        convertColours(d, *conversion);
+        return d.setScriptInfo(u8"YCbCr Matrix", wide(std::string(matrix)));
+    }});
 }
 
 std::expected<void, CommandRefusal> setLayoutResolution(EditSession &session, Resolution layout)

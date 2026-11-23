@@ -3,6 +3,7 @@
 #include "media.h"
 #include "hikari/api/file_names.h"
 
+#include "hikari/plugins/archive.h"
 #include "hikari/plugins/qml_imports.h"
 
 #include <algorithm>
@@ -11,33 +12,6 @@
 namespace hikari::plugins {
 
 namespace {
-
-bool allowedChar(char c)
-{
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == ' ' || c == '_' ||
-           c == '.' || c == '-' || c == '+';
-}
-
-bool goodPart(std::string_view part)
-{
-    return !part.empty() && part != "." && part != ".." && part.size() <= 255 &&
-           std::all_of(part.begin(), part.end(), allowedChar) && !part.ends_with('.') && !part.ends_with(' ') &&
-           !api::reservedOnWindows(part);
-}
-
-bool goodPath(std::string_view path)
-{
-    if (path.empty() || path.size() > 400)
-        return false;
-    while (true) {
-        const std::size_t slash = path.find('/');
-        if (!goodPart(path.substr(0, slash)))
-            return false;
-        if (slash == std::string_view::npos)
-            return true;
-        path.remove_prefix(slash + 1);
-    }
-}
 
 std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::vector<PackageFile> &files)
 {
@@ -101,9 +75,9 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     const PackageFile *manifestFile = nullptr;
     for (const PackageFile &file : files) {
         total += file.data.size();
-        if (total > kMaxPackageBytes)
-            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
-        if (!goodPath(file.path) || !seen.insert(api::lowered(file.path)).second)
+        if (total > kMaxPlatformPackageBytes)
+            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}, {}, kMaxPlatformPackageBytes});
+        if (!goodPackagePath(file.path) || !seen.insert(api::lowered(file.path)).second)
             return std::unexpected(PackageProblem{Kind::BadPath, file.path, {}});
         if (file.path == kManifestName)
             manifestFile = &file;
@@ -122,8 +96,22 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     auto manifest = parseManifest(std::string_view(reinterpret_cast<const char *>(bytes.data()), bytes.size()), apiVersion);
     if (!manifest)
         return std::unexpected(PackageProblem{Kind::Manifest, std::string(kManifestName), manifest.error()});
-    if (std::none_of(files.begin(), files.end(), [&](const PackageFile &f) { return f.path == manifest->main; }))
+    const auto holds = [&](const std::string &path) {
+        return std::ranges::any_of(files, [&](const PackageFile &f) { return f.path == path; });
+    };
+    if (!holds(manifest->main))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
+    bool forOnePlatform = false;
+    for (const Program &program : manifest->programs)
+        for (const auto &[platform, run] : program.platforms) {
+            if (run.download || holds(run.path))
+                continue;
+            if (platform == thisPlatform())
+                return std::unexpected(PackageProblem{Kind::MissingProgram, run.path, {}});
+            forOnePlatform = true;
+        }
+    if (total > kMaxPackageBytes && !forOnePlatform)
+        return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
     if (auto problem = mediaProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
     if (auto problem = qmlProblem(*manifest, files))

@@ -5301,6 +5301,7 @@ ApplicationWindow {
                 objectName: field.objectName + "AiMenu"
                 controller: root.inlineAi
                 editor: true
+                field: field
                 shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
                 onChosen: ask => inlineAiBox.begin(ask, true, field)
                 onRepeatRequested: root.repeatInlineAi(true, field)
@@ -7597,6 +7598,7 @@ ApplicationWindow {
                         objectName: "editorAiMenu"
                         controller: root.inlineAi
                         editor: true
+                        field: lineText
                         onChosen: ask => inlineAiBox.begin(ask, true, lineText)
                         onRepeatRequested: root.repeatInlineAi(true, lineText)
                         onSettingsRequested: root.openSettings("ai")
@@ -8239,10 +8241,21 @@ ApplicationWindow {
                 Label {
                     objectName: "gridEmptyState"
                     anchors.centerIn: parent
-                    visible: !shell.hasEditingTarget
-                    text: qsTranslate("HikariSub.Grid", "No document open")
+                    visible: !shell.hasEditingTarget || shell.gridFilterMatchesNothing
+                    text: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "No lines match the filter")
+                                                 : qsTranslate("HikariSub.Grid", "No document open")
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true
+                }
+                GridFilterField {
+                    id: gridFilterField
+                    shell: root.shell
+                    onLeave: toFirstLine => {
+                        const first = toFirstLine ? root.shell.firstShownLine() : undefined
+                        if (first !== undefined)
+                            root.app.selectLine(first)
+                        root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    }
                 }
             }
         }
@@ -8736,7 +8749,7 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader(root.engineName("Grid"), true, null)
+            Docking.setPanelHeader(root.engineName("Grid"), true, gridFilterField)
             Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
             Docking.setPanelHeader(root.engineName("Search"), true, null)
             Docking.setPanelHeader(root.engineName("Log"), true, null)
@@ -10459,8 +10472,11 @@ ApplicationWindow {
         case "matrixMismatch":
             o = { title: qsTr("YCbCr matrix mismatch"),
                   text: qsTr("The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).").arg(question.recommended, question.script),
-                  detail: qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
-                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+                  detail: question.convertible
+                          ? qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.").arg(question.script)
+                          : qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)]
+                           .concat(question.convertible ? [set("convert", qsTr("Convert colours and set to %1").arg(question.recommended), false)] : []) }
             break
         case "missingLayoutRes":
             o = { title: qsTr("Set the layout resolution?"),
@@ -10482,7 +10498,7 @@ ApplicationWindow {
         }
         o.dontAsk = true
         root.messages.ask(o, (id, dontAskAgain) => {
-            const choice = ({ set: 1, play: 2 })[id] ?? 0
+            const choice = ({ set: 1, play: 2, convert: 2 })[id] ?? 0
             if (dontAskAgain)
                 root.app.stopAskingVideoProperty(question.kind, choice)
             if (choice > 0)

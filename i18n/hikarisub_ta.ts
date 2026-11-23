@@ -3876,14 +3876,6 @@ Output device: %2</source>
         <translation>கலவை</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>ஒவ்வொரு வரியிலும் உள்ள எழுத்துகளின் எண்ணிக்கை. 43 அல்லது அதற்குக் குறைவாக, அதிகபட்சம் 2 வரிகளில் வைத்திருங்கள்.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>ஒரு நொடிக்கான எழுத்துகள். 15 அல்லது அதற்குக் குறைவாக வைத்திருங்கள்.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>நேரங்களைக் காட்டு</translation>
     </message>
@@ -4298,6 +4290,17 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>குறிச்சொல் பின்சாய்வுக்கோட்டுடன் தொடங்கும், எடுத்துக்காட்டாக \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>ஒவ்வொரு வரியிலும் உள்ள எழுத்துகளின் எண்ணிக்கை. அதை %1 அல்லது அதற்குக் குறைவாக, அதிகபட்சம் %n வரியில் வைக்கவும்.</numerusform>
+            <numerusform>ஒவ்வொரு வரியிலும் உள்ள எழுத்துகளின் எண்ணிக்கை. அதை %1 அல்லது அதற்குக் குறைவாக, அதிகபட்சம் %n வரிகளில் வைக்கவும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>நொடிக்கு எழுத்துகள். அதை %1 அல்லது அதற்குக் குறைவாக வைக்கவும்.</translation>
     </message>
 </context>
 <context>
@@ -6514,6 +6517,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>No lines match the filter</source>
+        <translation>வடிப்பியுடன் பொருந்தும் வரிகள் இல்லை</translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>வரிக் குழு விளக்கம்</translation>
     </message>
@@ -6889,6 +6896,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter the Grid</source>
+        <translation>கட்டத்தை வடிகட்டு</translation>
     </message>
 </context>
 <context>
@@ -8878,6 +8889,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>ஒத்த சொல்</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8903,6 +8918,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>ஒத்த சொற்களைப் பரிந்துரை</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>“%1” க்கு ஒத்த சொற்கள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>ஒத்த சொற்களைப் பரிந்துரைக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>இன்றைய செலவு வரம்பு எட்டப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>ஒத்த சொற்களைத் தேடுகிறது…</translation>
     </message>
     <message>
         <source>Translate to %1</source>
@@ -10694,12 +10729,20 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவின் YCbCr மேட்ரிக்ச் (%1) வசன வரிகளுடையதிலிருந்து (%2) வேறுபடுகிறது.</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>இந்த வீடியோவின் வண்ணங்கள், வசன வரிகள் உருவாக்கப்பட்ட வீடியோவின் வண்ணங்களைப் போலவே தோன்றினால், வசன வரிகளின் மேட்ரிக்சை வீடியோவினுடையதற்கு அமைக்கவும். வசன வரிகளின் வண்ணங்கள் %1 வீடியோவுக்குப் பொருத்தப்பட்டிருந்தால், இந்த வீடியோவிலும் அவை அப்படியே தோன்ற அவற்றை மாற்றவும்.</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>இந்த வீடியோவின் வண்ணங்கள், வசன வரிகள் உருவாக்கப்பட்ட வீடியோவின் வண்ணங்களைப் போலவே தோன்றினால், வசன வரிகளின் மேட்ரிக்சை வீடியோவினுடையதற்கு அமைக்கவும்.</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>%1 ஐ வை</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>வண்ணங்களை மாற்றி %1 ஆக அமை</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14133,6 +14176,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>CPS க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் எண்ணு</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>CPS எச்சரிக்கை</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>இதைவிட வேகமாகப் படிக்கப்படும் வரிகள் நிறமிடப்படுகின்றன; பிழை நிலை வரை நிறம் மேலும் அடர்கிறது.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>CPS பிழை</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>வரிக்கு எழுத்துகள்</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>ஒரு வசனக் கோப்பு தனது சொந்த வரம்புகளை ஸ்கிரிப்ட் பண்புகளில் அமைக்கலாம்.</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>பிரித்தல்</translation>
     </message>
@@ -14399,6 +14470,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>வசன வரிகளுடையதை வை</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>வண்ணங்களை மாற்றி வீடியோவினுடையதற்கு அமை</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>
@@ -17628,6 +17703,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>மொழிபெயர்ப்பு பயன்முறைக்கு வெளியே மட்டுமே இயங்கும்</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>தொகுப்பில் இந்தக் கணினிக்கான அதன் நிரலான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>%2 இலிருந்து %1 ஐப் பதிவிறக்குகிறது (%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>இந்தக் கணினிக்குக் கிடைக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>நிரல்கள்</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>%1 இந்தக் கணினிக்குக் கிடைக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>%1 பதிவிறக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>%1 ஐப் பதிவிறக்குகிறது…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>இப்போது பதிவிறக்கு</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>%1 க்குத் தேவையான நிரல்களைப் பதிவிறக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>இதன் நிரல்கள் பதிவிறக்கப்படவில்லை: “செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி” முடக்கத்தில் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>%1 ஐப் பதிவிறக்க முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>அது செருகுநிரல் குறிப்பிடும் கோப்பு அல்ல.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>அதைப் பிரித்தெடுக்க முடியவில்லை (%1).</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>அதில் %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>அதைச் சேமிக்க முடியவில்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -19328,6 +19463,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Rendering</source>
         <translation>ரெண்டரிங்</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>வாசிப்பு வரம்புகள்</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>என் அமைப்புகளைப் பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>CPS எச்சரிக்கை</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>CPS பிழை</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>வரிக்கு எழுத்துகள்</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
     </message>
     <message>
         <source>Save</source>

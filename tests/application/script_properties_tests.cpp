@@ -177,3 +177,29 @@ TEST(ScriptProperties, OnSaveChangesAreOneUndoStep)
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(saved(session), std::string(kFull));
 }
+
+TEST(ScriptProperties, ReadingLimitsSaveInTheSameStepAndUseMySettingsRemovesThem)
+{
+    EditSession session{load(kFull)};
+    auto p = scriptProperties(session.document());
+    const auto steps = session.historySize();
+    p.title = u8"Renamed";
+    p.readingLimits = ReadingLimits{12, 20, 37, 3};
+    ScriptPropertiesEdits edits;
+    edits.title = edits.readingLimits = true;
+    ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(readingLimits(session.document(), ReadingLimits{}), (ReadingLimits{12, 20, 37, 3}));
+    EXPECT_EQ(session.document().scriptInfo(u8"Title"), u8"Renamed");
+
+    p.readingLimits.reset();
+    edits = {};
+    edits.readingLimits = true;
+    ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
+    EXPECT_EQ(session.historySize(), steps + 2);
+    EXPECT_TRUE(scriptReadingLimits(session.document()).empty());
+    EXPECT_EQ(saved(session).find("Hikari "), std::string::npos);
+
+    ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
+    EXPECT_EQ(session.historySize(), steps + 2);
+}

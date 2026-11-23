@@ -3837,14 +3837,6 @@ Output device: %2</source>
         <translation>혼합</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>각 줄의 글자 수. 43자 이하, 최대 2줄로 유지하십시오.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>초당 문자 수. 15자 이하로 유지하십시오.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>시간 표시</translation>
     </message>
@@ -4259,6 +4251,16 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>태그는 역슬래시로 시작합니다. 예: \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>각 줄의 문자 수입니다. %1자 이하로, 최대 %n줄 안에서 유지해야 합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>초당 문자 수입니다. %1 이하로 유지해야 합니다.</translation>
     </message>
 </context>
 <context>
@@ -6457,6 +6459,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>No lines match the filter</source>
+        <translation>필터와 일치하는 줄 없음</translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>줄 그룹 설명</translation>
     </message>
@@ -6824,6 +6830,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter the Grid</source>
+        <translation>자막 목록 필터</translation>
     </message>
 </context>
 <context>
@@ -8811,6 +8821,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>동의어</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8835,6 +8849,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>동의어 제안</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>“%1”의 동의어 없음</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>동의어를 제안할 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>오늘의 비용 한도에 도달했습니다.</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>동의어를 찾는 중…</translation>
     </message>
     <message>
         <source>Translate to %1</source>
@@ -10595,12 +10629,20 @@ Failed to copy %2 fonts.</source>
         <translation>영상의 YCbCr 매트릭스(%1)가 자막의 매트릭스(%2)와 다릅니다.</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>이 영상의 색상이 자막을 만든 원래 영상의 색상과 같아 보이면 자막의 매트릭스를 영상 값으로 설정하십시오. 자막의 색상을 %1 영상에 맞췄다면 이 영상에서도 같아 보이도록 색상을 변환하십시오.</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>이 영상의 색상이 자막을 만든 원래 영상의 색상과 같아 보이면 자막의 매트릭스를 영상 값으로 설정하십시오.</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>색상 변환 후 %1(으)로 설정</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14018,6 +14060,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>초당 문자 수 계산에 공백과 문장 부호 포함</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>초당 문자 수 경고</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>이보다 빨리 읽어야 하는 줄은 색이 칠해지며, 오류 수준에 가까울수록 색이 진해집니다.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>초당 문자</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>초당 문자 수 오류</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>줄당 문자 수</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄 수</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>자막 파일은 스크립트 속성에서 자체 제한을 설정할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>분할</translation>
     </message>
@@ -14284,6 +14354,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>자막 값 유지</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>색상 변환 후 영상 값으로 설정</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>
@@ -17502,6 +17576,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>번역 모드가 아닐 때만 작동합니다</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>패키지에 이 컴퓨터용 프로그램 %1(이)가 없습니다.</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>%2에서 %1(을)를 다운로드합니다(%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>이 컴퓨터에서 사용할 수 없음</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>프로그램</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>%1: 이 컴퓨터에서 사용할 수 없음</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>%1: 다운로드되지 않음</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>%1 다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>지금 다운로드</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>%1에 필요한 프로그램을 다운로드합니다</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>프로그램을 다운로드하지 않았습니다: “플러그인의 인터넷 연결 허용”이 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>%1(을)를 다운로드하지 못했습니다: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>플러그인이 지정한 파일이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>압축을 풀 수 없습니다(%1).</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>%1(이)가 들어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>저장할 수 없습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -19169,6 +19303,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Rendering</source>
         <translation>렌더링</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>읽기 제한</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>내 설정 사용</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>초당 문자 수 경고</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>초당 문자 수 오류</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>줄당 문자 수</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄 수</translation>
     </message>
     <message>
         <source>Save</source>

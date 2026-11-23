@@ -3837,14 +3837,6 @@ Output device: %2</source>
         <translation>หลายค่า</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>จำนวนอักขระในแต่ละบรรทัด ควรไม่เกิน 43 อักขระ และไม่เกิน 2 บรรทัด</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>อักขระต่อวินาที ควรไม่เกิน 15</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>แสดงเวลา</translation>
     </message>
@@ -4259,6 +4251,16 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>แท็กขึ้นต้นด้วยแบ็กสแลช เช่น \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>จำนวนอักขระในแต่ละบรรทัด ควรไม่เกิน %1 อักขระ และไม่เกิน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>อักขระต่อวินาที ควรไม่เกิน %1</translation>
     </message>
 </context>
 <context>
@@ -6457,6 +6459,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>No lines match the filter</source>
+        <translation>ไม่มีบรรทัดที่ตรงกับตัวกรอง</translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>คำอธิบายกลุ่มบรรทัด</translation>
     </message>
@@ -6824,6 +6830,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter the Grid</source>
+        <translation>กรองตาราง</translation>
     </message>
 </context>
 <context>
@@ -8811,6 +8821,10 @@ Failed to copy %2 fonts.</source>
         </translation>
     </message>
     <message>
+        <source>Synonym</source>
+        <translation>คำพ้องความหมาย</translation>
+    </message>
+    <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8835,6 +8849,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Fix spelling and grammar</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest synonyms</source>
+        <translation>แนะนำคำพ้องความหมาย</translation>
+    </message>
+    <message>
+        <source>No synonyms for “%1”</source>
+        <translation>ไม่มีคำพ้องความหมายของ “%1”</translation>
+    </message>
+    <message>
+        <source>Couldn’t suggest synonyms: %1</source>
+        <translation>แนะนำคำพ้องความหมายไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>Today’s cost cap is reached.</source>
+        <translation>ถึงเพดานค่าใช้จ่ายของวันนี้แล้ว</translation>
+    </message>
+    <message>
+        <source>Finding synonyms…</source>
+        <translation>กำลังหาคำพ้องความหมาย…</translation>
     </message>
     <message>
         <source>Translate to %1</source>
@@ -10595,12 +10629,20 @@ Failed to copy %2 fonts.</source>
         <translation>เมทริกซ์ YCbCr ของวิดีโอ (%1) ต่างจากของคำบรรยาย (%2)</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>หากสีของวิดีโอนี้ดูเหมือนกับสีของวิดีโอที่ใช้ทำคำบรรยาย ให้ตั้งเมทริกซ์ของคำบรรยายเป็นค่าของวิดีโอ หากสีของคำบรรยายถูกปรับให้เข้ากับวิดีโอ %1 ให้แปลงสีเพื่อให้ดูเหมือนเดิมบนวิดีโอนี้</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>หากสีของวิดีโอนี้ดูเหมือนกับสีของวิดีโอที่ใช้ทำคำบรรยาย ให้ตั้งเมทริกซ์ของคำบรรยายเป็นค่าของวิดีโอ</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>แปลงสีแล้วตั้งเป็น %1</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14018,6 +14060,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นับช่องว่างและเครื่องหมายวรรคตอนในการคำนวณ CPS</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>คำเตือน CPS</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>บรรทัดที่อ่านเร็วกว่านี้จะถูกแต้มสี และสีจะเข้มขึ้นจนถึงระดับข้อผิดพลาด</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>ข้อผิดพลาด CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>อักขระต่อบรรทัด</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>จำนวนบรรทัด</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>ไฟล์คำบรรยายสามารถกำหนดขีดจำกัดของตัวเองได้ในคุณสมบัติของสคริปต์</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>การแบ่ง</translation>
     </message>
@@ -14284,6 +14354,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>คงค่าของคำบรรยายไว้</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>แปลงสีแล้วตั้งเป็นค่าของวิดีโอ</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>
@@ -17502,6 +17576,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>ทำงานได้เฉพาะนอกโหมดการแปล</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>แพ็กเกจไม่มีโปรแกรมสำหรับคอมพิวเตอร์เครื่องนี้ %1</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>ดาวน์โหลด %1 จาก %2 (%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>ไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>โปรแกรม</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>%1 ไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>ยังไม่ได้ดาวน์โหลด %1</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>กำลังดาวน์โหลด %1…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>ดาวน์โหลดเลย</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>ดาวน์โหลดโปรแกรมที่ %1 ต้องใช้</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>ยังไม่ได้ดาวน์โหลดโปรแกรมของปลั๊กอิน: “อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต” ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>ดาวน์โหลด %1 ไม่ได้: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>ไฟล์ที่ดาวน์โหลดไม่ใช่ไฟล์ที่ปลั๊กอินระบุไว้</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>แตกไฟล์ไม่ได้ (%1)</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>ไฟล์ไม่มี %1 อยู่ข้างใน</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>บันทึกไฟล์ไว้ไม่ได้</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -19169,6 +19303,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Rendering</source>
         <translation>การเรนเดอร์</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>ขีดจำกัดการอ่าน</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>ใช้การตั้งค่าของฉัน</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>คำเตือน CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>ข้อผิดพลาด CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>อักขระต่อบรรทัด</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>จำนวนบรรทัด</translation>
     </message>
     <message>
         <source>Save</source>
