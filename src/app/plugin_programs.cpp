@@ -114,8 +114,10 @@ QProcessEnvironment baseEnvironment(const QString &temp)
     const QProcessEnvironment system = QProcessEnvironment::systemEnvironment();
     QProcessEnvironment env;
 #ifdef Q_OS_WIN
-    // Windows programs fail to load without SystemRoot.
-    for (const QString &name : {QStringLiteral("PATH"), QStringLiteral("USERPROFILE"), QStringLiteral("LANG"), QStringLiteral("SystemRoot")})
+    // Windows programs fail to load without SystemRoot. An AppContainer doesn't start without LOCALAPPDATA
+    // (ERROR_ENVVAR_NOT_FOUND); Windows then points it, TEMP and TMP at the container's own folders.
+    for (const QString &name : {QStringLiteral("PATH"), QStringLiteral("USERPROFILE"), QStringLiteral("LANG"), QStringLiteral("SystemRoot"),
+                                QStringLiteral("LOCALAPPDATA")})
 #else
     for (const QString &name : {QStringLiteral("PATH"), QStringLiteral("HOME"), QStringLiteral("LANG")})
 #endif

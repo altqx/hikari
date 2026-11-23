@@ -810,7 +810,7 @@ The palette itself is #1236's, in the command palette spec (`docs/ux/command-pal
   - `${setting:<id>}` becomes a setting's value. A `list` setting written as a whole `args` value becomes one argument per item, and in `env` its items joined by `\n`. A `secret` may be named in `env` only, never in `args`, which other processes can read.
   - `${file:N}` (in `programs.run` and `programs.start` only) becomes the path of the call's `files[N]`.
 
-  The program gets no other environment from HikariSub than `PATH`, `HOME` or `USERPROFILE`, `TEMP`, `LANG` and these. It starts in `${data}`.
+  The program gets no other environment from HikariSub than `PATH`, `HOME` or `USERPROFILE`, `TEMP`, `LANG` and these. It starts in `${data}`. On Windows it also gets `LOCALAPPDATA`, without which an AppContainer doesn't start. In an AppContainer, Windows points `LOCALAPPDATA`, `TEMP` and `TMP` at the container's own folders; elsewhere `TEMP` is `${cache}/tmp`.
 - **The sandbox.** HikariSub starts every program in `hikari_sandbox` with the profile `HikariSub.Program.<the first 32 hex digits of the SHA-256 of "<plugin id>/<program id>">`. That holds for Full trust plugins too.
   - **Access.** The program may read and run its own folder, read and write `${data}` and `${cache}`, and use the files handed to it.
   - **Network.** It has network only with `"network": true`, and the install question then says "Connects to the internet", since the sandbox can't limit a program to some hosts. While "Let plugins connect to the internet" is off, a program with `network` starts without it on Linux and in an AppContainer, and a `lowIntegrity` one doesn't start at all.
