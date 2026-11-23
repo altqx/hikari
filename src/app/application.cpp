@@ -7232,11 +7232,11 @@ void Application::settingChanged(const QString &id)
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
-    else if (id == QLatin1String("autosave.intervalSeconds"))
+    else if (id == QLatin1String("autosave.intervalSeconds")) {
         for (auto &[document, timer] : m_autosaveTimers)
             if (timer)
                 timer->setInterval(autosaveIntervalMs());
-    else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
+    } else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         for (auto *views : allViews())
             views->shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.columnWidths") && !m_resettingSettings)

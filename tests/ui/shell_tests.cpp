@@ -19356,6 +19356,7 @@ private slots:
               {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
               {"program.tabTextMaxChars", nullptr},
               {"autosave.maxFiles", nullptr},
+              {"autosave.intervalSeconds", nullptr},
               {"notices.toasts", "Show notices as toasts"},
               {"fonts.externalDirectory", nullptr}}},
             {"settingsPageAppearance",
