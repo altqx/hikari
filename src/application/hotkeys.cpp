@@ -328,6 +328,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_ALIGN_TO_VIDEO", 5238},
         {"GLOBAL_TRACK_COLOUR", 5269},
         {"GLOBAL_FIND_FADE", 5270},
+        // MUST KILL: named LEGACY but imports Aegisub settings too
         {"GLOBAL_IMPORT_LEGACY_SETTINGS", 5223},
         {"GLOBAL_TOGGLE_LOCK_LAYOUT", 5230},
         {"GLOBAL_OPEN_TIMECODES", 5234},
@@ -445,6 +446,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
         {"GLOBAL_QUICK_FIX", 5373},
+        {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
 };
 
 struct NameRow {
@@ -738,7 +740,7 @@ constexpr NameRow kNames[] = {
         {5238, "Align to video…"},
         {5269, "Track colour…"},
         {5270, "Find fade…"},
-        {5223, "Import legacy settings…"},
+        {5223, "Import settings…"},
         {5230, "Lock layout"},
         {5234, "Open timecodes…"},
         {5235, "Save timecodes…"},
@@ -860,6 +862,7 @@ constexpr NameRow kNames[] = {
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
         {5373, "Quick fix"},
+        {5374, "Full screen typesetting"},
 };
 
 struct DefaultRow {

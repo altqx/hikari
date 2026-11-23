@@ -1743,7 +1743,8 @@
    "conditional": false,
    "length": 1243692,
    "sha1": "08e2e88d359027adf8d8e66f75726cb5323a7759",
-   "sha256": "3ceaa0ad99610b21acb33e6818dc51ed7b22a4530a2002d36c60bb24582079b4"
+   "sha256": "3ceaa0ad99610b21acb33e6818dc51ed7b22a4530a2002d36c60bb24582079b4",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-payloads-linux-6.12.0-20261123/linux_x64__desktop__sdktool__qt.tools.qtcreator__20.0.2-0-202609221200qtcreator_sdktool.7z"
   },
   {
    "kind": "sidecar",
@@ -1753,7 +1754,8 @@
    "conditional": false,
    "length": 40,
    "sha1": "631138f664b778347efcdcb670f937c9ed13cf05",
-   "sha256": "92db16a07e35d203700af7506eb60ad76880455360a950cda90cf5fceea5a4b9"
+   "sha256": "92db16a07e35d203700af7506eb60ad76880455360a950cda90cf5fceea5a4b9",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-payloads-linux-6.12.0-20261123/linux_x64__desktop__sdktool__qt.tools.qtcreator__20.0.2-0-202609221200qtcreator_sdktool.7z.sha1"
   }
  ],
  "declared_bytes": {

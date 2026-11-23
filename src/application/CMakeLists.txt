@@ -1,5 +1,5 @@
 add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp ai_review.cpp ai_review_files.cpp file_diff.cpp word_diff.cpp workspace.cpp document_files.cpp
-    automation_registry.cpp macro_transaction.cpp template_preview.cpp generated_runs.cpp automation_services.cpp extents_cache.cpp compile_cache.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp lyrics_insert.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp aegisub_frame_times.cpp editor_fields.cpp grid_split.cpp frame_bake.cpp override_blocks.cpp layer_builders.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp row_marks.cpp problems.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp tiers.cpp spell_checker.cpp settings.cpp options_dialog.cpp getting_started.cpp audio_display.cpp audio_box.cpp fold_groups.cpp timecodes_file.cpp
+    automation_registry.cpp macro_transaction.cpp template_preview.cpp generated_runs.cpp automation_services.cpp extents_cache.cpp compile_cache.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp lyrics_insert.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp aegisub_frame_times.cpp editor_fields.cpp grid_split.cpp frame_bake.cpp override_blocks.cpp layer_builders.cpp grid_translation.cpp script_properties.cpp reading_limits.cpp shift_times.cpp keyframe_files.cpp row_marks.cpp problems.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp tiers.cpp spell_checker.cpp settings.cpp options_dialog.cpp getting_started.cpp audio_display.cpp audio_box.cpp fold_groups.cpp timecodes_file.cpp
     dialog_memory.cpp dependency_control.cpp)
 target_sources(hikari_application PRIVATE text_commands.cpp include/hikari/application/text_commands.h)
 target_sources(hikari_application PRIVATE hotkeys.cpp)
@@ -70,7 +70,7 @@ set_source_files_properties(visual_transform.cpp visual_scale.cpp visual_rotatio
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 set_source_files_properties(visual_view.cpp visual_crosshair.cpp visual_script.cpp visual_position.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
-target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp)
+target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp settings_import_aegisub.cpp)
 target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
 target_sources(hikari_application PRIVATE position_commands.cpp)
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
@@ -86,7 +86,7 @@ set_source_files_properties(visual_drawing.cpp PROPERTIES COMPILE_OPTIONS
 target_sources(hikari_application PRIVATE video_sources.cpp)
 set_source_files_properties(video_sources.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
-target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp video_details.cpp video_properties.cpp subtitle_render.cpp
+target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp matrix_conversion.cpp video_details.cpp video_properties.cpp subtitle_render.cpp
     document_overlay.cpp)
 set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
@@ -98,6 +98,7 @@ target_sources(hikari_application PRIVATE align_to_video.cpp)
 target_sources(hikari_application PRIVATE video_analysis.cpp)
 target_sources(hikari_application PRIVATE qc_notes.cpp)
 target_sources(hikari_application PRIVATE perspective_tracking.cpp motion_data.cpp tag_removal.cpp motion_tags.cpp motion_fit.cpp)
+target_sources(hikari_application PRIVATE export_steps.cpp)
 target_sources(hikari_application PRIVATE tag_lerp.cpp gradient_geometry.cpp gradient.cpp interpolate.cpp text_on_path.cpp)
 target_sources(hikari_application PRIVATE translation_mode.cpp)
 target_sources(hikari_application PRIVATE owned_file.cpp include/hikari/application/owned_file.h)

@@ -10,6 +10,8 @@ DialogWindow {
     id: dialog
     objectName: "pluginManagerDialog"
     required property var manager
+    // Default shortcuts left out because their key is taken: command id -> note.
+    property var takenShortcuts: ({})
     property var runtime: null
     property var market: null
     property string view: "installed"
@@ -1155,6 +1157,18 @@ DialogWindow {
             Label {
                 required property string modelData
                 text: "• " + modelData
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+        }
+        Repeater {
+            model: Object.keys(dialog.takenShortcuts).filter(id => id.startsWith("plugin." + details.row.id + "."))
+            Label {
+                required property string modelData
+                objectName: "pluginTakenShortcut_" + modelData
+                text: dialog.takenShortcuts[modelData]
+                color: Theme.warning
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true

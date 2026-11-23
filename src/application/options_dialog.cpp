@@ -146,7 +146,7 @@ constexpr OptionsBinding kBindings[] = {
     {"ai.promptCaching", Check, Ai},
     {"video.handleSize", Number, Video, 50, 400},
     {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
-    {"video.matrixMismatch", IndexChoice, Video, 0, 0, 3},
+    {"video.matrixMismatch", IndexChoice, Video, 0, 0, 4},
     {"video.missingLayoutRes", IndexChoice, Video, 0, 0, 4},
     {"video.layoutResMismatch", IndexChoice, Video, 0, 0, 3},
     {"video.untaggedMatrixWarning", Check, Video},
@@ -190,6 +190,16 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.discordLinkUrl", Text, Updates},
     {"audio.spectrumCurve", IndexChoice, Audio, 0, 0, 3},
     {"audio.timingKeysEverywhere", IndexChoice, Audio, 0, 0, 3},
+    {"autosave.intervalSeconds", Number, General, 5, 3600},
+    {"video.fullscreenBarPosition", IndexChoice, Video, 0, 0, 2},
+    {"video.fullscreenBar", IndexChoice, Video, 0, 0, 3},
+    {"video.fullscreenHidePointer", Check, Video},
+    {"video.fullscreenOverlays", Check, Video},
+    {"video.fullscreenOpensIn", IndexChoice, Video, 0, 0, 2},
+    {"grid.cpsWarning", Number, Grid, 1, 100},
+    {"grid.cpsError", Number, Grid, 1, 100},
+    {"grid.lineLength", Number, Grid, 1, 1000},
+    {"grid.maxLines", Number, Grid, 1, 20},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

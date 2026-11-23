@@ -76,6 +76,27 @@ TEST(ScriptProperties, OnlyChangedFieldsAreWrittenAsOneStep)
     EXPECT_EQ(saved(session), std::string(kFull));
 }
 
+TEST(ScriptProperties, SynchPointAndUpdateDetailsRoundTrip)
+{
+    EditSession session{load("[Script Info]\nTitle: Show\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n"
+                             "Collisions: Normal\nScaledBorderAndShadow: yes\nSynch Point: 0:00:01.00\n\n[Events]\n")};
+    auto p = scriptProperties(session.document());
+    EXPECT_EQ(p.synchPoint, u8"0:00:01.00");
+    EXPECT_EQ(p.updateDetails, u8"");
+    p.synchPoint = u8"Opening song";
+    p.updateDetails = u8"Fixed the signs";
+    ScriptPropertiesEdits edits;
+    edits.synchPoint = edits.updateDetails = true;
+    const auto steps = session.historySize();
+    ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.document().scriptInfo(u8"Synch Point"), u8"Opening song");
+    EXPECT_EQ(session.document().scriptInfo(u8"Update Details"), u8"Fixed the signs");
+    const auto reopened = scriptProperties(session.document());
+    EXPECT_EQ(reopened.synchPoint, u8"Opening song");
+    EXPECT_EQ(reopened.updateDetails, u8"Fixed the signs");
+}
+
 TEST(ScriptProperties, LegacyDefaultsOnOk)
 {
     EditSession session{load("[Script Info]\nScriptType: v4.00+\n\n[Events]\n")};
@@ -155,4 +176,30 @@ TEST(ScriptProperties, OnSaveChangesAreOneUndoStep)
     EXPECT_EQ(session.document().scriptInfo(u8"Original Timing"), u8"Tim");
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(saved(session), std::string(kFull));
+}
+
+TEST(ScriptProperties, ReadingLimitsSaveInTheSameStepAndUseMySettingsRemovesThem)
+{
+    EditSession session{load(kFull)};
+    auto p = scriptProperties(session.document());
+    const auto steps = session.historySize();
+    p.title = u8"Renamed";
+    p.readingLimits = ReadingLimits{12, 20, 37, 3};
+    ScriptPropertiesEdits edits;
+    edits.title = edits.readingLimits = true;
+    ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(readingLimits(session.document(), ReadingLimits{}), (ReadingLimits{12, 20, 37, 3}));
+    EXPECT_EQ(session.document().scriptInfo(u8"Title"), u8"Renamed");
+
+    p.readingLimits.reset();
+    edits = {};
+    edits.readingLimits = true;
+    ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
+    EXPECT_EQ(session.historySize(), steps + 2);
+    EXPECT_TRUE(scriptReadingLimits(session.document()).empty());
+    EXPECT_EQ(saved(session).find("Hikari "), std::string::npos);
+
+    ASSERT_TRUE(applyScriptProperties(session, p, edits, false));
+    EXPECT_EQ(session.historySize(), steps + 2);
 }

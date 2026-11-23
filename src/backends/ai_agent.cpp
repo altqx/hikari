@@ -82,8 +82,8 @@ constexpr std::array kRiskySettingPrefixes{
     RiskyName{"ai.", Risk::AiSettings, "It changes an AI setting."},
 };
 
-constexpr std::array<std::string_view, 6> kViewWrites{"selection.set", "panels.open", "panels.close", "panels.focus",
-                                                     "marks.set",     "marks.clear"};
+constexpr std::array<std::string_view, 7> kViewWrites{"selection.set", "panels.open", "panels.close",   "panels.focus",
+                                                     "marks.set",     "marks.clear", "status_items.set"};
 
 std::string stringAt(const Json &object, std::string_view key)
 {
@@ -361,6 +361,8 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
         return {Risk::Programs, "It runs a plugin's command."};
     if (operation == "automation.run_macro")
         return {Risk::Programs, "It runs an Automation macro, a Lua script you installed."};
+    if (operation == "presence.set_text")
+        return {Risk::Network, "It shows text in your Discord status, which other people can see."};
     if (operation != "settings.set")
         return {};
     const std::string setting = stringAt(params, "setting");

@@ -1242,6 +1242,23 @@ export type PluginsRunResult = {
     ran: true;
 };
 
+/** Changes one of the caller's status bar items. Plugins only. */
+export type StatusItemsSetParams = {
+    /** An id from contributes.statusItems. */
+    item: string;
+    /** Empty: icon only. */
+    text?: string;
+    /** An icon role or own:<id>; empty: text only. */
+    icon?: string;
+    tooltip?: string;
+    tone?: "normal" | "warning" | "danger";
+    visible?: boolean;
+};
+
+export type StatusItemsSetResult = {
+    item: string;
+};
+
 /** The subtitle formats HikariSub can open and export, built-in and from plugins. */
 export type FormatsListParams = Record<string, never>;
 
@@ -2045,6 +2062,7 @@ export interface Operations {
     "plugins.review": { access: "read"; params: PluginsReviewParams; result: PluginsReviewResult };
     "plugins.install": { access: "write"; params: PluginsInstallParams; result: PluginsInstallResult };
     "plugins.run": { access: "write"; params: PluginsRunParams; result: PluginsRunResult };
+    "status_items.set": { access: "write"; params: StatusItemsSetParams; result: StatusItemsSetResult };
     "formats.list": { access: "read"; params: FormatsListParams; result: FormatsListResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
     "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };

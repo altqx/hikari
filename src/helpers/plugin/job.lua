@@ -90,6 +90,17 @@ hikari.problems = {
     end,
 }
 
+hikari.status = {
+    set = function(item, fields)
+        if type(item) ~= "string" or (fields ~= nil and type(fields) ~= "table") then
+            error("hikari.status.set takes a status item id and {text, icon, tooltip, tone, visible}", 2)
+        end
+        fields = fields or {}
+        return refused(call("status_items.set", { item = item, text = fields.text, icon = fields.icon,
+            tooltip = fields.tooltip, tone = fields.tone, visible = fields.visible }))
+    end,
+}
+
 local function programCall(what, program, options)
     if type(program) ~= "string" or program == "" then
         error(what .. " needs the id of a program the manifest declares", 3)
