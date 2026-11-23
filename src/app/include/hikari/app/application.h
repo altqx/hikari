@@ -211,7 +211,8 @@ public:
         QStringList systemUiLanguages;
         // Empty: no autosave.
         QString recoveryDir;
-        int autosaveIntervalMs = 20'000;
+        // Unset: the autosave.intervalSeconds setting.
+        std::optional<int> autosaveIntervalMs;
         // Whether video playback may open an audio device.
         bool playbackAudio = true;
         // Unset: PortAudio, or with playbackAudio off an output without a device.
@@ -529,6 +530,7 @@ public:
     bool autosaveNow();
     ui::FileWriteQueue &recoveryWrites() { return m_recoveryWrites; }
     bool autosavePending(application::DocumentId document) const;
+    int autosaveIntervalMs() const;
     // kind: "videoTime", "frames", "chars", "words", "wraps" or "tagBlocks".
     Q_INVOKABLE bool splitLines(const QString &kind);
     // Each selected Line in pieces of `count` frames, or seconds; frames need video.
@@ -1627,7 +1629,7 @@ private:
     QString m_recoveryDir;
     QString m_sessionId;
     std::map<std::uint64_t, QTimer *> m_autosaveTimers;
-    int m_autosaveIntervalMs = 20'000;
+    std::optional<int> m_autosaveIntervalOverrideMs;
     ui::FileWriteQueue m_recoveryWrites;
     void scheduleAutosave(std::optional<application::DocumentId> document = std::nullopt);
     bool autosave(application::DocumentId document, bool now);

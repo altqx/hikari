@@ -495,7 +495,7 @@ DialogWindow {
                 explanation: setup.importing
                              ? qsTr("The next pages start from these values; a change there wins over the imported one.")
                              : qsTr("HikariSub 0.0.x is installed on this computer. Nothing in it is changed.")
-                later: qsTr("Later: Settings › General › Import legacy settings…")
+                later: qsTr("Later: Settings › General › Import settings…")
                 RowLayout {
                     id: importChoices
                     spacing: 16
@@ -514,7 +514,7 @@ DialogWindow {
                         objectName: "gettingStartedImportNo"
                         iconRole: "settings"
                         text: qsTr("Set up from scratch")
-                        description: qsTr("Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.")
+                        description: qsTr("Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.")
                         checked: !setup.importing
                         onClicked: setup.importing = false
                         Layout.preferredWidth: 300

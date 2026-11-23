@@ -178,6 +178,7 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
         EXPECT_EQ(s.defaultValue, expected) << s.legacyKey;
     }
     EXPECT_EQ(findSetting("autosave.maxFiles")->legacyKey, "AUTOSAVE_MAX_FILES");
+    EXPECT_EQ(findSetting("autosave.intervalSeconds")->defaultValue, SettingValue(std::int64_t{20}));
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
 }
 

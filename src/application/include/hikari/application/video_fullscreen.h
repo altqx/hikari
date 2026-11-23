@@ -29,24 +29,38 @@ bool fullscreenOwnedByMainWindow(std::string_view platformName);
 // One context menu entry per monitor, or none with a single monitor.
 int fullscreenMonitorEntries(int monitors);
 
-// video.fullscreenBar. Auto: shown on pointer movement, hidden after kFullscreenBarIdleMs without;
-// Always: the picture ends above it.
+// video.fullscreenBar, the strip's Show bar. Auto: shown on pointer movement or a key, hidden after
+// kFullscreenBarIdleMs without while playing.
 enum class FullscreenBarMode { Auto = 0, Always = 1, Never = 2 };
-inline constexpr int kFullscreenBarIdleMs = 1500;
+inline constexpr int kFullscreenBarIdleMs = 2000;
 // Out of range: Auto.
 FullscreenBarMode fullscreenBarMode(std::int64_t setting);
 FullscreenBarMode nextFullscreenBarMode(FullscreenBarMode mode);
 
-// `awake`: the pointer moved less than kFullscreenBarIdleMs ago.
+// video.fullscreenBarPosition. Below: the strip fills a letterbox under the picture; Over: it lies on the picture.
+enum class FullscreenBarPosition { Below = 0, Over = 1 };
+// Out of range: Below.
+FullscreenBarPosition fullscreenBarPosition(std::int64_t setting);
+// The picture ends above the strip, shown or hidden, so the frame never changes size while playing.
+bool fullscreenStripReserved(FullscreenBarPosition position, FullscreenBarMode mode);
+
+// video.fullscreenOpensIn, and the mode Typeset and Simple switch between.
+enum class FullscreenMode { Simple = 0, Typesetting = 1 };
+// Out of range: Simple.
+FullscreenMode fullscreenMode(std::int64_t setting);
+
+// `awake`: the pointer moved or a key was pressed less than kFullscreenBarIdleMs ago.
 struct FullscreenBarState {
     bool awake = false;
     bool playing = false;
     bool menuOpen = false;
     bool pointerOverBar = false;
 };
-// Nothing keeps the bar up: Auto hides it and every mode hides the pointer.
+// Nothing keeps the bar up: Auto hides it.
 bool fullscreenIdle(const FullscreenBarState &state);
 bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state);
+// video.fullscreenHidePointer: the pointer hides with the strip, and while idle when the strip never shows.
+bool fullscreenPointerHidden(bool hideWithBar, const FullscreenBarState &state);
 
 // One row without override blocks, drawings or malformed blocks; \N and \n as " ↵ ", \h and
 // Unicode separators as a space, white space collapsed and trimmed. Reads at most
@@ -61,6 +75,11 @@ std::string fullscreenOneRow(std::string_view text);
 
 // "HH:MM:SS / HH:MM:SS".
 std::string fullscreenProgressText(std::int64_t positionMs, std::int64_t durationMs);
+
+// "H:MM:SS.cc"; negative as 0.
+std::string fullscreenTimecode(std::int64_t ms);
+// The x of each keyframe's tick on a seek bar `width` wide, ascending and without repeats.
+std::vector<int> fullscreenKeyframeTicks(const std::vector<int> &keyframes, int frameCount, int width);
 
 // Client coordinates: a black frame, a white frame inside it, the bar along it and the times' text
 // box below, sized from the text's extent in the bar's font.
