@@ -15,12 +15,14 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <cstdint>
+#include <expected>
 #include <filesystem>
 #include <functional>
 #include <map>
 #include <optional>
 #include <set>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -60,6 +62,8 @@ class NodeEffectsController : public QObject {
     Q_PROPERTY(QVariantList recent READ recent NOTIFY recentChanged)
     Q_PROPERTY(QVariantList presets READ presets NOTIFY textsChanged)
     Q_PROPERTY(QStringList library READ library NOTIFY libraryChanged)
+    // [{name: the plugin's, graphs: [{title, file}]}], one per plugin with graphs, in plugin order.
+    Q_PROPERTY(QVariantList pluginLibrary READ pluginLibrary NOTIFY libraryChanged)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY changed)
     Q_PROPERTY(qulonglong source READ source WRITE setSource NOTIFY changed)
     Q_PROPERTY(QVariantList sourceSelection READ sourceSelection WRITE setSourceSelection NOTIFY changed)
@@ -137,6 +141,8 @@ public:
     QVariantList recent() const;
     static QVariantList presets();
     QStringList library() const;
+    static QVariantList pluginLibrary();
+    void pluginContentChanged() { emit libraryChanged(); }
     QVariantList sources() const;
     qulonglong source() const { return m_source ? m_source->value : 0; }
     void setSource(qulonglong id);
@@ -188,6 +194,8 @@ public:
     Q_INVOKABLE bool addPreset(int index);
     Q_INVOKABLE bool addTypesettingGraph(int index);
     Q_INVOKABLE bool addFromLibrary(const QString &name);
+    // `file` as pluginLibrary gives it; refused once the plugin's graph is gone.
+    Q_INVOKABLE bool addFromPlugin(const QString &file);
     Q_INVOKABLE bool saveToLibrary();
     Q_INVOKABLE QString graphNameProblem(const QString &name) const;
     Q_INVOKABLE bool renameGraph(const QString &name);
@@ -221,6 +229,8 @@ private:
     void edit(const application::NodeGraph &root);
     void editView(const application::NodeGraph &view);
     bool runGraphCommand(const std::function<bool(application::EditSession &)> &command);
+    bool addLibraryGraph(const std::expected<application::NodeGraph, application::GraphProblem> &graph,
+                         std::u8string_view title);
     QVariantMap problemRow(const std::string &node, const std::string &port, const std::string &message) const;
     void reload();
     void updateSources();

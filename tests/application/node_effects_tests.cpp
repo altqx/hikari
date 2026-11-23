@@ -6,6 +6,7 @@
 #include "hikari/application/node_graph.h"
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/application/node_graph_library.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/typesetting_graphs.h"
 #include "hikari/application/typesetting_line.h"
 #include "hikari/core/ass_load.h"
@@ -740,6 +741,13 @@ TEST(NodeGraphLibrary, KeepsTheUsersGraphsAsFiles)
     EXPECT_FALSE(library.remove(u8"bounce"));
     EXPECT_EQ(library.names(), (std::vector<std::u8string>{u8"fill"}));
     std::filesystem::remove_all(folder);
+}
+
+TEST(NodeGraphLibrary, APluginsGraphFileReadsAsTheLibraryReadsOne)
+{
+    const auto check = [](std::string_view text) { return graphProblem(std::as_bytes(std::span(text))); };
+    EXPECT_EQ(check(graphJson(graphOf(kClassicFill)).dump()), std::nullopt);
+    EXPECT_EQ(check("[]"), "isn\xE2\x80\x99t a node-effect graph: the graph is not a JSON object");
 }
 
 TEST(NodeCatalogue, EveryNodeHasAValidFieldSchemaAndUniqueId)

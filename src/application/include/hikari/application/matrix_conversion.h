@@ -24,6 +24,9 @@ private:
     std::array<double, 3> m_shiftTo{}, m_shiftFrom{};
 };
 
+// "TV." or "PC." with 601, 709, FCC or 240M: a matrix MatrixConversion converts from and to.
+bool namesConvertibleMatrix(std::string_view name);
+
 // Every Style colour, and each \c and \1c–\4c (inside \t too) in every Line's text and translation, except
 // karaoke template and code comments.
 void convertColours(core::Document &document, const MatrixConversion &conversion);

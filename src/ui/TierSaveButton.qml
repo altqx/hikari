@@ -18,7 +18,7 @@ Row {
     readonly property bool iconOnly: iconRole.length > 0
     readonly property string faceText: !hasProject ? plainText
                                      : tier === "project" ? qsTr("%1 in the project").arg(plainText)
-                                     : qsTr("%1 in mine").arg(plainText)
+                                     : qsTr("%1 in yours").arg(plainText)
     readonly property string tier: tierMenu.tier
     signal save(string tier)
     spacing: 1

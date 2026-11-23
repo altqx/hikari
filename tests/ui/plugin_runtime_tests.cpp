@@ -2,7 +2,9 @@
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/localisation.h"
+#include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_runtime.h"
+#include "hikari/backends/sandbox.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/app/project_windows.h"
 #include "hikari/application/node_catalogue.h"
@@ -270,6 +272,50 @@ private slots:
         runtime.sync();
         QCOMPARE(runtime.commands().size(), 2);
         QVERIFY(!runtime.process(QStringLiteral("com.example.hello")));
+    }
+
+    void aProgramPluginRunsItsProgramAndAPackageWithoutMainRunsNothing()
+    {
+        if (!backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete())
+            QSKIP("This machine can't confine programs.");
+        const QString id = QStringLiteral("com.example.program");
+        const QString exe = QFileInfo(QStringLiteral(HIKARI_TEST_PROGRAM)).fileName();
+        const QString folder = folders().plugins + QLatin1Char('/') + id;
+        write(folder + QStringLiteral("/hikari-plugin.json"),
+              R"({"id": "com.example.program", "name": "Program", "version": "1.0.0", "api": 1, "authors": ["Ana"],
+                  "main": {"program": "core"}, "permissions": {"programs": "Is the plugin"},
+                  "contributes": {"commands": [{"id": "hello", "title": "Hello"}], "programs": [{"id": "core", "title": "Core",
+                  "api": true, "platforms": {")" + QByteArray(plugins::thisPlatform().data()) + R"(": {"path": "bin/)" + exe.toUtf8() +
+                  R"(", "args": ["rpc"]}}}]}})");
+        QVERIFY(QDir().mkpath(folder + QStringLiteral("/bin")));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_TEST_PROGRAM), folder + QStringLiteral("/bin/") + exe));
+        QFile::setPermissions(folder + QStringLiteral("/bin/") + exe,
+                              QFile::permissions(QStringLiteral(HIKARI_TEST_PROGRAM)) | QFileDevice::ExeOwner);
+        m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        write(folders().plugins + QStringLiteral("/com.example.data/hikari-plugin.json"),
+              R"({"id": "com.example.data", "name": "Data", "version": "1.0.0", "api": 1, "authors": ["Ana"]})");
+        m_registry[QStringLiteral("com.example.data")] =
+            QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        app::PluginPrograms programs;
+        app::PluginRuntime::Wiring w = wiring(*a);
+        w.programs = &programs;
+        app::PluginRuntime runtime(std::move(w));
+        runtime.sync();
+        backends::PluginProcess *process = runtime.process(id);
+        QVERIFY(process);
+        QTRY_COMPARE_WITH_TIMEOUT(process->state(), backends::PluginProcess::State::Ready, 20000);
+        QSignalSpy finished(process, &backends::PluginProcess::finished);
+        QVERIFY(runtime.run(QStringLiteral("plugin.com.example.program.hello")));
+        QVERIFY(finished.wait(20000));
+
+        backends::PluginProcess *data = runtime.process(QStringLiteral("com.example.data"));
+        QVERIFY(data);
+        QCOMPARE(data->state(), backends::PluginProcess::State::Idle);
     }
 
     void restrictedPluginsStartSandboxedAndFullTrustOnesDoNot()
@@ -858,7 +904,9 @@ private slots:
               R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
                   "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
                                   "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
-                                  "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}]}})");
+                                  "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}],
+                                  "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}],
+                                  "layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]}})");
         write(folder + QStringLiteral("/main.lua"), "");
         const auto turn = [&](bool on) {
             m_registry[QStringLiteral("com.example.kit")] =
@@ -889,12 +937,20 @@ private slots:
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/dict/pl.aff"))));
         QCOMPARE(QString::fromStdU16String(content.dictionaries[0].dic.u16string()),
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/dict/pl.dic"))));
+        QCOMPARE(content.graphs.size(), 1u);
+        QVERIFY(content.graphs[0].title == u8"Sparkle");
+        QCOMPARE(content.layouts.size(), 1u);
+        QVERIFY(content.layouts[0].title == u8"Quiet");
+        QCOMPARE(QString::fromStdU16String(content.layouts[0].file.u16string()),
+                 QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/layouts/quiet.json"))));
 
         turn(false);
         runtime.sync();
         QVERIFY(application::pluginContent().styleCatalogues.empty());
         QVERIFY(application::pluginContent().karaokePresets.empty());
+        QVERIFY(application::pluginContent().graphs.empty());
         QVERIFY(application::pluginContent().dictionaries.empty());
+        QVERIFY(application::pluginContent().layouts.empty());
     }
 
     void aPluginsDictionaryIsASpellingLanguageFromTheStart()
@@ -1063,6 +1119,86 @@ private slots:
         QTRY_COMPARE(opened.count(), 2);
         ui->dismiss(opened.last().at(0).value<app::PluginDialogState *>()->key());
         QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: cancel  3")));
+    }
+
+    void aPluginAsksWithPopupsOnlyWhileItAnswersTheUser()
+    {
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            local function choose()
+                local picked, why = hikari.quick_pick.ask{title = 'Style',
+                    items = {{id = 'main', label = 'Main'}, {id = 'sign', label = 'Sign'}}}
+                hikari.notify('picked ' .. tostring(picked and picked[1]) .. ' ' .. tostring(why))
+                local name, back = hikari.input_box.ask{prompt = 'Name', back = true}
+                hikari.notify('named ' .. tostring(name) .. ' ' .. tostring(back))
+            end
+            hikari.commands.register('greet', function()
+                local ok, err = pcall(choose)
+                hikari.notify(ok and 'asked' or tostring(err))
+            end)
+            hikari.panels.on('notes', function(e)
+                if e.kind == 'show' then
+                    hikari.panels.render('notes', {kind = 'column', children = {{kind = 'button', id = 'go', text = 'Go'}}})
+                end
+                if e.kind == 'click' and e.widget == 'go' then choose() end
+                if e.kind == 'click' and e.widget == 'live' then
+                    local pick = hikari.quick_pick.open{items = {{id = 'a', label = 'A'}}}
+                    hikari.quick_pick.on(pick, function(p)
+                        if p.kind == 'accept' then
+                            hikari.quick_pick.close(pick)
+                            hikari.notify('then ' .. tostring(hikari.input_box.ask{value = p.items[1]}))
+                        end
+                    end)
+                end
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        app::PluginUi *ui = runtime.ui();
+        QTRY_VERIFY(runtime.process(QStringLiteral("com.example.tidy"))->state() == PluginProcess::State::Ready);
+
+        QVERIFY(runtime.run(kTidyGreet));
+        QTRY_VERIFY2(texts(noticed).join(u'\n').contains(QStringLiteral("only while it answers the user")),
+                     qPrintable(texts(noticed).join(u'\n')));
+        QVERIFY(!ui->popups()->shown());
+
+        QVERIFY(runtime.run(kTidyGreet, QStringLiteral("palette")));
+        QTRY_VERIFY(ui->popups()->shown());
+        ui->popups()->shown()->dismiss();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: picked nil nil")));
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->kind() == QStringLiteral("box"));
+        ui->popups()->shown()->dismiss();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: asked")));
+        noticed.clear();
+
+        const QString dock = QStringLiteral("plugin:com.example.tidy/notes");
+        ui->setShown(dock, true);
+        QTRY_VERIFY(!ui->panel(dock)->tree().isNull());
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")}, {QStringLiteral("widget"), QStringLiteral("go")}});
+        QTRY_VERIFY(ui->popups()->shown());
+        QCOMPARE(ui->popups()->shown()->pluginName(), QStringLiteral("Tidy"));
+        QCOMPARE(ui->popups()->shown()->items().size(), 2);
+        ui->popups()->shown()->accept({QStringLiteral("sign")});
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: picked sign nil")));
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->kind() == QStringLiteral("box"));
+        ui->popups()->shown()->goBack();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: named nil back")));
+
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")}, {QStringLiteral("widget"), QStringLiteral("live")}});
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->live());
+        ui->popups()->shown()->accept({QStringLiteral("a")});
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->kind() == QStringLiteral("box"));
+        QCOMPARE(ui->popups()->shown()->value(), QStringLiteral("a"));
+        ui->popups()->shown()->edit(QStringLiteral("ab"));
+        ui->popups()->shown()->accept();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: then ab")));
+
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")}, {QStringLiteral("widget"), QStringLiteral("go")}});
+        QTRY_VERIFY(ui->popups()->shown());
+        runtime.forceStop(QStringLiteral("com.example.tidy"));
+        QTRY_VERIFY(!ui->popups()->shown());
     }
 
     void pluginsHandleTheSameEventSideBySide()

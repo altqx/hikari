@@ -613,7 +613,7 @@ private slots:
         QTRY_VERIFY(shown("rightSideBar") && !shown("leftSideBar"));
         QCOMPARE(parentOf("stylesPanel"), slotOf("rightSideBar"));
         QTRY_VERIFY(fits());
-        shell(QStringLiteral("showAiAgentAction.trigger()"));
+        shell(QStringLiteral("root.showPanel(agentDock)"));
         QTRY_VERIFY(shown("leftSideBar") && !shown("rightSideBar"));
         QTRY_VERIFY(fits());
     }
