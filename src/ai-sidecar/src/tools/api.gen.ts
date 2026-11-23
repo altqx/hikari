@@ -202,7 +202,8 @@ export type DocumentsListResult = {
         document?: DocumentId;
         title?: string;
         path?: string | null;
-        format?: "ass" | "srt" | "tmplayer" | "microdvd" | "mpl2" | "text";
+        /** A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. */
+        format?: string;
         revision?: Revision;
         editingTarget?: boolean;
         /** The protected comparison reference. */
@@ -223,7 +224,8 @@ export type DocumentsGetResult = {
     document?: DocumentId;
     title?: string;
     path?: string | null;
-    format?: "ass" | "srt" | "tmplayer" | "microdvd" | "mpl2" | "text";
+    /** A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>. */
+    format?: string;
     revision?: Revision;
     editingTarget?: boolean;
     /** The protected comparison reference. */
@@ -1203,6 +1205,22 @@ export type PluginsRunResult = {
     ran: true;
 };
 
+/** The subtitle formats HikariSub can open and export, built-in and from plugins. */
+export type FormatsListParams = Record<string, never>;
+
+export type FormatsListResult = {
+    formats: ({
+        /** ass, srt, … or plugin:<plugin id>/<format id>. */
+        id: string;
+        title: string;
+        extensions: string[];
+        import: boolean;
+        export: boolean;
+        /** The plugin's id, for a plugin format. */
+        plugin?: string;
+    })[];
+};
+
 /** The Line's text with the tags that render it on a quad (VT3's perspective solver): \pos, \org, \frx, \fry, \frz, \fax, \fscx and \fscy. */
 export type TypesetPerspectiveParams = {
     /** Defaults to the active Document. */
@@ -1919,6 +1937,7 @@ export interface Operations {
     "plugins.review": { access: "read"; params: PluginsReviewParams; result: PluginsReviewResult };
     "plugins.install": { access: "write"; params: PluginsInstallParams; result: PluginsInstallResult };
     "plugins.run": { access: "write"; params: PluginsRunParams; result: PluginsRunResult };
+    "formats.list": { access: "read"; params: FormatsListParams; result: FormatsListResult };
     "typeset.perspective": { access: "read"; params: TypesetPerspectiveParams; result: TypesetPerspectiveResult };
     "typeset.clip": { access: "read"; params: TypesetClipParams; result: TypesetClipResult };
     "typeset.drawing": { access: "read"; params: TypesetDrawingParams; result: TypesetDrawingResult };

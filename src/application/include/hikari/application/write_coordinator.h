@@ -83,6 +83,8 @@ public:
     void revoke(PermitId permit);
     std::expected<void, WriteRefusal> write(PermitId permit, std::vector<std::byte> snapshot);
     void cancel(PermitId permit);
+    // Ends an unstarted permit whose bytes never came: reported as Failed, as a write would be.
+    void abandon(PermitId permit);
 
     // Called by the FilePort. The first report for a started permit becomes its
     // terminal result; later reports are ignored and counted.

@@ -113,6 +113,10 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
     for (int n = 0; n < 3; ++n)
         m_autosaveFiles[n] = file(u"fonts.autosave-" + std::u16string(1, char16_t(u'0' + n)) + u".toml",
                                   application::fontCatalogsAutosaveFile(n));
+    for (const auto &autosave : m_autosaveFiles)
+        autosave->writeInBackground(m_autosaveWrites, [this](ui::ListFile::Write result) {
+            autosaved(result != ui::ListFile::Write::Failed);
+        });
     m_autosave.setSingleShot(true);
     m_autosave.setInterval(20000);
     connect(&m_autosave, &QTimer::timeout, this, &FontCatalogsController::autosaveNow);
@@ -136,6 +140,8 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
 
 FontCatalogsController::~FontCatalogsController()
 {
+    for (const auto &autosave : m_autosaveFiles)
+        autosave->flush();
     if (m_windowMade || m_unsaved)
         save();
     stopResolver();
@@ -695,13 +701,16 @@ void FontCatalogsController::startAutosave()
 
 void FontCatalogsController::autosaveNow()
 {
-    const bool written = m_autosaveFiles[m_autosaveIndex]->write(ui::fontCatalogsToToml(m_catalogs.catalogs())) !=
-                         ui::ListFile::Write::Failed;
+    m_autosaveFiles[m_autosaveIndex]->write(ui::fontCatalogsToToml(m_catalogs.catalogs()));
+    if (++m_autosaveIndex > 2)
+        m_autosaveIndex = 0;
+}
+
+void FontCatalogsController::autosaved(bool written)
+{
     m_autosaveStatus = written ? QCoreApplication::translate("HikariSub.Fonts", "Autosave") : QString();
     m_autosaveFailed = !written;
     emit autosaveStatusChanged();
-    if (++m_autosaveIndex > 2)
-        m_autosaveIndex = 0;
     m_autosaveLabel.start();
 }
 
