@@ -1098,6 +1098,13 @@
             <numerusform>%n results</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n picked</source>
+        <translation>
+            <numerusform>%n picked</numerusform>
+            <numerusform>%n picked</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Reports</name>

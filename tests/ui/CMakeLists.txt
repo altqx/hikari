@@ -558,6 +558,7 @@ add_dependencies(hikari_ui_explorer_panel_tests hikari_media_helper hikari_media
 set_tests_properties(hikari_ui_explorer_panel_tests.offscreen PROPERTIES TIMEOUT 300)
 hikari_add_qttest(hikari_ui_quick_open_tests SOURCES quick_open_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+hikari_add_qttest(hikari_ui_plugin_popups_tests OFFSCREEN_ONLY SOURCES plugin_popups_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition
     PARTS skills spelling=eachWindowSpellsWithItsProjectsDictionary trust=aNamedKeyNobodyHasAsksNoTrust)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
