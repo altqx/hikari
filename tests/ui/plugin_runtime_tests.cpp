@@ -829,7 +829,8 @@ private slots:
         write(folder + QStringLiteral("/hikari-plugin.json"),
               R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
                   "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})");
+                                  "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
+                                  "layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]}})");
         write(folder + QStringLiteral("/main.lua"), "");
         const auto turn = [&](bool on) {
             m_registry[QStringLiteral("com.example.kit")] =
@@ -853,11 +854,16 @@ private slots:
         QVERIFY(content.karaokePresets[0].title.empty());
         QCOMPARE(QString::fromStdU16String(content.karaokePresets[0].file.u16string()),
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/presets/glow.ass"))));
+        QCOMPARE(content.layouts.size(), 1u);
+        QVERIFY(content.layouts[0].title == u8"Quiet");
+        QCOMPARE(QString::fromStdU16String(content.layouts[0].file.u16string()),
+                 QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/layouts/quiet.json"))));
 
         turn(false);
         runtime.sync();
         QVERIFY(application::pluginContent().styleCatalogues.empty());
         QVERIFY(application::pluginContent().karaokePresets.empty());
+        QVERIFY(application::pluginContent().layouts.empty());
     }
 
     void theFirstPluginGuideRunsAtEveryStep()

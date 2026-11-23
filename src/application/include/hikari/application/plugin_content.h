@@ -20,6 +20,7 @@ struct PluginContentFile {
 struct PluginContent {
     std::vector<PluginContentFile> styleCatalogues;
     std::vector<PluginContentFile> karaokePresets;
+    std::vector<PluginContentFile> layouts;
 };
 
 void setPluginContent(PluginContent content);

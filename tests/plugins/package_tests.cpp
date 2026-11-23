@@ -312,7 +312,8 @@ TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
     constexpr std::string_view manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0",
         "api": 1, "main": "lua/main.lua", "authors": ["Ana"],
         "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-                        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})";
+                        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
+                        "layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]}})";
     const auto files = [&](std::vector<PackageFile> extra) {
         std::vector<PackageFile> out{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
         out.insert(out.end(), extra.begin(), extra.end());
@@ -320,23 +321,33 @@ TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
     };
     const PackageFile styles{"styles/signs.sty", bytes("Style: Sign,Arial,20")};
     const PackageFile preset{"presets/glow.ass", bytes("[Script Info]")};
+    const PackageFile layout{"layouts/quiet.json", bytes("{}")};
 
-    const PackageProblem missing = problem(files({styles}));
+    const PackageProblem missing = problem(files({styles, layout}));
     EXPECT_EQ(missing.kind, Kind::MissingContent);
     EXPECT_EQ(missing.path, "presets/glow.ass");
-    EXPECT_TRUE(openPackage(files({styles, preset}), 1)) << "with no checks set, a file need only be there";
+    EXPECT_EQ(problem(files({styles, preset})).path, "layouts/quiet.json");
+    EXPECT_TRUE(openPackage(files({styles, preset, layout}), 1)) << "with no checks set, a file need only be there";
 
     ContentFileChecks checks;
     checks.styleCatalogue = [](std::span<const std::byte>) { return std::optional<std::string>(); };
     checks.karaokePreset = [](std::span<const std::byte> data) {
         return data.size() < 20 ? std::optional<std::string>("is too short") : std::nullopt;
     };
-    const auto refused = openPackage(files({styles, preset}), 1, checks);
+    const auto refused = openPackage(files({styles, preset, layout}), 1, checks);
     ASSERT_FALSE(refused);
     EXPECT_EQ(refused.error().kind, Kind::BadContent);
     EXPECT_EQ(refused.error().path, "presets/glow.ass");
     EXPECT_EQ(refused.error().detail, "is too short");
-    EXPECT_TRUE(openPackage(files({styles, {"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")}}), 1, checks));
+    const PackageFile longPreset{"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")};
+    EXPECT_TRUE(openPackage(files({styles, longPreset, layout}), 1, checks));
+    checks.layout = [](std::span<const std::byte> data) {
+        return data.size() < 3 ? std::optional<std::string>("isn't a layout") : std::nullopt;
+    };
+    const auto notALayout = openPackage(files({styles, longPreset, layout}), 1, checks);
+    ASSERT_FALSE(notALayout);
+    EXPECT_EQ(notALayout.error().kind, Kind::BadContent);
+    EXPECT_EQ(notALayout.error().path, "layouts/quiet.json");
 }
 
 TEST(PluginPackage, TheImportRuleReadsQmlAndScriptsAsWritten)

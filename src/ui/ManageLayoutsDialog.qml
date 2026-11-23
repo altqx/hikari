@@ -16,6 +16,8 @@ DialogWindow {
     defaultButton: closeButton
     readonly property var rows: layouts.savedLayouts
     readonly property var current: list.currentIndex >= 0 && list.currentIndex < rows.length ? rows[list.currentIndex] : null
+    readonly property bool fromPlugin: current?.tier === "plugin"
+    readonly property bool grouped: layouts.hasProject || rows.some(r => r.tier === "plugin")
     property bool renaming: false
     property string newName: ""
     readonly property string problem: renaming && current ? layouts.layoutNameProblem(newName, current.name) : ""
@@ -27,7 +29,7 @@ DialogWindow {
         list.forceActiveFocus()
     }
     function startRename() {
-        if (!current || current.hidden)
+        if (!current || current.hidden || fromPlugin)
             return
         newName = current.name
         renaming = true
@@ -46,7 +48,7 @@ DialogWindow {
             list.currentIndex = rows.findIndex(r => r.name === name)
     }
     function askDelete() {
-        if (!current || current.hidden)
+        if (!current || current.hidden || fromPlugin)
             return
         const name = current.name
         messages.ask({
@@ -150,7 +152,7 @@ DialogWindow {
             highlightMoveDuration: 0
             Accessible.role: Accessible.List
             Accessible.name: qsTr("Saved layouts")
-            MenuKey.enabled: dialog.layouts.hasProject && dialog.current !== null && !dialog.renaming
+            MenuKey.enabled: dialog.layouts.hasProject && dialog.current !== null && !dialog.fromPlugin && !dialog.renaming
             MenuKey.onRequested: tierMenu.popup(list.currentItem, 0, list.currentItem.height)
             Keys.onShortcutOverride: event => event.accepted = event.modifiers === Qt.NoModifier
                                                                && (event.key === Qt.Key_Delete || event.key === Qt.Key_F2)
@@ -169,9 +171,11 @@ DialogWindow {
                 required property int index
                 width: ListView.view.width
                 Label {
-                    visible: dialog.layouts.hasProject
-                             && (slot.index === 0 || dialog.rows[slot.index - 1].tier !== slot.modelData.tier)
-                    text: slot.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                    readonly property var before: slot.index > 0 ? dialog.rows[slot.index - 1] : null
+                    visible: dialog.grouped && (!before || before.tier !== slot.modelData.tier
+                                                || before.plugin !== slot.modelData.plugin)
+                    text: slot.modelData.tier === "plugin" ? slot.modelData.plugin
+                        : slot.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
                     color: Theme.muted
                     font: dialog.fontAt(11)
                     leftPadding: 8
@@ -183,9 +187,11 @@ DialogWindow {
                     readonly property var modelData: slot.modelData
                     readonly property int index: slot.index
                     readonly property bool editing: highlighted && dialog.renaming
+                    readonly property bool fromPlugin: modelData.tier === "plugin"
+                    readonly property bool noted: !modelData.usable || modelData.hidden || (fromPlugin && highlighted)
                     onEditingChanged: if (!editing) nameField.focus = false
                     width: slot.width
-                    height: modelData.usable && !modelData.hidden ? 32 : 44
+                    height: noted ? 44 : 32
                     highlighted: slot.ListView.isCurrentItem
                     text: modelData.name
                     focusPolicy: Qt.NoFocus
@@ -193,7 +199,7 @@ DialogWindow {
                     onDoubleClicked: dialog.startRename()
                     TapHandler {
                         acceptedButtons: Qt.RightButton
-                        enabled: dialog.layouts.hasProject
+                        enabled: dialog.layouts.hasProject && !row.fromPlugin
                         onTapped: {
                             list.currentIndex = row.index
                             tierMenu.popup()
@@ -222,9 +228,11 @@ DialogWindow {
                                 Layout.fillWidth: true
                             }
                             Label {
-                                visible: !row.modelData.usable || row.modelData.hidden
+                                objectName: row.highlighted ? "manageLayoutsNote" : ""
+                                visible: row.noted
                                 text: row.modelData.hidden ? qsTr("Hidden by the project’s copy")
-                                                           : qsTr("Cannot be used: %1").arg(row.modelData.problem)
+                                    : !row.modelData.usable ? qsTr("Cannot be used: %1").arg(row.modelData.problem)
+                                    : qsTr("Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.")
                                 elide: Text.ElideRight
                                 font: dialog.fontAt(12)
                                 color: Theme.muted
@@ -248,14 +256,14 @@ DialogWindow {
                             Keys.onEscapePressed: event => { event.accepted = true; dialog.endRename() }
                         }
                         TierChip {
-                            visible: dialog.layouts.hasProject && !row.editing
+                            visible: dialog.layouts.hasProject && !row.editing && !row.fromPlugin
                             tier: row.modelData.tier
                             enabled: !row.modelData.hidden
                         }
                         IconToolButton {
                             id: tierButton
                             objectName: row.highlighted ? "manageLayoutsTiers" : ""
-                            visible: row.highlighted && !row.editing && dialog.layouts.hasProject
+                            visible: row.highlighted && !row.editing && dialog.layouts.hasProject && !row.fromPlugin
                             iconRole: "panel-menu"
                             text: qsTr("More options")
                             focusPolicy: Qt.TabFocus
@@ -264,7 +272,7 @@ DialogWindow {
                         }
                         IconToolButton {
                             objectName: row.highlighted ? "manageLayoutsRename" : ""
-                            visible: row.highlighted && !row.editing && !row.modelData.hidden
+                            visible: row.highlighted && !row.editing && !row.modelData.hidden && !row.fromPlugin
                             iconRole: "edit"
                             text: qsTr("Rename")
                             tip: text + " (" + ShellMenus.keyText("F2") + ")"
@@ -273,7 +281,7 @@ DialogWindow {
                         }
                         IconToolButton {
                             objectName: row.highlighted ? "manageLayoutsDelete" : ""
-                            visible: row.highlighted && !row.editing && !row.modelData.hidden
+                            visible: row.highlighted && !row.editing && !row.modelData.hidden && !row.fromPlugin
                             iconRole: "delete"
                             text: qsTr("Delete")
                             focusPolicy: Qt.NoFocus
