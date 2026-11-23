@@ -8577,6 +8577,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     styles: root.styleManager
                     shellWindow: root.shellWindow
+                    activeNumber: root.shell.activeLineNumber
                     editor: root.editor
                     app: root.app
                     managerLoader: styleManagerWindowLoader

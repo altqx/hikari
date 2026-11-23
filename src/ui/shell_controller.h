@@ -185,6 +185,7 @@ public:
     void setSelection(const application::Selection &selection);
     std::vector<core::LineId> displayedLines() const;
     std::vector<core::LineId> actionLines() const;
+    std::optional<int> lineNumber(core::LineId id) const;
     void retranslate();
 
     void setReferenceSelection(const application::Selection &selection);
