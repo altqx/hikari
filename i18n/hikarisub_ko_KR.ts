@@ -5922,6 +5922,10 @@ Failed to copy %2 fonts.</source>
         <translation>이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>이전 설정 가져오기</translation>
     </message>
@@ -5936,6 +5940,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Set up from scratch</source>
         <translation>처음부터 설정</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6032,14 +6040,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>큰 영상 화면에 시각 도구와 스타일 패널을 함께 둡니다.</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>나중에: 설정 › 일반 › 이전 버전 설정 가져오기…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>HikariSub의 기본값으로 시작합니다. 나중에 설정 › 일반 › 이전 버전 설정 가져오기…로 가져올 수도 있습니다.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -8134,10 +8134,6 @@ Failed to copy %2 fonts.</source>
         <translation>페이드 찾기…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>이전 버전 설정 가져오기…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8192,6 +8188,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>가로 세로 비율 변경…</translation>
+    </message>
+    <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Apply motion data…</source>
@@ -13880,6 +13880,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>사용자 폴더 열기</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>태그 숨김</translation>
     </message>
@@ -14036,6 +14040,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>ASS tag replacement</source>
         <translation>ASS 태그 대체 문자</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -14508,10 +14572,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>이전 버전 설정 가져오기…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -16395,15 +16455,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In the Timing layout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Always</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -20120,10 +20172,6 @@ because it was edited.</source>
         <translation>스냅샷을 쓸 수 없음</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>이전 버전 설정 가져오기</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>충돌</translation>
     </message>
@@ -20148,20 +20196,8 @@ because it was edited.</source>
         <translation>마지막 가져오기 전의 설정으로 되돌리시겠습니까?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>HikariSub을 다음에 시작할 때 적용됩니다. 이전 버전 설치본은 변경되지 않습니다.</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>그 뒤에 변경한 다음 설정도 함께 되돌아갑니다: %1. 이전 버전 설치본은 변경되지 않습니다.</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>취소</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>이전 버전 설치 폴더 선택</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20196,10 +20232,6 @@ because it was edited.</source>
         <translation>가져오기</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>설치본</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>검토</translation>
     </message>
@@ -20208,20 +20240,36 @@ because it was edited.</source>
         <translation>3단계 중 %1단계: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>가져올 이전 버전 설치본 선택</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>이 컴퓨터에서 찾은 HikariSub 0.0.x 설치본입니다. 설치본의 내용은 변경되지 않습니다.</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>이전 버전 설치본</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>이전 버전 설치본을 찾지 못했습니다. 설치 폴더를 선택하십시오.</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20248,8 +20296,8 @@ because it was edited.</source>
         <translation>가져올 항목 검토</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>충돌은 이전 버전 설치본에서 현재와 다르게 지정된 설정입니다. 제안된 선택이 체크되어 있으니, 현재 값을 유지할 항목은 체크를 해제하십시오.</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20352,8 +20400,8 @@ because it was edited.</source>
         <translation>변경 %2개 중 가져올 항목 %1개, 변경 없음 %3개, 미해결 %4개, 제외 %5개, 폐지 %6개</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>프로그램 옆에서 이전 버전 설정을 찾지 못했습니다. 이전 버전 설치 폴더를 선택하십시오.</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
@@ -25369,10 +25417,6 @@ Styles deleted:
         <translation>가로 세로 비율 변경…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation>전체 화면 종료</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>전체 화면</translation>
     </message>
@@ -25457,22 +25501,59 @@ Styles deleted:
         <translation>전체 화면 영상</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>전체 화면을 끝내려면 Esc 키를 누르십시오</translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation>이전 영상 파일</translation>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>줄 %1, %2: %3</translation>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Visual tools</source>
         <translation>시각 도구</translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25492,32 +25573,48 @@ Styles deleted:
         <translation>전체 화면 막대</translation>
     </message>
     <message>
-        <source>Full screen bar: %1</source>
-        <translation>전체 화면 막대: %1</translation>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show when the pointer moves</source>
-        <translation>포인터를 움직일 때 표시</translation>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always show</source>
-        <translation>항상 표시</translation>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never show</source>
-        <translation>표시 안 함</translation>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation>포인터를 움직이면 표시하고 움직임이 없으면 숨김</translation>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation>막대를 유지하고 화면은 그 위까지 표시</translation>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>화면만</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>

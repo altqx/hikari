@@ -31,6 +31,9 @@ public:
              bool validateFirst = false);
     // Runs only the macro's validation; busy until runFinished reports Ok (valid) or NotValid.
     bool validate(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot);
+    // Runs the script's export filter; the result lands in host(path)->lastResult().
+    bool runFilter(const std::string &path, int filterIndex, const application::MacroSnapshot &snapshot,
+                   const application::DialogRequest &settings);
     // Whether the file's mtime differs from the one at last load; false when it cannot be read.
     bool modifiedSinceLoad(const std::string &path) const;
     void cancel() override;

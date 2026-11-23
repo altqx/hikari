@@ -735,6 +735,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
+    m_exportRecipes = std::make_unique<ui::ExportRecipes>(*m_settings);
+    m_luaExportFilters = std::make_unique<LuaExportFilters>(*m_automation);
     m_selectOptions = m_settings->integer("selectLines.options");
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
@@ -2533,6 +2535,8 @@ void Application::refreshViews()
         m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
+    if (m_exportRecipes)
+        m_exportRecipes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -7228,11 +7232,11 @@ void Application::settingChanged(const QString &id)
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
-    else if (id == QLatin1String("autosave.intervalSeconds"))
+    else if (id == QLatin1String("autosave.intervalSeconds")) {
         for (auto &[document, timer] : m_autosaveTimers)
             if (timer)
                 timer->setInterval(autosaveIntervalMs());
-    else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
+    } else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         for (auto *views : allViews())
             views->shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.columnWidths") && !m_resettingSettings)
