@@ -746,8 +746,9 @@ class ShellTest : public QObject {
     {
         return QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_ARG(QVariant, QString::fromLatin1(symbol)));
     }
-    bool askForVideoFile(bool next) const
+    bool askForVideoFile(bool next)
     {
+        keysNeverRepeat();
         return QMetaObject::invokeMethod(window, "runVideoHotkey",
                                          Q_ARG(QVariant, QString::fromLatin1(next ? "VIDEO_NEXT_FILE" : "VIDEO_PREVIOUS_FILE")));
     }
@@ -916,9 +917,9 @@ class ShellTest : public QObject {
     }
     void keysNeverRepeat()
     {
-        auto t = std::make_shared<qint64>(0);
-        application->hotkeys().setKeyClock([t] { return *t += 1000; });
+        application->hotkeys().setKeyClock([t = keyTime] { return *t += 1000; });
     }
+    std::shared_ptr<qint64> keyTime = std::make_shared<qint64>(0);
     void showShiftTimes()
     {
         QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
@@ -38413,8 +38414,8 @@ private slots:
         QVERIFY(f.open(QIODevice::WriteOnly));
         f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[Events]\n"
                 "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
-                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n");
+                "Dialogue: 0,0:00:00.25,0:00:00.75,Default,,0,0,0,,one\n"
+                "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,two\n");
         f.close();
         QVERIFY(application->openFile(f.fileName()));
         auto &video = application->video();
@@ -38425,15 +38426,15 @@ private slots:
         const auto firstAt = [&](std::int64_t ms) { return session.frameAtOrAfter(core::DocumentTime(ms * 1000)).value_or(-1); };
         const auto lastBefore = [&](std::int64_t ms) { return session.lastFrameBefore(core::DocumentTime(ms * 1000)).value_or(-1); };
         QVERIFY(runGlobal("GLOBAL_NEXT_SUBTITLE_BOUNDARY"));
-        QTRY_COMPARE(video.frame(), firstAt(1000));
+        QTRY_COMPARE(video.frame(), firstAt(250));
         QVERIFY(runGlobal("GLOBAL_NEXT_SUBTITLE_BOUNDARY"));
-        QTRY_COMPARE(video.frame(), lastBefore(2000));
+        QTRY_COMPARE(video.frame(), lastBefore(750));
         QVERIFY(runGlobal("GLOBAL_NEXT_SUBTITLE_BOUNDARY"));
         QTRY_COMPARE(application->shell().activeLineNumber(), 2);
-        QTRY_COMPARE(video.frame(), firstAt(3000));
+        QTRY_COMPARE(video.frame(), firstAt(1000));
         QVERIFY(runGlobal("GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY"));
         QTRY_COMPARE(application->shell().activeLineNumber(), 1);
-        QTRY_COMPARE(video.frame(), lastBefore(2000));
+        QTRY_COMPARE(video.frame(), lastBefore(750));
 
         auto *text = item("lineText");
         text->forceActiveFocus();
@@ -38461,7 +38462,7 @@ private slots:
         QVERIFY(becomesFocusWindow(fsWindow));
         QCOMPARE(fullscreenItem("fullscreenZoomReadout")->property("text").toString(), QStringLiteral("Fit"));
         QVERIFY(runGlobal("GLOBAL_JUMP_TO"));
-        auto *field = findItem(fullscreenItem("fullscreenTime"), QStringLiteral("videoTimeField"));
+        auto *field = fullscreenItem("fullscreenStripTimeField");
         QVERIFY(field);
         QTRY_VERIFY(field->isVisible() && field->hasActiveFocus());
         QVERIFY(fs.barShown());
@@ -39437,9 +39438,11 @@ private slots:
                                       Q_ARG(int, i));
             order << (it ? it->objectName() : QString());
         }
-        QCOMPARE(order.mid(0, 6), (QStringList{QStringLiteral("videoMenuCopyCoords"), QStringLiteral("videoMenuPlayPause"),
-                                              QStringLiteral("videoMenuStop"), QStringLiteral("videoMenuFullScreen"),
-                                              QString(), QStringLiteral("videoMenuOpenEditor")}));
+        QCOMPARE(order.mid(0, 9), (QStringList{QStringLiteral("videoMenuCopyCoords"), QStringLiteral("videoMenuPlayPause"),
+                                              QStringLiteral("videoMenuStop"), QStringLiteral("videoMenuPreviousFile"),
+                                              QStringLiteral("videoMenuNextFile"), QStringLiteral("videoMenuJumpTo"),
+                                              QStringLiteral("videoMenuFullScreen"), QString(),
+                                              QStringLiteral("videoMenuOpenEditor")}));
         QVERIFY(QMetaObject::invokeMethod(named("videoMenuFullScreen"), "triggered"));
         QVERIFY(fs.active());
         QTRY_VERIFY(!menu->property("visible").toBool());

@@ -8568,6 +8568,46 @@ Failed to copy %2 fonts.</source>
         <translation>전체 화면 식자</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>확대/축소 50%</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>확대/축소 100%</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>확대/축소 200%</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>맞춤 확대/축소</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>1:1 장치 픽셀로 확대/축소</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>다음 자막 경계</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>이전 자막 경계</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -26467,11 +26507,12 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Fit</source>
-        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
         <translation>맞춤</translation>
     </message>
     <message>
         <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
         <translation>%1%</translation>
     </message>
     <message>

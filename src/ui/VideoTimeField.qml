@@ -13,6 +13,7 @@ Item {
     property color ink: palette.windowText
     property int pixelSize: 20
     property string tip
+    property string itemPrefix: "video"
     readonly property bool editing: input.visible
     readonly property string jumpError: input.error
     signal closed()
@@ -40,7 +41,7 @@ Item {
             return
         }
         //: Jump to's bad input: %1 what was typed, %2 the time shown now
-        input.error = qsTr("Not a time or frame: %1. Try %2 or a frame number.").arg(input.text.trim()).arg(time)
+        input.error = qsTr("Not a time or frame: %1. Try %2 or a frame number.").arg(input.text.trim(), time)
     }
 
     implicitWidth: row.implicitWidth
@@ -52,7 +53,7 @@ Item {
         spacing: 4
         AbstractButton {
             id: timeButton
-            objectName: "videoTime"
+            objectName: field.itemPrefix + "Time"
             Layout.preferredWidth: implicitWidth
             Layout.preferredHeight: implicitHeight
             enabled: field.video.hasVideo
@@ -83,7 +84,7 @@ Item {
         }
         TextField {
             id: input
-            objectName: "videoTimeField"
+            objectName: field.itemPrefix + "TimeField"
             property string error
             visible: false
             Layout.preferredWidth: timeButton.implicitWidth
@@ -111,7 +112,7 @@ Item {
             }
         }
         Icon {
-            objectName: "videoKeyframeMark"
+            objectName: field.itemPrefix + "KeyframeMark"
             visible: field.keyframe
             iconRole: "keyframe-next"
             size: 16

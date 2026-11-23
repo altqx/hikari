@@ -8635,6 +8635,46 @@ Failed to copy %2 fonts.</source>
         <translation>முழுத் திரை டைப்செட்டிங்</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>தாவிச் செல்</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>பெரிதாக்கம் 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>பெரிதாக்கம் 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>பெரிதாக்கம் 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>சிறிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>பொருந்தும்படி பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>1:1 சாதனப் படப்புள்ளிகளுக்குப் பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>அடுத்த வசன எல்லை</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>முந்தைய வசன எல்லை</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -26695,11 +26735,12 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Fit</source>
-        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
         <translation>பொருத்தம்</translation>
     </message>
     <message>
         <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
         <translation>%1 %</translation>
     </message>
     <message>

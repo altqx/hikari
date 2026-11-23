@@ -6116,22 +6116,36 @@ ApplicationWindow {
                         video: root.video
                         tip: root.videoTimeTip
                     }
-                    Label {
-                        objectName: "videoStatus"
-                        Layout.leftMargin: 8
+                    Item {
+                        id: videoReadouts
                         Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        elide: Text.ElideRight
-                        //: The video's frame readout: %1 the shown frame, %2 how many frames the video has
-                        text: root.video.loaded && root.video.frame >= 0
-                              ? qsTranslate("HikariSub.Video", "frame %1 / %2").arg(root.video.frame).arg(root.video.frameCount)
-                              : root.video.status
-                        color: Theme.muted
-                        font.family: "monospace"
-                        font.features: { "tnum": 1 }
-                    }
-                    VisualPointerReadout {
-                        tools: root.visualTools
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 0
+                        implicitHeight: Math.max(videoStatus.implicitHeight, videoPointerReadout.implicitHeight)
+                        Label {
+                            id: videoStatus
+                            objectName: "videoStatus"
+                            anchors.left: parent.left
+                            anchors.leftMargin: 8
+                            anchors.right: videoPointerReadout.visible ? videoPointerReadout.left : parent.right
+                            anchors.rightMargin: 4
+                            anchors.verticalCenter: parent.verticalCenter
+                            elide: Text.ElideRight
+                            //: The video's frame readout: %1 the shown frame, %2 how many frames the video has
+                            text: root.video.loaded && root.video.frame >= 0
+                                  ? qsTranslate("HikariSub.Video", "frame %1 / %2").arg(root.video.frame, root.video.frameCount)
+                                  : root.video.status
+                            color: Theme.muted
+                            font.family: "monospace"
+                            font.features: { "tnum": 1 }
+                        }
+                        VisualPointerReadout {
+                            id: videoPointerReadout
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            tools: root.visualTools
+                            visible: pointer && videoReadouts.width >= implicitWidth + 8
+                        }
                     }
                     VideoZoomReadout {
                         shell: root
@@ -11146,8 +11160,8 @@ ApplicationWindow {
         const signedMs = n => n < 0 ? "−" + -n : n > 0 ? "+" + n : "0"
         //: The video time's tooltip: %1 signed frames, %2 the active line's number, %3 and %4 signed milliseconds
         return qsTranslate("HikariSub.Video", "%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end")
-                   .arg(signedFrames(distance.frames)).arg(root.shell.activeLineNumber)
-                   .arg(signedMs(distance.fromStart)).arg(signedMs(distance.fromEnd)) + "\n" + jump
+                   .arg(signedFrames(distance.frames), root.shell.activeLineNumber, signedMs(distance.fromStart),
+                        signedMs(distance.fromEnd)) + "\n" + jump
     }
     function bitmapTip(text, symbol, window, unboundKey) {
         const key = root.boundKeys(symbol, window) || (unboundKey ?? "")
@@ -11493,8 +11507,13 @@ ApplicationWindow {
     function editVideoTime() {
         if (root.videoFullscreen.active)
             return videoFullscreenWindow.editTime()
-        root.showPanel(videoDock)
-        return videoTimeField.edit()
+        root.revealPanel(videoDock, false)
+        if (!videoTimeField.edit())
+            return false
+        const w = videoTimeField.Window.window
+        if (w && root.workspaceLayout.focusWindow !== w)
+            w.requestActivate()
+        return true
     }
     function stepSubtitleBoundary(direction) {
         const frame = root.video.boundaryInLine(direction)

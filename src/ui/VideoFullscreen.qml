@@ -170,7 +170,8 @@ Window {
         }
         VideoTimeField {
             id: typesettingTime
-            objectName: "fullscreenTypesettingTimeField"
+            objectName: "fullscreenTypesettingTimes"
+            itemPrefix: "fullscreenTypesetting"
             parent: typesetting.item ? typesetting.item.timeSlot : fs.contentItem
             visible: typesetting.item !== null
             video: fs.shell.video
@@ -584,6 +585,7 @@ Window {
                         VideoTimeField {
                             id: stripTime
                             objectName: "fullscreenTime"
+                            itemPrefix: "fullscreenStrip"
                             Layout.leftMargin: 10
                             video: fs.shell.video
                             time: fs.controller.positionText

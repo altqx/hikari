@@ -84,7 +84,7 @@ protected:
         if (waitForItem("mainWindow/loadAssociated", 5s)) {
             observed.push_back(getStringProperty("mainWindow/associationText", "text"));
             mouseClick("mainWindow/loadAssociated");
-            for (int i = 0; i < 100 && status().rfind("Frame", 0) != 0; ++i)
+            for (int i = 0; i < 100 && status().rfind("frame ", 0) != 0; ++i)
                 wait(100ms);
             observed.push_back(status());
             mouseClick("mainWindow/editingGrid");
@@ -195,10 +195,10 @@ int main(int argc, char **argv)
         expect(o.size() == 5, "every step observed");
         if (o.size() == 5) {
             expect(o[0].find("ep1.mkv") != std::string::npos, "the association is offered");
-            expect(o[1].rfind("Frame 0 of 48", 0) == 0, "indexed; the first Line's frame is shown");
+            expect(o[1].rfind("frame 0 / 48", 0) == 0, "indexed; the first Line's frame is shown");
             expect(o[2] == "frame 24", "the second Line shows its start frame (first at or after 1.0 s)");
             expect(o[3] == "frame 25", "Next frame steps one frame");
-            expect(o[4].rfind("Frame 25 of 48", 0) == 0, "the status names the frame");
+            expect(o[4].rfind("frame 25 / 48", 0) == 0, "the status names the frame");
         }
         for (std::size_t i = 0; i < test.frames.size(); ++i)
             std::printf("frame %d barcode %d overlay %d accepted %d\n", test.frames[i].frame, test.frames[i].barcode,

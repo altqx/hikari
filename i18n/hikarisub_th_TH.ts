@@ -8568,6 +8568,46 @@ Failed to copy %2 fonts.</source>
         <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>ซูม 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>ซูม 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>ซูม 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>ซูมเข้า</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>ซูมออก</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>ซูมให้พอดี</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>ซูมเป็นพิกเซลอุปกรณ์ 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -26467,11 +26507,12 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Fit</source>
-        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
         <translation>พอดี</translation>
     </message>
     <message>
         <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
         <translation>%1 %</translation>
     </message>
     <message>

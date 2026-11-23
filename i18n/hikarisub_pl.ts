@@ -8702,6 +8702,46 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Typesetting na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>Powiększenie 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>Powiększenie 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Powiększ</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Pomniejsz</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>Dopasuj powiększenie do panelu</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>Powiększ do pikseli urządzenia 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>Następna granica napisu</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -26923,11 +26963,12 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Fit</source>
-        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
         <translation>Dopasowanie</translation>
     </message>
     <message>
         <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
         <translation>%1 %</translation>
     </message>
     <message>
