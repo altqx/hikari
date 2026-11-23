@@ -29,6 +29,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp libass_log.h o
     icu_text.cpp include/hikari/backends/icu_text.h
     harper_client.cpp include/hikari/backends/harper_client.h
     plugin_process.cpp include/hikari/backends/plugin_process.h
+    program_process.cpp include/hikari/backends/program_process.h
     lua_node_helper.cpp include/hikari/backends/lua_node_helper.h
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
     $<$<PLATFORM_ID:Linux>:posix_platform_files.cpp>

@@ -31,6 +31,8 @@ ColumnLayout {
             parts.push(qsTr("%n lead-out", "", counts.leadOut))
         if (counts.gapClosed)
             parts.push(qsTr("%n gap(s) closed", "", counts.gapClosed))
+        if (counts.overlapClosed)
+            parts.push(qsTr("%n overlap(s) closed", "", counts.overlapClosed))
         if (counts.snapped)
             parts.push(qsTr("%n snapped", "", counts.snapped))
         return parts.join(" · ")
@@ -44,7 +46,7 @@ ColumnLayout {
         return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0") + "." + String(cs).padStart(2, "0")
     }
     function reasonText(rules) {
-        const words = { leadIn: qsTr("lead-in"), leadOut: qsTr("lead-out"), gapClosed: qsTr("gap closed"),
+        const words = { leadIn: qsTr("lead-in"), leadOut: qsTr("lead-out"), gapClosed: qsTr("gap closed"), overlapClosed: qsTr("overlap closed"),
                         snappedStart: qsTr("snapped start"), snappedEnd: qsTr("snapped end") }
         return rules.map(r => words[r]).join(" · ")
     }

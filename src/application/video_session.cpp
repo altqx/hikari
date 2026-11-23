@@ -124,6 +124,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         }
         m_streamTimeline = core::FrameTimeline::indexed(m_streamStarts);
         m_keyframes = opened->keyframes;
+        m_videoKeyframes = opened->keyframes;
         m_hasAudio = opened->firstAudioTrack >= 0;
         m_audioTrack = chosen >= 0 ? chosen : opened->firstAudioTrack;
         const auto ordinal = std::find(opened->audioTracks.begin(), opened->audioTracks.end(), m_audioTrack);
@@ -172,10 +173,12 @@ void VideoSession::close()
     m_state = State::Closed;
     m_path.clear();
     m_error.reset();
+    m_failedFrame.reset();
     m_starts.clear();
     m_streamStarts.clear();
     m_streamTimeline.reset();
     m_keyframes.clear();
+    m_videoKeyframes.clear();
     m_hasAudio = false;
     m_audioTrack = -1;
     m_audioOrdinal = -1;
@@ -291,16 +294,18 @@ bool VideoSession::step(int frames)
 void VideoSession::showFrame(int index)
 {
     m_requested = index;
+    m_failedFrame.reset();
     if (m_state != State::Ready || index < 0 || index >= frameCount())
         return notify();
     const std::uint64_t request = ++m_request;
     const std::weak_ptr<bool> alive = m_alive;
-    m_source.frame(index, [this, alive, request](std::expected<IndexedFrame, SourceError> frame) {
+    m_source.frame(index, [this, alive, request, index](std::expected<IndexedFrame, SourceError> frame) {
         if (alive.expired() || request != m_request)
             return;
         if (!frame) {
             if (frame.error() != SourceError::Stale && frame.error() != SourceError::Cancelled) {
                 m_error = frame.error();
+                m_failedFrame = index;
                 notify();
             }
             return;

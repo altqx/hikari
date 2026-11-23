@@ -87,8 +87,6 @@ signals:
 
 private:
     static QStringList names(const TieredPresets &presets);
-    static QList<NamedPreset> readPresets(const QStringList &stored);
-    static QStringList writePresets(const QList<NamedPreset> &presets);
     TieredPresets *presetsOf(const QString &tool);
     QString *currentOf(const QString &tool);
     application::Tier *currentTierOf(const QString &tool);

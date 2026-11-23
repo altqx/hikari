@@ -45,6 +45,8 @@ std::vector<std::byte> encodeLoad(const LoadRequest &load)
         .str(load.locale)
         .str(load.settings);
     writeStrings(w, load.commands);
+    writeStrings(w, load.exporters);
+    writeStrings(w, load.importers);
     return w.take();
 }
 
@@ -60,10 +62,15 @@ std::optional<LoadRequest> decodeLoad(Reader &in)
     load.locale = in.str();
     load.settings = in.str();
     auto commands = readStrings(in);
-    if (!in.ok() || !commands || !in.atEnd() || (tier != 0 && tier != 1) || load.memoryLimit <= 0)
+    auto exporters = readStrings(in);
+    auto importers = readStrings(in);
+    if (!in.ok() || !commands || !exporters || !importers || !in.atEnd() || (tier != 0 && tier != 1) ||
+        load.memoryLimit <= 0)
         return std::nullopt;
     load.tier = static_cast<Tier>(tier);
     load.commands = std::move(*commands);
+    load.exporters = std::move(*exporters);
+    load.importers = std::move(*importers);
     return load;
 }
 

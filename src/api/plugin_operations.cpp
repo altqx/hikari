@@ -11,6 +11,25 @@ std::unexpected<Error> noPlugins()
     return fail(errors::kUnavailable, "Plugins are not available.");
 }
 
+}
+
+std::string_view viaOf(const Caller &caller)
+{
+    return caller.reviewed ? "ai" : "api";
+}
+
+std::unexpected<Error> disabled(const PluginHost &plugins, std::string_view command)
+{
+    std::string reason = "The command is disabled.";
+    for (const PluginState &plugin : plugins.plugins())
+        for (const PluginCommand &c : plugin.commands)
+            if (c.command == command && !c.disabledReason.empty())
+                reason = c.disabledReason;
+    return fail(errors::kRefused, reason, Json::object({{"reason", Json("disabled")}}));
+}
+
+namespace {
+
 Json commandsJson(const std::vector<PluginCommand> &commands)
 {
     Json out = Json::array();
@@ -52,15 +71,49 @@ Result manifest(const Context &context, const Json &params)
     return Json::object({{"plugin", Json(id)}, {"manifest", std::move(*parsed)}});
 }
 
+Result setStatusItem(const Context &context, const Json &params)
+{
+    const std::string_view caller = context.caller.id;
+    if (!caller.starts_with("plugin:"))
+        return fail(errors::kNotGranted, "Only plugins have status bar items.", Json::object());
+    if (!context.host.plugins)
+        return noPlugins();
+    StatusItemChange change{params.find("item")->asString(), {}, {}, {}, {}, {}};
+    const auto text = [&](const char *key) -> std::optional<std::string> {
+        const Json *value = params.find(key);
+        return value ? std::optional(value->asString()) : std::nullopt;
+    };
+    change.text = text("text");
+    change.icon = text("icon");
+    change.tooltip = text("tooltip");
+    change.tone = text("tone");
+    if (const Json *visible = params.find("visible"))
+        change.visible = visible->asBool();
+    switch (context.host.plugins->setStatusItem(caller.substr(7), change)) {
+    case StatusItemSet::Set:
+        return Json::object({{"item", Json(change.item)}});
+    case StatusItemSet::UnknownItem:
+        return fail(errors::kNotFound, "The plugin declares no status item \"" + change.item + "\".",
+                    Json::object({{"item", Json(change.item)}}));
+    case StatusItemSet::Empty:
+        return fail(errors::kInvalidParams, "A status item needs text, an icon or both.", Json::object({{"item", Json(change.item)}}));
+    case StatusItemSet::NotRunning:
+        break;
+    }
+    return fail(errors::kRefused, "The plugin isn't running.", Json::object({{"reason", Json("not_running")}}));
+}
+
 Result run(const Context &context, const Json &params)
 {
     if (!context.host.plugins)
         return noPlugins();
     const std::string &plugin = params.find("plugin")->asString();
     const std::string &command = params.find("command")->asString();
-    switch (context.host.plugins->run(plugin, command)) {
+    switch (context.host.plugins->run(plugin, command, viaOf(context.caller))) {
     case PluginRun::Ran:
         return Json::object({{"ran", Json(true)}});
+    case PluginRun::Disabled:
+        return disabled(*context.host.plugins, "plugin." + plugin + "." + command);
     case PluginRun::NotInstalled:
         return fail(errors::kNotFound, "No plugin \"" + plugin + "\" is installed.", Json::object({{"plugin", Json(plugin)}}));
     case PluginRun::UnknownCommand:
@@ -320,6 +373,17 @@ void addPluginOperations(Registry &registry)
             "required": ["plugin", "command"], "additionalProperties": false})",
         R"({"type": "object", "properties": {"ran": {"const": true}}, "required": ["ran"], "additionalProperties": false})",
         run);
+    add(registry, Access::Write, "status_items.set", "Changes one of the caller's status bar items. Plugins only.",
+        R"({"type": "object", "properties": {
+            "item": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 64, "description": "An id from contributes.statusItems."},
+            "text": {"type": "string", "maxLength": 40, "description": "Empty: icon only."},
+            "icon": {"type": "string", "maxLength": 68, "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$", "description": "An icon role or own:<id>; empty: text only."},
+            "tooltip": {"type": "string", "maxLength": 300},
+            "tone": {"enum": ["normal", "warning", "danger"]},
+            "visible": {"type": "boolean"}},
+            "required": ["item"], "additionalProperties": false})",
+        R"({"type": "object", "properties": {"item": {"type": "string"}}, "required": ["item"], "additionalProperties": false})",
+        setStatusItem);
 }
 
 }

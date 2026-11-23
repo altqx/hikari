@@ -1,6 +1,6 @@
 # Apply motion data: parity with Aegisub-Motion
 
-AU8 #842. What the bundled Aegisub-Motion 1.0.9 (`a-mo.Aegisub-Motion.moon`, MotionHandler 1.1.8) writes, and what the native command does with the same data and options.
+AU8 #842. What the bundled Aegisub-Motion 1.0.9 (`a-mo.Aegisub-Motion.moon`, MotionHandler 1.1.8) wrote, and what the native command does with the same data and options. Since #1216 the bundled copy is 1.1.2 (upstream `ce44cf9131de`, MotionHandler 1.1.10). The goldens in `tests/fixtures/motion-data/amo` record 1.1.2, and the rows below say where it differs from 1.0.9 (transform precision, D5, D14).
 
 ## How it was measured
 
@@ -80,8 +80,8 @@ Values are rounded to 2 decimals and written with `%g`, so trailing zeros are dr
 
 | Behaviour | a-mo | Native |
 |---|---|---|
-| **Interpolate transforms** on | Each frame gets the values `\t` has reached at the frame's mid-time, written `%g` unrounded (`\frz1.17647`). `\fad` becomes `\fade`, then scales every alpha by the fade at that time (`interpolate-transforms`). | Match. FA15's `bakeAnimations` does the same work; where the two differ, a-mo's numbers win for this command. |
-| Off | `\t` and `\fade` times shift by the frame's offset, and a `\t` that has ended becomes plain tags. But a-mo's dedupe then keeps only one `\t` per block, and sometimes drops the block's `\fscx` (`shift-transforms`, 2 variants). | **D5**: keep every shifted `\t` and no tag is lost; a-mo's output is plainly broken here. |
+| **Interpolate transforms** on | Each frame gets the values `\t` has reached at the frame's mid-time, written `%g` unrounded (`\frz1.17647`); 1.1.2 writes them `%.15f` without trailing zeros (`\frz1.176470588235294`, upstream #76). `\fad` becomes `\fade`, then scales every alpha by the fade at that time (`interpolate-transforms`). | Match, at 1.1.2's full precision since #1216 (Q774). FA15's `bakeAnimations` does the same work; where the two differ, a-mo's numbers win for this command. |
+| Off | `\t` and `\fade` times shift by the frame's offset, and a `\t` that has ended becomes plain tags. But a-mo's dedupe then keeps only one `\t` per block, and sometimes drops the block's `\fscx` (`shift-transforms`, 2 variants). 1.1.2 keeps both (upstream #78) and gives one variant. | **D5**: keep every shifted `\t` and no tag is lost; a-mo's output is plainly broken here. |
 | Karaoke | Each frame shortens the leading `\k` by the time elapsed; ended syllables lose their tag (`karaoke`: `\k10` → `\k8` → `\k4` → gone; the last frame reads `Karaoke`) | Match |
 
 ### Linear mode
@@ -146,3 +146,4 @@ These four scripts aren't bundled (Q186), so they set no byte-identical target. 
 | D11 | Export Power Pin is one command: the saved plane, else the tags (arch has two) |
 | D12 | Derive and Export write the video's fps, not a fixed 23.976 |
 | D13 | With Bake transforms on, the Style's alphas are added only when a fade is baked |
+| D14 | Frame times truncate to the centisecond; a-mo since #87 rounds them (#1216, Q773) |

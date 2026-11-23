@@ -329,6 +329,7 @@ TEST_F(AiFolder, ALinkToAnExcludedFileIsRefused)
 TEST_F(AiFolder, MediaIsNeverSentAsBytes)
 {
     EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/take1.WAV"})"), "media");
+    EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.y4m"})"), "media");
     EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "media");
     m_caller.reviewed = false;
     EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "ok");

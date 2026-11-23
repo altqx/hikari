@@ -263,6 +263,7 @@ void AiFeatures::apply()
                 QStringLiteral("Sign in with Google for Antigravity in Settings first"));
         m_live->configs = m_ports.configStore();
         m_live->providers = std::make_unique<application::ai::Providers>(*m_live->configs, *m_live->keys);
+        m_live->providers->observe([this] { emit providersChanged(); });
         m_live->requests =
             std::make_unique<backends::ai::AiRequests>(*m_live->providers, [this] { return sidecarForAction(); });
         m_live->requests->setCaching(m_settings.boolean(kCachingSetting));
@@ -322,16 +323,21 @@ void AiFeatures::startUpdates()
             m_live->pollTimer.start();
         emit componentsChanged();
     });
-    connect(updater, &AiSidecarUpdater::downloaded, this, [this] {
-        if (!m_live->host && !runnable())
-            m_live->updater->switchToStaged();
-        else
-            m_live->pollTimer.start();
-        emit componentsChanged();
-    });
-    connect(updater, &AiSidecarUpdater::installed, this, [this] {
+    const auto keepChecking = [this] {
         if (!m_live->checkTimer.isActive())
             m_live->checkTimer.start();
+    };
+    connect(updater, &AiSidecarUpdater::downloaded, this, [this, keepChecking] {
+        if (!m_live->host && !runnable()) {
+            m_live->updater->switchToStaged();
+            keepChecking();
+        } else {
+            m_live->pollTimer.start();
+        }
+        emit componentsChanged();
+    });
+    connect(updater, &AiSidecarUpdater::installed, this, [this, keepChecking] {
+        keepChecking();
         emit componentsChanged();
     });
     m_live->checkTimer.setInterval(m_ports.timing.checkMs);

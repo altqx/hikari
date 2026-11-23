@@ -1,5 +1,6 @@
 #pragma once
 
+#include "file_write_queue.h"
 #include "settings_store.h"
 
 #include <QElapsedTimer>
@@ -140,6 +141,7 @@ private:
     void trim();
     void load();
     void save();
+    ui::FileWriteQueue::Write queueWrite() const;
     void sendFinished();
     QJsonObject common() const;
 
@@ -162,6 +164,7 @@ private:
     bool m_closed = false;
     std::atomic<bool> m_counting = false;
     std::array<std::atomic<qint64>, kFrameBuckets.size()> m_frames{};
+    ui::FileWriteQueue m_writes;
 };
 
 }

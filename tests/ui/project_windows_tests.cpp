@@ -673,7 +673,7 @@ private slots:
         const QString exported = show + QStringLiteral("/done.ass");
         application->settingsStore()->setValue(
             QStringLiteral("export.choices"),
-            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"mdvd\",\"fps\":25}"),
+            QStringList{QFileInfo(exported).absoluteFilePath() + QStringLiteral("\t{\"format\":\"microdvd\",\"fps\":25}"),
                         QStringLiteral("\t{\"format\":\"sbv\",\"lines\":\"selected\"}")});
         const auto setup = [&] { return application->exportSetup(); };
         const auto format = [&] { return setup().value(QStringLiteral("format")).toString(); };
@@ -697,9 +697,120 @@ private slots:
             if (tabs[i].toMap().value(QStringLiteral("title")).toString().contains(QStringLiteral("done.ass")))
                 application->selectTab(i);
         QTRY_COMPARE(setup().value(QStringLiteral("name")).toString(), QStringLiteral("done"));
-        QCOMPARE(format(), QStringLiteral("mdvd"));
+        QCOMPARE(format(), QStringLiteral("microdvd"));
         QCOMPARE(option("fps").toDouble(), 25.0);
-        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("mdvd"));
+        QVERIFY(!readAll(show + QStringLiteral("/.hikari/project.toml")).contains("microdvd"));
+    }
+
+    void beta4ExportChoicesKeepTheirFormat_data()
+    {
+        QTest::addColumn<QString>("old");
+        QTest::addColumn<QString>("current");
+        QTest::newRow("txt") << QStringLiteral("txt") << QStringLiteral("text");
+        QTest::newRow("mdvd") << QStringLiteral("mdvd") << QStringLiteral("microdvd");
+        QTest::newRow("tmp") << QStringLiteral("tmp") << QStringLiteral("tmplayer");
+    }
+
+    void beta4ExportChoicesKeepTheirFormat()
+    {
+        QFETCH(QString, old);
+        QFETCH(QString, current);
+        start();
+        const QString plain = folder("plain");
+        const QString episode = QFileInfo(writeAss(plain + QStringLiteral("/ep01.ass"), "one")).absoluteFilePath();
+        const QString other = QFileInfo(plain + QStringLiteral("/ep02.ass")).absoluteFilePath();
+        const QString row = QStringLiteral("\t{\"format\":\"%1\",\"fps\":25}").arg(old);
+        application->settingsStore()->setValue(QStringLiteral("export.choices"), QStringList{episode + row, other + row, row});
+        QCOMPARE(application->openFolder(plain, 0).value(QStringLiteral("window")).toInt(), 0);
+        QVERIFY(application->openFile(episode));
+        const QVariantMap setup = application->exportSetup();
+        QCOMPARE(setup.value(QStringLiteral("format")).toString(), current);
+
+        const QString out = plain + QStringLiteral("/ep01.") + setup.value(QStringLiteral("extensions")).toMap().value(current).toString();
+        const QVariantMap result =
+            application->exportTo(QUrl::fromLocalFile(out), current, setup.value(QStringLiteral("options")).toMap());
+        QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(result.value(QStringLiteral("problem")).toString()));
+        const QStringList saved = application->settingsStore()->list("export.choices");
+        QCOMPARE(saved.size(), 3);
+        for (const QString &entry : saved) {
+            QVERIFY2(entry.contains(QStringLiteral("\"format\":\"%1\"").arg(current)), qPrintable(entry));
+            QVERIFY2(!entry.contains(QStringLiteral("\"format\":\"%1\"").arg(old)), qPrintable(entry));
+        }
+    }
+
+    void beforeExportStepsChangeOnlyTheCopyAndTheNextSaveNamesThem()
+    {
+        start();
+        const QString plain = folder("plain");
+        const QString episode = QFileInfo(writeAss(plain + QStringLiteral("/ep01.ass"), "hi")).absoluteFilePath();
+        QVERIFY(application->openFile(episode));
+        const QVariantMap lists = application->exportSteps();
+        QVERIFY(lists.value(QStringLiteral("fromFile")).toList().isEmpty());
+        QVariantList steps = lists.value(QStringLiteral("newList")).toList();
+        for (QVariant &step : steps) {
+            QVariantMap m = step.toMap();
+            QVERIFY(!m.value(QStringLiteral("on")).toBool());
+            if (m.value(QStringLiteral("id")) == QStringLiteral("transform-frame-rate")) {
+                QVariantMap settings = m.value(QStringLiteral("settings")).toMap();
+                settings.insert(QStringLiteral("input"), 25);
+                settings.insert(QStringLiteral("output"), QStringLiteral("constant"));
+                settings.insert(QStringLiteral("outputFps"), 50);
+                m.insert(QStringLiteral("settings"), settings);
+                m.insert(QStringLiteral("on"), true);
+            }
+            step = m;
+        }
+        QVariantMap options = application->exportSetup().value(QStringLiteral("options")).toMap();
+        options.insert(QStringLiteral("steps"), steps);
+        const QString out = plain + QStringLiteral("/ep01.srt");
+        QVariantMap result = application->exportTo(QUrl::fromLocalFile(out), QStringLiteral("srt"), options);
+        QVERIFY2(result.value(QStringLiteral("ok")).toBool(), qPrintable(result.value(QStringLiteral("problem")).toString()));
+        const QVariantMap ran = result.value(QStringLiteral("steps")).toList().value(0).toMap();
+        QCOMPARE(ran.value(QStringLiteral("id")).toString(), QStringLiteral("transform-frame-rate"));
+        QCOMPARE(ran.value(QStringLiteral("state")).toString(), QStringLiteral("done"));
+        QVERIFY2(!readAll(out).contains("00:00:01,000"), readAll(out).constData());
+
+        options.remove(QStringLiteral("steps"));
+        options.insert(QStringLiteral("replace"), true);
+        QVERIFY(application->exportTo(QUrl::fromLocalFile(out), QStringLiteral("srt"), options).value(QStringLiteral("ok")).toBool());
+        QVERIFY2(readAll(out).contains("00:00:00,000 --> 00:00:01,000"), readAll(out).constData());
+
+        const QVariantList fromFile = application->exportSteps().value(QStringLiteral("fromFile")).toList();
+        QCOMPARE(fromFile.size(), 1);
+        QCOMPARE(fromFile.value(0).toMap().value(QStringLiteral("id")).toString(), QStringLiteral("transform-frame-rate"));
+        QVERIFY(application->saveDocument(application->workspace().editingTarget()->value));
+        application->waitForWrites();
+        QVERIFY2(readAll(episode).contains("Export Filters: Transform Framerate"), readAll(episode).constData());
+        QVERIFY(readAll(episode).contains("0:00:00.00,0:00:01.00"));
+    }
+
+    void aFailingBeforeExportStepWritesNothing()
+    {
+        start();
+        const QString plain = folder("plain");
+        const QString episode = QFileInfo(writeAss(plain + QStringLiteral("/ep01.ass"), "hi")).absoluteFilePath();
+        QVERIFY(application->openFile(episode));
+        QVariantMap options = application->exportSetup().value(QStringLiteral("options")).toMap();
+        options.insert(QStringLiteral("steps"),
+                       QVariantList{QVariantMap{{QStringLiteral("id"), QStringLiteral("fix-styles")}, {QStringLiteral("on"), true}},
+                                    QVariantMap{{QStringLiteral("id"), QStringLiteral("transform-frame-rate")},
+                                                {QStringLiteral("on"), true},
+                                                {QStringLiteral("settings"),
+                                                 QVariantMap{{QStringLiteral("input"), 25},
+                                                             {QStringLiteral("output"), QStringLiteral("constant")},
+                                                             {QStringLiteral("outputFps"), 0}}}},
+                                    QVariantMap{{QStringLiteral("id"), QStringLiteral("remove-tags")}, {QStringLiteral("on"), true}}});
+        const QString out = plain + QStringLiteral("/ep01.srt");
+        const QVariantMap result = application->exportTo(QUrl::fromLocalFile(out), QStringLiteral("srt"), options);
+        QVERIFY(!result.value(QStringLiteral("ok")).toBool());
+        QVERIFY(result.value(QStringLiteral("stepsFailed")).toBool());
+        QStringList states;
+        for (const QVariant &step : result.value(QStringLiteral("steps")).toList())
+            states << step.toMap().value(QStringLiteral("state")).toString() + u'/' +
+                          step.toMap().value(QStringLiteral("problem")).toString();
+        QCOMPARE(states, (QStringList{QStringLiteral("done/"), QStringLiteral("failed/badFrameRate"), QStringLiteral("notRun/")}));
+        QVERIFY(!QFile::exists(out));
+        QVERIFY(application->exportSteps().value(QStringLiteral("fromFile")).toList().isEmpty());
     }
 
     void theProjectsTargetLanguageIsInlineTranslatesDefault()

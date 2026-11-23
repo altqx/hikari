@@ -56,12 +56,19 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .keyframes = this,
           .marks = m_wiring.marks,
           .vcs = m_wiring.vcs,
+          .programs = m_wiring.programs,
+          .presence = m_wiring.presence,
       }),
       m_seenProject(project())
 {
 }
 
 ApiHost::~ApiHost() = default;
+
+std::optional<std::string> ApiHost::pluginFormat(application::DocumentId document) const
+{
+    return m_pluginFormat ? m_pluginFormat(document) : std::nullopt;
+}
 
 std::optional<std::string> ApiHost::setKeyframes(const std::vector<std::int64_t> &frames, const std::optional<std::string> &file)
 {

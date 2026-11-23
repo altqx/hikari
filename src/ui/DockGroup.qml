@@ -11,15 +11,13 @@ Rectangle {
     // Read by KDDW: the group's height besides its panel.
     readonly property int nonContentsHeight: (titleBar.item && titleBar.item.visible ? titleBar.item.heightWhenVisible : 0)
                                              + (tabbar.item && tabbar.item.visible ? tabbar.item.implicitHeight : 0)
-                                             + contentGap
-    readonly property int contentGap: tabbar.item && tabbar.item.visible ? tabbar.item.contentGap : 0
     property alias tabBarHeight: tabbar.height
     readonly property bool hasCustomMouseEventRedirector: false
     readonly property bool isMDI: false
     readonly property bool tabsAtTop: true
 
     anchors.fill: parent
-    color: Theme.field
+    color: Theme.panel
 
     onGroupCppChanged: {
         if (groupCpp)
@@ -60,7 +58,6 @@ Rectangle {
             right: parent.right
             top: tabbar.item && tabbar.item.visible ? tabbar.bottom : (titleBar.item && titleBar.item.visible ? titleBar.bottom : parent.top)
             bottom: parent.bottom
-            topMargin: root.contentGap
         }
     }
 }

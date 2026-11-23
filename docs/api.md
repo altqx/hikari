@@ -62,6 +62,8 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `panels.open`, `panels.close`, `panels.focus` | write | Shows, closes or focuses a panel where the layout keeps it. |
 | `settings.set` | write | One setting, type-checked. |
 | `files.write` | write | Replaces a file granted for writing, or makes one in a writable folder. |
+| `programs.run` | write | Runs one of the plugin's declared programs to the end and gives its output. Plugins with the `programs` permission only. |
+| `programs.start`, `programs.send`, `programs.stop` | write | Starts one of the plugin's declared programs and keeps it running, writes to its stdin, or ends it. |
 
 Commands and panels are those of the shell window used last (ADR 0025), never a closed window's.
 
@@ -106,6 +108,8 @@ A caller subscribes to events by name and hears them only while subscribed.
 | `selection.changed` | The selection or active Line of a Document changed. |
 | `documents.changed` | A Document opened or closed, or the editing target changed. Without `documents.all` the list holds the editing target and the caller's attached Documents only. |
 | `panel.changed` | A panel opened, closed or floated. |
+| `program.output` | A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged. |
+| `program.exited` | A started program ended. Only its plugin hears it. |
 | `command.ran` | A command was triggered, from the API, a menu, a toolbar or a key. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, even when it is then cancelled. Use `document.saved` to know a file was written. |
 
 The application notices changes after each refresh of its views and each selection change, so a burst of edits gives one event per refresh, not one per edit.
@@ -142,10 +146,6 @@ An error is `{code, message, data}`. The message is English text for developers 
 | `problems.set` | write | plugins | Replaces the caller's problems from one source on a Document. | #1227 |
 | `problems.clear` | write | plugins | Removes the caller's problems. | #1227 |
 | `problems.fix` | write | all | Applies one quick fix as one undo step. | #1227 |
-| `programs.run` | write | plugins | Runs a declared program to the end and gives its output. | #1226 |
-| `programs.start` | write | plugins | Starts a declared program and keeps it running. | #1226 |
-| `programs.send` | write | plugins | Writes to a started program's stdin. | #1226 |
-| `programs.stop` | write | plugins | Ends a started program. | #1226 |
 | `formats.list` | read | all | The subtitle formats HikariSub can open and export, built-in and from plugins. | #1229 |
 | `plugins.run` | write | all | Gains `args` and gives the command's `result`. | #1228 |
 | `settings.open` | write | all | Opens the Settings window at a setting, on the Yours or Project tab. | #1238 |
@@ -157,8 +157,6 @@ An error is `{code, message, data}`. The message is English text for developers 
 | Event | When | Card |
 | --- | --- | --- |
 | `problems.changed` | The problems on a Document changed; it names the Document and the sources that changed. | #1227 |
-| `program.output` | A started program wrote to stdout or stderr. Only its plugin hears it. | #1226 |
-| `program.exited` | A started program ended. Only its plugin hears it. | #1226 |
 | `plugin_settings.changed` | One of the plugin's own settings changed, from the plugin manager, Settings or a Project. Only its plugin hears it. | #1230 |
 
 ### New `$defs`

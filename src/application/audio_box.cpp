@@ -191,7 +191,10 @@ void AudioBox::open(const std::string &path)
     m_videoNewIndex = false;
     m_videoIndexFile.clear();
     if (isDummyName(path)) {
-        m_audio = std::make_shared<DisplayAudio>(DisplayAudio::silence(kDummyRate, dummySamples(path)));
+        const auto samples = dummySamples(path);
+        m_audio = std::make_shared<DisplayAudio>(path.find("noise") != std::string::npos
+                                                     ? DisplayAudio::noise(kDummyRate, samples)
+                                                     : DisplayAudio::silence(kDummyRate, samples));
         m_progress = 1.f;
         m_state = State::Ready;
         return notify();

@@ -42,6 +42,8 @@ public:
     // The API committed a step on `document`; the views refresh and
     // documentChanged is reported.
     virtual void committed(application::DocumentId document) = 0;
+    // A Document opened from a plugin's format: that format's plugin:<plugin id>/<format id>.
+    virtual std::optional<std::string> pluginFormat(application::DocumentId) const { return std::nullopt; }
 };
 
 struct CommandState {
@@ -267,6 +269,8 @@ public:
 struct PluginCommand {
     std::string command; // "plugin.<plugin id>.<command id>"
     std::string title;
+    bool enabled = true; // false while its `when` conditions fail in the window the user works in
+    std::string disabledReason;
 };
 
 struct PluginState {
@@ -274,6 +278,15 @@ struct PluginState {
     std::string source; // "file" or "marketplace"
     bool signedPackage = false, enabled = false, fullTrust = false, revoked = false;
     std::vector<PluginCommand> commands; // only while it runs
+};
+
+struct FormatInfo {
+    std::string id; // ass, srt, … or plugin:<plugin id>/<format id>
+    std::string title;
+    std::vector<std::string> extensions;
+    bool imports = false;
+    bool exports = false;
+    std::string plugin; // empty for a built-in format
 };
 
 struct PluginFile {
@@ -285,7 +298,16 @@ struct ScaffoldedPlugin {
     std::string folder, package;
 };
 
-enum class PluginRun { Ran, NotInstalled, NotRunning, UnknownCommand };
+enum class PluginRun { Ran, NotInstalled, NotRunning, UnknownCommand, Disabled };
+
+// A status_items.set change; unset fields keep their value.
+struct StatusItemChange {
+    std::string item;
+    std::optional<std::string> text, icon, tooltip, tone;
+    std::optional<bool> visible;
+};
+
+enum class StatusItemSet { Set, NotRunning, UnknownItem, Empty };
 
 // What the install question shows for a package.
 struct PluginReview {
@@ -305,9 +327,13 @@ class PluginHost {
 public:
     virtual ~PluginHost() = default;
     virtual std::vector<PluginState> plugins() const = 0;
+    // The formats of the plugins that run, in the order the plugins were installed.
+    virtual std::vector<FormatInfo> formats() const { return {}; }
     // The installed hikari-plugin.json; nullopt when the plugin isn't installed.
     virtual std::optional<std::string> manifest(std::string_view plugin) const = 0;
-    virtual PluginRun run(std::string_view plugin, std::string_view command) = 0;
+    // `via` is the handler's context.via: "api" or "ai".
+    virtual PluginRun run(std::string_view plugin, std::string_view command, std::string_view via) = 0;
+    virtual StatusItemSet setStatusItem(std::string_view plugin, const StatusItemChange &change) = 0;
     // Replaces the plugin's folder in the AI plugins folder with the files and packs them; or why it could not.
     virtual std::expected<ScaffoldedPlugin, std::string> scaffold(std::string_view plugin,
                                                                  const std::vector<PluginFile> &files) = 0;
@@ -323,6 +349,15 @@ class EffectsHost {
 public:
     virtual ~EffectsHost() = default;
     virtual application::NodeEffectOptions options() = 0;
+};
+
+class ProgramHost;
+// The text a plugin sets for {plugin} in the user's Discord status.
+class PresenceHost {
+public:
+    virtual ~PresenceHost() = default;
+    // Empty `text` clears it.
+    virtual void setPluginText(std::string_view plugin, std::string_view text) = 0;
 };
 
 // A missing port makes its operations answer unavailable.
@@ -347,6 +382,8 @@ struct Host {
     KeyframeHost *keyframes = nullptr;
     application::RowMarks *marks = nullptr;
     application::VcsPort *vcs = nullptr;
+    ProgramHost *programs = nullptr;
+    PresenceHost *presence = nullptr;
 };
 
 }

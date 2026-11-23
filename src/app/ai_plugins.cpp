@@ -143,12 +143,23 @@ std::vector<api::PluginState> AiPlugins::plugins() const
         state.revoked = p.value(QStringLiteral("revoked")).toBool();
         for (const QVariant &c : commands) {
             const QVariantMap command = c.toMap();
-            if (command.value(QStringLiteral("plugin")).toString() == qs(state.id))
-                state.commands.push_back({utf8(command.value(QStringLiteral("id")).toString()),
-                                          utf8(command.value(QStringLiteral("title")).toString())});
+            if (command.value(QStringLiteral("plugin")).toString() != qs(state.id))
+                continue;
+            const QString id = command.value(QStringLiteral("id")).toString();
+            const QString reason = m_wiring.runtime()->disabledReason(id);
+            state.commands.push_back({utf8(id), utf8(command.value(QStringLiteral("title")).toString()), reason.isEmpty(), utf8(reason)});
         }
         out.push_back(std::move(state));
     }
+    return out;
+}
+
+std::vector<api::FormatInfo> AiPlugins::formats() const
+{
+    std::vector<api::FormatInfo> out;
+    if (PluginRuntime *runtime = m_wiring.runtime ? m_wiring.runtime() : nullptr)
+        for (auto &f : runtime->formats())
+            out.push_back({f.id, f.format.title, f.format.extensions, f.format.imports, f.format.exports, f.plugin});
     return out;
 }
 
@@ -165,7 +176,7 @@ std::optional<std::string> AiPlugins::manifest(std::string_view plugin) const
     return file.read(kMaxAiPackage).toStdString();
 }
 
-api::PluginRun AiPlugins::run(std::string_view plugin, std::string_view command)
+api::PluginRun AiPlugins::run(std::string_view plugin, std::string_view command, std::string_view via)
 {
     const auto installed = plugins();
     const auto it = std::ranges::find(installed, plugin, &api::PluginState::id);
@@ -174,10 +185,19 @@ api::PluginRun AiPlugins::run(std::string_view plugin, std::string_view command)
     if (it->commands.empty())
         return api::PluginRun::NotRunning;
     const std::string id = "plugin." + std::string(plugin) + "." + std::string(command);
-    if (std::ranges::none_of(it->commands, [&](const api::PluginCommand &c) { return c.command == id; }))
+    const auto found = std::ranges::find(it->commands, id, &api::PluginCommand::command);
+    if (found == it->commands.end())
         return api::PluginRun::UnknownCommand;
+    if (!found->enabled)
+        return api::PluginRun::Disabled;
     PluginRuntime *runtime = m_wiring.runtime ? m_wiring.runtime() : nullptr;
-    return runtime && runtime->run(qs(id)) ? api::PluginRun::Ran : api::PluginRun::NotRunning;
+    return runtime && runtime->run(qs(id), qs(via)) ? api::PluginRun::Ran : api::PluginRun::NotRunning;
+}
+
+api::StatusItemSet AiPlugins::setStatusItem(std::string_view plugin, const api::StatusItemChange &change)
+{
+    PluginRuntime *runtime = m_wiring.runtime ? m_wiring.runtime() : nullptr;
+    return runtime ? runtime->setStatusItem(std::string(plugin), change) : api::StatusItemSet::NotRunning;
 }
 
 std::expected<api::ScaffoldedPlugin, std::string> AiPlugins::scaffold(std::string_view plugin,

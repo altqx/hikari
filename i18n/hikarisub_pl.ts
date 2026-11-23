@@ -72,10 +72,6 @@
         <translation>Nowy wątek</translation>
     </message>
     <message>
-        <source>Thread menu</source>
-        <translation type="vanished">Menu wątku</translation>
-    </message>
-    <message>
         <source>Add a provider to use the agent</source>
         <translation>Dodaj dostawcę, aby używać agenta</translation>
     </message>
@@ -164,44 +160,12 @@
         <translation>%1 z %2</translation>
     </message>
     <message>
-        <source>%1 · active tab</source>
-        <translation type="vanished">%1 · aktywna karta</translation>
-    </message>
-    <message>
-        <source>Ask, or type @ to attach, / for commands</source>
-        <translation type="vanished">Zapytaj albo wpisz @, aby dołączyć, / dla poleceń</translation>
-    </message>
-    <message>
         <source>Add a provider first</source>
         <translation>Najpierw dodaj dostawcę</translation>
     </message>
     <message>
         <source>Message</source>
         <translation>Wiadomość</translation>
-    </message>
-    <message>
-        <source>Attach</source>
-        <translation type="vanished">Dołącz</translation>
-    </message>
-    <message>
-        <source>Search the web</source>
-        <translation type="vanished">Wyszukaj w sieci</translation>
-    </message>
-    <message>
-        <source>This provider can’t search the web on its own. Choose a search service in Settings › AI › Web search.</source>
-        <translation type="vanished">Ten dostawca nie potrafi sam wyszukiwać w sieci. Wybierz usługę wyszukiwania w Ustawienia › AI › Wyszukiwanie w sieci.</translation>
-    </message>
-    <message>
-        <source>Search the web: on for this thread</source>
-        <translation type="vanished">Wyszukiwanie w sieci: włączone w tym wątku</translation>
-    </message>
-    <message>
-        <source>Search the web: off for this thread</source>
-        <translation type="vanished">Wyszukiwanie w sieci: wyłączone w tym wątku</translation>
-    </message>
-    <message>
-        <source>Changing it mid-thread costs one cache miss on Anthropic.</source>
-        <translation type="vanished">Zmiana w trakcie wątku kosztuje jedno chybienie pamięci podręcznej w Anthropic.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -280,14 +244,6 @@
         <translation>Usuń wątek</translation>
     </message>
     <message>
-        <source>Delete this thread?</source>
-        <translation type="vanished">Usunąć ten wątek?</translation>
-    </message>
-    <message>
-        <source>The conversation goes. Changes it made stay in your subtitles and in the review.</source>
-        <translation type="vanished">Rozmowa zostanie usunięta. Wprowadzone w niej zmiany zostają w napisach i w przeglądzie.</translation>
-    </message>
-    <message>
         <source>Delete</source>
         <translation>Usuń</translation>
     </message>
@@ -304,10 +260,6 @@
         <translation>Wczytywanie modeli…</translation>
     </message>
     <message>
-        <source>Settings › AI…</source>
-        <translation type="vanished">Ustawienia › AI…</translation>
-    </message>
-    <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
         <translation>Zatwierdzasz każdą zmianę w napisach, zanim zostanie wprowadzona, i każdą inną zmianę. Odczyt nigdy nie pyta.</translation>
     </message>
@@ -318,10 +270,6 @@
     <message>
         <source>Nothing asks except the always-ask list. Edits apply at once and stay undoable.</source>
         <translation>Pyta tylko lista „zawsze pytaj”. Zmiany działają od razu i można je cofnąć.</translation>
-    </message>
-    <message>
-        <source>Default for new threads…</source>
-        <translation type="vanished">Domyślny dla nowych wątków…</translation>
     </message>
     <message>
         <source>Rename thread</source>
@@ -404,18 +352,6 @@
         <translation>%1 pyta Ciebie</translation>
     </message>
     <message>
-        <source>Judge asks you</source>
-        <translation type="vanished">Sędzia pyta Ciebie</translation>
-    </message>
-    <message>
-        <source>Allow %1?</source>
-        <translation type="vanished">Zezwolić na %1?</translation>
-    </message>
-    <message>
-        <source>Run %1?</source>
-        <translation type="vanished">Uruchomić %1?</translation>
-    </message>
-    <message>
         <source>asks in every mode</source>
         <translation>pyta w każdym trybie</translation>
     </message>
@@ -450,10 +386,6 @@
     <message>
         <source>Deny</source>
         <translation>Odmów</translation>
-    </message>
-    <message>
-        <source>Deny and tell the agent…</source>
-        <translation type="vanished">Odmów i powiedz agentowi…</translation>
     </message>
     <message>
         <source>Withdrawn: the agent stopped waiting for your answer.</source>
@@ -948,10 +880,6 @@
         <translation>Tura została przerwana i nie uruchomi się ponownie sama. Wprowadzone zmiany zostają w przeglądzie.</translation>
     </message>
     <message>
-        <source>HikariSub is still getting the AI component, or it couldn’t start.</source>
-        <translation type="vanished">HikariSub nadal pobiera komponent AI albo nie udało się go uruchomić.</translation>
-    </message>
-    <message>
         <source>The search service answered %1. The answer goes on without searching the web.</source>
         <translation>Usługa wyszukiwania odpowiedziała kodem %1. Odpowiedź powstaje dalej bez wyszukiwania w sieci.</translation>
     </message>
@@ -1022,10 +950,6 @@
     <message>
         <source>Decline</source>
         <translation>Odrzuć</translation>
-    </message>
-    <message>
-        <source>Decline and tell the agent…</source>
-        <translation type="vanished">Odrzuć i powiedz agentowi…</translation>
     </message>
     <message>
         <source>Sent back to the agent: %1</source>
@@ -1168,10 +1092,6 @@
         <translation>Ustawienia audio</translation>
     </message>
     <message>
-        <source>Audio settings…</source>
-        <translation type="vanished">Ustawienia audio…</translation>
-    </message>
-    <message>
         <source>Link the volume and stretch sliders</source>
         <translation>Łącz suwaki głośności i rozciągnięcia</translation>
     </message>
@@ -1212,10 +1132,6 @@
         <translation>Zatrzymaj odtwarzanie</translation>
     </message>
     <message>
-        <source>Play 500 ms after the start time</source>
-        <translation type="vanished">Odtwórz 500 ms po czasie początkowym</translation>
-    </message>
-    <message>
         <source>Play to the end</source>
         <translation>Odtwarzaj do końca</translation>
     </message>
@@ -1252,16 +1168,8 @@
         <translation>Automatyczny podział</translation>
     </message>
     <message>
-        <source>Enable / Disable automatic splitting of syllables</source>
-        <translation type="vanished">Włącz / Wyłącz automatyczne dzielenie sylab</translation>
-    </message>
-    <message>
         <source>Auto-scroll</source>
         <translation>Automatyczne przewijanie</translation>
-    </message>
-    <message>
-        <source>Auto-scroll to the active line</source>
-        <translation type="vanished">Automatyczne przewijanie do aktywnej linijki</translation>
     </message>
     <message>
         <source>Spectrum</source>
@@ -1285,24 +1193,12 @@
         <translation>Odtwórz 500 ms przed początkiem</translation>
     </message>
     <message>
-        <source>Play 500 ms before the start time</source>
-        <translation type="vanished">Odtwórz 500 ms przed czasem początkowym</translation>
-    </message>
-    <message>
         <source>Play the first 500 ms</source>
         <translation>Odtwórz pierwsze 500 ms</translation>
     </message>
     <message>
-        <source>Play 500 ms before the end time</source>
-        <translation type="vanished">Odtwórz 500 ms przed czasem końcowym</translation>
-    </message>
-    <message>
         <source>Play the last 500 ms</source>
         <translation>Odtwórz ostatnie 500 ms</translation>
-    </message>
-    <message>
-        <source>Play 500 ms after the end time</source>
-        <translation type="vanished">Odtwórz 500 ms po czasie końcowym</translation>
     </message>
     <message>
         <source>Play 500 ms after the end</source>
@@ -1397,28 +1293,12 @@
         <translation>Przebieg fali</translation>
     </message>
     <message>
-        <source>Waveform mode</source>
-        <translation type="vanished">Tryb przebiegu fali</translation>
-    </message>
-    <message>
-        <source>Spectrum mode</source>
-        <translation type="vanished">Tryb spektrum</translation>
-    </message>
-    <message>
         <source>Sync with video</source>
         <translation>Synchronizuj z wideo</translation>
     </message>
     <message>
-        <source>Sync the video and audio cursors</source>
-        <translation type="vanished">Synchronizuj kursory wideo i audio</translation>
-    </message>
-    <message>
         <source>Speech</source>
         <translation>Mowa</translation>
-    </message>
-    <message>
-        <source>More audio options</source>
-        <translation type="vanished">Więcej opcji audio</translation>
     </message>
     <message>
         <source>Go to selection start</source>
@@ -1664,6 +1544,38 @@ Urządzenie wyjściowe: %2</translation>
         <source>Apply</source>
         <translation>Zastosuj</translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Linear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>WAV audio (*.wav)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio and select lines with some length first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio is still loading.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio couldn’t be saved there.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Automation</name>
@@ -1714,10 +1626,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Answers and presets</source>
-        <translation type="vanished">Odpowiedzi i presety</translation>
     </message>
     <message>
         <source>Last used</source>
@@ -1878,10 +1786,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Filter macros</source>
         <translation>Filtruj makra</translation>
-    </message>
-    <message>
-        <source>Rerun last macro</source>
-        <translation type="vanished">Uruchom ponownie ostatnie makro</translation>
     </message>
     <message>
         <source>%1 cancelled</source>
@@ -2210,10 +2114,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Stopped</source>
         <translation>Zatrzymano</translation>
-    </message>
-    <message>
-        <source>%1 options</source>
-        <translation type="vanished">Opcje: %1</translation>
     </message>
     <message>
         <source>The script’s process ended. Reload to start it again; its macro is not rerun.</source>
@@ -3320,12 +3220,100 @@ Urządzenie wyjściowe: %2</translation>
 <context>
     <name>HikariSub.Discord</name>
     <message>
+        <source>Watching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effects</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spell-checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reviewing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exporting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>With the AI agent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In HikariSub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Editing subtitles</source>
         <translation>Edytuje napisy</translation>
     </message>
     <message>
         <source>Get HikariSub</source>
         <translation>Pobierz HikariSub</translation>
+    </message>
+    <message>
+        <source>In the Editing layout, or when no other mode applies</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Timing layout, and in kanji timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Translation layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Typesetting layout, and in full-screen typesetting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Karaoke layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While Simple mode is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the node-effects mode or the Template editor is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the Style manager is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While the Spellchecker panel is checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While QC notes has focus, or for 5 minutes after a QC note is added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While an export, Collect fonts or a muxing run is going</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While an agent turn runs in the current tab</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3437,10 +3425,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)</source>
         <translation>Teksty piosenek z czasami słów (*.lrc *.krc *.qrc *.ttml)</translation>
-    </message>
-    <message>
-        <source>Word-timed lyrics (*.lrc *.ttml)</source>
-        <translation type="vanished">Teksty piosenek z czasami słów (*.lrc *.ttml)</translation>
     </message>
     <message>
         <source>YouTube timed text (*.ytt *.srv3)</source>
@@ -3883,45 +3867,45 @@ Urządzenie wyjściowe: %2</translation>
         <source>Import</source>
         <translation>Importuj</translation>
     </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the plugin that writes this format isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the document couldn’t be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t save.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be read: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is larger than 48 MiB, so no plugin can open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t open this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
-    <message>
-        <source>Bottom-left</source>
-        <translation type="vanished">Lewo-dół</translation>
-    </message>
-    <message>
-        <source>Bottom-centre</source>
-        <translation type="vanished">Środek-dół</translation>
-    </message>
-    <message>
-        <source>Bottom-right</source>
-        <translation type="vanished">Prawo-dół</translation>
-    </message>
-    <message>
-        <source>Middle-left</source>
-        <translation type="vanished">Lewo-środek</translation>
-    </message>
-    <message>
-        <source>Centre</source>
-        <translation type="vanished">Środek</translation>
-    </message>
-    <message>
-        <source>Middle-right</source>
-        <translation type="vanished">Prawo-środek</translation>
-    </message>
-    <message>
-        <source>Top-left</source>
-        <translation type="vanished">Lewo-góra</translation>
-    </message>
-    <message>
-        <source>Top-centre</source>
-        <translation type="vanished">Środek-góra</translation>
-    </message>
-    <message>
-        <source>Top-right</source>
-        <translation type="vanished">Prawo-góra</translation>
-    </message>
     <message>
         <source>Text position</source>
         <translation>Położenie tekstu</translation>
@@ -4119,10 +4103,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Dodaj przycisk tagu…</translation>
     </message>
     <message>
-        <source>Add a tag button</source>
-        <translation type="vanished">Dodaj przycisk tagu</translation>
-    </message>
-    <message>
         <source>Edit…</source>
         <translation>Edytuj…</translation>
     </message>
@@ -4137,10 +4117,6 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Remove</source>
         <translation>Usuń</translation>
-    </message>
-    <message>
-        <source>Check spelling</source>
-        <translation type="vanished">Sprawdzaj pisownię</translation>
     </message>
     <message>
         <source>Original text</source>
@@ -4915,6 +4891,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Close</source>
         <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t export this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t export.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -6048,6 +6032,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
     </message>
     <message>
+        <source>Later: Settings › General › Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import my old settings</source>
         <translation>Importuj moje dawne ustawienia</translation>
     </message>
@@ -6062,6 +6050,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Set up from scratch</source>
         <translation>Skonfiguruj od zera</translation>
+    </message>
+    <message>
+        <source>Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Read again</source>
@@ -6158,14 +6150,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>A large video with the visual tools and the Styles panel.</source>
         <translation>Duże wideo z narzędziami wizualnymi i panelem Style.</translation>
-    </message>
-    <message>
-        <source>Later: Settings › General › Import legacy settings…</source>
-        <translation>Później: Ustawienia › Ogólne › Importuj ustawienia starej wersji…</translation>
-    </message>
-    <message>
-        <source>Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.</source>
-        <translation>Zacznij od ustawień domyślnych HikariSub. Ustawienia › Ogólne › Importuj ustawienia starej wersji… pozwoli przenieść je później.</translation>
     </message>
     <message>
         <source>The Template editor beside the video, the audio in Karaoke mode.</source>
@@ -6768,10 +6752,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Tylko te tagi</translation>
     </message>
     <message>
-        <source>These tags:</source>
-        <translation type="vanished">Te tagi:</translation>
-    </message>
-    <message>
         <source>changed</source>
         <translation>zmieniona</translation>
     </message>
@@ -6966,6 +6946,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Frames need a video.</source>
         <translation>Klatki wymagają wideo.</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to the scene</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -7366,14 +7354,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przewiń w prawo</translation>
     </message>
     <message>
-        <source>Play before the marker</source>
-        <translation type="vanished">Odtwórz przed znacznikiem</translation>
-    </message>
-    <message>
-        <source>Play after the marker</source>
-        <translation type="vanished">Odtwórz po znaczniku</translation>
-    </message>
-    <message>
         <source>Play to the end</source>
         <translation>Odtwarzaj do końca</translation>
     </message>
@@ -7686,16 +7666,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wklej kolumny</translation>
     </message>
     <message>
-        <source>Load subtitles from an MKV file</source>
-        <translation type="vanished">Wczytaj napisy z pliku MKV</translation>
-    </message>
-    <message>
         <source>Swap lines</source>
         <translation>Zamień linijki</translation>
-    </message>
-    <message>
-        <source>Set new FPS</source>
-        <translation type="vanished">Ustaw nowy FPS</translation>
     </message>
     <message>
         <source>Show subtitles preview</source>
@@ -7734,32 +7706,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>O programie</translation>
     </message>
     <message>
-        <source>Report an issue</source>
-        <translation type="vanished">Zgłoś problem</translation>
-    </message>
-    <message>
         <source>Open audio from video</source>
         <translation>Otwórz audio z wideo</translation>
-    </message>
-    <message>
-        <source>Load script</source>
-        <translation type="vanished">Wczytaj skrypt</translation>
     </message>
     <message>
         <source>Refresh autoload scripts</source>
         <translation>Odśwież skrypty autoload</translation>
     </message>
     <message>
-        <source>Time shift window</source>
-        <translation type="vanished">Okno przesuwania czasów</translation>
-    </message>
-    <message>
         <source>Close audio</source>
         <translation>Zamknij audio</translation>
-    </message>
-    <message>
-        <source>Find and replace</source>
-        <translation type="vanished">Znajdź i zamień</translation>
     </message>
     <message>
         <source>Font collector</source>
@@ -7774,10 +7730,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Lista osób pomocnych przy tworzeniu programu</translation>
     </message>
     <message>
-        <source>Hide tags</source>
-        <translation type="vanished">Ukryj tagi</translation>
-    </message>
-    <message>
         <source>History</source>
         <translation>Historia</translation>
     </message>
@@ -7788,10 +7740,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Merge with next line</source>
         <translation>Scal z następną linijką</translation>
-    </message>
-    <message>
-        <source>Open keyframes</source>
-        <translation type="vanished">Otwórz klatki kluczowe</translation>
     </message>
     <message>
         <source>Open autosave…</source>
@@ -7808,10 +7756,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Sort all lines by end time</source>
         <translation>Sortuj wszystkie linijki według czasu końcowego</translation>
-    </message>
-    <message>
-        <source>Sort all lines by styles</source>
-        <translation type="vanished">Sortuj wszystkie linijki według stylów</translation>
     </message>
     <message>
         <source>Sort all lines by actor</source>
@@ -7842,10 +7786,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Sortuj zaznaczone linijki według czasu końcowego</translation>
     </message>
     <message>
-        <source>Sort selected lines by styles</source>
-        <translation type="vanished">Sortuj zaznaczone linijki według stylów</translation>
-    </message>
-    <message>
         <source>Sort selected lines by actor</source>
         <translation>Sortuj zaznaczone linijki według aktora</translation>
     </message>
@@ -7870,10 +7810,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przesuń czasy z ostatnimi wartościami</translation>
     </message>
     <message>
-        <source>Timing postprocessor panel</source>
-        <translation type="vanished">Panel postprocesora timingu</translation>
-    </message>
-    <message>
         <source>Timing postprocessor with the last values</source>
         <translation>Postprocesor timingu z ostatnimi wartościami</translation>
     </message>
@@ -7884,10 +7820,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Go to next keyframe</source>
         <translation>Przejdź do następnej klatki kluczowej</translation>
-    </message>
-    <message>
-        <source>Resample subtitles</source>
-        <translation type="vanished">Zmień rozdzielczość napisów</translation>
     </message>
     <message>
         <source>Undo</source>
@@ -7910,10 +7842,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz nową zakładkę</translation>
     </message>
     <message>
-        <source>Close current tab</source>
-        <translation type="vanished">Zamknij bieżącą zakładkę</translation>
-    </message>
-    <message>
         <source>Clean styles of ASS file</source>
         <translation>Oczyść style pliku ASS</translation>
     </message>
@@ -7930,24 +7858,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wczytaj ostatnią sesję</translation>
     </message>
     <message>
-        <source>Next frame</source>
-        <translation type="vanished">Klatka w przód</translation>
-    </message>
-    <message>
         <source>Next tab</source>
         <translation>Następna zakładka</translation>
-    </message>
-    <message>
-        <source>Open audio</source>
-        <translation type="vanished">Otwórz audio</translation>
-    </message>
-    <message>
-        <source>Open subtitles</source>
-        <translation type="vanished">Otwórz napisy</translation>
-    </message>
-    <message>
-        <source>Open video</source>
-        <translation type="vanished">Otwórz wideo</translation>
     </message>
     <message>
         <source>Play or pause</source>
@@ -7956,10 +7868,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Play active line</source>
         <translation>Odtwórz aktywną linijkę</translation>
-    </message>
-    <message>
-        <source>Previous frame</source>
-        <translation type="vanished">Klatka w tył</translation>
     </message>
     <message>
         <source>Previous tab</source>
@@ -7986,68 +7894,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń tekst</translation>
     </message>
     <message>
-        <source>Save all subtitles</source>
-        <translation type="vanished">Zapisz wszystkie napisy</translation>
-    </message>
-    <message>
         <source>Save</source>
         <translation>Zapisz</translation>
-    </message>
-    <message>
-        <source>Save translation</source>
-        <translation type="vanished">Zapisz tłumaczenie</translation>
-    </message>
-    <message>
-        <source>Save subtitles using the video name</source>
-        <translation type="vanished">Zapisuj napisy z nazwą wideo</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation type="vanished">Znajdź</translation>
     </message>
     <message>
         <source>Select line at current video position</source>
         <translation>Zaznacz linijkę w bieżącym czasie wideo</translation>
     </message>
     <message>
-        <source>Select lines</source>
-        <translation type="vanished">Zaznacz linijki</translation>
-    </message>
-    <message>
         <source>Set audio position to video time</source>
         <translation>Ustaw pozycję audio na czas wideo</translation>
     </message>
     <message>
-        <source>Set audio marker to video time</source>
-        <translation type="vanished">Ustaw znacznik audio na czas wideo</translation>
-    </message>
-    <message>
-        <source>Insert end time from video</source>
-        <translation type="vanished">Wstaw czas końcowy z wideo</translation>
-    </message>
-    <message>
-        <source>Insert start time from video</source>
-        <translation type="vanished">Wstaw czas początkowy z wideo</translation>
-    </message>
-    <message>
         <source>Settings</source>
         <translation>Ustawienia</translation>
-    </message>
-    <message>
-        <source>Play first 500 ms</source>
-        <translation type="vanished">Odtwórz pierwsze 500 ms</translation>
-    </message>
-    <message>
-        <source>Play last 500 ms</source>
-        <translation type="vanished">Odtwórz ostatnie 500 ms</translation>
-    </message>
-    <message>
-        <source>Play 500 ms before</source>
-        <translation type="vanished">Odtwórz 500 ms przed</translation>
-    </message>
-    <message>
-        <source>Play 500 ms after</source>
-        <translation type="vanished">Odtwórz 500 ms po</translation>
     </message>
     <message>
         <source>Paste the selected text</source>
@@ -8136,10 +7996,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Next file</source>
         <translation>Następny plik</translation>
-    </message>
-    <message>
-        <source>Change aspect ratio</source>
-        <translation type="vanished">Zmień proporcje obrazu</translation>
     </message>
     <message>
         <source>5 seconds forward</source>
@@ -8370,14 +8226,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Pierwsze kroki</translation>
     </message>
     <message>
-        <source>Export as</source>
-        <translation type="vanished">Eksportuj jako</translation>
-    </message>
-    <message>
-        <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">Połącz z poprzednią linijką według zaznaczenia audio</translation>
-    </message>
-    <message>
         <source>Shift selected lines by frames: start at video</source>
         <translation>Przesuń zaznaczone linijki o klatki: początek na wideo</translation>
     </message>
@@ -8418,36 +8266,16 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Znajdź pojawianie i zanikanie…</translation>
     </message>
     <message>
-        <source>Import legacy settings…</source>
-        <translation>Importuj ustawienia starej wersji…</translation>
-    </message>
-    <message>
         <source>Lock layout</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Video details…</source>
-        <translation type="vanished">Szczegóły wideo…</translation>
     </message>
     <message>
         <source>Convert Aegisub folds to line groups</source>
         <translation>Konwertuj zwinięcia Aegisub na grupy linijek</translation>
     </message>
     <message>
-        <source>Open timecodes</source>
-        <translation type="vanished">Otwórz kody czasowe</translation>
-    </message>
-    <message>
-        <source>Save timecodes</source>
-        <translation type="vanished">Zapisz kody czasowe</translation>
-    </message>
-    <message>
         <source>Close timecodes</source>
         <translation>Zamknij kody czasowe</translation>
-    </message>
-    <message>
-        <source>QC notes panel</source>
-        <translation type="vanished">Panel notatek QC</translation>
     </message>
     <message>
         <source>Next QC note</source>
@@ -8456,14 +8284,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Previous QC note</source>
         <translation>Poprzednia notatka QC</translation>
-    </message>
-    <message>
-        <source>Add QC note</source>
-        <translation type="vanished">Dodaj notatkę QC</translation>
-    </message>
-    <message>
-        <source>Perspective tracking…</source>
-        <translation type="vanished">Śledzenie perspektywy…</translation>
     </message>
     <message>
         <source>Play before the mark</source>
@@ -8502,6 +8322,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Apply motion data…</source>
         <translation>Zastosuj dane ruchu…</translation>
     </message>
@@ -8512,10 +8336,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Copy motion data from lines</source>
         <translation>Kopiuj dane ruchu z linijek</translation>
-    </message>
-    <message>
-        <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">Kopiuj ścieżkę Power-Pin z linijek</translation>
     </message>
     <message>
         <source>Extend tracked lines…</source>
@@ -9065,6 +8885,34 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Run the last macro again</source>
         <translation>Uruchom ponownie ostatnie makro</translation>
     </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Commit and use the default timing for the next line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lengthen and shift what follows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorten and shift what follows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keyframes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.InlineAi</name>
@@ -9095,10 +8943,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>AI</source>
-        <translation type="obsolete">AI</translation>
     </message>
     <message>
         <source>Rewrite…</source>
@@ -9577,10 +9421,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Syllable outside the line</source>
         <translation>Sylaba poza linijką</translation>
-    </message>
-    <message>
-        <source>Karaoke check</source>
-        <translation type="vanished">Sprawdzanie karaoke</translation>
     </message>
     <message>
         <source>No karaoke problems found</source>
@@ -10233,52 +10073,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Plik</translation>
     </message>
     <message>
-        <source>&amp;Open…</source>
-        <translation type="vanished">&amp;Otwórz…</translation>
-    </message>
-    <message>
-        <source>Recently opened &amp;subtitles</source>
-        <translation type="vanished">Ostatnio otwa&amp;rte napisy</translation>
-    </message>
-    <message>
         <source>None</source>
         <translation>Brak</translation>
-    </message>
-    <message>
-        <source>Remove subtitles from the &amp;editor</source>
-        <translation type="vanished">Usuń napisy z e&amp;dytora</translation>
-    </message>
-    <message>
-        <source>&amp;Close</source>
-        <translation type="vanished">&amp;Zamknij</translation>
     </message>
     <message>
         <source>&amp;Save</source>
         <translation>&amp;Zapisz</translation>
     </message>
     <message>
-        <source>Save &amp;all</source>
-        <translation type="vanished">Zapisz &amp;wszystko</translation>
-    </message>
-    <message>
         <source>Save &amp;as…</source>
         <translation>Zapisz &amp;jako…</translation>
     </message>
     <message>
-        <source>Save &amp;translation</source>
-        <translation type="vanished">Zapisz &amp;tłumaczenie</translation>
-    </message>
-    <message>
-        <source>Save subtitles using the video name</source>
-        <translation type="vanished">Zapisuj napisy z nazwą wideo</translation>
-    </message>
-    <message>
         <source>Open autosave…</source>
         <translation>Otwórz autozapis…</translation>
-    </message>
-    <message>
-        <source>Remove temporary files</source>
-        <translation type="vanished">Usuń pliki tymczasowe</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -10291,22 +10099,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Load session from file</source>
         <translation>Wczytaj sesję z pliku</translation>
-    </message>
-    <message>
-        <source>Save session to file</source>
-        <translation type="vanished">Zapisz sesję do pliku</translation>
-    </message>
-    <message>
-        <source>Ask whether to load the last session at program startup</source>
-        <translation type="vanished">Pytaj o wczytanie ostatniej sesji przy starcie programu</translation>
-    </message>
-    <message>
-        <source>Load last session after program start</source>
-        <translation type="vanished">Wczytuj ostatnią sesję przy starcie programu</translation>
-    </message>
-    <message>
-        <source>&amp;Settings</source>
-        <translation type="vanished">&amp;Ustawienia</translation>
     </message>
     <message>
         <source>E&amp;xit</source>
@@ -10325,24 +10117,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Ponów</translation>
     </message>
     <message>
-        <source>So&amp;rt all lines</source>
-        <translation type="vanished">Sort&amp;uj wszystkie linijki</translation>
-    </message>
-    <message>
-        <source>So&amp;rt selected lines</source>
-        <translation type="vanished">Sortu&amp;j zaznaczone linijki</translation>
-    </message>
-    <message>
         <source>Undo to last save</source>
         <translation>Cofnij do ostatniego zapisu</translation>
     </message>
     <message>
         <source>&amp;History</source>
         <translation>&amp;Historia</translation>
-    </message>
-    <message>
-        <source>Select &amp;lines</source>
-        <translation type="vanished">Zaznacz &amp;linijki</translation>
     </message>
     <message>
         <source>Find next</source>
@@ -10377,10 +10157,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Odśwież skrypty autoload</translation>
     </message>
     <message>
-        <source>Rerun last macro</source>
-        <translation type="vanished">Uruchom ponownie ostatnie makro</translation>
-    </message>
-    <message>
         <source>&amp;Video</source>
         <translation>&amp;Wideo</translation>
     </message>
@@ -10389,20 +10165,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz &amp;wideo…</translation>
     </message>
     <message>
-        <source>Previous frame</source>
-        <translation type="vanished">Klatka w tył</translation>
-    </message>
-    <message>
-        <source>Next frame</source>
-        <translation type="vanished">Klatka w przód</translation>
-    </message>
-    <message>
         <source>Go to end time of line</source>
         <translation>Przejdź do czasu końcowego linijki</translation>
-    </message>
-    <message>
-        <source>Play or pause</source>
-        <translation type="vanished">Odtwórz lub wstrzymaj</translation>
     </message>
     <message>
         <source>Go to previous keyframe</source>
@@ -10433,20 +10197,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz atrapę wideo</translation>
     </message>
     <message>
-        <source>Insert start time from video</source>
-        <translation type="vanished">Wstaw czas początkowy z wideo</translation>
-    </message>
-    <message>
-        <source>Insert end time from video</source>
-        <translation type="vanished">Wstaw czas końcowy z wideo</translation>
-    </message>
-    <message>
         <source>Set audio position to video time</source>
         <translation>Ustaw pozycję audio na czas wideo</translation>
-    </message>
-    <message>
-        <source>Set audio marker to video time</source>
-        <translation type="vanished">Ustaw znacznik audio na czas wideo</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -10471,14 +10223,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Recently opened audio</source>
         <translation>Ostatnio otwarte audio</translation>
-    </message>
-    <message>
-        <source>Open audio from video</source>
-        <translation type="vanished">Otwórz audio z wideo</translation>
-    </message>
-    <message>
-        <source>Close audio</source>
-        <translation type="vanished">Zamknij audio</translation>
     </message>
     <message>
         <source>Vie&amp;w</source>
@@ -10541,10 +10285,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Formaty plików i pomysły zaczerpnięto z</translation>
     </message>
     <message>
-        <source>Restore the previous layout</source>
-        <translation type="vanished">Przywróć poprzedni układ</translation>
-    </message>
-    <message>
         <source>&amp;Subtitles</source>
         <translation>&amp;Napisy</translation>
     </message>
@@ -10581,22 +10321,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Menedżer stylów</translation>
     </message>
     <message>
-        <source>Script properties</source>
-        <translation type="vanished">Właściwości skryptu</translation>
-    </message>
-    <message>
-        <source>Font collector</source>
-        <translation type="vanished">Kolekcjoner czcionek</translation>
-    </message>
-    <message>
-        <source>Resample subtitles</source>
-        <translation type="vanished">Zmień rozdzielczość napisów</translation>
-    </message>
-    <message>
-        <source>Check spelling</source>
-        <translation type="vanished">Sprawdź pisownię</translation>
-    </message>
-    <message>
         <source>Carries each selected line’s timed %1 on at the same speed from its start to its end</source>
         <translation>Przedłuża %1 z podanymi czasami w każdej zaznaczonej linijce, z tą samą prędkością, od jej początku do końca</translation>
     </message>
@@ -10605,28 +10329,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ekstrapoluj %1 na całą linijkę</translation>
     </message>
     <message>
-        <source>Install, turn on and off, and uninstall plugins</source>
-        <translation type="vanished">Instaluj, włączaj, wyłączaj i odinstalowuj wtyczki</translation>
-    </message>
-    <message>
-        <source>Pl&amp;ugins…</source>
-        <translation type="vanished">W&amp;tyczki…</translation>
-    </message>
-    <message>
         <source>Remove from the layout</source>
         <translation>Usuń z układu</translation>
     </message>
     <message>
-        <source>Hide tags</source>
-        <translation type="vanished">Ukryj tagi</translation>
-    </message>
-    <message>
         <source>&amp;Help</source>
         <translation>Pomo&amp;c</translation>
-    </message>
-    <message>
-        <source>&amp;Report an issue</source>
-        <translation type="vanished">&amp;Zgłoś problem</translation>
     </message>
     <message>
         <source>Check for &amp;updates</source>
@@ -10733,24 +10441,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Open subtitle file</source>
-        <translation type="vanished">Otwórz plik napisów</translation>
-    </message>
-    <message>
-        <source>Open a folder as a project</source>
-        <translation type="vanished">Otwórz folder jako projekt</translation>
-    </message>
-    <message>
         <source>Open &amp;folder…</source>
         <translation>Otwórz &amp;folder…</translation>
-    </message>
-    <message>
-        <source>Recently opened subtitles</source>
-        <translation type="vanished">Ostatnio otwarte napisy</translation>
-    </message>
-    <message>
-        <source>Open</source>
-        <translation type="vanished">Otwórz</translation>
     </message>
     <message>
         <source>Open %1</source>
@@ -10761,16 +10453,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Usuń napisy z edytora</translation>
     </message>
     <message>
-        <source>Close this window’s tabs and its project</source>
-        <translation type="vanished">Zamknij zakładki tego okna i jego projekt</translation>
-    </message>
-    <message>
         <source>Close pro&amp;ject</source>
         <translation>Zamknij pro&amp;jekt</translation>
-    </message>
-    <message>
-        <source>Opens video file</source>
-        <translation type="vanished">Otwiera plik wideo</translation>
     </message>
     <message>
         <source>Imports a subtitle track from a Matroska file</source>
@@ -10789,18 +10473,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Importuj tekst piosenki…</translation>
     </message>
     <message>
-        <source>Save current file</source>
-        <translation type="vanished">Zapisz aktualny plik</translation>
-    </message>
-    <message>
-        <source>Save all subtitles</source>
-        <translation type="vanished">Zapisz wszystkie napisy</translation>
-    </message>
-    <message>
-        <source>Save as</source>
-        <translation type="vanished">Zapisz jako</translation>
-    </message>
-    <message>
         <source>Writes a copy of the document in another format</source>
         <translation>Zapisuje kopię dokumentu w innym formacie</translation>
     </message>
@@ -10809,20 +10481,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Eksportuj jako…</translation>
     </message>
     <message>
-        <source>Save translation</source>
-        <translation type="vanished">Zapisz tłumaczenie</translation>
-    </message>
-    <message>
         <source>Opens the selected autosave from the list</source>
         <translation>Otwiera autozapis wybrany z listy</translation>
-    </message>
-    <message>
-        <source>Opens the temporary file removal window</source>
-        <translation type="vanished">Otwiera okno usuwania plików tymczasowych</translation>
-    </message>
-    <message>
-        <source>Last session options</source>
-        <translation type="vanished">Opcje ostatniej sesji</translation>
     </message>
     <message>
         <source>Loads previously loaded files</source>
@@ -10837,44 +10497,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zapisuje sesję do pliku</translation>
     </message>
     <message>
-        <source>Asks whether to load previously loaded files at program startup</source>
-        <translation type="vanished">Pyta, czy wczytać ostatnio otwarte pliki przy starcie programu</translation>
-    </message>
-    <message>
-        <source>Loads previously loaded files at program startup</source>
-        <translation type="vanished">Wczytuje ostatnio otwarte pliki przy starcie programu</translation>
-    </message>
-    <message>
-        <source>Program settings</source>
-        <translation type="vanished">Ustawienia programu</translation>
-    </message>
-    <message>
-        <source>Close this window; closing the last window exits the program</source>
-        <translation type="vanished">Zamyka to okno; zamknięcie ostatniego okna kończy działanie programu</translation>
-    </message>
-    <message>
         <source>Close &amp;window</source>
         <translation>Zamknij o&amp;kno</translation>
-    </message>
-    <message>
-        <source>Exit the program</source>
-        <translation type="vanished">Zakończ działanie programu</translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation type="vanished">Cofnij</translation>
-    </message>
-    <message>
-        <source>Redo</source>
-        <translation type="vanished">Ponów</translation>
-    </message>
-    <message>
-        <source>Sorts all lines in ASS file</source>
-        <translation type="vanished">Sortuje wszystkie linijki w pliku ASS</translation>
-    </message>
-    <message>
-        <source>Sorts selected lines in ASS file</source>
-        <translation type="vanished">Sortuje zaznaczone linijki w pliku ASS</translation>
     </message>
     <message>
         <source>History</source>
@@ -10933,22 +10557,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Moves the start of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the start of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame earlier</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Moves the end of each selected line one frame later</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Ends the line before the active line where the active line starts</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10993,16 +10601,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Notatki z kontroli jakości, zapisane w pliku, z linijkami, które oznaczają</translation>
     </message>
     <message>
-        <source>&amp;QC notes…</source>
-        <translation type="vanished">Notatki &amp;QC…</translation>
-    </message>
-    <message>
         <source>Changes the frame rate of the subtitle times</source>
         <translation>Zmienia liczbę klatek na sekundę czasów napisów</translation>
-    </message>
-    <message>
-        <source>Set FPS</source>
-        <translation type="vanished">Ustaw FPS</translation>
     </message>
     <message>
         <source>Set new FPS…</source>
@@ -11013,28 +10613,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustaw FPS z wideo</translation>
     </message>
     <message>
-        <source>Open a VFR timecodes v1, v2 or v4 file</source>
-        <translation type="vanished">Otwiera plik kodów czasowych VFR v1, v2 lub v4</translation>
-    </message>
-    <message>
-        <source>Open timecodes</source>
-        <translation type="vanished">Otwórz kody czasowe</translation>
-    </message>
-    <message>
         <source>Recently opened timecodes</source>
         <translation>Ostatnio otwarte kody czasowe</translation>
-    </message>
-    <message>
-        <source>Save a VFR timecodes v2 file</source>
-        <translation type="vanished">Zapisuje plik kodów czasowych VFR v2</translation>
-    </message>
-    <message>
-        <source>Save timecodes</source>
-        <translation type="vanished">Zapisz kody czasowe</translation>
-    </message>
-    <message>
-        <source>Close the currently open timecodes file</source>
-        <translation type="vanished">Zamyka otwarty plik kodów czasowych</translation>
     </message>
     <message>
         <source>Close timecodes</source>
@@ -11117,18 +10697,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Śledź kolor</translation>
     </message>
     <message>
-        <source>Open a video first: tracking data is per frame.</source>
-        <translation type="vanished">Najpierw otwórz wideo: dane śledzenia są podane dla każdej klatki.</translation>
-    </message>
-    <message>
-        <source>Perspective tracking…</source>
-        <translation type="vanished">Śledzenie perspektywy…</translation>
-    </message>
-    <message>
-        <source>Video details…</source>
-        <translation type="vanished">Szczegóły wideo…</translation>
-    </message>
-    <message>
         <source>Reload video</source>
         <translation>Wczytaj ponownie wideo</translation>
     </message>
@@ -11153,10 +10721,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kopiuje płaszczyzny perspektywy zaznaczonych linijek jako dane Power-Pin, jeden czworokąt na klatkę</translation>
     </message>
     <message>
-        <source>Copy Power-Pin track from lines</source>
-        <translation type="vanished">Kopiuj ścieżkę Power-Pin z linijek</translation>
-    </message>
-    <message>
         <source>Fits the selected frame-by-frame lines’ motion and carries it on for more frames</source>
         <translation>Dopasowuje ruch zaznaczonych linijek klatka po klatce i przedłuża go o kolejne klatki</translation>
     </message>
@@ -11169,16 +10733,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Koszt renderowania</translation>
     </message>
     <message>
-        <source>Reload audio</source>
-        <translation type="vanished">Wczytaj ponownie audio</translation>
-    </message>
-    <message>
         <source>Gives the active line the audio selection and ends the line before it where the selection starts</source>
         <translation>Nadaje aktywnej linijce zaznaczenie audio i kończy poprzednią linijkę tam, gdzie zaczyna się zaznaczenie</translation>
-    </message>
-    <message>
-        <source>Join with previous line using the audio selection</source>
-        <translation type="vanished">Połącz z poprzednią linijką według zaznaczenia audio</translation>
     </message>
     <message>
         <source>Untagged video</source>
@@ -11293,14 +10849,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wyśrodkuj czasy w klatkach</translation>
     </message>
     <message>
-        <source>Load script</source>
-        <translation type="vanished">Wczytaj skrypt</translation>
-    </message>
-    <message>
-        <source>Run the last macro again with the same answers, without its dialogs when they are unchanged</source>
-        <translation type="vanished">Uruchamia ponownie ostatnie makro z tymi samymi odpowiedziami, bez jego okien dialogowych, jeśli się nie zmieniły</translation>
-    </message>
-    <message>
         <source>Repeat last run</source>
         <translation>Powtórz ostatnie uruchomienie</translation>
     </message>
@@ -11333,10 +10881,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Odtwarza lub pauzuje wideo</translation>
     </message>
     <message>
-        <source>Opens audio file</source>
-        <translation type="vanished">Otwiera plik audio</translation>
-    </message>
-    <message>
         <source>Opens audio from video</source>
         <translation>Otwiera audio z wideo</translation>
     </message>
@@ -11345,16 +10889,8 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Kopiuje timing karaoke linijek romaji do odpowiadających im linijek kanji</translation>
     </message>
     <message>
-        <source>Kanji timer</source>
-        <translation type="vanished">Timer kanji</translation>
-    </message>
-    <message>
         <source>Walks through the settings most people change first</source>
         <translation>Prowadzi przez ustawienia, które większość osób zmienia najpierw</translation>
-    </message>
-    <message>
-        <source>&amp;Getting started</source>
-        <translation type="vanished">Pierwsze &amp;kroki</translation>
     </message>
     <message>
         <source>Opens the user guide in the default browser</source>
@@ -11393,28 +10929,12 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zainstaluj aktualizację</translation>
     </message>
     <message>
-        <source>Closes audio</source>
-        <translation type="vanished">Zamyka audio</translation>
-    </message>
-    <message>
-        <source>Shifting subtitle times</source>
-        <translation type="vanished">Przesuwanie czasów napisów</translation>
-    </message>
-    <message>
-        <source>Is used to manage ASS styles</source>
-        <translation type="vanished">Służy do zarządzania stylami ASS</translation>
-    </message>
-    <message>
         <source>Opens Script properties</source>
         <translation>Otwiera właściwości skryptu</translation>
     </message>
     <message>
         <source>Checks the karaoke syllables of every line</source>
         <translation>Sprawdza sylaby karaoke w każdej linijce</translation>
-    </message>
-    <message>
-        <source>Check karaoke</source>
-        <translation type="vanished">Sprawdź karaoke</translation>
     </message>
     <message>
         <source>Hide tags in the line editor</source>
@@ -12025,10 +11545,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ustawia czasy aktywnej linijki na klatki wokół klatki wideo, w których wybrany punkt zachowuje swój kolor</translation>
     </message>
     <message>
-        <source>Align to video…</source>
-        <translation type="vanished">Dopasuj do wideo…</translation>
-    </message>
-    <message>
         <source>Align to video</source>
         <translation>Dopasuj do wideo</translation>
     </message>
@@ -12555,6 +12071,70 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
+    </message>
+    <message>
+        <source>Save audio of selected lines…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the audio from the first selected line’s start to the last one’s end as a WAV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lengthen and shift what follows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shorten and shift what follows</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sets each selected line to the keyframes around it: one line takes the scene at the video frame, several lines each take the scene of their own start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame earlier, or 10 ms without video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the start of each selected line one frame later, or 10 ms without video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame earlier, or 10 ms without video. In karaoke mode, moves the current syllable’s end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one frame later, or 10 ms without video. In karaoke mode, moves the current syllable’s end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one step later and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end of each selected line one step earlier and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save keyframes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves the video’s keyframes as a keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14156,10 +13736,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Właściwości skryptu</translation>
     </message>
     <message>
-        <source>Language (program restart required)</source>
-        <translation type="vanished">Język (wymaga restartu programu)</translation>
-    </message>
-    <message>
         <source>Appearance</source>
         <translation>Wygląd</translation>
     </message>
@@ -14532,6 +14108,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Otwórz folder użytkownika</translation>
     </message>
     <message>
+        <source>Import settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags</source>
         <translation>Ukrywaj tagi</translation>
     </message>
@@ -14690,6 +14270,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>ASS tag replacement</source>
         <translation>Znak podmiany tagów ASS</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the pointer with the bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the render time and position overlays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -15080,14 +14720,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wyczyść ostatnie odpowiedzi…</translation>
     </message>
     <message>
-        <source>Trusted script folders</source>
-        <translation type="vanished">Zaufane foldery skryptów</translation>
-    </message>
-    <message>
-        <source>Scripts a subtitle file names load without asking when they are in one of these folders.</source>
-        <translation type="vanished">Skrypty wymienione w pliku napisów wczytują się bez pytania, gdy leżą w jednym z tych folderów.</translation>
-    </message>
-    <message>
         <source>No trusted folders</source>
         <translation>Brak zaufanych folderów</translation>
     </message>
@@ -15144,6 +14776,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>AI</translation>
     </message>
     <message>
+        <source>Autosave every</source>
+        <translation>Autozapis co</translation>
+    </message>
+    <message>
+        <source>seconds</source>
+        <translation>sekund</translation>
+    </message>
+    <message>
+        <source>Seconds from a change to its autosave. Range from 5 to 3600</source>
+        <translation>Sekundy od zmiany do jej autozapisu. Zakres od 5 do 3600</translation>
+    </message>
+    <message>
         <source>Trusted folders</source>
         <translation>Zaufane foldery</translation>
     </message>
@@ -15158,10 +14802,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>HikariSub 0.0.x</source>
         <translation>HikariSub 0.0.x</translation>
-    </message>
-    <message>
-        <source>Import legacy settings…</source>
-        <translation>Importuj ustawienia starej wersji…</translation>
     </message>
     <message>
         <source>Roll back the last import…</source>
@@ -15268,24 +14908,176 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Ta kopia nie instaluje aktualizacji sama: okno aktualizacji otwiera stronę pobierania.</translation>
     </message>
     <message>
+        <source>The mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The project’s name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>{%1} stays empty while %2 is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1/128</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show what I am doing in Discord</source>
         <translation>Pokazuj w Discordzie, co robię</translation>
     </message>
     <message>
-        <source>Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.</source>
-        <translation>Twój status w Discordzie pokazuje Edytuje napisy, tryb i czas pracy. Nigdy wideo, napisów ani liczby wierszy.</translation>
+        <source>Your Discord status shows what you choose below. Never folders, your subtitles, the video or line counts.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Include the file name</source>
-        <translation>Dołącz nazwę pliku</translation>
+        <source>What shows</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Suggest starring HikariSub on GitHub</source>
-        <translation type="vanished">Proponuj gwiazdkę dla HikariSub na GitHubie</translation>
+        <source>The mode follows your layout. While one of the activities below is going, it shows instead.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>At most twice, after you have used HikariSub on several days. The counts stay on this computer.</source>
-        <translation type="vanished">Najwyżej dwa razy, po kilku dniach korzystania z HikariSub. Liczniki zostają na tym komputerze.</translation>
+        <source>Unticked activities show the layout’s mode. A layout you saved shows the mode of the layout it came from.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The mode’s icon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Standard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details (first line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>State (second line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text from plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows only where you put {plugin} in your own text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Since HikariSub started</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Since the file opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Idle and away</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>After no input for</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minutes without input</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>min</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show “Idle”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear the status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Do the same while HikariSub is in the background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Buttons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“Get HikariSub”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A link of your own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Label</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Needs an https:// address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is shown in Discord. Presence is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>12:34 elapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roughly how Discord shows it to people who can see your status. Buttons show to them, not to you.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Let plugins connect to the internet</source>
@@ -16589,10 +16381,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Żądania trafiają tylko do dodanych dostawców. W tym systemie komponent AI nie jest izolowany w piaskownicy.</translation>
     </message>
     <message>
-        <source>Requests go only to the providers you add. The operating system doesn’t sandbox the AI component yet.</source>
-        <translation type="vanished">Żądania trafiają tylko do dodanych dostawców. System operacyjny nie izoluje jeszcze komponentu AI w piaskownicy.</translation>
-    </message>
-    <message>
         <source>Web search</source>
         <translation>Wyszukiwanie w sieci</translation>
     </message>
@@ -16731,10 +16519,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Values for %1, in order</source>
         <translation>Wartości dla %1, po kolei</translation>
-    </message>
-    <message>
-        <source>Each Cycle command steps the tag in the selected lines&apos; start block to the next value. Cycle back steps the other way.</source>
-        <translation type="vanished">Każde polecenie cyklu zmienia tag w bloku początkowym zaznaczonych wierszy na następną wartość. Cykl wstecz zmienia go w drugą stronę.</translation>
     </message>
     <message>
         <source>Delete MCP server</source>
@@ -16900,6 +16684,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Antigravity isn’t on PATH.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Frequency curve</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Logarithmic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default line duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Timing keys work in every panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the Timing layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not installed</source>
+        <translation>Niezainstalowany</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>Zainstaluj</translation>
+    </message>
+    <message>
+        <source>Installed</source>
+        <translation>Zainstalowany</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Ponów próbę</translation>
+    </message>
+    <message>
+        <source>Downloading the AI component · %1 of %2 MB</source>
+        <translation>Pobieranie komponentu AI · %1 z %2 MB</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -16960,6 +16792,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 importuje %2, czego panele wtyczek nie mogą używać.</translation>
     </message>
     <message>
+        <source>The package lacks its content file, %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The package’s content file %1 can’t be read: it %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The package has a signature, but its manifest names no publicKey to check it with.</source>
         <translation>Pakiet ma podpis, ale jego manifest nie podaje klucza publicKey, którym można go sprawdzić.</translation>
     </message>
@@ -17006,6 +16846,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Read the branches, tags and history of the git repository holding your subtitle files: %1</source>
         <translation>Odczytywać gałęzie, tagi i historię repozytorium git z Twoimi plikami napisów: %1</translation>
+    </message>
+    <message>
+        <source>Set text in your Discord status: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ask you for a folder to read and write, %1: %2</source>
@@ -17282,10 +17126,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Installed plugins</source>
         <translation>Zainstalowane wtyczki</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation type="vanished">Włączona</translation>
     </message>
     <message>
         <source>Unverified, signed by key %1</source>
@@ -17596,14 +17436,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin isn’t installed, is turned off, or no longer has this command</source>
         <translation>Wtyczka nie jest zainstalowana, jest wyłączona albo nie ma już tego polecenia</translation>
     </message>
-    <message numerus="yes">
-        <source>It ran for more than %n second(s).</source>
-        <translation type="vanished">
-            <numerusform>Działała dłużej niż %n sekundę.</numerusform>
-            <numerusform>Działała dłużej niż %n sekundy.</numerusform>
-            <numerusform>Działała dłużej niż %n sekund.</numerusform>
-        </translation>
-    </message>
     <message>
         <source>It stopped unexpectedly.</source>
         <translation>Nieoczekiwanie się zatrzymała.</translation>
@@ -17631,14 +17463,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its %1 handler failed: %2</source>
         <translation>Obsługa zdarzenia %1 we wtyczce nie powiodła się: %2</translation>
-    </message>
-    <message numerus="yes">
-        <source>The plugin ran for more than %n second(s), so HikariSub stopped it. Its next command starts it again.</source>
-        <translation type="vanished">
-            <numerusform>Wtyczka działała dłużej niż %n sekundę, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
-            <numerusform>Wtyczka działała dłużej niż %n sekundy, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
-            <numerusform>Wtyczka działała dłużej niż %n sekund, więc HikariSub ją zatrzymał. Następne polecenie uruchomi ją ponownie.</numerusform>
-        </translation>
     </message>
     <message>
         <source>The plugin stopped unexpectedly. Its next command starts it again.</source>
@@ -17829,6 +17653,98 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin is stopped. Start it again in its details.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Runs programs that come with it: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs programs that come with it: %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connects to the internet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can read your files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json wskazuje w %2 polecenie „%1”, którego nie deklaruje.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json przypisuje %1 dwa razy, w %2.</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>Element paska stanu: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>Skrót: %1 dla %2</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 jest już zajęty przez %2</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>Wymaga otwartego pliku</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>Działa tylko bez otwartego pliku</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>Wymaga zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>Działa tylko bez zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>Wymaga co najmniej dwóch zaznaczonych linijek</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>Działa tylko z jedną zaznaczoną linijką lub bez zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>Wymaga otwartego wideo</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>Działa tylko bez otwartego wideo</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>Wymaga otwartego audio</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>Działa tylko bez otwartego audio</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>Wymaga linijki karaoke</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>Działa tylko na linijce bez karaoke</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>Wymaga trybu tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>Działa tylko poza trybem tłumaczenia</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -17929,52 +17845,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Pionowo</translation>
     </message>
     <message>
-        <source>The active line</source>
-        <translation type="vanished">Aktywnego wiersza</translation>
-    </message>
-    <message>
-        <source>The video frame</source>
-        <translation type="vanished">Klatki wideo</translation>
-    </message>
-    <message>
         <source>Active line</source>
         <translation>Aktywnego wiersza</translation>
     </message>
     <message>
         <source>Video frame</source>
         <translation>Klatki wideo</translation>
-    </message>
-    <message>
-        <source>Align left edges</source>
-        <translation type="vanished">Wyrównaj lewe krawędzie</translation>
-    </message>
-    <message>
-        <source>Align centres</source>
-        <translation type="vanished">Wyrównaj środki</translation>
-    </message>
-    <message>
-        <source>Align right edges</source>
-        <translation type="vanished">Wyrównaj prawe krawędzie</translation>
-    </message>
-    <message>
-        <source>Align top edges</source>
-        <translation type="vanished">Wyrównaj górne krawędzie</translation>
-    </message>
-    <message>
-        <source>Align middles</source>
-        <translation type="vanished">Wyrównaj środki w pionie</translation>
-    </message>
-    <message>
-        <source>Align bottom edges</source>
-        <translation type="vanished">Wyrównaj dolne krawędzie</translation>
-    </message>
-    <message>
-        <source>Distribute horizontally</source>
-        <translation type="vanished">Rozłóż poziomo</translation>
-    </message>
-    <message>
-        <source>Distribute vertically</source>
-        <translation type="vanished">Rozłóż pionowo</translation>
     </message>
     <message>
         <source>Phantom</source>
@@ -18217,6 +18093,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Creates the file and .hikari/.gitignore, which keeps it and project.local.toml out of git. Keys never reach Hikari AI or the model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide presence while this project is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this project’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In this project</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details (first line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>State (second line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An empty line uses yours. Until you trust this folder, your own presence shows.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What shows stays yours: a project can’t show the file or project name.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -19628,6 +19540,18 @@ Linijki [Sekcja] je grupują.</translation>
         <translation>Edycja</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation>Więcej</translation>
+    </message>
+    <message>
+        <source>Synch point</source>
+        <translation>Punkt synchronizacji</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>Szczegóły aktualizacji</translation>
+    </message>
+    <message>
         <source>Resolution</source>
         <translation>Rozdzielczość</translation>
     </message>
@@ -20513,8 +20437,8 @@ ponieważ została zmieniona.</translation>
         <translation>Napisy (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -20712,10 +20636,6 @@ ponieważ została zmieniona.</translation>
         <translation>Nie można zapisać migawki</translation>
     </message>
     <message>
-        <source>Import legacy settings</source>
-        <translation>Importuj ustawienia starszej wersji</translation>
-    </message>
-    <message>
         <source>Conflict</source>
         <translation>Konflikt</translation>
     </message>
@@ -20740,20 +20660,8 @@ ponieważ została zmieniona.</translation>
         <translation>Przywrócić ustawienia sprzed ostatniego importu?</translation>
     </message>
     <message>
-        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
-        <translation>Zaczną obowiązywać przy następnym uruchomieniu HikariSub. Instalacja starszej wersji nie zostanie zmieniona.</translation>
-    </message>
-    <message>
-        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
-        <translation>Ustawienia zmienione przez Ciebie od tamtej pory również wrócą do poprzednich wartości: %1. Instalacja starszej wersji nie zostanie zmieniona.</translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Choose the folder of a legacy installation</source>
-        <translation>Wybierz folder instalacji starszej wersji</translation>
     </message>
     <message>
         <source>Roll back</source>
@@ -20788,10 +20696,6 @@ ponieważ została zmieniona.</translation>
         <translation>Import</translation>
     </message>
     <message>
-        <source>Installation</source>
-        <translation>Instalacja</translation>
-    </message>
-    <message>
         <source>Review</source>
         <translation>Przegląd</translation>
     </message>
@@ -20800,20 +20704,36 @@ ponieważ została zmieniona.</translation>
         <translation>Krok %1 z 3: %2</translation>
     </message>
     <message>
-        <source>Choose the legacy installation to import from</source>
-        <translation>Wybierz instalację starszej wersji, z której chcesz zaimportować ustawienia</translation>
+        <source>Import settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
-        <translation>Instalacje HikariSub 0.0.x znalezione na tym komputerze. Nic w nich nie zostanie zmienione.</translation>
+        <source>They take effect the next time HikariSub starts. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Legacy installations</source>
-        <translation>Instalacje starszej wersji</translation>
+        <source>These settings you changed since go back too: %1. The files you imported from are not changed.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>No legacy installation was found. Choose its folder.</source>
-        <translation>Nie znaleziono instalacji starszej wersji. Wybierz jej folder.</translation>
+        <source>Choose a HikariSub 0.0.x installation or Aegisub settings folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose what to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Places to import from</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Files that are not UTF-8 are read as</source>
@@ -20840,8 +20760,8 @@ ponieważ została zmieniona.</translation>
         <translation>Przejrzyj, co zaimportować</translation>
     </message>
     <message>
-        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
-        <translation>Konflikt to ustawienie, które instalacja starszej wersji ma ustawione inaczej niż Ty. Proponowany wybór jest zaznaczony; odznacz to, co chcesz zachować.</translation>
+        <source>A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Every record read, with its status. Only conflicts can be imported.</source>
@@ -20948,8 +20868,8 @@ ponieważ została zmieniona.</translation>
         <translation>Do zaimportowania: %1 z %2 zmian, bez zmian: %3, nierozstrzygnięte: %4, wykluczone: %5, przestarzałe: %6</translation>
     </message>
     <message>
-        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
-        <translation>Obok programu nie znaleziono ustawień starszej wersji. Wybierz folder instalacji starszej wersji.</translation>
+        <source>Nothing to import was found. Choose a folder.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 holds no legacy settings (no “Config” or “Dictionary” folder).</source>
@@ -21929,6 +21849,10 @@ ponieważ została zmieniona.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>From plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Copy to project</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21946,6 +21870,14 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Hidden by the project’s copy. Copy it to the project to use it there.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This catalogue comes with a plugin, so it can’t be changed here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to my catalogues</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -22229,6 +22161,11 @@ ponieważ została zmieniona.</translation>
         <translation>Wybierz plik ASS</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s style catalogue in the Style manager: the catalogue&apos;s title, then the plugin&apos;s name.</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Copy of %1</source>
         <translation>Kopia %1</translation>
     </message>
@@ -22265,10 +22202,6 @@ Usunięte style:
     <message>
         <source>Styles</source>
         <translation>Style</translation>
-    </message>
-    <message>
-        <source>Styles: %1</source>
-        <translation>Style: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>
@@ -22803,10 +22736,6 @@ Usunięte style:
     <message>
         <source>Z coordinate for tags \frx and \fry</source>
         <translation>Współrzędna Z dla tagów \frx i \fry</translation>
-    </message>
-    <message>
-        <source>Tag list options</source>
-        <translation type="vanished">Opcje listy tagów</translation>
     </message>
     <message>
         <source>Tag list</source>
@@ -23940,6 +23869,11 @@ Usunięte style:
         <translation>wszystkie zmienne globalne, w tym te z karaskel</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s karaoke preset in the Template editor: the preset&apos;s title, then the plugin&apos;s name.</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The templater stopped before it finished.</source>
         <translation>Templater zatrzymał się przed zakończeniem.</translation>
     </message>
@@ -24801,10 +24735,6 @@ Usunięte style:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Preset commands</source>
-        <translation type="vanished">Polecenia presetów</translation>
-    </message>
-    <message>
         <source>Save as preset…</source>
         <translation>Zapisz jako preset…</translation>
     </message>
@@ -24984,6 +24914,22 @@ Usunięte style:
         <source>Accepted %1, skipped %2. Each accepted line is one undo step.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Join lines that overlap by up to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>overlap closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n overlap(s) closed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Tracking</name>
@@ -25046,10 +24992,6 @@ Usunięte style:
     <message>
         <source>A line can’t be tracked: its text can’t be measured or the plane folds it.</source>
         <translation>Nie można śledzić jednej z linijek: nie da się zmierzyć jej tekstu albo płaszczyzna ją składa.</translation>
-    </message>
-    <message>
-        <source>Perspective tracking</source>
-        <translation type="vanished">Śledzenie perspektywy</translation>
     </message>
     <message>
         <source>Power-Pin data</source>
@@ -25547,10 +25489,6 @@ Usunięte style:
         <translation>Tagi z oryginału: tłumaczenie otrzymuje tagi tekstu oryginalnego</translation>
     </message>
     <message>
-        <source>Translator mode displays and saves both foreign text and translation text</source>
-        <translation type="vanished">Tryb tłumacza wyświetla i zapisuje zarówno tekst obcojęzyczny, jak i tekst tłumaczenia</translation>
-    </message>
-    <message>
         <source>Paste translation</source>
         <translation>Wklej tłumaczenie</translation>
     </message>
@@ -25561,10 +25499,6 @@ Usunięte style:
     <message>
         <source>Translation needs an ASS file: plain text cannot store it.</source>
         <translation>Tłumaczenie wymaga pliku ASS: zwykły tekst nie może go przechowywać.</translation>
-    </message>
-    <message>
-        <source>More</source>
-        <translation type="vanished">Więcej</translation>
     </message>
     <message>
         <source>Run %1: %2, %3</source>
@@ -25926,6 +25860,10 @@ Usunięte style:
         <translation>Następny plik</translation>
     </message>
     <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+    </message>
+    <message>
         <source>Choose keyframes file</source>
         <translation>Wybierz plik klatek kluczowych</translation>
     </message>
@@ -25940,10 +25878,6 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
-    </message>
-    <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -26051,14 +25985,6 @@ Usunięte style:
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
-        <source>Exit full screen</source>
-        <translation>Wyłącz pełny ekran</translation>
-    </message>
-    <message>
-        <source>Escape</source>
-        <translation type="vanished">Escape</translation>
-    </message>
-    <message>
         <source>Full screen</source>
         <translation>Pełny ekran</translation>
     </message>
@@ -26143,22 +26069,59 @@ Usunięte style:
         <translation>Wideo na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Seeking…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Can’t decode frame %1 of %2. Playback stopped.</source>
+        <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seek to another time, or press Esc to leave full screen.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Press Esc to exit full screen</source>
         <extracomment>Shown for two seconds on entering full screen video</extracomment>
         <translation>Naciśnij Esc, aby wyjść z pełnego ekranu</translation>
     </message>
     <message>
-        <source>Previous video file</source>
-        <translation>Poprzedni plik wideo</translation>
+        <source>Seek bar</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Line %1, %2: %3</source>
-        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
-        <translation>Linijka %1, %2: %3</translation>
+        <source>No line at this time</source>
+        <extracomment>The full screen strip when no Line is at the current time</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video time, %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Leave full screen</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Visual tools</source>
         <translation>Narzędzia wizualne</translation>
+    </message>
+    <message>
+        <source>Simple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Simple: switch to full-screen watching · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -26178,32 +26141,48 @@ Usunięte style:
         <translation>Pasek pełnego ekranu</translation>
     </message>
     <message>
-        <source>Full screen bar: %1</source>
-        <translation>Pasek pełnego ekranu: %1</translation>
+        <source>Auto-hide</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show when the pointer moves</source>
-        <translation>Pokazuj przy ruchu wskaźnika</translation>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Always show</source>
-        <translation>Zawsze pokazuj</translation>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Never show</source>
-        <translation>Nigdy nie pokazuj</translation>
+        <source>Bar position</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show on pointer movement, hide when idle</source>
-        <translation>Pokazuj przy ruchu wskaźnika, ukrywaj przy bezczynności</translation>
+        <source>Below the picture (letterbox)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the bar; the picture ends above it</source>
-        <translation>Zachowaj pasek; obraz kończy się nad nim</translation>
+        <source>Over the picture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Picture only</source>
         <translation>Tylko obraz</translation>
+    </message>
+    <message>
+        <source>Keep the bar shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full-screen settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -26212,10 +26191,6 @@ Usunięte style:
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
-    </message>
-    <message>
-        <source>Streams</source>
-        <translation type="vanished">Strumienie</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -26543,10 +26518,6 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Nie można zapisać pliku kodów czasowych %1</translation>
     </message>
     <message>
-        <source>Timecodes file not found: %1</source>
-        <translation type="vanished">Nie znaleziono pliku kodów czasowych: %1</translation>
-    </message>
-    <message>
         <source>Video details</source>
         <translation>Szczegóły wideo</translation>
     </message>
@@ -26745,6 +26716,22 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Arrow keys move the point; Enter applies</source>
         <translation>Strzałki przesuwają punkt; Enter stosuje</translation>
+    </message>
+    <message>
+        <source>Save keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes file (*.txt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are no keyframes to save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the keyframes file %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

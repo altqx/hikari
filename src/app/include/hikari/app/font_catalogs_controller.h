@@ -7,6 +7,8 @@
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/core/document.h"
 
+#include "file_write_queue.h"
+
 #include <QFileSystemWatcher>
 #include <QImage>
 #include <QObject>
@@ -195,6 +197,7 @@ public:
     void convertFiles();
     int autosaveInterval() const { return m_autosave.interval(); }
     void setAutosaveInterval(int ms) { m_autosave.setInterval(ms); }
+    ui::FileWriteQueue &autosaveWrites() { return m_autosaveWrites; }
     void setWatchDelay(int ms) { m_watchDelay.setInterval(ms); }
 
 signals:
@@ -217,6 +220,7 @@ private:
     QString sendCatalog(const QString &name, const QString &from, const QVariantList &choices, bool move);
     void startAutosave();
     void autosaveNow();
+    void autosaved(bool written);
     void loadExternalFonts();
     void relist();
     void watchFolders();
@@ -270,6 +274,7 @@ private:
     bool m_windowMade = false;
     bool m_unsaved = false;
     std::shared_ptr<ui::ListFile> m_file;
+    ui::FileWriteQueue m_autosaveWrites;
     std::shared_ptr<ui::ListFile> m_autosaveFiles[3];
 };
 

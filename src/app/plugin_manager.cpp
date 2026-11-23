@@ -1,5 +1,7 @@
 #include "hikari/app/plugin_manager.h"
 
+#include "hikari/app/plugin_content.h"
+
 #include "hikari/api/api.h"
 #include "hikari/backends/desktop_handoff.h"
 
@@ -11,6 +13,7 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QKeySequence>
 #include <QUrl>
 #include <private/qzipreader_p.h>
 
@@ -107,6 +110,12 @@ QString manifestMessage(const ManifestProblem &problem)
             .arg(api::kApiVersion);
     case ManifestProblem::Kind::QmlNeedsFullTrust:
         return QCoreApplication::translate("HikariSub.Plugins", "Only Full trust plugins can ship QML panels.");
+    case ManifestProblem::Kind::UnknownCommand:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.")
+            .arg(text(problem.detail), at);
+    case ManifestProblem::Kind::DuplicateKey:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json binds %1 twice, at %2.")
+            .arg(text(problem.detail), at);
     case ManifestProblem::Kind::Schema:
     case ManifestProblem::Kind::BadDefault:
         break;
@@ -136,6 +145,11 @@ QString packageMessage(const PackageProblem &problem)
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its panel file, %1.").arg(text(problem.path));
     case PackageProblem::Kind::QmlImport:
         return QCoreApplication::translate("HikariSub.Plugins", "%1 imports %2, which plugin panels can’t use.")
+            .arg(text(problem.path), text(problem.detail));
+    case PackageProblem::Kind::MissingContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its content file, %1.").arg(text(problem.path));
+    case PackageProblem::Kind::BadContent:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package’s content file %1 can’t be read: it %2.")
             .arg(text(problem.path), text(problem.detail));
     case PackageProblem::Kind::Manifest:
         break;
@@ -178,7 +192,8 @@ QString refusalMessage(const InstallRefusal &refusal)
 
 QStringList permissionLines(const plugins::Manifest &manifest)
 {
-    return app::permissionLines(manifest.tier == plugins::Tier::Unrestricted, manifest.permissions, manifest.hasQmlPanels());
+    return app::permissionLines(manifest.tier == plugins::Tier::Unrestricted, manifest.permissions, manifest.hasQmlPanels(),
+                                manifest.programs);
 }
 
 QVariantList folderRows(const plugins::Manifest &manifest, const std::map<std::string, plugins::FileGrant> &grants)
@@ -214,6 +229,14 @@ QStringList contributionLines(const plugins::Manifest &manifest)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Command: %1").arg(text(command.title));
     for (const plugins::Panel &panel : manifest.panels)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Panel: %1").arg(text(panel.title));
+    for (const plugins::StatusItem &item : manifest.statusItems)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Status bar item: %1").arg(text(item.title));
+    for (const plugins::Keybinding &binding : manifest.keybindings) {
+        const auto command = std::ranges::find(manifest.commands, binding.command, &plugins::Command::id);
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Shortcut: %1 for %2")
+                     .arg(QKeySequence::fromString(text(binding.key), QKeySequence::PortableText).toString(QKeySequence::NativeText),
+                          text(command->title));
+    }
     return lines;
 }
 
@@ -256,6 +279,11 @@ QString noUserFolder()
     return QCoreApplication::translate("HikariSub.Plugins", "Plugins need a user folder, and this copy has none.");
 }
 
+bool isLowIntegrity(const plugins::Program &program)
+{
+    return program.confinement == plugins::Confinement::LowIntegrity;
+}
+
 QVariantList permissionChanges(const plugins::Manifest &current, const plugins::Manifest &next)
 {
     const plugins::PermissionIncrease more = plugins::permissionIncrease(current, next);
@@ -272,6 +300,19 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
         added << more.vcsRead;
     if (next.permissions.background)
         added << more.background;
+    const auto asksMore = [&](auto test) {
+        return std::ranges::any_of(next.programs, [&](const plugins::Program &p) {
+            return test(p) && std::ranges::find(more.programs, p.id) != more.programs.end();
+        });
+    };
+    if (next.permissions.programs)
+        added << (more.runPrograms || !more.programs.empty());
+    if (std::ranges::any_of(next.programs, &plugins::Program::network))
+        added << asksMore([](const plugins::Program &p) { return p.network; });
+    if (std::ranges::any_of(next.programs, isLowIntegrity))
+        added << asksMore(isLowIntegrity);
+    if (next.permissions.presence)
+        added << more.presence;
     for (const plugins::FileGrantRequest &request : next.permissions.files)
         added << (std::ranges::find(more.files, request.id) != more.files.end());
     const QStringList lines = permissionLines(next);
@@ -283,7 +324,8 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
 
 }
 
-QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bool qmlPanels)
+QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bool qmlPanels,
+                            const std::vector<plugins::Program> &programs)
 {
     QStringList lines;
     if (unrestricted)
@@ -305,6 +347,21 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
     if (p.background)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Works in the background while HikariSub is open: %1")
                      .arg(text(*p.background));
+    if (p.programs) {
+        QStringList titles;
+        for (const plugins::Program &program : programs)
+            titles << text(program.title);
+        lines << (titles.isEmpty()
+                      ? QCoreApplication::translate("HikariSub.Plugins", "Runs programs that come with it: %1").arg(text(*p.programs))
+                      : QCoreApplication::translate("HikariSub.Plugins", "Runs programs that come with it: %1: %2")
+                            .arg(titles.join(QStringLiteral(", ")), text(*p.programs)));
+    }
+    if (std::ranges::any_of(programs, &plugins::Program::network))
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Connects to the internet");
+    if (std::ranges::any_of(programs, isLowIntegrity))
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Can read your files");
+    if (p.presence)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Set text in your Discord status: %1").arg(text(*p.presence));
     for (const plugins::FileGrantRequest &f : p.files)
         lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
                              : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))
@@ -318,6 +375,8 @@ PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
         m_installer.emplace(plugins::PluginFolders{path(folders.plugins), path(folders.data), path(folders.cache),
                                                    path(folders.registry)},
                             api::kApiVersion);
+    if (m_installer)
+        m_installer->checkContentWith(contentFileChecks());
     refresh();
 }
 

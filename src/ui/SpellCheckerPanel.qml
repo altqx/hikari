@@ -14,6 +14,7 @@ FocusScope {
     property bool ignoreComments: false
     property bool ignoreUpperCase: false
     property bool checking: false
+    onCheckingChanged: app.presenceActivity(shellWindow, "spelling", checking)
     property var current: ({})
     property var suggestions: []
     property string mode: "spelling"

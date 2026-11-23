@@ -178,6 +178,7 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
         EXPECT_EQ(s.defaultValue, expected) << s.legacyKey;
     }
     EXPECT_EQ(findSetting("autosave.maxFiles")->legacyKey, "AUTOSAVE_MAX_FILES");
+    EXPECT_EQ(findSetting("autosave.intervalSeconds")->defaultValue, SettingValue(std::int64_t{20}));
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
 }
 
@@ -434,7 +435,8 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
     for (const auto &setting : settingDefinitions())
         if (setting.widens)
             widening.emplace_back(setting.id);
-    EXPECT_EQ(widening, (std::vector<std::string>{"translation.translator", "translation.reviewer"}));
+    EXPECT_EQ(widening, (std::vector<std::string>{"privacy.discordDetails", "privacy.discordState", "privacy.discordShow",
+                                                  "translation.translator", "translation.reviewer"}));
 }
 
 TEST(ProjectSettings, NoProjectValueWidensWhatTheAiMayDo)
@@ -442,9 +444,11 @@ TEST(ProjectSettings, NoProjectValueWidensWhatTheAiMayDo)
     for (const auto &setting : settingDefinitions()) {
         if (!setting.id.starts_with("ai.") && !setting.id.starts_with("trust.") && !setting.id.starts_with("privacy."))
             continue;
-        const bool exclude = setting.id == "ai.exclude";
-        EXPECT_EQ(projectMaySet(setting, false), exclude) << setting.id;
-        EXPECT_EQ(projectMaySet(setting, true), exclude) << setting.id;
+        const bool narrows = setting.id == "ai.exclude" || setting.id == "privacy.discordProject";
+        const bool presenceText = setting.id == "privacy.discordShow" || setting.id == "privacy.discordDetails" ||
+                                  setting.id == "privacy.discordState";
+        EXPECT_EQ(projectMaySet(setting, false), narrows) << setting.id;
+        EXPECT_EQ(projectMaySet(setting, true), narrows || presenceText) << setting.id;
     }
 }
 

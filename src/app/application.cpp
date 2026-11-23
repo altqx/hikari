@@ -14,6 +14,7 @@
 #include "hikari/backends/simulated_output.h"
 #include "hikari/backends/video_frame_bgra.h"
 #include "hikari/application/automation_registry.h"
+#include "hikari/application/export_format_ids.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/settings.h"
 #include "hikari/application/getting_started.h"
@@ -734,6 +735,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
+    m_exportRecipes = std::make_unique<ui::ExportRecipes>(*m_settings);
+    m_luaExportFilters = std::make_unique<LuaExportFilters>(*m_automation);
     m_selectOptions = m_settings->integer("selectLines.options");
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
@@ -775,6 +778,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_userFolder.isEmpty() || options.plugins.plugins.isEmpty() ? QString() : m_userFolder + QStringLiteral("/ai/plugins"),
         options.plugins.plugins, [this] { return m_pluginManager.get(); }, [this] { return m_pluginRuntime.get(); }});
     m_git = std::make_unique<backends::GitReader>();
+    m_pluginPrograms = std::make_unique<PluginPrograms>();
+    m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
     m_apiHost = std::make_unique<ApiHost>(ApiHost::Wiring{
         m_workspace, *m_files, &m_settings->settings(), &m_automation->media(),
         [this](application::Selection next) { return applySelection(std::move(next)); },
@@ -811,7 +816,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks, m_git.get()});
+        &m_rowMarks, m_git.get(), m_pluginPrograms.get(), m_presence.get()});
+    m_apiHost->setPluginFormat([this](application::DocumentId document) { return fileFormat(document); });
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
@@ -910,6 +916,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     pluginWiring.marks = &m_rowMarks;
+    pluginWiring.programs = m_pluginPrograms.get();
+#ifdef Q_OS_WIN
+    pluginWiring.lowRightsHelper = QCoreApplication::applicationDirPath() + QStringLiteral("/hikarisub-confine.exe");
+#endif
     pluginWiring.documentTitle = [this](application::DocumentId document) {
         const std::string *title = m_workspace.title(document);
         return title ? QString::fromStdString(*title) : QString();
@@ -919,27 +929,24 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->pluginFeatureUsed(feature);
     };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
+        return pluginSaveBytes(document, destination);
+    });
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
-    m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
-    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
-            [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    m_automationHotkeys->setPluginRunner(
+        [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
+        m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands());
+        m_automationHotkeys->setPluginDefaults(m_pluginRuntime->keybindings());
+    });
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
-    m_presence = std::make_unique<DiscordPresence>(*m_settings, options.presence);
-    m_presence->setMode(m_workspaceLayout->preset());
-    connect(m_workspaceLayout.get(), &ui::WorkspaceLayoutController::changed, m_presence.get(),
-            [this] { m_presence->setMode(m_workspaceLayout->preset()); });
-    connect(this, &Application::tabsChanged, m_presence.get(), [this] {
-        const auto target = m_workspace.editingTarget();
-        const std::string *title = target ? m_workspace.title(*target) : nullptr;
-        m_presence->setFileName(title ? QString::fromStdString(*title) : QString());
-    });
     m_crashReports->setKnown(
         [this] {
             QStringList names;
@@ -1244,6 +1251,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
+    m_autosaveIntervalOverrideMs = options.autosaveIntervalMs;
     m_spellingText = backends::legacySpellingText(true);
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     m_spellingOn = m_settings->boolean("editor.spellchecker");
@@ -1340,6 +1348,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     reportUserFolder(options.userFolderMove, options.userFolderSeed);
     reportSettingsFiles();
     convertListFiles();
+    wirePresence();
     refreshViews();
 }
 
@@ -1796,7 +1805,9 @@ bool Application::commitAudioTimes(const application::AudioCommitRequest &reques
         return false;
     const bool before = std::exchange(m_audioCommitting, true);
     editor().timesFromAudio(request.startMs, request.endMs, request.duration);
-    const auto outcome = application::commitAudioTimes(*session, request, shownLines());
+    auto timed = request;
+    timed.appendDurationMs = static_cast<int>(m_settings->integer("audio.defaultDuration"));
+    const auto outcome = application::commitAudioTimes(*session, timed, shownLines());
     if (request.save)
         editor().audioSent();
     editor().reloadFromSession();
@@ -2082,6 +2093,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     makeNodeEffects(v, shellWindow);
     makeKanjiTimer(v, shellWindow);
     createFindReplace(v, shellWindow);
+    watchPresence(v);
 }
 
 void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
@@ -2526,6 +2538,8 @@ void Application::refreshViews()
         m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
+    if (m_exportRecipes)
+        m_exportRecipes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -2955,11 +2969,12 @@ void Application::resolveClose(const QVariantList &choices)
         }
         if (c.save) {
             QString path = row.value(QStringLiteral("path")).toString();
-            const bool toAss = !path.isEmpty() && savesAsAss(session->document().format(), path,
-                                                              row.value(QStringLiteral("format")).toString());
-            if (const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
-                !path.isEmpty() && QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
-                path += u'.' + ext;
+            const SaveTarget target = path.isEmpty() ? SaveTarget{}
+                                                     : saveTargetFor(id, path, row.value(QStringLiteral("format")).toString());
+            const bool toAss = target.toAss;
+            path = target.path;
+            if (!path.isEmpty())
+                useSaveTarget(target);
             if (toAss && !convertToAss(id)) {
                 m_closing.clear();
                 emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
@@ -3221,6 +3236,36 @@ bool readOnly(const QString &path)
 
 }
 
+Application::SaveTarget Application::saveTargetFor(application::DocumentId document, QString path, const QString &chosen) const
+{
+    const auto *session = m_files->session(document);
+    std::optional<PluginRuntime::Format> plugin;
+    if (chosen.startsWith(u"plugin:"))
+        plugin = m_pluginRuntime ? m_pluginRuntime->format(chosen.toStdString()) : std::nullopt;
+    else if (chosen.isEmpty())
+        plugin = exportingFormat(document);
+    if (plugin && plugin->format.exports) {
+        const auto &extensions = plugin->format.extensions;
+        if (std::ranges::find(extensions, QFileInfo(path).suffix().toLower().toStdString()) == extensions.end())
+            path += u'.' + QString::fromStdString(extensions.front());
+        return {std::move(path), false, plugin->id};
+    }
+    const bool toAss = session && savesAsAss(session->document().format(), path, chosen);
+    const QString ext = toAss || !session ? QStringLiteral("ass") : extensionFor(session->document().format());
+    if (QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
+        path += u'.' + ext;
+    return {std::move(path), toAss, {}};
+}
+
+void Application::useSaveTarget(const SaveTarget &target)
+{
+    const std::string key = QFileInfo(target.path).absoluteFilePath().toStdString();
+    if (target.pluginFormat.empty())
+        m_fileFormats.erase(key);
+    else
+        m_fileFormats[key] = target.pluginFormat;
+}
+
 QString Application::saveRoute() const
 {
     return saveRouteFor(0);
@@ -3241,6 +3286,8 @@ QString Application::saveRouteFor(qulonglong id) const
     const QString video = *document == m_workspace.editingTarget() ? readyVideo(activeMedia().video->session()) : tabVideo(*document);
     if (path.isEmpty() || (saveWithVideoName() && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
+        return QStringLiteral("dialog");
+    if (fileFormat(*document) && !exportingFormat(*document))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
 }
@@ -3263,15 +3310,22 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
                          : destination && !destination->value.empty() ? QString::fromStdString(destination->value)
                          : importPath != m_importPaths.end()            ? importPath->second
                                                                        : QString();
-    const QString ext = extensionFor(session->document().format());
-    const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
-                               .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
+    const auto own = exportingFormat(*document);
+    const QString ext = own ? QString::fromStdString(own->format.extensions.front()) : extensionFor(session->document().format());
+    const QString filter = own ? formatFilter(*own)
+                               : QCoreApplication::translate("HikariSub.Documents", "Subtitle file (%1)")
+                                     .arg(ext == QStringLiteral("txt") ? QStringLiteral("*.txt *.sub") : QStringLiteral("*.%1").arg(ext));
     QStringList filters{filter};
     QStringList formats{QString()};
-    if (ext != QLatin1String("ass")) {
+    if (own || ext != QLatin1String("ass")) {
         filters << QCoreApplication::translate("HikariSub.Documents", "ASS subtitles (*.ass)");
         formats << QStringLiteral("ass");
     }
+    for (const auto &format : pluginFormats(false))
+        if (!own || format.id != own->id) {
+            filters << formatFilter(format);
+            formats << QString::fromStdString(format.id);
+        }
     const QFileInfo info(path);
     return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
             {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
@@ -3295,14 +3349,14 @@ QString Application::saveChosenFor(qulonglong id, const QUrl &file, const QStrin
         return QStringLiteral("failed");
     if (readOnly(path))
         return QStringLiteral("readonly");
-    const bool toAss = savesAsAss(session->document().format(), path, format);
-    const QString ext = toAss ? QStringLiteral("ass") : extensionFor(session->document().format());
-    if (QFileInfo(path).suffix().compare(ext, Qt::CaseInsensitive) != 0)
-        path += u'.' + ext;
+    const SaveTarget target = saveTargetFor(*document, path, format);
+    const bool toAss = target.toAss;
+    path = target.path;
     if (readOnly(path))
         return QStringLiteral("readonly");
     if (toAss && !convertToAss(*document))
         return QStringLiteral("failed");
+    useSaveTarget(target);
     auto plan = m_files->prepareSave(*document, application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()});
     if (!plan || !m_files->startSave(std::move(*plan)))
         return QStringLiteral("failed");
@@ -3419,19 +3473,36 @@ void Application::openUserFolder()
 
 QVariantMap Application::reviewOpen(const QString &path, bool here)
 {
+    auto candidates = importCandidates(path, {});
+    if (!candidates.empty() && !builtInExtension(path)) {
+        openThroughPlugins(path, here, std::move(candidates), {});
+        return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()},
+                {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
+    }
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
         const QString problem = openProblem(path, staged.error());
+        if (!candidates.empty()) {
+            openThroughPlugins(path, here, std::move(candidates), problem);
+            return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()},
+                    {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
+        }
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"), problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
+    m_fileFormats.erase(staged->destination.value);
+    return continueOpen(std::move(*staged), path, here);
+}
+
+QVariantMap Application::continueOpen(application::StagedOpen staged, const QString &path, bool here)
+{
     if (!here && !m_openFromVideo && m_settings->boolean("subtitles.openInNewTab") && !targetUntitled()) {
-        const bool opened = openInNewTab(std::move(*staged), path);
+        const bool opened = openInNewTab(std::move(staged), path);
         return {{QStringLiteral("ok"), opened}, {QStringLiteral("problem"), QString()},
                 {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
     }
     const QVariantList rows = reviewClose(QStringLiteral("open"));
-    m_pendingOpen = std::move(*staged);
+    m_pendingOpen = std::move(staged);
     m_pendingOpenPath = path;
     return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()}, {QStringLiteral("rows"), rows}};
 }
@@ -4073,6 +4144,15 @@ std::string Application::recoveryKey(application::DocumentId document) const
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
 }
 
+int Application::autosaveIntervalMs() const
+{
+    if (m_autosaveIntervalOverrideMs)
+        return *m_autosaveIntervalOverrideMs;
+    const auto *binding = application::findOptionsBinding("autosave.intervalSeconds");
+    const auto seconds = std::clamp<std::int64_t>(m_settings->integer64("autosave.intervalSeconds"), binding->min, binding->max);
+    return static_cast<int>(seconds * 1000);
+}
+
 void Application::scheduleAutosave(std::optional<application::DocumentId> document)
 {
     if (!m_recovery || !m_recovery->enabled())
@@ -4085,9 +4165,9 @@ void Application::scheduleAutosave(std::optional<application::DocumentId> docume
     if (!timer) {
         timer = new QTimer(this);
         timer->setSingleShot(true);
-        timer->setInterval(20'000);
+        timer->setInterval(autosaveIntervalMs());
         const auto id = *target;
-        connect(timer, &QTimer::timeout, this, [this, id] { autosave(id); });
+        connect(timer, &QTimer::timeout, this, [this, id] { autosave(id, false); });
     }
     if (!timer->isActive())
         timer->start();
@@ -4102,10 +4182,13 @@ bool Application::autosavePending(application::DocumentId document) const
 bool Application::autosaveNow()
 {
     const auto target = m_workspace.editingTarget();
-    return target && autosave(*target);
+    if (!target)
+        return false;
+    m_recoveryWrites.finishWrites();
+    return autosave(*target, true);
 }
 
-bool Application::autosave(application::DocumentId document)
+bool Application::autosave(application::DocumentId document, bool now)
 {
     auto *session = m_files->session(document);
     if (!session || !m_recovery->enabled())
@@ -4140,17 +4223,26 @@ bool Application::autosave(application::DocumentId document)
     if (const auto &rate = session->document().frameRate())
         content.frameRate = std::pair(rate->framesPerSecond().numerator(), rate->framesPerSecond().denominator());
     content.writtenMs = QDateTime::currentMSecsSinceEpoch();
-    if (!m_recovery->write(recoveryKey(document), content))
-        return false;
-    if (activeLine)
-        session->amendScriptInfo(application::kActiveLineKey, *activeLine);
-    return true;
+    const std::string key = recoveryKey(document);
+    auto write = [store = *m_recovery, key, content = std::move(content)]() mutable { return store.write(key, content); };
+    auto wrote = [this, document, activeLine](bool written) {
+        if (auto *s = m_files->session(document); written && activeLine && s)
+            s->amendScriptInfo(application::kActiveLineKey, *activeLine);
+    };
+    if (!now) {
+        m_recoveryWrites.put(QString::fromStdString(key), std::move(write), std::move(wrote));
+        return true;
+    }
+    const bool written = write();
+    wrote(written);
+    return written;
 }
 
 void Application::discardRecovery(application::DocumentId document)
 {
     if (const auto it = m_autosaveTimers.find(document.value); it != m_autosaveTimers.end() && it->second)
         it->second->stop();
+    m_recoveryWrites.finishWrites();
     if (m_recovery)
         m_recovery->discard(recoveryKey(document));
 }
@@ -4382,6 +4474,7 @@ bool Application::openLegacyAutosave(const QString &file)
 
 void Application::dismissBundle(const QString &key)
 {
+    m_recoveryWrites.finishWrites();
     if (m_recovery)
         m_recovery->discard(key.toStdString());
 }
@@ -4644,8 +4737,11 @@ bool Application::shiftTranslation(int mode)
 QString Application::openKeyframes(const QUrl &file)
 {
     const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
-    if (const auto target = m_workspace.editingTarget())
+    if (const auto target = m_workspace.editingTarget()) {
         m_tabMedia[target->value].keyframes = QDir::toNativeSeparators(path);
+        m_tabMedia[target->value].keyframesDropped = false;
+    }
+    emit keyframesChanged();
     auto &video = activeMedia().video->session();
     if (video.state() != application::VideoSession::State::Ready) {
         if (QString problem; keyframesWithoutVideo(path, problem))
@@ -4778,7 +4874,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     }
     const auto &selected = session->selection().selected;
     const auto lines = session->document().lines();
-    int changed = 0, leadIn = 0, leadOut = 0, gaps = 0, snapped = 0;
+    int changed = 0, leadIn = 0, leadOut = 0, gaps = 0, overlaps = 0, snapped = 0;
     std::vector<const application::ShiftedLine *> shown;
     for (const auto &l : plan->lines) {
         if (!l.changed())
@@ -4787,6 +4883,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
         leadIn += (l.rules & application::LeadIn) != 0;
         leadOut += (l.rules & application::LeadOut) != 0;
         gaps += (l.rules & application::GapClosed) != 0;
+        overlaps += (l.rules & application::OverlapClosed) != 0;
         snapped += (l.rules & (application::SnappedStart | application::SnappedEnd)) != 0;
     }
     for (const auto &l : plan->lines)
@@ -4805,6 +4902,8 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
             rules << QStringLiteral("leadIn");
         if (l->rules & application::GapClosed)
             rules << QStringLiteral("gapClosed");
+        if (l->rules & application::OverlapClosed)
+            rules << QStringLiteral("overlapClosed");
         if (l->rules & application::SnappedStart)
             rules << QStringLiteral("snappedStart");
         if (l->rules & application::LeadOut)
@@ -4831,6 +4930,7 @@ QVariantMap Application::shiftPreview(const QString &tool, int shellWindow)
     out.insert(QStringLiteral("ruleCounts"), QVariantMap{{QStringLiteral("leadIn"), leadIn},
                                                          {QStringLiteral("leadOut"), leadOut},
                                                          {QStringLiteral("gapClosed"), gaps},
+                                                         {QStringLiteral("overlapClosed"), overlaps},
                                                          {QStringLiteral("snapped"), snapped}});
     return out;
 }
@@ -6383,7 +6483,9 @@ QVariantMap Application::scriptProperties()
             {QStringLiteral("originalTranslation"), q(p.originalTranslation)},
             {QStringLiteral("originalEditing"), q(p.originalEditing)},
             {QStringLiteral("originalTiming"), q(p.originalTiming)},
+            {QStringLiteral("synchPoint"), q(p.synchPoint)},
             {QStringLiteral("updatedBy"), q(p.updatedBy)},
+            {QStringLiteral("updateDetails"), q(p.updateDetails)},
             {QStringLiteral("playResX"), p.playResX},
             {QStringLiteral("playResY"), p.playResY},
             {QStringLiteral("layoutResX"), p.layoutResX},
@@ -6410,7 +6512,9 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     p.originalTranslation = toU8(values.value(QStringLiteral("originalTranslation")).toString());
     p.originalEditing = toU8(values.value(QStringLiteral("originalEditing")).toString());
     p.originalTiming = toU8(values.value(QStringLiteral("originalTiming")).toString());
+    p.synchPoint = toU8(values.value(QStringLiteral("synchPoint")).toString());
     p.updatedBy = toU8(values.value(QStringLiteral("updatedBy")).toString());
+    p.updateDetails = toU8(values.value(QStringLiteral("updateDetails")).toString());
     p.playResX = values.value(QStringLiteral("playResX")).toInt();
     p.playResY = values.value(QStringLiteral("playResY")).toInt();
     p.layoutResX = values.value(QStringLiteral("layoutResX")).toInt();
@@ -6435,7 +6539,9 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     e.originalTranslation = edited("originalTranslation");
     e.originalEditing = edited("originalEditing");
     e.originalTiming = edited("originalTiming");
+    e.synchPoint = edited("synchPoint");
     e.updatedBy = edited("updatedBy");
+    e.updateDetails = edited("updateDetails");
     e.playResX = edited("playResX");
     e.playResY = edited("playResY");
     e.layoutResX = edited("layoutResX");
@@ -6729,6 +6835,7 @@ QQuickWindow *Application::openShellWindow(QQmlEngine &engine)
         connect(layout.get(), &ui::WorkspaceLayoutController::savedLayoutsWritten, other,
                 &ui::WorkspaceLayoutController::reloadSavedLayouts);
     }
+    connect(layout.get(), &ui::WorkspaceLayoutController::changed, this, &Application::refreshPresence);
     m_shellWindows[id].layout = std::move(layout);
     auto media = std::make_unique<WindowMedia>();
     media->window = id;
@@ -6786,6 +6893,7 @@ bool Application::eventFilter(QObject *watched, QEvent *event)
     case QEvent::FocusIn:
     case QEvent::ShortcutOverride:
     case QEvent::KeyPress: {
+        m_presence->noteInput();
         const QWindow *window = qobject_cast<QWindow *>(watched);
         if (!window)
             if (const auto *item = qobject_cast<QQuickItem *>(watched))
@@ -6794,6 +6902,10 @@ bool Application::eventFilter(QObject *watched, QEvent *event)
             activateShellWindow(*shellWindow);
         break;
     }
+    case QEvent::MouseMove:
+    case QEvent::Wheel:
+        m_presence->noteInput();
+        break;
     default:
         break;
     }
@@ -7123,7 +7235,11 @@ void Application::settingChanged(const QString &id)
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
-    else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
+    else if (id == QLatin1String("autosave.intervalSeconds")) {
+        for (auto &[document, timer] : m_autosaveTimers)
+            if (timer)
+                timer->setInterval(autosaveIntervalMs());
+    } else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         for (auto *views : allViews())
             views->shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.columnWidths") && !m_resettingSettings)
@@ -7347,6 +7463,7 @@ QVariantMap Application::openSettingsDialog()
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
     values.insert(QStringLiteral("trust.folders"), m_settings->list("trust.folders"));
+    values.insert(QStringLiteral("privacy.discordActivities"), m_settings->list("privacy.discordActivities"));
     values.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), m_settings->list(AiFeatures::kCustomAgentsSetting));
     QStringList rendererLabels;
     for (const auto &name : lists.renderers)
@@ -7452,6 +7569,9 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         if (list != kept)
             m_settings->setValue(QStringLiteral("trust.folders"), list);
     }
+    if (const auto activities = values.constFind(QStringLiteral("privacy.discordActivities")); activities != values.cend())
+        if (const QStringList list = activities->toStringList(); list != m_settings->list("privacy.discordActivities"))
+            m_settings->setValue(QStringLiteral("privacy.discordActivities"), list);
     if (const auto custom = values.constFind(QLatin1String(AiFeatures::kCustomAgentsSetting)); custom != values.cend()) {
         const QStringList list = custom->toStringList();
         if (list != m_settings->list(AiFeatures::kCustomAgentsSetting))
@@ -7478,12 +7598,15 @@ namespace {
 
 // Projectable settings the Options dialog doesn't hold.
 constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage",
-                                               "translation.targetLanguage", "export.format"};
+                                               "translation.targetLanguage", "export.format", "privacy.discordProject",
+                                               "privacy.discordShow"};
 
 void insertExtras(QVariantMap &values, const application::Settings &settings)
 {
     for (const auto id : kProjectExtras)
         values.insert(qs(id), ui::SettingsStore::toVariant(settings.value(id)));
+    const QString format = values.value(QStringLiteral("export.format")).toString();
+    values.insert(QStringLiteral("export.format"), qs(application::currentExportFormat(format.toStdString())));
 }
 
 application::OptionsState projectableOnly(application::OptionsState state)
@@ -7767,6 +7890,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     refreshed.insert(QStringLiteral("trust.folders"), QStringList());
+    refreshed.insert(QStringLiteral("privacy.discordActivities"),
+                     ui::SettingsStore::toVariant(defaults.value("privacy.discordActivities")));
     refreshed.insert(QLatin1String(AiFeatures::kCustomAgentsSetting), QStringList());
     keep("automation.dialogAnswers");
     return refreshed;
@@ -7797,6 +7922,9 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
         out.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     if (*which == application::OptionsPage::Automation)
         out.insert(QStringLiteral("trust.folders"), QStringList());
+    if (*which == application::OptionsPage::Updates)
+        out.insert(QStringLiteral("privacy.discordActivities"),
+                   ui::SettingsStore::toVariant(defaults.value("privacy.discordActivities")));
     return out;
 }
 
