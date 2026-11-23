@@ -282,7 +282,7 @@ ColumnLayout {
                 block.luaDialog = Object.assign({ id: id }, dialog)
         }
         function onExportStepStarted(name, step, count) {
-            block.progress = qsTr("Before export · %1 · step %2 of %3").arg(name).arg(step).arg(count)
+            block.progress = qsTr("Before export · %1 · step %2 of %3").arg(name, step, count)
         }
     }
 
