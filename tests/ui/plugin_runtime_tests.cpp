@@ -858,7 +858,8 @@ private slots:
               R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
                   "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
                                   "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
-                                  "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}]}})");
+                                  "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}],
+                                  "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}]}})");
         write(folder + QStringLiteral("/main.lua"), "");
         const auto turn = [&](bool on) {
             m_registry[QStringLiteral("com.example.kit")] =
@@ -889,11 +890,14 @@ private slots:
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/dict/pl.aff"))));
         QCOMPARE(QString::fromStdU16String(content.dictionaries[0].dic.u16string()),
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/dict/pl.dic"))));
+        QCOMPARE(content.graphs.size(), 1u);
+        QVERIFY(content.graphs[0].title == u8"Sparkle");
 
         turn(false);
         runtime.sync();
         QVERIFY(application::pluginContent().styleCatalogues.empty());
         QVERIFY(application::pluginContent().karaokePresets.empty());
+        QVERIFY(application::pluginContent().graphs.empty());
         QVERIFY(application::pluginContent().dictionaries.empty());
     }
 

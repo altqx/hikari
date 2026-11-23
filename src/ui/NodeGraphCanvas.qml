@@ -797,7 +797,7 @@ Pane {
                 icon.source: IconTheme.image("node-library", enabled ? IconTheme.normal : IconTheme.disabled,
                                              enabled ? IconTheme.accent : IconTheme.disabled, false)
                 icon.color: "transparent"
-                enabled: root.editable && root.controller.library.length > 0
+                enabled: root.editable && (root.controller.library.length > 0 || root.controller.pluginLibrary.length > 0)
                 down: libraryMenu.visible
                 onClicked: libraryMenu.popup(libraryButton, 0, libraryButton.height)
                 Accessible.role: Accessible.ButtonMenu
