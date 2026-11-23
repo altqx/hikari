@@ -1721,6 +1721,10 @@ private:
     // By dictionary language and Project folder; windows on both the same share a checker.
     std::map<QString, SpellSlot> m_spellCheckers;
     std::vector<std::filesystem::path> m_spellingFolders;
+    std::vector<application::PluginDictionary> m_pluginDictionaries;
+    bool m_pluginDictionariesRead = false;
+    bool m_spellingWaitsForPlugins = false;
+    void readPluginDictionaries();
     SpellSlot *spellSlot(const QString &language, const QString &projectRoot = {});
     // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
     bool editorSpellingOn() const;

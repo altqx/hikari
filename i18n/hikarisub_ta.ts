@@ -15058,6 +15058,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>உள்ளமைந்த கருப்பொருளைப் படிக்க முடியவில்லை, எனவே இருண்ட கருப்பொருள் காட்டப்படுகிறது.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s spelling dictionary: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
         <translation>.dic மற்றும் .aff கோப்புகளை “Dictionary” கோப்புறையில் வைக்கவும்</translation>
     </message>

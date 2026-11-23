@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/tiers.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/spelling_scripts.h"
@@ -59,6 +60,11 @@ public:
     // word of their script is checked; the loaded handler runs on that thread after each load.
     Status initialize(std::u16string_view language);
     void setLoadedHandler(std::function<void()> loaded) { m_loaded = std::move(loaded); }
+    // Searched after the folders, so a language a folder holds never comes from a plugin; read by initialize().
+    void setPluginDictionaries(std::vector<PluginDictionary> dictionaries)
+    {
+        m_pluginDictionaries = std::move(dictionaries);
+    }
     void clear();
     bool ready() const { return !m_dictionaries.empty() && m_dictionaries.front().backend; }
 
@@ -103,12 +109,14 @@ private:
     };
     enum class Load { Ready, Loading, Missing };
     std::optional<std::pair<std::filesystem::path, std::filesystem::path>> findPair(std::u16string_view symbol) const;
+    std::vector<std::u16string> symbols() const;
     Load poll(Dictionary &dictionary, bool wait);
     void startLoad(Dictionary &dictionary);
     // The primary first; `loading` is set when one is still loading.
     std::vector<Dictionary *> dictionariesFor(core::spelling::Scripts scripts, bool wait, bool *loading = nullptr);
 
     std::vector<std::filesystem::path> m_folders;
+    std::vector<PluginDictionary> m_pluginDictionaries;
     std::filesystem::path m_projectWords;
     SpellingBackendLoader m_loader;
     std::vector<Dictionary> m_dictionaries; // the primary first

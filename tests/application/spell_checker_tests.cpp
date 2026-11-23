@@ -329,6 +329,27 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     EXPECT_EQ(both.initialize(u"de"), SpellChecker::Status::NoDictionary);
 }
 
+TEST_F(Spelling, PluginDictionariesComeAfterTheFolders)
+{
+    const fs::path plugin = folder / "plugin";
+    fs::create_directories(plugin);
+    writeFile(plugin / "pl.aff", "");
+    writeFile(plugin / "pl.dic", "1\nkot\n");
+    writeFile(plugin / "en_US.aff", "");
+    writeFile(plugin / "en_US.dic", "1\nplugin\n");
+    ASSERT_EQ(checker->initialize(u"pl"), SpellChecker::Status::NoDictionary);
+    checker->setPluginDictionaries({{"x", u8"X", u8"Polski", u"pl", plugin / "pl.aff", plugin / "pl.dic"},
+                                    {"x", u8"X", u8"Mine", u"en_US", plugin / "en_US.aff", plugin / "en_US.dic"}});
+    ASSERT_EQ(checker->initialize(u"pl"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(checker->checkWord(u"kot"));
+    EXPECT_TRUE(checker->checkWord(u"Hello", true));
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(checker->checkWord(u"Hello"));
+    EXPECT_FALSE(checker->checkWord(u"plugin", true));
+    fs::remove(plugin / "pl.dic");
+    EXPECT_EQ(checker->initialize(u"pl"), SpellChecker::Status::NoDictionary);
+}
+
 TEST_F(Spelling, MultilingualRoutesWordsByScript)
 {
     writeFile(folder / "pl.aff", "SET UTF-8\n");
