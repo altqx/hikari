@@ -14797,35 +14797,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Pełny ekran</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie paska</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem cały obraz pozostaje widoczny, a pasek znajduje się w czarnym pasie pod nim.</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem (letterbox)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>Na obrazie</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj pasek</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie pokazuje pasek, gdy wskaźnik się porusza lub zostanie naciśnięty klawisz, i ukrywa go 2 sekundy później podczas odtwarzania. Pod obrazem pas pozostaje zarezerwowany.</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14837,23 +14837,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukrywaj wskaźnik razem z paskiem</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj nakładki czasu renderowania i pozycji</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryb przy otwarciu</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -23013,6 +23013,14 @@ Usunięte style:
         <translation>Filtruj</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>Przechodzenie przez linijki</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>Przechodzenie przez linijki: Enter stosuje styl i przechodzi do następnej linijki, Shift+Enter wraca</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>Styl</translation>
     </message>
@@ -23067,6 +23075,20 @@ Usunięte style:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter stosuje “%1” do linijki %2 i przechodzi do %3.</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter stosuje “%1” do linijki %2.</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>Wybierz styl</translation>
     </message>
 </context>
 <context>
@@ -26879,16 +26901,16 @@ Usunięte style:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>Przewijanie…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zdekodować klatki %1 z %2. Odtwarzanie zostało zatrzymane.</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przewiń do innego czasu lub naciśnij Esc, aby wyjść z pełnego ekranu.</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -26897,24 +26919,24 @@ Usunięte style:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasek przewijania</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Brak linijki w tym czasie</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas wideo, %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyjdź z pełnego ekranu</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -26935,21 +26957,34 @@ Usunięte style:
         <translation>Linijka %1 z %2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>Styl: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>Wybierz styl linijki</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter stosuje · Esc cofa</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>Tekst linijki %1</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty: przełącza na oglądanie na pełnym ekranie · klatka pozostaje na miejscu</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting: przełącza na typesetting na pełnym ekranie · klatka pozostaje na miejscu</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -26970,35 +27005,35 @@ Usunięte style:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>Nigdy</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie paska</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem (letterbox)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>Na obrazie</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj pasek</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuje pasek, gdy wskaźnik się porusza lub zostanie naciśnięty klawisz; ukrywa go 2 sekundy później podczas odtwarzania</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -27006,11 +27041,11 @@ Usunięte style:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze pokazuj pasek</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia pełnego ekranu…</translation>
     </message>
     <message>
         <source>Indexing video</source>

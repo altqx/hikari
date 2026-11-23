@@ -3944,6 +3944,36 @@ int Application::selectedLineCount(bool shownOnly) const
     return int(std::ranges::count_if(selected, [&](core::LineId id) { return shown(id); }));
 }
 
+QVariantMap Application::styleStep(int direction) const
+{
+    auto *session = targetSession();
+    if (!session || !session->selection().active)
+        return {};
+    const core::LineId active = *session->selection().active;
+    const auto grid = shell().actionLines();
+    const auto picked = visualTools().batchCount() > 1 ? visualTools().batchTargets() : std::vector<core::LineId>{};
+    const std::set<core::LineId> stops(picked.begin(), picked.end());
+    const auto stop = [&](core::LineId id) { return id != active && (stops.empty() || stops.contains(id)); };
+    const auto at = std::ranges::find(grid, active);
+    std::optional<core::LineId> next;
+    if (direction > 0) {
+        for (auto it = at == grid.end() ? grid.begin() : std::next(at); it != grid.end() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    } else if (direction < 0 && at != grid.end()) {
+        for (auto it = std::make_reverse_iterator(at); it != grid.rend() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    }
+    QVariantMap out{{QStringLiteral("from"), QVariant::fromValue(active.value)},
+                    {QStringLiteral("fromNumber"), shell().lineNumber(active).value_or(0)}};
+    if (const auto number = next ? shell().lineNumber(*next) : std::nullopt) {
+        out.insert(QStringLiteral("id"), QVariant::fromValue(next->value));
+        out.insert(QStringLiteral("number"), *number);
+    }
+    return out;
+}
+
 QVariantList Application::columnChoices(bool paste)
 {
     using namespace core::column;
