@@ -17,6 +17,7 @@ Item {
     }
     required property var catalogs
     required property int shellWindow
+    property int activeNumber: 0
     readonly property Item toolbar: tools
     property bool live: false
 
@@ -72,9 +73,19 @@ Item {
     }
     onShownRowsChanged: list.currentIndex = shownRows.findIndex(r => r.row === chosenAt)
 
+    readonly property StyleStepper stepper: StyleStepper {
+        app: panel.app
+        editor: panel.editor
+    }
     function apply(name) {
-        if (name.length > 0 && editor.editable && editor.assFields)
+        if (stepper.canApply(name))
             editor.chooseStyle(name)
+    }
+    function applyFromList(name) {
+        if (!stepper.on)
+            apply(name)
+        else if (stepper.apply(name))
+            filterField.clear()
     }
     function remove(row) {
         if (row >= 0 && row < rows.length)
@@ -84,19 +95,33 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         spacing: 4
-        TextField {
-            id: filterField
-            objectName: "stylesFilter"
+        RowLayout {
+            spacing: 2
             Layout.fillWidth: true
-            placeholderText: qsTr("Filter")
-            Accessible.name: qsTr("Filter styles")
-            Keys.onDownPressed: list.forceActiveFocus(Qt.TabFocusReason)
-            Keys.onEscapePressed: event => {
-                if (text.length === 0) {
-                    event.accepted = false
-                    return
+            TextField {
+                id: filterField
+                objectName: "stylesFilter"
+                Layout.fillWidth: true
+                placeholderText: qsTr("Filter")
+                Accessible.name: qsTr("Filter styles")
+                Keys.onDownPressed: list.forceActiveFocus(Qt.TabFocusReason)
+                Keys.onEscapePressed: event => {
+                    if (text.length === 0) {
+                        event.accepted = false
+                        return
+                    }
+                    clear()
                 }
-                clear()
+            }
+            IconToolButton {
+                objectName: "stylesStep"
+                iconRole: "style-apply"
+                text: qsTr("Step through lines")
+                tip: qsTr("Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back")
+                checkable: true
+                checked: panel.stepper.on
+                focusPolicy: Qt.TabFocus
+                onToggled: panel.stepper.on = checked
             }
         }
         RowLayout {
@@ -153,9 +178,13 @@ Item {
             }
             Keys.onPressed: event => {
                 const row = panel.shownRows[currentIndex]
-                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                        && panel.stepper.on && (event.modifiers & Qt.ShiftModifier)) {
+                    panel.stepper.back()
+                    event.accepted = true
+                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     if (row)
-                        panel.apply(row.name)
+                        panel.applyFromList(row.name)
                     event.accepted = true
                 } else if (event.key === Qt.Key_Delete) {
                     if (row)
@@ -222,7 +251,7 @@ Item {
                         list.currentIndex = row.index
                         list.forceActiveFocus(Qt.MouseFocusReason)
                     }
-                    onDoubleTapped: panel.apply(row.modelData.name)
+                    onDoubleTapped: panel.applyFromList(row.modelData.name)
                 }
                 TapHandler {
                     acceptedButtons: Qt.RightButton
@@ -322,6 +351,15 @@ Item {
                     }
                 }
             }
+        }
+        Label {
+            objectName: "stylesStepFoot"
+            visible: panel.stepper.on && text.length > 0
+            Layout.fillWidth: true
+            Layout.margins: 6
+            wrapMode: Text.Wrap
+            color: Theme.muted
+            text: panel.stepper.foot(panel.chosenRow?.name ?? "", panel.activeNumber)
         }
     }
 

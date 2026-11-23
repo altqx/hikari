@@ -51,6 +51,7 @@ class LineEditorController : public QObject {
     Q_PROPERTY(QString problem READ problem NOTIFY changed)
     Q_PROPERTY(QString attempted READ attempted NOTIFY changed)
     Q_PROPERTY(bool dirty READ dirty NOTIFY changed)
+    Q_PROPERTY(bool hasDraft READ hasDraft NOTIFY changed)
     Q_PROPERTY(QString saveStatus READ saveStatus NOTIFY changed)
     Q_PROPERTY(int selectionStart READ selectionStart NOTIFY selectionRequested)
     Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY selectionRequested)
@@ -131,6 +132,7 @@ public:
     QString problem() const { return m_problem; }
     QString attempted() const { return m_attempted; }
     bool dirty() const;
+    bool hasDraft() const;
     QString saveStatus() const;
 
     void setOptionsSource(std::function<Options()> source) { m_options = std::move(source); }

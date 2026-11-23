@@ -14047,35 +14047,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>เต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>ตำแหน่งแถบ</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>ใต้ภาพจะแสดงภาพทั้งหมด โดยแถบอยู่ในขอบดำใต้ภาพ</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>ใต้ภาพ (เลตเตอร์บ็อกซ์)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>ทับภาพ</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงแถบ</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนอัตโนมัติจะแสดงแถบเมื่อขยับตัวชี้หรือกดปุ่ม และซ่อนแถบหลังจากนั้น 2 วินาทีขณะเล่น เมื่ออยู่ใต้ภาพ พื้นที่ขอบดำจะยังคงสงวนไว้</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนอัตโนมัติ</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14087,23 +14087,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนตัวชี้พร้อมกับแถบ</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงข้อมูลซ้อนทับของเวลาเรนเดอร์และตำแหน่ง</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>เปิดในโหมด</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>แบบง่าย</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ต</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -21818,6 +21818,14 @@ Styles deleted:
         <translation>ตัวกรอง</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>ไล่ทีละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>ไล่ทีละบรรทัด: Enter นำสไตล์ไปใช้แล้วไปบรรทัดถัดไป Shift+Enter ย้อนกลับ</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>สไตล์</translation>
     </message>
@@ -21872,6 +21880,20 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter นำ “%1” ไปใช้กับบรรทัด %2 แล้วไปบรรทัด %3</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter นำ “%1” ไปใช้กับบรรทัด %2</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>เลือกสไตล์</translation>
     </message>
 </context>
 <context>
@@ -25610,16 +25632,16 @@ Styles deleted:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>กำลังค้นหาตำแหน่ง…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ถอดรหัสเฟรม %1 ของ %2 ไม่ได้ หยุดการเล่นแล้ว</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>ค้นหาตำแหน่งไปยังเวลาอื่น หรือกด Esc เพื่อออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -25628,24 +25650,24 @@ Styles deleted:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>แถบค้นหาตำแหน่ง</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ไม่มีบรรทัดในเวลานี้</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาวิดีโอ %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>แบบง่าย</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -25666,21 +25688,34 @@ Styles deleted:
         <translation>บรรทัด %1 จาก %2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>สไตล์: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>เลือกสไตล์ของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter นำไปใช้ · Esc คืนค่าเดิม</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>ข้อความบรรทัด %1</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ต</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>แบบง่าย: สลับไปดูแบบเต็มหน้าจอ · เฟรมคงตำแหน่งเดิม</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ต: สลับไปไทป์เซ็ตแบบเต็มหน้าจอ · เฟรมคงตำแหน่งเดิม</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -25701,35 +25736,35 @@ Styles deleted:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนอัตโนมัติ</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงเสมอ</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่แสดง</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>ตำแหน่งแถบ</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>ใต้ภาพ (เลตเตอร์บ็อกซ์)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>ทับภาพ</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงแถบ</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงเมื่อขยับตัวชี้หรือกดปุ่ม และซ่อนหลังจากนั้น 2 วินาทีขณะเล่น</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -25737,11 +25772,11 @@ Styles deleted:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงแถบไว้ตลอด</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>การตั้งค่าเต็มหน้าจอ…</translation>
     </message>
     <message>
         <source>Indexing video</source>

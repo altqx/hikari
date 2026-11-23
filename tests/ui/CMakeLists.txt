@@ -32,6 +32,7 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           visual=visualToolRailCrosshairAndCopyCoordinates
           visual2=importLyricsAddsLinesToTheOpenFileInOneStep
           video=videoRecentListsAndDialogFolders
+          video2=videoFullscreenLineBoxEditsStepsAndChoosesStyles
     PART_TIMEOUT 600)
 foreach(part documents visual visual2)
     foreach(mode offscreen xvfb)
