@@ -3,6 +3,7 @@
 #include "hikari/app/plugin_content.h"
 
 #include "hikari/api/api.h"
+#include "plugin_variant.h"
 #include "hikari/backends/desktop_handoff.h"
 
 #include <QBuffer>
@@ -389,7 +390,7 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
     return lines;
 }
 
-PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent)
+PluginManager::PluginManager(Folders folders, QObject *parent) : QObject(parent), m_registryFile(folders.registry)
 {
     if (!folders.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(folders.plugins), path(folders.data), path(folders.cache),
@@ -617,6 +618,28 @@ QString PluginManager::setSetting(const QString &id, const QString &setting, con
     refresh();
     emit settingChanged(id, setting, json);
     return {};
+}
+
+std::vector<api::PluginSettingState> PluginManager::settingStates() const
+{
+    std::vector<api::PluginSettingState> out;
+    for (const QVariant &row : m_rows) {
+        const QVariantMap plugin = row.toMap();
+        if (!plugin.value(QStringLiteral("enabled")).toBool())
+            continue;
+        for (const QVariant &entry : plugin.value(QStringLiteral("settings")).toList()) {
+            const QVariantMap setting = entry.toMap();
+            const QString type = setting.value(QStringLiteral("type")).toString();
+            const bool secret = type == QLatin1String("secret");
+            out.push_back({plugin.value(QStringLiteral("id")).toString().toStdString(),
+                           setting.value(QStringLiteral("id")).toString().toStdString(),
+                           setting.value(QStringLiteral("title")).toString().toStdString(), type.toStdString(),
+                           setting.value(QStringLiteral("scope")).toString() != QLatin1String("user") && !secret,
+                           secret ? api::Json() : fromVariant(setting.value(QStringLiteral("default"))),
+                           secret ? api::Json() : fromVariant(setting.value(QStringLiteral("value")))});
+        }
+    }
+    return out;
 }
 
 QString PluginManager::install(bool retrusted)

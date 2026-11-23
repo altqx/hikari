@@ -375,11 +375,9 @@ private slots:
         QVERIFY(languageChoice);
         QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Interface language"));
         choose("setting_program.language", 2);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));
         QCOMPARE(application->localisation().language(), QStringLiteral("pl"));
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&Plik"));
-        QCOMPARE(settingsButton("settingsApply")->property("text").toString(), QStringLiteral("Zastosuj"));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 2);
         QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_subtitles.openInNewTab"));
         QVERIFY(a);
@@ -392,7 +390,7 @@ private slots:
         QCOMPARE(settingsDialog()->property("dictionaries").toStringList().value(0),
                  QStringLiteral("Umieść pliki .dic i .aff w folderze “Dictionary”"));
         choose("setting_program.language", 0);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("en"));
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&File"));
@@ -406,9 +404,8 @@ private slots:
         QTRY_VERIFY((question = settingsDialog()->property("question").value<QObject *>()) &&
                     question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("reset"))));
-        QCOMPARE(application->localisation().language(), QStringLiteral("ko_KR"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-        QCOMPARE(application->localisation().language(), QString());
+        QTRY_COMPARE(application->localisation().language(), QString());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&File"));
     }
 
@@ -635,19 +632,12 @@ private slots:
         QCOMPARE(QQmlProperty(window->contentItem(), QStringLiteral("LayoutMirroring.enabled"), qmlContext(window)).read().toBool(), true);
         QTRY_VERIFY(file->mapToScene(QPointF(file->width(), 0)).x() > window->width() / 2);
         openSettings();
-        auto *ok = settingsButton("settingsOk");
-        auto *cancel = settingsButton("settingsCancel");
-        QVERIFY(ok && cancel);
-        const bool okLeftOfCancel = ok->mapToScene(QPointF()).x() < cancel->mapToScene(QPointF()).x();
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QVERIFY(settingsButton("settingsClose"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
         application->localisation().setPseudo(app::Localisation::Pseudo::None);
         QCOMPARE(QGuiApplication::layoutDirection(), Qt::LeftToRight);
         QTRY_COMPARE(file->mapToScene(QPointF()).x(), ltrX);
-        openSettings();
-        QCOMPARE(settingsButton("settingsOk")->mapToScene(QPointF()).x() < settingsButton("settingsCancel")->mapToScene(QPointF()).x(),
-                 !okLeftOfCancel);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
 
     void documentIgnoresTheLanguage()
@@ -922,7 +912,7 @@ private slots:
             QTest::qWait(300);
             QVERIFY(qobject_cast<QQuickWindow *>(settingsDialog())->grabWindow().save(
                 out + QStringLiteral("/options-%1.png").arg(QLatin1String(c.name))));
-            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
             QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
         }
         application->localisation().setPseudo(app::Localisation::Pseudo::None);

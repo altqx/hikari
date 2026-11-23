@@ -964,7 +964,7 @@ ApplicationWindow {
         [spellDock, spellPanel], [logDock, logPanel], [stylesDock, stylesPanel], [templateDock, templatePanel],
         [qcNotesDock, qcNotesPanel], [reviewDock, reviewPanel], [agentDock, agentPanel], [nodeGraphDock, nodeGraphPanel],
         [nodeInspectorDock, nodeInspectorPanel], [nodeSourcesDock, nodeSourcesPanel], [explorerDock, explorerPanel]
-    ].filter(([dock]) => (dock !== reviewDock || root.review.on) && (dock !== agentDock || root.agent.on))
+    ].filter(([dock]) => dock !== reviewDock || root.review.on)
     readonly property var builtInDocks: builtIns.map(([dock]) => dock)
     readonly property var panelMenuGroups: [
         [videoDock, audioDock, gridDock, editorDock, originalDock, referenceDock],
@@ -3409,8 +3409,15 @@ ApplicationWindow {
                 MenuSeparator {
                     id: reviewSeparator
                     objectName: "reviewSeparator"
-                    visible: root.review.on
+                }
+                ShellMenuItem {
+                    objectName: "turnOnAiMenuItem"
+                    visible: !root.agent.on
                     height: visible ? implicitHeight : 0
+                    text: qsTranslate("HikariSub.Agent", "Turn on AI…")
+                    help: qsTranslate("HikariSub.Agent", "Shows the Agent panel, where you can turn AI on")
+                    iconRole: "ai-assistant"
+                    onTriggered: root.showPanel(agentDock)
                 }
                 Instantiator {
                     active: editMenu.lazyItems?.placed ?? false
@@ -8425,15 +8432,24 @@ ApplicationWindow {
                 id: agentPanel
                 objectName: "agentPanel"
                 dockName: root.engineName("Agent")
-                minimumBodySize: Qt.size(300, Math.max(240, agentLoader.item ? agentLoader.item.minimumHeight : 0))
+                minimumBodySize: Qt.size(300, Math.max(240, agentLoader.item?.minimumHeight ?? 0))
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Agent", "Agent")
                 Loader {
                     id: agentLoader
                     anchors.fill: parent
-                    active: root.agent.on
                     focus: true
-                    sourceComponent: AgentPanel {
+                    sourceComponent: root.agent.on ? agentPanelOn : agentPanelOff
+                }
+                Component {
+                    id: agentPanelOff
+                    AgentPanelOff {
+                        onTurnOnRequested: root.app.settings.setValue("ai.off", false)
+                    }
+                }
+                Component {
+                    id: agentPanelOn
+                    AgentPanel {
                         agent: root.agent
                         aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
@@ -8442,13 +8458,6 @@ ApplicationWindow {
                         onLogRequested: root.showPanel(logDock)
                         onExportRequested: id => agentExportDialog.openFor(id)
                         onPluginRequested: id => pluginManagerDialog.showPlugin(id)
-                    }
-                }
-                Connections {
-                    target: root.agent
-                    function onSwitched() {
-                        if (!root.agent.on && agentDock.isOpen)
-                            agentDock.close()
                     }
                 }
             }
@@ -9214,6 +9223,7 @@ ApplicationWindow {
             return root.app.projectPlugins(root.shellWindow)
         }
         onCopyRequested: text => root.app.copyText(text)
+        onSettingsRequested: node => root.settingsWindow().openDialog(node)
         onTrustRequested: root.app.trustProject(root.shellWindow)
     }
     Connections {
@@ -10553,6 +10563,8 @@ ApplicationWindow {
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
                 importer: root.settingsImport
+                pluginManager: root.app.pluginManager
+                onPluginsRequested: plugin => plugin.length > 0 ? pluginManagerDialog.showPlugin(plugin) : pluginManagerDialog.show()
                 onCreditsRequested: root.lazy(creditsDialogLoader).open()
                 onLegacyImportRequested: root.importLegacySettings()
                 onLegacyRollBackRequested: root.lazy(settingsImportDialogLoader).openRollBack()
@@ -10565,6 +10577,13 @@ ApplicationWindow {
     }
     function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
     function openProjectSettingsPage(page) { settingsWindow().openDialog(undefined, undefined, page) }
+    // hikarisub://settings/<id>[?scope=project] and settings.open.
+    function openSettingLink(setting, project) { settingsWindow().openSetting(setting, project) }
+    Connections {
+        target: root.app.apiHost
+        enabled: root.servesApi
+        function onSettingsOpenRequested(setting, project) { root.openSettingLink(setting, project) }
+    }
     function repeatInlineAi(inEditor, field) {
         if (root.inlineAi.last.action)
             inlineAiBox.begin(Object.assign({}, root.inlineAi.last, {repeat: true}), inEditor, field)
@@ -10867,6 +10886,20 @@ ApplicationWindow {
         shell: root
         explorer: explorerModel
         hangFrom: (titleBar.visible ? titleBar.height : 0) + 8
+    }
+    Connections {
+        target: quickOpen.popup
+        function onOpened() {
+            if (root.pluginUi)
+                root.pluginUi.popups.dismissShown()
+        }
+    }
+    PluginQuickInput {
+        id: pluginQuickInput
+        objectName: "pluginQuickInput"
+        popups: root.pluginUi ? root.pluginUi.popups : null
+        hangFrom: quickOpen.hangFrom
+        onShowing: quickOpen.close()
     }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]

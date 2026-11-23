@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>เปิด AI…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>แสดงแผงเอเจนต์ ซึ่งคุณเปิด AI ได้</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>เอเจนต์</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>เปิดการตั้งค่า › AI</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>จะไม่มีการส่งหรือดาวน์โหลดสิ่งใดจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -208,6 +212,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>เอเจนต์ย่อยของ “%1” อ่านอย่างเดียว คุยกับมันผ่านเธรดหลัก</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>จะไม่มีการส่งสิ่งใดจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1005,6 +1013,18 @@
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>เปิดเพื่อใช้เอเจนต์และการทำงาน AI จากนั้น HikariSub จะดาวน์โหลดคอมโพเนนต์ AI เพียงครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>เปิด AI</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Audio</name>
@@ -1614,8 +1634,16 @@ Output device: %2</source>
         <translation type="unfinished">โปรเจกต์</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>คัดลอกไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>ย้ายไปยังของคุณ</translation>
     </message>
     <message>
         <source>Hidden by the project’s copy</source>
@@ -1654,15 +1682,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4589,12 +4609,290 @@ Output device: %2</source>
         <translation>มีไฟล์ชื่อนี้อยู่แล้ว</translation>
     </message>
     <message>
+        <source>From this file (Aegisub)</source>
+        <translation>จากไฟล์นี้ (Aegisub)</translation>
+    </message>
+    <message>
+        <source>Unsaved steps</source>
+        <translation>ขั้นตอนที่ยังไม่ได้บันทึก</translation>
+    </message>
+    <message>
+        <source>No steps</source>
+        <translation>ไม่มีขั้นตอน</translation>
+    </message>
+    <message>
+        <source>The script is busy or isn’t loaded, so its settings can’t be shown.</source>
+        <translation>สคริปต์กำลังทำงานอยู่หรือยังไม่ได้โหลด จึงแสดงการตั้งค่าของสคริปต์ไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>แท็ก %n ประเภท</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing chosen</source>
+        <translation>ไม่ได้เลือกไว้</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>ไม่คงที่</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>%1, reversed</source>
+        <translation>%1 แบบย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Templates in this file</source>
+        <translation>เทมเพลตของไฟล์</translation>
+    </message>
+    <message>
+        <source>Lines whose style is missing</source>
+        <translation>บรรทัดที่ไม่พบสไตล์</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation>โปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>ในตัว</translation>
+    </message>
+    <message>
+        <source>Lua · %1</source>
+        <translation>Lua · %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>สร้าง %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Skipped: its script isn’t loaded</source>
+        <translation>ข้ามแล้ว: ยังไม่ได้โหลดสคริปต์</translation>
+    </message>
+    <message>
+        <source>Didn’t run</source>
+        <translation>ไม่ได้ทำงาน</translation>
+    </message>
+    <message>
+        <source>Variable needs a video or timecodes file</source>
+        <translation>แบบไม่คงที่ต้องมีวิดีโอหรือไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Enter frame rates above 0</source>
+        <translation>ป้อนอัตราเฟรมที่มากกว่า 0</translation>
+    </message>
+    <message>
+        <source>A macro is running, so the script couldn’t start</source>
+        <translation>มีแมโครกำลังทำงานอยู่ จึงเริ่มสคริปต์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Couldn’t apply the script’s changes</source>
+        <translation>นำการเปลี่ยนแปลงของสคริปต์ไปใช้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Stopped with a script error</source>
+        <translation>สคริปต์หยุดทำงานเพราะเกิดข้อผิดพลาด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (สร้าง %n บรรทัด)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ran before export: %1.</source>
+        <translation>เรียกใช้ก่อนส่งออก: %1</translation>
+    </message>
+    <message>
+        <source>Before export · %1 · step %2 of %3</source>
+        <translation>ก่อนส่งออก · %1 · ขั้นตอนที่ %2 จาก %3</translation>
+    </message>
+    <message>
+        <source>Before export: %1</source>
+        <translation>ก่อนส่งออก: %1</translation>
+    </message>
+    <message>
+        <source>changed</source>
+        <translation>เปลี่ยนแล้ว</translation>
+    </message>
+    <message>
+        <source>Add steps</source>
+        <translation>เพิ่มขั้นตอน</translation>
+    </message>
+    <message>
+        <source>Hide steps</source>
+        <translation>ซ่อนขั้นตอน</translation>
+    </message>
+    <message>
+        <source>Show steps</source>
+        <translation>แสดงขั้นตอน</translation>
+    </message>
+    <message>
+        <source>Writes the document as it is.</source>
+        <translation>เขียนเอกสารตามที่เป็นอยู่</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s recipe of the same name</source>
+        <translation>ถูกซ่อนโดยสูตรของโปรเจกต์ที่มีชื่อเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Save recipe…</source>
+        <translation>บันทึกสูตร…</translation>
+    </message>
+    <message>
+        <source>Manage recipes…</source>
+        <translation>จัดการสูตร…</translation>
+    </message>
+    <message>
+        <source>Run in this order on a copy; the document doesn’t change.</source>
+        <translation>เรียกใช้ตามลำดับนี้บนสำเนา เอกสารจะไม่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Run %1</source>
+        <translation>เรียกใช้ %1</translation>
+    </message>
+    <message>
+        <source>%1 isn’t loaded · Export skips it</source>
+        <translation>ยังไม่ได้โหลด %1 · การส่งออกจะข้ามขั้นตอนนี้</translation>
+    </message>
+    <message>
+        <source>Settings for %1</source>
+        <translation>การตั้งค่าสำหรับ %1</translation>
+    </message>
+    <message>
+        <source>More for %1</source>
+        <translation>เพิ่มเติมสำหรับ %1</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>ย้ายขึ้น</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>ย้ายลง</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>ย้ายไปบนสุด</translation>
+    </message>
+    <message>
+        <source>Reset settings</source>
+        <translation>รีเซ็ตการตั้งค่า</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n ขั้นตอนจะไม่ทำงาน เพราะยังไม่ได้โหลดสคริปต์</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not saved. “%1” failed.</source>
+        <translation>ไม่ได้บันทึก “%1” ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>Turn it off and export</source>
+        <translation>ปิดขั้นตอนนี้แล้วส่งออก</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>Write the file: didn’t run</source>
+        <translation>เขียนไฟล์: ไม่ได้ทำงาน</translation>
+    </message>
+    <message>
+        <source>Nothing was written, and the document is unchanged.</source>
+        <translation>ไม่ได้เขียนสิ่งใด เอกสารไม่มีการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Input frame rate</source>
+        <translation>อัตราเฟรมขาเข้า</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>จากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>เอาต์พุต</translation>
+    </message>
+    <message>
+        <source>Variable (the loaded timecodes)</source>
+        <translation>ไม่คงที่ (ไทม์โค้ดที่โหลดไว้)</translation>
+    </message>
+    <message>
+        <source>Constant</source>
+        <translation>คงที่</translation>
+    </message>
+    <message>
+        <source>Output frame rate</source>
+        <translation>อัตราเฟรมขาออก</translation>
+    </message>
+    <message>
+        <source>Reverse the transformation</source>
+        <translation>ย้อนการแปลง</translation>
+    </message>
+    <message>
+        <source>Settings from %1</source>
+        <translation>การตั้งค่าจาก %1</translation>
+    </message>
+    <message>
+        <source>Asking the script…</source>
+        <translation>กำลังถามสคริปต์…</translation>
+    </message>
+    <message>
+        <source>Save recipe</source>
+        <translation>บันทึกสูตร</translation>
+    </message>
+    <message>
+        <source>Recipe name</source>
+        <translation>ชื่อสูตร</translation>
+    </message>
+    <message>
+        <source>A recipe with this name exists; saving replaces it.</source>
+        <translation>มีสูตรชื่อนี้อยู่แล้ว การบันทึกจะแทนที่สูตรนั้น</translation>
+    </message>
+    <message>
         <source>Replace</source>
         <translation>แทนที่</translation>
     </message>
     <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Manage recipes</source>
+        <translation>จัดการสูตร</translation>
+    </message>
+    <message>
+        <source>Name of %1</source>
+        <translation>ชื่อของ %1</translation>
+    </message>
+    <message>
+        <source>Delete %1</source>
+        <translation>ลบ %1</translation>
     </message>
     <message>
         <source>Format</source>
@@ -4752,6 +5050,10 @@ Output device: %2</source>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>จะไม่คงรูปแบบข้อความ สี และตำแหน่งไว้</translation>
     </message>
+    <message>
+        <source>Before export</source>
+        <translation>ก่อนส่งออก</translation>
+    </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
         <translation>
@@ -4858,6 +5160,10 @@ Output device: %2</source>
     <message>
         <source>Delete</source>
         <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
     </message>
     <message>
         <source>Refresh fonts</source>
@@ -5040,8 +5346,12 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Copy to yours</source>
+        <translation>คัดลอกไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>ย้ายไปยังของคุณ</translation>
     </message>
     <message>
         <source>%1, hidden by the project’s copy</source>
@@ -5128,15 +5438,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7174,6 +7476,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shortcut “%1” is invalid</source>
         <translation>ปุ่มลัด “%1” ไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Also on %1</source>
+        <translation>ใช้กับ %1 ด้วย</translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -11391,8 +11697,8 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">โปรเจกต์</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
     </message>
     <message>
         <source>Save</source>
@@ -11403,16 +11709,16 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 in mine</source>
-        <translation type="unfinished"></translation>
+        <source>%1 in yours</source>
+        <translation>%1 ในของคุณ</translation>
     </message>
     <message>
         <source>Save to project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save to mine</source>
-        <translation type="unfinished"></translation>
+        <source>Save to yours</source>
+        <translation>บันทึกไปยังของคุณ</translation>
     </message>
     <message>
         <source>Where to save</source>
@@ -13515,7 +13821,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Apply</source>
-        <translation>นำไปใช้</translation>
+        <translation type="vanished">นำไปใช้</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -13527,7 +13833,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>OK</source>
-        <translation>ตกลง</translation>
+        <translation type="vanished">ตกลง</translation>
     </message>
     <message>
         <source>Font size</source>
@@ -13807,7 +14113,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
-        <translation>ทุกหน้าจะกลับเป็นค่าเริ่มต้นเมื่อคุณกด “ตกลง” หรือ “นำไปใช้” ส่วน “ยกเลิก” จะคงการตั้งค่าของคุณไว้ ปุ่มลัดและลักษณะที่ปรากฏจะคงเดิม: รีเซ็ตได้ในหน้าของรายการนั้นเอง</translation>
+        <translation type="vanished">ทุกหน้าจะกลับเป็นค่าเริ่มต้นเมื่อคุณกด “ตกลง” หรือ “นำไปใช้” ส่วน “ยกเลิก” จะคงการตั้งค่าของคุณไว้ ปุ่มลัดและลักษณะที่ปรากฏจะคงเดิม: รีเซ็ตได้ในหน้าของรายการนั้นเอง</translation>
     </message>
     <message>
         <source>Reset all</source>
@@ -13819,19 +14125,19 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Resets the settings on this page to their defaults</source>
-        <translation>รีเซ็ตการตั้งค่าของหน้าที่แสดงอยู่กลับเป็นค่าเริ่มต้น</translation>
+        <translation type="vanished">รีเซ็ตการตั้งค่าของหน้าที่แสดงอยู่กลับเป็นค่าเริ่มต้น</translation>
     </message>
     <message>
         <source>More resets</source>
-        <translation>การรีเซ็ตเพิ่มเติม</translation>
+        <translation type="vanished">การรีเซ็ตเพิ่มเติม</translation>
     </message>
     <message>
         <source>Reset this page</source>
-        <translation>รีเซ็ตหน้านี้</translation>
+        <translation type="vanished">รีเซ็ตหน้านี้</translation>
     </message>
     <message>
         <source>Reset all settings…</source>
-        <translation>รีเซ็ตการตั้งค่าทั้งหมด…</translation>
+        <translation type="vanished">รีเซ็ตการตั้งค่าทั้งหมด…</translation>
     </message>
     <message>
         <source>Interface language</source>
@@ -14028,6 +14334,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>บรรทัดปัจจุบัน</translation>
     </message>
     <message>
+        <source>Export</source>
+        <translation>ส่งออก</translation>
+    </message>
+    <message>
+        <source>Keys</source>
+        <translation>คีย์</translation>
+    </message>
+    <message>
+        <source>Discord</source>
+        <translation>Discord</translation>
+    </message>
+    <message>
+        <source>Glossary</source>
+        <translation>อภิธานศัพท์</translation>
+    </message>
+    <message>
         <source>Change the active line when adding to the selection</source>
         <translation>เปลี่ยนบรรทัดปัจจุบันเมื่อเพิ่มลงในส่วนที่เลือก</translation>
     </message>
@@ -14038,6 +14360,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>เลื่อนไปยังบรรทัดที่มองเห็นหลังออกจากโหมดเต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Activities</source>
+        <translation>กิจกรรม</translation>
     </message>
     <message>
         <source>Columns</source>
@@ -14254,6 +14580,96 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>ลากด้วยปุ่มกลางเพื่อเลื่อนภาพ การจีบนิ้วบนทัชแพดจะซูมรอบตัวชี้</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
+        <translation>โปรเจกต์ตั้งค่า “%1” ไม่ได้ จึงเปิดในแท็บของคุณ</translation>
+    </message>
+    <message>
+        <source>This window has no project, so the link opens the Yours tab.</source>
+        <translation>หน้าต่างนี้ไม่มีโปรเจกต์ ลิงก์จึงเปิดแท็บของคุณ</translation>
+    </message>
+    <message>
+        <source>Waits for trust</source>
+        <translation>รอการเชื่อถือ</translation>
+    </message>
+    <message>
+        <source>Reset the settings on %1 to their defaults?</source>
+        <translation>ต้องการรีเซ็ตการตั้งค่าใน %1 เป็นค่าเริ่มต้นหรือไม่?</translation>
+    </message>
+    <message>
+        <source>Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
+        <translation>ปุ่มลัดและลักษณะที่ปรากฏจะคงไว้ตามเดิม รีเซ็ตได้ในหน้าของแต่ละรายการ</translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation>ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Reset all…</source>
+        <translation>รีเซ็ตทั้งหมด…</translation>
+    </message>
+    <message>
+        <source>Resets every setting but the shortcuts and the appearance</source>
+        <translation>รีเซ็ตการตั้งค่าทั้งหมด ยกเว้นปุ่มลัดและลักษณะที่ปรากฏ</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Write</source>
+        <translation>เขียน</translation>
+    </message>
+    <message>
+        <source>Write %1</source>
+        <translation>เขียน %1</translation>
+    </message>
+    <message>
+        <source>Open settings file</source>
+        <translation>เปิดไฟล์การตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Search settings</source>
+        <translation>ค้นหาการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation>ตัวกรอง</translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation>แก้ไขแล้ว</translation>
+    </message>
+    <message>
+        <source>Plugin</source>
+        <translation>ปลั๊กอิน</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n setting(s) match</source>
+        <translation>
+            <numerusform>การตั้งค่าที่ตรงกัน %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Settings contents</source>
+        <translation>สารบัญการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Reset page…</source>
+        <translation>รีเซ็ตหน้า…</translation>
+    </message>
+    <message>
+        <source>HikariSub keeps the last values it could read, and your changes here wait until it reads again.</source>
+        <translation>HikariSub จะใช้ค่าล่าสุดที่อ่านได้ และการเปลี่ยนแปลงของคุณที่นี่จะรอจนกว่าจะอ่านไฟล์ได้อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Nothing is changed here.</source>
+        <translation>ไม่มีการเปลี่ยนแปลงที่นี่</translation>
+    </message>
+    <message>
+        <source>No settings match “%1”.</source>
+        <translation>ไม่มีการตั้งค่าที่ตรงกับ “%1”</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -14581,7 +14997,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Set shortcuts</source>
-        <translation>ตั้งค่าปุ่มลัด</translation>
+        <translation type="vanished">ตั้งค่าปุ่มลัด</translation>
     </message>
     <message>
         <source>Global shortcuts</source>
@@ -14668,6 +15084,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
     </message>
     <message>
+        <source>Macro</source>
+        <translation>แมโคร</translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation>แหล่งที่มา</translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation>ความขัดแย้ง</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -14706,6 +15134,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Checking</source>
         <translation>การตรวจหา</translation>
+    </message>
+    <message>
+        <source>Translator model</source>
+        <translation>โมเดลผู้แปล</translation>
+    </message>
+    <message>
+        <source>Reviewer model</source>
+        <translation>โมเดลผู้ตรวจทาน</translation>
+    </message>
+    <message>
+        <source>Never send to AI</source>
+        <translation>ไม่ส่งให้ AI เด็ดขาด</translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
@@ -14946,6 +15386,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Import legacy shortcuts</source>
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม</translation>
+    </message>
+    <message>
+        <source>No plugin has settings.</source>
+        <translation>ไม่มีปลั๊กอินที่มีการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Plugins…</source>
+        <translation>ปลั๊กอิน…</translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n shortcuts</source>
+        <translation>
+            <numerusform>แสดงปุ่มลัดทั้งหมด %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Manage plugin…</source>
+        <translation>จัดการปลั๊กอิน…</translation>
+    </message>
+    <message>
+        <source>%1 is turned off. Its settings apply when it’s on.</source>
+        <translation>%1 ปิดอยู่ การตั้งค่าจะมีผลเมื่อเปิดใช้</translation>
+    </message>
+    <message>
+        <source>Enter a number.</source>
+        <translation>ป้อนตัวเลข</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -15458,10 +15924,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">โปรเจกต์</translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Built in</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15620,10 +16082,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ปิดฟีเจอร์ AI ทั้งหมด</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>จะไม่มีสิ่งใดที่เกี่ยวกับ AI แสดง ดาวน์โหลด เริ่มทำงาน หรืออ่านพวงกุญแจของคุณ ผู้ให้บริการ คีย์ และเธรดจะยังเก็บไว้ และเมื่อเปิด AI อีกครั้งทุกอย่างจะกลับมาโดยไม่ต้องรีสตาร์ต</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>สิ่งที่เก็บไว้ขณะปิด AI</translation>
     </message>
@@ -15642,10 +16100,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>สิ่งที่ซ่อนขณะปิด AI</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>แผงเอเจนต์ การทำงาน AI ในบรรทัด และรายการ AI ในทุกเมนู</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -15832,6 +16286,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>จะไม่มีสิ่งใดที่เกี่ยวกับ AI ดาวน์โหลด เริ่มทำงาน หรืออ่านพวงกุญแจของคุณ ผู้ให้บริการ คีย์ และเธรดจะยังเก็บไว้ และเมื่อเปิด AI อีกครั้งทุกอย่างจะกลับมาโดยไม่ต้องรีสตาร์ต</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>การทำงาน AI ในบรรทัด และรายการ AI ในทุกเมนู แผงเอเจนต์จะแสดงเพียงปุ่มสำหรับเปิด AI</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -16390,6 +16852,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
         <source>Add an MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16564,6 +17030,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Downloading the AI component · %1 of %2 MB</source>
         <translation>กำลังดาวน์โหลดคอมโพเนนต์ AI · %1 จาก %2 MB</translation>
+    </message>
+    <message>
+        <source>Changed</source>
+        <translation>เปลี่ยนแล้ว</translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation>รีเซ็ต %1</translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation>ใช้ของคุณ</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>รีเซ็ตเป็นค่าเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>%1 options</source>
+        <translation>ตัวเลือกของ %1</translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation>รีเซ็ต</translation>
+    </message>
+    <message>
+        <source>Copy setting id</source>
+        <translation>คัดลอกรหัสการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Copy link</source>
+        <translation>คัดลอกลิงก์</translation>
+    </message>
+    <message>
+        <source>settings.toml has an error on line %1.</source>
+        <translation>settings.toml มีข้อผิดพลาดที่บรรทัด %1</translation>
     </message>
 </context>
 <context>
@@ -17214,6 +17716,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>การตั้งค่า</translation>
     </message>
     <message>
+        <source>Open in Settings…</source>
+        <translation>เปิดในการตั้งค่า…</translation>
+    </message>
+    <message>
         <source>Update from file…</source>
         <translation>อัปเดตจากไฟล์…</translation>
     </message>
@@ -17227,7 +17733,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Setting not kept</source>
-        <translation>ไม่ได้เก็บการตั้งค่า</translation>
+        <translation type="vanished">ไม่ได้เก็บการตั้งค่า</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -17254,6 +17760,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Close</source>
         <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Also in Settings › Updates and privacy</source>
+        <translation>อยู่ใน การตั้งค่า › การอัปเดตและความเป็นส่วนตัว ด้วย</translation>
     </message>
     <message>
         <source>Choose a plugin package</source>
@@ -17824,7 +18334,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Project</source>
-        <translation>โปรเจกต์</translation>
+        <translation type="vanished">โปรเจกต์</translation>
     </message>
     <message>
         <source>Uses yours</source>
@@ -17837,6 +18347,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Set in project.local.toml</source>
         <translation>ตั้งไว้ใน project.local.toml</translation>
+    </message>
+    <message>
+        <source>Project: %1</source>
+        <translation>โปรเจกต์: %1</translation>
     </message>
     <message>
         <source>Not set</source>
@@ -17872,7 +18386,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>project.toml could not be written, so some Project settings were not saved.</source>
-        <translation>เขียน project.toml ไม่ได้ การตั้งค่าโปรเจกต์บางรายการจึงไม่ได้บันทึก</translation>
+        <translation type="vanished">เขียน project.toml ไม่ได้ การตั้งค่าโปรเจกต์บางรายการจึงไม่ได้บันทึก</translation>
     </message>
     <message>
         <source>Saving a file writes the switched-on fields into its Script Info.</source>
@@ -17995,23 +18509,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Discord</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In this project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Details (first line)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>State (second line)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -18335,6 +18837,24 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Back</source>
+        <translation>ย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Back (Alt+Left)</source>
+        <translation>ย้อนกลับ (Alt+Left)</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n picked</source>
+        <translation>
+            <numerusform>เลือก %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
         <source>unavailable: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -18503,6 +19023,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>ซ่อน</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
     </message>
 </context>
 <context>
@@ -21618,10 +22146,6 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>From plugins</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21630,15 +22154,7 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21810,8 +22326,20 @@ because it was edited.</source>
         <translation>นำไปใช้</translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
         <source>New catalogue</source>
         <translation>แคตตาล็อกใหม่</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>คัดลอกไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>ย้ายไปยังของคุณ</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -24456,8 +24984,8 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
     </message>
     <message>
         <source>Save as preset…</source>
@@ -24468,6 +24996,14 @@ Styles deleted:
         <translation>เปลี่ยนชื่อพรีเซ็ต…</translation>
     </message>
     <message>
+        <source>Copy to yours</source>
+        <translation>คัดลอกไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>ย้ายไปยังของคุณ</translation>
+    </message>
+    <message>
         <source>Delete preset…</source>
         <translation>ลบพรีเซ็ต…</translation>
     </message>
@@ -24476,15 +25012,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26943,8 +27471,16 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation>คัดลอกไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>ย้ายไปยังของคุณ</translation>
     </message>
     <message>
         <source>yours</source>
@@ -27044,15 +27580,7 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -28470,8 +28998,8 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
     </message>
     <message>
         <source>Where to save</source>
@@ -28530,15 +29058,15 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
+        <source>Copy to yours</source>
+        <translation>คัดลอกไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation>ย้ายไปยังของคุณ</translation>
     </message>
     <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

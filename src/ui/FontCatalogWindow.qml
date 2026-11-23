@@ -446,7 +446,7 @@ DialogWindow {
                             textFormat: Text.PlainText
                             visible: window.catalogs.hasProject
                                      && (catalogSlot.index === 0 || window.catalogRows[catalogSlot.index - 1].tier !== catalogSlot.modelData.tier)
-                            text: catalogSlot.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                            text: catalogSlot.modelData.tier === "project" ? qsTr("This project") : qsTr("Yours")
                             color: Theme.muted
                             font: window.fontAt(11)
                             leftPadding: 8
@@ -841,13 +841,13 @@ DialogWindow {
         ShellMenuItem {
             objectName: "copyFontCatalogToTier"
             iconRole: "copy-to-tier"
-            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
             onTriggered: window.transfer(false)
         }
         ShellMenuItem {
             objectName: "moveFontCatalogToTier"
             iconRole: "move-to-tier"
-            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
             onTriggered: window.transfer(true)
         }
     }
