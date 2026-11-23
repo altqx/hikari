@@ -26,7 +26,7 @@ The Timing dock's Shift / Post processor switch becomes two panels, **Shift time
 - One row per rule, each with a switch:
   - **Lead-in:** Start earlier by N ms.
   - **Lead-out:** End later by N ms.
-  - **Close small gaps:** Start back to the previous end if within N ms; End on to the next start if within N ms. The two limits are legacy's start and end thresholds; a gap up to their sum closes, split in their proportion.
+  - **Close small gaps:** Start back to the previous end if within N ms; End on to the next start if within N ms. The two limits are legacy's start and end thresholds; a gap up to their sum closes, split in their proportion. Join lines that overlap by up to N ms (Aegisub's Max overlap, PT [#1212](https://github.com/altqx/hikari/issues/1212)) closes an overlap the same way, at the same split (halfway when both gap limits are 0); 0 ms, the default, keeps overlaps. The preview names it "overlap closed" and counts "N overlap(s) closed"; presets keep it.
   - **Snap to keyframes:** Start within N ms before / N ms after; End within N ms before / N ms after.
 
 ## Preview and Apply
@@ -61,7 +61,7 @@ Each says why and offers one command:
 - Centre times within frames without a video: "Needs a video." Open video…. Without a video the core shifts without centring, and logs "Times were not centred within frames: no video is open".
 - Every postprocessor rule without a video: "The rules need a video." Open video….
 - Snap to keyframes with a video but no keyframes: "Needs keyframes." Open keyframes….
-- Close small gaps with both limits at 0 ms: "Both gap limits are 0 ms. Raise one to close gaps."
+- Close small gaps with both limits and the overlap at 0 ms: "Both gap limits are 0 ms. Raise one to close gaps."
 
 ## Presets
 

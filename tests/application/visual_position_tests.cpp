@@ -342,13 +342,13 @@ std::vector<Draw> draws(const Overlay &o)
     std::vector<Draw> out;
     for (const auto &p : o.polygons) {
         if (p.points.size() == 4)
-            out.push_back({p.fill == kHandleSelectedFill ? "rectsel" : "rect", p.points[0].x, p.points[0].y,
+            out.push_back({p.fill == HandleColours{}.selectedFill ? "rectsel" : "rect", p.points[0].x, p.points[0].y,
                            p.points[2].x, p.points[2].y, 0, 0});
         if (p.points.size() == 3) {
             const PointF mid{(p.points[1].x + p.points[2].x) / 2, (p.points[1].y + p.points[2].y) / 2};
             PointF pend{-1e9f, -1e9f};
             for (const auto &l : o.lines)
-                if (l.argb == kHandleBorder && std::abs(l.to.x - mid.x) < 1e-3f && std::abs(l.to.y - mid.y) < 1e-3f)
+                if (l.argb == HandleColours{}.border && std::abs(l.to.x - mid.x) < 1e-3f && std::abs(l.to.y - mid.y) < 1e-3f)
                     pend = l.to;
             out.push_back({"arrow", p.points[0].x, p.points[0].y, pend.x, pend.y, 0, 0});
             out.push_back({"arrowbase", p.points[1].x, p.points[1].y, p.points[2].x, p.points[2].y, 0, 0});
@@ -359,7 +359,7 @@ std::vector<Draw> draws(const Overlay &o)
             out.push_back({"dash", l.from.x, l.from.y, l.to.x, l.to.y, 0, l.argb});
     for (const auto &c : o.circles)
         if (c.filled)
-            out.push_back({c.argb == kHandleSelectedFill ? "circlesel" : "circle", c.centre.x, c.centre.y, 0, 0,
+            out.push_back({c.argb == HandleColours{}.selectedFill ? "circlesel" : "circle", c.centre.x, c.centre.y, 0, 0,
                            c.radius, 0});
     for (std::size_t i = 0; i + 1 < o.lines.size(); i++) {
         const auto &h = o.lines[i];
@@ -757,6 +757,32 @@ TEST(VisualPositionTags, CalcMovePositionKeepsLegacysSteps)
     EXPECT_EQ(calcMovePosition({100, 200}, table, 500), (PointF{100, 200}));
     EXPECT_EQ(calcMovePosition({100, 200}, table, 2500), (PointF{300, 400}));
     EXPECT_EQ(calcMovePosition({100, 200}, table, 1500), (PointF{200, 300}));
+}
+
+TEST(VisualPositionOverlay, HandlesTakeTheHostsColours)
+{
+    TestHost host;
+    standard(host);
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    const HandleColours themed{0x80102030, 0x80405060, 0xFF708090};
+    host.setHandleColours(themed);
+    const Overlay overlay = tool.overlay(host);
+    EXPECT_EQ(overlay.handles, themed);
+    bool sawHandle = false;
+    for (const auto &p : overlay.polygons)
+        if (p.points.size() == 4) {
+            EXPECT_TRUE(p.fill == themed.fill || p.fill == themed.selectedFill);
+            EXPECT_EQ(p.border, themed.border);
+            sawHandle = true;
+        }
+    for (const auto &c : overlay.circles) {
+        EXPECT_TRUE(c.argb == themed.fill || c.argb == themed.selectedFill || c.argb == themed.border);
+        sawHandle = true;
+    }
+    EXPECT_TRUE(sawHandle);
 }
 
 TEST(VisualPositionGesture, DragStagesAndCommitsOnReleaseAndEscCancels)

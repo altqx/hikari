@@ -28,6 +28,13 @@ const std::string kAss = "[Script Info]\nTitle: t\n[Events]\n"
                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
                          "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n";
 
+std::string savedWithActiveLine(std::string ass, std::string_view row)
+{
+    const std::string line = "Active Line: " + std::string(row) + "\n";
+    ass.replace(ass.find("Title: t\n"), 9, "Title: t\n" + line + "\n[Aegisub Project Garbage]\n" + line + "\n");
+    return ass;
+}
+
 struct Disk : FileReadPort {
     std::map<std::string, std::vector<std::byte>> files;
     std::expected<std::vector<std::byte>, ReadError> read(const DestinationKey &d) override
@@ -105,11 +112,84 @@ TEST_F(Files, OpenEditSaveReopen)
 
     std::string expected = kAss;
     expected.replace(expected.find(",one"), 4, ",edited");
-    expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 0\n");
+    expected = savedWithActiveLine(expected, "0");
     EXPECT_EQ(text(disk.files["/a.ass"]), expected);
     ASSERT_TRUE(service.close(doc));
     const auto again = open("/a.ass");
     EXPECT_EQ(service.session(again)->document().lines()[0]->text, u8"edited");
+}
+
+TEST_F(Files, ADeferredSaveWritesTheBytesWhenTheyComeAndKnowsThemAfterwards)
+{
+    const auto doc = open("/a.ass");
+    std::optional<BytesReady> ready;
+    service.setDeferredEncoder([&](DocumentId id, const DestinationKey &destination) -> std::optional<DeferredBytes> {
+        if (id != doc || destination.value != "/a.stl")
+            return std::nullopt;
+        return [&](BytesReady r) { ready = std::move(r); };
+    });
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"edited"));
+    auto plan = service.prepareSave(doc, DestinationKey{"/a.stl"});
+    ASSERT_TRUE(plan);
+    EXPECT_TRUE(plan->deferred);
+    ASSERT_TRUE(service.startSave(std::move(*plan)));
+    ASSERT_TRUE(ready);
+    EXPECT_TRUE(writer.started.empty());
+    (*ready)(bytesOf("STL"));
+    ASSERT_EQ(writer.started.size(), 1u);
+    EXPECT_EQ(text(writer.started[0].bytes), "STL");
+    finish(WriteOutcome::Written);
+    EXPECT_FALSE(service.session(doc)->isDirty());
+    EXPECT_EQ(service.destination(doc)->value, "/a.stl");
+
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"again"));
+    plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    ASSERT_TRUE(service.startSave(std::move(*plan))) << "the file on disk is the bytes the plugin gave";
+}
+
+TEST_F(Files, ADeferredSaveWithoutBytesFailsAsAWriteWould)
+{
+    const auto doc = open("/a.ass");
+    std::vector<WriteOutcome> reported;
+    WriteCoordinator watched{writer, [&](const WriteResult &r) {
+                                 reported.push_back(r.outcome);
+                                 files->onWriteResult(r);
+                             }};
+    DocumentFiles other{disk, watched};
+    files = &other;
+    auto staged = other.stageOpen({"/a.ass"});
+    ASSERT_TRUE(staged);
+    const DocumentId id = *other.activate(std::move(*staged));
+    other.setDeferredEncoder([](DocumentId, const DestinationKey &) -> std::optional<DeferredBytes> {
+        return [](BytesReady r) { r(std::nullopt); };
+    });
+    ASSERT_TRUE(other.session(id)->editDraftText(other.session(id)->document().lines().at(0)->id, u8"edited"));
+    auto plan = other.prepareSave(id);
+    ASSERT_TRUE(plan);
+    ASSERT_TRUE(other.startSave(std::move(*plan)));
+    EXPECT_EQ(reported, std::vector<WriteOutcome>{WriteOutcome::Failed});
+    EXPECT_EQ(other.lastSave(id)->outcome, WriteOutcome::Failed);
+    EXPECT_TRUE(other.session(id)->isDirty());
+    EXPECT_TRUE(writer.started.empty());
+    (void)doc;
+}
+
+TEST_F(Files, ADocumentBuiltFromAFileKnowsTheFilesOwnBytes)
+{
+    disk.files["/a.stl"] = bytesOf("STL bytes");
+    auto staged = service.stageOpen({"/a.ass"});
+    ASSERT_TRUE(staged);
+    staged->destination = {"/a.stl"};
+    staged->fileBytes = bytesOf("STL bytes");
+    const DocumentId doc = *service.activate(std::move(*staged));
+    service.setDeferredEncoder([](DocumentId, const DestinationKey &) -> std::optional<DeferredBytes> {
+        return [](BytesReady r) { r(bytesOf("STL 2")); };
+    });
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"edited"));
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    EXPECT_TRUE(service.startSave(std::move(*plan)));
 }
 
 TEST_F(Files, FailedOpensKeepExistingWork)
@@ -419,9 +499,7 @@ TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
     ASSERT_TRUE(plan);
     ASSERT_TRUE(service.startSave(*plan));
     finish(WriteOutcome::Written);
-    std::string expected = kAss;
-    expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 1\n");
-    EXPECT_EQ(text(disk.files["/a.ass"]), expected);
+    EXPECT_EQ(text(disk.files["/a.ass"]), savedWithActiveLine(kAss, "1"));
     EXPECT_EQ(s.document().scriptInfo(kActiveLineKey), std::optional<std::u8string>(u8"1"));
     EXPECT_EQ(s.historySize(), steps);
     EXPECT_EQ(s.revision(), revision);
@@ -431,8 +509,7 @@ TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
     s.setSelection(Selection{line(doc, 0), {line(doc, 0)}, line(doc, 0), {}});
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
     finish(WriteOutcome::Written);
-    expected.replace(expected.find("Active Line: 1"), 14, "Active Line: 0");
-    EXPECT_EQ(text(disk.files["/a.ass"]), expected);
+    EXPECT_EQ(text(disk.files["/a.ass"]), savedWithActiveLine(kAss, "0"));
     EXPECT_EQ(s.document().scriptInfo(kActiveLineKey), std::optional<std::u8string>(u8"0"));
     EXPECT_FALSE(s.isDirty());
 
@@ -442,7 +519,9 @@ TEST_F(Files, SaveWritesTheActiveLineIntoTheFileAndTheDocument)
     const auto c = open("/c.ass");
     ASSERT_TRUE(service.startSave(*service.prepareSave(c)));
     finish(WriteOutcome::Written);
-    EXPECT_EQ(text(disk.files["/c.ass"]).substr(0, 39), "[Script Info]\nActive Line: 0\nTitle: t\n[");
+    EXPECT_TRUE(text(disk.files["/c.ass"]).starts_with(
+            "[Script Info]\nActive Line: 0\nTitle: t\n\n[Aegisub Project Garbage]\nActive Line: 0\n\n[Events]"))
+            << text(disk.files["/c.ass"]);
 }
 
 TEST_F(Files, OnlyAssSavesWriteTheActiveLine)
@@ -478,8 +557,7 @@ TEST_F(Files, SaveWritesTheLayoutIntoTheHikariSection)
 
     ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
     finish(WriteOutcome::Written);
-    std::string expected = kAss;
-    expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 0\n");
+    const std::string expected = savedWithActiveLine(kAss, "0");
     EXPECT_EQ(text(disk.files["/a.ass"]), expected + "\n[Hikari]\nLayout=QUJD\n");
     EXPECT_EQ(s.document().hikariProperty(kLayoutKey), std::optional<std::u8string>(u8"QUJD"));
     EXPECT_EQ(s.historySize(), steps);
@@ -515,6 +593,60 @@ TEST_F(Files, OnlyAssSavesWriteTheLayout)
     EXPECT_FALSE(asked);
     EXPECT_FALSE(plan->layout);
     EXPECT_EQ(text(plan->bytes), "1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+}
+
+TEST_F(Files, AnAssSaveNamesTheHikariSubThatWroteIt)
+{
+    service.setGeneratorVersion(u8"0.1.0-beta.6");
+    const auto doc = open("/a.ass");
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    EXPECT_TRUE(text(plan->bytes).starts_with(
+            "[Script Info]\n; Script generated by HikariSub v0.1.0-beta.6\n; https://hikarisub.org/\nTitle: t\n"))
+            << text(plan->bytes);
+    ASSERT_TRUE(service.startSave(*plan));
+    finish(WriteOutcome::Written);
+    EXPECT_FALSE(service.session(doc)->isDirty());
+    EXPECT_EQ(text(service.session(doc)->document().source().bytes), kAss);
+
+    disk.files["/srt.srt"] = bytesOf("1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+    plan = service.prepareSave(open("/srt.srt"));
+    ASSERT_TRUE(plan);
+    EXPECT_EQ(text(plan->bytes).find("HikariSub"), std::string::npos);
+}
+
+TEST_F(Files, ProjectGarbageKeysAreAddedInAegisubsOrderWithTheActiveLine)
+{
+    service.setProjectGarbageSource([](DocumentId, const DestinationKey &) {
+        return std::vector<ProjectGarbageEdit>{{u8"Video Position", u8"12"}, {u8"Scroll Position", u8"3"},
+                                               {u8"Video File", u8"v.mkv"}, {u8"Video AR Value", u8"1.777778"},
+                                               {u8"Audio File", u8"a.wav"}, {u8"Video AR Mode", u8"4"}};
+    });
+    const auto doc = open("/a.ass");
+    const auto second = line(doc, 1);
+    service.session(doc)->setSelection(Selection{second, {second}, second, {}});
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    const std::string saved = text(plan->bytes);
+    EXPECT_NE(saved.find("[Aegisub Project Garbage]\nAudio File: a.wav\nVideo File: v.mkv\nVideo AR Mode: 4\n"
+                         "Video AR Value: 1.777778\nScroll Position: 3\nActive Line: 1\nVideo Position: 12\n"),
+              std::string::npos)
+            << saved;
+    EXPECT_NE(saved.find("Title: t\nActive Line: 1\n"), std::string::npos) << saved;
+    ASSERT_TRUE(service.startSave(*plan));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(service.session(doc)->document().projectGarbage(u8"Active Line"), u8"1");
+    EXPECT_EQ(service.session(doc)->document().scriptInfo(u8"Active Line"), u8"1");
+    EXPECT_FALSE(service.session(doc)->isDirty());
+}
+
+TEST(ProjectGarbage, TheAspectIsWrittenOnlyWhenItIsNotTheVideosOwn)
+{
+    EXPECT_EQ(aspectGarbage(16.0 / 9.0, 4.0 / 3.0),
+              (std::vector<ProjectGarbageEdit>{{u8"Video AR Mode", u8"4"}, {u8"Video AR Value", u8"1.777778"}}));
+    EXPECT_EQ(aspectGarbage(1.5, 1.5),
+              (std::vector<ProjectGarbageEdit>{{u8"Video AR Mode", std::nullopt}, {u8"Video AR Value", std::nullopt}}));
+    EXPECT_EQ(aegisubDecimal(0.75), u8"0.750000");
 }
 
 TEST_F(Files, SaveAppliesTheProjectGarbageEditsForItsDestination)

@@ -34,7 +34,7 @@ DisplayAudio displayAudio(const std::vector<std::int16_t> &samples, std::int64_t
 }
 
 std::vector<std::uint8_t> expectedImage(const DisplayAudio &audio, std::int64_t rangeStart, std::int64_t rangeEnd,
-                                        int w, int h, int percent, float scale, bool nonLinear,
+                                        int w, int h, int percent, float scale, SpectrumCurve curve,
                                         const std::array<std::uint8_t, 768> &palette)
 {
     const int overlaps = AudioSpectrum::overlapsFor(w, rangeStart, rangeEnd, percent);
@@ -57,7 +57,12 @@ std::vector<std::uint8_t> expectedImage(const DisplayAudio &audio, std::int64_t 
         audio.read(AudioSpectrum::lineSample(owner, overlaps), 2048, samples.data());
         legacySpectrumLine(samples.data(), line.data());
         std::vector<std::pair<int, int>> bands;
-        if (nonLinear) {
+        if (curve == SpectrumCurve::Logarithmic) {
+            for (int y = 0; y < h; ++y) {
+                const int s1 = std::min(1023, int(std::pow(1024.0, double(y) / h)) - 1);
+                bands.emplace_back(s1, std::clamp(int(std::pow(1024.0, double(y + 1) / h)) - 1, s1, 1023));
+            }
+        } else if (curve == SpectrumCurve::Speech) {
             int s1 = 0, s2 = 0;
             float counter = 1.f;
             for (int y = 0; y < h; ++y) {
@@ -76,7 +81,11 @@ std::vector<std::uint8_t> expectedImage(const DisplayAudio &audio, std::int64_t 
             float maxval = 0;
             for (int b = bands[std::size_t(y)].first; b <= bands[std::size_t(y)].second; ++b)
                 maxval = std::max(maxval, line[std::size_t(b)]);
-            const int intensity = std::clamp(int(256 * (maxval * upscale) / 8388608), 0, 255);
+            const double r = maxval * upscale / 8388608;
+            const int level = curve == SpectrumCurve::Linear ? int(256 * (maxval * upscale) / 8388608)
+                              : r > 0                         ? int(128 * (1 + 20 * std::log10(r) / 60))
+                                                              : 0;
+            const int intensity = std::clamp(level, 0, 255);
             std::uint8_t *p = image.data() + (std::size_t(h - y - 1) * w + x) * 4;
             p[2] = palette[std::size_t(intensity) * 3];
             p[1] = palette[std::size_t(intensity) * 3 + 1];
@@ -161,18 +170,20 @@ TEST(AudioSpectrum, RendersLegacyPixels)
         std::int64_t start;
         int w, h, samples, percent;
         float scale;
-        bool nonLinear;
+        SpectrumCurve curve;
     };
-    for (const Case c : {Case{0, 120, 90, 2880, 100, 1.f, false}, Case{0, 120, 90, 1440, 50, 1.f, true},
-                         Case{96000, 100, 64, 288, 10, 1.f, false}, Case{48000, 80, 150, 288, 10, 0.216f, true},
-                         Case{48000 * 5, 100, 40, 1440, 50, 8.f, false}}) {
-        SCOPED_TRACE(testing::Message() << "zoom " << c.percent << " start " << c.start << " h " << c.h);
+    using enum SpectrumCurve;
+    for (const Case c : {Case{0, 120, 90, 2880, 100, 1.f, Linear}, Case{0, 120, 90, 1440, 50, 1.f, Speech},
+                         Case{96000, 100, 64, 288, 10, 1.f, Linear}, Case{48000, 80, 150, 288, 10, 0.216f, Speech},
+                         Case{48000 * 5, 100, 40, 1440, 50, 8.f, Linear}, Case{0, 120, 90, 1440, 50, 1.f, Logarithmic},
+                         Case{48000, 80, 150, 288, 10, 0.216f, Logarithmic}}) {
+        SCOPED_TRACE(testing::Message() << "zoom " << c.percent << " start " << c.start << " h " << c.h << " curve " << int(c.curve));
         AudioSpectrum spectrum(3);
         spectrum.setScaling(c.scale);
-        spectrum.setNonLinear(c.nonLinear);
+        spectrum.setCurve(c.curve);
         const std::int64_t end = c.start + std::int64_t(c.w) * c.samples;
         const auto got = rendered(spectrum, audio, c.start, end, c.w, c.h, c.percent);
-        const auto want = expectedImage(audio, c.start, end, c.w, c.h, c.percent, c.scale, c.nonLinear, kPalette);
+        const auto want = expectedImage(audio, c.start, end, c.w, c.h, c.percent, c.scale, c.curve, kPalette);
         ASSERT_EQ(got.size(), want.size());
         int differences = 0;
         for (std::size_t i = 0; i < got.size(); ++i)

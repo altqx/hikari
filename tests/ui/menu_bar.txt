@@ -2,6 +2,7 @@ File
 File > Open subtitles… [GLOBAL_OPEN_SUBS]
 File > Open video… [GLOBAL_OPEN_VIDEO]
 File > Open folder… [GLOBAL_OPEN_FOLDER]
+File > Quick Open… [GLOBAL_QUICK_OPEN]
 File > Recently opened subtitles >
 File > Recently opened subtitles > None
 File > -
@@ -81,6 +82,8 @@ Subtitles
 Subtitles > Shift times… [GLOBAL_SHOW_SHIFT_TIMES]
 Subtitles > Timing postprocessor… [GLOBAL_SHOW_TIMING_POSTPROCESSOR]
 Subtitles > Timing helpers >
+Subtitles > Timing helpers > Snap to the scene [GLOBAL_SNAP_TO_SCENE]
+Subtitles > Timing helpers > -
 Subtitles > Timing helpers > Snap start to the previous keyframe [GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME]
 Subtitles > Timing helpers > Snap start to the next keyframe [GLOBAL_SNAP_START_TO_NEXT_KEYFRAME]
 Subtitles > Timing helpers > Snap end to the previous keyframe [GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME]
@@ -95,6 +98,8 @@ Subtitles > Timing helpers > Move start one frame earlier [GLOBAL_START_FRAME_EA
 Subtitles > Timing helpers > Move start one frame later [GLOBAL_START_FRAME_LATER]
 Subtitles > Timing helpers > Move end one frame earlier [GLOBAL_END_FRAME_EARLIER]
 Subtitles > Timing helpers > Move end one frame later [GLOBAL_END_FRAME_LATER]
+Subtitles > Timing helpers > Lengthen and shift what follows [GLOBAL_END_LATER_SHIFT_FOLLOWING]
+Subtitles > Timing helpers > Shorten and shift what follows [GLOBAL_END_EARLIER_SHIFT_FOLLOWING]
 Subtitles > Timing helpers > -
 Subtitles > Timing helpers > Extend the previous line to this start [GLOBAL_EXTEND_PREVIOUS_TO_START]
 Subtitles > Timing helpers > Extend the next line to this end [GLOBAL_EXTEND_NEXT_TO_END]
@@ -132,6 +137,8 @@ Video > -
 Video > Open keyframes… [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
 Video > Recently opened keyframes > None
+Video > Save keyframes… [GLOBAL_SAVE_KEYFRAMES]
+Video > Close keyframes [GLOBAL_CLOSE_KEYFRAMES]
 Video > Open timecodes… [GLOBAL_OPEN_TIMECODES]
 Video > Recently opened timecodes >
 Video > Recently opened timecodes > None
@@ -185,6 +192,7 @@ Audio > Recently opened audio > None
 Audio > Open audio from video [GLOBAL_AUDIO_FROM_VIDEO]
 Audio > Reload audio [GLOBAL_RELOAD_AUDIO]
 Audio > Close audio [GLOBAL_CLOSE_AUDIO]
+Audio > Save audio of selected lines… [GLOBAL_SAVE_SELECTED_AUDIO]
 Audio > -
 Audio > Set audio position to video time [GLOBAL_SET_AUDIO_FROM_VIDEO]
 Audio > Set audio mark to video time [GLOBAL_SET_AUDIO_MARK_FROM_VIDEO]
@@ -203,6 +211,8 @@ Automation > Plugins [GLOBAL_PLUGINS]
 Automation > -
 Automation > -
 View
+View > Command palette… [GLOBAL_COMMAND_PALETTE]
+View > -
 View > Layout >
 View > Layout > Editing
 View > Layout > Timing
@@ -258,6 +268,7 @@ View > Explorer [GLOBAL_SHOW_EXPLORER]
 View > Log
 View > -
 View > Node effects [GLOBAL_NODE_EFFECTS]
+View > Full screen typesetting [GLOBAL_FULL_SCREEN_TYPESETTING]
 View > -
 View > Hide tags in the Grid [GLOBAL_HIDE_TAGS]
 View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]

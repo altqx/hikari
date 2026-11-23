@@ -1171,25 +1171,44 @@ bool WorkspaceLayoutController::save()
     return write({m_preset, tabPayload(), m_layout, m_locked});
 }
 
+bool WorkspaceLayoutController::writable(const WorkspaceArrangement &arrangement) const
+{
+    return !m_file.isEmpty() && !m_fileLocked && !m_restoring && m_loaded && !m_quitting &&
+           arrangement.payload != m_lastSaved;
+}
+
 bool WorkspaceLayoutController::write(const WorkspaceArrangement &arrangement)
 {
-    if (m_file.isEmpty() || m_fileLocked || m_restoring || !m_loaded || m_quitting)
+    if (!writable(arrangement))
         return false;
-    if (arrangement.payload == m_lastSaved)
-        return false;
-    if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
-        writeAtomically(backupFile(), *old);
+    m_lastSaved = arrangement.payload;
+    m_writes.put(m_file, fileWrite(arrangement),
+                 [this, payload = arrangement.payload](bool written) { wrote(payload, written); });
+    return true;
+}
+
+FileWriteQueue::Write WorkspaceLayoutController::fileWrite(const WorkspaceArrangement &arrangement) const
+{
+    return [file = m_file, backup = backupFile(),
+            bytes = envelope(arrangement.payload, arrangement.preset, arrangement.layout, arrangement.locked)] {
+        if (const auto old = readFile(file); old && payloadOf(*old, nullptr))
+            writeAtomically(backup, *old);
+        return writeAtomically(file, bytes);
+    };
+}
+
+void WorkspaceLayoutController::wrote(const QByteArray &payload, bool written)
+{
     const QString failure = QCoreApplication::translate("HikariSub.Workspace", "The panel layout could not be written to %1.")
                                 .arg(QDir::toNativeSeparators(m_file));
-    if (!writeAtomically(m_file, envelope(arrangement.payload, arrangement.preset, arrangement.layout, arrangement.locked))) {
+    if (written) {
+        m_panelNotices.removeAll(failure);
+    } else {
         addPanelNotice(failure);
-        emit changed();
-        return false;
+        if (m_lastSaved == payload)
+            m_lastSaved.clear();
     }
-    m_panelNotices.removeAll(failure);
-    m_lastSaved = arrangement.payload;
     emit changed();
-    return true;
 }
 
 bool WorkspaceLayoutController::saveForQuit()
@@ -1206,7 +1225,13 @@ bool WorkspaceLayoutController::saveForQuit(const WorkspaceArrangement &active)
     WorkspaceArrangement placed = active;
     if (m_loaded && !placed.payload.isEmpty())
         placed.payload = onMainWindowOf(placed.payload, serialiseWindow());
-    const bool saved = write(placed);
+    m_writes.finishWrites();
+    bool saved = writable(placed);
+    if (saved) {
+        saved = fileWrite(placed)();
+        m_lastSaved = placed.payload;
+        wrote(placed.payload, saved);
+    }
     if (m_beforeNodeEffects && !nodeEffectsFile().isEmpty())
         writeAtomically(nodeEffectsFile(), envelope(serialiseWindow()));
     if (m_loaded)
@@ -1344,6 +1369,7 @@ bool WorkspaceLayoutController::hasBackup() const
 
 bool WorkspaceLayoutController::restoreBackup()
 {
+    m_writes.finishWrites();
     const auto bytes = readFile(backupFile());
     QString preset, layout;
     bool locked = false;

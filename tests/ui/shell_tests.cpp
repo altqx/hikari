@@ -118,6 +118,7 @@
 #include <QtQml/qqmlextensionplugin.h>
 #include <QElapsedTimer>
 #include <QFontDatabase>
+#include <QtQuickTest/quicktest.h>
 #include <QtTest>
 
 #ifndef _WIN32
@@ -799,11 +800,13 @@ class ShellTest : public QObject {
                 && view.contains(it->mapRectToScene(QRectF(0, 0, it->width(), it->height())));
         };
         if (!dockHeader(panel)) {
+            if (!QQuickTest::qWaitForPolish(window))
+                return false;
             QQuickItem *tab = tabTitled(dock->property("title").toString());
             if (!inView(tab))
                 return false;
             QTest::mouseClick(window, Qt::LeftButton, {}, tab->mapToScene(QPointF(tab->width() / 2, tab->height() / 2)).toPoint());
-            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }, 1000))
+            if (!QTest::qWaitFor([&] { return dockHeader(panel) != nullptr; }))
                 return false;
         }
         QQuickItem *header = dockHeader(panel);
@@ -1045,7 +1048,7 @@ private slots:
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
         original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
-        application = new app::Application;
+        application = newApplication({});
         loadMainWindow();
         QTRY_VERIFY(window->property("sideBarsLoaded").toBool());
     }
@@ -1492,7 +1495,7 @@ private slots:
         QVERIFY(frame);
         QTRY_VERIFY(frame->custom());
         QVERIFY(window->flags().testFlag(Qt::FramelessWindowHint));
-        QTRY_COMPARE(qRound(bar->height()), 32);
+        QTRY_COMPARE(qRound(bar->height()), 36);
         QQuickItem *icon = visualItem("titleBarAppIcon");
         auto *menus = visualItem("appMenus");
         QQuickItem *switcher = visualItem("layoutSwitcher");
@@ -1654,7 +1657,7 @@ private slots:
         settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
         QTRY_VERIFY(!frame->custom());
         QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
-        QTRY_COMPARE(qRound(bar->height()), 27);
+        QTRY_COMPARE(qRound(bar->height()), 30);
         for (QQuickItem *i : {icon, title, minimize, maximize, close})
             QVERIFY2(!i->isVisible(), qPrintable(i->objectName()));
         QVERIFY(menus->isVisible() && switcher->isVisible());
@@ -4761,7 +4764,7 @@ private slots:
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
         QTRY_VERIFY(legacyCatalogsOf(dirPath + QStringLiteral("/fonts.autosave-0.toml")).contains("C={\r\n}\r\n"));
-        QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
+        QTRY_COMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
         QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
         QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
 
@@ -4998,7 +5001,7 @@ private slots:
         for (int i = 0; i < 4; ++i) {
             QVERIFY(catalogs.addCatalog(QLatin1String(names[i])));
             QTRY_VERIFY(copy(files[i]).contains(QByteArray(names[i]) + "={\r\n}\r\n"));
-            QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
+            QTRY_COMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
         }
         QVERIFY(copy(1).contains("X={") && !copy(1).contains("Y={"));
         QVERIFY(copy(2).contains("Y={") && !copy(2).contains("Z={"));
@@ -7065,7 +7068,7 @@ private slots:
 
     void menuBarIsTheListedOne()
     {
-        static const QRegularExpression byData(QStringLiteral(R"(^(macro_|recent\w*\d+$|viewLayoutSaved\d+$))"));
+        static const QRegularExpression byData(QStringLiteral(R"(^(macro_|pluginMenu_|recent\w*\d+$|viewLayoutSaved\d+$))"));
         QStringList shown;
         QVERIFY(buildMenus());
         QObject *bar = named("appMenus");
@@ -7085,7 +7088,7 @@ private slots:
     void contextMenusAreTheListedOnes()
     {
         static const QRegularExpression byData(
-            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$|^tabMenuTab\d+$))"));
+            QStringLiteral(R"((^macro_|^pluginMenu_|^statusItemToggle_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$|^tabMenuTab\d+$))"));
         QVERIFY(application->openFile(episode));
         QQuickItem *field = stylesFilter();
         QVERIFY(field);
@@ -7128,6 +7131,7 @@ private slots:
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
             {QStringLiteral("Tag list"), named("lineTextTagListOptions")},
             {QStringLiteral("Explorer row"), named("explorerRowMenu")},
+            {QStringLiteral("Status bar"), named("statusBarMenu")},
         };
         QStringList missing;
         for (const auto &[name, menu] : listed)
@@ -7622,6 +7626,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(view, "open"));
         QTRY_VERIFY(view->property("opened").toBool());
         QVERIFY(root->property("menuHasKeys").toBool());
+        press(Qt::Key_Down);
+        QCOMPARE(current(view)->objectName(), QStringLiteral("commandPaletteMenuItem"));
         press(Qt::Key_Down);
         QCOMPARE(current(view)->property("subMenu").value<QObject *>(), named("viewLayoutMenu"));
         QStringList between;
@@ -8607,24 +8613,36 @@ private slots:
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
     }
 
-    void everyPanelsMenuButtonStaysInTheDockingArea_data()
+    void everyArrangementFitsTheDockingArea_data()
     {
         QTest::addColumn<QString>("arrangement");
         QTest::addColumn<QSize>("size");
+        QTest::addColumn<bool>("sideBarsOff");
         for (const char *name : {"Editing", "Timing", "Translation", "Typesetting", "Karaoke", "NodeEffects"})
             for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
-                QTest::addRow("%s %dx%d", name, size.width(), size.height()) << QString::fromLatin1(name) << size;
+                for (const bool off : {false, true})
+                    QTest::addRow("%s %dx%d%s", name, size.width(), size.height(), off ? " side bars off" : "")
+                        << QString::fromLatin1(name) << size << off;
     }
 
-    void everyPanelsMenuButtonStaysInTheDockingArea()
+    void everyArrangementFitsTheDockingArea()
     {
         QFETCH(QString, arrangement);
         QFETCH(QSize, size);
+        QFETCH(bool, sideBarsOff);
         window->resize(size);
         QTRY_COMPARE(window->size(), size);
         QObject *root = engine->rootObjects().first();
         QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
         QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        if (sideBarsOff) {
+            for (const bool left : {true, false}) {
+                const char *shown = left ? "leftSideBarShown" : "rightSideBarShown";
+                if (root->property(shown).toBool())
+                    QVERIFY(QMetaObject::invokeMethod(root, "toggleSideBar", Q_ARG(QVariant, left)));
+                QTRY_VERIFY(!root->property(shown).toBool());
+            }
+        }
         QVERIFY(application->openFile(episode));
         if (arrangement == QLatin1String("Translation"))
             QVERIFY(application->turnOnTranslationMode());
@@ -8632,6 +8650,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(root, "setNodeEffects", Q_ARG(QVariant, true)));
         else
             QVERIFY(application->workspaceLayout().applyPreset(arrangement));
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         QVERIFY(application->openReference(original));
         for (const char *name : {"referenceDock", "spellDock", "logDock"}) {
             auto *dock = item<QObject>(name);
@@ -8643,6 +8662,7 @@ private slots:
         QStringList docked;
         QStringList unreachable;
         const auto reach = [&] {
+            QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
             docked.clear();
             unreachable.clear();
             const QRectF areaRect = area->mapRectToScene(QRectF(0, 0, area->width(), area->height()));
@@ -8666,12 +8686,17 @@ private slots:
                               .arg(least.width()).arg(least.height());
             for (const QString &panel : std::as_const(docked)) {
                 const QRect place = docking->placeInLayout(panel);
-                out += QStringLiteral(" %1 %2x%3+%4+%5;").arg(panel).arg(place.width()).arg(place.height()).arg(place.x()).arg(place.y());
+                const QSize panelLeast = docking->minimumSize(panel);
+                out += QStringLiteral(" %1 %2x%3+%4+%5 (minimum %6x%7);").arg(panel).arg(place.width()).arg(place.height())
+                           .arg(place.x()).arg(place.y()).arg(panelLeast.width()).arg(panelLeast.height());
             }
             return out;
         };
         QTRY_VERIFY2(reach(), qPrintable(unreachable.join(u", ") + QLatin1Char('\n') + places()));
         QVERIFY2(docked.contains(QStringLiteral("Spellchecker")) && docked.size() >= 4, qPrintable(docked.join(u", ")));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        const QSize least = docking->layoutMinimumSize(area->property("uniqueName").toString());
+        QVERIFY2(least.width() <= qCeil(area->width()) && least.height() <= qCeil(area->height()), qPrintable(places()));
     }
 
     void panelMenusReadInTheOrderTheyShow()
@@ -9198,6 +9223,93 @@ private slots:
         QCOMPARE(session->historySize(), ours);
         QCOMPARE(other->historySize(), theirs);
         QCOMPARE(session->document().scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Show"));
+        application->editor().discard();
+    }
+
+    void scriptPropertiesGiveTheFileItsOwnReadingLimits()
+    {
+        QVERIFY(application->openFile(writeStyled("limits.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,much too fast here\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *cps = item<QObject>("cpsCounter");
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
+        auto *root = engine->rootObjects().first();
+        QVariant opened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
+        QTRY_VERIFY(dialog && dialog->property("visible").toBool());
+        auto *useMine = dialogItem("scriptPropertiesDialog", "propUseMyLimits");
+        auto *warning = dialogItem("scriptPropertiesDialog", "propCpsWarning");
+        QVERIFY(useMine->property("checked").toBool());
+        QVERIFY(!warning->isEnabled());
+        QCOMPARE(warning->property("value").toInt(), 15);
+        QVERIFY(QMetaObject::invokeMethod(useMine, "click"));
+        QVERIFY(warning->isEnabled());
+        warning->setProperty("value", 12);
+        QVERIFY(QMetaObject::invokeMethod(warning, "valueModified"));
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        const auto &d = session->document();
+        QCOMPARE(d.scriptInfo(u8"Hikari CPS Warning"), std::optional<std::u8string>(u8"12"));
+        QCOMPARE(d.scriptInfo(u8"Hikari CPS Error"), std::optional<std::u8string>(u8"30"));
+        QCOMPARE(d.scriptInfo(u8"Hikari Line Length"), std::optional<std::u8string>(u8"43"));
+        QCOMPARE(d.scriptInfo(u8"Hikari Max Lines"), std::optional<std::u8string>(u8"2"));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/12"));
+        QVERIFY(application->editor().cpsWarning());
+
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(!useMine->property("checked").toBool());
+        QCOMPARE(warning->property("value").toInt(), 12);
+        QVERIFY(QMetaObject::invokeMethod(useMine, "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QVERIFY(!session->document().scriptInfo(u8"Hikari CPS Warning"));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
+        application->editor().discard();
+    }
+
+    void scriptPropertiesMoreHoldsSynchPointAndUpdateDetails()
+    {
+        const QString path = dir.filePath(QStringLiteral("synched.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTitle: Show\nPlayResX: 640\nPlayResY: 360\nSynch Point: Opening song\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        QVariant opened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QVERIFY(opened.toBool());
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
+                    dialog->property("visible").toBool());
+        QVERIFY(dialogItem("scriptPropertiesDialog", "propMore")->property("expanded").toBool());
+        QCOMPARE(dialogItem("scriptPropertiesDialog", "propSynchPoint")->property("text").toString(), QStringLiteral("Opening song"));
+        auto *details = dialogItem("scriptPropertiesDialog", "propUpdateDetails");
+        details->setProperty("text", QStringLiteral("Fixed the signs"));
+        QVERIFY(QMetaObject::invokeMethod(details, "textEdited"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->document().scriptInfo(u8"Update Details"), std::optional<std::u8string>(u8"Fixed the signs"));
+        QCOMPARE(session->document().scriptInfo(u8"Synch Point"), std::optional<std::u8string>(u8"Opening song"));
+
+        QVERIFY(application->applyScriptProperties({{QStringLiteral("title"), QStringLiteral("Show")}},
+                                                   {{QStringLiteral("synchPoint"), true}, {QStringLiteral("updateDetails"), true}},
+                                                   false));
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(!dialogItem("scriptPropertiesDialog", "propMore")->property("expanded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         application->editor().discard();
     }
 
@@ -12727,6 +12839,11 @@ private slots:
     }
 
 private:
+    static app::Application *newApplication(app::Application::Options options)
+    {
+        options.legacySettingsFolders = QStringList{qEnvironmentVariable("XDG_DATA_HOME") + QStringLiteral("/HikariSub/Legacy")};
+        return new app::Application(std::move(options));
+    }
     void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false,
                              application::SpellingBackendLoader loader = {})
     {
@@ -12741,7 +12858,7 @@ private:
         else if (loader)
             options.spellingBackend = std::move(loader);
         options.bundledDictionaryDir = bundled;
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
     static void writeDictionary(const QString &home, const QString &folder = QStringLiteral("Dictionary"))
@@ -12842,7 +12959,7 @@ private:
         app::Application::Options options;
         options.settingsFile = file;
         options.spellingBackend = {};
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
 
@@ -12856,7 +12973,7 @@ private:
     {
         delete engine;
         delete application;
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
 
@@ -12867,7 +12984,7 @@ private:
         app::Application::Options options;
         options.playbackAudio = false;
         options.mediaHelper = helper;
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
 
@@ -13826,13 +13943,13 @@ private slots:
                               {10, 11, R::TemplateVariables}, {12, 15, R::TemplateKeywords}}));
         application->settingsStore()->setValue(QStringLiteral("appearance.followSystem"), false);
         application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastWhite"));
-        QTRY_VERIFY(ui::theme::current().code == ui::theme::Code::HighContrastWhite);
+        QTRY_VERIFY(ui::theme::currentIs(ui::theme::Code::HighContrastWhite));
         QTRY_COMPARE(appliedColours("lineTextHighlighter"),
                      colours({{0, 2, R::TemplateKeywords}, {3, 4, R::TemplateVariables}, {5, 9, R::TemplateKeywords},
                               {10, 11, R::TemplateVariables}, {12, 15, R::TemplateKeywords}}));
         QCOMPARE(appliedColours("lineTextHighlighter")[2].toString(), QStringLiteral("#5b2da8"));
         application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
-        QTRY_VERIFY(ui::theme::current().code == ui::theme::Code::Dark);
+        QTRY_VERIFY(ui::theme::currentIs(ui::theme::Code::Dark));
     }
 
     void spellingStartsOnceAndReportsMissingDictionaries()
@@ -14037,6 +14154,7 @@ private slots:
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
         auto *replace = spellItem("spellReplace");
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         const QPoint centre = replace->mapToScene(QPointF(replace->width() / 2, replace->height() / 2)).toPoint();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, centre);
         QCoreApplication::processEvents();
@@ -14097,11 +14215,12 @@ private slots:
         };
         QTRY_VERIFY(suggestion(QStringLiteral("world")));
         auto *world = suggestion(QStringLiteral("world"));
-        const QPoint at = world->mapToScene(QPointF(world->width() / 2, world->height() / 2)).toPoint();
 
         auto *field = item("lineText");
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
+        QVERIFY(QQuickTest::qWaitForPolish(window));
+        const QPoint at = world->mapToScene(QPointF(world->width() / 2, world->height() / 2)).toPoint();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
         QCoreApplication::processEvents();
         QTRY_VERIFY(panel->property("activeFocus").toBool());
@@ -15369,6 +15488,15 @@ private slots:
         QTRY_VERIFY(item("ppGapsNeed")->isVisible());
         QTRY_COMPARE(item("postprocessorPreviewStatus")->property("text").toString(), QStringLiteral("No line changes"));
         QVERIFY(!item("postprocessorApply")->property("enabled").toBool());
+
+        auto &shift = application->shiftTimesSettings();
+        auto dropPreset = qScopeGuard([&] { shift.deletePreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")); });
+        setShift("maxOverlap", 200);
+        QTRY_VERIFY(!item("ppGapsNeed")->isVisible());
+        QVERIFY(shift.savePreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")));
+        setShift("maxOverlap", 0);
+        QVERIFY(shift.applyPreset(QStringLiteral("postprocessor"), QStringLiteral("Overlaps")));
+        QCOMPARE(shift.settings().maxOverlap, 200);
         application->editor().discard();
     }
 
@@ -15459,6 +15587,20 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Snapping to the adjacent keyframe"));
         auto *menu = item<QObject>("snapStartToNextKeyframeItem");
         QVERIFY(menu && menu->property("enabled").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_SNAP_TO_SCENE"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 10}));
+        QCOMPARE(session->history().back().name, std::string("Snapping to the scene"));
+        auto *scene = item<QObject>("snapToSceneItem");
+        QVERIFY(scene && scene->property("enabled").toBool());
+
+        const auto below = frames(1);
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_END_LATER_SHIFT_FOLLOWING"))));
+        QTRY_COMPARE(frames(0), (Frames{0, 11}));
+        QCOMPARE(frames(1), (Frames{below.first + 1, below.second + 1}));
+        QCOMPARE(session->history().back().name, std::string("Moving the end by frames"));
     }
 
     void theTimingLayoutOpensThePostprocessorWithItsPreset()
@@ -15739,6 +15881,105 @@ private slots:
         }
         QCOMPARE(application->openKeyframes(QUrl::fromLocalFile(bad)), QStringLiteral("Invalid keyframes format"));
         QCOMPARE(application->video().session().keyframes(), (std::vector<int>{0, 10, 20}));
+    }
+
+    void keyframeFilesSaveAndClose()
+    {
+        const QString kf = dir.filePath(QStringLiteral("kf-close.txt"));
+        {
+            QFile f(kf);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 25\n0\n10\n20\n");
+        }
+        const QString subtitles = dir.filePath(QStringLiteral("kf-close.ass"));
+        {
+            QFile f(subtitles);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[Aegisub Project Garbage]\nKeyframes File: missing-kf.txt\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(subtitles));
+        application->setAskForBadResolution(false);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready, 20000);
+        const auto own = application->video().session().keyframes();
+        QCOMPARE(application->keyframesFile(), QString());
+        QVERIFY(!item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+        QVERIFY(item<QObject>("saveKeyframesMenuItem")->property("enabled").toBool());
+
+        QVERIFY(application->openKeyframes(QUrl::fromLocalFile(kf)).isEmpty());
+        QCOMPARE(application->video().session().keyframes(), (std::vector<int>{0, 10, 20}));
+        QCOMPARE(application->keyframesFile(), QDir::toNativeSeparators(kf));
+        QTRY_VERIFY(item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+
+        const QString saved = dir.filePath(QStringLiteral("kf-saved.txt"));
+        QCOMPARE(application->saveKeyframesFile(QUrl::fromLocalFile(saved)), QString());
+        QFile f(saved);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), QByteArray("# keyframe format v1\nfps 0\n0\n10\n20\n"));
+
+        application->closeKeyframes();
+        QCOMPARE(application->video().session().keyframes(), own);
+        QCOMPARE(application->keyframesFile(), QString());
+        QTRY_VERIFY(!item<QObject>("closeKeyframesMenuItem")->property("enabled").toBool());
+        const QString resaved = dir.filePath(QStringLiteral("kf-close-saved.ass"));
+        QVERIFY(application->saveAs(resaved));
+        QTRY_VERIFY_WITH_TIMEOUT(QFileInfo::exists(resaved), 20000);
+        QFile written(resaved);
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QVERIFY(!written.readAll().contains("Keyframes File"));
+        QVERIFY(application->video().unloadVideo());
+        QVERIFY(!application->saveKeyframesFile(QUrl::fromLocalFile(saved)).isEmpty());
+    }
+
+    void timingKeysWorkInEveryPanelWhenAsked()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        auto &settings = *application->settingsStore();
+        const bool followed = settings.boolean("audio.autoFocus");
+        settings.set("audio.autoFocus", false);
+        auto restore = qScopeGuard([&] {
+            settings.set("audio.timingKeysEverywhere", 1);
+            settings.set("audio.autoFocus", followed);
+        });
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        const auto activeRow = [&] {
+            for (std::size_t i = 0; i < lines.size(); ++i)
+                if (session->selection().active == lines[i]->id)
+                    return int(i);
+            return -1;
+        };
+        QVERIFY(lines.size() >= 2);
+        application->selectLine(lines[1]->id.value);
+        QTRY_COMPARE(activeRow(), 1);
+        QTest::mouseMove(window, kOverNoPanel);
+        QTest::qWait(200);
+        auto *video = item("videoPanel");
+        const auto pressInVideo = [&](Qt::Key key) {
+            video->forceActiveFocus();
+            QTRY_VERIFY(video->hasActiveFocus());
+            QTest::keyClick(window, key);
+        };
+
+        settings.set("audio.timingKeysEverywhere", 0);
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
+        settings.set("audio.timingKeysEverywhere", 1);
+        QVERIFY(application->workspaceLayout().preset() != QStringLiteral("Timing"));
+        pressInVideo(Qt::Key_Z);
+        QCOMPARE(activeRow(), 1);
+
+        settings.set("audio.timingKeysEverywhere", 2);
+        pressInVideo(Qt::Key_Z);
+        QTRY_COMPARE(activeRow(), 0);
+        pressInVideo(Qt::Key_Right);
+        QCOMPARE(activeRow(), 0);
+        audio.closeAudio();
     }
 
     void hideColumnsMenuTogglesGridColumns()
@@ -16193,6 +16434,155 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("turnOffFiltering")), "triggered"));
         QTRY_VERIFY(!application->shell().filtered());
         QCOMPARE(grid->markWidth(), 0.0);
+    }
+
+    void gridHeaderFilterNarrowsTheGridOverTheStyleFilterWithoutAnUndoStep()
+    {
+        const QString path = dir.filePath(QStringLiteral("gridfilter.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\nFormat: Name, Fontname, Fontsize\nStyle: Default,Arial,20\nStyle: Sign,Arial,20\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Sign,,0,0,0,,two\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        }
+        QVERIFY(application->openFile(path));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        auto *rows = shell.lines();
+        QCOMPARE(rows->rowCount(), 3);
+        const auto steps = session->historySize();
+        auto *field = item("gridFilter");
+        QVERIFY(field);
+        field->forceActiveFocus();
+        typeText(QStringLiteral("O"));
+        QCOMPARE(shell.gridFilterText(), QStringLiteral("O"));
+        QTRY_COMPARE(rows->rowCount(), 2);
+        QCOMPARE(session->historySize(), steps);
+        auto &filter = application->gridFilter();
+        auto restore = qScopeGuard([&] { filter.setStyle(QStringLiteral("Sign"), false); });
+        filter.setStyle(QStringLiteral("Sign"), true);
+        QVERIFY(application->filterLines());
+        QTRY_COMPARE(rows->rowCount(), 1);
+        QVERIFY(field->hasActiveFocus());
+        press(Qt::Key_Escape);
+        QCOMPARE(shell.gridFilterText(), QString());
+        QTRY_COMPARE(rows->rowCount(), 2);
+        QVERIFY(field->hasActiveFocus());
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!field->hasActiveFocus());
+        QVERIFY(application->turnOffFiltering());
+        QTRY_COMPARE(rows->rowCount(), 3);
+    }
+
+    void gridHeaderFilterShowsAnEmptyStateAndEnterGoesToTheFirstShownLine()
+    {
+        const QString path = writeFile(dir, "gridfilter2.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        QVERIFY(application->openFile(path));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *field = item("gridFilter");
+        auto *empty = item("gridEmptyState");
+        QVERIFY(!empty->isVisible());
+        field->forceActiveFocus();
+        typeText(QStringLiteral("zz"));
+        QTRY_VERIFY(empty->isVisible());
+        QCOMPARE(empty->property("text").toString(), QStringLiteral("No lines match the filter"));
+        application->shell().setGridFilterText(QStringLiteral("hre"));
+        QTRY_VERIFY(!empty->isVisible());
+        press(Qt::Key_Return);
+        QTRY_COMPARE(session->selection().active, session->document().lines()[2]->id);
+        QTRY_VERIFY(item("editingGrid")->hasActiveFocus());
+        application->shell().setGridFilterText({});
+    }
+
+    void gridHeaderFilterKeepsAnEditedLineAndUndoRechecksIt()
+    {
+        const QString path = writeFile(dir, "gridfilter3.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        const auto one = session->document().lines()[0]->id;
+        const auto two = session->document().lines()[1]->id;
+        application->selectLine(two.value);
+        shell.setGridFilterText(QStringLiteral("two"));
+        QTRY_COMPARE(shell.lines()->rowCount(), 1);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("two"));
+        keysNeverRepeat();
+        text->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(text, "selectAll"));
+        typeText(QStringLiteral("deux"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        QVERIFY(application->editor().commit());
+        QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"deux"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"two"));
+        QCOMPARE(shell.lines()->rowCount(), 1);
+        application->selectLine(one.value);
+        shell.setGridFilterText(QStringLiteral("o"));
+        QTRY_COMPARE(shell.lines()->rowCount(), 2);
+        shell.setGridFilterText({});
+    }
+
+    void gridHeaderFilterHidesLinesFromActionsUnlessFilteringIsIgnored()
+    {
+        const QString path = writeFile(dir, "gridfilter4.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &shell = application->shell();
+        auto &filter = application->gridFilter();
+        const auto startOf = [&](int row) { return session->document().lines()[std::size_t(row)]->start.value.microseconds(); };
+        application->selectAllLines();
+        QCOMPARE(session->selection().selected.size(), std::size_t(3));
+        shell.setGridFilterText(QStringLiteral("o"));
+        auto restore = qScopeGuard([&] {
+            shell.setGridFilterText({});
+            filter.setIgnoreInActions(false);
+        });
+        QTRY_COMPARE(shell.lines()->rowCount(), 2);
+        QCOMPARE(session->selection().selected.size(), std::size_t(3));
+        QVERIFY(shell.selectionStatus().contains(QStringLiteral("(1 hidden)")));
+
+        QVERIFY(application->copyLines());
+        QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",three")));
+
+        const auto before = application->shiftTimesSettings().settingsMap();
+        auto restoreShift = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
+        auto settings = before;
+        settings.insert(QStringLiteral("timeMs"), 1000);
+        settings.insert(QStringLiteral("forward"), true);
+        settings.insert(QStringLiteral("whichLines"), 0);
+        settings.insert(QStringLiteral("whichTimes"), 0);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
+        QCOMPARE(startOf(0), 2'000'000);
+        QCOMPARE(startOf(1), 4'000'000);
+        QCOMPARE(startOf(2), 5'000'000);
+        filter.setIgnoreInActions(true);
+        QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
+        QCOMPARE(startOf(2), 6'000'000);
+
+        const QVariantMap findE{{QStringLiteral("find"), QStringLiteral("e")},
+                                {QStringLiteral("field"), 0},
+                                {QStringLiteral("mode"), 0},
+                                {QStringLiteral("action"), 0}};
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("2 lines selected."));
+        filter.setIgnoreInActions(false);
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("1 lines selected."));
+        application->editor().discard();
     }
 
     void groupRowMenuOpensFromTheKeyboard()
@@ -16808,8 +17198,13 @@ private slots:
         application->waitForWrites();
         QFile saved(ass);
         QVERIFY(saved.open(QIODevice::ReadOnly));
-        const QByteArray bytes = saved.readAll();
-        const QByteArray expected = QByteArray("[Script Info]\nTLMode: Yes\nActive Line: 0\n\n") + body + "\n[Hikari]\nLayout=";
+        QByteArray bytes = saved.readAll();
+        const QByteArray url = "; https://hikarisub.org/\n";
+        QVERIFY(bytes.startsWith("[Script Info]\n; Script generated by HikariSub v"));
+        bytes.remove(14, bytes.indexOf(url) + url.size() - 14);
+        const QByteArray expected = QByteArray("[Script Info]\nTLMode: Yes\nActive Line: 0\n\n[Aegisub Project Garbage]\n"
+                                               "Active Line: 0\n\n") +
+                                    body + "\n[Hikari]\nLayout=";
         QCOMPARE(bytes.left(expected.size()), expected);
         QCOMPARE(bytes.count('\n'), expected.count('\n') + 1);
         QVERIFY(bytes.endsWith("\n"));
@@ -19168,6 +19563,7 @@ private slots:
               {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
               {"program.tabTextMaxChars", nullptr},
               {"autosave.maxFiles", nullptr},
+              {"autosave.intervalSeconds", nullptr},
               {"notices.toasts", "Show notices as toasts"},
               {"fonts.externalDirectory", nullptr}}},
             {"settingsPageAppearance",
@@ -19214,12 +19610,21 @@ private slots:
               {"grid.autoHideColumns", "Hide empty columns"},
               {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
               {"grid.calcSpacesAndPunctuationForCps", "Count spaces and punctuation for CPS"},
+              {"grid.cpsWarning", nullptr},
+              {"grid.cpsError", nullptr},
+              {"grid.lineLength", nullptr},
+              {"grid.maxLines", nullptr},
               {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr},
               {"grid.tagsSwapCharacter", nullptr}}},
             {"settingsPageVideo",
-             {{"video.pauseOnClick", "Left mouse button pauses video"},
+             {{"video.fullscreenBarPosition", nullptr},
+              {"video.fullscreenBar", nullptr},
+              {"video.fullscreenHidePointer", "Hide the pointer with the bar"},
+              {"video.fullscreenOverlays", "Show the render time and position overlays"},
+              {"video.fullscreenOpensIn", nullptr},
+              {"video.pauseOnClick", "Left mouse button pauses video"},
               {"video.fullScreenOnStart", "Open video from the context menu in full screen"},
               {"video.openAtActiveLine", "Open video at the active line’s time"},
               {"video.moveToActiveLine", nullptr},
@@ -19257,9 +19662,11 @@ private slots:
               {"audio.markPlayTime", nullptr},
               {"audio.leadInValue", nullptr},
               {"audio.leadOutValue", nullptr},
+              {"audio.defaultDuration", nullptr},
               {"audio.lockScrollOnCursor", "Follow audio during playback"},
               {"audio.dontPlayWhenLineChanges", "Don’t play after changing the line"},
               {"audio.autoFocus", "Focus the panel under the pointer"},
+              {"audio.timingKeysEverywhere", nullptr},
               {"audio.playMono", "Play in mono"},
               {"audio.drawTimeCursor", "Show the time beside the cursor"},
               {"audio.drawSecondaryLines", "Show seconds markers"},
@@ -19268,6 +19675,7 @@ private slots:
               {"audio.drawKeyframes", "Show keyframes"},
               {"audio.lineBoundariesThickness", nullptr},
               {"audio.inactiveLinesDisplayMode", nullptr},
+              {"audio.spectrumCurve", nullptr},
               {"audio.snapToKeyframes", "Snap to keyframes"},
               {"audio.snapToOtherLines", "Snap to other lines"},
               {"audio.mergeEveryNWithSyllable", "Merge every “n” with the previous syllable"},
@@ -19328,7 +19736,22 @@ private slots:
               {"privacy.usageData", "Send anonymous usage data"},
               {"privacy.alwaysSendCrashReports", "Always send crash reports"},
               {"privacy.discordPresence", "Show what I am doing in Discord"},
-              {"privacy.discordFileName", "Include the file name"},
+              {"privacy.discordMode", "The mode"},
+              {"privacy.discordModeIcon", "The mode’s icon"},
+              {"privacy.discordProjectName", "The project’s name"},
+              {"privacy.discordFileName", "The file name"},
+              {"privacy.discordText", nullptr},
+              {"privacy.discordDetails", nullptr},
+              {"privacy.discordState", nullptr},
+              {"privacy.discordPlugin", nullptr},
+              {"privacy.discordTime", nullptr},
+              {"privacy.discordIdleMinutes", nullptr},
+              {"privacy.discordIdle", nullptr},
+              {"privacy.discordIdleBackground", "Do the same while HikariSub is in the background"},
+              {"privacy.discordGetButton", "“Get HikariSub”"},
+              {"privacy.discordLink", "A link of your own"},
+              {"privacy.discordLinkLabel", nullptr},
+              {"privacy.discordLinkUrl", nullptr},
               {"plugins.network", "Let plugins connect to the internet"}}},
         };
         std::set<std::string> shown;
@@ -19377,6 +19800,7 @@ private slots:
         bound.insert("automation.dialogAnswers");
         bound.insert("trust.folders");
         bound.insert("ai.agents.custom");
+        bound.insert("privacy.discordActivities");
 #ifndef HIKARI_WITH_VSFILTERMOD
         bound.erase("video.subtitleProvider");
 #endif
@@ -21696,7 +22120,7 @@ private slots:
     {
         const LegacyHere none({});
         auto restore = qScopeGuard([] { ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown); });
-        const auto code = [] { return ui::theme::codeName(ui::theme::current().code); };
+        const auto code = [] { return ui::theme::current().id; };
         QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(gettingStarted()->property("visible").toBool());
         auto *store = application->settingsStore();
@@ -21727,7 +22151,7 @@ private slots:
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
         QCOMPARE(store->text("appearance.theme"), other);
         QCOMPARE(store->boolean("appearance.followSystem"), false);
-        QCOMPARE(store->text(other == u"dark" ? "appearance.darkAccent" : "appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(store->list("appearance.accents"), QStringList{other + QStringLiteral("=blue")});
         QCOMPARE(store->integer("autosave.maxFiles"), 7);
         QCOMPARE(store->boolean("updater.checkForStable"), false);
         QCOMPARE(store->boolean("updater.autoCheck"), true);
@@ -21863,22 +22287,21 @@ private slots:
         auto *store = application->settingsStore();
         store->setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         store->setValue(QStringLiteral("appearance.followSystem"), true);
+        store->setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("dark=red")});
         ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
-        QTRY_COMPARE(ui::theme::codeName(ui::theme::current().code), QStringLiteral("light"));
+        QTRY_COMPARE(ui::theme::current().id, QStringLiteral("light"));
         QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(gettingStarted()->property("visible").toBool());
         setupNext();
         QVERIFY(setupItem("gettingStartedTheme_light")->property("checked").toBool());
-        const QString dark = store->text("appearance.darkAccent");
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedAccent_blue"), "click"));
-        QCOMPARE(setupValues().value(QStringLiteral("appearance.lightAccent")).toString(), QStringLiteral("blue"));
-        QCOMPARE(setupValues().value(QStringLiteral("appearance.darkAccent")).toString(), dark);
+        const QStringList picked{QStringLiteral("dark=red"), QStringLiteral("light=blue")};
+        QCOMPARE(setupValues().value(QStringLiteral("appearance.accents")).toStringList(), picked);
         while (setupPage() != u"files")
             setupNext();
         setupNext();
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
-        QCOMPARE(store->text("appearance.lightAccent"), QStringLiteral("blue"));
-        QCOMPARE(store->text("appearance.darkAccent"), dark);
+        QCOMPARE(store->list("appearance.accents"), picked);
         QVERIFY(store->boolean("appearance.followSystem"));
     }
 
@@ -22446,6 +22869,7 @@ private slots:
         QVERIFY(audio.autoScroll());
         QVERIFY(!audio.spectrumOn());
         QVERIFY(!audio.spectrumNonLinear());
+        QCOMPARE(audio.spectrumCurve(), 0);
         audio.openDummy();
         QVERIFY(audio.ready());
         QVERIFY(item("audioZoom")->isVisible());
@@ -22653,6 +23077,40 @@ private slots:
         QTRY_VERIFY(item("audioPanel")->window() == window);
     }
 
+    void audioCommitGivesTheNextLineTheDefaultTiming()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "pt-default-timing.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:09.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto times = [&](int i) {
+            const auto &l = *session->document().lines()[static_cast<std::size_t>(i)];
+            return std::pair(int(l.start.value.microseconds() / 1000), int(l.end.value.microseconds() / 1000));
+        };
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("audio.defaultDuration"), 2000);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("audio.defaultDuration"), 5000); });
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(audio.marks().startMs, 1000);
+
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_COMMIT_DEFAULT")));
+        QTRY_COMPARE(audio.marks().startMs, 2000);
+        QCOMPARE(audio.marks().endMs, 4000);
+        QCOMPARE(times(1), std::pair(2000, 4000));
+        QCOMPARE(times(0), std::pair(1000, 2000));
+
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_COMMIT_DEFAULT")));
+        QTRY_COMPARE(int(session->document().lines().size()), 3);
+        QCOMPARE(times(2), std::pair(4000, 6000));
+        QCOMPARE(audio.marks().startMs, 4000);
+    }
+
     void audioPanelRowFoldsItsControls()
     {
         // MUST KILL: restarts without sound so our playback-failure log window can't steal activation and keys
@@ -22844,7 +23302,7 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(item("audioMoreGotoEnd")->isVisible());
-        for (const char *twice : {"audioMoreSpeechSpectrum", "audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
+        for (const char *twice : {"audioMoreAutoScroll", "audioMoreSyncVideo", "audioMoreWaveform",
                                   "audioMoreLineTiming", "audioMoreExtraGoto"})
             QVERIFY2(!item(twice)->isVisible(), twice);
         closeMore();
@@ -22878,13 +23336,18 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreAutoScroll")->isVisible());
         QVERIFY(item("audioMoreSyncVideo")->isVisible());
-        QVERIFY(item("audioMoreSpeechSpectrum")->isVisible());
+        QVERIFY(named("audioMoreFrequencyCurve")->property("shown").toBool());
+        QCOMPARE(named("audioMoreFrequencyCurveLinear")->property("checked").toBool(), audio.spectrumCurve() == 0);
         QVERIFY(item("audioMoreGotoStart")->isVisible());
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
         QVERIFY(!named("audioMoreTapOptions")->property("shown").toBool());
         QVERIFY(!item("audioMoreKaraokeSplitAtCursor")->isVisible());
         QVERIFY(!item("audioMoreKaraokeKf")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreFrequencyCurveLogarithmic"), "triggered"));
+        QCOMPARE(audio.spectrumCurve(), 2);
+        QVERIFY(named("audioMoreFrequencyCurveLogarithmic")->property("checked").toBool());
+        audio.setSpectrumCurve(0);
         closeMore();
         auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
         QVERIFY(moreAutoScroll->property("checked").toBool());
@@ -23509,11 +23972,22 @@ private slots:
         QVERIFY(lit > 0);
 
         audio.setSpectrumNonLinear(true);
-        QVERIFY(settings.boolean("audio.spectrumNonLinearOn"));
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 1);
+        QCOMPARE(audio.spectrumCurve(), 1);
         const auto speech = audio.spectrumImage();
         QVERIFY(speech != picture);
         QVERIFY(speech->bgra != picture->bgra);
         QCOMPARE(audio.spectrum()->transformedLines(), lines);
+
+        audio.setSpectrumCurve(2);
+        QCOMPARE(settings.integer("audio.spectrumCurve"), 2);
+        QVERIFY(!audio.spectrumNonLinear());
+        const auto logarithmic = audio.spectrumImage();
+        QVERIFY(logarithmic->bgra != speech->bgra);
+        QVERIFY(logarithmic->bgra != picture->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines);
+        audio.setSpectrumCurve(1);
+        QVERIFY(audio.spectrumNonLinear());
 
         audio.setVerticalZoom(100);
         QVERIFY(audio.spectrumImage()->bgra != speech->bgra);
@@ -23541,6 +24015,30 @@ private slots:
         for (int peak : audio.columns().peak)
             QCOMPARE(peak, audio.view().height() / 2);
         QVERIFY(application->recentAudio().isEmpty());
+    }
+
+    void saveAudioOfSelectedLines()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        QVERIFY(!application->canSaveSelectedAudio());
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(application->canSaveSelectedAudio());
+        const QString path = dir.filePath(QStringLiteral("clip.wav"));
+        QCOMPARE(application->saveSelectedAudio(QUrl::fromLocalFile(path)), QString());
+        QFile wav(path);
+        QVERIFY(wav.open(QIODevice::ReadOnly));
+        const QByteArray bytes = wav.readAll();
+        QCOMPARE(bytes.left(4), QByteArray("RIFF"));
+        QCOMPARE(bytes.mid(8, 4), QByteArray("WAVE"));
+        const std::int64_t rate = audio.box().audio()->sampleRate();
+        const std::int64_t samples = std::int64_t{audio.selectionEnd() - audio.selectionStart()} * rate / 1000;
+        QCOMPARE(bytes.size(), 44 + 2 * samples);
+        QVERIFY(named("saveSelectedAudioDialog"));
+        audio.closeAudio();
+        QVERIFY(!application->canSaveSelectedAudio());
+        QVERIFY(!application->saveSelectedAudio(QUrl::fromLocalFile(path)).isEmpty());
     }
 
     void audioTimingByMouseAndKeys()
@@ -23752,7 +24250,7 @@ private slots:
         app::Application::Options options;
         options.indexDir = folder.filePath(QStringLiteral("Indices"));
         options.audioCacheDir = folder.filePath(QStringLiteral("AudioCache"));
-        application = new app::Application(options);
+        application = newApplication(options);
         const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
         auto &audio = application->audio();
@@ -23869,7 +24367,7 @@ private slots:
         app::Application::Options options;
         options.indexDir = indices;
         options.audioCacheDir = folder.filePath(QStringLiteral("AudioCache"));
-        application = new app::Application(options);
+        application = newApplication(options);
         const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
         auto &audio = application->audio();
@@ -23937,6 +24435,19 @@ private slots:
         return application->hotkeys().keys().value(QLatin1String(window)).toMap();
     }
     QVariantList hotkeyRows() const { return application->hotkeys().rows(); }
+    QStringList listedHotkeyTexts() const
+    {
+        const auto hidden = [this](int id) { return !application->ai()->on() && application::aiCommand(id); };
+        auto bound = application->hotkeys().bindings();
+        std::erase_if(bound, [&](const auto &binding) { return hidden(binding.first.id); });
+        application::HotkeyMap copy;
+        application::HotkeyList list(copy);
+        list.build(bound, hidden);
+        QStringList texts;
+        for (std::size_t i = 0; i < list.rowCount(); ++i)
+            texts << QString::fromStdString(list.row(int(i)).text);
+        return texts;
+    }
     int hotkeyPosition(const QString &text) const
     {
         const auto rows = hotkeyRows();
@@ -24027,8 +24538,9 @@ private slots:
                                      "Video", "Audio", "Conversion", "Script properties", "Automation", "Shortcuts",
                                      "AI", "Updates and privacy"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 396);
-        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Run the last macro again"));
+        const QStringList listed = listedHotkeyTexts();
+        QCOMPARE(hotkeyRows().size(), listed.size());
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), listed.first());
         QCOMPARE(application->hotkeys().selected(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
         QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
@@ -24511,7 +25023,7 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
-        QCOMPARE(table().size(), 39);
+        QCOMPARE(table().size(), 41);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));
@@ -27817,7 +28329,7 @@ private slots:
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         audio.setSpectrumOn(true);
-        QCOMPARE(ui::theme::current().code, ui::theme::Code::Dark);
+        QCOMPARE(ui::theme::current().id, ui::theme::codeName(ui::theme::Code::Dark));
         const application::AudioDisplayOptions legacy;
         QCOMPARE(audio.options().background, 0xFF36393Eu);
         QCOMPARE(audio.options().spectrumBackground, 0xFF000000u);
@@ -27848,7 +28360,7 @@ private slots:
         fresh.render(*audio.box().audio(), view.position() * view.samples(), (view.position() + view.width()) * view.samples(),
                      expected.data(), view.width(), view.width(), view.height(), view.samplesPercent());
         QVERIFY(again->bgra == expected);
-        settings.setValue(QStringLiteral("appearance.lightAccent"), QStringLiteral("blue"));
+        settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("light=blue")});
         const QColor blue = ui::theme::accent(false, QStringLiteral("blue")).accent;
         QCOMPARE(audio.options().waveformSelected, blue.rgba());
         QCOMPARE(audio.options().selectionBackground, (blue.rgba() & 0x00FFFFFFu) | 0x37000000u);
@@ -27868,7 +28380,7 @@ private slots:
         auto &settings = *application->settingsStore();
         auto restore = qScopeGuard([] { ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown); });
         auto *root = engine->rootObjects().first();
-        const auto code = [] { return ui::theme::codeName(ui::theme::current().code); };
+        const auto code = [] { return ui::theme::current().id; };
         const auto accent = [] { return ui::theme::current().roles.accent; };
         const auto click = [&](const char *name) {
             auto *control = dialogItem("settingsDialog", name);
@@ -27876,8 +28388,12 @@ private slots:
             QVERIFY2(QMetaObject::invokeMethod(control, "click"), name);
         };
         const auto checked = [&](const char *name) { return dialogItem("settingsDialog", name)->property("checked").toBool(); };
+        const auto accents = [&] { return settings.list("appearance.accents"); };
+        const auto colours = [&] { return settings.list("appearance.colours"); };
+        QObject *dialog = nullptr;
+        const auto staged = [&] { return settingsValues(dialog).value(QStringLiteral("appearance.colours")).toStringList(); };
         QCOMPARE(code(), QStringLiteral("dark"));
-        QCOMPARE(root->property("color").value<QColor>(), QColor(0x17, 0x1B, 0x20));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0x18, 0x1B, 0x20));
 
         const auto openAppearance = [&] {
             auto *shown = openSettings();
@@ -27886,7 +28402,7 @@ private slots:
             showSettingsPage("appearance");
             return shown;
         };
-        auto *dialog = openAppearance();
+        dialog = openAppearance();
         QVERIFY(dialog);
         QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
         for (const char *theme : {"appearanceTheme_light", "appearanceTheme_dark", "appearanceTheme_highContrastWhite",
@@ -27895,7 +28411,7 @@ private slots:
         QVERIFY(checked("appearanceTheme_dark"));
         QVERIFY(checked("appearanceFollowSystem"));
         for (const auto &a : ui::theme::accents(true))
-            QVERIFY2(dialogItem("settingsDialog", qPrintable(QStringLiteral("accent_") + QLatin1String(a.key))), a.key);
+            QVERIFY2(dialogItem("settingsDialog", qPrintable(QStringLiteral("accent_") + a.key)), qPrintable(a.key));
         QVERIFY(checked("accent_green"));
         QVERIFY(dialogItem("settingsDialog", "appearanceAccents")->property("visible").toBool());
         QVERIFY(!dialogItem("settingsDialog", "appearanceHighContrast")->property("visible").toBool());
@@ -27929,9 +28445,9 @@ private slots:
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.followSystem")).toBool(), false);
         QVERIFY(!checked("appearanceFollowSystem"));
         QCOMPARE(code(), QStringLiteral("light"));
-        QCOMPARE(root->property("color").value<QColor>(), QColor(0xE5, 0xE9, 0xEC));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0xEE, 0xF0, 0xF3));
         auto *controls = root->property("palette").value<QObject *>();
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xF9, 0xFA, 0xFB));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xFF, 0xFF, 0xFF));
         QCOMPARE(accent(), QColor(0x14, 0x5C, 0x4C));
         click("accent_blue");
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
@@ -27941,9 +28457,9 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(code(), QStringLiteral("dark"));
         QCOMPARE(accent(), QColor(0x9C, 0xDB, 0xC9));
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x1E, 0x21, 0x27));
         QVERIFY(!settings.isSet(QStringLiteral("appearance.theme")));
-        QVERIFY(!settings.isSet(QStringLiteral("appearance.lightAccent")));
+        QVERIFY(!settings.isSet(QStringLiteral("appearance.accents")));
 
         QVERIFY((dialog = openAppearance()) != nullptr);
         click("appearanceTheme_light");
@@ -27952,8 +28468,7 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(settings.text("appearance.theme"), QStringLiteral("light"));
         QVERIFY(!settings.boolean("appearance.followSystem"));
-        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("green"));
+        QCOMPARE(accents(), QStringList{QStringLiteral("light=blue")});
         QCOMPARE(code(), QStringLiteral("light"));
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
         QVERIFY((dialog = openAppearance()) != nullptr);
@@ -27963,78 +28478,68 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
         QVERIFY(dialog->property("visible").toBool());
         QCOMPARE(settings.text("appearance.theme"), QStringLiteral("dark"));
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
-        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(accents(), (QStringList{QStringLiteral("light=blue"), QStringLiteral("dark=red")}));
         QCOMPARE(code(), QStringLiteral("dark"));
         QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x1E, 0x21, 0x27));
         QVERIFY(checked("accent_red"));
         click("accent_purple");
         QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("purple")).accent);
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
+        QCOMPARE(accents(), (QStringList{QStringLiteral("light=blue"), QStringLiteral("dark=red")}));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(code(), QStringLiteral("dark"));
         QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
-        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
-        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(accents(), (QStringList{QStringLiteral("light=blue"), QStringLiteral("dark=red")}));
 
         QVERIFY((dialog = openAppearance()) != nullptr);
         click("appearanceTheme_highContrastBlack");
         QCOMPARE(code(), QStringLiteral("highContrastBlack"));
         QTRY_VERIFY(dialogItem("settingsDialog", "appearanceHighContrast")->property("visible").toBool());
         QVERIFY(!dialogItem("settingsDialog", "appearanceAccents")->property("visible").toBool());
-        for (const char *pick : {"highContrastPick_appearance.highContrastBlack.accent",
-                                 "highContrastPick_appearance.highContrastBlack.text",
-                                 "highContrastPick_appearance.highContrastBlack.border"})
+        for (const char *pick : {"highContrastPick_accent", "highContrastPick_text", "highContrastPick_line"})
             QVERIFY2(dialogItem("settingsDialog", pick), pick);
         auto *themePopover = named("themeColourPopover");
         QVERIFY(themePopover);
-        const QString accentBefore = settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString();
-        click("highContrastChoose_appearance.highContrastBlack.accent");
+        const QStringList coloursBefore = staged();
+        click("highContrastChoose_accent");
         QTRY_VERIFY(themePopover->property("visible").toBool());
         QCOMPARE(themePopover->property("anchor").value<QQuickItem *>(),
-                 dialogItem("settingsDialog", "highContrastChoose_appearance.highContrastBlack.accent"));
+                 dialogItem("settingsDialog", "highContrastChoose_accent"));
         QVERIFY(!dialogItem("themeColourPopover", "alpha")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0x12), Q_ARG(QVariant, 0x34), Q_ARG(QVariant, 0x56)));
-        QTRY_COMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                     QStringLiteral("#123456"));
+        QTRY_COMPARE(staged(), QStringList{QStringLiteral("highContrastBlack/accent=#123456")});
         QCOMPARE(accent(), QColor(0x12, 0x34, 0x56));
         QTest::keyClick(qobject_cast<QWindow *>(dialog), Qt::Key_Escape);
         QTRY_VERIFY(!themePopover->property("visible").toBool());
         QVERIFY(dialog->property("visible").toBool());
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(), accentBefore);
-        click("highContrastChoose_appearance.highContrastBlack.accent");
+        QCOMPARE(staged(), coloursBefore);
+        click("highContrastChoose_accent");
         QTRY_VERIFY(themePopover->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(themePopover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
         QVERIFY(QMetaObject::invokeMethod(themePopover, "accept"));
         QTRY_VERIFY(!themePopover->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.border")),
-                                          Q_ARG(QVariant, QStringLiteral("#FF00FF"))));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                 QStringLiteral("#00FF00"));
+        const QStringList picked{QStringLiteral("highContrastBlack/accent=#00FF00"),
+                                 QStringLiteral("highContrastBlack/line=#FF00FF")};
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.colours")),
+                                          Q_ARG(QVariant, picked)));
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
         QCOMPARE(ui::theme::current().roles.line, QColor(0xFF, 0x00, 0xFF));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(settings.text("appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
-        QCOMPARE(settings.text("appearance.highContrastBlack.border"), QStringLiteral("#FF00FF"));
+        QCOMPARE(colours(), picked);
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
-        QCOMPARE(settings.text("appearance.highContrastWhite.accent"), QStringLiteral("#0037B3"));
         QVERIFY((dialog = openAppearance()) != nullptr);
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
         answerSettingsQuestion("reset");
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                 QStringLiteral("#00FF00"));
+        QCOMPARE(staged(), picked);
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.theme")).toString(), QStringLiteral("highContrastBlack"));
         click("resetHighContrast");
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
-                 QStringLiteral("#FFFF00"));
+        QVERIFY(staged().isEmpty());
         QCOMPARE(accent(), QColor(0xFF, 0xFF, 0x00));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(settings.text("appearance.highContrastBlack.accent"), QStringLiteral("#FFFF00"));
-        QCOMPARE(settings.text("appearance.highContrastBlack.border"), QStringLiteral("#FFFFFF"));
+        QVERIFY(colours().isEmpty());
 
         QVERIFY((dialog = openAppearance()) != nullptr);
         click("appearanceFollowSystem");
@@ -28051,8 +28556,8 @@ private slots:
         ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
         QCOMPARE(code(), QStringLiteral("light"));
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
-        QCOMPARE(root->property("color").value<QColor>(), QColor(0xE5, 0xE9, 0xEC));
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xF9, 0xFA, 0xFB));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0xEE, 0xF0, 0xF3));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xFF, 0xFF, 0xFF));
         QVERIFY((dialog = openAppearance()) != nullptr);
         QVERIFY(checked("appearanceFollowSystem"));
         QVERIFY(checked("appearanceTheme_light"));
@@ -28096,17 +28601,17 @@ private slots:
                 ++headers;
                 auto *strip = findItem(bar, QStringLiteral("dockHeaderStrip"));
                 QVERIFY(strip);
-                const bool titleMode = bar->property("titleMode").toBool();
-                QCOMPARE(strip->property("color").value<QColor>(), titleMode ? roles.field : roles.raised);
-                if (!titleMode)
-                    QCOMPARE(findItem(bar->property("currentTab").value<QQuickItem *>(), QStringLiteral("dockTabBackground"))
-                                 ->property("color").value<QColor>(), roles.field);
+                QCOMPARE(strip->property("color").value<QColor>(), roles.panel);
+                if (!bar->property("titleMode").toBool())
+                    QCOMPARE(findItem(bar->property("currentTab").value<QQuickItem *>(), QStringLiteral("dockTabUnderline"))
+                                 ->property("color").value<QColor>(), roles.accent);
             }
             QVERIFY(headers >= 4);
             const auto windows = root->findChildren<QQuickWindow *>();
             QVERIFY(windows.size() >= 10);
             for (auto *other : windows)
-                QVERIFY2(other->color() == roles.panel || other->color() == roles.background,
+                QVERIFY2(other->color() == roles.panel || other->color() == roles.background
+                             || (other->objectName() == QLatin1String("videoFullscreen") && other->color() == Qt::black),
                          qPrintable(other->objectName() + QLatin1Char(' ') + other->color().name()));
             QCOMPARE(ui::IconTheme::colours()[0], roles.text);
             QTRY_COMPARE(gridPixel(), roles.panel);
@@ -28188,13 +28693,13 @@ private slots:
         grid->forceActiveFocus(Qt::TabFocusReason);
         QTRY_COMPARE(markedPanels(), QStringList{QStringLiteral("Grid")});
         for (const char *key : {"blue", "purple", "orange"}) {
-            settings.setValue(QStringLiteral("appearance.darkAccent"), QLatin1String(key));
+            settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("dark=") + QLatin1String(key)});
             const QColor accent = ui::theme::accent(true, QLatin1String(key)).accent;
             QCOMPARE(ui::theme::current().roles.accent, accent);
             QTRY_COMPARE(markOf(QStringLiteral("Grid"))->property("colour").value<QColor>(), accent);
             checkMark(QStringLiteral("Grid"), accent);
         }
-        settings.setValue(QStringLiteral("appearance.lightAccent"), QStringLiteral("red"));
+        settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("light=red")});
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
         QTRY_COMPARE(markOf(QStringLiteral("Grid"))->property("colour").value<QColor>(),
                      ui::theme::accent(false, QStringLiteral("red")).accent);
@@ -28303,7 +28808,7 @@ private slots:
             made.push_back(o.hostApi);
             return std::make_unique<backends::SimulatedOutput>();
         };
-        application = new app::Application(options);
+        application = newApplication(options);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
         engine->setInitialProperties(application->qmlProperties());
@@ -28398,7 +28903,7 @@ private slots:
             application = nullptr;
         });
         const auto start = [&] {
-            application = new app::Application(options);
+            application = newApplication(options);
             engine = new QQmlApplicationEngine;
             hikari::ui::attachDocking(*engine);
             engine->setInitialProperties(application->qmlProperties());
@@ -28539,7 +29044,7 @@ private slots:
             engine = nullptr;
             application = nullptr;
         });
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
         if (QTest::currentTestFailed())
             return;
@@ -29096,21 +29601,22 @@ private slots:
 
         auto &fs = application->videoFullscreen();
         fs.setBarMode(1);
+        application->settingsStore()->set("video.fullscreenOpensIn", 1);
         viewController.setAspectFromSlider(100000);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QVERIFY(fsWindow);
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.pinned());
+        QVERIFY(!fs.stripReserved());
         QTRY_COMPARE(overlay->window(), fsWindow);
         pointerMovesTo(fsWindow);
-        QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
+        QTRY_COMPARE(overlay->height(), fullscreenItem("fullscreenFrame")->height());
         QTRY_VERIFY2(tools.videoRect().top() >= 8, qPrintable(QDebug::toString(tools.videoRect())));
         crosshairOnlyOverThePicture("fullscreen, zoomed");
         if (QTest::currentTestFailed())
             return;
-        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenBarMode", "fullscreenVolume",
-                              "fullscreenSpeaker", "fullscreenToolsButton", "fullscreenExit"},
+        controlsTakeTheArrow({"fullscreenModeChoice", "fullscreenTypesettingExit", "visualToolRow1",
+                              "fullscreenTypesettingPlayPause", "fullscreenInspector"},
                              true);
         if (QTest::currentTestFailed())
             return;
@@ -29128,6 +29634,7 @@ private slots:
         viewController.setAspectFromSlider(525000);
         QTRY_COMPARE(tools.videoView().aspectRatio(), 0.75f);
         fs.setBarMode(0);
+        application->settingsStore()->set("video.fullscreenOpensIn", 0);
 
         QTRY_VERIFY(visualItem("visualToolRail")->isVisible());
         // Qt drops a move to the pointer's current point, so each try moves a pixel.
@@ -32532,15 +33039,14 @@ private slots:
                 QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()));
             }
             auto &fs = application->videoFullscreen();
-            QVERIFY(fs.toggle(0));
+            QVERIFY(fs.toggleTypesetting());
             QQuickWindow *fsWindow = fullscreenWindow();
             QTRY_VERIFY(fsWindow->isExposed());
             QTRY_VERIFY(fullscreenItem("fullscreenToolBar") && fullscreenItem("fullscreenToolBar")->isVisible());
             QTRY_VERIFY(fullscreenItem("visualValue_fscx"));
-            QTRY_COMPARE(fullscreenItem("videoFullscreenPanel")->opacity(), 1.0);
             QTest::qWait(300);
             const QImage fsShot = fsWindow->grabWindow();
-            QVERIFY(fsShot.copy(crop(fullscreenItem("videoFullscreenPanel"))).save(out + QStringLiteral("/vt1-fullscreen") + suffix));
+            QVERIFY(fsShot.save(out + QStringLiteral("/vt1-fullscreen") + suffix));
             QVERIFY(fs.leave());
             QTRY_VERIFY(!fsWindow->isVisible());
             tools.selectFamily(0);
@@ -32614,17 +33120,17 @@ private slots:
         }
         QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShift+click to set a shortcut"));
         setTheme("light");
-        QCOMPARE(colours(), all(QStringLiteral("#74808b")));
-        QVERIFY(shown(QColor(0x74, 0x80, 0x8B)));
+        QCOMPARE(colours(), all(QStringLiteral("#7a838d")));
+        QVERIFY(shown(QColor(0x7A, 0x83, 0x8D)));
         saveTransport(QStringLiteral("transport-light-disabled.png"));
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         closeMismatchQuestion();
         application->video().stepFrames(1);
-        QTRY_COMPARE(colours(), all(QStringLiteral("#202832")));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#1e2329")));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(),
                  QStringLiteral("#145c4c"));
-        QTRY_VERIFY(shown(QColor(0x20, 0x28, 0x32)));
+        QTRY_VERIFY(shown(QColor(0x1E, 0x23, 0x29)));
         saveTransport(QStringLiteral("transport-light.png"));
         application->video().togglePlay();
         QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-pause"));
@@ -32632,29 +33138,29 @@ private slots:
         application->video().togglePlay();
         QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-play"));
         setTheme("dark");
-        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e4e7eb")));
         auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
         QVERIFY(controls);
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x1E, 0x21, 0x27));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#9cdbc9"));
-        QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
+        QTRY_VERIFY(shown(QColor(0xE4, 0xE7, 0xEB)));
         saveTransport(QStringLiteral("transport-dark.png"));
-        settings.setValue(QStringLiteral("appearance.darkAccent"), QStringLiteral("purple"));
+        settings.setValue(QStringLiteral("appearance.accents"), QStringList{QStringLiteral("dark=purple")});
         QTRY_COMPARE(icon("previousFrame")->property("accentColor").value<QColor>(),
                      ui::theme::accent(true, QStringLiteral("purple")).accent);
-        QCOMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QCOMPARE(colours(), all(QStringLiteral("#e4e7eb")));
         setTheme("highContrastBlack");
         QTRY_COMPARE(colours(), all(QStringLiteral("#ffffff")));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#ffff00"));
-        settings.setValue(QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FF8800"));
+        settings.setValue(QStringLiteral("appearance.colours"), QStringList{QStringLiteral("highContrastBlack/text=#FF8800")});
         QTRY_COMPARE(colours(), all(QStringLiteral("#ff8800")));
         QTRY_VERIFY(shown(QColor(0xFF, 0x88, 0x00)));
         setTheme("dark");
-        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e4e7eb")));
         application->video().stepFrames(-1);
-        QTRY_COMPARE(icon("previousFrame")->property("color").value<QColor>().name(), QStringLiteral("#75818d"));
-        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#75818d"));
-        QCOMPARE(icon("nextFrame")->property("color").value<QColor>().name(), QStringLiteral("#e8edf2"));
+        QTRY_COMPARE(icon("previousFrame")->property("color").value<QColor>().name(), QStringLiteral("#737b85"));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#737b85"));
+        QCOMPARE(icon("nextFrame")->property("color").value<QColor>().name(), QStringLiteral("#e4e7eb"));
     }
 
     void iconSurfacesShowTheSetWithTheirNames()
@@ -35412,6 +35918,18 @@ private slots:
         QTRY_VERIFY(application->editor().charsWarning());
         QTRY_VERIFY(item("charsCounterWarning")->isVisible());
         application->editor().discard();
+
+        application->settingsStore()->setValue(QStringLiteral("grid.cpsWarning"), 10);
+        application->settingsStore()->setValue(QStringLiteral("grid.cpsError"), 14);
+        application->settingsStore()->setValue(QStringLiteral("grid.lineLength"), 8);
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/10"));
+        QCOMPARE(chars->property("text").toString(), QStringLiteral("5/10/8"));
+        QVERIFY(application->editor().cpsError());
+        QVERIFY(application->editor().charsWarning());
+        QTRY_COMPARE(item("cpsCounterValue")->property("color").value<QColor>(), ui::theme::current().roles.danger);
+        for (const char *id : {"grid.cpsWarning", "grid.cpsError", "grid.lineLength"})
+            application->settingsStore()->reset(QLatin1String(id));
+        QTRY_COMPARE(cps->property("text").toString(), QStringLiteral("15/15"));
     }
 
     void squeezeTheLineEditor()
@@ -36470,7 +36988,7 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[Events]\n"
                     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                    "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,line\n");
+                    "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,{\\c&H0000FF&}line\n");
         }
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -36527,6 +37045,21 @@ private slots:
         }, 500));
         QVERIFY(info(u8"YCbCr Matrix").isEmpty());
         QCOMPARE(application::sessionVideoMatrix(*session), "TV.601");
+
+        QVERIFY(application::setMatrix(*session, "TV.601"));
+        QVERIFY(application->video().reloadVideo());
+        QVERIFY(asked("YCbCr matrix mismatch"));
+        const auto choices = box->property("choices").toList();
+        QCOMPARE(choices.size(), 3);
+        QCOMPARE(choices.at(1).toMap().value(QStringLiteral("isDefault")).toBool(), true);
+        QCOMPARE(choices.at(2).toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Convert colours and set to TV.709"));
+        answer("convert", true);
+        QTRY_COMPARE(info(u8"YCbCr Matrix"), QStringLiteral("TV.709"));
+        QCOMPARE(session->history().back().name, std::string(application::kMatrixConversionStep));
+        QVERIFY(session->document().lines().front()->text == u8"{\\c&H0019FF&}line");
+        QCOMPARE(application->settingsStore()->integer("video.matrixMismatch"),
+                 int(application::VideoPropertyAction::ConvertColours));
         application->editor().discard();
     }
 
@@ -37964,17 +38497,17 @@ private slots:
             return menu->property("background").value<QQuickItem *>()->property("color").value<QColor>();
         };
         const auto check = [&](bool dark) {
-            const QColor field = ui::theme::current().roles.field;
-            QCOMPARE(field.lightness() < 128, dark);
+            const QColor panel = ui::theme::current().roles.panel;
+            QCOMPARE(panel.lightness() < 128, dark);
             QVERIFY(QMetaObject::invokeMethod(videoMenu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
             QTRY_VERIFY(videoMenu->property("opened").toBool());
-            QTRY_COMPARE(surface(videoMenu), field);
+            QTRY_COMPARE(surface(videoMenu), panel);
             QVERIFY(QMetaObject::invokeMethod(videoMenu, "close"));
             QTRY_VERIFY(!videoMenu->property("visible").toBool());
             QVERIFY(QMetaObject::invokeMethod(fileMenu, "popup", Q_ARG(QQuickItem *, bar),
                                               Q_ARG(QPointF, QPointF(0, bar->height()))));
             QTRY_VERIFY(fileMenu->property("opened").toBool());
-            QTRY_COMPARE(surface(fileMenu), field);
+            QTRY_COMPARE(surface(fileMenu), panel);
             QVERIFY(QMetaObject::invokeMethod(fileMenu, "close"));
             QTRY_VERIFY(!fileMenu->property("visible").toBool());
         };
@@ -38547,24 +39080,22 @@ private slots:
         QTRY_VERIFY(fsWindow->grabWindow().copy(picture) != before);
         auto *panel = fullscreenItem("videoFullscreenPanel");
         QCOMPARE(fs.barMode(), 0);
-        QVERIFY(!fs.pinned());
+        QVERIFY(fs.stripReserved());
         QVERIFY(fs.barShown());
         QTRY_VERIFY(panel && panel->isVisible());
         QTRY_VERIFY(fullscreenItem("videoFullscreenHint")->isVisible());
         QCOMPARE(fullscreenItem("videoFullscreenHintText")->property("text").toString(),
                  QStringLiteral("Press Esc to exit full screen"));
-        QTRY_VERIFY(fullscreenItem("videoFullscreenTitle")->isVisible());
-        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
+        QVERIFY(!fullscreenItem("videoFullscreenTitle"));
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
         QCOMPARE(presenter->width(), qreal(fsWindow->width()));
-        QVERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
-        QVERIFY(!fullscreenItem("fullscreenInspectorSlot")->isVisible());
+        QVERIFY(!fullscreenItem("fullscreenTypesetting"));
         const QRectF shownRect = application->visualTools().videoRect();
         QVERIFY(qAbs(shownRect.width() - presenter->width()) <= 1 || qAbs(shownRect.height() - presenter->height()) <= 1);
         QVERIFY(qAbs(shownRect.center().x() - presenter->width() / 2) <= 1);
         QVERIFY(qAbs(shownRect.center().y() - presenter->height() / 2) <= 1);
-        for (const char *name : {"fullscreenPreviousFile", "fullscreenPlayPause", "fullscreenPlayLine", "fullscreenStop",
-                                 "fullscreenNextFile", "fullscreenOpenEditor", "fullscreenToolsButton", "fullscreenSpeaker",
-                                 "fullscreenExit"}) {
+        for (const char *name : {"fullscreenPreviousFrame", "fullscreenPlayPause", "fullscreenNextFrame", "fullscreenPlayLine",
+                                 "fullscreenStop", "fullscreenSpeaker", "fullscreenExit"}) {
             auto *button = fullscreenItem(name);
             QVERIFY2(button && button->isVisible(), name);
             QCOMPARE(button->property("display").toInt(), 0);
@@ -38572,22 +39103,17 @@ private slots:
             QVERIFY2(!button->property("tip").toString().isEmpty(), name);
         }
         QCOMPARE(fullscreenItem("fullscreenExit")->property("tip").toString(),
-                 QStringLiteral("Exit full screen (Esc)\nShift+click to set a shortcut"));
-        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Show when the pointer moves"));
-        QVERIFY(fullscreenItem("fullscreenBarMode")->property("tip").toString().startsWith(QStringLiteral("Full screen bar (Tab)")));
-        QCOMPARE(fullscreenItem("fullscreenVideoName")->property("text").toString(), QStringLiteral("clip.mkv"));
+                 QStringLiteral("Leave full screen (Esc)\nShift+click to set a shortcut"));
+        QCOMPARE(fs.videoName(), QStringLiteral("clip.mkv"));
         QTRY_VERIFY(fullscreenItem("fullscreenLine")->isVisible());
         QCOMPARE(fullscreenItem("fullscreenLineNumber")->property("text").toString(), QStringLiteral("1"));
         QCOMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
-        QCOMPARE(fullscreenItem("fullscreenLineTimes")->property("text").toString(),
-                 application->editor().startText() + QStringLiteral(" – ") + application->editor().endText());
         application->editor().textEdited(QStringLiteral("{\\i1}draft\\Nnow"), 5);
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("draft \u21B5 now"));
         const QString markup = QStringLiteral("<img src=\"http://127.0.0.1:9/x\"><b>bold</b>");
         application->editor().textEdited(markup, int(markup.size()));
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), markup);
         QCOMPARE(fullscreenItem("fullscreenLineText")->property("textFormat").toInt(), int(Qt::PlainText));
-        QCOMPARE(fullscreenItem("fullscreenVideoName")->property("textFormat").toInt(), int(Qt::PlainText));
         application->editor().discard();
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
         auto *progress = fullscreenItem("videoFullscreenProgress");
@@ -38821,23 +39347,21 @@ private slots:
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.pinned());
-        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Always show"));
+        QVERIFY(fs.stripReserved());
         const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
         QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
         auto *fsMenu = named("videoFullscreenMenu");
         QTRY_VERIFY(fsMenu->property("opened").toBool());
         QCOMPARE(named("fullscreenMenuFullscreenBar")->property("title").toString(), QStringLiteral("Full screen bar"));
         QVERIFY(named("fullscreenMenuFullscreenBar")->property("shown").toBool());
-        QCOMPARE(named("fullscreenMenuFullscreenBarAuto")->property("text").toString(), QStringLiteral("Show when the pointer moves"));
+        QCOMPARE(named("fullscreenMenuFullscreenBarAuto")->property("text").toString(), QStringLiteral("Auto-hide"));
         QCOMPARE(named("fullscreenMenuFullscreenBar")->property("shortcutText").toString(), QStringLiteral("Tab"));
         QVERIFY(checked(QStringLiteral("fullscreenMenuFullscreenBarAlways")));
         pick(QStringLiteral("fullscreenMenuFullscreenBar"), "Never", 2);
-        QVERIFY(!fs.pinned());
-        QTRY_COMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Never show"));
+        QVERIFY(!fs.stripReserved());
         QVERIFY(checked(QStringLiteral("fullscreenBarNever")));
         pick(QStringLiteral("fullscreenMenuFullscreenBar"), "Auto", 0);
-        QTRY_COMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Show when the pointer moves"));
+        QVERIFY(fs.stripReserved());
         QTRY_VERIFY(!fsMenu->property("visible").toBool());
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 1);
@@ -38899,13 +39423,18 @@ private slots:
         auto &fs = application->videoFullscreen();
         auto &settings = *application->settingsStore();
         auto &video = application->video();
+        const auto restore = qScopeGuard([&] {
+            settings.set("video.fullscreenBar", 0);
+            settings.set("video.fullscreenBarPosition", 0);
+            settings.set("video.fullscreenHidePointer", true);
+        });
         fs.setIdleInterval(300);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
         QVERIFY(becomesFocusWindow(fsWindow));
         auto *panel = fullscreenItem("videoFullscreenPanel");
-        auto *title = fullscreenItem("videoFullscreenTitle");
+        QVERIFY(!fullscreenItem("videoFullscreenTitle"));
         auto *overlay = item("visualOverlay");
         auto *presenter = item("videoPresenter");
         const auto cursor = [&] { return overlay->property("cursorOverride").toInt(); };
@@ -38921,16 +39450,20 @@ private slots:
             QTRY_VERIFY(!video.playing());
         };
         const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
+        QCOMPARE(fs.barPosition(), ui::VideoFullscreenController::BarPosition::Below);
+        QCOMPARE(fs.barMode(), 0);
+        QVERIFY(fs.stripReserved());
+        QCOMPARE(panel->height(), 112.0);
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
         QTest::mouseMove(fsWindow, picture);
         QTest::qWait(600);
         QVERIFY(fs.barShown());
         QVERIFY(panel->isVisible());
-        QVERIFY(title->isVisible());
         QCOMPARE(cursor(), -1);
         playFromStart();
         QTRY_VERIFY(!fs.barShown());
         QTRY_VERIFY(!panel->isVisible());
-        QTRY_VERIFY(!title->isVisible());
+        QCOMPARE(presenter->height(), fsWindow->height() - panel->height());
         QCOMPARE(cursor(), int(Qt::BlankCursor));
         QVERIFY(fullscreenItem("videoFullscreenKeys")->hasActiveFocus());
         // Qt Quick resends a still pointer's hover each frame the picture changes.
@@ -38955,6 +39488,21 @@ private slots:
         QCOMPARE(cursor(), -1);
         QTRY_VERIFY(panel->isVisible());
         QTRY_VERIFY(!fs.barShown());
+        QTest::keyClick(fsWindow, Qt::Key_Space);
+        QTRY_VERIFY(!video.playing());
+        QTRY_VERIFY(fs.barShown());
+        playFromStart();
+        QTRY_VERIFY(!fs.barShown());
+        QTest::keyClick(fsWindow, Qt::Key_Right);
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        fs.keyPressed(Qt::Key_Space);
+        QVERIFY(!fs.barShown());
+        settings.set("video.fullscreenHidePointer", false);
+        QTRY_COMPARE(cursor(), -1);
+        QVERIFY(!fs.barShown());
+        settings.set("video.fullscreenHidePointer", true);
+        QTRY_COMPARE(cursor(), int(Qt::BlankCursor));
         auto &view = application->videoView();
         QVERIFY(view.toggleZoom());
         QVERIFY(view.zoomMode());
@@ -38967,38 +39515,26 @@ private slots:
         QVERIFY(!view.zoomMode());
         QVERIFY(view.resetZoom());
         auto &tools = application->visualTools();
-        const qreal barHeight = panel->height();
         tools.selectFamily(3);
-        auto *rail = fullscreenItem("fullscreenToolRail");
-        QTRY_VERIFY(rail->isVisible());
+        QTest::qWait(50);
+        QVERIFY(!fullscreenItem("fullscreenToolRail"));
+        fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
+        QTRY_VERIFY(fullscreenItem("fullscreenToolRail") && fullscreenItem("fullscreenToolRail")->isVisible());
+        QVERIFY(!fs.barShown());
+        QVERIFY(!fs.cursorHidden());
         pause();
         playFromStart();
-        QTRY_VERIFY(!fs.barShown());
-        QVERIFY(rail->isVisible());
-        auto *railTool = findItem(rail, QStringLiteral("visualTool3"));
-        QVERIFY(railTool && railTool->isVisible());
-        const QPoint onRail = railTool->mapToScene(QPointF(railTool->width() / 2, railTool->height() / 2)).toPoint();
-        QTest::mouseMove(fsWindow, onRail);
-        QTRY_VERIFY(fs.barShown());
-        QTRY_VERIFY(!fs.barShown());
-        QTest::mouseMove(fsWindow, onRail + QPoint(0, 2));
-        QTRY_VERIFY(fs.barShown());
-        pause();
-        playFromStart();
-        QTRY_VERIFY(title->isVisible());
-        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
-        for (int i = 0; i < 5; ++i) {
-            QTest::mouseMove(fsWindow, onTitle + QPoint(4 * i, 0));
-            QTest::qWait(150);
-            QVERIFY2(fs.barShown(), qPrintable(QString::number(i)));
-        }
+        QTest::qWait(600);
+        QVERIFY(!fs.barShown());
+        QVERIFY(!fs.cursorHidden());
+        fs.setMode(ui::VideoFullscreenController::Mode::Simple);
         tools.selectFamily(0);
-        QTRY_VERIFY(!rail->isVisible());
-        QTRY_COMPARE(panel->height(), barHeight);
+        QTRY_VERIFY(!fullscreenItem("fullscreenToolRail"));
         pause();
         QVERIFY(fs.barShown());
         QTRY_VERIFY(panel->isVisible());
-        const QPoint onBar = panel->mapToScene(QPointF(panel->width() / 2, 4)).toPoint();
+        QTRY_COMPARE(panel->height(), 112.0);
+        const QPoint onBar = panel->mapToScene(QPointF(panel->width() / 2, panel->height() / 2)).toPoint();
         QTest::mouseMove(fsWindow, onBar);
         QTRY_VERIFY(fs.pointerOverBar());
         playFromStart();
@@ -39023,11 +39559,9 @@ private slots:
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 1);
         QCOMPARE(settings.integer("video.fullscreenBar"), 1);
-        QVERIFY(fs.pinned());
+        QVERIFY(fs.stripReserved());
         QTRY_VERIFY(panel->isVisible());
         QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
-        QTRY_VERIFY(!title->isVisible());
-        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Always show"));
         playFromStart();
         QTRY_COMPARE(cursor(), int(Qt::BlankCursor));
         QVERIFY(fs.barShown());
@@ -39035,29 +39569,52 @@ private slots:
         pause();
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 2);
+        QVERIFY(!fs.stripReserved());
         QTRY_VERIFY(!panel->isVisible());
         QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
         QTest::mouseMove(fsWindow, picture + QPoint(0, 10));
         QTest::qWait(50);
         QVERIFY(!fs.barShown());
-        QVERIFY(!title->isVisible());
         QCOMPARE(cursor(), -1);
         QTest::keyClick(fsWindow, Qt::Key_Tab);
         QCOMPARE(fs.barMode(), 0);
         QTest::mouseMove(fsWindow, picture);
         QTRY_VERIFY(panel->isVisible());
-        clickWith(fullscreenItem("fullscreenBarMode"), Qt::NoModifier);
-        auto *modeMenu = named("fullscreenBarModeMenu");
-        QTRY_VERIFY(modeMenu->property("opened").toBool());
-        QCOMPARE(named("fullscreenBarAuto")->property("checked").toBool(), true);
-        QCOMPARE(named("fullscreenBarNever")->property("text").toString(), QStringLiteral("Never show"));
+
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier,
+                          panel->mapToScene(QPointF(8, 8)).toPoint());
+        auto *stripMenu = named("fullscreenStripMenu");
+        QTRY_VERIFY(stripMenu->property("opened").toBool());
+        QVERIFY(fs.menuOpen());
+        QCOMPARE(named("fullscreenBarPosition")->property("title").toString(), QStringLiteral("Bar position"));
+        QCOMPARE(named("fullscreenBarShow")->property("title").toString(), QStringLiteral("Show bar"));
+        QCOMPARE(named("fullscreenBarSettings")->property("text").toString(), QStringLiteral("Full-screen settings…"));
+        QVERIFY(named("fullscreenBarPositionBelow")->property("checked").toBool());
+        QVERIFY(named("fullscreenBarAuto")->property("checked").toBool());
+        QCOMPARE(named("fullscreenBarAuto")->property("text").toString(), QStringLiteral("Auto-hide"));
+        QCOMPARE(named("fullscreenBarNever")->property("text").toString(), QStringLiteral("Never"));
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarPositionOver"), "triggered"));
+        QCOMPARE(settings.integer("video.fullscreenBarPosition"), 1);
+        QCOMPARE(fs.barPosition(), ui::VideoFullscreenController::BarPosition::Over);
+        QVERIFY(!fs.stripReserved());
+        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
+        QVERIFY(panel->height() < 112);
+        QMetaObject::invokeMethod(stripMenu, "close");
+        QTRY_VERIFY(!stripMenu->property("visible").toBool());
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier,
+                          panel->mapToScene(QPointF(8, panel->height() - 8)).toPoint());
+        QTRY_VERIFY(stripMenu->property("opened").toBool());
+        QVERIFY(named("fullscreenBarPositionOver")->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarAlways"), "triggered"));
         QCOMPARE(fs.barMode(), 1);
-        QTRY_VERIFY(!modeMenu->property("visible").toBool());
+        QVERIFY(!fs.stripReserved());
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarPositionBelow"), "triggered"));
+        QMetaObject::invokeMethod(stripMenu, "close");
+        QTRY_VERIFY(!stripMenu->property("visible").toBool());
         QVERIFY(fs.leave());
         QVERIFY(fs.toggle(0));
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.pinned());
+        QVERIFY(fs.stripReserved());
         QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
         const int volume = application->videoView().volume();
         const QPoint below = panel->mapToScene(QPointF(panel->width() / 2, panel->height() / 2)).toPoint();
@@ -39074,7 +39631,135 @@ private slots:
         QTest::qWait(50);
         QCOMPARE(fs.barMode(), 1);
         QVERIFY(!fs.active());
-        settings.set("video.fullscreenBar", 0);
+    }
+
+    void videoFullscreenOpensInTheChosenModeAndTypesetSwitchesInPlace()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        auto &settings = *application->settingsStore();
+        const auto restore = qScopeGuard([&] { settings.set("video.fullscreenOpensIn", 0); });
+        using Mode = ui::VideoFullscreenController::Mode;
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QCOMPARE(fs.mode(), Mode::Simple);
+        QVERIFY(!fullscreenItem("fullscreenTypesetting"));
+        auto *typeset = fullscreenItem("fullscreenTypeset");
+        QTRY_VERIFY(typeset && typeset->isVisible());
+        QCOMPARE(typeset->property("label").toString(), QStringLiteral("Typeset"));
+        QCOMPARE(typeset->property("tip").toString(),
+                 QStringLiteral("Typeset: switch to full-screen typesetting · the frame keeps its place"));
+        clickWith(typeset, Qt::NoModifier);
+        QCOMPARE(fs.mode(), Mode::Typesetting);
+        QVERIFY(fs.active());
+        QVERIFY(!fs.barShown());
+        QTRY_VERIFY(fullscreenItem("fullscreenTypesetting") && fullscreenItem("fullscreenTypesetting")->isVisible());
+        QCOMPARE(application->video().frame(), 30);
+        auto *simple = fullscreenItem("fullscreenModeSimple");
+        QTRY_VERIFY(simple && simple->isVisible());
+        QTest::qWait(200);
+        clickWith(simple, Qt::NoModifier);
+        QCOMPARE(fs.mode(), Mode::Simple);
+        QVERIFY(fs.leave());
+        settings.set("video.fullscreenOpensIn", 1);
+        QVERIFY(fs.toggle(0));
+        QCOMPARE(fs.mode(), Mode::Typesetting);
+        QVERIFY(fs.leave());
+        settings.set("video.fullscreenOpensIn", 0);
+        QTRY_VERIFY(!fsWindow->isVisible());
+        auto *header = visualItem("videoFullScreenTypesetting");
+        QTRY_VERIFY(header && header->isVisible() && header->isEnabled());
+        clickWith(header, Qt::NoModifier);
+        QTRY_VERIFY(fs.active());
+        QCOMPARE(fs.mode(), Mode::Typesetting);
+        QVERIFY(fs.toggleTypesetting());
+        QVERIFY(!fs.active());
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_FULL_SCREEN_TYPESETTING"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(fs.active());
+        QCOMPARE(fs.mode(), Mode::Typesetting);
+        QVERIFY(fs.toggle(0));
+        QVERIFY(!fs.active());
+    }
+
+    void videoFullscreenStripStatesAndKeyboard()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        keysNeverRepeat();
+        auto &fs = application->videoFullscreen();
+        auto &settings = *application->settingsStore();
+        const auto restore = qScopeGuard([&] { settings.set("video.fullscreenOverlays", true); });
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QCOMPARE(fullscreenItem("fullscreenStartTime")->property("text").toString(), fs.positionText());
+        QCOMPARE(fullscreenItem("fullscreenTime")->property("text").toString(), fs.positionText());
+        QVERIFY(fs.positionText().startsWith(QStringLiteral("0:00:0")));
+        QVERIFY(fs.lengthText().startsWith(QStringLiteral("0:00:0")));
+        QCOMPARE(fullscreenItem("fullscreenLength")->property("text").toString(), fs.lengthText());
+        QVERIFY(!fs.seeking());
+        QCOMPARE(fs.failedFrame(), -1);
+        QVERIFY(!fullscreenItem("videoFullscreenFailure")->isVisible());
+        QVERIFY(fullscreenItem("videoFullscreenProgress")->isVisible());
+        settings.set("video.fullscreenOverlays", false);
+        QTRY_VERIFY(!fullscreenItem("videoFullscreenProgress")->isVisible());
+
+        auto *leading = fullscreenItem("fullscreenLine");
+        QTRY_VERIFY(fullscreenItem("fullscreenLineText")->isVisible());
+        QCOMPARE(QAccessible::queryAccessibleInterface(leading)->text(QAccessible::Name),
+                 QStringLiteral("Line 1: first"));
+        v5Session()->setSelection(application::Selection{});
+        application->editor().reloadFromSession();
+        QTRY_VERIFY(fullscreenItem("fullscreenNoLine")->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenNoLine")->property("text").toString(), QStringLiteral("No line at this time"));
+        QVERIFY(!fullscreenItem("fullscreenLineText")->isVisible());
+
+        for (const char *name : {"fullscreenPreviousFile", "fullscreenNextFile", "fullscreenBarMode", "fullscreenOpenEditor"})
+            QVERIFY2(!fullscreenItem(name), name);
+        for (const char *name : {"fullscreenPreviousFrame", "fullscreenPlayPause", "fullscreenNextFrame", "fullscreenPlayLine",
+                                 "fullscreenStop", "fullscreenTypeset", "fullscreenSpeaker", "fullscreenExit"}) {
+            auto *button = fullscreenItem(name);
+            QVERIFY2(button && button->isVisible(), name);
+            QVERIFY2(button->width() >= 34 && qAbs(button->width() - qMax(34.0, button->implicitWidth())) < 1, name);
+            QCOMPARE(button->height(), 34.0);
+            const auto *a11y = QAccessible::queryAccessibleInterface(button);
+            QCOMPARE(a11y->text(QAccessible::Name), button->property("text").toString());
+            QCOMPARE(a11y->text(QAccessible::Description), button->property("tip").toString().section(QLatin1Char('\n'), 0, 0));
+        }
+        const int frame = application->video().frame();
+        clickWith(fullscreenItem("fullscreenNextFrame"), Qt::NoModifier);
+        QTRY_COMPARE(application->video().frame(), frame + 1);
+        clickWith(fullscreenItem("fullscreenPreviousFrame"), Qt::NoModifier);
+        QTRY_COMPARE(application->video().frame(), frame);
+
+        fullscreenItem("videoFullscreenKeys")->forceActiveFocus();
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_VERIFY(leading->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_VERIFY(fullscreenItem("fullscreenPreviousFrame")->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_VERIFY(fullscreenItem("fullscreenTypeset")->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_F6);
+        QTRY_COMPARE(fsWindow->activeFocusItem(), fullscreenItem("videoFullscreenKeys"));
+        QTest::keyClick(fsWindow, Qt::Key_F6, Qt::ShiftModifier);
+        QTRY_VERIFY(fullscreenItem("fullscreenTypeset")->hasActiveFocus());
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QVERIFY(fs.active());
+        QTRY_COMPARE(fsWindow->activeFocusItem(), fullscreenItem("videoFullscreenKeys"));
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QVERIFY(!fs.active());
     }
 
     void videoTextIsWhatTheVideoShows()
@@ -39128,14 +39813,8 @@ private slots:
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
-        auto *title = fullscreenItem("videoFullscreenTitle");
         auto *panel = fullscreenItem("videoFullscreenPanel");
-        QTRY_VERIFY(title->isVisible());
         QTRY_VERIFY(panel->isVisible());
-        QVERIFY(!video.playing());
-        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
-        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, onTitle);
-        QTest::qWait(100);
         QVERIFY(!video.playing());
         const QPoint betweenControls = panel->mapToScene(QPointF(panel->width() / 2, 2)).toPoint();
         QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, betweenControls);
@@ -39147,26 +39826,6 @@ private slots:
         QTRY_VERIFY(video.playing());
         QVERIFY(video.pause());
         QVERIFY(fs.leave());
-    }
-
-    void videoFullscreenOpenEditorShowsTheLineEditor()
-    {
-        restartWithoutSound();
-        QTemporaryDir &folder = testFolder();
-        QVERIFY(v5Open(folder));
-        auto &fs = application->videoFullscreen();
-        QObject *editorDock = named("editorDock");
-        QVERIFY(QMetaObject::invokeMethod(editorDock, "close"));
-        QTRY_VERIFY(!editorDock->property("isOpen").toBool());
-        QVERIFY(fs.toggle(0));
-        QQuickWindow *fsWindow = fullscreenWindow();
-        QTRY_VERIFY(fsWindow->isExposed());
-        auto *open = fullscreenItem("fullscreenOpenEditor");
-        QTRY_VERIFY(open->isVisible());
-        clickWith(open, Qt::NoModifier);
-        QTRY_VERIFY(!fs.active());
-        QTRY_VERIFY(editorDock->property("isOpen").toBool());
-        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
     }
 
     void videoFullscreenToastDetailsLeaveForTheLog()
@@ -39449,7 +40108,7 @@ private slots:
         QCOMPARE(aspectWindow->transientParent(), fsWindow);
         QVERIFY(QMetaObject::invokeMethod(aspect, "close"));
         QTRY_VERIFY(!aspectWindow->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(fullscreenItem("fullscreenNextFile"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_NEXT_FILE"))));
         auto *question = named("videoFileQuestion");
         QObject *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
@@ -39476,59 +40135,80 @@ private slots:
         QTRY_VERIFY(!fsMenu->property("visible").toBool());
         auto &tools = application->visualTools();
         QCOMPARE(tools.activeFamily(), 0);
+        QVERIFY(!fullscreenItem("fullscreenToolRail"));
+        fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
+        QTRY_VERIFY(fullscreenItem("fullscreenTypesetting") && fullscreenItem("fullscreenTypesetting")->isVisible());
+        QTRY_VERIFY(!fullscreenItem("videoFullscreenPanel")->isVisible());
         auto *rail = fullscreenItem("fullscreenToolRail");
-        auto *slot = fullscreenItem("fullscreenInspectorSlot");
-        QVERIFY(!rail->isVisible());
-        QVERIFY(!slot->isVisible());
-        auto *toolsButton = fullscreenItem("fullscreenToolsButton");
-        QTRY_VERIFY(toolsButton->isVisible());
-        clickWith(toolsButton, Qt::NoModifier);
-        auto *toolsMenu = named("fullscreenToolsMenu");
-        QTRY_VERIFY(toolsMenu->property("opened").toBool());
-        QCOMPARE(toolsMenu->property("count").toInt(), application::visual::kFamilyCount);
-        auto *scale = toolsMenu->findChild<QObject *>(QStringLiteral("fullscreenTool3"));
-        QVERIFY(scale);
-        QCOMPARE(scale->property("text").toString(), tools.families().at(3).toMap().value(QStringLiteral("name")).toString());
-        QVERIFY(toolsMenu->findChild<QObject *>(QStringLiteral("fullscreenTool0"))->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(scale, "triggered"));
+        auto *list = fullscreenItem("visualToolList");
+        QVERIFY(rail && list && list->isVisible());
+        QVERIFY(!findItem(rail, QStringLiteral("visualTool0"))->isVisible());
+        const bool narrow = fsWindow->width() < 1400;
+        QCOMPARE(rail->width(), narrow ? 160.0 : 188.0);
+        QCOMPARE(fullscreenItem("fullscreenInspector")->width(), narrow ? 288.0 : 320.0);
+        QCOMPARE(fullscreenItem("fullscreenTopBar")->height(), 40.0);
+        QCOMPARE(fullscreenItem("fullscreenStatusRow")->height(), 28.0);
+        auto *frameArea = fullscreenItem("fullscreenFrame");
+        auto *stage = fullscreenItem("videoFullscreenStage");
+        QTRY_COMPARE(stage->size(), frameArea->size());
+        QCOMPARE(stage->mapToScene(QPointF()), frameArea->mapToScene(QPointF()));
+        QCOMPARE(fullscreenItem("fullscreenModeChoice")->property("currentIndex").toInt(), 1);
+        QCOMPARE(fullscreenItem("visualToolRowName3")->property("text").toString(), QStringLiteral("Scale"));
+        QCOMPARE(fullscreenItem("visualToolRowName5")->property("text").toString(), QStringLiteral("Tilt X / Y"));
+        QCOMPARE(fullscreenItem("visualToolRow3")->property("text").toString(),
+                 tools.families().at(3).toMap().value(QStringLiteral("name")).toString());
+        for (QQuickItem *item : list->findChildren<QQuickItem *>())
+            item->ensurePolished();
+        clickWith(fullscreenItem("visualToolRow3"), Qt::NoModifier);
         QTRY_COMPARE(tools.activeFamily(), 3);
-        QTRY_VERIFY(!toolsMenu->property("visible").toBool());
-        QTRY_VERIFY(rail->isVisible());
-        QVERIFY(slot->isVisible());
         auto *fsBar = fullscreenItem("fullscreenToolBar");
         QVERIFY(fsBar && fsBar->isVisible());
-        QCOMPARE(fsBar->parentItem(), slot);
-        QVERIFY(!fullscreenItem("visualToolName"));
-        {
-            QVERIFY(!fs.menuOpen());
-            auto *moreTools = rail->findChild<QObject *>(QStringLiteral("visualToolsMoreMenu"));
-            QVERIFY(moreTools);
-            QVERIFY(QMetaObject::invokeMethod(moreTools, "open"));
-            QTRY_VERIFY(fs.menuOpen());
-            QVERIFY(QMetaObject::invokeMethod(moreTools, "close"));
-            QTRY_VERIFY(!fs.menuOpen());
-            auto *moreOptions = fsBar->findChild<QObject *>(QStringLiteral("visualToolMorePopover"));
-            QVERIFY(moreOptions);
-            QVERIFY(QMetaObject::invokeMethod(moreOptions, "openAt", Q_ARG(QVariant, QVariant::fromValue<QObject *>(fsBar)),
-                                              Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
-            QTRY_VERIFY(fs.menuOpen());
-            QVERIFY(QMetaObject::invokeMethod(moreOptions, "revert"));
-            QTRY_VERIFY(!fs.menuOpen());
-        }
+        QCOMPARE(fullscreenItem("visualInspectorName")->property("text").toString(), QStringLiteral("Scale"));
+        QCOMPARE(fullscreenItem("visualInspectorHintText")->property("text").toString(),
+                 QStringLiteral("Drag to stretch across, right-drag to stretch up. Shift-drag scales both."));
         QTRY_VERIFY(fullscreenItem("visualOption_rectangle"));
         QTRY_VERIFY(fullscreenItem("visualValue_fscx") && fullscreenItem("visualValue_fscx")->isVisible());
-        QCOMPARE(fullscreenItem("fullscreenToolsButton")->property("iconRole").toString(), QStringLiteral("tool-scale"));
-        auto *bar = fullscreenItem("videoFullscreenPanel");
-        QVERIFY(rail->mapToScene(QPointF(0, rail->height())).y() <= bar->mapToScene(QPointF(0, 0)).y());
-        auto *crosshair = findItem(rail, QStringLiteral("visualTool0"));
-        QVERIFY(crosshair && crosshair->isVisible());
-        // Offscreen lays out the rail's column again only at a frame.
-        for (QQuickItem *item : rail->findChildren<QQuickItem *>())
-            item->ensurePolished();
-        clickWith(crosshair, Qt::NoModifier);
+        QVERIFY(fullscreenItem("visualInspectorHandles")->isVisible());
+        QVERIFY(fullscreenItem("visualInspectorHandle2"));
+        QVERIFY(!fullscreenItem("visualInspectorHandle3"));
+        QVERIFY(fullscreenItem("visualApplyTo")->isVisible());
+        {
+            auto *keys = fullscreenItem("videoFullscreenKeys");
+            const auto in = [&](const char *region) {
+                QQuickItem *focus = fsWindow->activeFocusItem();
+                return focus && (focus == fullscreenItem(region) || fullscreenItem(region)->isAncestorOf(focus));
+            };
+            keys->forceActiveFocus();
+            QTRY_COMPARE(fsWindow->activeFocusItem(), keys);
+            QTest::keyClick(fsWindow, Qt::Key_F6);
+            QTRY_VERIFY(in("fullscreenInspector"));
+            QTest::keyClick(fsWindow, Qt::Key_F6);
+            QTRY_VERIFY(fullscreenItem("fullscreenLineBox")->hasActiveFocus());
+            QTest::keyClick(fsWindow, Qt::Key_F6);
+            QTRY_VERIFY(in("fullscreenStatusRow"));
+            QTest::keyClick(fsWindow, Qt::Key_F6);
+            QTRY_VERIFY(fullscreenItem("fullscreenModeTypesetting")->hasActiveFocus());
+            QTest::keyClick(fsWindow, Qt::Key_F6);
+            QTRY_VERIFY(list->hasActiveFocus());
+            QTest::keyClick(fsWindow, Qt::Key_F6);
+            QTRY_COMPARE(fsWindow->activeFocusItem(), keys);
+            QTest::keyClick(fsWindow, Qt::Key_F6, Qt::ShiftModifier);
+            QTRY_VERIFY(list->hasActiveFocus());
+            QTest::keyClick(fsWindow, Qt::Key_Down);
+            QTest::keyClick(fsWindow, Qt::Key_Return);
+            QTRY_COMPARE(tools.activeFamily(), 4);
+            QTest::keyClick(fsWindow, Qt::Key_Escape);
+            QTRY_COMPARE(fsWindow->activeFocusItem(), keys);
+            QVERIFY(fs.active());
+        }
+        clickWith(fullscreenItem("visualToolRow0"), Qt::NoModifier);
         QTRY_COMPARE(tools.activeFamily(), 0);
-        QTRY_VERIFY(!rail->isVisible());
-        QVERIFY(!slot->isVisible());
+        QVERIFY(!fullscreenItem("visualInspectorHandles")->isVisible());
+        QVERIFY(!fullscreenItem("visualApplyTo")->isVisible());
+        fs.setMode(ui::VideoFullscreenController::Mode::Simple);
+        QTRY_VERIFY(!fullscreenItem("fullscreenTypesetting"));
+        fs.pointerMoved(QPointF(3, 3));
+        QTRY_COMPARE(fullscreenItem("videoFullscreenPanel")->opacity(), 1.0);
         QVERIFY(application->video().play());
         QTRY_VERIFY(application->video().playing());
         clickWith(fullscreenItem("fullscreenStop"), Qt::ShiftModifier);
@@ -39544,6 +40224,7 @@ private slots:
         QTemporaryDir shapesConfig;
         QVERIFY(shapesConfig.isValid());
         tools.setShapesFile(ui::ListFile::make(shapesConfig.filePath(QStringLiteral("shapes.toml")), {}, ui::kShapesFormat, nullptr));
+        fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
         tools.selectFamily(8);
         QTRY_VERIFY(fullscreenItem("visualOption_shape"));
         QVERIFY(becomesFocusWindow(fsWindow));
@@ -39717,8 +40398,9 @@ private slots:
             QTRY_VERIFY(!fullscreenItem("videoFullscreenHint")->isVisible());
             shot("auto");
             openAndShoot("fullscreenSpeaker", "fullscreenAudioOutputMenu", "output", Qt::RightButton);
-            openAndShoot("fullscreenBarMode", "fullscreenBarModeMenu", "mode");
-            openAndShoot("fullscreenToolsButton", "fullscreenToolsMenu", "tools");
+            fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
+            QTRY_VERIFY(fullscreenItem("fullscreenTypesetting") && fullscreenItem("fullscreenTypesetting")->isVisible());
+            QTRY_COMPARE(fullscreenItem("videoFullscreenStage")->size(), fullscreenItem("fullscreenFrame")->size());
             const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
             QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
             auto *fsMenu = named("videoFullscreenMenu");
@@ -39727,13 +40409,14 @@ private slots:
             QMetaObject::invokeMethod(fsMenu, "close");
             QTRY_VERIFY(!fsMenu->property("visible").toBool());
             tools.selectFamily(6);
-            QTRY_VERIFY(fullscreenItem("fullscreenToolRail")->isVisible());
-            QTest::mouseMove(fsWindow, picture + QPoint(4, 0));
+            QTRY_VERIFY(fullscreenItem("visualInspectorHandles")->isVisible());
+            QTest::mouseMove(fsWindow, centre + QPoint(4, 0));
             shot("tool");
             tools.selectFamily(0);
-            QTRY_VERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
+            fs.setMode(ui::VideoFullscreenController::Mode::Simple);
+            QTRY_VERIFY(!fullscreenItem("fullscreenTypesetting"));
             fs.setBarMode(1);
-            QTRY_VERIFY(fs.pinned());
+            QTRY_VERIFY(fs.stripReserved());
             shot("always");
             fs.setBarMode(2);
             QVERIFY(fs.leave());

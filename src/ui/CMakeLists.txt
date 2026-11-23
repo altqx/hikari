@@ -6,7 +6,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h panel_dock.cpp panel_dock.h side_bar_model.cpp side_bar_model.h
-    workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h presets_file.cpp presets_file.h tiered_presets.cpp tiered_presets.h
+    workspace_layout.cpp workspace_layout.h file_write_queue.cpp file_write_queue.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h presets_file.cpp presets_file.h tiered_presets.cpp tiered_presets.h export_recipes.cpp export_recipes.h
     editor_highlighter.cpp editor_highlighter.h
     settings_store.cpp settings_store.h settings_files.cpp settings_files.h project_file.cpp project_file.h project_credentials.cpp project_credentials.h toml_file.cpp toml_file.h list_files.cpp list_files.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
@@ -19,18 +19,20 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MenuContent.qml MacroMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml MenuContent.qml MacroMenuEntries.qml PluginMenuEntries.qml AutomationDialog.qml AutomationManager.qml TemplateEditor.qml AutomationFilePicker.qml FontPicker.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml HistoryWindow.qml ColumnsWindow.qml TranslationShiftWindow.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 list(APPEND hikari_ui_qml_files ShiftTimesPanel.qml TimingPostprocessorPanel.qml TimingAssistantView.qml ShiftPresetBar.qml ShiftPreview.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 list(APPEND hikari_ui_qml_files HomePage.qml RecentList.qml)
+list(APPEND hikari_ui_qml_files GridFilterField.qml)
 list(APPEND hikari_ui_qml_files StylesPanel.qml)
+list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml)
 list(APPEND hikari_ui_qml_files ChangeAlignmentMenu.qml AlignDistributeMenu.qml PhantomMenu.qml CycleValuesPage.qml)
 list(APPEND hikari_ui_qml_files TagListPopup.qml EditorTagList.qml)
 list(APPEND hikari_ui_qml_files TagButton.qml TagButtonEditor.qml)
 list(APPEND hikari_ui_qml_files NodeGraphCanvas.qml NodePort.qml NodeAddPopup.qml NodeInspector.qml
     NodeSourceLines.qml NodeModeBar.qml NodePresetMenu.qml NodeLibraryMenu.qml)
-target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
+target_link_libraries(hikari_ui PUBLIC hikari_application hikari_themes Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS ShaderTools)
 target_sources(hikari_ui PRIVATE ycbcr_node.cpp ycbcr_node.h)
 target_sources(hikari_ui PRIVATE search_suggestions_view.cpp search_suggestions_view.h cited_answer.cpp cited_answer.h)
@@ -43,7 +45,7 @@ target_link_libraries(hikari_ui PRIVATE Qt6::GuiPrivate)
 get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 target_link_libraries(hikari_ui PUBLIC Hikari::tomlplusplus)
-hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
+hikari_module(hikari_ui ALLOW hikari_application hikari_core hikari_themes "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
 list(APPEND hikari_ui_qml_files AutomationNotices.qml)
 list(APPEND hikari_ui_qml_files AutomationResetDialog.qml)
 list(APPEND hikari_ui_qml_files FileChooser.qml FolderChooser.qml)
@@ -72,7 +74,7 @@ list(APPEND hikari_ui_qml_files FilterChip.qml FontResolutionNote.qml FontWindow
 list(APPEND hikari_ui_qml_files MatroskaSubtitles.qml)
 list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
-list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
+list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 list(APPEND hikari_ui_qml_files VisualToolOption.qml VisualToolDialogs.qml)
 list(APPEND hikari_ui_qml_files ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
 list(APPEND hikari_ui_qml_files AllTagsEditionDialog.qml)
@@ -91,8 +93,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setting_labels.cpp
         -P ${CMAKE_CURRENT_SOURCE_DIR}/setting_labels.cmake
     DEPENDS ${hikari_setting_pages} ${CMAKE_CURRENT_SOURCE_DIR}/setting_labels.cmake VERBATIM)
 target_sources(hikari_ui PRIVATE setting_labels.h ${CMAKE_CURRENT_BINARY_DIR}/setting_labels.cpp)
-set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
-list(APPEND hikari_ui_qml_files StatusBar.qml StatusHelp.qml)
+set_source_files_properties(StatusHelp.qml TypeRoles.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+list(APPEND hikari_ui_qml_files StatusBar.qml StatusHelp.qml TypeRoles.qml)
 set_source_files_properties(MenuKeys.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 list(APPEND hikari_ui_qml_files MenuKeys.qml TextMenu.qml TextMenuItem.qml)
 target_sources(hikari_ui PRIVATE icon_theme.cpp icon_theme.h)
@@ -103,17 +105,23 @@ list(APPEND hikari_ui_qml_files Icon.qml IconButton.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml IconTextButton.qml)
 list(APPEND hikari_ui_qml_resources icons/manifest.json ${hikari_icon_files})
 target_sources(hikari_ui PRIVATE theme.cpp theme.h)
+set(hikari_builtin_themes themes/light.json themes/dark.json themes/highContrastWhite.json themes/highContrastBlack.json)
+qt_add_resources(hikari_ui "hikari_builtin_themes" PREFIX "/hikari/ui" FILES ${hikari_builtin_themes})
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/themes/dark.json" HIKARI_FALLBACK_DARK)
+configure_file(themes/fallback_dark.cpp.in "${CMAKE_CURRENT_BINARY_DIR}/fallback_dark.cpp" @ONLY)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/themes/dark.json")
+target_sources(hikari_ui PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/fallback_dark.cpp")
 target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-list(APPEND hikari_ui_qml_files SearchSuggestions.qml AppearancePage.qml SettingsAiPage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml PanelToolbarSlot.qml SideBar.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+list(APPEND hikari_ui_qml_files SearchSuggestions.qml AppearancePage.qml SettingsAiPage.qml SettingsSection.qml SettingsRow.qml DiscordSettingsSection.qml DiscordProjectSection.qml FocusRing.qml PanelFocusMark.qml PanelToolbarSlot.qml SideBar.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 add_subdirectory(style)
 add_subdirectory(plugin_api)
 target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)
 target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
 target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscreen_controller.h)
-list(APPEND hikari_ui_qml_files VideoFullscreen.qml FullscreenBarMenu.qml)
+list(APPEND hikari_ui_qml_files VideoFullscreen.qml FullscreenTypesetting.qml FullscreenBarMenu.qml FullscreenStripButton.qml)
 list(APPEND hikari_ui_qml_files VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoRenderCost.qml
     VideoTemplateBadge.qml
@@ -158,6 +166,7 @@ if(UNIX AND NOT APPLE)
 endif()
 target_sources(hikari_ui PRIVATE user_guide.cpp user_guide.h)
 target_sources(hikari_ui PRIVATE explorer_model.cpp explorer_model.h)
+target_sources(hikari_ui PRIVATE quick_pick_model.cpp quick_pick_model.h)
 target_sources(hikari_ui PRIVATE window_frame.cpp window_frame.h window_frame_native.h)
 if(WIN32)
     target_sources(hikari_ui PRIVATE window_frame_win.cpp)

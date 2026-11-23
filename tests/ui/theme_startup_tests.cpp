@@ -36,7 +36,8 @@ private slots:
         window->requestActivate();
         QVERIFY(QTest::qWaitForWindowExposed(window));
         const QColor field = ui::theme::current().roles.field;
-        QVERIFY(field.lightness() < 128);
+        const QColor panel = ui::theme::current().roles.panel;
+        QVERIFY(panel.lightness() < 128);
         const auto surface = [](QObject *menu) {
             return menu->property("background").value<QQuickItem *>()->property("color").value<QColor>();
         };
@@ -44,8 +45,8 @@ private slots:
         QVERIFY(videoMenu);
         QVERIFY(QMetaObject::invokeMethod(videoMenu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
         QTRY_VERIFY(videoMenu->property("opened").toBool());
-        QTRY_COMPARE(surface(videoMenu), field);
-        QCOMPARE(window->property("palette").value<QObject *>()->property("base").value<QColor>(), field);
+        QTRY_COMPARE(surface(videoMenu), panel);
+        QTRY_COMPARE(window->property("palette").value<QObject *>()->property("base").value<QColor>(), field);
         QVERIFY(QMetaObject::invokeMethod(videoMenu, "close"));
         QTRY_VERIFY(!videoMenu->property("visible").toBool());
         auto *bar = window->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
@@ -54,7 +55,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(fileMenu, "popup", Q_ARG(QQuickItem *, bar),
                                           Q_ARG(QPointF, QPointF(0, bar->height()))));
         QTRY_VERIFY(fileMenu->property("opened").toBool());
-        QCOMPARE(surface(fileMenu), field);
+        QCOMPARE(surface(fileMenu), panel);
         QVERIFY(QMetaObject::invokeMethod(fileMenu, "close"));
         QTRY_VERIFY(!fileMenu->property("visible").toBool());
         ui::theme::forceSystemScheme(std::nullopt);

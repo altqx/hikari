@@ -1,11 +1,18 @@
 #include "hikari/app/api_host.h"
 
+#include "command_names.h"
+#include "plugin_variant.h"
+
 #include "hikari/backends/subtitle_renderer_selection.h"
 
 #include <QCoreApplication>
 #include <QFile>
 #include <QJSValueIterator>
 #include <QSaveFile>
+
+#include <algorithm>
+#include <memory>
+#include <optional>
 
 namespace hikari::app {
 
@@ -50,12 +57,18 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .marks = m_wiring.marks,
           .vcs = m_wiring.vcs,
           .programs = m_wiring.programs,
+          .presence = m_wiring.presence,
       }),
       m_seenProject(project())
 {
 }
 
 ApiHost::~ApiHost() = default;
+
+std::optional<std::string> ApiHost::pluginFormat(application::DocumentId document) const
+{
+    return m_pluginFormat ? m_pluginFormat(document) : std::nullopt;
+}
 
 std::optional<std::string> ApiHost::setKeyframes(const std::vector<std::int64_t> &frames, const std::optional<std::string> &file)
 {
@@ -180,6 +193,40 @@ bool ApiHost::run(std::string_view command)
 void ApiHost::commandRan(const QString &command, bool ok)
 {
     m_api.commandRan(command.toStdString(), ok);
+}
+
+QVariantList ApiHost::commands()
+{
+    static const QStringList kWindows{QStringLiteral("global"), QStringLiteral("subtitles"), QStringLiteral("editor"),
+                                      QStringLiteral("video"), QStringLiteral("audio")};
+    QVariantList out = call(QStringLiteral("commands.list")).toMap().value(QStringLiteral("commands")).toList();
+    for (QVariant &entry : out) {
+        QVariantMap command = entry.toMap();
+        const int window = int(std::max<qsizetype>(0, kWindows.indexOf(command.value(QStringLiteral("window")).toString())));
+        command.insert(QStringLiteral("windowIndex"), window);
+        if (command.value(QStringLiteral("kind")).toString() == QLatin1String("hotkey")) {
+            command.insert(QStringLiteral("title"),
+                           ui::hotkeyCommandName(command.value(QStringLiteral("name")).toString().toStdString()));
+            command.insert(QStringLiteral("group"), ui::hotkeyWindowName(window));
+        } else {
+            command.insert(QStringLiteral("title"), command.value(QStringLiteral("name")));
+        }
+        entry = command;
+    }
+    return out;
+}
+
+QVariant ApiHost::call(const QString &operation, const QVariantMap &params)
+{
+    const auto out = std::make_shared<std::optional<QVariant>>(QVariant());
+    m_api.call(api::Caller{"palette", "Command palette", true}, operation.toStdString(), fromVariant(params),
+               [out](const api::Result &result) {
+                   if (*out && result)
+                       *out = toVariant(*result);
+               });
+    const QVariant answer = **out;
+    out->reset();
+    return answer;
 }
 
 void ApiHost::panelChanged(const QString &panel)

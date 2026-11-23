@@ -79,10 +79,10 @@ describe("the tool catalogue", () => {
         expect(apply.properties.edits.items.oneOf[0].properties.op).toEqual({ enum: ["set_line"] });
     });
 
-    test("offers the plugin tools in plugins, with scaffold, install and run writing", () => {
+    test("offers the plugin tools and formats_list in plugins, with scaffold, install and run writing", () => {
         const plugins = kOwn.entries.filter((e) => e.group === "plugins");
-        expect(plugins.map((e) => e.tool.name).sort()).toEqual(["plugins_install", "plugins_list", "plugins_manifest",
-            "plugins_review", "plugins_run", "plugins_scaffold"]);
+        expect(plugins.map((e) => e.tool.name).sort()).toEqual(["formats_list", "plugins_install", "plugins_list",
+            "plugins_manifest", "plugins_review", "plugins_run", "plugins_scaffold"]);
         expect(plugins.filter((e) => !e.tool.annotations.readOnlyHint).map((e) => e.tool.name).sort())
             .toEqual(["plugins_install", "plugins_run", "plugins_scaffold"]);
     });
@@ -121,7 +121,7 @@ describe("the tool catalogue", () => {
         const names = kOwn.entries.map((e) => e.tool.name);
         expect(kOwn.entries.find((e) => e.tool.name === "automation_macros")!.group).toBe("automation");
         for (const name of ["automation_run_macro", "vcs_refs", "vcs_show", "marks_set", "marks_clear", "marks_list",
-            "video_frames", "programs_run", "programs_start", "programs_send", "programs_stop"])
+            "presence_set_text", "video_frames", "programs_run", "programs_start", "programs_send", "programs_stop"])
             expect(names).not.toContain(name);
     });
 

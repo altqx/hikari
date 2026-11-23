@@ -1,6 +1,8 @@
 #include "hikari/app/agent_controller.h"
 #include "hikari/app/ai_features.h"
 #include "hikari/app/application.h"
+#include "hikari/app/automation_shell.h"
+#include "hikari/app/inline_ai_controller.h"
 #include "hikari/app/review_controller.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/ai_providers.h"
@@ -93,6 +95,25 @@ class ReleaseScreenshotsTests : public QObject {
     static constexpr int kKaraokeRow = 34;
     static constexpr int kColourSweepPreset = 2;
     static constexpr int kFuriganaRisePreset = 14;
+    static constexpr int kBetweenLinesFrame = 2000;
+    static constexpr const char *kSignHelpers = R"lua(script_name = "Sign helpers"
+script_description = "Small edits for signs"
+script_version = "1.0"
+
+local function prefix(tags)
+    return function(subs, selected)
+        for _, i in ipairs(selected) do
+            local line = subs[i]
+            line.text = tags .. line.text
+            subs[i] = line
+        end
+        return selected
+    end
+end
+
+aegisub.register_macro("Signs/Soften the edges", "Adds \\blur1.5 to the selected lines", prefix("{\\blur1.5}"))
+aegisub.register_macro("Signs/Fade in and out", "Adds \\fad(200,200) to the selected lines", prefix("{\\fad(200,200)}"))
+)lua";
 
     std::unique_ptr<QTemporaryDir> home;
     app::Application *application = nullptr;
@@ -117,8 +138,28 @@ class ReleaseScreenshotsTests : public QObject {
         o.legacyAutosaveDir = home->filePath(QStringLiteral("Subs"));
         o.harperLs = QStringLiteral(HIKARI_HARPER_LS);
         o.grammarDir = home->filePath(QStringLiteral("Harper"));
-        if (QTest::currentTestFunction() == QByteArrayLiteral("homeAiReview"))
+        if (QTest::currentTestFunction() == QByteArrayLiteral("homeAiReview")
+            || QTest::currentTestFunction() == QByteArrayLiteral("aiAiMenu"))
             o.aiPorts = standInAi();
+        if (QTest::currentTestFunction() == QByteArrayLiteral("checkingSpellingMenuWithoutFilm")) {
+            o.spellingBackend = app::Application::Options().spellingBackend;
+            o.userFolder = home->path();
+            QVERIFY(writeAt(home->filePath(QStringLiteral("Dictionary/en_US.aff")), "SET UTF-8\nTRY esianrtolcdugmphbyfvkwz'\n"));
+            QVERIFY(writeAt(home->filePath(QStringLiteral("Dictionary/en_US.dic")),
+                            "12\nFinally\nfinally\nthe\nThe\ntent\ntents\nten\nnet\nis\nup\nit\ntext\n"));
+        }
+        if (QTest::currentTestFunction() == QByteArrayLiteral("pluginsAutomationMenu")) {
+            const QString folder = home->filePath(QStringLiteral("plugins/com.example.line-tools"));
+            QVERIFY(QDir().mkpath(folder));
+            for (const char *file : {"hikari-plugin.json", "main.lua"})
+                QVERIFY(QFile::copy(QStringLiteral(HIKARI_PLUGIN_EXAMPLES "/line-tools/") + QLatin1String(file),
+                                    folder + QLatin1Char('/') + QLatin1String(file)));
+            QVERIFY(writeAt(home->filePath(QStringLiteral("plugins.json")),
+                            R"({"format": 1, "plugins": {"com.example.line-tools": {"version": "1.2.0", "enabled": true}}})"));
+            o.plugins = {home->filePath(QStringLiteral("plugins")), home->filePath(QStringLiteral("plugin-data")),
+                         home->filePath(QStringLiteral("plugin-cache")), home->filePath(QStringLiteral("plugins.json"))};
+            o.pluginHelper = QStringLiteral(HIKARI_PLUGIN_HELPER);
+        }
         if (QTest::currentTestFunction() == QByteArrayLiteral("homePlugins")) {
             o.plugins = {home->filePath(QStringLiteral("plugins")), home->filePath(QStringLiteral("plugin-data")),
                          home->filePath(QStringLiteral("plugin-cache")), home->filePath(QStringLiteral("plugins.json"))};
@@ -349,6 +390,92 @@ class ReleaseScreenshotsTests : public QObject {
     }
 
     static bool onRayMv() { return QByteArray(QTest::currentTestFunction()).endsWith("OnRayMv"); }
+    static bool withoutFilm() { return QByteArray(QTest::currentTestFunction()).endsWith("WithoutFilm"); }
+
+    QObject *named(const char *name) const { return root()->findChild<QObject *>(QLatin1String(name)); }
+
+    void openMenu(QObject *menu)
+    {
+        QVERIFY(menu);
+        QVERIFY(QMetaObject::invokeMethod(menu, "open"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+    }
+
+    static void closeMenu(QObject *menu)
+    {
+        QMetaObject::invokeMethod(menu, "close");
+        QTRY_VERIFY(!menu->property("visible").toBool());
+    }
+
+    void popupFromMenuBar(const char *name)
+    {
+        QVERIFY(QMetaObject::invokeMethod(root(), "buildMenus"));
+        QObject *menu = named(name);
+        auto *menus = named("appMenus");
+        QVERIFY2(menu && menus, name);
+        for (int i = 0; i < menus->property("count").toInt(); ++i) {
+            QQuickItem *title = nullptr;
+            QVERIFY(QMetaObject::invokeMethod(menus, "itemAt", Q_RETURN_ARG(QQuickItem *, title), Q_ARG(int, i)));
+            if (title && title->property("menu").value<QObject *>() == menu) {
+                QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, title),
+                                                  Q_ARG(QPointF, QPointF(0, title->height()))));
+                QTRY_VERIFY(menu->property("opened").toBool());
+                return;
+            }
+        }
+        QFAIL(name);
+    }
+
+    static QObject *popupOf(QObject *comboBox) { return comboBox ? comboBox->property("popup").value<QObject *>() : nullptr; }
+
+    void shootOpen(const QString &page, const QString &name, const std::function<void(QList<QObject *> &shown)> &open,
+                   const char *crop = nullptr, QQuickWindow *from = nullptr)
+    {
+        for (const char *code : {"light", "dark"}) {
+            setTheme(QString::fromLatin1(code));
+            QList<QObject *> menus;
+            open(menus);
+            if (QTest::currentTestFailed())
+                return;
+            QVERIFY(!menus.isEmpty() && !menus.contains(nullptr));
+            QTest::qWait(300);
+            save(grab(from ? from : window, crop), page, name + QLatin1Char('-') + QLatin1String(code));
+            for (auto it = menus.rbegin(); it != menus.rend(); ++it)
+                closeMenu(*it);
+        }
+    }
+
+    void seekTo(int frame)
+    {
+        auto &controller = application->video();
+        QVERIFY(controller.session().seekFrame(frame));
+        QTRY_VERIFY_WITH_TIMEOUT(controller.session().shownFrame() == std::optional<int>(frame), 60000);
+    }
+
+    qulonglong lineIdAt(int row) const
+    {
+        const auto &lines = application->files().session(*application->workspace().editingTarget())->document().lines();
+        return row >= 0 && std::size_t(row) < lines.size() ? lines[std::size_t(row)]->id.value : 0;
+    }
+
+    int rowOfLine(qulonglong id) const
+    {
+        const auto &lines = application->files().session(*application->workspace().editingTarget())->document().lines();
+        for (std::size_t i = 0; i < lines.size(); ++i)
+            if (lines[i]->id.value == id)
+                return int(i);
+        return -1;
+    }
+
+    qulonglong groupLines(qulonglong first, int count, const QString &description)
+    {
+        application->selectLine(first);
+        application->extendSelection(count - 1);
+        if (!application->makeGroups())
+            return 0;
+        const qulonglong made = lineIdAt(rowOfLine(first) - 1);
+        return application->renameGroup(made, description) ? made : 0;
+    }
 
     void openKaraokeSong()
     {
@@ -503,10 +630,10 @@ private slots:
                 QFontDatabase::addApplicationFont(font.absoluteFilePath());
         } else {
             video = qEnvironmentVariable("HIKARI_SHOT_VIDEO");
-            if (video.isEmpty())
+            if (video.isEmpty() && !withoutFilm())
                 QSKIP("HIKARI_SHOT_VIDEO is not set");
         }
-        QVERIFY(QFileInfo(video).isFile());
+        QVERIFY(video.isEmpty() || QFileInfo(video).isFile());
         QVERIFY(QDir().mkpath(out));
         start();
     }
@@ -961,6 +1088,285 @@ private slots:
         QTest::qWait(1500);
         QTest::mouseMove(window, QPoint(1, 1));
         shoot(QStringLiteral("home"), QStringLiteral("ai-review-window"));
+    }
+
+    void pluginsAutomationMenu()
+    {
+        openCommonsDialogue(kEditingFrame);
+        seekTo(kBetweenLinesFrame);
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("plugins"), QStringLiteral("automation-menu"), [this](QList<QObject *> &shown) {
+            popupFromMenuBar("automationMenu");
+            QObject *lineTools = nullptr;
+            QTRY_VERIFY((lineTools = named("pluginCommandMenu_Line tools")));
+            openMenu(lineTools);
+            shown << named("automationMenu") << lineTools;
+        });
+    }
+
+    void homeAutomation()
+    {
+        openCommonsDialogue(kEditingFrame);
+        const QString script = writeFile(QStringLiteral("sign-helpers.lua"), kSignHelpers);
+        QVERIFY(!script.isEmpty());
+        auto &automation = application->automation();
+        automation.load(script.toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(std::ranges::any_of(automation.scripts(), [&](const auto &s) {
+            return s.path == script.toStdString() && s.state == hikari::application::ScriptStatus::State::Ready;
+        }), 30000);
+        QSignalSpy ran(&automation, &app::AutomationShell::runCompleted);
+        QVERIFY(automation.run(script.toStdString(), 0));
+        QVERIFY(ran.wait(30000));
+        QVERIFY(ran.first().first().toBool());
+        QTRY_VERIFY(automation.canRepeat());
+        seekTo(kBetweenLinesFrame);
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("home"), QStringLiteral("automation"), [this](QList<QObject *> &shown) {
+            popupFromMenuBar("automationMenu");
+            shown << named("automationMenu");
+        });
+    }
+
+    void basicsExplorerMenuWithoutFilm()
+    {
+        const QString project = home->filePath(QStringLiteral("Sprite Fright"));
+        QVERIFY(QDir().mkpath(project + QStringLiteral("/fonts")));
+        QVERIFY(writeAt(project + QStringLiteral("/.hikari/project.toml"), "version = 1\n"));
+        QVERIFY(writeAt(project + QStringLiteral("/Sprite Fright_keyframes.txt"), "# keyframe format v1\nfps 0\n0\n"));
+        QVERIFY(writeAt(project + QStringLiteral("/Sprite Fright.ass"),
+                        signsScript("Dialogue: 0,0:01:14.42,0:01:17.50,Default,,0,0,0,,Finally, the tent is up!\n")));
+        QVERIFY(writeAt(project + QStringLiteral("/Sprite Fright signs.ass"),
+                        signsScript("Dialogue: 0,0:00:59.50,0:01:00.50,Sign,,0,0,0,,{\\pos(1180,150)}Brambleden Woods\n")));
+        QVERIFY(application->openFolder(project, 0).value(QStringLiteral("ok")).toBool());
+        QVERIFY(application->openFile(project + QStringLiteral("/Sprite Fright.ass")));
+        applyLayout("Editing");
+        auto *dock = named("explorerDock");
+        QVERIFY(dock);
+        QVERIFY(QMetaObject::invokeMethod(root(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *explorer = window->findChild<ui::ExplorerModel *>();
+        QVERIFY(explorer);
+        const QString episode = project + QStringLiteral("/Sprite Fright.ass");
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY(explorer->rowOf(episode) >= 0 && (row = item("explorerRow_Sprite Fright.ass")));
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("basics"), QStringLiteral("explorer-menu"), [&](QList<QObject *> &shown) {
+            QVERIFY(QMetaObject::invokeMethod(item("explorerTool"), "showMenu", Q_ARG(QVariant, explorer->rowOf(episode)),
+                                              Q_ARG(QVariant, QVariant::fromValue(row)), Q_ARG(QVariant, row->width() * 3 / 4),
+                                              Q_ARG(QVariant, row->height() / 2)));
+            QTRY_VERIFY(named("explorerRowMenu")->property("opened").toBool());
+            shown << named("explorerRowMenu");
+        });
+    }
+
+    void basicsGridMenu()
+    {
+        openCommonsDialogue(kEditingFrame);
+        application->extendSelection(1);
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("basics"), QStringLiteral("grid-menu"), [this](QList<QObject *> &shown) {
+            grid()->requestMenu();
+            QTRY_VERIFY(named("gridMenu")->property("opened").toBool());
+            shown << named("gridMenu");
+        });
+    }
+
+    void basicsLineGroups()
+    {
+        openCommonsDialogue(kEditingFrame);
+        const int first = rowOfLine(grid()->activeLine()->value) - 4;
+        QVERIFY(first >= 0);
+        const qulonglong campsite = lineIdAt(first), fire = lineIdAt(first + 2), after = lineIdAt(first + 7);
+        const qulonglong inner = groupLines(fire, 2, QStringLiteral("The barbecue"));
+        QVERIFY(inner);
+        const qulonglong outer = groupLines(campsite, 5, QStringLiteral("At the campsite"));
+        QVERIFY(outer);
+        QVERIFY(application->toggleGroup(outer));
+        QVERIFY(application->toggleGroup(inner));
+        QVERIFY(groupLines(after, 2, QStringLiteral("Into the woods")));
+        application->selectLine(outer);
+        grid()->makeLineVisible(outer);
+        grid()->scrollToTopRow(std::max(0, rowOfLine(outer) - 2));
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("basics"), QStringLiteral("line-groups"), [this](QList<QObject *> &shown) {
+            grid()->requestMenu();
+            QTRY_VERIFY(named("groupMenu")->property("opened").toBool());
+            shown << named("groupMenu");
+        });
+    }
+
+    void basicsVideoMenu()
+    {
+        openCommonsDialogue(kEditingFrame);
+        seekTo(kBetweenLinesFrame);
+        shootOpen(QStringLiteral("basics"), QStringLiteral("video-menu"), [this](QList<QObject *> &shown) {
+            auto *menu = named("videoContextMenu");
+            QVERIFY(QMetaObject::invokeMethod(menu, "openAt", Q_ARG(QVariant, QPointF(160, 60))));
+            QTRY_VERIFY(menu->property("opened").toBool());
+            shown << menu;
+        });
+    }
+
+    void basicsPhantom()
+    {
+        openCommonsDialogue(kEditingFrame);
+        QQuickItem *lineText = item("lineText");
+        QVERIFY(lineText);
+        QTRY_VERIFY(!lineText->property("text").toString().isEmpty());
+        shootOpen(QStringLiteral("basics"), QStringLiteral("phantom"), [&](QList<QObject *> &shown) {
+            const int length = int(lineText->property("text").toString().size());
+            QVERIFY(QMetaObject::invokeMethod(lineText, "select", Q_ARG(int, 0), Q_ARG(int, std::min(length, 8))));
+            lineText->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(lineText->hasActiveFocus());
+            QTest::keyClick(window, Qt::Key_Menu);
+            QObject *menu = lineText->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+            QTRY_VERIFY(menu && menu->property("opened").toBool());
+            QObject *phantom = named("lineTextPhantomMenu");
+            openMenu(phantom);
+            shown << menu << phantom;
+        });
+    }
+
+    void basicsStyleCatalogueWithoutFilm()
+    {
+        auto &styles = application->styleManager();
+        for (const char *name : {"Film subtitles", "Signs", "Sprite Fright"})
+            QVERIFY(styles.createCatalog(QString::fromLatin1(name), QStringLiteral("mine")));
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Sprite Fright"), QStringLiteral("mine")));
+        QVERIFY(openDialogue());
+        app::attachStylePreview(*engine, styles);
+        QVERIFY(QMetaObject::invokeMethod(root(), "buildMenus"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
+        auto *manager = qobject_cast<QQuickWindow *>(named("styleManager"));
+        QVERIFY(manager);
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        auto *box = findItem(manager->contentItem(), QStringLiteral("styleCatalog"));
+        QVERIFY(box);
+        shootOpen(QStringLiteral("basics"), QStringLiteral("style-catalogue"), [&](QList<QObject *> &shown) {
+            QObject *popup = popupOf(box);
+            openMenu(popup);
+            shown << popup;
+        }, nullptr, manager);
+    }
+
+    void basicsTimingHelpersWithoutFilm()
+    {
+        const QString file = writeFile(QStringLiteral("Sprite Fright.ass"), signsScript(
+            "Dialogue: 0,0:01:10.00,0:01:11.50,Default,,0,0,0,,This clearing looks perfect.\n"
+            "Dialogue: 0,0:01:11.50,0:01:14.42,Default,,0,0,0,,Who brought the tent poles?\n"
+            "Dialogue: 0,0:01:14.42,0:01:17.50,Default,,0,0,0,,Finally, the tent is up!\n"
+            "Dialogue: 0,0:01:18.42,0:01:20.17,Default,,0,0,0,,Did anyone else hear that?\n"));
+        QVERIFY(!file.isEmpty());
+        QVERIFY(application->openFile(file));
+        applyLayout("Editing");
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("basics"), QStringLiteral("timing-helpers"), [this](QList<QObject *> &shown) {
+            popupFromMenuBar("subtitlesMenu");
+            QObject *subtitles = named("subtitlesMenu");
+            QObject *helpers = named("timingHelpersMenu");
+            openMenu(helpers);
+            shown << subtitles << helpers;
+        });
+    }
+
+    void checkingSpellingMenuWithoutFilm()
+    {
+        const QString file = writeFile(QStringLiteral("Sprite Fright.ass"),
+                                       signsScript("Dialogue: 0,0:01:14.42,0:01:17.50,Default,,0,0,0,,Finally, the tnet is up!\n"));
+        QVERIFY(!file.isEmpty());
+        QVERIFY(application->openFile(file));
+        applyLayout("Editing");
+        QQuickItem *lineText = item("lineText");
+        QVERIFY(lineText);
+        QTRY_COMPARE(lineText->property("text").toString(), QStringLiteral("Finally, the tnet is up!"));
+        QObject *menu = lineText->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        shootOpen(QStringLiteral("checking"), QStringLiteral("spelling-menu"), [&](QList<QObject *> &shown) {
+            QRectF at;
+            QVERIFY(QMetaObject::invokeMethod(lineText, "positionToRectangle", Q_RETURN_ARG(QRectF, at), Q_ARG(int, 15)));
+            const QPoint word = lineText->mapToScene(QPointF(at.x() + 2, at.center().y())).toPoint();
+            QTest::mouseMove(window, word);
+            QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, word);
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QQuickItem *first = nullptr;
+            QVERIFY(QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)));
+            QVERIFY(first);
+            QCOMPARE(first->property("text").toString(), QStringLiteral("tent"));
+            shown << menu;
+        });
+    }
+
+    void karaokeTemplateLanguageWithoutFilm()
+    {
+        const QString file = writeFile(QStringLiteral("Our karaoke.ass"),
+            QByteArrayLiteral("[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n"
+                              "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                              "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, "
+                              "Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                              "Style: Default,Noto Sans,80,&H00FFFFFF,&H00FF8C3C,&H00301018,&H80000000,-1,0,0,0,100,100,"
+                              "0,0,1,3,0,8,10,10,80,1\n\n"
+                              "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                              "Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template syl,"
+                              "{\\an5\\pos($scenter,$smiddle)\\t($start,$end,\\fscx120\\fscy120)}\n"
+                              "Dialogue: 0,0:01:14.00,0:01:18.00,Default,,0,0,0,karaoke,"
+                              "{\\k40}ki{\\k35}ra{\\k45}ki{\\k30}ra {\\k60}hi{\\k50}ka{\\k40}ru\n"));
+        QVERIFY(!file.isEmpty());
+        QVERIFY(application->openFile(file));
+        applyLayout("Editing");
+        QVERIFY(loadTemplater());
+        auto *dock = named("templateDock");
+        QVERIFY(dock);
+        QVERIFY(QMetaObject::invokeMethod(root(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QQuickItem *mode = nullptr;
+        QTRY_VERIFY((mode = item("templateMode")) && mode->isVisible() && mode->isEnabled());
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("karaoke"), QStringLiteral("template-language"), [&](QList<QObject *> &shown) {
+            QObject *popup = popupOf(mode);
+            openMenu(popup);
+            shown << popup;
+        });
+    }
+
+    void typesettingPerspectiveOrigin()
+    {
+        const QString file = writeFile(QStringLiteral("Sprite Fright signs.ass"),
+                                       signsScript("Dialogue: 0,0:00:59.50,0:01:00.50,Sign,,0,0,0,,"
+                                                   "{\\an5\\pos(1180,150)\\org(1180,150)\\frx14\\fry-22\\frz-4\\blur1}"
+                                                   "Brambleden Woods\n"));
+        QVERIFY(!file.isEmpty());
+        QVERIFY(application->openFile(file));
+        applyLayout("Typesetting");
+        showVideoAt(kSignFrame);
+        application->visualTools().selectFamily(kPerspectiveTool);
+        QTRY_VERIFY(item("visualOption_plane"));
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("typesetting"), QStringLiteral("perspective-origin"), [this](QList<QObject *> &shown) {
+            QQuickItem *origin = nullptr;
+            QTRY_VERIFY((origin = findItem(window->contentItem(), QStringLiteral("visualOption_orgMode"))) && origin->isVisible());
+            QObject *popup = popupOf(origin);
+            openMenu(popup);
+            shown << popup;
+        }, "videoPanel");
+    }
+
+    void aiAiMenu()
+    {
+        application->settingsStore()->setValue(QString::fromLatin1(app::AiFeatures::kOffSetting), false);
+        QTRY_VERIFY(application->inlineAi()->on());
+        openCommonsDialogue(kEditingFrame);
+        application->extendSelection(1);
+        QTRY_VERIFY_WITH_TIMEOUT(application->inlineAi()->ready().value(QStringLiteral("chat")).toBool(), 20000);
+        QTest::mouseMove(window, QPoint(1, 1));
+        shootOpen(QStringLiteral("ai"), QStringLiteral("ai-menu"), [this](QList<QObject *> &shown) {
+            grid()->requestMenu();
+            QObject *menu = named("gridMenu");
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QObject *ai = named("gridAiMenu");
+            openMenu(ai);
+            shown << menu << ai;
+        });
     }
 };
 

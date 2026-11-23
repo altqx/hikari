@@ -7,7 +7,13 @@ The full-screen mode for watching and QA ([#1207](https://github.com/altqx/hikar
 - The card's scope is Q566–Q569, Q575, Q576 and Q579 on tracking [#1209](https://github.com/altqx/hikari/issues/1209).
 - The owner chose this design from the mode gate board on 2026-11-17 ("yes lgtm", Q698–Q704; see [Decisions](#decisions)).
 
-The app doesn't change until the code card lands after the beta.4 tag.
+**In the code** (#1207):
+
+- `VideoFullscreenController::mode` is Simple or Typesetting. Until #1208 lands, Typesetting shows the visual tool rail, the inspector bar and the Visual tools button in the strip; #1208 replaces that layout.
+- The settings are `video.fullscreenBarPosition` (0 below, 1 over), `video.fullscreenBar` (0 Auto-hide, 1 Always, 2 Never), `video.fullscreenHidePointer`, `video.fullscreenOverlays` and `video.fullscreenOpensIn` (0 Simple, 1 Typesetting). The Full screen section is the first on Settings › Video, so Full-screen settings… lands on it.
+- Row 1's start time is the shown frame's time.
+- The zoom readout, the editable time and the keyframe mark come with #1206. Watching's Discord mode and art come with #1245.
+- A frame the source can't decode is `VideoSession::failedFrame`, cleared by the next request.
 
 ## Entering and leaving
 

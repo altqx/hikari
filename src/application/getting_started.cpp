@@ -9,9 +9,11 @@ namespace hikari::application {
 
 namespace {
 
-constexpr std::array<std::string_view, 15> kSettings{
+constexpr std::array<std::string_view, 19> kSettings{
     "program.language",
-    "appearance.theme", "appearance.followSystem", "appearance.lightAccent", "appearance.darkAccent",
+    "appearance.theme", "appearance.followSystem", "appearance.accents",
+    "appearance.lightTheme", "appearance.darkTheme", "appearance.highContrastLightTheme",
+    "appearance.highContrastDarkTheme", "appearance.colours",
     "appearance.titleBar",
     "video.subtitleProvider", "audio.outputDevice",
     "autosave.maxFiles", "editor.spellchecker", "editor.dictionaryLanguage",

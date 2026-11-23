@@ -32,11 +32,38 @@ struct Permissions {
     std::optional<std::string> vcsRead; // the reason, when asked for
     std::optional<std::string> background; // the reason, when asked for
     std::optional<std::string> programs;   // the reason, when asked for
+    std::optional<std::string> presence; // the reason, when asked for
 };
 
-struct Contribution {
+struct Command {
     std::string id;
     std::string title;
+    std::string icon;              // an icon role or own:<id>, or empty
+    std::vector<std::string> when; // conditions that must all hold; "!" negates one
+    std::string description;
+    bool palette = true;
+};
+
+enum class MenuLocation { Grid, LineEditor, MenuBar };
+
+struct MenuPlacement {
+    std::string command;
+    MenuLocation location = MenuLocation::MenuBar;
+    std::string group;
+};
+
+struct StatusItem {
+    std::string id;
+    std::string title;
+    std::string text;
+    std::string icon;
+    std::string tooltip;
+    std::string command; // empty: not a button
+};
+
+struct Keybinding {
+    std::string command;
+    std::string key; // Qt's portable text
 };
 
 enum class PanelArea { Left, Right, Bottom };
@@ -48,10 +75,18 @@ struct Panel {
     std::string qml; // a package path: a QML panel; empty: a declarative one
 };
 
+enum class SettingType { Boolean, Integer, Number, String, Choice, List, Secret };
+
 struct Setting {
     std::string id;
     std::string title;
-    api::Json definition; // the manifest's object, with type and default
+    api::Json definition; // the manifest's object
+    SettingType type = SettingType::String;
+
+    // A Secret lives in the system keychain, never in plugins.json or a Project, and has no default.
+    bool secret() const { return type == SettingType::Secret; }
+    // The manifest's default; null for a Secret.
+    api::Json fallback() const;
 };
 
 struct NodePort {
@@ -66,6 +101,14 @@ struct NodeContribution {
     std::string summary;
     std::string file; // a package .lua path: the node's code
     std::vector<NodePort> inputs, outputs;
+};
+
+struct FormatContribution {
+    std::string id;
+    std::string title;
+    std::vector<std::string> extensions; // lower case, without the dot
+    bool imports = false;
+    bool exports = false;
 };
 
 struct ProgramDownload {
@@ -102,6 +145,21 @@ struct Screenshot {
     std::string caption;
 };
 
+// A content pack file, shown beside its built-in counterpart (docs/plugins.md, Content packs).
+struct ContentFile {
+    std::string id;
+    std::string title; // empty for a karaoke preset, whose file holds its title
+    std::string path;  // a package path
+};
+
+// A Hunspell pair the spell checker offers after the user's and the bundled dictionaries.
+struct Dictionary {
+    std::string language; // the Hunspell name, such as en_US
+    std::string title;
+    std::string aff; // package paths
+    std::string dic;
+};
+
 struct Manifest {
     std::string id;
     std::string name;
@@ -119,11 +177,18 @@ struct Manifest {
     std::vector<Screenshot> screenshots;
     std::optional<minisign::PublicKey> publicKey;
     Permissions permissions;
-    std::vector<Contribution> commands;
+    std::vector<Command> commands;
     std::vector<Panel> panels;
+    std::vector<MenuPlacement> menus;
+    std::vector<StatusItem> statusItems;
+    std::vector<Keybinding> keybindings;
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
+    std::vector<FormatContribution> formats;
     std::vector<Program> programs;
+    std::vector<ContentFile> styles;
+    std::vector<ContentFile> karaokePresets;
+    std::vector<Dictionary> dictionaries;
 
     bool hasQmlPanels() const;
     const Program *program(std::string_view id) const;
@@ -133,7 +198,7 @@ struct Manifest {
 std::string_view manifestSchema();
 
 struct ManifestProblem {
-    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust };
+    enum class Kind { NotJson, Schema, DuplicateId, BadDefault, NeedsNewerApi, QmlNeedsFullTrust, UnknownCommand, DuplicateKey };
     Kind kind = Kind::Schema;
     std::string at;     // a JSON pointer into the manifest
     std::string detail; // English, technical: the parser's or validator's words
@@ -146,7 +211,8 @@ Permissions readPermissions(const api::Json &permissions);
 
 // Why `value` doesn't fit the setting's type, options or bounds (English), or nothing when it does.
 std::optional<std::string> settingRefusal(const Setting &setting, const api::Json &value);
-// Every declared setting: the stored value when it still fits, else the default.
+// Every declared setting: the stored value when it still fits, else the default. A Secret is null here;
+// its value comes from the keychain only.
 api::Json settingValues(const Manifest &manifest, const api::Json &stored);
 
 // Semantic-version order; build metadata is ignored. Both must be valid versions.
@@ -164,11 +230,12 @@ struct PermissionIncrease {
     bool runPrograms = false;
     // Programs that are new, gain network, or move to lowIntegrity.
     std::vector<std::string> programs;
+    bool presence = false;
 
     bool any() const
     {
         return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background ||
-               runPrograms || !programs.empty();
+               runPrograms || !programs.empty() || presence;
     }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);

@@ -24,7 +24,7 @@ The release also carries `SHA256SUMS`, the AppImage's `.zsync` for external AppI
 
 Each installed copy has `package-kind.txt` beside the executable: `nsis-user`, `nsis-machine`, `appimage`, `deb`, `rpm` or `arch`. No marker means a portable copy. About and `hikarisub --version` name the kind, so bug reports carry it.
 
-HikariSub keeps its settings in the platform's user folders (`QStandardPaths`), whatever the kind. Removing or upgrading a package never deletes them, nor the update cache. The settings importer also looks in installed legacy's data folders, `%LOCALAPPDATA%\HikariSub\Legacy` and `~/.local/share/HikariSub/Legacy`.
+HikariSub keeps its settings in the platform's user folders (`QStandardPaths`), whatever the kind. Removing or upgrading a package never deletes them, nor the update cache. The settings importer also looks in installed legacy's data folders, `%LOCALAPPDATA%\HikariSub\Legacy` and `~/.local/share/HikariSub/Legacy`, and in Aegisub's, `%APPDATA%\Aegisub`, `~/Library/Application Support/Aegisub` and `~/.aegisub`.
 
 ## The Windows installer
 
@@ -122,7 +122,7 @@ Everything a user may edit or keep is in one user folder, Aegisub's `?user` ([UD
 - **`state.json`** holds what the app remembers: the window and dialog places, picker folders and other `[workspace]` keys, the recents, the script dialogs' last answers, the usage-data id, the skipped update, the last style catalog and the last script. `toolbar.actions`, `toolbar.alignment` and `program.tabTextMaxChars` are choices, so they stay in `settings.toml`.
 - **Editing by hand.** Edit the files while HikariSub is closed, because it writes them from memory and keeps no comments. It does keep keys it doesn't know.
 - **A file that doesn't read is never overwritten.** That covers a TOML or JSON error, and a `version` that is missing or newer than 1. The file is renamed `<name>.broken` (or `.broken-2` and on), its settings take their defaults, and a notice names the file, line and column. Fix it while HikariSub is closed and give it its name back.
-- **`hikari.ini` before them.** The first start without `settings.toml` converts `hikari.ini` into the three files once and renames it `hikari.ini.old`, which is never written again. Import legacy settings still reads legacy's `Config.txt` and `Hotkeys.txt`, and writes into these files.
+- **`hikari.ini` before them.** The first start without `settings.toml` converts `hikari.ini` into the three files once and renames it `hikari.ini.old`, which is never written again. Import settings still reads legacy's `Config.txt` and `Hotkeys.txt`, and writes into these files.
 
 **List files (CF2, #489).** The lists you build up are TOML files too, each starting with `version = 1` and then one array of tables with named fields:
 - **`shapes.toml`** holds the drawing tool's shapes: `[[shape]]` with `name`, `drawing`, `fromCursor` (`"widthAndHeight"`, `"keepAspectRatio"` or `"widthOnly"`) and `scaling` (`"points"` or `"scale"`).

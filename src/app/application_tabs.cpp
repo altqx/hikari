@@ -2,6 +2,7 @@
 
 #include "hikari/app/session_json.h"
 #include "hikari/application/grid_clipboard.h"
+#include "hikari/application/media_association.h"
 #include "hikari/application/owned_file.h"
 #include "hikari/application/session_file.h"
 
@@ -239,6 +240,7 @@ void Application::forgetTab(application::DocumentId document)
     for (auto *layout : layouts())
         layout->forgetTab(document.value);
     m_importPaths.erase(document.value);
+    m_exportFiltersToSave.erase(document.value);
     m_lyricsImports.erase(document.value);
     m_originalColumns.erase(document.value);
     m_translationDeclined.erase(document.value);
@@ -321,7 +323,11 @@ void Application::setUpFileArrangements()
 {
     m_files->setProjectGarbageSource(
         [this](application::DocumentId document, const application::DestinationKey &destination) {
-            return timecodesGarbage(document, destination);
+            auto edits = mediaFileGarbage(document, destination);
+            if (const auto line = m_exportFiltersToSave.find(document.value); line != m_exportFiltersToSave.end())
+                edits.push_back({std::u8string(application::kExportFiltersKey),
+                                 std::u8string(line->second.begin(), line->second.end())});
+            return edits;
         });
     m_files->setLayoutSource([this](application::DocumentId document) -> std::optional<std::u8string> {
         if (!m_settings->boolean(kLayoutInFile))
@@ -391,7 +397,23 @@ void Application::trackTabMedia(WindowMedia &media)
             media.video = path;
             emit tabsChanged();
         }
+        media.videoDropped = false;
         warnShortTimecodes(media);
+        if ((media.fileFrame || media.fileAspect) && media.video == path && video.frameCount() > 0) {
+            const auto frame = std::exchange(media.fileFrame, std::nullopt);
+            const auto aspect = std::exchange(media.fileAspect, std::nullopt);
+            // MUST KILL: queued so the view's own reset on open goes first
+            QMetaObject::invokeMethod(bundle->video.get(), [this, bundle, path, frame, aspect] {
+                auto &session = bundle->video->session();
+                if (QString::fromStdString(session.path()) != path ||
+                    session.state() != application::VideoSession::State::Ready)
+                    return;
+                if (aspect)
+                    views(bundle->window).videoView->setAspectRatio(1.0 / *aspect);
+                if (frame && *frame > 0 && *frame < session.frameCount())
+                    session.seekFrame(*frame);
+            }, Qt::QueuedConnection);
+        }
         if (bundle->pendingTabSeek && !bundle->tabSeekQueued && bundle->pendingTabSeek->first == path && video.frameCount() > 0) {
             bundle->tabSeekQueued = true;
             // MUST KILL: queued to land after the session's own pending seek on Ready
@@ -419,6 +441,8 @@ void Application::trackTabMedia(WindowMedia &media)
         media.audio = fromVideo ? QString() : native;
         if (!fromVideo)
             media.audioFromVideo = false;
+        media.openedAudio = path.startsWith(QLatin1String("dummy")) ? path : native;
+        media.audioDropped = false;
     });
     media.audioConnections << connect(media.audio.get(), &ui::AudioController::changed, this, [this, bundle = &media] {
         const auto tab = m_workspace.currentTab(bundle->window);
@@ -426,6 +450,9 @@ void Application::trackTabMedia(WindowMedia &media)
             if (const auto it = m_tabMedia.find(tab->value); it != m_tabMedia.end()) {
                 it->second.audio.clear();
                 it->second.audioFromVideo = false;
+                if (!it->second.openedAudio.isEmpty())
+                    it->second.audioDropped = true;
+                it->second.openedAudio.clear();
             }
     });
 }
@@ -478,8 +505,10 @@ void Application::enterTabMedia(WindowMedia &own, std::optional<application::Doc
         if (document && previous)
             m_tabMedia[document->value];
         showTabTimecodes(own, document);
-        if (active)
-            emit tabShown(0);
+        if (active) {
+            auto *session = document ? m_files->session(*document) : nullptr;
+            emit tabShown(session ? std::max(0, application::savedView(session->document()).scroll.value_or(0)) : 0);
+        }
         return;
     }
     const TabMedia media = m_tabMedia[document->value];
@@ -1103,6 +1132,7 @@ bool Application::retryRestore(int row)
         m_comparison.replaced(entry.document, *id);
         m_tabMedia.erase(entry.document.value);
         m_originalColumns.erase(entry.document.value);
+        m_exportFiltersToSave.erase(entry.document.value);
         m_tabMedia[id->value] = kept;
         for (auto &u : m_unresolved)
             if (u.document == entry.document)

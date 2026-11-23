@@ -1752,7 +1752,8 @@
    "conditional": false,
    "length": 1162855,
    "sha1": "657c8c2b248bef912942f21467da0c0550be073f",
-   "sha256": "7789983ce3febdd74a63ff6a5dd1956d294695c5a774d108ecd217cf327ad977"
+   "sha256": "7789983ce3febdd74a63ff6a5dd1956d294695c5a774d108ecd217cf327ad977",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-payloads-windows-6.12.0-20261123/windows_x86__desktop__sdktool__qt.tools.qtcreator__20.0.2-0-202609221200qtcreator_sdktool.7z"
   },
   {
    "kind": "sidecar",
@@ -1762,7 +1763,8 @@
    "conditional": false,
    "length": 40,
    "sha1": "02cdf845b2093fac95db128b147f410cfab55bd9",
-   "sha256": "efc58bb1925c6e1c9b901b19a943e1f3115f5b90860af950afd05bb66d01a2b1"
+   "sha256": "efc58bb1925c6e1c9b901b19a943e1f3115f5b90860af950afd05bb66d01a2b1",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-payloads-windows-6.12.0-20261123/windows_x86__desktop__sdktool__qt.tools.qtcreator__20.0.2-0-202609221200qtcreator_sdktool.7z.sha1"
   }
  ],
  "declared_bytes": {

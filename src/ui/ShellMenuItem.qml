@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.impl
@@ -41,7 +42,7 @@ MenuItem {
     property string description
     property bool danger: false
     readonly property string underText: reason || description
-    readonly property real rowHeight: contentItem ? contentItem.rowHeight : implicitHeight
+    readonly property real rowHeight: contentItem?.item ? contentItem.item.rowHeight : implicitHeight
     Accessible.description: underText
     readonly property string shownHelp: help.length > 0 ? help
         : subMenu && typeof subMenu.help === "string" ? subMenu.help
@@ -70,87 +71,93 @@ MenuItem {
     icon.width: 16
     icon.height: 16
 
-    contentItem: Item {
-        readonly property real arrowPadding: control.subMenu && control.arrow ? control.arrow.width + control.spacing : 0
-        readonly property real checkGutter: control.indicator ? control.indicator.width + control.spacing : 0
-        readonly property real iconGutter: control.icon.source.toString().length > 0 ? 0 : control.icon.width + control.spacing
-        readonly property bool lit: control.enabled && (control.down || control.highlighted)
-        readonly property color textColour: lit ? control.palette.highlightedText
-            : control.danger && control.enabled ? Theme.danger : control.palette.text
-        readonly property real rowHeight: Math.max(label.implicitHeight, plainText.implicitHeight, keys.implicitHeight)
-        readonly property real iconRoom: control.icon.source.toString().length > 0 ? control.icon.width + control.spacing : 0
-        readonly property real leadPadding: control.mirrored ? arrowPadding : checkGutter + iconGutter
-        readonly property real trailPadding: control.mirrored ? checkGutter + iconGutter : arrowPadding
-        readonly property real textStart: leadPadding + (control.mirrored ? 0 : iconRoom)
-        readonly property real textEnd: trailPadding + (control.mirrored ? iconRoom : 0)
-        implicitWidth: (control.plainLabel ? textStart + plainText.implicitWidth + textEnd : label.implicitWidth)
-            + (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
-        implicitHeight: rowHeight + (reasonText.visible ? reasonText.implicitHeight : 0)
-        IconLabel {
-            id: label
-            width: parent.width - (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
-            height: parent.height - (reasonText.visible ? reasonText.implicitHeight : 0)
-            x: control.mirrored ? parent.width - width : 0
-            leftPadding: parent.leadPadding
-            rightPadding: parent.trailPadding
-            spacing: control.spacing
-            mirrored: control.mirrored
-            display: control.display
-            alignment: Qt.AlignLeft
-            icon: control.icon
-            text: control.plainLabel ? "" : control.text
-            font: control.font
-            color: parent.textColour
-        }
-        Text {
-            id: plainText
-            objectName: "menuItemPlainText"
-            visible: control.plainLabel
-            text: control.plainLabel ? control.text : ""
-            textFormat: Text.PlainText
-            x: label.x + parent.textStart
-            width: Math.max(0, label.width - parent.textStart - parent.textEnd)
-            anchors.verticalCenter: label.verticalCenter
-            horizontalAlignment: control.mirrored ? Text.AlignRight : Text.AlignLeft
-            elide: Text.ElideRight
-            font: control.font
-            color: parent.textColour
-        }
-        Text {
-            id: reasonText
-            objectName: "menuItemReason"
-            visible: control.underText.length > 0
-            text: control.underText
-            textFormat: Text.PlainText
-            x: control.mirrored ? parent.textEnd : parent.textStart
-            width: Math.max(0, parent.width - parent.textStart - parent.textEnd)
-            anchors.bottom: parent.bottom
-            horizontalAlignment: control.mirrored ? Text.AlignRight : Text.AlignLeft
-            wrapMode: Text.Wrap
-            font.family: control.font.family
-            font.pointSize: control.font.pointSize * 0.85
-            color: parent.lit ? control.palette.highlightedText : Theme.muted
-        }
-        Text {
-            id: keys
-            readonly property bool detail: control.keysText.length === 0
-            objectName: detail ? "menuItemDetail" : "menuItemKeys"
-            text: control.columnText
-            visible: text.length > 0
-            x: control.mirrored ? parent.arrowPadding : parent.width - width - parent.arrowPadding
-            anchors.verticalCenter: label.verticalCenter
-            font.family: control.font.family
-            font.pointSize: control.font.pointSize
-            font.italic: detail
-            color: control.enabled && (control.down || control.highlighted) ? control.palette.highlightedText : Theme.muted
-        }
+    contentItem: Loader {
+        active: control.menu !== null && control.menu.hasOpened !== false
+        sourceComponent: rowVisuals
     }
-
-    // Qt's Windows style tints only a hovered or pressed item; give the keyboard's highlight that tint.
-    Binding {
-        when: control.windowsStyle && control.highlighted && !control.down && !control.hovered
-        target: control.background
-        property: "color"
-        value: Color.rgba(0, 0, 0, 0.0373)
+    Component {
+        id: rowVisuals
+        Item {
+            readonly property real arrowPadding: control.subMenu && control.arrow ? control.arrow.width + control.spacing : 0
+            readonly property real checkGutter: control.indicator ? control.indicator.width + control.spacing : 0
+            readonly property real iconGutter: control.icon.source.toString().length > 0 ? 0 : control.icon.width + control.spacing
+            readonly property bool lit: control.enabled && (control.down || control.highlighted)
+            readonly property color textColour: lit ? control.palette.highlightedText
+                : control.danger && control.enabled ? Theme.danger : control.palette.text
+            readonly property real rowHeight: Math.max(label.implicitHeight, plainText.implicitHeight, keys.implicitHeight)
+            readonly property real iconRoom: control.icon.source.toString().length > 0 ? control.icon.width + control.spacing : 0
+            readonly property real leadPadding: control.mirrored ? arrowPadding : checkGutter + iconGutter
+            readonly property real trailPadding: control.mirrored ? checkGutter + iconGutter : arrowPadding
+            readonly property real textStart: leadPadding + (control.mirrored ? 0 : iconRoom)
+            readonly property real textEnd: trailPadding + (control.mirrored ? iconRoom : 0)
+            implicitWidth: (control.plainLabel ? textStart + plainText.implicitWidth + textEnd : label.implicitWidth)
+                + (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
+            implicitHeight: rowHeight + (reasonText.visible ? reasonText.implicitHeight : 0)
+            IconLabel {
+                id: label
+                width: parent.width - (keys.text.length > 0 ? keys.implicitWidth + 24 : 0)
+                height: parent.height - (reasonText.visible ? reasonText.implicitHeight : 0)
+                x: control.mirrored ? parent.width - width : 0
+                leftPadding: parent.leadPadding
+                rightPadding: parent.trailPadding
+                spacing: control.spacing
+                mirrored: control.mirrored
+                display: control.display
+                alignment: Qt.AlignLeft
+                icon: control.icon
+                text: control.plainLabel ? "" : control.text
+                font: control.font
+                color: parent.textColour
+            }
+            Text {
+                id: plainText
+                objectName: "menuItemPlainText"
+                visible: control.plainLabel
+                text: control.plainLabel ? control.text : ""
+                textFormat: Text.PlainText
+                x: label.x + parent.textStart
+                width: Math.max(0, label.width - parent.textStart - parent.textEnd)
+                anchors.verticalCenter: label.verticalCenter
+                horizontalAlignment: control.mirrored ? Text.AlignRight : Text.AlignLeft
+                elide: Text.ElideRight
+                font: control.font
+                color: parent.textColour
+            }
+            Text {
+                id: reasonText
+                objectName: "menuItemReason"
+                visible: control.underText.length > 0
+                text: control.underText
+                textFormat: Text.PlainText
+                x: control.mirrored ? parent.textEnd : parent.textStart
+                width: Math.max(0, parent.width - parent.textStart - parent.textEnd)
+                anchors.bottom: parent.bottom
+                horizontalAlignment: control.mirrored ? Text.AlignRight : Text.AlignLeft
+                wrapMode: Text.Wrap
+                font.family: control.font.family
+                font.pointSize: control.font.pointSize * 0.85
+                color: parent.lit ? control.palette.highlightedText : Theme.muted
+            }
+            Text {
+                id: keys
+                readonly property bool detail: control.keysText.length === 0
+                objectName: detail ? "menuItemDetail" : "menuItemKeys"
+                text: control.columnText
+                visible: text.length > 0
+                x: control.mirrored ? parent.arrowPadding : parent.width - width - parent.arrowPadding
+                anchors.verticalCenter: label.verticalCenter
+                font.family: control.font.family
+                font.pointSize: control.font.pointSize
+                font.italic: detail
+                color: control.enabled && (control.down || control.highlighted) ? control.palette.highlightedText : Theme.muted
+            }
+            // Qt's Windows style tints only a hovered or pressed item; give the keyboard's highlight that tint.
+            Binding {
+                when: control.windowsStyle && control.highlighted && !control.down && !control.hovered
+                target: control.background
+                property: "color"
+                value: Color.rgba(0, 0, 0, 0.0373)
+            }
+        }
     }
 }

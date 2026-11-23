@@ -138,11 +138,12 @@ DialogWindow {
         if (setting.startsWith("appearance."))
             Theme.preview(values)
     }
-    function pickThemeColour(setting, colour, anchor, name) {
+    function pickThemeColour(theme, role, colour, anchor, name) {
         themeColourPopover.openFor(anchor, themeColourTarget, () => {
-            const now = values[setting] ?? colour
-            themeColourTarget.setting = setting
-            themeColourTarget.before = now
+            const now = colour
+            themeColourTarget.theme = theme
+            themeColourTarget.role = role
+            themeColourTarget.before = values["appearance.colours"] ?? []
             colourPicker.opened("settings")
             const c = colourPicker.htmlColour(now)
             return { r: c.r, g: c.g, b: c.b, a: 0 }
@@ -636,6 +637,14 @@ DialogWindow {
                                 tip: qsTr("Number of autosaves can be set from 2 to 1000000")
                             }
                         }
+                        SettingsRow {
+                            iconRole: "autosave"
+                            text: qsTr("Autosave every")
+                            SettingNumber {
+                                setting: "autosave.intervalSeconds"; from: 5; to: 3600; unit: qsTr("seconds")
+                                name: qsTr("Autosave every"); tip: qsTr("Seconds from a change to its autosave. Range from 5 to 3600")
+                            }
+                        }
                     }
                     SettingsSection {
                         objectName: "settingsNoticesGroup"
@@ -737,7 +746,7 @@ DialogWindow {
                             IconTextButton {
                                 iconRole: "import"
                                 objectName: "settingsImportLegacy"
-                                text: qsTr("Import legacy settings…")
+                                text: qsTr("Import settings…")
                                 enabled: dialog.importer !== null && dialog.importer.available
                                 onClicked: dialog.legacyImportRequested()
                             }
@@ -1062,6 +1071,24 @@ DialogWindow {
                         title: qsTr("Counting")
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps"; text: qsTr("Count spaces and punctuation for wraps") }
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
+                        SettingsRow {
+                            text: qsTr("CPS warning")
+                            note: qsTr("Lines that read faster are tinted, more strongly up to the error level.")
+                            SettingNumber { setting: "grid.cpsWarning"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS warning") }
+                        }
+                        SettingsRow {
+                            text: qsTr("CPS error")
+                            SettingNumber { setting: "grid.cpsError"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS error") }
+                        }
+                        SettingsRow {
+                            text: qsTr("Characters per line")
+                            SettingNumber { setting: "grid.lineLength"; from: 1; to: 1000; name: qsTr("Characters per line") }
+                        }
+                        SettingsRow {
+                            text: qsTr("Lines")
+                            note: qsTr("A subtitle file can set its own limits in Script properties.")
+                            SettingNumber { setting: "grid.maxLines"; from: 1; to: 20; name: qsTr("Lines") }
+                        }
                     }
                     SettingsSection {
                         title: qsTr("Splitting")
@@ -1090,8 +1117,42 @@ DialogWindow {
                 SettingsPage {
                     objectName: "settingsPageVideo"
                     SettingsSection {
-                        title: qsTr("Playback")
+                        objectName: "settingsFullscreen"
+                        title: qsTr("Full screen")
                         ruled: false
+                        SettingsRow {
+                            iconRole: "fullscreen"
+                            text: qsTr("Bar position")
+                            note: qsTr("Below keeps the whole picture in view; the bar sits in the black strip under it.")
+                            SettingChoice {
+                                setting: "video.fullscreenBarPosition"
+                                model: [qsTr("Below the picture (letterbox)"), qsTr("Over the picture")]
+                                Accessible.name: qsTr("Bar position")
+                            }
+                        }
+                        SettingsRow {
+                            iconRole: "show-toolbar"
+                            text: qsTr("Show bar")
+                            note: qsTr("Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.")
+                            SettingChoice {
+                                setting: "video.fullscreenBar"
+                                model: [qsTr("Auto-hide"), qsTr("Always"), qsTr("Never")]
+                                Accessible.name: qsTr("Show bar")
+                            }
+                        }
+                        SettingCheck { setting: "video.fullscreenHidePointer"; text: qsTr("Hide the pointer with the bar") }
+                        SettingCheck { setting: "video.fullscreenOverlays"; text: qsTr("Show the render time and position overlays") }
+                        SettingsRow {
+                            text: qsTr("Opens in")
+                            SettingChoice {
+                                setting: "video.fullscreenOpensIn"
+                                model: [qsTr("Simple"), qsTr("Typesetting")]
+                                Accessible.name: qsTr("Opens in")
+                            }
+                        }
+                    }
+                    SettingsSection {
+                        title: qsTr("Playback")
                         SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
                         SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from the context menu in full screen") }
                         SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line’s time") }
@@ -1260,7 +1321,7 @@ DialogWindow {
                                 { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s")] },
                                 { setting: "video.matrixMismatch", text: qsTr("A different YCbCr matrix from the video’s"),
-                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Convert the colours and set it to the video’s")] },
                                 { setting: "video.missingLayoutRes", text: qsTr("No layout resolution in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Set it to the script resolution")] },
                                 { setting: "video.layoutResMismatch", text: qsTr("A different layout resolution from the video’s"),
@@ -1338,9 +1399,24 @@ DialogWindow {
                             SettingNumber { setting: "audio.leadInValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-in") }
                             SettingNumber { setting: "audio.leadOutValue"; from: 0; to: 10000; unit: qsTr("ms"); name: qsTr("Lead-out") }
                         }
+                        SettingsRow {
+                            iconRole: "audio-commit-default"
+                            text: qsTr("Default line duration")
+                            SettingNumber { setting: "audio.defaultDuration"; from: 100; to: 60000; unit: qsTr("ms"); name: qsTr("Default line duration") }
+                        }
                         SettingCheck { setting: "audio.lockScrollOnCursor"; text: qsTr("Follow audio during playback") }
                         SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Don’t play after changing the line") }
                         SettingCheck { setting: "audio.autoFocus"; text: qsTr("Focus the panel under the pointer") }
+                        SettingsRow {
+                            iconRole: "hotkeys"
+                            text: qsTr("Timing keys work in every panel")
+                            SettingChoice {
+                                setting: "audio.timingKeysEverywhere"
+                                model: [qsTr("Never"), qsTr("In the Timing layout"), qsTr("Always")]
+                                Accessible.name: qsTr("Timing keys work in every panel")
+                            }
+                        }
+                        SettingNote { text: qsTr("The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.") }
                         SettingCheck { setting: "audio.playMono"; text: qsTr("Play in mono") }
                         SettingNote { text: qsTr("Mixes the channels for the audio panel and editing playback. General video playback keeps the file’s channels.") }
                     }
@@ -1363,6 +1439,15 @@ DialogWindow {
                                 setting: "audio.inactiveLinesDisplayMode"
                                 model: [qsTr("None"), qsTr("Before and after the active"), qsTr("All visible")]
                                 Accessible.name: qsTr("Inactive lines")
+                            }
+                        }
+                        SettingsRow {
+                            iconRole: "spectrum-nonlinear"
+                            text: qsTr("Frequency curve")
+                            SettingChoice {
+                                setting: "audio.spectrumCurve"
+                                model: [qsTr("Linear"), qsTr("Speech"), qsTr("Logarithmic")]
+                                Accessible.name: qsTr("Frequency curve")
                             }
                         }
                     }
@@ -1843,14 +1928,7 @@ DialogWindow {
                             visible: !dialog.crashReports || dialog.crashReports.canSend
                             text: qsTr("After a crash or a freeze, the report is sent without asking: what crashed, your system, settings and the last Log lines. Never your subtitles, files or their names.")
                         }
-                        SettingCheck { setting: "privacy.discordPresence"; text: qsTr("Show what I am doing in Discord") }
-                        SettingNote { text: qsTr("Your Discord status shows Editing subtitles, the mode and for how long. Never the video, your subtitles or line counts.") }
-                        SettingCheck {
-                            setting: "privacy.discordFileName"
-                            enabled: dialog.values["privacy.discordPresence"] === true
-                            text: qsTr("Include the file name")
-                            Layout.leftMargin: 22
-                        }
+                        DiscordSettingsSection { dialog: dialog }
                         SettingCheck { setting: "plugins.network"; text: qsTr("Let plugins connect to the internet") }
                         SettingNote { text: qsTr("HikariSub makes each request, over HTTPS and only to the hosts the plugin listed when you installed it. Off: HikariSub refuses every request a plugin makes through it. A Full trust plugin can still connect on its own.") }
                     }
@@ -1899,15 +1977,17 @@ DialogWindow {
 
     QtObject {
         id: themeColourTarget
-        property string setting: ""
-        property string before: ""
+        property string theme: ""
+        property string role: ""
+        property var before: []
         function changeColour(c) {
-            dialog.put(setting, dialog.colourPicker.htmlText(c))
+            dialog.put("appearance.colours", Theme.withUserColour(dialog.values["appearance.colours"] ?? [], theme, role,
+                                                                  dialog.colourPicker.htmlText(c)))
             return true
         }
         function endDialog(accepted) {
             if (!accepted)
-                dialog.put(setting, before)
+                dialog.put("appearance.colours", before)
         }
     }
     ColourPopover {

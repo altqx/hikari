@@ -146,13 +146,25 @@ ApplicationWindow {
             closeReview.review(rows)
     }
     function openSubtitles(path) {
-        const result = root.app.reviewOpen(path)
+        root.continueOpen(root.app.reviewOpen(path))
+    }
+    function openPluginSubtitles(path, format) {
+        root.continueOpen(root.app.reviewOpenAs(path, format))
+    }
+    function continueOpen(result) {
         if (!result.ok || result.done)
             return
         else if (result.rows.length === 0)
             root.app.finishClose()
         else
             closeReview.review(result.rows)
+    }
+    Connections {
+        target: root.app
+        function onPluginOpenReviewed(shellWindow, result) {
+            if (shellWindow === root.shellWindow)
+                root.continueOpen(result)
+        }
     }
     function openFromExplorer(path, newTab) {
         const open = root.app.tabOfFile(root.shellWindow, path)
@@ -510,6 +522,26 @@ ApplicationWindow {
     readonly property bool originalShown: root.editor.translationMode && root.panelShown(originalDock)
     readonly property bool translationMode: root.editor.translationMode
     onTranslationModeChanged: root.placeOriginal()
+    readonly property var pluginConditions: ({
+        document: root.shell.hasEditingTarget,
+        selectedLines: root.shell.selectedCount,
+        video: root.video.hasVideo,
+        audio: root.audio.hasAudio,
+        karaoke: root.editor.hasLine && /\\(?:kf|ko|k|K)\d/.test(root.editor.text),
+        translation: root.translationMode
+    })
+    onPluginConditionsChanged: root.app.pluginRuntime?.setConditions(root.shellWindow, root.pluginConditions)
+    Component.onDestruction: root.app.pluginRuntime?.forgetWindow(root.shellWindow)
+    function pluginMenuItems(location) {
+        const runtime = root.app.pluginRuntime
+        if (!runtime)
+            return []
+        runtime.windowsRevision
+        return runtime.menuItems.filter(item => item.location === location && runtime.onIn(item.plugin, root.shellWindow))
+    }
+    function runPluginCommand(id, via) {
+        root.app.pluginRuntime.run(id, via)
+    }
     function placeOriginal() {
         if (!root.arrangementSettled)
             return
@@ -1240,6 +1272,7 @@ ApplicationWindow {
     function runTimingHelper(symbol) {
         const app = root.app
         const helpers = {
+            GLOBAL_SNAP_TO_SCENE: () => app.snapToScene(),
             GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(false, false),
             GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: () => app.snapToAdjacentKeyframe(false, true),
             GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: () => app.snapToAdjacentKeyframe(true, false),
@@ -1252,6 +1285,8 @@ ApplicationWindow {
             GLOBAL_START_FRAME_LATER: () => app.nudgeEdge(false, 1),
             GLOBAL_END_FRAME_EARLIER: () => app.nudgeEdge(true, -1),
             GLOBAL_END_FRAME_LATER: () => app.nudgeEdge(true, 1),
+            GLOBAL_END_LATER_SHIFT_FOLLOWING: () => app.nudgeEdge(true, 1, true),
+            GLOBAL_END_EARLIER_SHIFT_FOLLOWING: () => app.nudgeEdge(true, -1, true),
             GLOBAL_EXTEND_PREVIOUS_TO_START: () => app.extendNeighbour(false),
             GLOBAL_EXTEND_NEXT_TO_END: () => app.extendNeighbour(true),
             GLOBAL_TIMING_ASSISTANT: () => {
@@ -2152,13 +2187,13 @@ ApplicationWindow {
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
-        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("F6")
+        enabled: root.shellActive && !root.videoFullscreen.active && !root.hotkeys.globalSequences.includes("F6")
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
         context: Qt.ApplicationShortcut
-        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("Shift+F6")
+        enabled: root.shellActive && !root.videoFullscreen.active && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
     // Windows puts the window in menu mode on an unclaimed Shift+F10, which eats the next keys.
@@ -2486,6 +2521,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_TIMING_POSTPROCESSOR")) root.showPanel(postprocessorDock)
         }
         Action {
+            id: snapToSceneAction
+            text: qsTr("Snap to the scene")
+            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
+        }
+        Action {
             id: snapStartToPreviousKeyframeAction
             text: qsTr("Snap start to the previous keyframe")
             enabled: root.video.hasVideo && root.shell.hasEditingTarget
@@ -2536,26 +2577,38 @@ ApplicationWindow {
         Action {
             id: startFrameEarlierAction
             text: qsTr("Move start one frame earlier")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_START_FRAME_EARLIER")
         }
         Action {
             id: startFrameLaterAction
             text: qsTr("Move start one frame later")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_START_FRAME_LATER")) root.runTimingHelper("GLOBAL_START_FRAME_LATER")
         }
         Action {
             id: endFrameEarlierAction
             text: qsTr("Move end one frame earlier")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_EARLIER")) root.runTimingHelper("GLOBAL_END_FRAME_EARLIER")
         }
         Action {
             id: endFrameLaterAction
             text: qsTr("Move end one frame later")
-            enabled: root.video.hasVideo && root.shell.hasEditingTarget
+            enabled: root.shell.hasEditingTarget
             onTriggered: if (!root.hotkeyGesture("GLOBAL_END_FRAME_LATER")) root.runTimingHelper("GLOBAL_END_FRAME_LATER")
+        }
+        Action {
+            id: endLaterShiftFollowingAction
+            text: qsTr("Lengthen and shift what follows")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_END_LATER_SHIFT_FOLLOWING")) root.runTimingHelper("GLOBAL_END_LATER_SHIFT_FOLLOWING")
+        }
+        Action {
+            id: endEarlierShiftFollowingAction
+            text: qsTr("Shorten and shift what follows")
+            enabled: root.shell.hasEditingTarget
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_END_EARLIER_SHIFT_FOLLOWING")) root.runTimingHelper("GLOBAL_END_EARLIER_SHIFT_FOLLOWING")
         }
         Action {
             id: extendPreviousToStartAction
@@ -2661,6 +2714,32 @@ ApplicationWindow {
             text: qsTr("Open &keyframes…")
             enabled: root.video.hasVideo
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
+        }
+        Action {
+            id: saveKeyframesAction
+            text: qsTr("Save keyframes…")
+            enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_KEYFRAMES")) saveKeyframesDialog.show()
+        }
+        Action {
+            id: closeKeyframesAction
+            text: qsTr("Close keyframes")
+            enabled: root.app.keyframesFile.length > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_KEYFRAMES")) root.app.closeKeyframes()
+        }
+        Action {
+            id: fullScreenTypesettingAction
+            readonly property bool open: root.videoFullscreen.active
+                                         && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
+            text: qsTranslate("HikariSub.Video", "Full screen typesetting")
+            checkable: true
+            checked: open
+            enabled: root.video.hasVideo
+            onTriggered: {
+                checked = Qt.binding(() => open)
+                if (!root.hotkeyGesture("GLOBAL_FULL_SCREEN_TYPESETTING"))
+                    root.videoFullscreen.toggleTypesetting()
+            }
         }
         Action {
             id: openTimecodesAction
@@ -2874,6 +2953,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
         }
         Action {
+            id: saveSelectedAudioAction
+            text: qsTr("Save audio of selected lines…")
+            enabled: root.audio.hasAudio && root.shell.selectedCount > 0
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
+        }
+        Action {
             id: closeAudioAction
             text: qsTr("&Close audio")
             enabled: root.audio.hasAudio
@@ -2949,6 +3034,21 @@ ApplicationWindow {
                     root.setNodeEffects(checked)
                 checked = Qt.binding(() => root.workspaceLayout.nodeEffects)
             }
+        }
+        Action {
+            id: quickOpenAction
+            text: qsTranslate("HikariSub.QuickPick", "Quick Open…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_QUICK_OPEN")) quickOpen.open("")
+        }
+        Action {
+            id: commandPaletteAction
+            text: qsTranslate("HikariSub.QuickPick", "Command palette…")
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_COMMAND_PALETTE")) quickOpen.open(">")
+        }
+        Action {
+            id: clearCommandHistoryAction
+            text: qsTranslate("HikariSub.QuickPick", "Clear command history")
+            onTriggered: root.app.settings.setValue("recent.commands", [])
         }
         Action {
             id: showExplorerAction
@@ -3046,6 +3146,13 @@ ApplicationWindow {
                         iconRole: "open-project"
                         objectName: "openFolderMenuItem"
                         action: openFolderAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_QUICK_OPEN"
+                        help: qsTr("Finds a recent or project file, a command, a line, a time, a style or a panel")
+                        iconRole: "quick-open"
+                        objectName: "quickOpenMenuItem"
+                        action: quickOpenAction
                     }
                     ShellMenu {
                         help: qsTr("Lists the subtitle files opened lately")
@@ -3480,6 +3587,14 @@ ApplicationWindow {
                     title: qsTr("Timing &helpers")
                     iconRole: "timing-helpers"
                     ShellMenuItem {
+                        command: "GLOBAL_SNAP_TO_SCENE"
+                        help: qsTr("Sets each selected line to the keyframes around it: one line takes the scene at the video frame, several lines each take the scene of their own start")
+                        iconRole: "snap-to-scene"
+                        objectName: "snapToSceneItem"
+                        action: snapToSceneAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
                         command: "GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME"
                         help: qsTr("Moves the start of each selected line to the keyframe before it")
                         iconRole: "snap-start-to-previous-keyframe"
@@ -3539,31 +3654,45 @@ ApplicationWindow {
                     MenuSeparator {}
                     ShellMenuItem {
                         command: "GLOBAL_START_FRAME_EARLIER"
-                        help: qsTr("Moves the start of each selected line one frame earlier")
+                        help: qsTr("Moves the start of each selected line one frame earlier, or 10 ms without video")
                         iconRole: "start-frame-earlier"
                         objectName: "startFrameEarlierItem"
                         action: startFrameEarlierAction
                     }
                     ShellMenuItem {
                         command: "GLOBAL_START_FRAME_LATER"
-                        help: qsTr("Moves the start of each selected line one frame later")
+                        help: qsTr("Moves the start of each selected line one frame later, or 10 ms without video")
                         iconRole: "start-frame-later"
                         objectName: "startFrameLaterItem"
                         action: startFrameLaterAction
                     }
                     ShellMenuItem {
                         command: "GLOBAL_END_FRAME_EARLIER"
-                        help: qsTr("Moves the end of each selected line one frame earlier")
+                        help: qsTr("Moves the end of each selected line one frame earlier, or 10 ms without video. In karaoke mode, moves the current syllable’s end")
                         iconRole: "end-frame-earlier"
                         objectName: "endFrameEarlierItem"
                         action: endFrameEarlierAction
                     }
                     ShellMenuItem {
                         command: "GLOBAL_END_FRAME_LATER"
-                        help: qsTr("Moves the end of each selected line one frame later")
+                        help: qsTr("Moves the end of each selected line one frame later, or 10 ms without video. In karaoke mode, moves the current syllable’s end")
                         iconRole: "end-frame-later"
                         objectName: "endFrameLaterItem"
                         action: endFrameLaterAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_END_LATER_SHIFT_FOLLOWING"
+                        help: qsTr("Moves the end of each selected line one step later and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one")
+                        iconRole: "end-later-shift-following"
+                        objectName: "endLaterShiftFollowingItem"
+                        action: endLaterShiftFollowingAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_END_EARLIER_SHIFT_FOLLOWING"
+                        help: qsTr("Moves the end of each selected line one step earlier and every line below by the same amount. In karaoke mode, moves the current syllable’s end and every later one")
+                        iconRole: "end-earlier-shift-following"
+                        objectName: "endEarlierShiftFollowingItem"
+                        action: endEarlierShiftFollowingAction
                     }
                     MenuSeparator {}
                     ShellMenuItem {
@@ -3782,6 +3911,20 @@ ApplicationWindow {
                         if (problem.length > 0)
                             root.notices.post("error", qsTr("Open keyframes"), problem)
                     }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_SAVE_KEYFRAMES"
+                    objectName: "saveKeyframesMenuItem"
+                    help: qsTr("Saves the video’s keyframes as a keyframes file")
+                    iconRole: "save-keyframes"
+                    action: saveKeyframesAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_CLOSE_KEYFRAMES"
+                    objectName: "closeKeyframesMenuItem"
+                    help: qsTr("Closes the open keyframes file and goes back to the video’s own keyframes")
+                    iconRole: "close-keyframes"
+                    action: closeKeyframesAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_TIMECODES"
@@ -4095,6 +4238,13 @@ ApplicationWindow {
                     objectName: "closeAudioMenuItem"
                     action: closeAudioAction
                 }
+                ShellMenuItem {
+                    command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                    help: qsTr("Saves the audio from the first selected line’s start to the last one’s end as a WAV file")
+                    iconRole: "save-audio"
+                    objectName: "saveSelectedAudioMenuItem"
+                    action: saveSelectedAudioAction
+                }
                 MenuSeparator {}
                 ShellMenuItem {
                     command: "GLOBAL_SET_AUDIO_FROM_VIDEO"
@@ -4188,6 +4338,15 @@ ApplicationWindow {
                     objectName: "pluginsMenuItem"
                     action: pluginsAction
                 }
+                PluginMenuEntries {
+                    menu: automationMenu
+                    after: pluginsMenuItem
+                    items: automationMenu.lazyItems?.placed ? root.pluginMenuItems("menuBar") : []
+                    runtime: root.app.pluginRuntime
+                    shellWindow: root.shellWindow
+                    keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                    onTriggered: item => root.runPluginCommand(item.id, "menu")
+                }
                 MenuSeparator {
                     id: pluginCommandsSeparator
                     objectName: "pluginCommandsSeparator"
@@ -4206,9 +4365,13 @@ ApplicationWindow {
                         return runtime.commands.filter(c => runtime.onIn(c.plugin, root.shellWindow))
                     }
                     keys: command => root.automationHotkeys.keys[command.id] ?? ""
+                    reasonOf: command => {
+                        root.app.pluginRuntime.conditionsRevision
+                        return root.app.pluginRuntime.disabledReason(command.id, root.shellWindow)
+                    }
                     itemPrefix: "pluginCommand_"
                     menuPrefix: "pluginCommandMenu_"
-                    onTriggered: command => root.app.pluginRuntime.run(command.id)
+                    onTriggered: command => root.runPluginCommand(command.id, "menu")
                 }
                 MenuSeparator {
                     id: macrosSeparator
@@ -4240,6 +4403,14 @@ ApplicationWindow {
             title: qsTr("Vie&w")
             onBuilt: root.applyMenuShortcuts()
             lazyContent: MenuContent {
+                ShellMenuItem {
+                    command: "GLOBAL_COMMAND_PALETTE"
+                    help: qsTr("Finds and runs any command by its name")
+                    iconRole: "command-palette"
+                    objectName: "commandPaletteMenuItem"
+                    action: commandPaletteAction
+                }
+                MenuSeparator {}
                 LayoutMenu {
                     id: viewLayoutMenu
                     objectName: "viewLayoutMenu"
@@ -4435,6 +4606,15 @@ ApplicationWindow {
                     objectName: "nodeEffectsMenuItem"
                     reason: nodeEffectsAction.enabled ? "" : !root.shell.hasEditingTarget ? qsTr("Open a file first") : root.lockedReason
                     action: nodeEffectsAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_FULL_SCREEN_TYPESETTING"
+                    help: qsTranslate("HikariSub.Video", "Opens the video full screen with the visual tools, the active line and its tools beside it")
+                    iconRole: "fullscreen"
+                    objectName: "fullScreenTypesettingMenuItem"
+                    reason: root.video.hasVideo ? "" : qsTr("Open a video first")
+                    keepsMenuOpen: false
+                    action: fullScreenTypesettingAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
@@ -4947,6 +5127,15 @@ ApplicationWindow {
         ContextMenu.menu: ShellMenu {
             id: editMenu
             objectName: field.objectName + "Menu"
+            PluginMenuEntries {
+                menu: editMenu
+                items: field.objectName === "lineText" || field.objectName === "translationText"
+                       ? root.pluginMenuItems("lineEditor.context") : []
+                runtime: root.app.pluginRuntime
+                shellWindow: root.shellWindow
+                keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                onTriggered: item => root.runPluginCommand(item.id, "menu")
+            }
             readonly property bool grammar: !!field.grammar.rule
             readonly property var suggestions: (grammar ? field.grammar.suggestions : field.misspell.suggestions) || []
             property bool headerShown: false
@@ -5112,6 +5301,7 @@ ApplicationWindow {
                 objectName: field.objectName + "AiMenu"
                 controller: root.inlineAi
                 editor: true
+                field: field
                 shown: root.inlineAi.on && field.role === 0 && root.editor.hasLine
                 onChosen: ask => inlineAiBox.begin(ask, true, field)
                 onRepeatRequested: root.repeatInlineAi(true, field)
@@ -5210,6 +5400,7 @@ ApplicationWindow {
         }
         Keys.onShortcutOverride: event => event.accepted = field.compositionKey(event) || hotkeyAction(event) !== ""
                                                            || tagListPopup.takesKey(event) || field.undoRedoKey(event)
+                                                           || root.timingKey(event, true) !== ""
         Keys.onPressed: event => {
             if (field.compositionKey(event)) {
                 field.endComposition(event.key === Qt.Key_Escape)
@@ -5227,6 +5418,7 @@ ApplicationWindow {
             if (action !== "") {
                 root.runEditorHotkey(action, field)
                 event.accepted = true
+            } else if (root.runTimingKey(event, true)) {
             } else if (plain && field.role === 1 && event.key === Qt.Key_Tab && root.editor.acceptSuggestedRuns()) {
                 event.accepted = true
             } else if (plain && field.role === 1 && event.key === Qt.Key_Escape && root.editor.dismissSuggestedRuns()) {
@@ -5515,6 +5707,7 @@ ApplicationWindow {
                 Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
                                                   || root.visualTools.takesKey(event.key, event.modifiers)
                                                   || videoPanel.panelAction(event) !== ""
+                                                  || root.timingKey(event, false) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
                         event.accepted = true
@@ -5529,6 +5722,7 @@ ApplicationWindow {
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
+                    } else if (root.runTimingKey(event, false)) {
                     } else if (event.key === Qt.Key_F) {
                         root.videoFullscreen.toggle(0)
                         event.accepted = true
@@ -5550,6 +5744,25 @@ ApplicationWindow {
                     video: root.video
                     anchors { left: videoStageDock.left; right: parent.right; top: parent.top }
                     z: 1
+                }
+                Item {
+                    id: videoHeaderTools
+                    objectName: "videoHeaderTools"
+                    visible: parent !== null && parent.objectName === "dockToolbarSlot"
+                    implicitWidth: 24
+                    implicitHeight: 24
+                    IconToolButton {
+                        objectName: "videoFullScreenTypesetting"
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                        implicitWidth: 24
+                        implicitHeight: 24
+                        iconRole: "fullscreen"
+                        text: fullScreenTypesettingAction.text
+                        tip: root.bitmapTip(text, "GLOBAL_FULL_SCREEN_TYPESETTING", 0)
+                        enabled: fullScreenTypesettingAction.enabled
+                        focusPolicy: Qt.NoFocus
+                        onClicked: if (!root.hotkeyGesture("GLOBAL_FULL_SCREEN_TYPESETTING", 0, "bitmap")) root.videoFullscreen.toggleTypesetting()
+                    }
                 }
                 VisualToolRail {
                     id: visualRail
@@ -5618,6 +5831,7 @@ ApplicationWindow {
                 VideoRenderCost {
                     anchors.fill: presenter
                     visible: root.videoView.renderCost && root.video.hasVideo
+                             && (!root.videoFullscreen.active || root.videoFullscreen.overlays)
                     cost: presenter.renderCost
                     textTop: templateBadge.visible ? templateBadge.height + 12 : nodeBadge.visible ? nodeBadge.height + 12 : 8
                 }
@@ -5635,6 +5849,7 @@ ApplicationWindow {
                         at = point
                         popup(visualOverlay, point)
                     }
+                    onFullscreenSettingsRequested: root.openSettings("video")
                     onOpenVideoRequested: videoDialog.show()
                     onOpenSubtitlesRequested: openDialog.show()
                     onAspectRatioRequested: root.lazy(aspectRatioDialogLoader).openAtCursor(visualOverlay)
@@ -6958,17 +7173,39 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                FoldedToggle {
-                                    objectName: "audioMoreSpeechSpectrum"
+                                ShellMenu {
+                                    objectName: "audioMoreFrequencyCurve"
                                     iconRole: "spectrum-nonlinear"
-                                    text: qsTranslate("HikariSub.Audio", "Speech spectrum")
-                                    checked: root.audio.spectrumNonLinear
-                                    onToggled: {
-                                        root.audio.setSpectrumNonLinear(checked)
-                                        checked = Qt.binding(() => root.audio.spectrumNonLinear)
+                                    title: qsTranslate("HikariSub.Audio", "Frequency curve")
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLinear"
+                                        text: qsTranslate("HikariSub.Audio", "Linear")
+                                        checked: root.audio.spectrumCurve === 0
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 0)
+                                            root.audio.setSpectrumCurve(0)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveSpeech"
+                                        text: qsTranslate("HikariSub.Audio", "Speech")
+                                        checked: root.audio.spectrumCurve === 1
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 1)
+                                            root.audio.setSpectrumCurve(1)
+                                        }
+                                    }
+                                    MenuRadioItem {
+                                        objectName: "audioMoreFrequencyCurveLogarithmic"
+                                        text: qsTranslate("HikariSub.Audio", "Logarithmic")
+                                        checked: root.audio.spectrumCurve === 2
+                                        onTriggered: {
+                                            checked = Qt.binding(() => root.audio.spectrumCurve === 2)
+                                            root.audio.setSpectrumCurve(2)
+                                        }
                                     }
                                 }
-                                FoldedToggleSeparator {}
+                                MenuSeparator {}
                                 ShellMenuItem {
                                     objectName: "audioMoreGotoStart"
                                     iconRole: "audio-to-selection-start"
@@ -7319,10 +7556,15 @@ ApplicationWindow {
                     return action === "EDITBOX_COMMIT" || action === "EDITBOX_COMMIT_GO_NEXT_LINE" ? "" : action
                 }
                 Keys.onShortcutOverride: event => event.accepted = panelAction(event) !== ""
+                                                  || (!lineText.activeFocus && !translationText.activeFocus
+                                                      && root.timingKey(event, false) !== "")
                 Keys.onPressed: event => {
                     const action = panelAction(event)
-                    if (action === "")
+                    if (action === "") {
+                        if (!lineText.activeFocus && !translationText.activeFocus)
+                            root.runTimingKey(event, false)
                         return
+                    }
                     root.runEditorHotkey(action, root.editedField())
                     event.accepted = true
                 }
@@ -7356,6 +7598,7 @@ ApplicationWindow {
                         objectName: "editorAiMenu"
                         controller: root.inlineAi
                         editor: true
+                        field: lineText
                         onChosen: ask => inlineAiBox.begin(ask, true, lineText)
                         onRepeatRequested: root.repeatInlineAi(true, lineText)
                         onSettingsRequested: root.openSettings("ai")
@@ -7628,6 +7871,14 @@ ApplicationWindow {
                     ShellMenu {
                         id: gridMenu
                         objectName: "gridMenu"
+                        PluginMenuEntries {
+                            menu: gridMenu
+                            items: root.pluginMenuItems("grid.context")
+                            runtime: root.app.pluginRuntime
+                            shellWindow: root.shellWindow
+                            keys: item => root.automationHotkeys.keys[item.id] ?? ""
+                            onTriggered: item => root.runPluginCommand(item.id, "menu")
+                        }
                         property bool canPasteTranslation: false
                         property bool canShiftTranslation: false
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
@@ -7834,6 +8085,22 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                             }
                         }
+                        ShellMenuItem {
+                            command: "GLOBAL_SNAP_TO_SCENE"
+                            iconRole: "snap-to-scene"
+                            objectName: "gridSnapToScene"
+                            text: qsTranslate("HikariSub.Grid", "Snap to the scene")
+                            enabled: root.video.hasVideo
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_SNAP_TO_SCENE")) root.runTimingHelper("GLOBAL_SNAP_TO_SCENE")
+                        }
+                        ShellMenuItem {
+                            command: "GLOBAL_SAVE_SELECTED_AUDIO"
+                            iconRole: "save-audio"
+                            objectName: "gridSaveSelectedAudio"
+                            text: qsTranslate("HikariSub.Grid", "Save audio of selected lines…")
+                            enabled: root.audio.hasAudio
+                            onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SELECTED_AUDIO")) saveSelectedAudioDialog.show()
+                        }
                         ShellMenuItem { command: "GRID_TREE_MAKE"; iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make line group"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         ShellMenuItem {
                             command: "GLOBAL_CONVERT_FOLDS_TO_GROUPS"
@@ -7974,10 +8241,21 @@ ApplicationWindow {
                 Label {
                     objectName: "gridEmptyState"
                     anchors.centerIn: parent
-                    visible: !shell.hasEditingTarget
-                    text: qsTranslate("HikariSub.Grid", "No document open")
+                    visible: !shell.hasEditingTarget || shell.gridFilterMatchesNothing
+                    text: shell.hasEditingTarget ? qsTranslate("HikariSub.Grid", "No lines match the filter")
+                                                 : qsTranslate("HikariSub.Grid", "No document open")
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true
+                }
+                GridFilterField {
+                    id: gridFilterField
+                    shell: root.shell
+                    onLeave: toFirstLine => {
+                        const first = toFirstLine ? root.shell.firstShownLine() : undefined
+                        if (first !== undefined)
+                            root.app.selectLine(first)
+                        root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                    }
                 }
             }
         }
@@ -8093,6 +8371,7 @@ ApplicationWindow {
                 id: qcNotesPanel
                 objectName: "qcNotesPanel"
                 dockName: root.engineName("QcNotes")
+                onActiveFocusChanged: root.app.presenceActivity(root.shellWindow, "reviewing", activeFocus)
                 minimumBodySize: qcNotesTool.minimumBodySize
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.QcNotes", "QC notes")
@@ -8297,8 +8576,7 @@ ApplicationWindow {
                 dockName: root.engineName("Styles")
                 minimumBodySize: Qt.size(180, 120)
                 anchors.fill: parent
-                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Styles", "Styles: %1").arg(shell.editingTitle)
-                                              : qsTranslate("HikariSub.Styles", "Styles")
+                title: qsTranslate("HikariSub.Styles", "Styles")
                 accessibleName: qsTranslate("HikariSub.Styles", "Styles")
                 StylesPanel {
                     id: stylesTool
@@ -8471,7 +8749,7 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader(root.engineName("Grid"), true, null)
+            Docking.setPanelHeader(root.engineName("Grid"), true, gridFilterField)
             Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
             Docking.setPanelHeader(root.engineName("Search"), true, null)
             Docking.setPanelHeader(root.engineName("Log"), true, null)
@@ -8483,6 +8761,7 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("NodeSources"), true, nodeSourcesTool.toolbar)
             Docking.setPanelHeader(root.engineName("NodeInspector"), true, null)
             Docking.setPanelHeader(root.engineName("Explorer"), true, explorerTool.toolbar)
+            Docking.setPanelHeader(root.engineName("Video"), true, videoHeaderTools)
             root.defaultLayout()
         }
     }
@@ -8800,6 +9079,35 @@ ApplicationWindow {
                     ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", root.review.waiting) : ""
         onReviewClicked: root.showPanel(reviewDock)
         pluginRuntime: root.app.pluginRuntime
+        pluginItems: {
+            const runtime = root.app.pluginRuntime
+            if (!runtime)
+                return []
+            runtime.windowsRevision
+            return runtime.statusItems.filter(item => runtime.onIn(item.plugin, root.shellWindow))
+        }
+        pluginTitles: {
+            const runtime = root.app.pluginRuntime
+            if (!runtime)
+                return []
+            runtime.windowsRevision
+            return runtime.statusItemTitles.filter(item => runtime.onIn(item.plugin, root.shellWindow))
+        }
+        hiddenItems: root.app.settings.value("statusBar.hiddenItems") || []
+        Connections {
+            target: root.app.settings
+            function onChanged(id) {
+                if (id === "statusBar.hiddenItems")
+                    statusStrip.hiddenItems = root.app.settings.value(id) || []
+            }
+        }
+        onPluginItemClicked: item => root.runPluginCommand(item.command, "status")
+        onPluginItemHidden: (key, hidden) => {
+            const rows = (root.app.settings.value("statusBar.hiddenItems") || []).filter(k => k !== key)
+            if (hidden)
+                rows.push(key)
+            root.app.settings.setValue("statusBar.hiddenItems", rows)
+        }
     }
     function currentTab() {
         const tabs = root.app.tabs
@@ -8912,6 +9220,7 @@ ApplicationWindow {
     PluginManagerDialog {
         id: pluginManagerDialog
         manager: root.app.pluginManager
+        takenShortcuts: root.automationHotkeys.takenDefaults
         market: root.app.pluginMarketplace
         runtime: root.app.pluginRuntime
         settings: root.app.settings
@@ -9252,7 +9561,7 @@ ApplicationWindow {
     FileChooser {
         id: videoDialog
         objectName: "videoOpenDialog"
-        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)"), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("video", selectedFile)
             if (root.videoFullscreen.active)
@@ -9361,15 +9670,25 @@ ApplicationWindow {
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.show()
         onAspectRatioRequested: root.lazy(aspectRatioDialogLoader).openAtCursor(videoFullscreenWindow.contentItem)
-        onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
             root.openSettings("audio")
+        }
+        onFullscreenSettingsRequested: {
+            root.videoFullscreen.leave()
+            root.openSettings("video")
         }
         Component.onCompleted: {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
         }
+    }
+    QtObject {
+        readonly property bool typesetting: root.videoFullscreen.active
+                                            && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
+        readonly property bool watching: root.videoFullscreen.active && !typesetting
+        onWatchingChanged: root.app.presenceActivity(root.shellWindow, "watching", watching)
+        onTypesettingChanged: root.app.presenceActivity(root.shellWindow, "typesetting", typesetting)
     }
     Binding {
         when: root.videoFullscreen.active
@@ -9405,20 +9724,28 @@ ApplicationWindow {
         id: openDialog
         objectName: "subtitlesOpenDialog"
         title: qsTranslate("HikariSub.Documents", "Open subtitles")
+        readonly property var builtInFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+                                               qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
+                                               qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
+                                               qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)")]
+        readonly property string allFilesFilter: qsTranslate("HikariSub.Documents", "All files (*)")
+        property var pluginFormats: []
+        nameFilters: builtInFilters.concat([allFilesFilter])
         function show() {
             const folder = root.pickerFolder("subtitles")
             if (folder.length > 0)
                 currentFolder = folder
+            pluginFormats = root.app.pluginOpenFormats()
+            nameFilters = builtInFilters.concat(root.app.pluginOpenFilters(), [allFilesFilter])
             open()
         }
-        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
-                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
-                      qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
-                      qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
-                      qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
-            root.openChosenSubtitles(root.app.localPath(selectedFile))
+            const plugin = pluginFormats[selectedNameFilter.index - builtInFilters.length]
+            if (selectedNameFilter.index >= builtInFilters.length && plugin !== undefined)
+                root.openPluginSubtitles(root.app.localPath(selectedFile), plugin)
+            else
+                root.openChosenSubtitles(root.app.localPath(selectedFile))
         }
     }
 
@@ -9755,6 +10082,24 @@ ApplicationWindow {
         }
     }
     FileChooser {
+        id: saveKeyframesDialog
+        objectName: "saveKeyframesDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Video", "Save keyframes file")
+        defaultSuffix: "txt"
+        nameFilters: [qsTranslate("HikariSub.Video", "Keyframes file (*.txt)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("keyframes", selectedFile)
+            const problem = root.app.saveKeyframesFile(selectedFile)
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Video", "Save keyframes file"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("keyframes", root.app.keyframesDialogFolder())
+            open()
+        }
+    }
+    FileChooser {
         id: saveTimecodesDialog
         objectName: "saveTimecodesDialog"
         fileMode: FileDialog.SaveFile
@@ -9768,6 +10113,24 @@ ApplicationWindow {
         }
         function show() {
             currentFolder = root.startFolder("timecodes", root.app.timecodesDialogFolder())
+            open()
+        }
+    }
+    FileChooser {
+        id: saveSelectedAudioDialog
+        objectName: "saveSelectedAudioDialog"
+        fileMode: FileDialog.SaveFile
+        title: qsTranslate("HikariSub.Audio", "Save audio of selected lines")
+        defaultSuffix: "wav"
+        nameFilters: [qsTranslate("HikariSub.Audio", "WAV audio (*.wav)")]
+        onAccepted: {
+            root.rememberPickerFolder("audioClip", selectedFile)
+            const problem = root.app.saveSelectedAudio(selectedFile)
+            if (problem.length > 0)
+                root.notices.post("error", qsTranslate("HikariSub.Audio", "Save audio of selected lines"), problem)
+        }
+        function show() {
+            currentFolder = root.startFolder("audioClip", root.app.audioDialogFolder())
             open()
         }
     }
@@ -10109,8 +10472,11 @@ ApplicationWindow {
         case "matrixMismatch":
             o = { title: qsTr("YCbCr matrix mismatch"),
                   text: qsTr("The video’s YCbCr matrix (%1) differs from the subtitles’ (%2).").arg(question.recommended, question.script),
-                  detail: qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
-                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)] }
+                  detail: question.convertible
+                          ? qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.").arg(question.script)
+                          : qsTr("If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s."),
+                  choices: [leave(qsTr("Keep %1").arg(question.script), false), set("set", qsTr("Set to %1").arg(question.recommended), true)]
+                           .concat(question.convertible ? [set("convert", qsTr("Convert colours and set to %1").arg(question.recommended), false)] : []) }
             break
         case "missingLayoutRes":
             o = { title: qsTr("Set the layout resolution?"),
@@ -10132,7 +10498,7 @@ ApplicationWindow {
         }
         o.dontAsk = true
         root.messages.ask(o, (id, dontAskAgain) => {
-            const choice = ({ set: 1, play: 2 })[id] ?? 0
+            const choice = ({ set: 1, play: 2, convert: 2 })[id] ?? 0
             if (dontAskAgain)
                 root.app.stopAskingVideoProperty(question.kind, choice)
             if (choice > 0)
@@ -10512,10 +10878,22 @@ ApplicationWindow {
         }
     }
 
+    QuickOpen {
+        id: quickOpen
+        objectName: "quickOpen"
+        shell: root
+        explorer: explorerModel
+        hangFrom: (titleBar.visible ? titleBar.height : 0) + 8
+    }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]
-        if (!target)
-            return null
+        if (!target) {
+            if (!run)
+                return { enabled: true, reason: "" }
+            const ran = root.byKey(() => root.globalHotkey(symbol))
+            root.app.apiHost.commandRan(symbol, ran)
+            return ran
+        }
         if (!run)
             return { enabled: target.enabled, reason: "" }
         if (!target.enabled)
@@ -10562,6 +10940,7 @@ ApplicationWindow {
 
     Component.onCompleted: {
         root.app.shellWindowLoaded(root)
+        root.app.pluginRuntime?.setConditions(root.shellWindow, root.pluginConditions)
         root.connectApi()
         const turnedOn = root.app.settings.value("workspace.karaokeTurnedOn")
         root.karaokeTurnedOn = turnedOn.indexOf("audio.karaoke") >= 0
@@ -10769,7 +11148,7 @@ ApplicationWindow {
         GLOBAL_RELOAD_AUDIO: reloadAudioAction, GLOBAL_RELOAD_VIDEO: reloadVideoAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction,
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, GLOBAL_AUTOMATION_RERUN_LAST_MACRO: rerunLastMacroAction, GLOBAL_SAVE_SELECTED_AUDIO: saveSelectedAudioAction,
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
@@ -10800,7 +11179,9 @@ ApplicationWindow {
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
         GLOBAL_OPEN_FOLDER: openFolderAction, GLOBAL_CLOSE_PROJECT: closeProjectAction,
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
-        GLOBAL_CLOSE_TIMECODES: closeTimecodesAction,
+        GLOBAL_CLOSE_TIMECODES: closeTimecodesAction, GLOBAL_SAVE_KEYFRAMES: saveKeyframesAction,
+        GLOBAL_CLOSE_KEYFRAMES: closeKeyframesAction,
+        GLOBAL_FULL_SCREEN_TYPESETTING: fullScreenTypesettingAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
@@ -10827,6 +11208,9 @@ ApplicationWindow {
         GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesAction, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorAction,
         GLOBAL_SHOW_QC_NOTES: showQcNotesAction, GLOBAL_SHOW_EXPLORER: showExplorerAction,
+        GLOBAL_SNAP_TO_SCENE: snapToSceneAction,
+        GLOBAL_QUICK_OPEN: quickOpenAction, GLOBAL_COMMAND_PALETTE: commandPaletteAction,
+        GLOBAL_CLEAR_COMMAND_HISTORY: clearCommandHistoryAction,
         GLOBAL_SNAP_START_TO_PREVIOUS_KEYFRAME: snapStartToPreviousKeyframeAction,
         GLOBAL_SNAP_START_TO_NEXT_KEYFRAME: snapStartToNextKeyframeAction,
         GLOBAL_SNAP_END_TO_PREVIOUS_KEYFRAME: snapEndToPreviousKeyframeAction,
@@ -10839,6 +11223,8 @@ ApplicationWindow {
         GLOBAL_START_FRAME_LATER: startFrameLaterAction,
         GLOBAL_END_FRAME_EARLIER: endFrameEarlierAction,
         GLOBAL_END_FRAME_LATER: endFrameLaterAction,
+        GLOBAL_END_LATER_SHIFT_FOLLOWING: endLaterShiftFollowingAction,
+        GLOBAL_END_EARLIER_SHIFT_FOLLOWING: endEarlierShiftFollowingAction,
         GLOBAL_EXTEND_PREVIOUS_TO_START: extendPreviousToStartAction,
         GLOBAL_EXTEND_NEXT_TO_END: extendNextToEndAction,
         GLOBAL_TIMING_ASSISTANT: timingAssistantAction,
@@ -10936,6 +11322,27 @@ ApplicationWindow {
     function runAudioHotkey(action) {
         return root.hotkeys.report(action, root.hotkeys.rehearsing() || root.byKey(() => root.audioHotkey(action)))
     }
+    readonly property var panelNavigationKeys: [Qt.Key_Left, Qt.Key_Right, Qt.Key_Up, Qt.Key_Down, Qt.Key_PageUp,
+                                                Qt.Key_PageDown, Qt.Key_Home, Qt.Key_End, Qt.Key_Return, Qt.Key_Enter,
+                                                Qt.Key_Tab, Qt.Key_Backtab, Qt.Key_Escape]
+    function timingKey(event, typing) {
+        const everywhere = Number(root.app.settings.value("audio.timingKeysEverywhere"))
+        if (!root.audio.loaded || everywhere === 0 || (everywhere === 1 && root.workspaceLayout.preset !== "Timing"))
+            return ""
+        if (typing && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)))
+            return ""
+        if (root.panelNavigationKeys.includes(event.key))
+            return ""
+        return root.hotkeys.actionFor(4, event.key, event.modifiers)
+    }
+    function runTimingKey(event, typing) {
+        const action = root.timingKey(event, typing)
+        if (action === "")
+            return false
+        root.runAudioHotkey(action)
+        event.accepted = true
+        return true
+    }
     property int keyRuns: 0
     function byKey(run) {
         ++root.keyRuns
@@ -10956,7 +11363,7 @@ ApplicationWindow {
         if (symbol.startsWith("GRID_"))
             return root.runGridHotkey(symbol)
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
-                               "GLOBAL_OPEN_TIMECODES", "GLOBAL_SAVE_TIMECODES",
+                               "GLOBAL_OPEN_TIMECODES", "GLOBAL_SAVE_TIMECODES", "GLOBAL_SAVE_KEYFRAMES",
                                "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
@@ -11127,8 +11534,8 @@ ApplicationWindow {
         case "VIDEO_MINUTE_BACKWARD": root.video.seekBy(-60000); return true
         case "VIDEO_STOP": root.video.stop(); return true
         case "VIDEO_COPY_COORDS": root.visualTools.copyCoordinatesAtCursor(visualOverlay); return true
-        case "VIDEO_PREVIOUS_FILE": videoFileQuestion.ask(false); return true
-        case "VIDEO_NEXT_FILE": videoFileQuestion.ask(true); return true
+        case "VIDEO_PREVIOUS_FILE": videoFileQuestion.ask(false, root.videoFullscreen.active ? videoFullscreenWindow : null); return true
+        case "VIDEO_NEXT_FILE": videoFileQuestion.ask(true, root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_PREVIOUS_CHAPTER": root.video.previousChapter(); return true
         case "VIDEO_NEXT_CHAPTER": root.video.nextChapter(); return true
         case "VIDEO_DELETE_FILE": root.video.unloadVideo(); return true

@@ -162,7 +162,7 @@ class Upload(unittest.TestCase):
         self.assertFalse(api.has("23d051e4-93db-40b7-8ab2-7072163144b9-1"))
         self.assertEqual(Loopback.asked[0]["status"], ["valid"])
 
-    @unittest.skipUnless(all(map(shutil.which, ("zstd", "objcopy", "dwz"))), "needs zstd, objcopy and dwz")
+    @unittest.skipUnless(all(map(shutil.which, ("zstd", "objcopy"))), "needs zstd and objcopy")
     def test_a_set_posthog_has_is_not_packed(self):
         server = loopback_posthog("1251dbf9-ff35-761a-90ff-786534e30872")
         self.addCleanup(server.server_close)
@@ -174,12 +174,13 @@ class Upload(unittest.TestCase):
             out = io.StringIO()
             with mock.patch.dict(os.environ, env), mock.patch.object(posthog_symbols, "debug_data") as packed, \
                     redirect_stdout(out):
-                self.assertEqual(posthog_symbols.main([scratch]), 0)
+                self.assertEqual(posthog_symbols.main([scratch, "--dwarf-reduce", sys.executable]), 0)
         packed.assert_not_called()
         self.assertIn("hikarisub.debug: already there", out.getvalue())
 
-    @unittest.skipUnless(all(map(shutil.which, ("g++", "objcopy", "dwz"))), "needs g++, objcopy and dwz")
-    def test_dwz_shrinks_the_uploaded_copy_and_keeps_the_build_id(self):
+    @unittest.skipUnless(all(map(shutil.which, ("g++", "objcopy"))) and posthog_symbols.DWARF_REDUCE.is_file(),
+                         "needs g++, objcopy and a built dwarf-reduce")
+    def test_the_uploaded_copy_keeps_only_what_cymbal_reads_and_the_build_id(self):
         with tempfile.TemporaryDirectory() as scratch:
             root = Path(scratch)
             for name in ("a", "b"):
@@ -201,7 +202,42 @@ class Upload(unittest.TestCase):
             plain_size = (root / "plain.debug").stat().st_size
         self.assertEqual(posthog_symbols.elf_debug_id(data), original)
         self.assertNotIn(".debug_loclists", sections)
+        self.assertNotIn(".debug_aranges", sections)
+        self.assertIn(".debug_line", sections)
         self.assertLess(len(data), plain_size)
+
+
+class Limits(unittest.TestCase):
+    def dry_run(self, names, *flags, packed=b"x" * 100):
+        with tempfile.TemporaryDirectory() as scratch:
+            for i, name in enumerate(names):
+                (Path(scratch) / name).write_bytes(elf_with_build_id(bytes([i + 1]) * 20))
+            out = io.StringIO()
+            with mock.patch.object(posthog_symbols, "debug_data", return_value=b"debug"), \
+                    mock.patch.object(posthog_symbols, "container", return_value=packed), \
+                    mock.patch.object(shutil, "which", return_value="/bin/true"), redirect_stdout(out):
+                code = posthog_symbols.main([scratch, "--dry-run", *flags])
+        return code, out.getvalue()
+
+    def test_a_skipped_main_binary_is_an_error_and_a_helper_a_warning(self):
+        with mock.patch.object(posthog_symbols, "MAX_UPLOAD", 10):
+            code, out = self.dry_run(["hikarisub.debug", "hikari-helper.debug"])
+        self.assertEqual(code, 1)
+        self.assertIn("::error::hikarisub.debug packs to 100 bytes, over PostHog's 10; skipped", out)
+        self.assertIn("::warning::hikari-helper.debug packs to 100 bytes", out)
+
+    def test_the_dry_run_fails_when_the_main_binary_packs_above_its_budget(self):
+        code, out = self.dry_run(["hikarisub.debug", "hikari-helper.debug"], "--fail-above", "50")
+        self.assertEqual(code, 1)
+        self.assertIn("::error::hikarisub.debug packs to 100 bytes, over the 50 the release allows", out)
+        self.assertNotIn("hikari-helper.debug packs", out)
+        self.assertEqual(self.dry_run(["hikarisub.debug"], "--fail-above", "100")[0], 0)
+
+    def test_a_set_cymbal_cannot_unpack_is_skipped(self):
+        with mock.patch.object(posthog_symbols, "MAX_PAYLOAD", 10):
+            code, out = self.dry_run(["hikarisub.debug"])
+        self.assertEqual(code, 1)
+        self.assertRegex(out, r"::error::hikarisub.debug unpacks to \d+ bytes, over cymbal's 10; skipped")
 
 
 class QtSymbols(unittest.TestCase):
