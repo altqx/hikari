@@ -24,6 +24,7 @@ qt_add_qml_module(hikari_ui
 list(APPEND hikari_ui_qml_files ShiftTimesPanel.qml TimingPostprocessorPanel.qml TimingAssistantView.qml ShiftPresetBar.qml ShiftPreview.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 list(APPEND hikari_ui_qml_files HomePage.qml RecentList.qml)
+list(APPEND hikari_ui_qml_files GridFilterField.qml)
 list(APPEND hikari_ui_qml_files StylesPanel.qml StyleStepper.qml StylePickerPopover.qml)
 list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml)
 list(APPEND hikari_ui_qml_files ChangeAlignmentMenu.qml AlignDistributeMenu.qml PhantomMenu.qml CycleValuesPage.qml)
