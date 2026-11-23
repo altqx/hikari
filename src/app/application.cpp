@@ -872,7 +872,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         m_aiScripts.get(), m_automation.get(),
-        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
+        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); },
+        [this](const QString &providerId) { return m_aiSettings->lacksKey(providerId); },
+        [this] { return m_aiSettings->codexSignedOut(); }});
+    connect(m_aiSettings.get(), &AiSettings::providersChanged, m_agent.get(), &AgentController::modelsChanged);
+    connect(m_aiSettings.get(), &AiSettings::codexChanged, m_agent.get(), &AgentController::modelsChanged);
     m_skillsSettings = std::make_unique<SkillsSettings>(
         m_userFolder, [this](int window) { return m_projects ? m_projects->root(window) : QString(); });
     m_ai->setProjectKeys([this](const std::string &project, const std::string &providerId) {

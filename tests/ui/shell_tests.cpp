@@ -7881,8 +7881,6 @@ private slots:
              QStringLiteral("the empty list's placeholder")},
             {QStringLiteral("ReferenceTray.qml"), QStringLiteral(R"(text: qsTr("No other occurrences"))"),
              QStringLiteral("the empty list's placeholder")},
-            {QStringLiteral("AgentPanel.qml"), QStringLiteral(R"("agentModelsLoading_" + agentModelMenu.modelData.agent)"),
-             QStringLiteral("the loading list's placeholder")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())
@@ -19931,7 +19929,7 @@ private slots:
         QTRY_COMPARE(dialogItem("settingsDialog", "aiProviderStatus")->property("text").toString(),
                      QStringLiteral("Connected · 1 model(s)"));
         QVERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
-        QTRY_COMPARE(dialogItem("settingsDialog", "aiRole_chat")->property("currentText").toString(),
+        QTRY_COMPARE(dialogItem("settingsDialog", "aiRole_chat")->property("text").toString(),
                      QStringLiteral("B · Google Gemini"));
         QVERIFY(QMetaObject::invokeMethod(page, "openForm", Q_ARG(QVariant, QStringLiteral("gemini")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(dialogItem("settingsDialog", "aiProviderId"));
@@ -19941,7 +19939,14 @@ private slots:
         QTRY_VERIFY(!dialogItem("settingsDialog", "aiProviderForm"));
 
         QVERIFY(!stored->config.roles.contains(ai::Role::Judge));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "activated", Q_ARG(int, 1)));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "aiRole_judge"), "click"));
+        QObject *picker = nullptr;
+        QTRY_VERIFY((picker = settingsWindow()->findChild<QObject *>(QStringLiteral("modelPicker"))) && picker->property("opened").toBool());
+        auto *picks = picker->property("model").value<QObject *>();
+        bool found = false;
+        QVERIFY(QMetaObject::invokeMethod(picks, "setCurrentById", Q_RETURN_ARG(bool, found), Q_ARG(QString, QStringLiteral("gemini\tb/model"))));
+        QVERIFY(found);
+        QVERIFY(QMetaObject::invokeMethod(picker, "choose"));
         QTRY_VERIFY(stored->config.roles.contains(ai::Role::Judge));
         QCOMPARE(stored->config.roles.at(ai::Role::Judge), (ai::ModelRef{"gemini", "b/model"}));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
