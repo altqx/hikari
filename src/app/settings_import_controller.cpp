@@ -131,8 +131,10 @@ void SettingsImportController::setStatus(const QString &status)
 
 void SettingsImportController::discover(const QStringList &candidates)
 {
-    m_roots = SettingsImportStore::discoverRoots(candidates.isEmpty() ? SettingsImportStore::defaultCandidates()
-                                                                      : candidates);
+    const QStringList folders = !candidates.isEmpty() ? candidates
+                                : m_defaultCandidates ? *m_defaultCandidates
+                                                      : SettingsImportStore::defaultCandidates();
+    m_roots = SettingsImportStore::discoverRoots(folders);
     emit rootsChanged();
     setStatus(m_roots.isEmpty() ? QCoreApplication::translate("HikariSub.SettingsImport",
                                                               "Nothing to import was found. Choose a folder.")

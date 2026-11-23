@@ -51,6 +51,7 @@ public:
     bool canRollBack() const { return m_store && m_store->canRollBack(); }
 
     Q_INVOKABLE void discover(const QStringList &candidates = {});
+    void setDefaultCandidates(QStringList candidates) { m_defaultCandidates = std::move(candidates); }
     // A path or a file: URL; false when it holds no legacy settings.
     Q_INVOKABLE bool addRoot(const QString &folder);
     Q_INVOKABLE bool choose(const QString &root);
@@ -87,6 +88,7 @@ private:
 
     SettingsImportStore *m_store;
     QList<SettingsImportStore::Root> m_roots;
+    std::optional<QStringList> m_defaultCandidates;
     std::optional<SettingsImportStore::Snapshot> m_snapshot;
     std::optional<application::settings_import::Plan> m_plan;
     std::optional<application::settings_import::Receipt> m_previous;

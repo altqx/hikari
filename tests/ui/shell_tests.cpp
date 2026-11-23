@@ -20522,6 +20522,7 @@ private slots:
             f.write(bytes);
         }
         restartWithSpelling(home.path(), false);
+        application->settingsImport().setDefaultCandidates({});
         QVERIFY(!named("importSettingsMenuItem"));
         auto *importButton = legacySettingsButton("settingsImportLegacy");
         QVERIFY(importButton);
