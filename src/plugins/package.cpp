@@ -122,7 +122,8 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     for (auto problem : {contentProblem(manifest->styles, checks.styleCatalogue, files),
                          contentProblem(manifest->karaokePresets, checks.karaokePreset, files),
                          dictionaryProblem(manifest->dictionaries, checks, files),
-                         contentProblem(manifest->graphs, checks.graph, files)})
+                         contentProblem(manifest->graphs, checks.graph, files),
+                         contentProblem(manifest->layouts, checks.layout, files)})
         if (problem)
             return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};

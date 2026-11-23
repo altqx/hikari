@@ -743,6 +743,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"),
         options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
+    m_workspaceLayout->waitForPluginLayouts();
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     makeViews(m_mainViews, 0);
     choosePlayer();
@@ -2164,6 +2165,8 @@ void Application::showPluginContent()
     for (WindowViews *views : allViews())
         if (views->nodeEffects)
             views->nodeEffects->pluginContentChanged();
+    for (auto *layout : layouts())
+        layout->pluginLayoutsRead();
 }
 
 void Application::makeNodeEffects(WindowViews &v, int shellWindow)

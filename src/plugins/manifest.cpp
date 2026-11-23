@@ -454,6 +454,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.dictionaries = dictionaries(contributes->find("dictionaries"));
         m.graphs = contentFiles(contributes->find("graphs"));
+        m.layouts = contentFiles(contributes->find("layouts"));
         m.programs = programs(contributes->find("programs"));
     }
 
@@ -465,7 +466,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.styles, "/contributes/styles"),
                          repeated(m.karaokePresets, "/contributes/karaokePresets"),
                          repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language"),
-                         repeated(m.graphs, "/contributes/graphs")})
+                         repeated(m.graphs, "/contributes/graphs"),
+                         repeated(m.layouts, "/contributes/layouts")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)

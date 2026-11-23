@@ -190,6 +190,7 @@ struct Manifest {
     std::vector<ContentFile> karaokePresets;
     std::vector<Dictionary> dictionaries;
     std::vector<ContentFile> graphs;
+    std::vector<ContentFile> layouts;
 
     bool hasQmlPanels() const;
     const Program *program(std::string_view id) const;

@@ -29387,6 +29387,15 @@ nie działają na komentarzach</translation>
         <translation>Układ zachowano w %1.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>nie można odczytać pliku</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>Układ paneli zapisany w %1 nie został użyty, ponieważ %2.</translation>
     </message>
@@ -29565,6 +29574,10 @@ nie działają na komentarzach</translation>
     <message>
         <source>Cannot be used: %1</source>
         <translation>Nie można użyć: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>Pochodzi z wtyczki, więc nie można go tu zmienić. Zapisz układ jako… tworzy Twoją własną kopię.</translation>
     </message>
     <message>
         <source>Rename</source>
