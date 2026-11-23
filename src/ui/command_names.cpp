@@ -415,6 +415,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save audio of selected lines…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save keyframes…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close keyframes"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Quick fix"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

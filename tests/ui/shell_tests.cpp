@@ -7154,7 +7154,7 @@ private slots:
         const std::vector<std::pair<QString, const char *>> panels{
             {QStringLiteral("Line editor"), "editorDock"}, {QStringLiteral("Video"), "videoDock"},
             {QStringLiteral("Reference"), "referenceDock"}, {QStringLiteral("Automation"), "automationDock"},
-            {QStringLiteral("Spellchecker"), "spellDock"}, {QStringLiteral("QC notes"), "qcNotesDock"},
+            {QStringLiteral("Spellchecker"), "spellDock"}, {QStringLiteral("Problems"), "qcNotesDock"},
             {QStringLiteral("Explorer"), "explorerDock"},
         };
         for (const auto &[title, dock] : panels)
@@ -24752,7 +24752,8 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
-        QCOMPARE(table().size(), 41);
+        QCOMPARE(table().value(QStringLiteral("GLOBAL_QUICK_FIX")), QStringLiteral("Alt+Return"));
+        QCOMPARE(table().size(), 42);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));

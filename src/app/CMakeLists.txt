@@ -33,6 +33,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     video_analysis_controller.cpp include/hikari/app/video_analysis_controller.h
     lyrics_import_controller.cpp include/hikari/app/lyrics_import_controller.h
     qc_notes_controller.cpp include/hikari/app/qc_notes_controller.h
+    problems_controller.cpp include/hikari/app/problems_controller.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_karaoke.cpp include/hikari/app/ai_karaoke.h

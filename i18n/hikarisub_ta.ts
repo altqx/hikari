@@ -6890,6 +6890,42 @@ Failed to copy %2 fonts.</source>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -7145,6 +7181,10 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>AI actions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -17853,12 +17893,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>QC குறிப்புகள்</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>மேலும் குறிப்புகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -17881,8 +17953,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>எல்லாக் குறிப்புகளையும் நீக்கு…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>QC குறிப்பைச் சேர்…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -17988,6 +18089,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தையும் நீக்கு</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>குறிப்புக் கோப்பை இறக்குமதி செய்</translation>
     </message>
@@ -18025,6 +18130,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>%n குறிப்புகள்</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>குறிப்பைச் சேர்</translation>
@@ -18053,6 +18165,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தும்</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%2 இல் %1</translation>
     </message>
@@ -18071,6 +18187,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>முடியவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>

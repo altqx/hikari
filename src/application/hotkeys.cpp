@@ -444,6 +444,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_SELECTED_AUDIO", 5349},
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
+        {"GLOBAL_QUICK_FIX", 5373},
 };
 
 struct NameRow {
@@ -858,6 +859,7 @@ constexpr NameRow kNames[] = {
         {5349, "Save audio of selected lines…"},
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
+        {5373, "Quick fix"},
 };
 
 struct DefaultRow {
@@ -875,6 +877,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5101, GlobalHotkey, "Open video…", "Ctrl-Shift-O"},
         {5343, GlobalHotkey, "Quick Open…", "Ctrl-P"},
         {5344, GlobalHotkey, "Command palette…", "Ctrl-Shift-P"},
+        {5373, GlobalHotkey, "Quick fix", "Alt-Enter"},
         {5009, GlobalHotkey, "Find…", "Ctrl-F"},
         {5010, GlobalHotkey, "Replace…", "Ctrl-H"},
         {5006, GlobalHotkey, "Undo", "Ctrl-Z"},

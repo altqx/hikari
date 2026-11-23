@@ -822,6 +822,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_rowMarks.setObserver([this](application::DocumentId document) { showRowMarks(document); });
     m_problems.setObserver([this](application::DocumentId document, std::vector<std::string> sources) {
         m_apiHost->api().problemsChanged(document, sources);
+        for (WindowViews *v : allViews())
+            if (v->editorDocument == document)
+                v->shell->setRowMarks(rowMarksOf(document));
+        if (m_problemsList)
+            m_problemsList->problemsChanged(document);
     });
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
@@ -1116,6 +1121,29 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             shell().setQcMarks(std::move(marks), current);
         };
         m_qcNotes = std::make_unique<QcNotesController>(*m_settings, std::move(hooks));
+    }
+    {
+        ProblemsController::Hooks hooks;
+        hooks.document = [this] { return m_workspace.editingTarget(); };
+        hooks.session = [this] { return targetSession(); };
+        hooks.selectLine = [this](core::LineId line) { selectLine(line.value); };
+        hooks.seek = [this](int ms) { return activeMedia().video->hasVideo() && activeMedia().video->session().seekToMs(ms); };
+        hooks.fix = [this](application::DocumentId document, const std::string &problem, int fix) {
+            bool fixed = false;
+            m_apiHost->api().call(api::Caller{"hikarisub.problems", "Problems", true}, "problems.fix",
+                                  api::Json::object({{"document", api::Json(document.value)},
+                                                     {"problem", api::Json(problem)},
+                                                     {"fix", api::Json(std::int64_t(fix))}}),
+                                  [&](const api::Result &result) { fixed = result.has_value(); });
+            if (fixed) {
+                editor().reloadFromSession();
+                refreshViews();
+            }
+            return fixed;
+        };
+        hooks.editorRaw = [this](int role) { return editorRaw(role); };
+        hooks.displaySpan = [this](int role, int from, int to) { return editor().displaySpan(role, from, to); };
+        m_problemsList = std::make_unique<ProblemsController>(m_problems, *m_qcNotes, std::move(hooks));
     }
     {
         FontCollectorController::Hooks hooks;
@@ -2580,6 +2608,8 @@ void Application::refreshViews()
     kanjiTimer().documentEdited();
     if (m_qcNotes)
         m_qcNotes->documentEdited();
+    if (m_problemsList)
+        m_problemsList->documentEdited();
     refreshVideo();
     refreshAudio();
     if (activeViews().statusBar)
@@ -2649,6 +2679,8 @@ ui::LineTableModel::RowMarks Application::rowMarksOf(std::optional<application::
     ui::LineTableModel::RowMarks out;
     if (!document)
         return out;
+    if (const auto *session = m_files->session(*document))
+        addProblemMarks(out, m_problems, *document, session->document());
     for (const auto &[line, marks] : m_rowMarks.shown(*document))
         for (const application::OwnedMark &mark : marks) {
             const QString note = QCoreApplication::translate("HikariSub.Grid", "%1: %2",
@@ -7179,6 +7211,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
+            {QStringLiteral("problems"), QVariant::fromValue(static_cast<QObject *>(m_problemsList.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},

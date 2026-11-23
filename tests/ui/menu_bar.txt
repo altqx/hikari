@@ -250,7 +250,7 @@ View > Panels > Timing postprocessor >
 View > Panels > Find >
 View > Panels > Spellchecker >
 View > Panels > Styles >
-View > Panels > QC notes >
+View > Panels > Problems >
 View > Panels > Template editor >
 View > Panels > Automation >
 View > Panels > Explorer >

@@ -479,6 +479,42 @@
             <numerusform>%n folds were skipped: they overlap a line group or do not pair.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n error</numerusform>
+            <numerusform>%n errors</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n warning</numerusform>
+            <numerusform>%n warnings</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>%n info</numerusform>
+            <numerusform>%n info</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>%n hint</numerusform>
+            <numerusform>%n hints</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>%n problem: %1</numerusform>
+            <numerusform>%n problems: %1</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -1016,10 +1052,24 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problems</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Export %n note(s)…</source>
         <translation>
             <numerusform>Export %n note…</numerusform>
             <numerusform>Export %n notes…</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · %n fix</numerusform>
+            <numerusform>%1 · %n fixes</numerusform>
         </translation>
     </message>
 </context>
