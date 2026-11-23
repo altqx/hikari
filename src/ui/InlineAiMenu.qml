@@ -60,8 +60,9 @@ ShellMenu {
         onAboutToShow: menu.controller.suggestSynonyms(menu.wordAt.start, menu.wordAt.end, menu.wordAt.text)
         ShellMenuItem {
             objectName: "inlineAiSynonymsState"
-            iconRole: menu.synonyms.state === "finding" || !menu.synonyms.state ? "run-busy"
-                : menu.synonyms.state === "none" ? "notice-info" : "notice-warning"
+            readonly property int stateIcon: menu.synonyms.state === "none" ? 1
+                : menu.synonyms.state === "failed" || menu.synonyms.state === "dailyCap" ? 2 : 0
+            iconRole: ["run-busy", "notice-info", "notice-warning"][stateIcon]
             enabled: false
             visible: menu.synonyms.state !== "found"
             height: visible ? implicitHeight : 0
