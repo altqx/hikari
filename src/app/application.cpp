@@ -814,12 +814,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         [this](const std::vector<std::int64_t> &frames, const std::optional<std::string> &file) {
             return setKeyframesFromApi(frames, file);
         },
-        &m_rowMarks, m_git.get(), m_pluginPrograms.get(), m_presence.get()});
+        &m_rowMarks, m_git.get(), m_pluginPrograms.get(), m_presence.get(), &m_problems});
     m_apiHost->setPluginFormat([this](application::DocumentId document) { return fileFormat(document); });
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
     m_rowMarks.setObserver([this](application::DocumentId document) { showRowMarks(document); });
+    m_problems.setObserver([this](application::DocumentId document, std::vector<std::string> sources) {
+        m_apiHost->api().problemsChanged(document, sources);
+    });
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -914,6 +917,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     pluginWiring.marks = &m_rowMarks;
+    pluginWiring.problems = &m_problems;
     pluginWiring.programs = m_pluginPrograms.get();
 #ifdef Q_OS_WIN
     pluginWiring.lowRightsHelper = QCoreApplication::applicationDirPath() + QStringLiteral("/hikarisub-confine.exe");
@@ -2566,6 +2570,7 @@ void Application::refreshViews()
         editor().setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
     }
     m_rowMarks.keepOnly(m_workspace.documents());
+    m_problems.keepOnly(m_workspace.documents());
     shell().setRowMarks(rowMarksOf(target));
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();

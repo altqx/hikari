@@ -430,6 +430,7 @@ public:
             .keyframes = &keyframes,
             .marks = &marks,
             .vcs = &vcs,
+            .problems = &problems,
         };
     }
 
@@ -547,6 +548,7 @@ public:
     FakeKeyframes keyframes;
     FakeVcs vcs;
     application::RowMarks marks;
+    application::Problems problems;
 };
 
 }

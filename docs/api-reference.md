@@ -89,6 +89,10 @@ Version 1 of the Hikari API, generated from HikariSub's own registry: the same r
 | `marks.set` | write | 1 | Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only. |
 | `marks.clear` | write | 1 | Removes the caller's Grid row marks. Plugins only. |
 | `marks.list` | read | 1 | The caller's Grid row marks on a Document. Plugins only. |
+| `problems.list` | read | 1 | The problems on a Document: the open QC notes and the problems plugins set, in Document order, then by from, those with no Line last. |
+| `problems.set` | write | 1 | Replaces the caller's problems under one set on a Document. Never saved and not an undo step; they go when the plugin stops, the Document closes, or their Line or field changes. Plugins only. |
+| `problems.clear` | write | 1 | Removes the caller's problems. Plugins only. |
+| `problems.fix` | write | 1 | Applies one of a problem's quick fixes through document.apply, as one undo step named after the problem's source and the fix; stale_revision when its Line changed since the problem was set. |
 | `programs.run` | write | 1 | Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only. |
 | `programs.start` | write | 1 | Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only. |
 | `programs.send` | write | 1 | Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only. |
@@ -2045,6 +2049,92 @@ The caller's Grid row marks on a Document. Plugins only.
 | `marks[].colour` | [MarkColour](#markcolour) | yes |  |
 | `marks[].tooltip` | string | yes | What the mark means; shown on hover after the plugin's name and read by screen readers. 1 to 200 characters. |
 
+### `problems.list`
+
+Read. Since version 1.
+
+The problems on a Document: the open QC notes and the problems plugins set, in Document order, then by from, those with no Line last.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `lines` | array of [LineId](#lineid) |  | These Lines only. At most 20000 items. |
+| `severity` | one of `error`, `warning`, `info` or `hint` |  | This severity and worse only. |
+| `source` | string |  | One source id only. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `revision` | [Revision](#revision) | yes |  |
+| `problems` | array of [Problem](#problem) | yes |  |
+
+### `problems.set`
+
+Write. Since version 1.
+
+Replaces the caller's problems under one set on a Document. Never saved and not an undo step; they go when the plugin stops, the Document closes, or their Line or field changes. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `revision` | [Revision](#revision) | yes | The revision the offsets were measured on; stale_revision when it moved. |
+| `set` | string |  | The plugin's own name for this group of checks; default when omitted. At most 64 characters. `pattern`: `"^[a-z0-9]+(-[a-z0-9]+)*$"`. |
+| `problems` | array of [Problem](#problem) | yes | At most 20000 items. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `count` | integer | yes | At least 0. |
+
+### `problems.clear`
+
+Write. Since version 1.
+
+Removes the caller's problems. Plugins only.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Every Document when omitted. |
+| `set` | string |  | Every set of the caller's when omitted. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `cleared` | integer | yes | At least 0. |
+
+### `problems.fix`
+
+Write. Since version 1.
+
+Applies one of a problem's quick fixes through document.apply, as one undo step named after the problem's source and the fix; stale_revision when its Line changed since the problem was set.
+
+**Parameters**
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) |  | Defaults to the active Document. |
+| `problem` | string | yes | An id from problems.list. |
+| `fix` | integer | yes | The fix's index. At least 0. |
+
+**Result**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `revision` | [Revision](#revision) | yes |  |
+| `inserted` | array of [LineId](#lineid) | yes | New Lines, in edit order. |
+| `changed` | boolean | yes | False when the edits changed nothing: no undo step was added. |
+
 ### `programs.run`
 
 Write. Since version 1.
@@ -2157,6 +2247,19 @@ A Document's content changed: a commit, Undo or Redo.
 | `document` | [DocumentId](#documentid) | yes |  |
 | `revision` | [Revision](#revision) | yes |  |
 | `step` | string | yes | The History step now current. |
+
+### `problems.changed`
+
+Since version 1.
+
+The problems on a Document changed: a source set or cleared them, an edit or a deleted Line dropped some, a plugin stopped, or the open QC notes changed.
+
+**Data**
+
+| Field | Type | Always | Meaning |
+| --- | --- | --- | --- |
+| `document` | [DocumentId](#documentid) | yes |  |
+| `sources` | array of string | yes | The ids of the sources whose problems changed: qc or a plugin id. |
 
 ### `program.output`
 
@@ -2536,6 +2639,31 @@ One of:
 | `controls` | array of [DialogControl](#dialogcontrol) |  | The dialog's value-bearing controls, in order. Without a key, the answer fills the dialog of the script being run whose controls have these kinds and names; the other fields don't count. At most 256 items. |
 | `values` | object of string, number or boolean by name | yes | The answered values by control name. |
 | `button` | string |  | The pressed button's label; empty when the dialog was closed. |
+
+### Problem
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `id` | string |  | Given by problems.list; problems.set ignores it. At most 64 characters. |
+| `line` | [LineId](#lineid) |  | Absent only for a QC note that matches no Line. |
+| `time` | integer |  | A QC note's time in milliseconds; problems.set ignores it. |
+| `field` | one of `text` or `translation` |  | text when omitted. |
+| `from` | integer |  | UTF-16 offset in the field; with to, the squiggle. The whole Line when omitted. At least 0. |
+| `to` | integer |  | At least 0. |
+| `severity` | one of `error`, `warning`, `info` or `hint` | yes |  |
+| `message` | string | yes | 1 to 500 characters. |
+| `code` | string |  | The check's own name, such as a grammar rule. 1 to 64 characters. |
+| `source` | object |  | Given by problems.list. |
+| `source.kind` | one of `qc`, `plugin` or `server` | yes |  |
+| `source.id` | string | yes | qc, a plugin id, or plugin:<plugin id>/<server id>. |
+| `source.set` | string |  | The plugin's own source name from problems.set, or a QC note's section. |
+| `source.name` | string | yes | What the problems list shows. |
+| `fixes` | array of objects |  | At most 8 items. |
+| `fixes[].title` | string | yes | 1 to 100 characters. |
+| `fixes[].edits` | array of objects | yes | Replacements in this Line's field, by UTF-16 offsets in the text the problem was set against. 1 to 64 items. |
+| `fixes[].edits[].from` | integer | yes | At least 0. |
+| `fixes[].edits[].to` | integer | yes | At least 0. |
+| `fixes[].edits[].insert` | string | yes | At most 10000 characters. |
 
 ### MarkColour
 

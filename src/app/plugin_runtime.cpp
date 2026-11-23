@@ -723,6 +723,8 @@ void PluginRuntime::endAccess(Running &plugin)
         m_wiring.programs->end(plugin.id);
     if (m_wiring.marks)
         m_wiring.marks->clearOwner(plugin.caller.id);
+    if (m_wiring.problems)
+        m_wiring.problems->clearOwner(plugin.caller.id);
     endJob(plugin.id);
 }
 

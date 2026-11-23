@@ -49,6 +49,47 @@ hikari.marks = {
     end,
 }
 
+local function options(what, given)
+    if given ~= nil and type(given) ~= "table" then
+        error(what .. " takes a table of options", 3)
+    end
+    return given or {}
+end
+
+hikari.problems = {
+    set = function(problems, given)
+        if type(problems) ~= "table" then
+            error("hikari.problems.set takes a list of {line, severity, message}", 2)
+        end
+        local o = options("hikari.problems.set", given)
+        return call("problems.set", { problems = array(problems), revision = o.revision, set = o.set, document = o.document })
+    end,
+    clear = function(given)
+        local o = options("hikari.problems.clear", given)
+        local result, err = call("problems.clear", { document = o.document, set = o.set })
+        if not result then
+            return nil, err
+        end
+        return result.cleared
+    end,
+    list = function(given)
+        local o = options("hikari.problems.list", given)
+        local result, err = call("problems.list", {
+            document = o.document,
+            lines = o.lines and array(o.lines) or nil,
+            severity = o.severity,
+            source = o.source,
+        })
+        if not result then
+            return nil, err
+        end
+        return result.problems
+    end,
+    fix = function(problem, fix, document)
+        return call("problems.fix", { problem = problem, fix = fix, document = document })
+    end,
+}
+
 local function programCall(what, program, options)
     if type(program) ~= "string" or program == "" then
         error(what .. " needs the id of a program the manifest declares", 3)

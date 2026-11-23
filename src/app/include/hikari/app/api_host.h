@@ -78,6 +78,7 @@ public:
         application::VcsPort *vcs = nullptr;
         api::ProgramHost *programs = nullptr;
         api::PresenceHost *presence = nullptr;
+        application::Problems *problems = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
