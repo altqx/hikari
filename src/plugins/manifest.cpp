@@ -474,6 +474,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.dictionaries = dictionaries(contributes->find("dictionaries"));
         m.graphs = contentFiles(contributes->find("graphs"));
+        m.layouts = contentFiles(contributes->find("layouts"));
         m.programs = programs(contributes->find("programs"));
         m.mcpServers = mcpServers(contributes->find("mcpServers"));
     }
@@ -487,6 +488,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.karaokePresets, "/contributes/karaokePresets"),
                          repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language"),
                          repeated(m.graphs, "/contributes/graphs"),
+                         repeated(m.layouts, "/contributes/layouts"),
                          repeated(m.mcpServers, "/contributes/mcpServers")})
         if (problem)
             return std::unexpected(*problem);

@@ -3049,6 +3049,50 @@ Output device: %2</source>
         <translation>வசன வரிகளை வீடியோவுக்கு ஏற்ப மறுமாதிரியாக்கவா? வசன வரிகள் › வசன வரிகளை மறுமாதிரியாக்கு மூலம் பின்னரும் இதைச் செய்யலாம்.</translation>
     </message>
     <message>
+        <source>Text keeps its proportions. Positions follow the new picture.</source>
+        <translation>உரை தன் விகிதங்களைத் தக்கவைக்கும். நிலைகள் புதிய படத்தைப் பின்பற்றும்.</translation>
+    </message>
+    <message>
+        <source>Text stretches with the picture.</source>
+        <translation>உரை படத்துடன் நீளும்.</translation>
+    </message>
+    <message>
+        <source>The video adds bars around the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>வசன வரிகள் உருவாக்கப்பட்ட படத்தைச் சுற்றி வீடியோ பட்டைகளைச் சேர்க்கிறது. குறிப்பு வரிகள் அவை குறிப்பவற்றின் மேலேயே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>வசன வரிகள் உருவாக்கப்பட்ட படத்தின் ஓரங்களை வீடியோ வெட்டுகிறது. குறிப்பு வரிகள் அவை குறிப்பவற்றின் மேலேயே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Custom edges. Text keeps its proportions.</source>
+        <translation>தனிப்பயன் ஓரங்கள். உரை தன் விகிதங்களைத் தக்கவைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Left %1</source>
+        <translation>இடது %1</translation>
+    </message>
+    <message>
+        <source>Right %1</source>
+        <translation>வலது %1</translation>
+    </message>
+    <message>
+        <source>Top %1</source>
+        <translation>மேல் %1</translation>
+    </message>
+    <message>
+        <source>Bottom %1</source>
+        <translation>கீழ் %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 ஐ வை</translation>
+    </message>
+    <message>
+        <source>%1 (video)</source>
+        <translation>%1 (வீடியோ)</translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>வசன வரிகள்</translation>
     </message>
@@ -3105,8 +3149,76 @@ Output device: %2</source>
         <translation>அப்படியே வை</translation>
     </message>
     <message>
+        <source>Letterbox</source>
+        <translation>பட்டைகள்</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation>வெட்டு</translation>
+    </message>
+    <message>
         <source>The aspect ratio changes from %1 to %2.</source>
         <translation>தோற்ற விகிதம் %1 இலிருந்து %2 ஆக மாறும்.</translation>
+    </message>
+    <message>
+        <source>Edges</source>
+        <translation>ஓரங்கள்</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>இடது</translation>
+    </message>
+    <message>
+        <source>Left edge</source>
+        <translation>இடது ஓரம்</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>வலது</translation>
+    </message>
+    <message>
+        <source>Right edge</source>
+        <translation>வலது ஓரம்</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>மேல்</translation>
+    </message>
+    <message>
+        <source>Top edge</source>
+        <translation>மேல் ஓரம்</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>கீழ்</translation>
+    </message>
+    <message>
+        <source>Bottom edge</source>
+        <translation>கீழ் ஓரம்</translation>
+    </message>
+    <message>
+        <source>Same on both sides</source>
+        <translation>இரு பக்கமும் ஒன்றாக</translation>
+    </message>
+    <message>
+        <source>Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.</source>
+        <translation>அளவிடுவதற்கு முன் வசன வரிகளின் படத்தின் ஒவ்வொரு ஓரத்திலும் சேர்க்கப்படும் (+) அல்லது வெட்டப்படும் (−) அளவு.</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix</source>
+        <translation>YCbCr மேட்ரிக்ஸ்</translation>
+    </message>
+    <message>
+        <source>Colours are converted so that they look the same under the new matrix.</source>
+        <translation>புதிய மேட்ரிக்ஸிலும் ஒரே மாதிரி தோன்ற வண்ணங்கள் மாற்றப்படும்.</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix to convert from.</source>
+        <translation>வசன வரிகளில் மாற்றுவதற்கான YCbCr மேட்ரிக்ஸ் இல்லை.</translation>
     </message>
     <message>
         <source>Adjust 3D rotations</source>
@@ -14564,35 +14676,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>முழுத் திரை</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியின் நிலை</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>கீழே என்பது முழுப் படத்தையும் பார்வையில் வைத்திருக்கும்; பட்டி அதன் கீழுள்ள கருப்புப் பட்டையில் இருக்கும்.</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் கீழே (லெட்டர்பாக்ஸ்)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் மேல்</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியைக் காட்டு</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>தானாக மறை என்பது சுட்டி நகரும்போது அல்லது ஒரு விசை அழுத்தப்படும்போது பட்டியைக் காட்டி, இயங்கும்போது 2 விநாடிகள் கழித்து மறைக்கும். படத்தின் கீழே இருக்கும்போது, பட்டைக்கான இடம் ஒதுக்கப்பட்டே இருக்கும்.</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>தானாக மறை</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14604,23 +14716,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியுடன் சுட்டியையும் மறை</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>ரெண்டர் நேரம் மற்றும் நிலை மேலடுக்குகளைக் காட்டு</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>இதில் திறக்கும்</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>எளிய</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>டைப்செட்டிங்</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -22727,6 +22839,14 @@ Styles deleted:
         <translation>வடிப்பி</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>வரிகளில் ஒவ்வொன்றாகச் செல்</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>வரிகளில் ஒவ்வொன்றாகச் செல்: Enter பாணியைப் பயன்படுத்தி அடுத்த வரிக்குச் செல்லும், Shift+Enter பின்னோக்கிச் செல்லும்</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>பாணி</translation>
     </message>
@@ -22781,6 +22901,20 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>பட்டியலுக்கு நகலெடு…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter “%1” ஐ வரி %2 க்குப் பயன்படுத்தி வரி %3 க்குச் செல்லும்.</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter “%1” ஐ வரி %2 க்குப் பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>ஒரு பாணியைத் தேர்ந்தெடு</translation>
     </message>
 </context>
 <context>
@@ -26556,16 +26690,16 @@ Styles deleted:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>தேடுகிறது…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%2 இல் சட்டகம் %1 ஐக் குறிவிலக்க முடியவில்லை. இயக்கம் நிறுத்தப்பட்டது.</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>வேறு நேரத்துக்குத் தேடவும், அல்லது முழுத் திரையிலிருந்து வெளியேற Esc அழுத்தவும்.</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -26574,24 +26708,24 @@ Styles deleted:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>தேடல் பட்டி</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>இந்த நேரத்தில் வரி இல்லை</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>வீடியோ நேரம், %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>முழுத் திரையிலிருந்து வெளியேறு</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>எளிய</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -26612,21 +26746,34 @@ Styles deleted:
         <translation>வரி %1 / %2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>பாணி: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>வரியின் பாணியைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter பயன்படுத்தும் · Esc திரும்பப்பெறும்</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>வரி %1 உரை</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>டைப்செட் செய்</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>எளிய: முழுத் திரையில் பார்ப்பதற்கு மாறு · சட்டகம் அதன் இடத்திலேயே இருக்கும்</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>டைப்செட் செய்: முழுத் திரை டைப்செட்டிங்குக்கு மாறு · சட்டகம் அதன் இடத்திலேயே இருக்கும்</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -26647,35 +26794,35 @@ Styles deleted:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>தானாக மறை</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>எப்போதும்</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>ஒருபோதும் இல்லை</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியின் நிலை</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் கீழே (லெட்டர்பாக்ஸ்)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் மேல்</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியைக் காட்டு</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>சுட்டி நகரும்போது அல்லது ஒரு விசை அழுத்தப்படும்போது காட்டு; இயங்கும்போது 2 விநாடிகள் கழித்து மறை</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -26683,11 +26830,11 @@ Styles deleted:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியைக் காட்டியே வை</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>முழுத் திரை அமைப்புகள்…</translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -29164,6 +29311,15 @@ do not work on comments</source>
         <translation>தளவமைப்பு %1 இல் வைக்கப்பட்டுள்ளது.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>கோப்பைப் படிக்க முடியவில்லை</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>%1 இல் சேமிக்கப்பட்ட பலகத் தளவமைப்பு பயன்படுத்தப்படவில்லை, ஏனெனில் %2.</translation>
     </message>
@@ -29342,6 +29498,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>பயன்படுத்த முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>இது செருகுநிரலுடன் வருகிறது, எனவே இதை இங்கே மாற்ற முடியாது. “தளவமைப்பைப் புதிய பெயரில் சேமி…” உங்கள் சொந்த நகலை வைத்திருக்கும்.</translation>
     </message>
     <message>
         <source>Rename</source>

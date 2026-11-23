@@ -3025,6 +3025,50 @@ Output device: %2</source>
         <translation>자막을 영상 해상도에 맞게 변경하시겠습니까? 나중에 자막 › 자막 해상도 변경에서도 할 수 있습니다.</translation>
     </message>
     <message>
+        <source>Text keeps its proportions. Positions follow the new picture.</source>
+        <translation>텍스트 비율은 유지됩니다. 위치는 새 화면을 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Text stretches with the picture.</source>
+        <translation>텍스트가 화면과 함께 늘어납니다.</translation>
+    </message>
+    <message>
+        <source>The video adds bars around the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>영상이 자막을 만든 원래 화면 둘레에 여백 띠를 더합니다. 표지 자막은 가리키는 대상 위에 남습니다.</translation>
+    </message>
+    <message>
+        <source>The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark.</source>
+        <translation>영상이 자막을 만든 원래 화면의 가장자리를 잘라냅니다. 표지 자막은 가리키는 대상 위에 남습니다.</translation>
+    </message>
+    <message>
+        <source>Custom edges. Text keeps its proportions.</source>
+        <translation>사용자 지정 가장자리. 텍스트 비율은 유지됩니다.</translation>
+    </message>
+    <message>
+        <source>Left %1</source>
+        <translation>왼쪽 %1</translation>
+    </message>
+    <message>
+        <source>Right %1</source>
+        <translation>오른쪽 %1</translation>
+    </message>
+    <message>
+        <source>Top %1</source>
+        <translation>위 %1</translation>
+    </message>
+    <message>
+        <source>Bottom %1</source>
+        <translation>아래 %1</translation>
+    </message>
+    <message>
+        <source>Keep %1</source>
+        <translation>%1 유지</translation>
+    </message>
+    <message>
+        <source>%1 (video)</source>
+        <translation>%1 (영상)</translation>
+    </message>
+    <message>
         <source>Subtitles</source>
         <translation>자막</translation>
     </message>
@@ -3081,8 +3125,76 @@ Output device: %2</source>
         <translation>유지</translation>
     </message>
     <message>
+        <source>Letterbox</source>
+        <translation>레터박스</translation>
+    </message>
+    <message>
+        <source>Crop</source>
+        <translation>자르기</translation>
+    </message>
+    <message>
         <source>The aspect ratio changes from %1 to %2.</source>
         <translation>가로 세로 비율이 %1에서 %2(으)로 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Edges</source>
+        <translation>가장자리</translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation>왼쪽</translation>
+    </message>
+    <message>
+        <source>Left edge</source>
+        <translation>왼쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <translation>px</translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation>오른쪽</translation>
+    </message>
+    <message>
+        <source>Right edge</source>
+        <translation>오른쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation>위</translation>
+    </message>
+    <message>
+        <source>Top edge</source>
+        <translation>위쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation>아래</translation>
+    </message>
+    <message>
+        <source>Bottom edge</source>
+        <translation>아래쪽 가장자리</translation>
+    </message>
+    <message>
+        <source>Same on both sides</source>
+        <translation>양쪽을 같게</translation>
+    </message>
+    <message>
+        <source>Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.</source>
+        <translation>배율을 조정하기 전에 자막 화면의 각 가장자리에 더하거나(+) 잘라낼(−) 픽셀입니다.</translation>
+    </message>
+    <message>
+        <source>YCbCr matrix</source>
+        <translation>YCbCr 매트릭스</translation>
+    </message>
+    <message>
+        <source>Colours are converted so that they look the same under the new matrix.</source>
+        <translation>새 매트릭스에서도 같아 보이도록 색상을 변환합니다.</translation>
+    </message>
+    <message>
+        <source>The subtitles have no YCbCr matrix to convert from.</source>
+        <translation>자막에 변환할 YCbCr 매트릭스가 없습니다.</translation>
     </message>
     <message>
         <source>Adjust 3D rotations</source>
@@ -14443,35 +14555,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>막대 위치</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>아래에 두면 영상 전체가 보이고, 막대는 영상 아래의 검은 띠에 놓입니다.</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 아래(레터박스)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 위</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>막대 표시</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 숨김은 포인터를 움직이거나 키를 누르면 막대를 표시하고, 재생 중에는 2초 후에 숨깁니다. 영상 아래에 둘 때는 띠 영역이 유지됩니다.</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 숨김</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14483,23 +14595,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>막대와 함께 포인터 숨기기</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>렌더링 시간 및 위치 오버레이 표시</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>열 때 모드</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>간단</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>식자</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -22533,6 +22645,14 @@ Styles deleted:
         <translation>필터</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>줄 단위로 넘기기</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>줄 단위로 넘기기: Enter는 스타일을 적용하고 다음 줄로 이동, Shift+Enter는 이전 줄로 이동</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>스타일</translation>
     </message>
@@ -22587,6 +22707,20 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>목록에 복사…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter를 누르면 %2번 줄에 “%1”(을)를 적용하고 %3번 줄로 이동합니다.</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter를 누르면 %2번 줄에 “%1”(을)를 적용합니다.</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>스타일 선택</translation>
     </message>
 </context>
 <context>
@@ -26325,16 +26459,16 @@ Styles deleted:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>탐색하는 중…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>프레임 %1/%2(을)를 디코딩할 수 없습니다. 재생을 멈췄습니다.</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>다른 시간으로 탐색하거나 Esc를 눌러 전체 화면을 종료하십시오.</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -26343,24 +26477,24 @@ Styles deleted:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>탐색 막대</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>이 시간에 줄 없음</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 시간, %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면 종료</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>간단</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -26381,21 +26515,34 @@ Styles deleted:
         <translation>줄 %1/%2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>스타일: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>줄의 스타일 선택</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter 적용 · Esc 되돌리기</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>%1번 줄 텍스트</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>식자</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>간단: 전체 화면 보기로 전환 · 프레임 위치 유지</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>식자: 전체 화면 식자로 전환 · 프레임 위치 유지</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -26416,35 +26563,35 @@ Styles deleted:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>자동 숨김</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>항상</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>안 함</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>막대 위치</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 아래(레터박스)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>영상 위</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>막대 표시</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>포인터를 움직이거나 키를 누르면 표시하고, 재생 중에는 2초 후에 숨깁니다</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -26452,11 +26599,11 @@ Styles deleted:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>막대 항상 표시</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>전체 화면 설정…</translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -28921,6 +29068,15 @@ do not work on comments</source>
         <translation>레이아웃은 %1에 보관됩니다.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>파일을 읽을 수 없음</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>%1에 저장된 패널 레이아웃을 사용하지 않았습니다(이유: %2).</translation>
     </message>
@@ -29099,6 +29255,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>사용할 수 없음: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>플러그인과 함께 제공되므로 여기에서 변경할 수 없습니다. 다른 이름으로 레이아웃 저장…을 사용하면 사본이 따로 보관됩니다.</translation>
     </message>
     <message>
         <source>Rename</source>

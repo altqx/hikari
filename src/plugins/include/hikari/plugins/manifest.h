@@ -197,6 +197,7 @@ struct Manifest {
     std::vector<ContentFile> karaokePresets;
     std::vector<Dictionary> dictionaries;
     std::vector<ContentFile> graphs;
+    std::vector<ContentFile> layouts;
     std::vector<McpServer> mcpServers;
 
     bool hasQmlPanels() const;

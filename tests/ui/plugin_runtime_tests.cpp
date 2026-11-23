@@ -905,7 +905,8 @@ private slots:
                   "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
                                   "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
                                   "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}],
-                                  "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}]}})");
+                                  "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}],
+                                  "layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]}})");
         write(folder + QStringLiteral("/main.lua"), "");
         const auto turn = [&](bool on) {
             m_registry[QStringLiteral("com.example.kit")] =
@@ -938,6 +939,10 @@ private slots:
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/dict/pl.dic"))));
         QCOMPARE(content.graphs.size(), 1u);
         QVERIFY(content.graphs[0].title == u8"Sparkle");
+        QCOMPARE(content.layouts.size(), 1u);
+        QVERIFY(content.layouts[0].title == u8"Quiet");
+        QCOMPARE(QString::fromStdU16String(content.layouts[0].file.u16string()),
+                 QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/layouts/quiet.json"))));
 
         turn(false);
         runtime.sync();
@@ -945,6 +950,7 @@ private slots:
         QVERIFY(application::pluginContent().karaokePresets.empty());
         QVERIFY(application::pluginContent().graphs.empty());
         QVERIFY(application::pluginContent().dictionaries.empty());
+        QVERIFY(application::pluginContent().layouts.empty());
     }
 
     void aPluginsDictionaryIsASpellingLanguageFromTheStart()

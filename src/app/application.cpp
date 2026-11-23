@@ -30,6 +30,7 @@
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
 #include "hikari/application/select_lines.h"
+#include "hikari/application/matrix_conversion.h"
 #include "hikari/application/resample.h"
 #include "hikari/application/position_commands.h"
 #include "hikari/application/visual_transform.h"
@@ -743,6 +744,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"),
         options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
+    m_workspaceLayout->waitForPluginLayouts();
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     makeViews(m_mainViews, 0);
     choosePlayer();
@@ -2175,6 +2177,8 @@ void Application::showPluginContent()
     for (WindowViews *views : allViews())
         if (views->nodeEffects)
             views->nodeEffects->pluginContentChanged();
+    for (auto *layout : layouts())
+        layout->pluginLayoutsRead();
 }
 
 void Application::makeNodeEffects(WindowViews &v, int shellWindow)
@@ -3949,6 +3953,36 @@ int Application::selectedLineCount(bool shownOnly) const
         return int(selected.size());
     const auto shown = shownLines();
     return int(std::ranges::count_if(selected, [&](core::LineId id) { return shown(id); }));
+}
+
+QVariantMap Application::styleStep(int direction) const
+{
+    auto *session = targetSession();
+    if (!session || !session->selection().active)
+        return {};
+    const core::LineId active = *session->selection().active;
+    const auto grid = shell().actionLines();
+    const auto picked = visualTools().batchCount() > 1 ? visualTools().batchTargets() : std::vector<core::LineId>{};
+    const std::set<core::LineId> stops(picked.begin(), picked.end());
+    const auto stop = [&](core::LineId id) { return id != active && (stops.empty() || stops.contains(id)); };
+    const auto at = std::ranges::find(grid, active);
+    std::optional<core::LineId> next;
+    if (direction > 0) {
+        for (auto it = at == grid.end() ? grid.begin() : std::next(at); it != grid.end() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    } else if (direction < 0 && at != grid.end()) {
+        for (auto it = std::make_reverse_iterator(at); it != grid.rend() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    }
+    QVariantMap out{{QStringLiteral("from"), QVariant::fromValue(active.value)},
+                    {QStringLiteral("fromNumber"), shell().lineNumber(active).value_or(0)}};
+    if (const auto number = next ? shell().lineNumber(*next) : std::nullopt) {
+        out.insert(QStringLiteral("id"), QVariant::fromValue(next->value));
+        out.insert(QStringLiteral("number"), *number);
+    }
+    return out;
 }
 
 QVariantList Application::columnChoices(bool paste)
@@ -6163,20 +6197,43 @@ QVariantMap Application::resampleValues() const
     const auto subs = application::scriptResolution(session->document());
     application::Resolution video = subs;
     const bool hasVideo = activeMedia().video->session().state() == application::VideoSession::State::Ready && activeMedia().video->session().lastFrame();
-    if (hasVideo)
-        video = {activeMedia().video->session().sourceGeometry().width, activeMedia().video->session().sourceGeometry().height};
+    std::string videoMatrix;
+    if (hasVideo) {
+        const auto &videoSession = activeMedia().video->session();
+        video = {videoSession.sourceGeometry().width, videoSession.sourceGeometry().height};
+        videoMatrix = application::recommendedMatrix(videoSession.colour(), video.width, video.height);
+    }
+    QStringList matrices;
+    for (const auto &m : application::matrixNames())
+        if (const std::string name(m.begin(), m.end()); application::namesConvertibleMatrix(name))
+            matrices << QString::fromStdString(name);
+    const auto info = session->document().scriptInfo(u8"YCbCr Matrix");
+    const std::string written = info ? std::string(info->begin(), info->end()) : std::string();
     return {{QStringLiteral("subsWidth"), subs.width},
             {QStringLiteral("subsHeight"), subs.height},
             {QStringLiteral("videoWidth"), video.width},
             {QStringLiteral("videoHeight"), video.height},
-            {QStringLiteral("hasVideo"), hasVideo}};
+            {QStringLiteral("hasVideo"), hasVideo},
+            {QStringLiteral("matrix"), application::namesConvertibleMatrix(written) ? QString::fromStdString(written) : QString()},
+            {QStringLiteral("videoMatrix"),
+             application::namesConvertibleMatrix(videoMatrix) ? QString::fromStdString(videoMatrix) : QString()},
+            {QStringLiteral("matrices"), matrices}};
 }
 
-bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations)
+QVariantList Application::resampleEdges(int subsWidth, int subsHeight, int width, int height, bool crop) const
+{
+    const auto e = application::fittingEdges({subsWidth, subsHeight}, {width, height}, crop);
+    return {e.left, e.right, e.top, e.bottom};
+}
+
+bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations,
+                           const QVariantList &edges, const QString &matrix)
 {
     if ((subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
         return false;
-    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations);
+    const auto edge = [&](int i) { return edges.size() == 4 ? edges.at(i).toInt() : 0; };
+    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations,
+                            {edge(0), edge(1), edge(2), edge(3)}, matrix.toStdString());
 }
 
 bool Application::matchVideoResolution(int option)
@@ -6190,7 +6247,7 @@ bool Application::matchVideoResolution(int option)
 }
 
 bool Application::changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
-                                   bool adjustRotations)
+                                   bool adjustRotations, application::Edges edges, const std::string &matrix)
 {
     auto *session = targetSession();
     if (!session)
@@ -6198,6 +6255,8 @@ bool Application::changeResolution(int fromWidth, int fromHeight, int width, int
     QStringList unscaled, unadjusted;
     application::ResampleOptions options;
     options.stretch = stretch;
+    options.edges = edges;
+    options.matrix = matrix;
     options.adjustRotations = adjustRotations;
     const auto &video = activeMedia().video->session();
     if (video.state() == application::VideoSession::State::Ready && video.lastFrame())

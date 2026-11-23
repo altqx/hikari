@@ -46,6 +46,7 @@ struct ContentFileChecks {
     ContentFileCheck dictionaryAff;
     ContentFileCheck dictionaryDic;
     ContentFileCheck graph;
+    ContentFileCheck layout;
 };
 
 // Refuses more than kMaxPackageFiles files or kMaxPackageBytes unpacked (kMaxPlatformPackageBytes for a package built
