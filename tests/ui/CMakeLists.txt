@@ -32,6 +32,7 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           visual=visualToolRailCrosshairAndCopyCoordinates
           visual2=importLyricsAddsLinesToTheOpenFileInOneStep
           video=videoRecentListsAndDialogFolders
+          video2=videoFullscreenLineBoxEditsStepsAndChoosesStyles
     PART_TIMEOUT 600)
 foreach(part documents visual visual2)
     foreach(mode offscreen xvfb)
@@ -194,6 +195,7 @@ foreach(mode offscreen xvfb native)
         set_tests_properties(hikari_ui_grammar_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+hikari_add_qttest(hikari_ui_problems_tests SOURCES problems_ui_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_open_reload_tests PRIVATE
@@ -243,6 +245,9 @@ hikari_add_qttest(hikari_ui_automation_submenus_tests SOURCES automation_submenu
 target_compile_definitions(hikari_ui_automation_submenus_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_submenus_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_automation_menu_checks_tests SOURCES automation_menu_checks_tests.cpp
+    LIBRARIES hikari_composition)
+add_dependencies(hikari_ui_automation_menu_checks_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends
     PARTS listing matching=anUndoneApplyMatchesAgain applying=aFailedMatchIsNotKept)

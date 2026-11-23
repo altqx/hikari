@@ -2396,6 +2396,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Dokument zmienił się podczas działania makra; nic nie zostało zmienione.</translation>
     </message>
     <message>
+        <source>Checking…</source>
+        <translation>Sprawdzanie…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>Nie można uruchomić na tym zaznaczeniu</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>Funkcja walidacji zatrzymała się z błędem</translation>
+    </message>
+    <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>Makro z ostatniego uruchomienia nie jest już wczytane, więc nie można go powtórzyć.</translation>
     </message>
@@ -7447,6 +7459,47 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n błąd</numerusform>
+            <numerusform>%n błędy</numerusform>
+            <numerusform>%n błędów</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n ostrzeżenie</numerusform>
+            <numerusform>%n ostrzeżenia</numerusform>
+            <numerusform>%n ostrzeżeń</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>%n informacja</numerusform>
+            <numerusform>%n informacje</numerusform>
+            <numerusform>%n informacji</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>%n wskazówka</numerusform>
+            <numerusform>%n wskazówki</numerusform>
+            <numerusform>%n wskazówek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>%n problem: %1</numerusform>
+            <numerusform>%n problemy: %1</numerusform>
+            <numerusform>%n problemów: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>Filtruj listę napisów</translation>
@@ -7708,6 +7761,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>Szybka poprawka</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14828,6 +14885,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Plik napisów może ustawić własne limity we właściwościach skryptu.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>Pokazuj problemy z limitami czytania</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>Dzielenie</translation>
     </message>
@@ -14857,35 +14918,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Pełny ekran</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie paska</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem cały obraz pozostaje widoczny, a pasek znajduje się w czarnym pasie pod nim.</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem (letterbox)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>Na obrazie</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj pasek</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie pokazuje pasek, gdy wskaźnik się porusza lub zostanie naciśnięty klawisz, i ukrywa go 2 sekundy później podczas odtwarzania. Pod obrazem pas pozostaje zarezerwowany.</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14897,23 +14958,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukrywaj wskaźnik razem z paskiem</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj nakładki czasu renderowania i pozycji</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>Tryb przy otwarciu</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -18976,12 +19037,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>Błędy</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>Ostrzeżenia</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>Informacje</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>Wskazówki</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>Linijka %1 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>Notatki QC</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>Nie ma więcej notatek</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>Szybka poprawka</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>Wybrany wiersz nie ma szybkich poprawek.</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>Żaden problem w miejscu kursora nie ma szybkiej poprawki.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -19004,8 +19097,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Usuń wszystkie notatki…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>Dodaj notatkę QC…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>Problemy</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>błąd</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>ostrzeżenie</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>informacja</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>wskazówka</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>Nie udało się zastosować poprawki. Jej linijka zmieniła się od wykrycia problemu.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -19120,6 +19242,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Usuń wszystkie</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>Brak szybkich poprawek</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>Importuj plik notatek</translation>
     </message>
@@ -19159,6 +19285,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>%n notatek</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problemy</numerusform>
+            <numerusform>%n problemów</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>Dodaj notatkę</translation>
@@ -19188,6 +19322,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wszystkie</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>Wszystkie źródła</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%1 z %2</translation>
     </message>
@@ -19206,6 +19344,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>niegotowe</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · %n poprawka</numerusform>
+            <numerusform>%1 · %n poprawki</numerusform>
+            <numerusform>%1 · %n poprawek</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -19284,6 +19430,26 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Save</source>
         <translation>Zapisz</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>Szybkość czytania %1 CPS; limit wynosi %2.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>Liczba znaków w wierszu %1: %2; limit wynosi %3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n wiersz; limit wynosi %1.</numerusform>
+            <numerusform>%n wiersze; limit wynosi %1.</numerusform>
+            <numerusform>%n wierszy; limit wynosi %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>Czytelność</translation>
     </message>
 </context>
 <context>
@@ -23073,6 +23239,14 @@ Usunięte style:
         <translation>Filtruj</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>Przechodzenie przez linijki</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>Przechodzenie przez linijki: Enter stosuje styl i przechodzi do następnej linijki, Shift+Enter wraca</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>Styl</translation>
     </message>
@@ -23127,6 +23301,20 @@ Usunięte style:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>Kopiuj do katalogu…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter stosuje “%1” do linijki %2 i przechodzi do %3.</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter stosuje “%1” do linijki %2.</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>Wybierz styl</translation>
     </message>
 </context>
 <context>
@@ -26939,16 +27127,16 @@ Usunięte style:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>Przewijanie…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zdekodować klatki %1 z %2. Odtwarzanie zostało zatrzymane.</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>Przewiń do innego czasu lub naciśnij Esc, aby wyjść z pełnego ekranu.</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -26957,24 +27145,24 @@ Usunięte style:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pasek przewijania</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Brak linijki w tym czasie</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Czas wideo, %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyjdź z pełnego ekranu</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -26995,21 +27183,34 @@ Usunięte style:
         <translation>Linijka %1 z %2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>Styl: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>Wybierz styl linijki</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter stosuje · Esc cofa</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>Tekst linijki %1</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosty: przełącza na oglądanie na pełnym ekranie · klatka pozostaje na miejscu</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>Typesetting: przełącza na typesetting na pełnym ekranie · klatka pozostaje na miejscu</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -27030,35 +27231,35 @@ Usunięte style:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatyczne ukrywanie</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>Nigdy</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>Położenie paska</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pod obrazem (letterbox)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>Na obrazie</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuj pasek</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokazuje pasek, gdy wskaźnik się porusza lub zostanie naciśnięty klawisz; ukrywa go 2 sekundy później podczas odtwarzania</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -27066,11 +27267,11 @@ Usunięte style:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>Zawsze pokazuj pasek</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>Ustawienia pełnego ekranu…</translation>
     </message>
     <message>
         <source>Indexing video</source>

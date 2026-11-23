@@ -14,7 +14,7 @@ Item {
     readonly property rect frameRect: Qt.rect(frame.x, frame.y, frame.width, frame.height)
     readonly property alias zoomReadoutSlot: zoomSlot
     readonly property alias timeSlot: timeSlot
-    readonly property bool popupOpen: inspectorBar.popoverOpen
+    readonly property bool popupOpen: inspectorBar.popoverOpen || lineBox.stylePicker.visible
     signal pictureFocusRequested()
 
     readonly property var regions: [topBar, rail, frame, inspector, lineBox, statusRow]
@@ -42,7 +42,9 @@ Item {
                 first.forceActiveFocus(reason)
             else
                 inspector.forceActiveFocus(reason)
-        } else
+        } else if (region === lineBox)
+            lineBox.focusText(reason)
+        else
             region.forceActiveFocus(reason)
     }
     function nextRegion(from, back) {
@@ -263,64 +265,13 @@ Item {
         width: 1
     }
 
-    Rectangle {
+    FullscreenLineBox {
         id: lineBox
-        objectName: "fullscreenLineBox"
         anchors { left: railPane.right; leftMargin: 1; right: inspectorPane.left; rightMargin: 1
                   bottom: statusRow.top; bottomMargin: 1 }
-        height: lineColumn.implicitHeight + 16
-        color: Theme.panel
-        readonly property bool hasLine: ts.shell.editor.hasLine
-        Accessible.role: Accessible.StaticText
-        //: The full-screen line box's name: %1 the active Line's number
-        Accessible.name: hasLine ? qsTr("Line %1 text").arg(ts.shell.shell.activeLineNumber) : noLine.text
-        Accessible.description: hasLine ? lineText.text : ""
-        ColumnLayout {
-            id: lineColumn
-            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter
-                      leftMargin: 12; rightMargin: 12 }
-            spacing: 4
-            RowLayout {
-                spacing: 8
-                visible: lineBox.hasLine
-                Label {
-                    objectName: "fullscreenLineBoxNumber"
-                    text: ts.shell.shell.activeLineNumber
-                    leftPadding: 6
-                    rightPadding: 6
-                    font.features: { "tnum": 1 }
-                    background: Rectangle {
-                        color: Theme.raised
-                        radius: Theme.radius
-                    }
-                }
-            }
-            Label {
-                id: lineText
-                objectName: "fullscreenLineBoxText"
-                visible: lineBox.hasLine
-                Layout.fillWidth: true
-                text: ts.controller.lineLabel(ts.shell.editor.videoText)
-                textFormat: Text.PlainText
-                wrapMode: Text.Wrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
-            }
-            Label {
-                id: noLine
-                objectName: "fullscreenLineBoxEmpty"
-                visible: !lineBox.hasLine
-                Layout.fillWidth: true
-                text: qsTr("No line at this time")
-                color: Theme.muted
-            }
-        }
-        Rectangle {
-            anchors.fill: parent
-            visible: lineBox.activeFocus
-            color: "transparent"
-            border.color: Theme.focus
-        }
+        height: implicitHeight
+        shell: ts.shell
+        onLeaveRequested: ts.pictureFocusRequested()
     }
     Split {
         anchors { left: lineBox.left; right: lineBox.right; bottom: lineBox.top }

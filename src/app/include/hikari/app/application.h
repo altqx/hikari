@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/problems.h"
 #include "hikari/application/row_marks.h"
 
 #include "hikari/app/ai_karaoke.h"
@@ -22,6 +23,8 @@
 #include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
+#include "hikari/app/problems_controller.h"
+#include "hikari/app/reading_problems.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
@@ -825,6 +828,9 @@ public:
     Q_INVOKABLE QVariantList columnChoices(bool paste);
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
+    // The style step from the active Line: {from, fromNumber, id, number}; no id at either end.
+    // Through the picked Lines when several are picked, else every shown Line, in Grid order.
+    Q_INVOKABLE QVariantMap styleStep(int direction) const;
     // columns: bits OR'ed; the choice is remembered.
     // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
     Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
@@ -989,6 +995,8 @@ public:
     VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
+    ProblemsController &problemsList() { return *m_problemsList; }
+    application::Problems &problems() { return m_problems; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -1483,6 +1491,8 @@ private:
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
     application::RowMarks m_rowMarks;
+    application::Problems m_problems;
+    ReadingProblems m_readingProblems{m_problems};
     std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
@@ -1514,6 +1524,7 @@ private:
     std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
+    std::unique_ptr<ProblemsController> m_problemsList;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;
@@ -1731,6 +1742,7 @@ private:
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
+    void syncReadingProblems();
     std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);

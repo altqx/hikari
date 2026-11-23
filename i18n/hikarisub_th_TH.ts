@@ -2356,6 +2356,18 @@ Output device: %2</source>
         <translation>เอกสารเปลี่ยนแปลงระหว่างที่แมโครทำงาน จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
     </message>
     <message>
+        <source>Checking…</source>
+        <translation>กำลังตรวจสอบ…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>เรียกใช้กับส่วนที่เลือกนี้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>ฟังก์ชันตรวจสอบของแมโครหยุดทำงานเพราะเกิดข้อผิดพลาด</translation>
+    </message>
+    <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>แมโครของการเรียกใช้ครั้งล่าสุดไม่ได้โหลดอยู่แล้ว จึงเรียกใช้ซ้ำไม่ได้</translation>
     </message>
@@ -7305,6 +7317,37 @@ Failed to copy %2 fonts.</source>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>ข้อผิดพลาด %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>คำเตือน %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>ข้อมูล %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>คำแนะนำ %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>ปัญหา %n รายการ: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>กรองตาราง</translation>
@@ -7564,6 +7607,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>แก้ไขด่วน</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14586,6 +14633,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไฟล์คำบรรยายสามารถกำหนดขีดจำกัดของตัวเองได้ในคุณสมบัติของสคริปต์</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>แสดงปัญหาขีดจำกัดการอ่าน</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>การแบ่ง</translation>
     </message>
@@ -14615,35 +14666,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>เต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>ตำแหน่งแถบ</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>ใต้ภาพจะแสดงภาพทั้งหมด โดยแถบอยู่ในขอบดำใต้ภาพ</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>ใต้ภาพ (เลตเตอร์บ็อกซ์)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>ทับภาพ</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงแถบ</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนอัตโนมัติจะแสดงแถบเมื่อขยับตัวชี้หรือกดปุ่ม และซ่อนแถบหลังจากนั้น 2 วินาทีขณะเล่น เมื่ออยู่ใต้ภาพ พื้นที่ขอบดำจะยังคงสงวนไว้</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนอัตโนมัติ</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14655,23 +14706,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนตัวชี้พร้อมกับแถบ</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงข้อมูลซ้อนทับของเวลาเรนเดอร์และตำแหน่ง</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>เปิดในโหมด</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>แบบง่าย</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ต</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -18708,12 +18759,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>ข้อผิดพลาด</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>คำเตือน</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>ข้อมูล</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>คำแนะนำ</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>บรรทัด %1 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>โน้ต QC</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>ไม่มีโน้ตเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>แก้ไขด่วน</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>แถวที่เลือกไม่มีการแก้ไขด่วน</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>ปัญหาที่เคอร์เซอร์ไม่มีการแก้ไขด่วน</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18736,8 +18819,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ลบโน้ตทั้งหมด…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>ปัญหา</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>ข้อผิดพลาด</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>คำเตือน</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>ข้อมูล</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>คำแนะนำ</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>นำการแก้ไขไปใช้ไม่ได้ บรรทัดนั้นเปลี่ยนไปหลังจากพบปัญหา</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18834,6 +18946,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ลบทั้งหมด</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>ไม่มีการแก้ไขด่วน</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>นำเข้าไฟล์โน้ต</translation>
     </message>
@@ -18869,6 +18985,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>โน้ต %n รายการ</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>ปัญหา %n รายการ</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>เพิ่มโน้ต</translation>
@@ -18896,6 +19018,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ทั้งหมด</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>แหล่งที่มาทั้งหมด</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%1 จาก %2</translation>
     </message>
@@ -18914,6 +19040,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>ยังไม่เสร็จ</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · การแก้ไข %n รายการ</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -18992,6 +19124,24 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>บันทึก</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>อ่านที่ %1 CPS ขีดจำกัดคือ %2</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>บรรทัดข้อความที่ %1 มี %2 อักขระ ขีดจำกัดคือ %3</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>ข้อความ %n บรรทัด ขีดจำกัดคือ %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>การอ่าน</translation>
     </message>
 </context>
 <context>
@@ -22685,6 +22835,14 @@ Styles deleted:
         <translation>ตัวกรอง</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>ไล่ทีละบรรทัด</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>ไล่ทีละบรรทัด: Enter นำสไตล์ไปใช้แล้วไปบรรทัดถัดไป Shift+Enter ย้อนกลับ</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>สไตล์</translation>
     </message>
@@ -22739,6 +22897,20 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>คัดลอกไปยังแคตตาล็อก…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter นำ “%1” ไปใช้กับบรรทัด %2 แล้วไปบรรทัด %3</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter นำ “%1” ไปใช้กับบรรทัด %2</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>เลือกสไตล์</translation>
     </message>
 </context>
 <context>
@@ -26477,16 +26649,16 @@ Styles deleted:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>กำลังค้นหาตำแหน่ง…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ถอดรหัสเฟรม %1 ของ %2 ไม่ได้ หยุดการเล่นแล้ว</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>ค้นหาตำแหน่งไปยังเวลาอื่น หรือกด Esc เพื่อออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -26495,24 +26667,24 @@ Styles deleted:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>แถบค้นหาตำแหน่ง</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>ไม่มีบรรทัดในเวลานี้</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>เวลาวิดีโอ %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>ออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>แบบง่าย</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -26533,21 +26705,34 @@ Styles deleted:
         <translation>บรรทัด %1 จาก %2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>สไตล์: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>เลือกสไตล์ของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter นำไปใช้ · Esc คืนค่าเดิม</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>ข้อความบรรทัด %1</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ต</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>แบบง่าย: สลับไปดูแบบเต็มหน้าจอ · เฟรมคงตำแหน่งเดิม</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>ไทป์เซ็ต: สลับไปไทป์เซ็ตแบบเต็มหน้าจอ · เฟรมคงตำแหน่งเดิม</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -26568,35 +26753,35 @@ Styles deleted:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>ซ่อนอัตโนมัติ</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงเสมอ</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่แสดง</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>ตำแหน่งแถบ</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>ใต้ภาพ (เลตเตอร์บ็อกซ์)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>ทับภาพ</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงแถบ</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงเมื่อขยับตัวชี้หรือกดปุ่ม และซ่อนหลังจากนั้น 2 วินาทีขณะเล่น</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -26604,11 +26789,11 @@ Styles deleted:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>แสดงแถบไว้ตลอด</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>การตั้งค่าเต็มหน้าจอ…</translation>
     </message>
     <message>
         <source>Indexing video</source>

@@ -2376,6 +2376,18 @@ Output device: %2</source>
         <translation>குறுநிரல் இயங்கும்போது ஆவணம் மாறியது; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
     <message>
+        <source>Checking…</source>
+        <translation>சரிபார்க்கிறது…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>இந்தத் தேர்வில் இயங்க முடியாது</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>அதன் சரிபார்ப்புச் செயல்பாடு ஒரு பிழையுடன் நின்றுவிட்டது</translation>
+    </message>
+    <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>கடைசி இயக்கத்தின் குறுநிரல் இப்போது ஏற்றப்படவில்லை, எனவே அதை மீண்டும் செய்ய முடியாது.</translation>
     </message>
@@ -7376,6 +7388,42 @@ Failed to copy %2 fonts.</source>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n பிழை</numerusform>
+            <numerusform>%n பிழைகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n எச்சரிக்கை</numerusform>
+            <numerusform>%n எச்சரிக்கைகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>%n தகவல்</numerusform>
+            <numerusform>%n தகவல்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>%n குறிப்பு</numerusform>
+            <numerusform>%n குறிப்புகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>%n சிக்கல்: %1</numerusform>
+            <numerusform>%n சிக்கல்கள்: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>கட்டத்தை வடிகட்டு</translation>
@@ -7636,6 +7684,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>விரைவாகச் சரிசெய்</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14707,6 +14759,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒரு வசனக் கோப்பு தனது சொந்த வரம்புகளை ஸ்கிரிப்ட் பண்புகளில் அமைக்கலாம்.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>வாசிப்பு வரம்புச் சிக்கல்களைக் காட்டு</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>பிரித்தல்</translation>
     </message>
@@ -14736,35 +14792,35 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>முழுத் திரை</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியின் நிலை</translation>
     </message>
     <message>
         <source>Below keeps the whole picture in view; the bar sits in the black strip under it.</source>
-        <translation type="unfinished"></translation>
+        <translation>கீழே என்பது முழுப் படத்தையும் பார்வையில் வைத்திருக்கும்; பட்டி அதன் கீழுள்ள கருப்புப் பட்டையில் இருக்கும்.</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் கீழே (லெட்டர்பாக்ஸ்)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் மேல்</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியைக் காட்டு</translation>
     </message>
     <message>
         <source>Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.</source>
-        <translation type="unfinished"></translation>
+        <translation>தானாக மறை என்பது சுட்டி நகரும்போது அல்லது ஒரு விசை அழுத்தப்படும்போது பட்டியைக் காட்டி, இயங்கும்போது 2 விநாடிகள் கழித்து மறைக்கும். படத்தின் கீழே இருக்கும்போது, பட்டைக்கான இடம் ஒதுக்கப்பட்டே இருக்கும்.</translation>
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>தானாக மறை</translation>
     </message>
     <message>
         <source>Always</source>
@@ -14776,23 +14832,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide the pointer with the bar</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியுடன் சுட்டியையும் மறை</translation>
     </message>
     <message>
         <source>Show the render time and position overlays</source>
-        <translation type="unfinished"></translation>
+        <translation>ரெண்டர் நேரம் மற்றும் நிலை மேலடுக்குகளைக் காட்டு</translation>
     </message>
     <message>
         <source>Opens in</source>
-        <translation type="unfinished"></translation>
+        <translation>இதில் திறக்கும்</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>எளிய</translation>
     </message>
     <message>
         <source>Typesetting</source>
-        <translation type="unfinished"></translation>
+        <translation>டைப்செட்டிங்</translation>
     </message>
     <message>
         <source>Open video from the context menu in full screen</source>
@@ -18842,12 +18898,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>பிழைகள்</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>எச்சரிக்கைகள்</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>தகவல்</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>குறிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>வரி %1 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>QC குறிப்புகள்</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>மேலும் குறிப்புகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>விரைவாகச் சரிசெய்</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>தேர்ந்தெடுத்த வரிசையில் விரைவுத் திருத்தங்கள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>கர்சரில் உள்ள எந்தச் சிக்கலுக்கும் விரைவுத் திருத்தம் இல்லை.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18870,8 +18958,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>எல்லாக் குறிப்புகளையும் நீக்கு…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>QC குறிப்பைச் சேர்…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>சிக்கல்கள்</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>பிழை</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>எச்சரிக்கை</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>தகவல்</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>குறிப்பு</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>திருத்தத்தைப் பயன்படுத்த முடியவில்லை. சிக்கல் கண்டறியப்பட்டதிலிருந்து அதன் வரி மாறியுள்ளது.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18977,6 +19094,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தையும் நீக்கு</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>விரைவுத் திருத்தங்கள் இல்லை</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>குறிப்புக் கோப்பை இறக்குமதி செய்</translation>
     </message>
@@ -19014,6 +19135,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>%n குறிப்புகள்</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>%n சிக்கல்</numerusform>
+            <numerusform>%n சிக்கல்கள்</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>குறிப்பைச் சேர்</translation>
@@ -19042,6 +19170,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தும்</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>அனைத்து மூலங்களும்</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%2 இல் %1</translation>
     </message>
@@ -19060,6 +19192,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>முடியவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · %n திருத்தம்</numerusform>
+            <numerusform>%1 · %n திருத்தங்கள்</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -19138,6 +19277,25 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>சேமி</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>%1 CPS இல் வாசிக்கப்படுகிறது; வரம்பு %2.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>உரை வரி %1 இல் %2 எழுத்துகள் உள்ளன; வரம்பு %3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n உரை வரி; வரம்பு %1.</numerusform>
+            <numerusform>%n உரை வரிகள்; வரம்பு %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>வாசிப்பு</translation>
     </message>
 </context>
 <context>
@@ -22879,6 +23037,14 @@ Styles deleted:
         <translation>வடிப்பி</translation>
     </message>
     <message>
+        <source>Step through lines</source>
+        <translation>வரிகளில் ஒவ்வொன்றாகச் செல்</translation>
+    </message>
+    <message>
+        <source>Step through lines: Enter applies the style and goes to the next line, Shift+Enter goes back</source>
+        <translation>வரிகளில் ஒவ்வொன்றாகச் செல்: Enter பாணியைப் பயன்படுத்தி அடுத்த வரிக்குச் செல்லும், Shift+Enter பின்னோக்கிச் செல்லும்</translation>
+    </message>
+    <message>
         <source>Style</source>
         <translation>பாணி</translation>
     </message>
@@ -22933,6 +23099,20 @@ Styles deleted:
     <message>
         <source>Copy to the catalogue…</source>
         <translation>பட்டியலுக்கு நகலெடு…</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2 and goes to %3.</source>
+        <extracomment>The style step&apos;s foot line: %1 the highlighted style, %2 the active Line&apos;s number, %3 the next Line&apos;s</extracomment>
+        <translation>Enter “%1” ஐ வரி %2 க்குப் பயன்படுத்தி வரி %3 க்குச் செல்லும்.</translation>
+    </message>
+    <message>
+        <source>Enter applies “%1” to line %2.</source>
+        <extracomment>The style step&apos;s foot line at the last Line: %1 the highlighted style, %2 the active Line&apos;s number</extracomment>
+        <translation>Enter “%1” ஐ வரி %2 க்குப் பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>Choose a style</source>
+        <translation>ஒரு பாணியைத் தேர்ந்தெடு</translation>
     </message>
 </context>
 <context>
@@ -26708,16 +26888,16 @@ Styles deleted:
     </message>
     <message>
         <source>Seeking…</source>
-        <translation type="unfinished"></translation>
+        <translation>தேடுகிறது…</translation>
     </message>
     <message>
         <source>Can’t decode frame %1 of %2. Playback stopped.</source>
         <extracomment>Full screen, when a frame can&apos;t be decoded: %1 the frame number, %2 the video&apos;s file name</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>%2 இல் சட்டகம் %1 ஐக் குறிவிலக்க முடியவில்லை. இயக்கம் நிறுத்தப்பட்டது.</translation>
     </message>
     <message>
         <source>Seek to another time, or press Esc to leave full screen.</source>
-        <translation type="unfinished"></translation>
+        <translation>வேறு நேரத்துக்குத் தேடவும், அல்லது முழுத் திரையிலிருந்து வெளியேற Esc அழுத்தவும்.</translation>
     </message>
     <message>
         <source>Press Esc to exit full screen</source>
@@ -26726,24 +26906,24 @@ Styles deleted:
     </message>
     <message>
         <source>Seek bar</source>
-        <translation type="unfinished"></translation>
+        <translation>தேடல் பட்டி</translation>
     </message>
     <message>
         <source>No line at this time</source>
         <extracomment>The full screen strip when no Line is at the current time</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>இந்த நேரத்தில் வரி இல்லை</translation>
     </message>
     <message>
         <source>Video time, %1</source>
-        <translation type="unfinished"></translation>
+        <translation>வீடியோ நேரம், %1</translation>
     </message>
     <message>
         <source>Leave full screen</source>
-        <translation type="unfinished"></translation>
+        <translation>முழுத் திரையிலிருந்து வெளியேறு</translation>
     </message>
     <message>
         <source>Simple</source>
-        <translation type="unfinished"></translation>
+        <translation>எளிய</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -26764,21 +26944,34 @@ Styles deleted:
         <translation>வரி %1 / %2</translation>
     </message>
     <message>
+        <source>Style: %1</source>
+        <extracomment>The full-screen line box&apos;s style button: %1 the Line&apos;s style</extracomment>
+        <translation>பாணி: %1</translation>
+    </message>
+    <message>
+        <source>Choose the line’s style</source>
+        <translation>வரியின் பாணியைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Enter applies · Esc reverts</source>
+        <translation>Enter பயன்படுத்தும் · Esc திரும்பப்பெறும்</translation>
+    </message>
+    <message>
         <source>Line %1 text</source>
         <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
         <translation>வரி %1 உரை</translation>
     </message>
     <message>
         <source>Typeset</source>
-        <translation type="unfinished"></translation>
+        <translation>டைப்செட் செய்</translation>
     </message>
     <message>
         <source>Simple: switch to full-screen watching · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>எளிய: முழுத் திரையில் பார்ப்பதற்கு மாறு · சட்டகம் அதன் இடத்திலேயே இருக்கும்</translation>
     </message>
     <message>
         <source>Typeset: switch to full-screen typesetting · the frame keeps its place</source>
-        <translation type="unfinished"></translation>
+        <translation>டைப்செட் செய்: முழுத் திரை டைப்செட்டிங்குக்கு மாறு · சட்டகம் அதன் இடத்திலேயே இருக்கும்</translation>
     </message>
     <message>
         <source>Unmute</source>
@@ -26799,35 +26992,35 @@ Styles deleted:
     </message>
     <message>
         <source>Auto-hide</source>
-        <translation type="unfinished"></translation>
+        <translation>தானாக மறை</translation>
     </message>
     <message>
         <source>Always</source>
-        <translation type="unfinished"></translation>
+        <translation>எப்போதும்</translation>
     </message>
     <message>
         <source>Never</source>
-        <translation type="unfinished"></translation>
+        <translation>ஒருபோதும் இல்லை</translation>
     </message>
     <message>
         <source>Bar position</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியின் நிலை</translation>
     </message>
     <message>
         <source>Below the picture (letterbox)</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் கீழே (லெட்டர்பாக்ஸ்)</translation>
     </message>
     <message>
         <source>Over the picture</source>
-        <translation type="unfinished"></translation>
+        <translation>படத்தின் மேல்</translation>
     </message>
     <message>
         <source>Show bar</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியைக் காட்டு</translation>
     </message>
     <message>
         <source>Show it when the pointer moves or a key is pressed; hide it 2 seconds later while playing</source>
-        <translation type="unfinished"></translation>
+        <translation>சுட்டி நகரும்போது அல்லது ஒரு விசை அழுத்தப்படும்போது காட்டு; இயங்கும்போது 2 விநாடிகள் கழித்து மறை</translation>
     </message>
     <message>
         <source>Picture only</source>
@@ -26835,11 +27028,11 @@ Styles deleted:
     </message>
     <message>
         <source>Keep the bar shown</source>
-        <translation type="unfinished"></translation>
+        <translation>பட்டியைக் காட்டியே வை</translation>
     </message>
     <message>
         <source>Full-screen settings…</source>
-        <translation type="unfinished"></translation>
+        <translation>முழுத் திரை அமைப்புகள்…</translation>
     </message>
     <message>
         <source>Indexing video</source>
