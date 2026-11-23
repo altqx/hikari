@@ -17069,11 +17069,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>From a plugin, in its sandbox</source>
-        <translation type="unfinished"></translation>
+        <translation>플러그인 제공, 해당 플러그인의 샌드박스에서 실행</translation>
     </message>
     <message>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>켬</translation>
     </message>
 </context>
 <context>
@@ -18160,15 +18160,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>설정 › AI에 MCP 서버를 제공하며, 켜기 전까지는 꺼져 있습니다: %1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The plugin isn’t on.</source>
-        <translation type="unfinished"></translation>
+        <translation>플러그인이 꺼져 있습니다.</translation>
     </message>
 </context>
 <context>

@@ -17202,11 +17202,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>From a plugin, in its sandbox</source>
-        <translation type="unfinished"></translation>
+        <translation>செருகுநிரலிலிருந்து, அதன் சாண்ட்பாக்ஸில்</translation>
     </message>
     <message>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>இயக்கத்தில்</translation>
     </message>
 </context>
 <context>
@@ -18294,15 +18294,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>அமைப்புகள் › AI இல் MCP சேவையகங்களை வழங்குகிறது, நீங்கள் இயக்கும் வரை அவை முடக்கத்தில் இருக்கும்: %1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The plugin isn’t on.</source>
-        <translation type="unfinished"></translation>
+        <translation>செருகுநிரல் இயக்கத்தில் இல்லை.</translation>
     </message>
 </context>
 <context>

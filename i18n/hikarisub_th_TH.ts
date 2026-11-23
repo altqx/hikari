@@ -17069,11 +17069,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>From a plugin, in its sandbox</source>
-        <translation type="unfinished"></translation>
+        <translation>มาจากปลั๊กอิน ทำงานในแซนด์บ็อกซ์ของปลั๊กอิน</translation>
     </message>
     <message>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>เปิด</translation>
     </message>
 </context>
 <context>
@@ -18160,15 +18160,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>มีเซิร์ฟเวอร์ MCP ให้ใช้ในการตั้งค่า › AI ซึ่งปิดอยู่จนกว่าคุณจะเปิด: %1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The plugin isn’t on.</source>
-        <translation type="unfinished"></translation>
+        <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
     </message>
 </context>
 <context>

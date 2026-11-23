@@ -17335,11 +17335,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>From a plugin, in its sandbox</source>
-        <translation type="unfinished"></translation>
+        <translation>Z wtyczki, w jej piaskownicy</translation>
     </message>
     <message>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>Włączone</translation>
     </message>
 </context>
 <context>
@@ -18428,15 +18428,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Udostępnia serwery MCP w Ustawienia › AI, wyłączone, dopóki ich nie włączysz: %1</translation>
     </message>
     <message>
         <source>%1 (%2)</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The plugin isn’t on.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wtyczka jest wyłączona.</translation>
     </message>
 </context>
 <context>
