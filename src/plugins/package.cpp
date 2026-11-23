@@ -99,8 +99,11 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     const auto holds = [&](const std::string &path) {
         return std::ranges::any_of(files, [&](const PackageFile &f) { return f.path == path; });
     };
-    if (!holds(manifest->main))
+    if (!manifest->main.empty() && !holds(manifest->main))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
+    if (const Program *main = manifest->program(manifest->mainProgram);
+        main && !main->platforms.contains(std::string(thisPlatform())))
+        return std::unexpected(PackageProblem{Kind::MainProgramUnavailable, main->title, {}});
     bool forOnePlatform = false;
     for (const Program &program : manifest->programs)
         for (const auto &[platform, run] : program.platforms) {
@@ -119,7 +122,8 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     for (auto problem : {contentProblem(manifest->styles, checks.styleCatalogue, files),
                          contentProblem(manifest->karaokePresets, checks.karaokePreset, files),
                          dictionaryProblem(manifest->dictionaries, checks, files),
-                         contentProblem(manifest->graphs, checks.graph, files)})
+                         contentProblem(manifest->graphs, checks.graph, files),
+                         contentProblem(manifest->layouts, checks.layout, files)})
         if (problem)
             return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};

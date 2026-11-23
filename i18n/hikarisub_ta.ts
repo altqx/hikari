@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>AI ஐ இயக்கு…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>AI ஐ இயக்கக்கூடிய முகவர் பலகத்தைக் காட்டுகிறது</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>முகவர்</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>அமைப்புகள் › AI ஐத் திற</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>நீங்கள் ஒன்றைச் சேர்க்கும் வரை எதுவும் அனுப்பப்படாது, பதிவிறக்கப்படாது.</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -209,6 +213,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>“%1” இன் துணை முகவர். படிக்க மட்டும்; பெற்றோர் இழை வழியாக அதனுடன் பேசுங்கள்.</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>நீங்கள் ஒன்றைச் சேர்க்கும் வரை எதுவும் அனுப்பப்படாது.</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1017,6 +1025,18 @@
     <message>
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI அணைந்துள்ளது</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>முகவர்களையும் AI செயல்களையும் பயன்படுத்த அதை இயக்கவும். பின்னர் HikariSub AI கூறை ஒருமுறை பதிவிறக்கும்.</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>AI ஐ இயக்கு</translation>
     </message>
 </context>
 <context>
@@ -16204,10 +16224,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்து AI அம்சங்களையும் அணை</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>AI தொடர்பான எதுவும் காட்டப்படாது, பதிவிறக்கப்படாது, தொடங்காது, உங்கள் விசைக்கொத்தைப் படிக்காது. வழங்குநர்கள், விசைகள், இழைகள் வைக்கப்படும்; AI ஐ மீண்டும் இயக்கினால் மறுதொடக்கம் இல்லாமல் அவை திரும்பும்.</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>AI அணைந்திருக்கும்போது வைக்கப்படுபவை</translation>
     </message>
@@ -16226,10 +16242,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>AI அணைந்திருக்கும்போது மறைக்கப்படுபவை</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>முகவர் பலகம், உள்வரி AI செயல்கள், ஒவ்வொரு மெனுவிலும் உள்ள AI வரிசைகள்</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -16417,6 +16429,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>AI தொடர்பான எதுவும் பதிவிறக்கப்படாது, தொடங்காது, உங்கள் விசைக்கொத்தைப் படிக்காது. வழங்குநர்கள், விசைகள், இழைகள் வைக்கப்படும்; AI ஐ மீண்டும் இயக்கினால் மறுதொடக்கம் இல்லாமல் அவை திரும்பும்.</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>உள்வரி AI செயல்கள், ஒவ்வொரு மெனுவிலும் உள்ள AI வரிசைகள். முகவர் பலகம் AI ஐ இயக்கும் பொத்தானை மட்டும் காட்டும்.</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -18271,6 +18291,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>it couldn’t be kept.</source>
         <translation>அதைச் சேமிக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>இந்தச் செருகுநிரல் %1 என்ற நிரல்; அது இந்தக் கணினிக்குக் கிடைக்கவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -29132,6 +29156,15 @@ do not work on comments</source>
         <translation>தளவமைப்பு %1 இல் வைக்கப்பட்டுள்ளது.</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>கோப்பைப் படிக்க முடியவில்லை</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>%1 இல் சேமிக்கப்பட்ட பலகத் தளவமைப்பு பயன்படுத்தப்படவில்லை, ஏனெனில் %2.</translation>
     </message>
@@ -29310,6 +29343,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>பயன்படுத்த முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>இது செருகுநிரலுடன் வருகிறது, எனவே இதை இங்கே மாற்ற முடியாது. “தளவமைப்பைப் புதிய பெயரில் சேமி…” உங்கள் சொந்த நகலை வைத்திருக்கும்.</translation>
     </message>
     <message>
         <source>Rename</source>

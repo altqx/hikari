@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>เปิด AI…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>แสดงแผงเอเจนต์ ซึ่งคุณเปิด AI ได้</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>เอเจนต์</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>เปิดการตั้งค่า › AI</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>จะไม่มีการส่งหรือดาวน์โหลดสิ่งใดจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -208,6 +212,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>เอเจนต์ย่อยของ “%1” อ่านอย่างเดียว คุยกับมันผ่านเธรดหลัก</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>จะไม่มีการส่งสิ่งใดจนกว่าคุณจะเพิ่มผู้ให้บริการ</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1004,6 +1012,18 @@
     <message>
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>เปิดเพื่อใช้เอเจนต์และการทำงาน AI จากนั้น HikariSub จะดาวน์โหลดคอมโพเนนต์ AI เพียงครั้งเดียว</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>เปิด AI</translation>
     </message>
 </context>
 <context>
@@ -16074,10 +16094,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ปิดฟีเจอร์ AI ทั้งหมด</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>จะไม่มีสิ่งใดที่เกี่ยวกับ AI แสดง ดาวน์โหลด เริ่มทำงาน หรืออ่านพวงกุญแจของคุณ ผู้ให้บริการ คีย์ และเธรดจะยังเก็บไว้ และเมื่อเปิด AI อีกครั้งทุกอย่างจะกลับมาโดยไม่ต้องรีสตาร์ต</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>สิ่งที่เก็บไว้ขณะปิด AI</translation>
     </message>
@@ -16096,10 +16112,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>สิ่งที่ซ่อนขณะปิด AI</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>แผงเอเจนต์ การทำงาน AI ในบรรทัด และรายการ AI ในทุกเมนู</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -16286,6 +16298,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>จะไม่มีสิ่งใดที่เกี่ยวกับ AI ดาวน์โหลด เริ่มทำงาน หรืออ่านพวงกุญแจของคุณ ผู้ให้บริการ คีย์ และเธรดจะยังเก็บไว้ และเมื่อเปิด AI อีกครั้งทุกอย่างจะกลับมาโดยไม่ต้องรีสตาร์ต</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>การทำงาน AI ในบรรทัด และรายการ AI ในทุกเมนู แผงเอเจนต์จะแสดงเพียงปุ่มสำหรับเปิด AI</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -18137,6 +18157,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>it couldn’t be kept.</source>
         <translation>บันทึกไฟล์ไว้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>ปลั๊กอินนี้คือโปรแกรม %1 ซึ่งไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
     </message>
 </context>
 <context>
@@ -28889,6 +28913,15 @@ do not work on comments</source>
         <translation>เก็บเค้าโครงไว้ที่ %1</translation>
     </message>
     <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s layout in the layout lists: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>the file can’t be read</source>
+        <translation>อ่านไฟล์ไม่ได้</translation>
+    </message>
+    <message>
         <source>The panel layout saved in %1 was not used because %2.</source>
         <translation>ไม่ได้ใช้เค้าโครงแผงที่บันทึกไว้ใน %1 เนื่องจาก%2</translation>
     </message>
@@ -29067,6 +29100,10 @@ do not work on comments</source>
     <message>
         <source>Cannot be used: %1</source>
         <translation>ใช้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>Comes with a plugin, so it can’t be changed here. Save layout as… keeps your own copy.</source>
+        <translation>มาพร้อมกับปลั๊กอิน จึงเปลี่ยนแปลงที่นี่ไม่ได้ บันทึกเค้าโครงเป็น… จะเก็บสำเนาของคุณเองไว้</translation>
     </message>
     <message>
         <source>Rename</source>

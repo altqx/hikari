@@ -2,6 +2,8 @@
 
 #include "hikari/app/plugin_content.h"
 #include "hikari/app/plugin_nodes.h"
+#include "hikari/backends/program_plugin_link.h"
+#include "hikari/backends/program_process.h"
 
 #include "log_controller.h"
 
@@ -64,6 +66,11 @@ QString analyticsFeature(std::string_view operation)
     if (operation == "marks.set")
         return QStringLiteral("row_marks");
     return {};
+}
+
+bool hasCode(const plugins::Manifest &manifest)
+{
+    return !manifest.main.empty() || !manifest.mainProgram.empty();
 }
 
 QString stopReason(PluginProcess::StopReason reason)
@@ -195,9 +202,13 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
     m_network = new PluginNetwork(*m_wiring.network, m_wiring.networkAllowed, this);
     m_downloads = std::make_unique<PluginProgramDownloads>(
         PluginProgramDownloads::Wiring{f.programs, m_wiring.network, m_wiring.networkAllowed});
-    connect(m_downloads.get(), &PluginProgramDownloads::changed, this, [this] {
+    connect(m_downloads.get(), &PluginProgramDownloads::changed, this, [this](const QString &pluginId) {
         ++m_programsRevision;
         emit programsChanged();
+        const auto it = m_plugins.find(pluginId.toStdString());
+        if (it != m_plugins.end() && !it->second->manifest.mainProgram.empty() && !it->second->held &&
+            it->second->process->state() == PluginProcess::State::LoadFailed && m_downloads->missing(it->first, it->second->manifest).empty())
+            it->second->process->start();
     });
     m_files = std::make_unique<PluginFiles>(m_wiring.api, m_installer ? &*m_installer : nullptr, *m_ui, m_wiring.project);
     m_ui->setGrantDrop([this](const std::string &plugin, const QString &file) {
@@ -421,12 +432,15 @@ void PluginRuntime::sync()
         endAccess(*it->second);
         PluginProcess *process = it->second->process.get();
         disconnect(process, nullptr, this, nullptr);
-        process->forceStop();
+        process->end();
         it = m_plugins.erase(it);
     }
     for (auto &[id, manifest] : wanted)
-        if (!m_plugins.contains(id))
-            m_plugins.emplace(id, launch(id, std::move(manifest)));
+        if (!m_plugins.contains(id)) {
+            Running &plugin = *m_plugins.emplace(id, launch(id, std::move(manifest))).first->second;
+            if (hasCode(plugin.manifest))
+                plugin.process->start();
+        }
     std::ranges::sort(order);
     m_installOrder.clear();
     for (auto &[installed, id] : order)
@@ -516,6 +530,21 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
         process->setSandbox(backends::pluginProfile(m_wiring.helperPath, QString::fromStdU16String(root.u16string()), id));
     }
+    if (!raw->manifest.mainProgram.empty())
+        process->setLinkFactory([this, raw]() -> std::expected<std::unique_ptr<backends::PluginLink>, QString> {
+            const plugins::Program *program = raw->manifest.program(raw->manifest.mainProgram);
+            if (!m_wiring.programs)
+                return std::unexpected(QStringLiteral("HikariSub can’t run programs here."));
+            auto prepared = m_wiring.programs->prepare(raw->id, raw->manifest.mainProgram);
+            if (!prepared)
+                return std::unexpected(qs(prepared.error().message));
+            auto link = std::make_unique<backends::ProgramPluginLink>(std::move(*prepared),
+                                                                      raw->manifest.permissions.background.has_value());
+            link->setName(qs(program->title));
+            connect(link.get(), &backends::ProgramPluginLink::logLine, this,
+                    [this, id = raw->id](const QString &line) { m_wiring.programs->logLine(id, line); });
+            return link;
+        });
     process->setServiceHandler([this, raw](const PluginProcess::ServiceRequest &request, PluginProcess::ServiceReply reply) {
         serve(*raw, request, std::move(reply));
     });
@@ -598,7 +627,6 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
             break;
         }
     });
-    process->start();
     return plugin;
 }
 
@@ -1103,7 +1131,8 @@ void PluginRuntime::restart(const QString &pluginId)
 {
     if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end()) {
         it->second->held = false;
-        it->second->process->start();
+        if (hasCode(it->second->manifest))
+            it->second->process->start();
     }
 }
 

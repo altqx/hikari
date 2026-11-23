@@ -143,6 +143,9 @@ QString packageMessage(const PackageProblem &problem)
     case PackageProblem::Kind::MissingProgram:
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its program for this computer, %1.")
             .arg(text(problem.path));
+    case PackageProblem::Kind::MainProgramUnavailable:
+        return QCoreApplication::translate("HikariSub.Plugins", "The plugin is the program %1, which isn’t available for this computer.")
+            .arg(text(problem.path));
     case PackageProblem::Kind::Media:
         return QCoreApplication::translate("HikariSub.Plugins", "The package breaks the media rules: %1 %2.")
             .arg(text(problem.path), text(problem.detail));

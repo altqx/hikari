@@ -400,6 +400,26 @@ TEST(PluginManifest, DictionariesReadAndALanguageRepeatsNot)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+TEST(PluginManifest, LayoutsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->layouts.size(), 1u);
+    EXPECT_EQ(m->layouts[0].id, "quiet");
+    EXPECT_EQ(m->layouts[0].title, "Quiet");
+    EXPECT_EQ(m->layouts[0].path, "layouts/quiet.json");
+
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "A", "path": "a.json"},
+                                                       {"id": "quiet", "title": "B", "path": "b.json"}]})");
+    const ManifestProblem repeated = problem(json);
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/layouts/1/id");
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "Quiet", "path": "quiet.ass"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
 TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
 {
     Json json = minimal();
@@ -582,6 +602,30 @@ TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun
     json["contributes"] = *Json::parse(R"({"settings": [{"id": "key", "title": "Key", "type": "secret"}],
         "programs": [{"id": "x", "title": "X", "platforms": {"linux-x64": {"path": "x", "env": {"KEY": "${setting:key}"}}}}]})");
     EXPECT_TRUE(parse(json));
+}
+
+TEST(PluginManifest, MainIsALuaFileAProgramOrNothing)
+{
+    Json json = minimal();
+    std::erase_if(json.asObject(), [](const Json::Member &m) { return m.key == "main"; });
+    const auto none = parse(json);
+    ASSERT_TRUE(none) << none.error().at << " " << none.error().detail;
+    EXPECT_TRUE(none->main.empty());
+    EXPECT_TRUE(none->mainProgram.empty());
+
+    json["permissions"] = *Json::parse(R"({"programs": "Is the plugin"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "core", "title": "Core", "api": true,
+        "platforms": {"linux-x64": {"path": "bin/core"}}}, {"id": "lsp", "title": "LSP", "platforms": {"linux-x64": {"path": "bin/lsp"}}}]})");
+    json["main"] = *Json::parse(R"({"program": "core"})");
+    const auto program = parse(json);
+    ASSERT_TRUE(program) << program.error().at << " " << program.error().detail;
+    EXPECT_EQ(program->mainProgram, "core");
+    EXPECT_TRUE(program->main.empty());
+
+    json["main"] = *Json::parse(R"({"program": "nope"})");
+    EXPECT_EQ(problem(json).at, "/main/program");
+    json["main"] = *Json::parse(R"({"program": "lsp"})");
+    EXPECT_EQ(problem(json).detail, "the main program needs \"api\": true");
 }
 
 TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)

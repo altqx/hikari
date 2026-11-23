@@ -743,6 +743,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"),
         options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
+    m_workspaceLayout->waitForPluginLayouts();
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     makeViews(m_mainViews, 0);
     choosePlayer();
@@ -850,6 +851,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
         return m_crashReports && m_crashReports->aiComponentFailed(version, reason);
     };
+    AiFeatures::settleOffDefault(*m_settings, aiPorts);
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder),
@@ -2163,6 +2165,8 @@ void Application::showPluginContent()
     for (WindowViews *views : allViews())
         if (views->nodeEffects)
             views->nodeEffects->pluginContentChanged();
+    for (auto *layout : layouts())
+        layout->pluginLayoutsRead();
 }
 
 void Application::makeNodeEffects(WindowViews &v, int shellWindow)
