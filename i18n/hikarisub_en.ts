@@ -288,6 +288,13 @@
             <numerusform>and %n more lines</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Export</name>

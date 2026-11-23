@@ -3381,6 +3381,14 @@ Output device: %2</source>
         <translation>%1 ஐப் படிக்க முடியவில்லை.</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>வசன வரிகளைத் திற</translation>
     </message>
@@ -3862,6 +3870,49 @@ Output device: %2</source>
     </message>
     <message>
         <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -8488,6 +8539,10 @@ Failed to copy %2 fonts.</source>
         <translation>பாடல் வரிகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
+        <source>Import text…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11703,6 +11758,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>%1 ஐத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saves the document</source>
@@ -26147,6 +26210,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>வரி %1: %2</translation>
     </message>
     <message>
