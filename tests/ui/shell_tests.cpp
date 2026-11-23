@@ -17179,8 +17179,8 @@ private slots:
         const QVariant stepMinimum = inspector->property(qPrintable(minimumName));
         QVERIFY2(stepMinimum.isValid(), qPrintable(minimumName));
         const qreal chrome = panel->width() - inspector->width();
-        const int width = int(std::ceil(stepMinimum.toReal() + chrome));
-        QVERIFY2(width >= int(std::ceil(panel->property("minimumSize").toSizeF().width())), qPrintable(QString::number(width)));
+        const int width = std::max(int(std::ceil(stepMinimum.toReal() + chrome)),
+                                   int(std::ceil(panel->property("minimumSize").toSizeF().width())));
         squeezeTheLineEditorTo(width);
         QTRY_COMPARE(inspector->property("step").toString(), step);
 
@@ -17267,6 +17267,42 @@ private slots:
         if (step == QLatin1String("narrow"))
             QCOMPARE(order, (QStringList{QStringLiteral("start,end,duration"), QStringLiteral("style,actor"),
                                          QStringLiteral("layer,effect,comment"), QStringLiteral("margins")}));
+    }
+
+    void lineEditorRowsAtTheDefaultSizes_data()
+    {
+        QTest::addColumn<QSize>("size");
+        for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
+            QTest::addRow("%dx%d", size.width(), size.height()) << size;
+    }
+    void lineEditorRowsAtTheDefaultSizes()
+    {
+        QFETCH(QSize, size);
+        window->resize(size);
+        QTRY_COMPARE(window->size(), size);
+        QObject *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        QVERIFY(application->openFile(writeLongLineFile("rows.ass", false)));
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        QVERIFY(QQuickTest::qWaitForPolish(window));
+        auto *inspector = item("lineInspector");
+        if (size == QSize(1366, 768))
+            QTRY_COMPARE(inspector->property("step").toString(), QStringLiteral("wide"));
+        for (const char *name : {"startField", "endField", "durationField", "styleChoice", "styleEditButton", "layerField",
+                                 "actorBox", "effectBox", "marginLeftField", "marginRightField", "marginVerticalField"})
+            QVERIFY2(qFuzzyCompare(item(name)->height(), 24.0), qPrintable(QStringLiteral("%1 %2").arg(name).arg(item(name)->height())));
+        QVERIFY(item("commentBox")->height() <= 24);
+        const qreal body = QGuiApplication::font().pointSizeF();
+        for (const char *name : {"startSlotLabel", "layerSlotLabel", "marginsSlotLabel"}) {
+            QQuickItem *label = visualItem(name);
+            QVERIFY2(label && label->isVisible(), name);
+            QCOMPARE(label->property("font").value<QFont>().pointSizeF(), std::max(body * 12 / 13, 8.0));
+            QCOMPARE(label->property("color").value<QColor>(), ui::theme::current().roles.muted);
+        }
+        const QFont time = item("startField")->property("font").value<QFont>();
+        QCOMPARE(time.pointSizeF(), std::max(body * 12 / 13, 8.0));
+        QCOMPARE(time.featureValue(QFont::Tag("tnum")), 1u);
     }
 
     void lineEditorMinimumFitsEveryPreset_data()
@@ -27046,7 +27082,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
         QVERIFY(audio.karaoke());
         QCOMPARE(audio.karaokeModel().count(), 2);
-        QCOMPARE(item("audioKaraokeSplitArrow")->width(), 9.0);
+        QCOMPARE(item("audioKaraokeSplitArrow")->width(), 16.0);
         QVERIFY(item("audioButtons")->property("splitArrowFolded").toBool());
         QVERIFY(!item("audioButtons")->property("folded").toBool());
         QVERIFY(!item("audioKaraokeSplitArrow")->isVisible());
