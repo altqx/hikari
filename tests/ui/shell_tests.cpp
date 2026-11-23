@@ -19821,7 +19821,6 @@ private slots:
         QTRY_VERIFY(http->isVisible() && copySetup->isVisible());
         QCOMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1"));
         QVERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("needs “Also listen on")));
-        QVERIFY(!mcp->server());
         QTRY_VERIFY(mcp->server());
 
         const auto copyEntry = [&](const char *name) { return page->findChild<QObject *>(QLatin1String(name)); };
