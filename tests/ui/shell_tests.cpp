@@ -34218,7 +34218,7 @@ private slots:
         const auto open = [&](const QString &path) {
             QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTextImport", Q_ARG(QVariant, path)));
         };
-        open(writeText(dir, "pf4-utf16.txt", QByteArray("\xff\xfeA\x00", 4)));
+        open(writeText(dir, "pf4-utf16.txt", QByteArray("\xff\xfe" "A\x00", 4)));
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("textImportDialog"))));
         QTRY_VERIFY(dialog->property("visible").toBool());
@@ -34235,13 +34235,14 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
 
-        open(writeText(dir, "pf4-lines.txt", "\xEF\xBB\xBFAna - Hi: there\nPlain\n"));
+        open(writeText(dir, "pf4-lines.txt", "\xEF\xBB\xBF" "Ana - Hi: there\nPlain\n"));
         QTRY_VERIFY(dialog->property("visible").toBool());
         controller->setProperty("actorSeparator", QStringLiteral(" - "));
         controller->setProperty("namesCarryOver", false);
         controller->setProperty("intoOpenFile", false);
-        QCOMPARE(controller->property("preview").toList()[0].toMap().value(QStringLiteral("text")).toString(),
-                 QStringLiteral("Hi: there"));
+        const QVariantList preview = controller->property("preview").toList();
+        QCOMPARE(preview.size(), 2);
+        QCOMPARE(preview[0].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Hi: there"));
         const QJsonObject remembered = QJsonDocument::fromJson(settings.text("textImport.options").toUtf8()).object();
         QCOMPARE(remembered.value(QStringLiteral("actorSeparator")).toString(), QStringLiteral(" - "));
         QCOMPARE(remembered.value(QStringLiteral("namesCarryOver")).toBool(true), false);

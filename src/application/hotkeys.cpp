@@ -345,7 +345,6 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_MOVE_TAB_TO_WINDOW", 5222},
         {"GLOBAL_CLOSE_WINDOW", 5263},
         {"GLOBAL_IMPORT_LYRICS", 5268},
-        {"GLOBAL_IMPORT_TEXT", 5375},
         {"GLOBAL_KEEP_AI_CHANGE", 5245},
         {"GLOBAL_UNDO_AI_CHANGE", 5246},
         {"GLOBAL_NEXT_AI_CHANGE", 5247},
@@ -447,6 +446,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
+        {"GLOBAL_IMPORT_TEXT", 5375},
 };
 
 struct NameRow {
@@ -756,7 +756,6 @@ constexpr NameRow kNames[] = {
         {5222, "Move tab to window"},
         {5263, "Close window"},
         {5268, "Import lyrics…"},
-        {5375, "Import text…"},
         {5108, "Exit"},
         {5245, "Keep AI change"},
         {5246, "Undo AI change"},
@@ -863,6 +862,7 @@ constexpr NameRow kNames[] = {
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
         {5374, "Full screen typesetting"},
+        {5375, "Import text…"},
 };
 
 struct DefaultRow {
