@@ -3877,14 +3877,6 @@ Output device: %2</source>
         <translation>혼합</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>각 줄의 글자 수. 43자 이하, 최대 2줄로 유지하십시오.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>초당 문자 수. 15자 이하로 유지하십시오.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>시간 표시</translation>
     </message>
@@ -4299,6 +4291,16 @@ Output device: %2</source>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>태그는 역슬래시로 시작합니다. 예: \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>각 줄의 문자 수입니다. %1자 이하로, 최대 %n줄 안에서 유지해야 합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>초당 문자 수입니다. %1 이하로 유지해야 합니다.</translation>
     </message>
 </context>
 <context>
@@ -14094,6 +14096,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>초당 문자 수 계산에 공백과 문장 부호 포함</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>초당 문자 수 경고</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>이보다 빨리 읽어야 하는 줄은 색이 칠해지며, 오류 수준에 가까울수록 색이 진해집니다.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>초당 문자</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>초당 문자 수 오류</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>줄당 문자 수</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄 수</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>자막 파일은 스크립트 속성에서 자체 제한을 설정할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>분할</translation>
     </message>
@@ -15014,6 +15044,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A built-in theme could not be read, so Dark is shown.</source>
         <translation>기본 제공 테마를 읽을 수 없어 어둡게 테마를 표시합니다.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s spelling dictionary: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
@@ -19240,6 +19275,30 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Rendering</source>
         <translation>렌더링</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>읽기 제한</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>내 설정 사용</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>초당 문자 수 경고</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>초당 문자 수 오류</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>줄당 문자 수</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄 수</translation>
     </message>
     <message>
         <source>Save</source>

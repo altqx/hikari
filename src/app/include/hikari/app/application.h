@@ -256,6 +256,8 @@ public:
         // HikariSub legacy's autosave folder, read only; empty: "Subs" in the first legacy
         // root that has one, or none without a settings file.
         QString legacyAutosaveDir;
+        // Where legacy settings are looked for; unset: SettingsImportStore::defaultCandidates().
+        std::optional<QStringList> legacySettingsFolders;
         // Empty: none (Open user folder does nothing).
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
@@ -1732,6 +1734,10 @@ private:
     // By dictionary language and Project folder; windows on both the same share a checker.
     std::map<QString, SpellSlot> m_spellCheckers;
     std::vector<std::filesystem::path> m_spellingFolders;
+    std::vector<application::PluginDictionary> m_pluginDictionaries;
+    bool m_pluginDictionariesRead = false;
+    bool m_spellingWaitsForPlugins = false;
+    void readPluginDictionaries();
     SpellSlot *spellSlot(const QString &language, const QString &projectRoot = {});
     // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
     bool editorSpellingOn() const;

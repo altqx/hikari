@@ -60,3 +60,19 @@ The named G45 obligations transferred from [Painted-Grid accessibility and perfo
 [ui]: https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md
 [core]: https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md
 [tests]: https://github.com/altqx/hikari/blob/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/tests/UndoHistoryTests.cpp
+
+## Reading limits
+
+[#1213](https://github.com/altqx/hikari/issues/1213), owner Q588. One `application::ReadingLimits` (`src/application/reading_limits.h`) holds the reading-speed and line-length limits. The Grid, the Line editor, AI Shorten and the problems list ([#1227](https://github.com/altqx/hikari/issues/1227)) read it; none keeps its own numbers.
+
+| Limit | Setting | Script Info key | Default |
+| --- | --- | --- | --- |
+| CPS warning | `grid.cpsWarning` | `Hikari CPS Warning` | 15 |
+| CPS error | `grid.cpsError` | `Hikari CPS Error` | 30 (Aegisub 3.5) |
+| Characters per line | `grid.lineLength` | `Hikari Line Length` | 43 |
+| Lines | `grid.maxLines` | `Hikari Max Lines` | 2 |
+
+- **Settings › Grid › Counting** holds your limits. **Script properties › Reading limits** gives one subtitle file its own: "Use my settings" off writes all four keys as plain integers in the same undo step as the other properties, and on removes them. Each key the file holds replaces your setting; a key that isn't a positive integer is ignored. Aegisub keeps unknown keys, so the file round-trips.
+- **Grid:** the CPS cell is tinted with the Grid warning colour at Aegisub 3.5's alpha, `min((cps − warning + 1) / (error − warning + 1), 1)`, so it deepens from the warning to the error level. An error level under the warning tints fully past the warning. The Wraps cell is tinted when a line is longer than the characters-per-line limit or there are more lines than the Lines limit.
+- **Line editor:** the Wraps and CPS counters show the limits, turn the warning colour past the warning level and the danger colour at the error level.
+- **AI Shorten** sends the Lines over the CPS warning and asks for that speed.

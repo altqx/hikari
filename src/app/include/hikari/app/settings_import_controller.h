@@ -35,7 +35,7 @@ class SettingsImportController : public QObject {
     Q_PROPERTY(bool canRollBack READ canRollBack NOTIFY stateChanged)
 public:
     // A null store (settings in memory only) imports nothing.
-    explicit SettingsImportController(SettingsImportStore *store, QObject *parent = nullptr);
+    SettingsImportController(SettingsImportStore *store, QStringList defaultFolders, QObject *parent = nullptr);
 
     QVariantList roots() const;
     QString root() const { return m_snapshot ? m_snapshot->root : QString(); }
@@ -51,6 +51,7 @@ public:
     bool canRollBack() const { return m_store && m_store->canRollBack(); }
 
     Q_INVOKABLE void discover(const QStringList &candidates = {});
+    const QStringList &defaultFolders() const { return m_defaultFolders; }
     // A path or a file: URL; false when it holds no legacy settings.
     Q_INVOKABLE bool addRoot(const QString &folder);
     Q_INVOKABLE bool choose(const QString &root);
@@ -87,6 +88,7 @@ private:
 
     SettingsImportStore *m_store;
     QList<SettingsImportStore::Root> m_roots;
+    QStringList m_defaultFolders;
     std::optional<SettingsImportStore::Snapshot> m_snapshot;
     std::optional<application::settings_import::Plan> m_plan;
     std::optional<application::settings_import::Receipt> m_previous;

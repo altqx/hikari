@@ -444,6 +444,20 @@ TEST(PluginContentChecks, AStyleCatalogueNeedsAStyleLine)
     EXPECT_EQ(check(""), "holds no Style: lines");
 }
 
+TEST(PluginContentChecks, AHunspellPairReadsAsHunspellDoes)
+{
+    const auto aff = [](std::string_view text) { return dictionaryAffProblem(std::as_bytes(std::span(text))); };
+    const auto dic = [](std::string_view text) { return dictionaryDicProblem(std::as_bytes(std::span(text))); };
+    EXPECT_EQ(aff("SET UTF-8\nTRY abc\n"), std::nullopt);
+    EXPECT_EQ(aff(""), std::nullopt);
+    EXPECT_EQ(aff(std::string_view("SET UTF-8\0", 10)), "isn\xE2\x80\x99t text");
+    EXPECT_EQ(dic("2\nkot\nma\n"), std::nullopt);
+    EXPECT_EQ(dic("\xEF\xBB\xBF 120 approximate\r\nkot\n"), std::nullopt);
+    EXPECT_EQ(dic("kot\nma\n"), "doesn\xE2\x80\x99t start with its word count");
+    EXPECT_EQ(dic("0\n"), "doesn\xE2\x80\x99t start with its word count");
+    EXPECT_EQ(dic(""), "doesn\xE2\x80\x99t start with its word count");
+}
+
 TEST(StyleCatalogTiers, OpeningAProjectAddsNoFilesAndSavingMakesTheFolder)
 {
     TierDirs dirs;
