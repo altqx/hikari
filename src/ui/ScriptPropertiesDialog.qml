@@ -38,6 +38,9 @@ DialogWindow {
         editingField.text = p.originalEditing
         timingField.text = p.originalTiming
         updatedField.text = p.updatedBy
+        synchField.text = p.synchPoint
+        detailsField.text = p.updateDetails
+        moreSection.expanded = p.synchPoint !== "" || p.updateDetails !== ""
         widthField.value = p.playResX
         heightField.value = p.playResY
         layoutWidthField.value = p.layoutResX
@@ -48,6 +51,11 @@ DialogWindow {
         wrapBox.currentIndex = Math.max(0, Math.min(3, p.wrapStyle))
         collisionBox.currentIndex = p.reverseCollisions ? 1 : 0
         borderBox.checked = p.scaledBorderAndShadow
+        useMyLimitsBox.checked = !p.readingLimits.own
+        cpsWarningField.value = p.readingLimits.cpsWarning
+        cpsErrorField.value = p.readingLimits.cpsError
+        lineLengthField.value = p.readingLimits.lineLength
+        maxLinesField.value = p.readingLimits.maxLines
         edits = ({})
         document = app.editingDocument()
         open()
@@ -81,10 +89,13 @@ DialogWindow {
     function values() {
         return { title: titleField.text, originalScript: scriptField.text, originalTranslation: translationField.text,
                  originalEditing: editingField.text, originalTiming: timingField.text, updatedBy: updatedField.text,
+                 synchPoint: synchField.text, updateDetails: detailsField.text,
                  playResX: widthField.value, playResY: heightField.value,
                  layoutResX: layoutWidthField.value, layoutResY: layoutHeightField.value,
                  matrix: matrixBox.currentIndex, wrapStyle: wrapBox.currentIndex,
-                 reverseCollisions: collisionBox.currentIndex === 1, scaledBorderAndShadow: borderBox.checked }
+                 reverseCollisions: collisionBox.currentIndex === 1, scaledBorderAndShadow: borderBox.checked,
+                 readingLimits: { own: !useMyLimitsBox.checked, cpsWarning: cpsWarningField.value, cpsError: cpsErrorField.value,
+                                  lineLength: lineLengthField.value, maxLines: maxLinesField.value } }
     }
     onAccepted: {
         if (app.editingDocument() === document)
@@ -94,6 +105,13 @@ DialogWindow {
     component FieldLabel: Label { Layout.preferredWidth: 104 }
     component WideField: TextField { Layout.fillWidth: true; Layout.preferredWidth: 300 }
     component SizeBox: SpinBox { from: 0; to: 100000; editable: true; Layout.preferredWidth: 110 }
+    component LimitBox: SpinBox {
+        from: 1
+        editable: true
+        enabled: !useMyLimitsBox.checked
+        Layout.preferredWidth: 110
+        onValueModified: dialog.mark("readingLimits")
+    }
 
     FormSection {
         objectName: "propCredits"
@@ -116,6 +134,23 @@ DialogWindow {
             WideField { id: timingField; objectName: "propTimer"; Accessible.name: qsTr("Timer"); onTextEdited: dialog.mark("originalTiming") }
             FieldLabel { text: qsTr("Editing") }
             WideField { id: updatedField; objectName: "propEditing"; Accessible.name: qsTr("Editing"); onTextEdited: dialog.mark("updatedBy") }
+        }
+    }
+    FormSection {
+        id: moreSection
+        objectName: "propMore"
+        title: qsTr("More")
+        expanded: false
+        onToggled: on => moreSection.expanded = on
+        GridLayout {
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 6
+            Layout.fillWidth: true
+            FieldLabel { text: qsTr("Synch point") }
+            WideField { id: synchField; objectName: "propSynchPoint"; Accessible.name: qsTr("Synch point"); onTextEdited: dialog.mark("synchPoint") }
+            FieldLabel { text: qsTr("Update details") }
+            WideField { id: detailsField; objectName: "propUpdateDetails"; Accessible.name: qsTr("Update details"); onTextEdited: dialog.mark("updateDetails") }
         }
     }
     FormSection {
@@ -182,6 +217,31 @@ DialogWindow {
             ComboBox { id: collisionBox; objectName: "propCollisions"; Layout.preferredWidth: 200; Accessible.name: qsTr("Colliding lines"); model: [qsTr("Normal"), qsTr("Reversed")]; onActivated: dialog.mark("reverseCollisions") }
             Item { implicitWidth: 1 }
             CheckBox { id: borderBox; objectName: "propScaleBorder"; text: qsTr("Scale border and shadow"); onToggled: dialog.mark("scaledBorderAndShadow") }
+        }
+    }
+    FormSection {
+        objectName: "propReadingLimits"
+        title: qsTr("Reading limits")
+        GridLayout {
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 6
+            Layout.fillWidth: true
+            Item { implicitWidth: 1 }
+            CheckBox {
+                id: useMyLimitsBox
+                objectName: "propUseMyLimits"
+                text: qsTr("Use my settings")
+                onToggled: dialog.mark("readingLimits")
+            }
+            FieldLabel { text: qsTr("CPS warning") }
+            LimitBox { id: cpsWarningField; objectName: "propCpsWarning"; to: 100; Accessible.name: qsTr("CPS warning") }
+            FieldLabel { text: qsTr("CPS error") }
+            LimitBox { id: cpsErrorField; objectName: "propCpsError"; to: 100; Accessible.name: qsTr("CPS error") }
+            FieldLabel { text: qsTr("Characters per line") }
+            LimitBox { id: lineLengthField; objectName: "propLineLength"; to: 1000; Accessible.name: qsTr("Characters per line") }
+            FieldLabel { text: qsTr("Lines") }
+            LimitBox { id: maxLinesField; objectName: "propMaxLines"; to: 20; Accessible.name: qsTr("Lines") }
         }
     }
 

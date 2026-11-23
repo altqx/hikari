@@ -14,6 +14,7 @@
 #include <QTimer>
 
 #include <deque>
+#include <expected>
 #include <map>
 #include <functional>
 #include <memory>
@@ -71,7 +72,14 @@ public:
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.
-    bool run(const std::string &command);
+    // `call` is the JSON {args, context} the handler gets.
+    bool run(const std::string &command, const std::string &call);
+    // What a format call gives: the file's bytes for an export, the JSON {lines, styles, info} for an import;
+    // else the error to show. Called once, also when the helper stops first.
+    using FormatDone = std::function<void(std::expected<std::string, QString>)>;
+    // Queued and started as run is.
+    bool exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson, FormatDone done);
+    bool importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
     bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.
@@ -85,6 +93,10 @@ public:
     // The running unit passed stillWorkingMs and isn't a job.
     bool stillWorking() const { return m_stillWorking; }
     bool inTimer() const { return m_running && m_running->kind == Unit::Kind::Timer; }
+    // The running unit answers the user: a command run with context.via other than api and ai, or a click in the
+    // plugin's own panel or dialog (a dialog's button too), or an accept, button or back of its own live quick pick or
+    // input box. A job keeps its command's answer.
+    bool answersUser() const;
     // What the running unit is: "load", "timer", or the command's or event's name; empty when idle.
     QString work() const;
     std::size_t timerCount() const { return m_timers.size(); }
@@ -117,10 +129,11 @@ signals:
 
 private:
     struct Unit {
-        enum class Kind { Load, Command, Event, Timer } kind = Kind::Command;
+        enum class Kind { Load, Command, Event, Timer, Export, Import } kind = Kind::Command;
         std::string name;
         std::string json;
-        std::string key;
+        std::string key; // Event: the coalesce key; Export: the options; Import: the file name
+        FormatDone done;
         std::int64_t timer = 0;
         bool last = false;
     };
@@ -128,6 +141,10 @@ private:
         std::unique_ptr<QTimer> clock;
         bool repeat = false;
     };
+    static bool isUserClick(const Unit &unit);
+    static bool isPopupAnswer(const Unit &unit);
+    bool enqueue(Unit unit);
+    void failPending(const QString &message);
     void startHelper();
     void next();
     void onEvent(std::expected<helper::Event, helper::HostError> event);

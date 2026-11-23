@@ -47,7 +47,7 @@ Item {
             required property int index
             anchors.fill: parent
             anchors.margins: index
-            radius: 3 + root.shadow - index
+            radius: Theme.popupRadius + root.shadow - index
             color: "transparent"
             border.width: 1
             border.color: Color.rgba(0, 0, 0, 0.14 * Math.pow((index + 1) / root.shadow, 2))
@@ -57,10 +57,10 @@ Item {
         objectName: "dockFloatingFrame"
         anchors.fill: parent
         anchors.margins: root.shadow
-        color: Theme.field
+        color: Theme.panel
         border.width: 1
         border.color: Theme.line
-        radius: root.shadow > 0 ? 3 : 0
+        radius: root.shadow > 0 ? Theme.popupRadius : 0
     }
 
     Loader {

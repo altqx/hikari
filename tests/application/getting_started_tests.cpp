@@ -133,7 +133,7 @@ TEST(GettingStarted, EachSettingHasItsPage)
     for (const auto id : gettingStartedSettings())
         EXPECT_FALSE(gettingStartedPageOf(id).empty()) << id;
     EXPECT_EQ(gettingStartedPageOf("program.language"), "language");
-    EXPECT_EQ(gettingStartedPageOf("appearance.darkAccent"), "look");
+    EXPECT_EQ(gettingStartedPageOf("appearance.accents"), "look");
     EXPECT_EQ(gettingStartedPageOf("audio.outputDevice"), "media");
     EXPECT_EQ(gettingStartedPageOf("editor.spellchecker"), "editing");
     EXPECT_EQ(gettingStartedPageOf("autosave.maxFiles"), "editing");

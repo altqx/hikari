@@ -33,13 +33,12 @@ ToolButton {
     padding: 2
     leftPadding: 6
     rightPadding: 4
-    implicitHeight: Math.max(24, implicitContentHeight + topPadding + bottomPadding)
+    implicitHeight: Math.max(26, implicitContentHeight + topPadding + bottomPadding)
     background: Rectangle {
-        radius: 1
-        readonly property bool lit: switcher.checked || switcher.down || switcher.hovered
-        color: lit ? Theme.select : Theme.raised
-        border.width: 1
-        border.color: switcher.keyboardCurrent ? Theme.focus : lit ? Theme.accent : Theme.line
+        radius: Theme.radius
+        color: switcher.checked || switcher.down || switcher.hovered ? Theme.raised : "transparent"
+        border.width: switcher.keyboardCurrent ? 1 : 0
+        border.color: Theme.focus
     }
     contentItem: RowLayout {
         spacing: 4

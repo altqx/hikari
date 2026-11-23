@@ -78,7 +78,7 @@ A prefix at the start of the field switches what is searched. A space after the 
 | `view ` | Panels and layouts | Shows and focuses the panel, or switches to the layout | Q664; the same word as VS Code |
 | `?` | The prefixes themselves, one row each | Puts that prefix in the field | As VS Code |
 
-**`:` Lines.** The row shows the Line's number, its start time in `muted` monospace and its text, elided. A number past the end is the validation line "Not a line: 500. This Document has 412 lines." With no number yet, the foot says "Type a line number, 1 to 412."
+**`:` Lines.** The row shows the Line's number, its start time in `muted` monospace and its text, elided. A number past the end is the validation line "Not a line: 500. This document has 412 lines." With no number yet, the foot says "Type a line number, 1 to 412."
 
 **`@` Times and frames.** One row says where Enter goes: "Go to 0:03:40.00 (frame 5280)". Input it can't read gives Jump to's validation line, with Jump to's wording. Without a video, a time selects the first Line showing at that time, or the next one after it, and a frame or step is refused: "Frames need a video."
 

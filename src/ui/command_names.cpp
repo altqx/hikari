@@ -293,7 +293,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Align to video…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Track colour…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Find fade…"),
-    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import legacy settings…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import settings…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Lock layout"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open timecodes…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save timecodes…"),
@@ -405,6 +405,17 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Delete old autosaves…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Open dummy video…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Run the last macro again"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Commit and use the default timing for the next line"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Snap to the scene"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Lengthen and shift what follows"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shorten and shift what follows"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Quick Open…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Command palette…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Clear command history"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save audio of selected lines…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save keyframes…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close keyframes"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Full screen typesetting"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

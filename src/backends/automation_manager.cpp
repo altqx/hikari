@@ -217,6 +217,30 @@ bool AutomationManager::validate(const std::string &path, int ordinal, const app
     return true;
 }
 
+bool AutomationManager::runFilter(const std::string &path, int filterIndex, const application::MacroSnapshot &snapshot,
+                                  const application::DialogRequest &settings)
+{
+    if (m_shuttingDown || busy())
+        return false;
+    LuaScriptHost *h = host(path);
+    if (!h || !h->runFilter(filterIndex, snapshot, settings))
+        return false;
+    notify();
+    return true;
+}
+
+bool AutomationManager::filterConfig(const std::string &path, int filterIndex,
+                                     const application::MacroSnapshot &snapshot)
+{
+    if (m_shuttingDown || busy())
+        return false;
+    LuaScriptHost *h = host(path);
+    if (!h || !h->filterConfig(filterIndex, snapshot))
+        return false;
+    notify();
+    return true;
+}
+
 bool AutomationManager::forceStop(const std::string &path)
 {
     LuaScriptHost *h = host(path);

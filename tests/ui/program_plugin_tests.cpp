@@ -6,6 +6,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QTemporaryDir>
@@ -127,7 +128,7 @@ private slots:
         QCOMPARE(params.value(QStringLiteral("plugin")).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("tester"));
         QCOMPARE(params.value(QStringLiteral("settings")).toObject().value(QStringLiteral("name")).toString(), QStringLiteral("Ann"));
 
-        QVERIFY(process->run("hello"));
+        QVERIFY(process->run("hello", R"({"args":{"n":2},"context":{"via":"palette"}})"));
         QVERIFY(finished.wait(20000));
         QCOMPARE(finished.first().first().toString(), QStringLiteral("hello"));
         QCOMPARE(m_served.size(), std::size_t(2));
@@ -139,6 +140,35 @@ private slots:
         QVERIFY(logged(QStringLiteral("notify ")).contains(QStringLiteral("\"result\":null")));
         QVERIFY(logged(QStringLiteral("call ")).contains(QStringLiteral("\"result\":{\"lines\":[]}")));
         QVERIFY(logged(QStringLiteral("setting ")).contains(QStringLiteral("\"result\":\"Ann\"")));
+        const QJsonObject call =
+            QJsonDocument::fromJson(logged(QStringLiteral("hello ")).toUtf8()).object().value(QStringLiteral("params")).toObject();
+        QCOMPARE(call.value(QStringLiteral("args")).toObject().value(QStringLiteral("n")).toInt(), 2);
+        QCOMPARE(call.value(QStringLiteral("context")).toObject().value(QStringLiteral("via")).toString(), QStringLiteral("palette"));
+    }
+
+    void formatCallsExportAndImportOverJsonRpc()
+    {
+        auto process = plugin();
+        process->start();
+        std::vector<std::expected<std::string, QString>> results;
+        const auto keep = [&](std::expected<std::string, QString> result) { results.push_back(std::move(result)); };
+        QVERIFY(process->exportDocument("text", R"({"lines":[]})", R"({"path":"a.txt"})", keep));
+        QVERIFY(process->exportDocument("bin", "{}", "{}", keep));
+        QVERIFY(process->importFile("text", std::string("\x01\x02", 2), "a.txt", keep));
+        QVERIFY(process->importFile("bad", "x", "b.txt", keep));
+        QTRY_COMPARE_WITH_TIMEOUT(results.size(), std::size_t(4), 20000);
+        QCOMPARE(results[0].value(), std::string("Line one\n"));
+        QCOMPARE(results[1].value(), std::string("\x00\x01\x02", 3));
+        QCOMPARE(QJsonDocument::fromJson(QByteArray::fromStdString(results[2].value())).object().value(QStringLiteral("lines")).toArray().size(), 1);
+        QVERIFY(!results[3]);
+        const QJsonObject exported =
+            QJsonDocument::fromJson(logged(QStringLiteral("export ")).toUtf8()).object().value(QStringLiteral("params")).toObject();
+        QCOMPARE(exported.value(QStringLiteral("format")).toString(), QStringLiteral("text"));
+        QCOMPARE(exported.value(QStringLiteral("options")).toObject().value(QStringLiteral("path")).toString(), QStringLiteral("a.txt"));
+        const QJsonObject imported =
+            QJsonDocument::fromJson(logged(QStringLiteral("import ")).toUtf8()).object().value(QStringLiteral("params")).toObject();
+        QCOMPARE(imported.value(QStringLiteral("data")).toString(), QStringLiteral("AQI="));
+        QCOMPARE(imported.value(QStringLiteral("name")).toString(), QStringLiteral("a.txt"));
     }
 
     void errorsComeBackAsJsonRpcErrors()
@@ -150,10 +180,10 @@ private slots:
         QSignalSpy failed(process.get(), &PluginProcess::commandFailed);
         QSignalSpy finished(process.get(), &PluginProcess::finished);
         process->start();
-        QVERIFY(process->run("hello"));
+        QVERIFY(process->run("hello", R"({"args":{"n":2},"context":{"via":"palette"}})"));
         QVERIFY(finished.wait(20000));
         QVERIFY(logged(QStringLiteral("call ")).contains(QStringLiteral("\"code\":-32601")));
-        QVERIFY(process->run("fail"));
+        QVERIFY(process->run("fail", "{}"));
         QVERIFY(failed.wait(20000));
         QCOMPARE(failed.first().at(1).toString(), QStringLiteral("it broke"));
     }
@@ -166,7 +196,7 @@ private slots:
         QSignalSpy finished(process.get(), &PluginProcess::finished);
         process->start();
         QVERIFY(loaded.wait(20000));
-        QVERIFY(process->run("subscribe"));
+        QVERIFY(process->run("subscribe", "{}"));
         QVERIFY(finished.wait(20000));
         QCOMPARE(m_served.front().service, backends::plugin::Service::Subscribe);
         QCOMPARE(m_served.front().name, std::string("document.changed"));
@@ -177,6 +207,11 @@ private slots:
         const QString event = m_log.filter(QStringLiteral("\"method\":\"event\"")).value(0);
         QVERIFY(event.contains(QStringLiteral("\"name\":\"document.changed\"")));
         QVERIFY(m_log.filter(QStringLiteral("\"panel\":\"main\"")).size() == 1);
+        QVERIFY(process->deliver("quick_pick:q1", R"({"kind":"accept","picked":["a"]})", {}));
+        QVERIFY(process->deliver("input_box:b1", R"({"kind":"value","value":"x"})", {}));
+        QTRY_VERIFY_WITH_TIMEOUT(m_log.filter(QStringLiteral("\"method\":\"input_box\"")).size() == 1, 20000);
+        QVERIFY(m_log.filter(QStringLiteral("\"method\":\"quick_pick\"")).value(0).contains(QStringLiteral("\"pick\":\"q1\"")));
+        QVERIFY(m_log.filter(QStringLiteral("\"method\":\"input_box\"")).value(0).contains(QStringLiteral("\"box\":\"b1\"")));
     }
 
     void anEditTakesTheTurnAndMakesOneGroup()
@@ -189,7 +224,7 @@ private slots:
         auto process = plugin();
         QSignalSpy finished(process.get(), &PluginProcess::finished);
         process->start();
-        QVERIFY(process->run("edit"));
+        QVERIFY(process->run("edit", "{}"));
         QVERIFY(finished.wait(20000));
         QCOMPARE(m_served.size(), std::size_t(4));
         QCOMPARE(m_served[0].service, backends::plugin::Service::Lock);
@@ -226,7 +261,7 @@ private slots:
         auto process = plugin();
         QSignalSpy stopped(process.get(), &PluginProcess::stopped);
         process->start();
-        QVERIFY(process->run("bad"));
+        QVERIFY(process->run("bad", "{}"));
         QVERIFY(stopped.wait(20000));
         QCOMPARE(stopped.first().first().value<PluginProcess::StopReason>(), PluginProcess::StopReason::Crashed);
         QVERIFY(process->diagnostics().contains("other than JSON-RPC"));

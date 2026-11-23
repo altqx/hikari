@@ -59,6 +59,7 @@ struct Caller {
     // A plugin whose manifest asks for permissions.programs: programs.* answer it.
     bool programs = false;
     bool vcsRead = false;
+    bool presence = false;
     // The SHA-256 of the plugin package the user approved; plugins.install refuses any other.
     std::string approvedPackage;
 };

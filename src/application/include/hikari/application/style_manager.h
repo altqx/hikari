@@ -95,6 +95,12 @@ std::expected<CleanResult, CommandRefusal> cleanDocumentStyles(EditSession &sess
 StyleList readCatalog(std::string_view bytes);
 std::string writeCatalog(const StyleList &styles);
 
+// A turned-on plugin's catalogue: shown read-only under its name, "<title> (<plugin>)".
+struct PluginCatalog {
+    std::u8string name;
+    std::filesystem::path file;
+};
+
 class StyleCatalogs {
 public:
     explicit StyleCatalogs(std::filesystem::path directory);
@@ -110,8 +116,15 @@ public:
     std::vector<TieredName> rows() const { return hideByName(m_projectNames, m_names); }
     const std::u8string &current() const { return m_current; }
     Tier currentTier() const { return m_currentTier; }
-    // A Mine catalog that the Project's hides: shown, never written.
+    // A Mine catalog that the Project's hides, or a plugin's: shown, never written.
     bool readOnly() const;
+    // Shows Mine's Default when the plugin catalog shown goes.
+    void setPluginCatalogs(std::vector<PluginCatalog> catalogs);
+    const std::vector<PluginCatalog> &pluginCatalogs() const { return m_pluginCatalogs; }
+    bool fromPlugin() const { return m_fromPlugin; }
+    bool choosePlugin(const std::u8string &name);
+    // Writes the plugin catalog shown into Mine, renamed on a clash, and shows the copy; returns its name.
+    std::optional<std::u8string> copyPluginToMine();
     StyleList &styles() { return m_styles; }
     const StyleList &styles() const { return m_styles; }
     // Saves the current catalog first when changed, then loads another; the Project's copy first
@@ -149,6 +162,8 @@ private:
     Tier m_currentTier = Tier::Mine;
     StyleList m_styles;
     bool m_changed = false;
+    std::vector<PluginCatalog> m_pluginCatalogs;
+    bool m_fromPlugin = false;
 };
 
 }

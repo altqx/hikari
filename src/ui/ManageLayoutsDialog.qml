@@ -117,13 +117,13 @@ DialogWindow {
         ShellMenuItem {
             objectName: "copyLayoutToTier"
             iconRole: "copy-to-tier"
-            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
             onTriggered: dialog.transfer(false)
         }
         ShellMenuItem {
             objectName: "moveLayoutToTier"
             iconRole: "move-to-tier"
-            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
             onTriggered: dialog.transfer(true)
         }
     }
@@ -171,7 +171,7 @@ DialogWindow {
                 Label {
                     visible: dialog.layouts.hasProject
                              && (slot.index === 0 || dialog.rows[slot.index - 1].tier !== slot.modelData.tier)
-                    text: slot.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                    text: slot.modelData.tier === "project" ? qsTr("This project") : qsTr("Yours")
                     color: Theme.muted
                     font: dialog.fontAt(11)
                     leftPadding: 8

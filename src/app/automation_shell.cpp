@@ -341,6 +341,47 @@ QString refusalText(const application::MacroApplyFailure &failure)
 
 }
 
+class AutomationShell::Templater final : public application::KaraokeTemplaterPort {
+public:
+    explicit Templater(AutomationShell &shell)
+        : m_shell(shell), m_runner(shell.m_paths.helper, sharedIncludes(shell.m_paths))
+    {
+        m_runner.setServiceHandler([this](const application::HostServiceRequest &r,
+                                          backends::LuaScriptHost::ServiceReply reply) {
+            m_shell.m_router.handle(r, std::move(reply));
+        });
+    }
+
+    std::string path() const
+    {
+        for (const auto &s : m_shell.m_manager.scripts())
+            if (application::isBuiltinScript(s.path) &&
+                (s.state == application::ScriptStatus::State::Ready ||
+                 s.state == application::ScriptStatus::State::Running) &&
+                s.info.macros.size() >= 2)
+                return s.path;
+        return {};
+    }
+    void update() { m_runner.setScript(QString::fromStdString(path())); }
+
+    bool available() const override { return m_runner.ready() && !path().empty(); }
+    void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
+    {
+        m_runner.run(snapshot, std::move(done));
+    }
+    void cancelPreview() override { m_runner.cancel(); }
+    bool apply(bool selectedOnly) override
+    {
+        const std::string script = path();
+        return !script.empty() && m_shell.run(script, selectedOnly ? 1 : 0, RunOrigin::Menu);
+    }
+    backends::KaraokePreviewRunner &runner() { return m_runner; }
+
+private:
+    AutomationShell &m_shell;
+    backends::KaraokePreviewRunner m_runner;
+};
+
 AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files, application::Workspace &workspace,
                                  EditorSource editor, VideoSource video, ShellSource shell,
                                  application::IndexedSourcePort &, QObject *parent)
@@ -576,47 +617,6 @@ void AutomationShell::setProjectSources(std::function<std::string()> keyframesFi
     media->timecodesFile = std::move(timecodesFile);
     media->videoZoom = std::move(videoZoom);
 }
-
-class AutomationShell::Templater final : public application::KaraokeTemplaterPort {
-public:
-    explicit Templater(AutomationShell &shell)
-        : m_shell(shell), m_runner(shell.m_paths.helper, sharedIncludes(shell.m_paths))
-    {
-        m_runner.setServiceHandler([this](const application::HostServiceRequest &r,
-                                          backends::LuaScriptHost::ServiceReply reply) {
-            m_shell.m_router.handle(r, std::move(reply));
-        });
-    }
-
-    std::string path() const
-    {
-        for (const auto &s : m_shell.m_manager.scripts())
-            if (application::isBuiltinScript(s.path) &&
-                (s.state == application::ScriptStatus::State::Ready ||
-                 s.state == application::ScriptStatus::State::Running) &&
-                s.info.macros.size() >= 2)
-                return s.path;
-        return {};
-    }
-    void update() { m_runner.setScript(QString::fromStdString(path())); }
-
-    bool available() const override { return m_runner.ready() && !path().empty(); }
-    void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
-    {
-        m_runner.run(snapshot, std::move(done));
-    }
-    void cancelPreview() override { m_runner.cancel(); }
-    bool apply(bool selectedOnly) override
-    {
-        const std::string script = path();
-        return !script.empty() && m_shell.run(script, selectedOnly ? 1 : 0, RunOrigin::Menu);
-    }
-    backends::KaraokePreviewRunner &runner() { return m_runner; }
-
-private:
-    AutomationShell &m_shell;
-    backends::KaraokePreviewRunner m_runner;
-};
 
 application::KaraokeTemplaterPort &AutomationShell::templater()
 {
@@ -875,13 +875,12 @@ void AutomationShell::addPickedScript(const std::string &path)
     auto *s = target ? session(*target) : nullptr;
     if (!s)
         return;
-    const auto key = wide(application::kAutomationScriptsKey);
-    const std::string before = narrow(s->document().scriptInfo(key).value_or(std::u8string()));
+    const std::string before = application::documentScriptsValue(s->document()).value_or(std::string());
     const std::string value = application::scriptInfoWithScript(before, path);
     if (before.empty() || m_readScriptInfo.contains(before))
         m_readScriptInfo.insert(value);
     s->run(application::Command{"Changing the subtitle header", s->revision(), {},
-                                [&](core::Document &d) { return d.setScriptInfo(key, wide(value)); }});
+                                [&](core::Document &d) { return application::setDocumentScriptsValue(d, value); }});
     if (m_documentChanged)
         m_documentChanged();
 }
@@ -937,11 +936,11 @@ void AutomationShell::addFromDocument(std::function<void()> then, bool askAgain)
     }
     const auto target = m_workspace.editingTarget();
     const auto *s = target ? session(*target) : nullptr;
-    const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
+    const auto value = s ? application::documentScriptsValue(s->document()) : std::nullopt;
     std::vector<std::string> ask;
-    if (value && (askAgain || m_documentScripts.reads(narrow(*value)))) {
+    if (value && (askAgain || m_documentScripts.reads(*value))) {
         const auto &listed = m_documentScripts.scripts();
-        for (std::string &path : application::scriptInfoScriptPaths(narrow(*value))) {
+        for (std::string &path : application::scriptInfoScriptPaths(*value)) {
             if (path.empty() || std::ranges::find(listed, path) != listed.end() ||
                 std::ranges::find(ask, path) != ask.end() || trusted(path))
                 continue;
@@ -1008,12 +1007,12 @@ void AutomationShell::answerTrust(int id, const QString &answer)
 void AutomationShell::readDocumentScripts(application::DocumentId document)
 {
     const auto *s = session(document);
-    const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
+    const auto value = s ? application::documentScriptsValue(s->document()) : std::nullopt;
     std::vector<std::string> added;
     if (value)
-        m_readScriptInfo.insert(narrow(*value));
+        m_readScriptInfo.insert(*value);
     m_documentScripts.readScriptInfo(
-        value ? narrow(*value) : std::string(),
+        value ? *value : std::string(),
         [&](const std::string &path) {
             return QFileInfo(QString::fromStdString(path)).isFile() && permitted(document, path);
         },
@@ -1026,11 +1025,11 @@ QStringList AutomationShell::documentScriptsToLoad()
 {
     const auto target = m_workspace.editingTarget();
     const auto *s = target ? session(*target) : nullptr;
-    const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
+    const auto value = s ? application::documentScriptsValue(s->document()) : std::nullopt;
     QStringList out;
     if (!value)
         return out;
-    const bool read = m_readScriptInfo.contains(narrow(*value));
+    const bool read = m_readScriptInfo.contains(*value);
     const auto declined = [&](const std::string &path) {
         const auto decided = m_trustDecisions.find(trustKey(*target, path));
         return decided != m_trustDecisions.end() && !decided->second;
@@ -1039,7 +1038,7 @@ QStringList AutomationShell::documentScriptsToLoad()
     const auto &listed = m_documentScripts.scripts();
     const absl::flat_hash_set<std::string_view> loaded(listed.begin(), listed.end());
     absl::flat_hash_set<std::string> offered;
-    for (std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
+    for (std::string &path : application::scriptInfoScriptPaths(*value))
         if (!path.empty() && !loaded.contains(path) && (!read || declined(path)) && offered.insert(path).second)
             out << QString::fromStdString(path);
     return out;

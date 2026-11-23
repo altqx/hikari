@@ -10,6 +10,8 @@ DialogWindow {
     id: dialog
     objectName: "pluginManagerDialog"
     required property var manager
+    // Default shortcuts left out because their key is taken: command id -> note.
+    property var takenShortcuts: ({})
     property var runtime: null
     property var market: null
     property string view: "installed"
@@ -19,6 +21,8 @@ DialogWindow {
     initialFocus: list
     defaultButton: closeButton
     signal copyRequested(string text)
+    // A Settings node: "plugins.<plugin id>" or "updates.plugins".
+    signal settingsRequested(string node)
     // The window's Project: {trusted, named, missing}; empty without one.
     property var project: ({})
     signal trustRequested()
@@ -1212,16 +1216,28 @@ DialogWindow {
                 Layout.fillWidth: true
             }
         }
+        Repeater {
+            model: Object.keys(dialog.takenShortcuts).filter(id => id.startsWith("plugin." + details.row.id + "."))
+            Label {
+                required property string modelData
+                objectName: "pluginTakenShortcut_" + modelData
+                text: dialog.takenShortcuts[modelData]
+                color: Theme.warning
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+        }
         Heading {
             visible: details.row.settings.length > 0
             text: qsTr("Settings")
         }
-        Repeater {
-            model: details.row.settings
-            SettingField {
-                pluginId: details.row.id
-                Layout.fillWidth: true
-            }
+        IconTextButton {
+            objectName: "pluginOpenSettings"
+            visible: details.row.settings.length > 0
+            iconRole: "settings"
+            text: qsTr("Open in Settings…")
+            onClicked: dialog.settingsRequested("plugins." + details.row.id)
         }
         RowLayout {
             spacing: 8
@@ -1256,82 +1272,6 @@ DialogWindow {
                 objectName: "pluginUninstall_" + details.row.id
                 text: qsTr("Uninstall…")
                 onClicked: dialog.askUninstall(details.row)
-            }
-        }
-    }
-
-    component SettingField: RowLayout {
-        id: field
-        required property var modelData
-        required property string pluginId
-        spacing: 8
-        function keep(value) {
-            const problem = dialog.manager.setSetting(field.pluginId, field.modelData.id, JSON.stringify(value))
-            if (problem.length > 0)
-                dialog.tell(qsTr("Setting not kept"), problem)
-        }
-        Label {
-            visible: field.modelData.type !== "boolean"
-            text: field.modelData.title
-            textFormat: Text.PlainText
-            Layout.preferredWidth: 160
-            elide: Text.ElideRight
-        }
-        Loader {
-            Layout.fillWidth: field.modelData.type === "string" || field.modelData.type === "choice"
-            sourceComponent: field.modelData.type === "boolean" ? checkSetting
-                           : field.modelData.type === "choice" ? choiceSetting
-                           : field.modelData.type === "string" ? textSetting : numberSetting
-        }
-        Component {
-            id: checkSetting
-            CheckBox {
-                objectName: "pluginSetting_" + field.modelData.id
-                text: field.modelData.title
-                checked: field.modelData.value === true
-                onToggled: field.keep(checked)
-            }
-        }
-        Component {
-            id: choiceSetting
-            ComboBox {
-                objectName: "pluginSetting_" + field.modelData.id
-                model: field.modelData.options
-                currentIndex: field.modelData.options.indexOf(field.modelData.value)
-                Accessible.name: field.modelData.title
-                onActivated: index => field.keep(field.modelData.options[index])
-            }
-        }
-        Component {
-            id: textSetting
-            TextField {
-                objectName: "pluginSetting_" + field.modelData.id
-                text: field.modelData.value
-                selectByMouse: true
-                Accessible.name: field.modelData.title
-                onEditingFinished: if (text !== field.modelData.value) field.keep(text)
-            }
-        }
-        Component {
-            id: numberSetting
-            TextField {
-                objectName: "pluginSetting_" + field.modelData.id
-                readonly property bool whole: field.modelData.type === "integer"
-                text: String(field.modelData.value)
-                implicitWidth: 100
-                horizontalAlignment: Text.AlignRight
-                selectByMouse: true
-                Accessible.name: field.modelData.title
-                validator: whole ? intValidator : doubleValidator
-                IntValidator { id: intValidator }
-                DoubleValidator { id: doubleValidator; notation: DoubleValidator.StandardNotation }
-                onEditingFinished: {
-                    const value = whole ? parseInt(text, 10) : parseFloat(text.replace(",", "."))
-                    if (isNaN(value) || value === field.modelData.value)
-                        text = String(field.modelData.value)
-                    else
-                        field.keep(value)
-                }
             }
         }
     }
@@ -1375,6 +1315,15 @@ DialogWindow {
             wrapMode: Text.Wrap
             Layout.maximumWidth: 300
             Layout.leftMargin: autoUpdate.indicator ? autoUpdate.indicator.width + autoUpdate.spacing : 0
+        }
+        LinkButton {
+            objectName: "pluginUpdatesInSettings"
+            iconRole: "settings"
+            text: qsTr("Also in Settings › Updates and privacy")
+            onClicked: {
+                updatesPopover.close()
+                dialog.settingsRequested("updates.plugins")
+            }
         }
     }
     buttons: [

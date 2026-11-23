@@ -87,7 +87,7 @@ bool mediaFile(const std::string &path)
 {
     static constexpr std::string_view kMedia[] = {
         "avi", "mp4", "mkv",  "ogm", "wmv", "asf", "rmvb", "rm",  "3gp", "ts",   "m2ts", "m4v", "flv",  "webm", "mpg",
-        "mpeg", "mov", "wav", "mp3", "flac", "ogg", "opus", "m4a", "aac", "ac3", "eac3", "dts", "wma", "mka", "aiff"};
+        "mpeg", "mov", "y4m", "wav", "mp3", "flac", "ogg", "opus", "m4a", "aac", "ac3", "eac3", "dts", "wma", "mka", "aiff"};
     const std::size_t dot = path.find_last_of("./\\");
     if (dot == std::string::npos || path[dot] != '.')
         return false;

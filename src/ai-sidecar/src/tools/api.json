@@ -481,6 +481,9 @@
           "type": "integer"
         },
         {
+          "type": "number"
+        },
+        {
           "type": "string"
         },
         {
@@ -745,14 +748,8 @@
                   ]
                 },
                 "format": {
-                  "enum": [
-                    "ass",
-                    "srt",
-                    "tmplayer",
-                    "microdvd",
-                    "mpl2",
-                    "text"
-                  ]
+                  "type": "string",
+                  "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
                 },
                 "revision": {
                   "$ref": "#/$defs/Revision"
@@ -813,14 +810,8 @@
             ]
           },
           "format": {
-            "enum": [
-              "ass",
-              "srt",
-              "tmplayer",
-              "microdvd",
-              "mpl2",
-              "text"
-            ]
+            "type": "string",
+            "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
           },
           "revision": {
             "$ref": "#/$defs/Revision"
@@ -1375,7 +1366,7 @@
     {
       "name": "settings.list",
       "access": "read",
-      "summary": "Settings with their type, scope, default and current value.",
+      "summary": "Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>.",
       "since": 1,
       "params": {
         "type": "object",
@@ -1402,6 +1393,7 @@
                   "enum": [
                     "boolean",
                     "integer",
+                    "number",
                     "string",
                     "stringList"
                   ]
@@ -1418,6 +1410,18 @@
                 },
                 "value": {
                   "$ref": "#/$defs/SettingValue"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name the Settings window shows, in the UI language."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "app, or the id of the plugin whose setting it is."
+                },
+                "projectable": {
+                  "type": "boolean",
+                  "description": "Whether a Project can override it on the Project tab."
                 }
               },
               "required": [
@@ -1647,6 +1651,42 @@
           "open",
           "floating",
           "focused"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "settings.open",
+      "access": "write",
+      "summary": "Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "setting": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,200}$",
+            "description": "A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>."
+          },
+          "scope": {
+            "enum": [
+              "yours",
+              "project"
+            ],
+            "description": "The tab; yours when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "opened": {
+            "const": true
+          }
+        },
+        "required": [
+          "opened"
         ],
         "additionalProperties": false
       }
@@ -4348,6 +4388,122 @@
       }
     },
     {
+      "name": "status_items.set",
+      "access": "write",
+      "summary": "Changes one of the caller's status bar items. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64,
+            "description": "An id from contributes.statusItems."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Empty: icon only."
+          },
+          "icon": {
+            "type": "string",
+            "maxLength": 68,
+            "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$",
+            "description": "An icon role or own:<id>; empty: text only."
+          },
+          "tooltip": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "tone": {
+            "enum": [
+              "normal",
+              "warning",
+              "danger"
+            ]
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "formats.list",
+      "access": "read",
+      "summary": "The subtitle formats HikariSub can open and export, built-in and from plugins.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "formats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ass, srt, … or plugin:<plugin id>/<format id>."
+                },
+                "title": {
+                  "type": "string"
+                },
+                "extensions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "import": {
+                  "type": "boolean"
+                },
+                "export": {
+                  "type": "boolean"
+                },
+                "plugin": {
+                  "type": "string",
+                  "description": "The plugin's id, for a plugin format."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "extensions",
+                "import",
+                "export"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "formats"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "typeset.perspective",
       "access": "read",
       "summary": "The Line's text with the tags that render it on a quad (VT3's perspective solver): \\pos, \\org, \\frx, \\fry, \\frz, \\fax, \\fscx and \\fscy.",
@@ -5412,6 +5568,31 @@
           "path",
           "text"
         ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "presence.set_text",
+      "access": "write",
+      "summary": "Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
+            "description": "Plain text; empty clears it."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
         "additionalProperties": false
       }
     },

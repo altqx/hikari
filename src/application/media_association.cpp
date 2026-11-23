@@ -1,5 +1,7 @@
 #include "hikari/application/media_association.h"
 
+#include <cstdlib>
+
 namespace hikari::application {
 
 namespace {
@@ -29,18 +31,19 @@ std::string directoryOf(const std::string &path, bool windows)
     return at == std::string::npos ? std::string() : path.substr(0, at + 1);
 }
 
-std::optional<std::string> timecodesValue(const core::Document &document, std::u8string_view key)
+std::optional<int> intValue(const core::Document &document, std::u8string_view key)
 {
-    if (auto value = document.projectGarbage(key))
-        return std::string(value->begin(), value->end());
-    return scriptInfo(document, key);
+    const auto value = projectValue(document, key);
+    if (!value)
+        return std::nullopt;
+    return std::atoi(value->c_str());
 }
 
 std::optional<MediaReference> resolve(const core::Document &document, std::u8string_view key,
                                       const std::string &subtitleDir,
                                       const std::function<bool(const std::string &)> &exists, bool windows)
 {
-    auto value = key == kTimecodesFileKey ? timecodesValue(document, key) : scriptInfo(document, key);
+    auto value = projectValue(document, key);
     if (!value || value->empty())
         return std::nullopt;
     MediaReference ref{*value, std::nullopt};
@@ -60,6 +63,30 @@ std::optional<MediaReference> resolve(const core::Document &document, std::u8str
 
 }
 
+std::optional<std::string> projectValue(const core::Document &document, std::u8string_view key)
+{
+    if (auto value = document.projectGarbage(key))
+        return std::string(value->begin(), value->end());
+    return scriptInfo(document, key);
+}
+
+SavedView savedView(const core::Document &document)
+{
+    SavedView view{intValue(document, u8"Active Line"), intValue(document, u8"Scroll Position"),
+                   intValue(document, u8"Video Position"), std::nullopt};
+    switch (intValue(document, u8"Video AR Mode").value_or(0)) {
+    case 1: view.aspect = 4.0 / 3.0; break;
+    case 2: view.aspect = 16.0 / 9.0; break;
+    case 3: view.aspect = 2.35; break;
+    case 4:
+        if (const auto value = projectValue(document, u8"Video AR Value"); value && std::atof(value->c_str()) > 0)
+            view.aspect = std::atof(value->c_str());
+        break;
+    default: break;
+    }
+    return view;
+}
+
 bool MediaAssociations::offersAnything() const
 {
     return (video && video->resolved) || (audio && audio->resolved) || (keyframes && keyframes->resolved) ||
@@ -72,7 +99,7 @@ MediaAssociations resolveMediaAssociations(const core::Document &document, const
     const std::string dir = directoryOf(subtitlePath, windows);
     return {resolve(document, u8"Video File", dir, exists, windows),
             resolve(document, u8"Audio File", dir, exists, windows),
-            resolve(document, u8"Keyframes File", dir, exists, windows),
+            resolve(document, kKeyframesFileKey, dir, exists, windows),
             resolve(document, kTimecodesFileKey, dir, exists, windows)};
 }
 

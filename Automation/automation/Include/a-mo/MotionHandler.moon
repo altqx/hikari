@@ -1,5 +1,5 @@
 local log, Line, LineCollection, Math, tags, Transform
-version = '1.1.8'
+version = '1.1.10'
 
 haveDepCtrl, DependencyControl = pcall require, 'l0.DependencyControl'
 
@@ -14,11 +14,11 @@ if haveDepCtrl
 		feed: 'https://raw.githubusercontent.com/TypesettingTools/Aegisub-Motion/DepCtrl/DependencyControl.json'
 		{
 			{ 'a-mo.Log',            version: '1.0.0'            }
-			{ 'a-mo.Line',           version: '1.5.3'           }
-			{ 'a-mo.LineCollection', version: '1.3.0' }
+			{ 'a-mo.Line',           version: '1.5.5'           }
+			{ 'a-mo.LineCollection', version: '1.4.1' }
 			{ 'a-mo.Math',           version: '1.0.0'           }
-			{ 'a-mo.Tags',           version: '1.3.4'           }
-			{ 'a-mo.Transform',      version: '1.2.4'      }
+			{ 'a-mo.Tags',           version: '1.3.6'           }
+			{ 'a-mo.Transform',      version: '1.2.5'      }
 		}
 	}
 	log, Line, LineCollection, Math, tags, Transform = version\requireModules!
@@ -30,6 +30,10 @@ else
 	Math           = require 'a-mo.Math'
 	tags           = require 'a-mo.Tags'
 	Transform      = require 'a-mo.Transform'
+
+-- ASS timestamps have centisecond precision.
+assTimeFromFrame = ( frame ) ->
+	math.floor((math.max(0, aegisub.ms_from_frame frame) + 5)/10)*10
 
 class MotionHandler
 	@version: version
@@ -142,7 +146,8 @@ class MotionHandler
 				.text = .text\gsub pattern, ( tag, value ) ->
 					values = { }
 					for frame in *{ .relativeStart, .relativeEnd }
-						@lineTrackingData\calculateCurrentState frame
+						if @lineTrackingData
+							@lineTrackingData\calculateCurrentState frame
 						values[#values+1] = callback @, value, frame
 					("%s%s\\t(%d,%d,%s%s)")\format tag, values[1], beginTime, endTime, tag, values[2]
 
@@ -160,10 +165,9 @@ class MotionHandler
 
 				log.checkCancellation!
 
-				newStartTime = math.floor(math.max(0, aegisub.ms_from_frame( @lineCollection.startFrame + frame - 1 ))/10)*10
-				newEndTime   = math.floor(aegisub.ms_from_frame( @lineCollection.startFrame + frame )/10)*10
-
-				timeDelta = newStartTime - math.floor(math.max(0,aegisub.ms_from_frame( @lineCollection.startFrame + .relativeStart - 1 ))/10)*10
+				newStartTime = assTimeFromFrame @lineCollection.startFrame + frame - 1
+				newEndTime = assTimeFromFrame @lineCollection.startFrame + frame
+				timeDelta = newStartTime - assTimeFromFrame(@lineCollection.startFrame + .relativeStart - 1)
 
 				local newText
 				if @options.main.killTrans
@@ -227,7 +231,8 @@ class MotionHandler
 				-- inserting lines into the resultingCollection would need to be
 				-- more clever to compensate for the fact that lines would no
 				-- longer be added to it in order.
-				@lineTrackingData\calculateCurrentState frame
+				if @lineTrackingData
+					@lineTrackingData\calculateCurrentState frame
 
 				-- iterate through the necessary operations
 				for pattern, callback in pairs @callbacks

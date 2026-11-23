@@ -640,7 +640,7 @@ private slots:
         LegacyRoot legacy;
         QTemporaryDir folder;
         Session s(folder.path());
-        app::SettingsImportController c(s.store.get());
+        app::SettingsImportController c(s.store.get(), {});
         QVERIFY(c.available());
         QSignalSpy plan(&c, &app::SettingsImportController::planChanged);
         c.discover({legacy.dir.path()});

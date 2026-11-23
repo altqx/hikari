@@ -2,6 +2,7 @@
 #include "hikari/app/localisation.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/plugin_content.h"
 
 #include "docking.h"
 #include "line_editor_controller.h"
@@ -10,10 +11,12 @@
 #include "tag_buttons_controller.h"
 
 #include <QAccessible>
+#include <QDir>
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -163,7 +166,7 @@ class LineEditorOptionsTest : public QObject {
         QVERIFY(check);
         QCOMPARE(check->property("checked").toBool(), expectedBefore);
         QVERIFY(QMetaObject::invokeMethod(check, "click"));
-        auto *ok = findItem(content, QStringLiteral("settingsOk"));
+        auto *ok = findItem(content, QStringLiteral("settingsClose"));
         QVERIFY(ok && QMetaObject::invokeMethod(ok, "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -507,8 +510,8 @@ private slots:
         fillTagButton(popover, QStringLiteral("Three"), QStringLiteral("\\u1"), "tagIcon_tag-underline");
         QCOMPARE(list->property("count").toInt(), 2);
         QCOMPARE(buttons.count(), 2);
-        QCOMPARE(buttons.button(0).name, QStringLiteral("One"));
-        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsOk")), "click"));
+        QCOMPARE(buttons.button(0).name, QStringLiteral("Two"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsClose")), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(buttons.count(), 2);
         QCOMPARE(buttons.button(0).name, QStringLiteral("Two"));
@@ -561,6 +564,47 @@ private slots:
         QVERIFY(application->styleManager().deleteCatalog(QStringLiteral("Kept")));
         restart();
         QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
+    }
+
+    void aPluginsCatalogueShowsReadOnlyAndCopiesIntoMine()
+    {
+        QVERIFY(QDir().mkpath(dir.filePath(QStringLiteral("kit"))));
+        QFile pack(dir.filePath(QStringLiteral("kit/signs.sty")));
+        QVERIFY(pack.open(QIODevice::WriteOnly));
+        pack.write("Style: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1\n");
+        pack.close();
+        application::setPluginContent(
+            {{{"com.example.kit", u8"Kit", u8"Signs", std::filesystem::path(pack.fileName().toStdU16String())}}, {}});
+        const auto reset = qScopeGuard([] { application::setPluginContent({}); });
+        auto &styles = application->styleManager();
+        styles.refreshLists();
+        const QVariantMap row = styles.catalogRows().last().toMap();
+        QCOMPARE(row.value(QStringLiteral("name")).toString(), QStringLiteral("Signs (Kit)"));
+        QCOMPARE(row.value(QStringLiteral("tier")).toString(), QStringLiteral("plugin"));
+
+        auto *window = styleWindow();
+        QVERIFY(window);
+        window->show();
+        const auto field = [&](const char *name) { return findItem(window->contentItem(), QLatin1String(name)); };
+        QVERIFY(QMetaObject::invokeMethod(window, "chooseCatalogIn", Q_ARG(QVariant, QStringLiteral("Signs (Kit)")),
+                                          Q_ARG(QVariant, QStringLiteral("plugin"))));
+        QCOMPARE(styles.catalogTier(), QStringLiteral("plugin"));
+        QVERIFY(styles.catalogReadOnly());
+        QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Sign")});
+        QTRY_VERIFY(field("styleCatalogFromPlugin")->isVisible());
+        QVERIFY(!field("styleCatalogHidden")->isVisible());
+        QVERIFY(!field("deleteCatalog")->isEnabled());
+        QVERIFY(!field("storeCommands")->isEnabled());
+        QVERIFY(!styles.deleteCatalog(QStringLiteral("Signs (Kit)"), QStringLiteral("plugin")));
+
+        QVERIFY(QMetaObject::invokeMethod(field("copyPluginCatalog"), "click"));
+        QTRY_COMPARE(styles.catalogTier(), QStringLiteral("mine"));
+        QCOMPARE(styles.catalog(), QStringLiteral("Signs (Kit)"));
+        QVERIFY(!styles.catalogReadOnly());
+        QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Sign")});
+        QTRY_VERIFY(!field("styleCatalogFromPlugin")->isVisible());
+        window->close();
+        QVERIFY(styles.deleteCatalog(QStringLiteral("Signs (Kit)"), QStringLiteral("mine")));
     }
 
     void editStyleOffersToCreateAMissingStyle()

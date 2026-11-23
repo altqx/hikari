@@ -61,7 +61,14 @@ int rpc(const std::string &variant)
             answer(id, "{}");
             if (variant == "early")
                 std::cerr << "early " << callHikari("hikari/notify", R"({"text":"too soon"})") << std::endl;
+        } else if (has(line, "\"method\":\"export\"")) {
+            std::cerr << "export " << line << std::endl;
+            answer(id, has(line, "\"format\":\"bin\"") ? R"({"data":"AAEC","encoding":"base64"})" : R"({"data":"Line one\n"})");
+        } else if (has(line, "\"method\":\"import\"")) {
+            std::cerr << "import " << line << std::endl;
+            answer(id, has(line, "\"format\":\"bad\"") ? "[]" : R"({"lines":[{"text":"Read"}],"styles":[],"info":{}})");
         } else if (has(line, "\"command\":\"hello\"")) {
+            std::cerr << "hello " << line << std::endl;
             std::cerr << "notify " << callHikari("hikari/notify", R"({"text":"hi","level":"warning"})") << std::endl;
             std::cerr << "call " << callHikari("lines.list", "{}") << std::endl;
             std::cerr << "setting " << callHikari("hikari/settings.get", R"({"id":"name"})") << std::endl;

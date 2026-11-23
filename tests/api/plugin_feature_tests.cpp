@@ -563,3 +563,53 @@ TEST_F(PluginFeatures, GroupsAreForPluginsOnly)
         EXPECT_EQ(code(call("document.group_begin", R"({"name": "x"})", caller)), errors::kNotGranted) << caller.id;
     EXPECT_EQ(code(call("document.group_end", "{}")), errors::kInvalidParams);
 }
+
+TEST_F(PluginFeatures, APluginCommandWhoseConditionsFailIsListedDisabledAndRefused)
+{
+    PluginCommand &count = host.fakePlugins.installed[0].commands[0];
+    count.enabled = false;
+    count.disabledReason = "Needs a selection";
+    const Result listed = call("commands.list", R"({"query": "word-count"})");
+    ASSERT_TRUE(listed);
+    const Json &entry = listed->find("commands")->asArray().at(0);
+    EXPECT_FALSE(entry.find("enabled")->asBool());
+    EXPECT_EQ(entry.find("disabledReason")->asString(), "Needs a selection");
+
+    host.fakePlugins.nextRun = PluginRun::Disabled;
+    for (const auto &[operation, params] :
+         {std::pair{"commands.run", R"({"command": "plugin.org.example.word-count.count"})"},
+          std::pair{"plugins.run", R"({"plugin": "org.example.word-count", "command": "count"})"}}) {
+        const Result refused = call(operation, params);
+        EXPECT_EQ(code(refused), errors::kRefused) << operation;
+        EXPECT_EQ(reason(refused), "disabled") << operation;
+        EXPECT_EQ(refused.error().message, "Needs a selection") << operation;
+    }
+}
+
+TEST_F(PluginFeatures, AHandlerLearnsWhetherAnAiOrAnotherCallerRanIt)
+{
+    ASSERT_TRUE(call("commands.run", R"({"command": "plugin.org.example.word-count.count"})"));
+    Caller ai{"ai:agent", "Hikari AI", false};
+    ai.reviewed = true;
+    ASSERT_TRUE(call("plugins.run", R"({"plugin": "org.example.word-count", "command": "count"})", ai));
+    EXPECT_EQ(host.fakePlugins.vias, (std::vector<std::string>{"api", "ai"}));
+}
+
+TEST_F(PluginFeatures, StatusItemsChangeOnlyForTheirPlugin)
+{
+    const Caller wordCount{"plugin:org.example.word-count", "Word count", false};
+    const Result set = call("status_items.set", R"({"item": "words", "text": "12 words", "tone": "warning"})", wordCount);
+    ASSERT_TRUE(set) << set.error().message;
+    EXPECT_EQ(set->find("item")->asString(), "words");
+    ASSERT_EQ(host.fakePlugins.statusChanges.size(), 1u);
+    const StatusItemChange &change = host.fakePlugins.statusChanges[0];
+    EXPECT_EQ(change.text, "12 words");
+    EXPECT_EQ(change.tone, "warning");
+    EXPECT_FALSE(change.icon);
+    EXPECT_FALSE(change.visible);
+
+    EXPECT_EQ(code(call("status_items.set", R"({"item": "lines"})", wordCount)), errors::kNotFound);
+    EXPECT_EQ(code(call("status_items.set", R"({"item": "words"})", Caller{"ai:agent", "Hikari AI", false})),
+              errors::kNotGranted);
+    EXPECT_EQ(code(call("status_items.set", R"({"item": "words", "tone": "loud"})", wordCount)), errors::kInvalidParams);
+}

@@ -893,6 +893,7 @@ Pane {
     ShellMenu {
         id: newMenu
         objectName: "templateNewMenu"
+        onAboutToShow: root.controller.refreshPresets()
         Instantiator {
             model: [
                 { effect: "template syl", text: qsTr("Template for each syllable") },

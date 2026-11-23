@@ -9,6 +9,8 @@
 #include "hikari/application/settings.h"
 
 #include <QCoreApplication>
+#include <QFile>
+#include <QFont>
 #include <QGuiApplication>
 #include <QPlatformSurfaceEvent>
 #include <QPointer>
@@ -30,16 +32,13 @@ namespace hikari::ui {
 
 namespace theme {
 
+std::string_view fallbackDark();
+
 namespace {
 
-QColor rgb(QRgb value)
+QColor qcolour(themes::Colour c)
 {
-    return QColor::fromRgb(value);
-}
-
-std::uint32_t toArgb(const QColor &colour)
-{
-    return colour.rgba();
+    return QColor::fromRgba(QRgb(c));
 }
 
 bool isDarkColour(const QColor &colour)
@@ -47,62 +46,146 @@ bool isDarkColour(const QColor &colour)
     return colour.lightnessF() < 0.5;
 }
 
-const std::array<Accent, 7> kLightAccents{{
-    {"red", QT_TRANSLATE_NOOP("HikariSub.Options", "Red"), rgb(0xB3261E), rgb(0xFFFFFF), rgb(0xEBD7D6)},
-    {"orange", QT_TRANSLATE_NOOP("HikariSub.Options", "Orange"), rgb(0x9C4600), rgb(0xFFFFFF), rgb(0xEBDFD6)},
-    {"gold", QT_TRANSLATE_NOOP("HikariSub.Options", "Gold"), rgb(0x7A5E00), rgb(0xFFFFFF), rgb(0xEBE6D6)},
-    {"green", QT_TRANSLATE_NOOP("HikariSub.Options", "Green"), rgb(0x145C4C), rgb(0xFFFFFF), rgb(0xD6EBE4)},
-    {"blue", QT_TRANSLATE_NOOP("HikariSub.Options", "Blue"), rgb(0x1D5BA8), rgb(0xFFFFFF), rgb(0xD6DFEB)},
-    {"purple", QT_TRANSLATE_NOOP("HikariSub.Options", "Purple"), rgb(0x5B3FB0), rgb(0xFFFFFF), rgb(0xDBD6EB)},
-    {"pink", QT_TRANSLATE_NOOP("HikariSub.Options", "Pink"), rgb(0x9E2A73), rgb(0xFFFFFF), rgb(0xEBD6E3)},
-}};
-const std::array<Accent, 7> kDarkAccents{{
-    {"red", QT_TRANSLATE_NOOP("HikariSub.Options", "Red"), rgb(0xF4A9A3), rgb(0x2C1210), rgb(0x4C3230)},
-    {"orange", QT_TRANSLATE_NOOP("HikariSub.Options", "Orange"), rgb(0xF5BB8A), rgb(0x2C1D10), rgb(0x4C3D30)},
-    {"gold", QT_TRANSLATE_NOOP("HikariSub.Options", "Gold"), rgb(0xE3CF7E), rgb(0x2C2610), rgb(0x4C4630)},
-    {"green", QT_TRANSLATE_NOOP("HikariSub.Options", "Green"), rgb(0x9CDBC9), rgb(0x102C24), rgb(0x304C47)},
-    {"blue", QT_TRANSLATE_NOOP("HikariSub.Options", "Blue"), rgb(0xA6C8F2), rgb(0x101D2C), rgb(0x303D4C)},
-    {"purple", QT_TRANSLATE_NOOP("HikariSub.Options", "Purple"), rgb(0xC6B5F4), rgb(0x18102C), rgb(0x38304C)},
-    {"pink", QT_TRANSLATE_NOOP("HikariSub.Options", "Pink"), rgb(0xEFAAD3), rgb(0x2C1021), rgb(0x4C3041)},
-}};
+const std::array<const char *, 4> kBuiltinTitles{
+    QT_TRANSLATE_NOOP("HikariSub.Options", "Light"),
+    QT_TRANSLATE_NOOP("HikariSub.Options", "Dark"),
+    QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast white"),
+    QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast black"),
+};
+// The built-in accent choices' titles, for lupdate; the theme files name them.
+[[maybe_unused]] const char *const kAccentTitles[] = {
+    QT_TRANSLATE_NOOP("HikariSub.Options", "Red"),    QT_TRANSLATE_NOOP("HikariSub.Options", "Orange"),
+    QT_TRANSLATE_NOOP("HikariSub.Options", "Gold"),   QT_TRANSLATE_NOOP("HikariSub.Options", "Green"),
+    QT_TRANSLATE_NOOP("HikariSub.Options", "Blue"),   QT_TRANSLATE_NOOP("HikariSub.Options", "Purple"),
+    QT_TRANSLATE_NOOP("HikariSub.Options", "Pink"),
+};
+const std::array<Type, 4> kBuiltinTypes{Type::Light, Type::Dark, Type::HighContrastLight, Type::HighContrastDark};
 
-Roles baseRoles(Code code)
-{
-    switch (code) {
-    case Code::Light:
-        return {rgb(0xE5E9EC), rgb(0xF9FAFB), rgb(0xEDF0F3), rgb(0xFFFFFF), rgb(0x202832), rgb(0x526170), rgb(0xAAB5BE),
-                {}, {}, {}, {}, rgb(0xA51F31), rgb(0x8A5A00), rgb(0x008000), rgb(0x74808B), rgb(0x76828D)};
-    case Code::Dark:
-        return {rgb(0x171B20), rgb(0x20262D), rgb(0x29313A), rgb(0x171D24), rgb(0xE8EDF2), rgb(0xA5B1BD), rgb(0x414B57),
-                {}, {}, {}, {}, rgb(0xFFADAD), rgb(0xE0A030), rgb(0x4DBA4D), rgb(0x75818D), rgb(0x7A8691)};
-    case Code::HighContrastWhite:
-        return {rgb(0xFFFFFF), rgb(0xFFFFFF), rgb(0xEBEBEB), rgb(0xFFFFFF), rgb(0x000000), rgb(0x1A1A1A), rgb(0x000000),
-                rgb(0x0037B3), rgb(0xFFFFFF), rgb(0xC9DAF8), {}, rgb(0xA00000), rgb(0x6B4500), rgb(0x005A00),
-                rgb(0x6E6E6E), rgb(0x000000)};
-    case Code::HighContrastBlack:
-        return {rgb(0x000000), rgb(0x080808), rgb(0x151515), rgb(0x000000), rgb(0xFFFFFF), rgb(0xEEEEEE), rgb(0xFFFFFF),
-                rgb(0xFFFF00), rgb(0x000000), rgb(0x253F60), {}, rgb(0xFFADAD), rgb(0xFFD54A), rgb(0x7CFC7C),
-                rgb(0x8C8C8C), rgb(0xFFFFFF)};
+struct Registry {
+    std::vector<Entry> entries;
+    QStringList problems;
+
+    Registry()
+    {
+        for (const auto code : kCodes) {
+            const QString id = codeName(code);
+            QFile file(QStringLiteral(":/hikari/ui/themes/%1.json").arg(id));
+            const QByteArray json = file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+            auto loaded = themes::load(std::string_view(json.constData(), std::size_t(json.size())));
+            if (loaded && loaded->type == kBuiltinTypes[std::size_t(code)]) {
+                entries.push_back({id, QString::fromLatin1(kBuiltinTitles[std::size_t(code)]), {}, std::move(*loaded)});
+                continue;
+            }
+            problems << (loaded ? QStringLiteral("%1: the type is %2").arg(id, QLatin1String(themes::typeName(loaded->type)))
+                                : QStringLiteral("%1: %2 %3")
+                                      .arg(id, QString::fromStdString(loaded.error().path),
+                                           QString::fromStdString(loaded.error().message)));
+        }
+        if (!std::ranges::any_of(entries, [](const Entry &e) { return e.id == QLatin1String("dark"); })) {
+            const auto dark = fallbackDark();
+            auto parsed = themes::parse(std::string_view(dark.data(), dark.size()));
+            entries.push_back({QStringLiteral("dark"), QString::fromLatin1(kBuiltinTitles[1]), {}, std::move(*parsed)});
+        }
     }
-    return {};
-}
-
-const char *const kPickSettings[2][3] = {
-    {"appearance.highContrastWhite.accent", "appearance.highContrastWhite.text", "appearance.highContrastWhite.border"},
-    {"appearance.highContrastBlack.accent", "appearance.highContrastBlack.text", "appearance.highContrastBlack.border"},
 };
 
-int hcIndex(Code code)
+Registry &registry()
 {
-    return code == Code::HighContrastBlack ? 1 : 0;
+    static Registry r;
+    return r;
 }
 
-QColor readColour(const QVariant &value)
+const Entry &entryOrDark(const QString &id)
 {
-    const auto parsed = application::parseSettingColour(value.toString().toStdString());
-    if (!parsed)
-        return {};
-    return QColor::fromRgb(QRgb(*parsed | 0xFF000000u));
+    if (const Entry *e = find(id))
+        return *e;
+    return *find(QStringLiteral("dark"));
+}
+
+themes::Picks picksOf(const Choice &choice, const Entry &entry)
+{
+    themes::Picks picks;
+    picks.accent = accentOf(choice, entry.id).toStdString();
+    for (const auto role : entry.file.userColours) {
+        const QColor c = colourOf(choice, entry.id, QLatin1String(themes::kRoleNames[std::size_t(role)]));
+        if (c.isValid())
+            picks.colours[role] = c.rgba();
+    }
+    return picks;
+}
+
+Roles rolesOf(const themes::Resolved &r)
+{
+    using R = themes::Role;
+    const auto c = [&r](R role) { return qcolour(themes::at(r.roles, role)); };
+    return {c(R::Background), c(R::Panel),   c(R::Raised),  c(R::Field),    c(R::Text),    c(R::Muted),
+            c(R::Line),       c(R::Accent),  c(R::OnAccent), c(R::Select),  c(R::Focus),   c(R::Danger),
+            c(R::Warning),    c(R::Success), c(R::Disabled), c(R::Control), c(R::Hover),   c(R::Pressed)};
+}
+
+Content contentOf(const themes::Resolved &r)
+{
+    const themes::Content &t = r.content;
+    Content c;
+    c.spellcheck = qcolour(t.spellcheck);
+    c.grammar = qcolour(t.grammar);
+    c.gridAlternate = qcolour(t.grid.alternate);
+    c.gridWarning = qcolour(t.grid.warning);
+    c.gridComment = qcolour(t.grid.comment);
+    for (std::size_t i = 0; i < c.comparison.size(); ++i)
+        c.comparison[i] = qcolour(t.grid.comparison[i]);
+    c.comparisonSelection = qcolour(*t.grid.comparisonSelection);
+    for (std::size_t i = 0; i < c.gridLabels.size(); ++i)
+        c.gridLabels[i] = qcolour(t.grid.labels[i]);
+    for (std::size_t i = 0; i < c.syntax.size(); ++i)
+        c.syntax[i] = qcolour(*t.syntax[i]);
+    for (std::size_t i = 0; i < c.ports.size(); ++i)
+        c.ports[i] = qcolour(t.ports[i]);
+    const themes::AudioColours &a = t.audio;
+    application::AudioDisplayOptions &o = c.audio;
+    o.background = a.background;
+    o.lineStart = a.lineStart;
+    o.lineEnd = a.lineEnd;
+    o.inactiveBoundary = a.inactiveBoundary;
+    o.cursor = a.cursor;
+    o.secondBoundaries = a.secondBoundaries;
+    o.keyframe = a.keyframe;
+    o.selectionBackground = *a.selectionBackground;
+    o.selectionModified = *a.selectionModified;
+    o.inactiveBackground = a.inactiveBackground;
+    o.waveform = a.waveform;
+    o.waveformInactive = a.waveformInactive;
+    o.waveformModified = a.waveformModified;
+    o.waveformSelected = *a.waveformSelected;
+    o.timescaleBackground = a.timescaleBackground;
+    o.timescaleText = a.timescaleText;
+    o.spectrumBackground = a.spectrumBackground;
+    o.spectrumEcho = a.spectrumEcho;
+    o.spectrumInner = a.spectrumInner;
+    o.lineBoundaryMark = a.lineBoundaryMark;
+    o.syllableBoundaries = a.syllableBoundaries;
+    o.syllableText = a.syllableText;
+    c.handle = qcolour(t.visualTools.handle);
+    c.handleSelected = qcolour(t.visualTools.handleSelected);
+    c.handleBorder = qcolour(t.visualTools.handleBorder);
+    return c;
+}
+
+themes::Resolved resolved(const QString &themeId, const Choice &choice)
+{
+    const Entry &entry = entryOrDark(themeId);
+    return themes::resolve(entry.file, picksOf(choice, entry));
+}
+
+QString lastValueFor(const QStringList &list, const QString &key)
+{
+    QString found;
+    for (const QString &item : list) {
+        const auto eq = item.indexOf(QLatin1Char('='));
+        if (eq > 0 && QStringView(item).left(eq) == key)
+            found = item.mid(eq + 1);
+    }
+    return found;
 }
 
 }
@@ -140,119 +223,138 @@ bool isHighContrast(Code code)
     return code == Code::HighContrastWhite || code == Code::HighContrastBlack;
 }
 
-Code withDark(Code code, bool dark)
-{
-    if (isHighContrast(code))
-        return dark ? Code::HighContrastBlack : Code::HighContrastWhite;
-    return dark ? Code::Dark : Code::Light;
-}
-
 QColor role(const Roles &r, std::size_t index)
 {
-    const QColor Roles::*members[] = {&Roles::background, &Roles::panel,  &Roles::raised,   &Roles::field,
-                                      &Roles::text,       &Roles::muted,  &Roles::line,     &Roles::accent,
-                                      &Roles::onAccent,   &Roles::select, &Roles::focus,    &Roles::danger,
-                                      &Roles::warning,    &Roles::success, &Roles::disabled, &Roles::control};
+    const QColor Roles::*members[] = {&Roles::background, &Roles::panel,   &Roles::raised,   &Roles::field,
+                                      &Roles::text,       &Roles::muted,   &Roles::line,     &Roles::accent,
+                                      &Roles::onAccent,   &Roles::select,  &Roles::focus,    &Roles::danger,
+                                      &Roles::warning,    &Roles::success, &Roles::disabled, &Roles::control,
+                                      &Roles::hover,      &Roles::pressed};
     static_assert(std::size(members) == kRoleNames.size());
     return index < std::size(members) ? r.*members[index] : QColor();
 }
 
-std::span<const Accent> accents(bool dark)
+const std::vector<Entry> &entries()
 {
-    return dark ? std::span<const Accent>(kDarkAccents) : std::span<const Accent>(kLightAccents);
+    return registry().entries;
 }
 
-const Accent &accent(bool dark, const QString &key)
+const Entry *find(const QString &id)
+{
+    for (const Entry &e : registry().entries)
+        if (e.id == id)
+            return &e;
+    return nullptr;
+}
+
+QStringList loadProblems()
+{
+    return registry().problems;
+}
+
+std::vector<Accent> accents(const QString &themeId)
+{
+    const Entry &entry = entryOrDark(themeId);
+    std::vector<Accent> out;
+    for (const themes::AccentChoice &a : entry.file.accents) {
+        const themes::Resolved r = themes::resolve(entry.file, {a.id, {}});
+        out.push_back({QString::fromStdString(a.id), QString::fromStdString(a.title), qcolour(a.accent),
+                       qcolour(themes::at(r.roles, themes::Role::OnAccent)), qcolour(a.select)});
+    }
+    return out;
+}
+
+std::vector<Accent> accents(bool dark)
+{
+    return accents(codeName(dark ? Code::Dark : Code::Light));
+}
+
+Accent accent(bool dark, const QString &key)
 {
     const auto list = accents(dark);
-    for (const auto &a : list)
-        if (key == QLatin1String(a.key))
-            return a;
-    for (const auto &a : list)
-        if (QLatin1String(a.key) == QLatin1String(kDefaultAccent))
-            return a;
+    for (const QString &k : {key, QString::fromLatin1(kDefaultAccent)})
+        for (const auto &a : list)
+            if (a.key == k)
+                return a;
     return list.front();
-}
-
-const char *pickSetting(Code code, Pick pick)
-{
-    return kPickSettings[hcIndex(code)][static_cast<int>(pick)];
-}
-
-QColor pickDefault(Code code, Pick pick)
-{
-    const Roles base = baseRoles(isHighContrast(code) ? code : Code::HighContrastWhite);
-    switch (pick) {
-    case Pick::Accent:
-        return base.accent;
-    case Pick::Text:
-        return base.text;
-    case Pick::Border:
-        return base.line;
-    }
-    return {};
 }
 
 Choice choiceFrom(const std::function<QVariant(const char *id)> &value)
 {
     Choice choice;
-    if (const auto code = codeFromName(value(kThemeSetting).toString()))
-        choice.theme = *code;
+    if (const QString id = value(kThemeSetting).toString(); find(id))
+        choice.theme = id;
     const QVariant follow = value(kFollowSystemSetting);
     if (follow.isValid())
         choice.followSystem = follow.toBool();
-    choice.lightAccent = accent(false, value(kLightAccentSetting).toString()).key;
-    choice.darkAccent = accent(true, value(kDarkAccentSetting).toString()).key;
-    for (const auto code : {Code::HighContrastWhite, Code::HighContrastBlack})
-        for (const auto pick : kPicks) {
-            const QColor picked = readColour(value(pickSetting(code, pick)));
-            choice.picks[hcIndex(code)][static_cast<int>(pick)] = picked.isValid() ? picked : pickDefault(code, pick);
-        }
+    for (std::size_t i = 0; i < kPairSettings.size(); ++i) {
+        const QString id = value(kPairSettings[i]).toString();
+        if (const Entry *e = find(id); e && e->file.type == kBuiltinTypes[i])
+            choice.pair[i] = id;
+    }
+    choice.accents = value(kAccentsSetting).toStringList();
+    choice.colours = value(kColoursSetting).toStringList();
     return choice;
 }
 
-Code effective(const Choice &choice, Qt::ColorScheme system)
+QString accentOf(const Choice &choice, const QString &themeId)
 {
+    return lastValueFor(choice.accents, themeId);
+}
+
+QColor colourOf(const Choice &choice, const QString &themeId, const QString &role)
+{
+    const QString text = lastValueFor(choice.colours, themeId + QLatin1Char('/') + role);
+    const auto parsed = application::parseSettingColour(text.toStdString());
+    return parsed ? QColor::fromRgba(QRgb(*parsed | 0xFF000000u)) : QColor();
+}
+
+QStringList withEntry(QStringList list, const QString &key, const QString &value)
+{
+    list.removeIf([&key](const QString &item) {
+        const auto eq = item.indexOf(QLatin1Char('='));
+        return eq > 0 && QStringView(item).left(eq) == key;
+    });
+    if (!value.isEmpty())
+        list << key + QLatin1Char('=') + value;
+    return list;
+}
+
+Type typeOf(const QString &themeId)
+{
+    return entryOrDark(themeId).file.type;
+}
+
+QString effective(const Choice &choice, Qt::ColorScheme system)
+{
+    const QString chosen = find(choice.theme) ? choice.theme : QStringLiteral("dark");
     if (!choice.followSystem || system == Qt::ColorScheme::Unknown)
-        return choice.theme;
-    return withDark(choice.theme, system == Qt::ColorScheme::Dark);
+        return chosen;
+    const bool dark = system == Qt::ColorScheme::Dark;
+    const Type side = themes::isHighContrast(typeOf(chosen)) ? (dark ? Type::HighContrastDark : Type::HighContrastLight)
+                                                            : (dark ? Type::Dark : Type::Light);
+    const QString &paired = choice.pair[std::size_t(side)];
+    return find(paired) && typeOf(paired) == side ? paired : codeName(kCodes[std::size_t(side)]);
 }
 
-namespace {
-
-Roles withFocus(Roles roles)
+Roles resolve(const QString &themeId, const Choice &choice)
 {
-    roles.focus = roles.text;
-    return roles;
-}
-
+    return rolesOf(resolved(themeId, choice));
 }
 
 Roles resolve(Code code, const Choice &choice)
 {
-    Roles roles = baseRoles(code);
-    if (isHighContrast(code)) {
-        const auto &picks = choice.picks[hcIndex(code)];
-        if (picks[0].isValid())
-            roles.accent = picks[0];
-        if (picks[1].isValid())
-            roles.text = picks[1];
-        if (picks[2].isValid())
-            roles.line = picks[2];
-        roles.control = roles.line;
-        if (contrastRatio(roles.onAccent, roles.accent) < 4.5) {
-            const QColor other = roles.onAccent == QColor(Qt::black) ? QColor(Qt::white) : QColor(Qt::black);
-            if (contrastRatio(other, roles.accent) > contrastRatio(roles.onAccent, roles.accent))
-                roles.onAccent = other;
-        }
-        return withFocus(roles);
-    }
-    const bool dark = isDark(code);
-    const Accent &a = accent(dark, dark ? choice.darkAccent : choice.lightAccent);
-    roles.accent = a.accent;
-    roles.onAccent = a.onAccent;
-    roles.select = a.select;
-    return withFocus(roles);
+    return resolve(codeName(code), choice);
+}
+
+Content content(const QString &themeId, const Choice &choice)
+{
+    return contentOf(resolved(themeId, choice));
+}
+
+Content content(Code code, const Choice &choice)
+{
+    return content(codeName(code), choice);
 }
 
 QPalette palette(const Roles &r)
@@ -287,126 +389,6 @@ QPalette palette(const Roles &r)
     return p;
 }
 
-Content content(Code code, const Roles &roles)
-{
-    Content c;
-    application::AudioDisplayOptions &a = c.audio;
-    QColor selection = roles.accent;
-    selection.setAlpha(0x37);
-    switch (code) {
-    case Code::Dark:
-        c.spellcheck = rgb(0xFF6B6B);
-        c.grammar = rgb(0x6EA8FE);
-        c.gridAlternate = rgb(0x242A31);
-        c.gridWarning = rgb(0x7A2E2E);
-        c.gridComment = rgb(0x253A57);
-        c.comparison = {rgb(0x2700FF), rgb(0x272B32), rgb(0x3A3E45), rgb(0x003176), rgb(0x3662A1)};
-        c.syntax = {QColor(), rgb(0x8791FD), rgb(0x00C3FF), rgb(0x00C3FF), rgb(0x0076FF), rgb(0xADABAB),
-                    rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243), rgb(0x4EC9B0),
-                    rgb(0xE5A0D9)};
-        c.ports = {rgb(0xC9A0FF), rgb(0x7FD6A8), rgb(0x8EC5FF), rgb(0xF2C46D), rgb(0xFF9EB5), rgb(0xFFB37A), rgb(0xB0B8C0),
-                   rgb(0x66D9E8)};
-        break;
-    case Code::Light:
-        c.spellcheck = rgb(0xD70000);
-        c.grammar = rgb(0x1A56DB);
-        c.gridAlternate = rgb(0xF0F2F4);
-        c.gridWarning = rgb(0xF4C7C7);
-        c.gridComment = rgb(0xD6E3F5);
-        c.comparison = {rgb(0xFFFFFF), rgb(0xFF000C), rgb(0xB7AC00), rgb(0x9C0000), rgb(0x817900)};
-        c.syntax = {QColor(), rgb(0x7E3B00), rgb(0x787600), rgb(0x787600), rgb(0x34C200), rgb(0x817F7F),
-                    rgb(0xBDB76B), rgb(0xFB4544), rgb(0x00C3FF), rgb(0x8D80D3), rgb(0x11A243), rgb(0x00796B),
-                    rgb(0xAD1457)};
-        c.ports = {rgb(0x6B3FB0), rgb(0x1E7A4F), rgb(0x1F5FAD), rgb(0x8A6100), rgb(0xB0306A), rgb(0xA04E00), rgb(0x5A6570),
-                   rgb(0x00707F)};
-        a.background = 0xFFDDE3E8;
-        a.lineStart = a.lineEnd = 0xFF940000;
-        a.inactiveBoundary = 0xFF00875A;
-        a.cursor = 0xFF4F56D6;
-        a.secondBoundaries = 0x37202832;
-        a.keyframe = 0xFF2E3A46;
-        a.inactiveBackground = 0x18000000;
-        a.waveform = 0xFF5B6774;
-        a.waveformInactive = 0xFF9AA5B0;
-        a.waveformModified = 0xFFC62828;
-        a.timescaleBackground = 0xFFEDF0F3;
-        a.timescaleText = 0xFF526170;
-        a.spectrumBackground = 0xFFFFFFFF;
-        a.spectrumEcho = 0xFF674FD7;
-        a.spectrumInner = 0xFF1A1F26;
-        a.lineBoundaryMark = 0xFF202832;
-        a.syllableBoundaries = 0xFF3A4652;
-        a.syllableText = 0xFFE0E3FF;
-        break;
-    case Code::HighContrastWhite:
-        c.spellcheck = rgb(0xC00000);
-        c.grammar = rgb(0x0000C8);
-        c.gridAlternate = rgb(0xFFFFFF);
-        c.gridWarning = rgb(0xFFC0C0);
-        c.gridComment = rgb(0xF2E2B0);
-        c.comparison = {rgb(0xC000C0), rgb(0xFFD0D0), rgb(0xE0E0E0), rgb(0xD0D0FF), rgb(0xD0E8FF)};
-        c.syntax = {QColor(), rgb(0x7A3E00), rgb(0x005A9E), rgb(0x005A9E), rgb(0x006400), rgb(0x595959),
-                    rgb(0x6B5E00), rgb(0xB00000), rgb(0x005A9E), rgb(0x5B2DA8), rgb(0x00663A), rgb(0x00695C),
-                    rgb(0x9C0060)};
-        a.background = 0xFFFFFFFF;
-        a.lineStart = a.lineEnd = 0xFFC00000;
-        a.inactiveBoundary = 0xFF007A3D;
-        a.cursor = 0xFF8000C0;
-        a.secondBoundaries = 0x60000000;
-        a.keyframe = 0xFF000000;
-        a.inactiveBackground = 0x22000000;
-        a.waveform = 0xFF303030;
-        a.waveformInactive = 0xFF8C8C8C;
-        a.waveformModified = 0xFFC00000;
-        a.timescaleBackground = 0xFFFFFFFF;
-        a.timescaleText = 0xFF000000;
-        a.spectrumBackground = 0xFFFFFFFF;
-        a.spectrumEcho = 0xFF0050C8;
-        a.spectrumInner = 0xFF000000;
-        a.lineBoundaryMark = 0xFF000000;
-        a.syllableBoundaries = 0xFF000000;
-        a.syllableText = 0xFFFFFFFF;
-        break;
-    case Code::HighContrastBlack:
-        c.spellcheck = rgb(0xFF6060);
-        c.grammar = rgb(0xFFFF00);
-        c.gridAlternate = rgb(0x000000);
-        c.gridWarning = rgb(0x800000);
-        c.gridComment = rgb(0x403400);
-        c.comparison = {rgb(0xFF00FF), rgb(0x3A0000), rgb(0x303030), rgb(0x000060), rgb(0x003060)};
-        c.syntax = {QColor(), rgb(0xFFB060), rgb(0x60D0FF), rgb(0x60D0FF), rgb(0x7CFC7C), rgb(0xBEBEBE),
-                    rgb(0xF0E68C), rgb(0xFF6060), rgb(0x60D0FF), rgb(0xC8A8FF), rgb(0xA0E0A0), rgb(0x40E0D0),
-                    rgb(0xFF80C0)};
-        a.background = 0xFF000000;
-        a.lineStart = a.lineEnd = 0xFFFF4040;
-        a.inactiveBoundary = 0xFF00FF80;
-        a.cursor = 0xFF00FFFF;
-        a.secondBoundaries = 0x60FFFFFF;
-        a.keyframe = 0xFFFFFFFF;
-        a.inactiveBackground = 0x55000000;
-        a.waveform = 0xFFC8C8C8;
-        a.waveformInactive = 0xFF6E6E6E;
-        a.waveformModified = 0xFFFF6968;
-        a.timescaleBackground = 0xFF000000;
-        a.timescaleText = 0xFFFFFFFF;
-        a.spectrumBackground = 0xFF000000;
-        a.spectrumEcho = 0xFF00C8FF;
-        a.spectrumInner = 0xFFFFFFFF;
-        a.lineBoundaryMark = 0xFFFFFFFF;
-        a.syllableBoundaries = 0xFFFFFFFF;
-        a.syllableText = 0xFF000000;
-        break;
-    }
-    c.syntax[0] = roles.text;
-    if (isHighContrast(code))
-        c.ports.fill(roles.text);
-    a.selectionBackground = a.selectionModified = toArgb(selection);
-    a.waveformSelected = toArgb(roles.accent);
-    c.comparisonSelection = roles.accent;
-    c.comparisonSelection.setAlpha(75);
-    return c;
-}
-
 void applyAudioColours(application::AudioDisplayOptions &o, const application::AudioDisplayOptions &c)
 {
     o.background = c.background;
@@ -435,12 +417,7 @@ void applyAudioColours(application::AudioDisplayOptions &o, const application::A
 
 double contrastRatio(const QColor &a, const QColor &b)
 {
-    const auto luminance = [](const QColor &c) {
-        const auto channel = [](double v) { return v <= 0.04045 ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4); };
-        return 0.2126 * channel(c.redF()) + 0.7152 * channel(c.greenF()) + 0.0722 * channel(c.blueF());
-    };
-    const double x = luminance(a), y = luminance(b);
-    return (std::max(x, y) + 0.05) / (std::min(x, y) + 0.05);
+    return themes::contrastRatio(a.rgba(), b.rgba());
 }
 
 QColor composite(const QColor &over, const QColor &under)
@@ -451,6 +428,12 @@ QColor composite(const QColor &over, const QColor &under)
 }
 
 namespace {
+
+style::StyleColours::Colours styleColours(const Roles &r, Type type)
+{
+    return {r.focus,  r.control,  r.text,  r.muted, r.line,    r.panel,    r.raised, r.field,
+            r.accent, r.onAccent, r.select, r.hover, r.pressed, r.disabled, r.danger, themes::isHighContrast(type)};
+}
 
 class Hub : public QObject {
     Q_OBJECT
@@ -539,17 +522,19 @@ public:
         next.choice = choiceFrom(value);
         if (next.choice.followSystem)
             requestScheme(Qt::ColorScheme::Unknown);
-        next.code = effective(next.choice, scheme());
-        next.roles = resolve(next.code, next.choice);
-        next.content = content(next.code, next.roles);
-        const bool same = next.code == state.code && next.choice == state.choice && next.roles == state.roles;
+        next.id = effective(next.choice, scheme());
+        next.type = typeOf(next.id);
+        const themes::Resolved look = resolved(next.id, next.choice);
+        next.roles = rolesOf(look);
+        next.content = contentOf(look);
+        const bool same = !themeListChanged && next.id == state.id && next.choice == state.choice && next.roles == state.roles;
+        themeListChanged = false;
         state = std::move(next);
         if (settings && (force || !same))
             QGuiApplication::setPalette(palette(state.roles));
         if (!state.choice.followSystem)
-            requestScheme(isDark(state.code) ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
-        style::StyleColours::setFocus(settings ? state.roles.focus : QColor());
-        style::StyleColours::setControl(settings ? state.roles.control : QColor());
+            requestScheme(themes::isDark(state.type) ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
+        style::StyleColours::set(settings ? styleColours(state.roles, state.type) : style::StyleColours::Colours{});
         // Qt resets the title bars from its own scheme on every system change.
         themeTitleBars(QGuiApplication::topLevelWindows());
         if (force || !same)
@@ -558,7 +543,7 @@ public:
 
     void themeTitleBars(const QList<QWindow *> &windows) const
     {
-        const bool dark = isDark(state.code);
+        const bool dark = themes::isDark(state.type);
         for (QWindow *window : windows)
             if (titlebars::themed(window))
                 titlebars::setDark(window, dark);
@@ -645,9 +630,10 @@ signals:
 private:
     explicit Hub(QObject *parent) : QObject(parent)
     {
-        state.code = effective(state.choice, Qt::ColorScheme::Unknown);
-        state.roles = resolve(state.code, state.choice);
-        state.content = content(state.code, state.roles);
+        state.id = effective(state.choice, Qt::ColorScheme::Unknown);
+        state.type = typeOf(state.id);
+        state.roles = resolve(state.id, state.choice);
+        state.content = content(state.id, state.choice);
         if (auto *hints = QGuiApplication::styleHints())
             connect(hints, &QStyleHints::colorSchemeChanged, this, [this] { refresh(); });
 #ifdef HIKARI_COLOUR_SCHEME_PORTAL
@@ -670,6 +656,9 @@ private:
     static constexpr const char *kAdopted = "hikariThemePalette";
     bool refreshing = false;
     std::optional<Qt::ColorScheme> requested;
+
+public:
+    bool themeListChanged = false;
 };
 
 }
@@ -677,6 +666,32 @@ private:
 const State &current()
 {
     return Hub::get().state;
+}
+
+bool currentIs(Code code)
+{
+    return current().id == codeName(code);
+}
+
+void install(Entry entry)
+{
+    auto &list = registry().entries;
+    const auto it = std::ranges::find(list, entry.id, &Entry::id);
+    if (it != list.end())
+        *it = std::move(entry);
+    else
+        list.push_back(std::move(entry));
+    Hub::get().themeListChanged = true;
+    Hub::get().refresh();
+}
+
+void uninstall(const QString &id)
+{
+    if (codeFromName(id))
+        return;
+    std::erase_if(registry().entries, [&id](const Entry &e) { return e.id == id; });
+    Hub::get().themeListChanged = true;
+    Hub::get().refresh();
 }
 
 void onChanged(QObject *context, std::function<void()> slot)
@@ -782,43 +797,55 @@ QVariantMap Theme::ports() const
 QString Theme::accentKey() const
 {
     const auto &s = theme::current();
-    if (theme::isHighContrast(s.code))
+    const auto list = theme::accents(s.id);
+    if (list.empty())
         return {};
-    return theme::isDark(s.code) ? s.choice.darkAccent : s.choice.lightAccent;
+    const QString picked = theme::accentOf(s.choice, s.id);
+    for (const auto &a : list)
+        if (a.key == picked)
+            return picked;
+    for (const auto &a : list)
+        if (a.accent == s.roles.accent && a.select == s.roles.select)
+            return a.key;
+    return list.front().key;
 }
 
 QVariantList Theme::themes() const
 {
-    const char *names[] = {
-        QT_TRANSLATE_NOOP("HikariSub.Options", "Light"),
-        QT_TRANSLATE_NOOP("HikariSub.Options", "Dark"),
-        QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast white"),
-        QT_TRANSLATE_NOOP("HikariSub.Options", "High contrast black"),
-    };
     QVariantList out;
-    for (const auto code : theme::kCodes)
-        out << QVariantMap{{QStringLiteral("code"), theme::codeName(code)},
-                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", names[static_cast<int>(code)])},
-                           {QStringLiteral("source"), QString::fromLatin1(names[static_cast<int>(code)])},
-                           {QStringLiteral("dark"), theme::isDark(code)},
-                           {QStringLiteral("highContrast"), theme::isHighContrast(code)}};
+    for (const auto &e : theme::entries()) {
+        const bool builtin = theme::codeFromName(e.id).has_value();
+        const QByteArray source = e.title.toUtf8();
+        out << QVariantMap{{QStringLiteral("code"), e.id},
+                           {QStringLiteral("name"), builtin ? QCoreApplication::translate("HikariSub.Options", source.constData())
+                                                            : e.title},
+                           {QStringLiteral("source"), e.title},
+                           {QStringLiteral("plugin"), e.plugin},
+                           {QStringLiteral("type"), QString::fromLatin1(themes::typeName(e.file.type))},
+                           {QStringLiteral("dark"), themes::isDark(e.file.type)},
+                           {QStringLiteral("highContrast"), themes::isHighContrast(e.file.type)}};
+    }
     return out;
 }
 
 QVariantList Theme::accents(bool dark) const
 {
-    const auto surfaces = [dark] {
-        const theme::Roles r = theme::resolve(dark ? theme::Code::Dark : theme::Code::Light, {});
-        return std::array{r.background, r.panel, r.raised, r.field};
-    }();
+    return accentsOf(theme::codeName(dark ? theme::Code::Dark : theme::Code::Light));
+}
+
+QVariantList Theme::accentsOf(const QString &code) const
+{
+    const theme::Roles r = theme::resolve(code, {});
+    const std::array surfaces{r.background, r.panel, r.raised, r.field};
     QVariantList out;
-    for (const auto &a : theme::accents(dark)) {
+    for (const auto &a : theme::accents(code)) {
         double lowest = 21;
         for (const QColor &s : surfaces)
             lowest = std::min(lowest, theme::contrastRatio(a.accent, s));
-        out << QVariantMap{{QStringLiteral("key"), QString::fromLatin1(a.key)},
-                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", a.name)},
-                           {QStringLiteral("source"), QString::fromLatin1(a.name)},
+        const QByteArray source = a.name.toUtf8();
+        out << QVariantMap{{QStringLiteral("key"), a.key},
+                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", source.constData())},
+                           {QStringLiteral("source"), a.name},
                            {QStringLiteral("accent"), a.accent},
                            {QStringLiteral("onAccent"), a.onAccent},
                            {QStringLiteral("contrast"), lowest}};
@@ -826,31 +853,124 @@ QVariantList Theme::accents(bool dark) const
     return out;
 }
 
+namespace {
+
+const char *roleTitle(themes::Role role)
+{
+    using R = themes::Role;
+    switch (role) {
+    case R::Accent:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Accent colour");
+    case R::Text:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Text and icons");
+    case R::Line:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Border colour");
+    case R::Background:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Background");
+    case R::Panel:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Panels");
+    case R::Raised:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Buttons and headers");
+    case R::Field:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Fields");
+    case R::Muted:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Secondary text");
+    case R::Control:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Control outlines");
+    case R::Disabled:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Disabled text");
+    case R::Select:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Selection");
+    case R::Danger:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Errors");
+    case R::Warning:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Warnings");
+    case R::Success:
+        return QT_TRANSLATE_NOOP("HikariSub.Options", "Success");
+    default:
+        return "";
+    }
+}
+
+}
+
 QVariantList Theme::picks(const QString &code) const
 {
-    const auto c = theme::codeFromName(code);
-    if (!c || !theme::isHighContrast(*c))
+    const theme::Entry *entry = theme::find(code);
+    if (!entry)
         return {};
-    const char *names[] = {
-        QT_TRANSLATE_NOOP("HikariSub.Options", "Accent colour"),
-        QT_TRANSLATE_NOOP("HikariSub.Options", "Text and icons"),
-        QT_TRANSLATE_NOOP("HikariSub.Options", "Border colour"),
-    };
+    const themes::Resolved plain = themes::resolve(entry->file);
     QVariantList out;
-    for (const auto pick : theme::kPicks)
-        out << QVariantMap{{QStringLiteral("setting"), QString::fromLatin1(theme::pickSetting(*c, pick))},
-                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", names[static_cast<int>(pick)])},
-                           {QStringLiteral("defaultColour"), theme::pickDefault(*c, pick).name(QColor::HexRgb).toUpper()}};
+    for (const auto role : entry->file.userColours) {
+        const QString name = QLatin1String(themes::kRoleNames[std::size_t(role)]);
+        out << QVariantMap{{QStringLiteral("role"), name},
+                           {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", roleTitle(role))},
+                           {QStringLiteral("defaultColour"),
+                            QColor::fromRgb(QRgb(themes::at(plain.roles, role))).name(QColor::HexRgb).toUpper()}};
+    }
     return out;
+}
+
+QString Theme::accentChoice(const QStringList &list, const QString &code) const
+{
+    theme::Choice choice;
+    choice.accents = list;
+    const QString picked = theme::accentOf(choice, code);
+    const auto all = theme::accents(code);
+    for (const auto &a : all)
+        if (a.key == picked)
+            return picked;
+    const theme::Roles r = theme::resolve(code, {});
+    for (const auto &a : all)
+        if (a.accent == r.accent && a.select == r.select)
+            return a.key;
+    return {};
+}
+
+QStringList Theme::withAccentChoice(const QStringList &list, const QString &code, const QString &choice) const
+{
+    return theme::withEntry(list, code, choice);
+}
+
+QString Theme::userColour(const QStringList &list, const QString &code, const QString &role) const
+{
+    theme::Choice choice;
+    choice.colours = list;
+    const QColor picked = theme::colourOf(choice, code, role);
+    if (picked.isValid())
+        return picked.name(QColor::HexRgb).toUpper();
+    for (const QVariant &p : picks(code))
+        if (p.toMap().value(QStringLiteral("role")) == role)
+            return p.toMap().value(QStringLiteral("defaultColour")).toString();
+    return {};
+}
+
+QStringList Theme::withUserColour(const QStringList &list, const QString &code, const QString &role,
+                                  const QString &colour) const
+{
+    return theme::withEntry(list, code + QLatin1Char('/') + role, colour);
+}
+
+QStringList Theme::withoutUserColours(const QStringList &list, const QString &code) const
+{
+    QStringList out = list;
+    out.removeIf([&code](const QString &item) { return item.startsWith(code + QLatin1Char('/')); });
+    return out;
+}
+
+qreal Theme::fontSize(int reference) const
+{
+    const QFont font = QGuiApplication::font();
+    const qreal body = font.pixelSize() > 0 ? font.pixelSize() : font.pointSizeF() * 96.0 / 72.0;
+    return body * reference / 13.0;
 }
 
 QVariantMap Theme::rolesOf(const QString &code, const QVariantMap &values) const
 {
-    const auto c = theme::codeFromName(code);
-    if (!c)
+    if (!theme::find(code))
         return {};
     const auto choice = theme::choiceFrom([&values](const char *id) { return values.value(QLatin1String(id)); });
-    const theme::Roles roles = theme::resolve(*c, choice);
+    const theme::Roles roles = theme::resolve(code, choice);
     QVariantMap out;
     for (std::size_t i = 0; i < theme::kRoleNames.size(); ++i)
         out.insert(QLatin1String(theme::kRoleNames[i]), theme::role(roles, i));
