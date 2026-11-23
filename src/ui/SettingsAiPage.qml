@@ -362,7 +362,8 @@ Item {
 
     Connections {
         target: page.dialog
-        function onReloaded() { page.reload() }
+        function onOpened() { page.reload() }
+        function onReloaded() { page.stagedRoles = page.ai ? Object.assign({}, page.ai.roles) : {} }
     }
     Connections {
         target: page.ai
@@ -2194,7 +2195,7 @@ Item {
             key: "ai.mcp"
             Connections {
                 target: page.dialog
-                function onReloaded() {
+                function onOpened() {
                     if (mcpSection.offering)
                         page.ai.cancelComponent()
                     mcpSection.offering = false

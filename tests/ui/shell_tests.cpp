@@ -19730,7 +19730,7 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "aiSearchKey")->isVisible());
         QVERIFY(dialogItem("settingsDialog", "aiSandboxNote")->property("text").toString().contains(
             QStringLiteral("to the providers you add and to Brave Search.")));
-        QCOMPARE(application->ai()->requests()->searchService(), std::nullopt);
+        QTRY_COMPARE(application->ai()->requests()->searchService(), std::optional(ai::SearchService::Brave));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(application->settingsStore()->text("ai.searchService"), QStringLiteral("brave"));

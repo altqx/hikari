@@ -96,6 +96,7 @@ DialogWindow {
                 legacyNotFound = importer.status
         }
         reloaded()
+        opened()
         if (filter !== undefined) {
             hotkeyFilter.currentIndex = Math.max(0, hotkeyFilter.modes.indexOf(filter))
             hotkeys.filter(filter)
@@ -2549,6 +2550,7 @@ DialogWindow {
         Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
     }
 
+    signal opened()
     signal pluginsRequested(string plugin)
     readonly property var commandMatches: {
         const words = query.split(" ").filter(w => w.length > 0 && !w.startsWith("@"))
