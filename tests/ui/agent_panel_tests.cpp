@@ -205,6 +205,21 @@ class AgentPanelTest : public QObject {
         }
         return nullptr;
     }
+    static QString turnOnAiRow(const QString &then)
+    {
+        return QStringLiteral("(() => { editMenu.build(); for (let i = 0; i < editMenu.count; ++i) { const it = editMenu.itemAt(i);"
+                              " if (it && it.objectName === 'turnOnAiMenuItem') return %1 } return undefined })()")
+            .arg(then);
+    }
+    bool editMenuShowsTurnOnAi()
+    {
+        shell(QStringLiteral("editMenu.build(); editMenu.open()"));
+        QTest::qWaitFor([&] { return shell(QStringLiteral("editMenu.opened")).toBool(); });
+        const bool shown = shell(turnOnAiRow(QStringLiteral("it.visible && it.height > 0"))).toBool();
+        shell(QStringLiteral("editMenu.close()"));
+        QTest::qWaitFor([&] { return !shell(QStringLiteral("editMenu.visible")).toBool(); });
+        return shown;
+    }
     bool click(const QString &name)
     {
         QQuickItem *button = item(name);
@@ -1537,24 +1552,42 @@ private slots:
         QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
     }
 
-    void withAiOffThePanelAndItsCommandsAreGone()
+    void withAiOffThePanelShowsOnlyTurnOnAiAndItsCommandsAreGone()
     {
         openPanel();
         QVERIFY(shell(QStringLiteral("root.builtInDocks.indexOf(agentDock) >= 0")).toBool());
+        QVERIFY(!editMenuShowsTurnOnAi());
         QVERIFY(application::aiCommand(application::hotkeyIdOf("GLOBAL_SHOW_AI_AGENT")));
         QVERIFY(application::aiCommand(application::hotkeyIdOf("GLOBAL_NEW_AI_THREAD")));
 
         application->settingsStore()->set(app::AiFeatures::kOffSetting, true);
         QVERIFY(!agent().on());
         QVERIFY(agent().engine() == nullptr);
-        QTRY_VERIFY(!shell(QStringLiteral("agentDock.isOpen")).toBool());
-        QVERIFY(shell(QStringLiteral("root.builtInDocks.indexOf(agentDock) < 0")).toBool());
-        QVERIFY(!shell(QStringLiteral("newAiThreadAction.enabled")).toBool());
-
-        application->settingsStore()->set(app::AiFeatures::kOffSetting, false);
-        QVERIFY(agent().on());
-        QVERIFY(agent().engine() != nullptr);
+        QVERIFY(shell(QStringLiteral("agentDock.isOpen")).toBool());
         QVERIFY(shell(QStringLiteral("root.builtInDocks.indexOf(agentDock) >= 0")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentAiOffCard")));
+        QVERIFY(!item(QStringLiteral("agentView")));
+        QCOMPARE(item(QStringLiteral("agentAiOffTitle"))->property("text").toString(), QStringLiteral("AI is off"));
+        QCOMPARE(item(QStringLiteral("agentAiOffBody"))->property("text").toString(),
+                 QStringLiteral("Turn it on to use agents and AI actions. HikariSub then downloads the AI component once."));
+        QVERIFY(!shell(QStringLiteral("newAiThreadAction.enabled")).toBool());
+        QVERIFY(!shell(QStringLiteral("showAiAgentAction.enabled")).toBool());
+        QVERIFY(editMenuShowsTurnOnAi());
+        QCOMPARE(shell(turnOnAiRow(QStringLiteral("it.text"))).toString(), QStringLiteral("Turn on AI…"));
+
+        shell(QStringLiteral("agentDock.close()"));
+        QTRY_VERIFY(!shell(QStringLiteral("agentDock.isOpen")).toBool());
+        shell(turnOnAiRow(QStringLiteral("it.triggered()")));
+        QTRY_VERIFY(shell(QStringLiteral("agentDock.isOpen")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("agentTurnOnAi")));
+
+        QVERIFY(click(QStringLiteral("agentTurnOnAi")));
+        QTRY_VERIFY(agent().on());
+        QVERIFY(!application->settingsStore()->boolean(app::AiFeatures::kOffSetting));
+        QVERIFY(agent().engine() != nullptr);
+        QTRY_VERIFY(item(QStringLiteral("agentView")));
+        QVERIFY(!item(QStringLiteral("agentAiOffCard")));
+        QVERIFY(!editMenuShowsTurnOnAi());
     }
 
     void theComposerGrowsToSixLinesThenScrollsAndTheTimelineKeepsItsRoom()

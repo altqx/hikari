@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>AI 켜기…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>AI를 켤 수 있는 에이전트 패널을 표시합니다</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>에이전트</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>설정 › AI 열기</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>공급자를 추가하기 전에는 아무것도 보내거나 다운로드하지 않습니다.</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -208,6 +212,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>“%1”의 하위 에이전트입니다. 읽기 전용이며, 상위 스레드를 통해 대화하세요.</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>공급자를 추가하기 전에는 아무것도 보내지 않습니다.</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1004,6 +1012,18 @@
     <message>
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI가 꺼져 있습니다</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>에이전트와 AI 작업을 쓰려면 켜세요. 그러면 HikariSub가 AI 구성 요소를 한 번 내려받습니다.</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>AI 켜기</translation>
     </message>
 </context>
 <context>
@@ -15537,10 +15557,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>모든 AI 기능 끄기</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>AI 관련 항목은 표시되거나 다운로드되거나 실행되지 않으며 키체인을 읽지도 않습니다. 공급자, 키, 스레드는 유지되며 AI를 다시 켜면 다시 시작하지 않아도 돌아옵니다.</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>AI가 꺼져 있어도 유지되는 항목</translation>
     </message>
@@ -15559,10 +15575,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>AI가 꺼져 있으면 숨겨지는 항목</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>에이전트 패널, 인라인 AI 작업, 모든 메뉴의 AI 항목</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -15749,6 +15761,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>AI 관련 항목은 다운로드되거나 실행되지 않으며 키체인을 읽지도 않습니다. 공급자, 키, 스레드는 유지되며 AI를 다시 켜면 다시 시작하지 않아도 돌아옵니다.</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>인라인 AI 작업, 모든 메뉴의 AI 항목. 에이전트 패널에는 AI를 켜는 버튼만 표시됩니다.</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -25943,6 +25963,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>%1번째 줄: %2</translation>
     </message>
     <message>

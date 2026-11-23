@@ -456,7 +456,7 @@ std::vector<SettingDefinition> &definitions()
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        {"ai.off", "", Bool, Profile, Mapped, false, false},
+        {"ai.off", "", Bool, Profile, Mapped, false, true},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
         {"ai.webSearch", "", Bool, Profile, Mapped, false, true},

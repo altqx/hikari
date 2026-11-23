@@ -4,6 +4,14 @@
 <context>
     <name>HikariSub.Agent</name>
     <message>
+        <source>Turn on AI…</source>
+        <translation>Włącz AI…</translation>
+    </message>
+    <message>
+        <source>Shows the Agent panel, where you can turn AI on</source>
+        <translation>Pokazuje panel agenta, w którym można włączyć AI</translation>
+    </message>
+    <message>
         <source>Agent</source>
         <translation>Agent</translation>
     </message>
@@ -82,10 +90,6 @@
     <message>
         <source>Open Settings › AI</source>
         <translation>Otwórz Ustawienia › AI</translation>
-    </message>
-    <message>
-        <source>Nothing is sent or downloaded until you add one.</source>
-        <translation>Nic nie jest wysyłane ani pobierane, dopóki go nie dodasz.</translation>
     </message>
     <message>
         <source>Search threads</source>
@@ -210,6 +214,10 @@
     <message>
         <source>Sub-agent of “%1”. Read-only; talk to it through the parent.</source>
         <translation>Podagent wątku „%1”. Tylko do odczytu; rozmawiaj z nim przez wątek nadrzędny.</translation>
+    </message>
+    <message>
+        <source>Nothing is sent until you add one.</source>
+        <translation>Nic nie jest wysyłane, dopóki go nie dodasz.</translation>
     </message>
     <message>
         <source>%1 · capped by the parent</source>
@@ -1030,6 +1038,18 @@
     <message>
         <source>Context compacted %1 → %2 tokens</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>AI is off</source>
+        <translation>AI jest wyłączone</translation>
+    </message>
+    <message>
+        <source>Turn it on to use agents and AI actions. HikariSub then downloads the AI component once.</source>
+        <translation>Włącz je, aby używać agentów i akcji AI. HikariSub pobierze wtedy jeden raz komponent AI.</translation>
+    </message>
+    <message>
+        <source>Turn on AI</source>
+        <translation>Włącz AI</translation>
     </message>
 </context>
 <context>
@@ -15781,10 +15801,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wyłącz wszystkie funkcje AI</translation>
     </message>
     <message>
-        <source>Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
-        <translation>Nic związanego z AI nie jest wyświetlane, pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
-    </message>
-    <message>
         <source>Kept while AI is off</source>
         <translation>Zachowane, gdy AI jest wyłączone</translation>
     </message>
@@ -15803,10 +15819,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Hidden while AI is off</source>
         <translation>Ukryte, gdy AI jest wyłączone</translation>
-    </message>
-    <message>
-        <source>The agent panel, inline AI actions and AI rows in every menu</source>
-        <translation>Panel agenta, akcje AI w tekście i pozycje AI we wszystkich menu</translation>
     </message>
     <message>
         <source>AI commands in command search, their shortcuts and toolbar buttons</source>
@@ -15995,6 +16007,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Id</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.</source>
+        <translation>Nic związanego z AI nie jest pobierane ani uruchamiane i nic nie czyta magazynu kluczy. Dostawcy, klucze i wątki zostają zachowane, a ponowne włączenie AI przywraca je bez ponownego uruchamiania.</translation>
+    </message>
+    <message>
+        <source>Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on.</source>
+        <translation>Akcje AI w tekście i pozycje AI we wszystkich menu. Panel agenta pokazuje tylko przycisk włączenia AI.</translation>
     </message>
     <message>
         <source>Open auth.openai.com</source>
@@ -26391,6 +26411,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>Wiersz %1: %2</translation>
     </message>
     <message>

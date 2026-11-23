@@ -21,6 +21,8 @@
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
 
+#include <optional>
+
 using namespace hikari;
 namespace ai = hikari::application::ai;
 
@@ -150,7 +152,11 @@ protected:
         ASSERT_TRUE(store->switchToStaged());
     }
 
-    void SetUp() override { channel.addRuntime(QStringLiteral("1.4.4-0123abcd"), "runtime"); }
+    void SetUp() override
+    {
+        channel.addRuntime(QStringLiteral("1.4.4-0123abcd"), "runtime");
+        settings.set(app::AiFeatures::kOffSetting, false);
+    }
 
     QTemporaryDir dir;
     ui::SettingsStore settings;
@@ -160,6 +166,59 @@ protected:
     test::MinisignSigner signer;
     bool policyOff = false;
 };
+
+TEST_F(AiFeaturesTest, AFreshProfileStartsWithAiOffAndNothingBuilt)
+{
+    settings.reset(QLatin1String(app::AiFeatures::kOffSetting));
+    app::AiFeatures::settleOffDefault(settings, ports(false, true));
+    EXPECT_FALSE(settings.contains(app::AiFeatures::kOffSetting));
+    app::AiFeatures features(settings, ports(false, true));
+    EXPECT_FALSE(features.on());
+    EXPECT_EQ(features.updater(), nullptr);
+    EXPECT_EQ(counts.keyStores, 0);
+    EXPECT_EQ(counts.keyReads, 0);
+    EXPECT_EQ(counts.sidecarHosts, 0);
+    EXPECT_EQ(release.fetches(".json"), 0);
+}
+
+TEST_F(AiFeaturesTest, AProfileThatNeverSetAiOffKeepsItOnOnlyWithTheComponentOrAProvider)
+{
+    const auto settled = [&](const app::AiFeatures::Ports &p) -> std::optional<bool> {
+        settings.reset(QLatin1String(app::AiFeatures::kOffSetting));
+        app::AiFeatures::settleOffDefault(settings, p);
+        if (!settings.contains(app::AiFeatures::kOffSetting))
+            return std::nullopt;
+        return settings.boolean(app::AiFeatures::kOffSetting);
+    };
+    EXPECT_EQ(settled(ports(false, true)), std::nullopt);
+    EXPECT_EQ(settled(ports(true, true)), false);
+    EXPECT_EQ(settled(ports(false, false)), false);
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    EXPECT_EQ(settled(ports(false, true)), false);
+    EXPECT_EQ(counts.keyStores, 0);
+    EXPECT_EQ(counts.keyReads, 0);
+
+    settings.set(app::AiFeatures::kOffSetting, true);
+    app::AiFeatures::settleOffDefault(settings, ports(true, true));
+    EXPECT_TRUE(settings.boolean(app::AiFeatures::kOffSetting));
+}
+
+TEST_F(AiFeaturesTest, ResettingAiOffTurnsAiOffAtOnceAndTheNextStartSettlesItAgain)
+{
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    {
+        app::AiFeatures features(settings, ports(false, true));
+        ASSERT_TRUE(features.on());
+        settings.reset(QLatin1String(app::AiFeatures::kOffSetting));
+        EXPECT_FALSE(features.on());
+    }
+    app::AiFeatures::settleOffDefault(settings, ports(false, true));
+    app::AiFeatures again(settings, ports(false, true));
+    EXPECT_TRUE(again.on());
+    EXPECT_FALSE(settings.boolean(app::AiFeatures::kOffSetting));
+}
 
 TEST_F(AiFeaturesTest, WithAiOffNothingIsBuiltAcrossStartupAndASession)
 {

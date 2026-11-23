@@ -12916,6 +12916,13 @@ private:
         options.playbackAudio = false;
         restartWith(options);
     }
+    static void seedAiOn(const QString &settingsFile)
+    {
+        ui::SettingsStore seed(settingsFile);
+        seed.set(app::AiFeatures::kOffSetting, false);
+        seed.sync();
+    }
+
     void restartWith(const app::Application::Options &options)
     {
         delete engine;
@@ -20079,6 +20086,7 @@ private slots:
         options.settingsFile = dir.filePath(QStringLiteral("ai-mcp-servers/hikari.ini"));
         options.playbackAudio = false;
         options.aiPorts = std::move(ports);
+        seedAiOn(options.settingsFile);
         restartWith(options);
         auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
         auto *dialog = openSettings();
@@ -20129,6 +20137,7 @@ private slots:
             options.settingsFile = home + QStringLiteral("/hikari.ini");
             options.playbackAudio = false;
             options.aiPorts = std::move(ports);
+            seedAiOn(options.settingsFile);
             restartWith(options);
             auto *dialog = openSettings();
             QTRY_VERIFY(dialog && dialog->property("visible").toBool());
@@ -24812,7 +24821,13 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_ADD_PAGE")), QStringLiteral("Ctrl+T"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_CONVERT_TO_TMP")));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
+        QVERIFY(!table().contains(QStringLiteral("GLOBAL_KEEP_AI_CHANGE")));
+        QCOMPARE(table().size(), 37);
+        application->settingsStore()->set(app::AiFeatures::kOffSetting, false);
+        QCOMPARE(table().value(QStringLiteral("GLOBAL_KEEP_AI_CHANGE")), QStringLiteral("Ctrl+Shift+Return"));
         QCOMPARE(table().size(), 41);
+        application->settingsStore()->reset(QString::fromLatin1(app::AiFeatures::kOffSetting));
+        QCOMPARE(table().size(), 37);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));

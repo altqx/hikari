@@ -410,6 +410,32 @@ FocusScope {
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
 
         RowLayout {
+            id: componentStrip
+            objectName: "agentComponentStrip"
+            readonly property bool failed: (panel.download.error ?? "").length > 0 && panel.download.needed === true
+            visible: panel.download.active === true || failed
+            Layout.fillWidth: true
+            Layout.margins: 8
+            spacing: 6
+            Icon { iconRole: componentStrip.failed ? "notice-error" : "notice-info"; size: 14 }
+            Label {
+                objectName: "agentComponentStripText"
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: componentStrip.failed ? qsTr("The AI component didn’t download. Check your connection and try again.")
+                      : qsTr("Getting the AI component: %1 of %2 MB").arg(Math.round((panel.download.received || 0) / 1000000),
+                                                                           Math.round((panel.download.size || 0) / 1000000))
+            }
+            Button {
+                objectName: "agentComponentRetry"
+                visible: componentStrip.failed && !!panel.aiSettings
+                text: qsTr("Retry")
+                onClicked: panel.aiSettings.installComponent()
+            }
+        }
+
+        RowLayout {
             objectName: "agentChildBanner"
             visible: panel.agent.ready && panel.isChild && !panel.showingThreads
             Layout.fillWidth: true
@@ -457,7 +483,7 @@ FocusScope {
                 onClicked: panel.settingsRequested()
             }
             Label {
-                text: qsTr("Nothing is sent or downloaded until you add one.")
+                text: qsTr("Nothing is sent until you add one.")
                 color: Theme.muted
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap

@@ -206,7 +206,7 @@ AI17 ([#445](https://github.com/altqx/hikari/issues/445), owner Q406–Q412). An
 
 ## The panel
 
-The Agent panel is panel 14. With AI off it isn't built, and its commands, Show Agent panel (5252) and New agent thread (5253), are gone. Neither has a default key. It opens as a tab beside the Review panel, or right of the Grid.
+The Agent panel is panel 14. With AI off it shows only the "AI is off" card with **Turn on AI** ([Agent panel](ux/agent-panel.md#panel-states)), and its commands, Show Agent panel (5252) and New agent thread (5253), are gone. Neither has a default key. It opens as a tab beside the Review panel, or right of the Grid.
 
 - **Header:** the threads list, the thread's title, a Full access badge, the thread ⋯ (Rename thread…, Export as Markdown… | Compact thread, New thread from summary | Delete thread…) and New thread. Right-click a row in the threads list, or press the Menu key on it, for the same menu. Right-click an answer for Copy and Select all. The Model and Mode menus are one-of-n choices, with the provider in the detail column.
 - **The threads list** shows the active window's Project threads first, under "This project", and then the others by day.
