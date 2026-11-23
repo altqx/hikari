@@ -18146,6 +18146,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>it couldn’t be kept.</source>
         <translation>บันทึกไฟล์ไว้ไม่ได้</translation>
     </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>ปลั๊กอินนี้คือโปรแกรม %1 ซึ่งไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

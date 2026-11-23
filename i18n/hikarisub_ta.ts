@@ -18280,6 +18280,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>it couldn’t be kept.</source>
         <translation>அதைச் சேமிக்க முடியவில்லை.</translation>
     </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>இந்தச் செருகுநிரல் %1 என்ற நிரல்; அது இந்தக் கணினிக்குக் கிடைக்கவில்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

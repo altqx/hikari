@@ -18146,6 +18146,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>it couldn’t be kept.</source>
         <translation>저장할 수 없습니다.</translation>
     </message>
+    <message>
+        <source>The plugin is the program %1, which isn’t available for this computer.</source>
+        <translation>이 플러그인은 프로그램 %1(이)며, 이 컴퓨터에서는 사용할 수 없습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
