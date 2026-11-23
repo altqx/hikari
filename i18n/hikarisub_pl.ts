@@ -2396,6 +2396,18 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Dokument zmienił się podczas działania makra; nic nie zostało zmienione.</translation>
     </message>
     <message>
+        <source>Checking…</source>
+        <translation>Sprawdzanie…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>Nie można uruchomić na tym zaznaczeniu</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>Funkcja walidacji zatrzymała się z błędem</translation>
+    </message>
+    <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
         <translation>Makro z ostatniego uruchomienia nie jest już wczytane, więc nie można go powtórzyć.</translation>
     </message>
