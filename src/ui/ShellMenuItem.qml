@@ -72,7 +72,7 @@ MenuItem {
     icon.height: 16
 
     contentItem: Loader {
-        active: item !== null || (control.menu !== null && control.menu.hasOpened !== false)
+        active: control.menu !== null && control.menu.hasOpened !== false
         sourceComponent: rowVisuals
     }
     Component {
