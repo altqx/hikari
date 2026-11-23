@@ -190,6 +190,7 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.discordLinkUrl", Text, Updates},
     {"audio.spectrumCurve", IndexChoice, Audio, 0, 0, 3},
     {"audio.timingKeysEverywhere", IndexChoice, Audio, 0, 0, 3},
+    {"autosave.intervalSeconds", Number, General, 5, 3600},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

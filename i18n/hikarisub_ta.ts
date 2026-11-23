@@ -14597,6 +14597,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>AI</translation>
     </message>
     <message>
+        <source>Autosave every</source>
+        <translation>தானியங்கு சேமிப்பு இடைவெளி</translation>
+    </message>
+    <message>
+        <source>seconds</source>
+        <translation>வினாடிகள்</translation>
+    </message>
+    <message>
+        <source>Seconds from a change to its autosave. Range from 5 to 3600</source>
+        <translation>ஒரு மாற்றத்திலிருந்து அதன் தானியங்கு சேமிப்பு வரையிலான வினாடிகள். வரம்பு 5 முதல் 3600 வரை</translation>
+    </message>
+    <message>
         <source>Trusted folders</source>
         <translation>நம்பகமான கோப்புறைகள்</translation>
     </message>
@@ -19193,6 +19205,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>திருத்துதல்</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation>மேலும்</translation>
+    </message>
+    <message>
+        <source>Synch point</source>
+        <translation>ஒத்திசைவுப் புள்ளி</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>புதுப்பிப்பு விவரங்கள்</translation>
+    </message>
+    <message>
         <source>Resolution</source>
         <translation>தெளிவுத்திறன்</translation>
     </message>
@@ -20071,8 +20095,8 @@ because it was edited.</source>
         <translation>வசன வரிகள் (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -25442,6 +25466,10 @@ Styles deleted:
         <translation>அடுத்த கோப்பு</translation>
     </message>
     <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+    </message>
+    <message>
         <source>Choose keyframes file</source>
         <translation>கீஃப்ரேம் கோப்பைத் தேர்ந்தெடு</translation>
     </message>
@@ -25456,10 +25484,6 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
-    </message>
-    <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
