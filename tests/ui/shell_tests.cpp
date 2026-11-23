@@ -16405,8 +16405,8 @@ private slots:
         auto *field = item("gridFilter");
         QVERIFY(field);
         field->forceActiveFocus();
-        QTest::keyClicks(window, "T");
-        QCOMPARE(shell.gridFilterText(), QStringLiteral("T"));
+        typeText(QStringLiteral("O"));
+        QCOMPARE(shell.gridFilterText(), QStringLiteral("O"));
         QTRY_COMPARE(rows->rowCount(), 2);
         QCOMPARE(session->historySize(), steps);
         auto &filter = application->gridFilter();
@@ -16438,7 +16438,7 @@ private slots:
         auto *empty = item("gridEmptyState");
         QVERIFY(!empty->isVisible());
         field->forceActiveFocus();
-        QTest::keyClicks(window, "zz");
+        typeText(QStringLiteral("zz"));
         QTRY_VERIFY(empty->isVisible());
         QCOMPARE(empty->property("text").toString(), QStringLiteral("No Lines match the filter"));
         application->shell().setGridFilterText(QStringLiteral("hre"));
@@ -16459,8 +16459,7 @@ private slots:
         auto &shell = application->shell();
         const auto one = session->document().lines()[0]->id;
         const auto two = session->document().lines()[1]->id;
-        session->setSelection(application::Selection{two, {two}, two, {}});
-        application->editor().reloadFromSession();
+        application->selectLine(two.value);
         shell.setGridFilterText(QStringLiteral("two"));
         QTRY_COMPARE(shell.lines()->rowCount(), 1);
         auto *text = item("lineText");
@@ -16468,7 +16467,7 @@ private slots:
         keysNeverRepeat();
         text->forceActiveFocus();
         QVERIFY(QMetaObject::invokeMethod(text, "selectAll"));
-        QTest::keyClicks(window, "deux");
+        typeText(QStringLiteral("deux"));
         QCOMPARE(shell.lines()->rowCount(), 1);
         QVERIFY(application->editor().commit());
         QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"deux"));
@@ -16476,8 +16475,7 @@ private slots:
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(session->document().lines()[1]->text, std::u8string(u8"two"));
         QCOMPARE(shell.lines()->rowCount(), 1);
-        session->setSelection(application::Selection{one, {one}, one, {}});
-        application->editor().reloadFromSession();
+        application->selectLine(one.value);
         shell.setGridFilterText(QStringLiteral("o"));
         QTRY_COMPARE(shell.lines()->rowCount(), 2);
         shell.setGridFilterText({});
@@ -16493,27 +16491,20 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto &shell = application->shell();
         auto &filter = application->gridFilter();
-        std::set<core::LineId> all;
-        for (const auto *line : session->document().lines())
-            all.insert(line->id);
-        session->setSelection(application::Selection{*all.begin(), all, *all.begin(), {}});
-        application->editor().reloadFromSession();
-        shell.setGridFilterText(QStringLiteral("t"));
+        const auto startOf = [&](int row) { return session->document().lines()[std::size_t(row)]->start.value.microseconds(); };
+        application->selectAllLines();
+        QCOMPARE(session->selection().selected.size(), std::size_t(3));
+        shell.setGridFilterText(QStringLiteral("o"));
         auto restore = qScopeGuard([&] {
             shell.setGridFilterText({});
             filter.setIgnoreInActions(false);
         });
         QTRY_COMPARE(shell.lines()->rowCount(), 2);
+        QCOMPARE(session->selection().selected.size(), std::size_t(3));
         QVERIFY(shell.selectionStatus().contains(QStringLiteral("(1 hidden)")));
 
         QVERIFY(application->copyLines());
-        QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",one")));
-
-        const QVariantMap findE{{QStringLiteral("find"), QStringLiteral("e")},
-                                {QStringLiteral("field"), 0},
-                                {QStringLiteral("mode"), 0},
-                                {QStringLiteral("action"), 0}};
-        QCOMPARE(application->selectLines(findE, false), QStringLiteral("1 lines selected."));
+        QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",three")));
 
         const auto before = application->shiftTimesSettings().settingsMap();
         auto restoreShift = qScopeGuard([&] { application->shiftTimesSettings().setSettingsMap(before); });
@@ -16524,13 +16515,20 @@ private slots:
         settings.insert(QStringLiteral("whichTimes"), 0);
         application->shiftTimesSettings().setSettingsMap(settings);
         QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
-        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000);
-        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 4'000'000);
-
+        QCOMPARE(startOf(0), 2'000'000);
+        QCOMPARE(startOf(1), 4'000'000);
+        QCOMPARE(startOf(2), 5'000'000);
         filter.setIgnoreInActions(true);
-        QCOMPARE(application->selectLines(findE, false), QStringLiteral("2 lines selected."));
         QVERIFY(application->applyShift(QStringLiteral("shift")).isEmpty());
-        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 2'000'000);
+        QCOMPARE(startOf(2), 6'000'000);
+
+        const QVariantMap findE{{QStringLiteral("find"), QStringLiteral("e")},
+                                {QStringLiteral("field"), 0},
+                                {QStringLiteral("mode"), 0},
+                                {QStringLiteral("action"), 0}};
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("2 lines selected."));
+        filter.setIgnoreInActions(false);
+        QCOMPARE(application->selectLines(findE, false), QStringLiteral("1 lines selected."));
         application->editor().discard();
     }
 

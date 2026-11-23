@@ -6571,6 +6571,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         </translation>
     </message>
     <message>
+        <source>No Lines match the filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Line group description</source>
         <translation>Opis grupy linijek</translation>
     </message>
@@ -6953,6 +6957,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Snap to the scene</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter the Grid</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
