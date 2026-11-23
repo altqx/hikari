@@ -190,7 +190,7 @@ Item {
                 function count() { total = ts.shell.shell.lines.rowCount() }
                 visible: ts.shell.shell.activeLineNumber > 0
                 //: The full-screen status row: %1 the active Line's number, %2 how many Lines the file has
-                text: qsTr("Line %1 of %2").arg(ts.shell.shell.activeLineNumber).arg(total)
+                text: qsTr("Line %1 of %2").arg(ts.shell.shell.activeLineNumber, total)
                 color: Theme.muted
                 font.features: { "tnum": 1 }
                 Component.onCompleted: count()
