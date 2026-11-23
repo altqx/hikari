@@ -60,6 +60,14 @@ struct Prepared {
 Prepared prepare(const Ask &ask, const core::LineRecord &line, const Neighbours &neighbours,
                  std::optional<std::pair<std::size_t, std::size_t>> span = std::nullopt);
 
+// Suggest synonyms: `word` is the [first, second) bytes of the Line's text, a word outside its override blocks.
+inline constexpr std::size_t kMaxSynonyms = 8;
+inline constexpr std::size_t kMaxSynonymBytes = 64;
+Prepared prepareSynonyms(const core::LineRecord &line, const Neighbours &neighbours,
+                         std::pair<std::size_t, std::size_t> word);
+// At most kMaxSynonyms replacements in the answer's order, without the word itself, repeats, or tags.
+std::vector<std::u8string> readSynonyms(std::string_view answer, std::u8string_view word);
+
 enum class Outcome { Changed, Same, DroppedTag, Empty };
 struct Answer {
     Outcome outcome = Outcome::Same;

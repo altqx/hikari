@@ -180,6 +180,53 @@ TEST(Marketplace, NewestSkipsRevokedVersionsAndOnesThisApiCannotRun)
     EXPECT_EQ(result->plugins.front().newest(4), nullptr);
 }
 
+std::string perPlatform(std::string_view number, std::string_view platform)
+{
+    hikari::api::Json v = *hikari::api::Json::parse(version(number, 1));
+    std::erase_if(v.asObject(), [](const hikari::api::Json::Member &m) {
+        return m.key == "url" || m.key == "sha256" || m.key == "size";
+    });
+    v["packages"] = *hikari::api::Json::parse(R"({")" + std::string(platform) +
+                                              R"(": {"url": "https://example.com/p.hikariplugin", "sha256": ")" +
+                                              minisign::sha256Hex(kPackage) + R"(", "size": 20}})");
+    return v.dump();
+}
+
+std::string_view otherPlatform()
+{
+    return thisPlatform() == "linux-x64" ? "windows-x64" : "linux-x64";
+}
+
+TEST(Marketplace, AVersionWithPackagesPerPlatformTakesThisComputersOne)
+{
+    auto result = read(index(5, plugin(perPlatform("1.1.0", otherPlatform()) + "," + perPlatform("1.0.0", thisPlatform()))),
+                       comment(5));
+    ASSERT_TRUE(result) << result.error().detail;
+    const Listing &listing = result->plugins.front();
+    EXPECT_FALSE(listing.versions.front().forThisComputer);
+    EXPECT_TRUE(listing.versions.front().url.empty());
+    ASSERT_NE(listing.newest(1), nullptr);
+    EXPECT_EQ(listing.newest(1)->version, "1.0.0");
+    EXPECT_EQ(listing.newest(1)->url, "https://example.com/p.hikariplugin");
+    EXPECT_EQ(listing.newest(1)->size, 20);
+
+    result = read(index(5, plugin(perPlatform("1.0.0", otherPlatform()))), comment(5));
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->plugins.front().newest(1), nullptr);
+}
+
+TEST(Marketplace, AVersionHasOnePackageOrPackagesPerPlatformNotBoth)
+{
+    std::string both = perPlatform("1.0.0", thisPlatform());
+    both.insert(1, R"("url": "https://example.com/a.hikariplugin", "sha256": ")" + minisign::sha256Hex(kPackage) +
+                       R"(", "size": 20, )");
+    EXPECT_EQ(refusal(read(index(5, plugin(both)), comment(5))), Kind::Malformed);
+    std::string neither = perPlatform("1.0.0", thisPlatform());
+    hikari::api::Json v = *hikari::api::Json::parse(neither);
+    std::erase_if(v.asObject(), [](const hikari::api::Json::Member &m) { return m.key == "packages"; });
+    EXPECT_EQ(refusal(read(index(5, plugin(v.dump())), comment(5))), Kind::Malformed);
+}
+
 TEST(Marketplace, ARevocationNamesTheVersionToOfferInstead)
 {
     const std::string revoked = R"(, "revoked": {"reason": "Leaked a token"})";

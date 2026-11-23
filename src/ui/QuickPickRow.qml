@@ -19,12 +19,15 @@ Item {
     required property string tooltip
     required property bool picked
     required property bool firstHeading
+    required property var item
     property bool current: false
     property bool many: false
     readonly property bool heading: kind === "heading"
     readonly property bool unavailable: disabledReason.length > 0
     signal clicked()
     signal toggled()
+    signal buttonPressed(string button)
+    readonly property var itemButtons: current && item && item.buttons ? item.buttons : []
 
     objectName: heading ? "quickPickHeading" + index : "quickPickRow_" + itemId
     height: heading ? 20 : detail.length > 0 ? 40 : 24
@@ -96,9 +99,29 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: 6
         height: 24
+        Row {
+            id: itemButtonRow
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            Repeater {
+                model: row.itemButtons
+                IconToolButton {
+                    required property var modelData
+                    objectName: "quickPickItemButton_" + row.itemId + "_" + modelData.id
+                    width: 22
+                    height: 22
+                    padding: 0
+                    focusPolicy: Qt.NoFocus
+                    iconRole: modelData.icon
+                    text: modelData.tooltip
+                    onClicked: row.buttonPressed(modelData.id)
+                }
+            }
+        }
         Text {
             id: end
-            anchors.right: parent.right
+            anchors.right: itemButtonRow.left
+            anchors.rightMargin: itemButtonRow.width > 0 ? 6 : 0
             anchors.verticalCenter: parent.verticalCenter
             text: [row.trailing, row.shortcut].filter(t => t.length > 0).join("   ")
             textFormat: Text.PlainText
@@ -108,7 +131,7 @@ Item {
             id: name
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, parent.width - end.width - 12)
+            width: Math.min(implicitWidth, parent.width - end.width - itemButtonRow.width - 18)
             text: row.labelMarkup
             textFormat: Text.StyledText
             elide: Text.ElideRight

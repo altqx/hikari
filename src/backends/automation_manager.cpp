@@ -229,6 +229,18 @@ bool AutomationManager::runFilter(const std::string &path, int filterIndex, cons
     return true;
 }
 
+bool AutomationManager::filterConfig(const std::string &path, int filterIndex,
+                                     const application::MacroSnapshot &snapshot)
+{
+    if (m_shuttingDown || busy())
+        return false;
+    LuaScriptHost *h = host(path);
+    if (!h || !h->filterConfig(filterIndex, snapshot))
+        return false;
+    notify();
+    return true;
+}
+
 bool AutomationManager::forceStop(const std::string &path)
 {
     LuaScriptHost *h = host(path);

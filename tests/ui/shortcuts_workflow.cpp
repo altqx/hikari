@@ -57,7 +57,7 @@ protected:
                              spix::KeyModifiers::Control | spix::KeyModifiers::Shift);
                     wait(300ms);
                     observed.push_back(getStringProperty("settingsDialog/settingsHotkeyMapping", "opened"));
-                    mouseClick("settingsDialog/settingsOk");
+                    mouseClick("settingsDialog/settingsClose");
                     wait(500ms);
                     mouseClick("mainWindow/editingGrid");
                     enterKey("mainWindow/editingGrid", Qt::Key_W, spix::KeyModifiers::Control);

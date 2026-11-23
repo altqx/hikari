@@ -858,7 +858,8 @@ private slots:
               R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
                   "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
                                   "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
-                                  "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}]}})");
+                                  "dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}],
+                                  "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}]}})");
         write(folder + QStringLiteral("/main.lua"), "");
         const auto turn = [&](bool on) {
             m_registry[QStringLiteral("com.example.kit")] =
@@ -889,11 +890,14 @@ private slots:
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/dict/pl.aff"))));
         QCOMPARE(QString::fromStdU16String(content.dictionaries[0].dic.u16string()),
                  QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/dict/pl.dic"))));
+        QCOMPARE(content.graphs.size(), 1u);
+        QVERIFY(content.graphs[0].title == u8"Sparkle");
 
         turn(false);
         runtime.sync();
         QVERIFY(application::pluginContent().styleCatalogues.empty());
         QVERIFY(application::pluginContent().karaokePresets.empty());
+        QVERIFY(application::pluginContent().graphs.empty());
         QVERIFY(application::pluginContent().dictionaries.empty());
     }
 
@@ -1063,6 +1067,86 @@ private slots:
         QTRY_COMPARE(opened.count(), 2);
         ui->dismiss(opened.last().at(0).value<app::PluginDialogState *>()->key());
         QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: cancel  3")));
+    }
+
+    void aPluginAsksWithPopupsOnlyWhileItAnswersTheUser()
+    {
+        install(QStringLiteral("com.example.tidy"), QStringLiteral("Tidy"), R"~(
+            local function choose()
+                local picked, why = hikari.quick_pick.ask{title = 'Style',
+                    items = {{id = 'main', label = 'Main'}, {id = 'sign', label = 'Sign'}}}
+                hikari.notify('picked ' .. tostring(picked and picked[1]) .. ' ' .. tostring(why))
+                local name, back = hikari.input_box.ask{prompt = 'Name', back = true}
+                hikari.notify('named ' .. tostring(name) .. ' ' .. tostring(back))
+            end
+            hikari.commands.register('greet', function()
+                local ok, err = pcall(choose)
+                hikari.notify(ok and 'asked' or tostring(err))
+            end)
+            hikari.panels.on('notes', function(e)
+                if e.kind == 'show' then
+                    hikari.panels.render('notes', {kind = 'column', children = {{kind = 'button', id = 'go', text = 'Go'}}})
+                end
+                if e.kind == 'click' and e.widget == 'go' then choose() end
+                if e.kind == 'click' and e.widget == 'live' then
+                    local pick = hikari.quick_pick.open{items = {{id = 'a', label = 'A'}}}
+                    hikari.quick_pick.on(pick, function(p)
+                        if p.kind == 'accept' then
+                            hikari.quick_pick.close(pick)
+                            hikari.notify('then ' .. tostring(hikari.input_box.ask{value = p.items[1]}))
+                        end
+                    end)
+                end
+            end)
+        )~");
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        QSignalSpy noticed(&a->log(), &ui::LogController::noticed);
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        app::PluginUi *ui = runtime.ui();
+        QTRY_VERIFY(runtime.process(QStringLiteral("com.example.tidy"))->state() == PluginProcess::State::Ready);
+
+        QVERIFY(runtime.run(kTidyGreet));
+        QTRY_VERIFY2(texts(noticed).join(u'\n').contains(QStringLiteral("only while it answers the user")),
+                     qPrintable(texts(noticed).join(u'\n')));
+        QVERIFY(!ui->popups()->shown());
+
+        QVERIFY(runtime.run(kTidyGreet, QStringLiteral("palette")));
+        QTRY_VERIFY(ui->popups()->shown());
+        ui->popups()->shown()->dismiss();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: picked nil nil")));
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->kind() == QStringLiteral("box"));
+        ui->popups()->shown()->dismiss();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: asked")));
+        noticed.clear();
+
+        const QString dock = QStringLiteral("plugin:com.example.tidy/notes");
+        ui->setShown(dock, true);
+        QTRY_VERIFY(!ui->panel(dock)->tree().isNull());
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")}, {QStringLiteral("widget"), QStringLiteral("go")}});
+        QTRY_VERIFY(ui->popups()->shown());
+        QCOMPARE(ui->popups()->shown()->pluginName(), QStringLiteral("Tidy"));
+        QCOMPARE(ui->popups()->shown()->items().size(), 2);
+        ui->popups()->shown()->accept({QStringLiteral("sign")});
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: picked sign nil")));
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->kind() == QStringLiteral("box"));
+        ui->popups()->shown()->goBack();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: named nil back")));
+
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")}, {QStringLiteral("widget"), QStringLiteral("live")}});
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->live());
+        ui->popups()->shown()->accept({QStringLiteral("a")});
+        QTRY_VERIFY(ui->popups()->shown() && ui->popups()->shown()->kind() == QStringLiteral("box"));
+        QCOMPARE(ui->popups()->shown()->value(), QStringLiteral("a"));
+        ui->popups()->shown()->edit(QStringLiteral("ab"));
+        ui->popups()->shown()->accept();
+        QTRY_VERIFY(texts(noticed).contains(QStringLiteral("Tidy: then ab")));
+
+        ui->send(dock, {{QStringLiteral("kind"), QStringLiteral("click")}, {QStringLiteral("widget"), QStringLiteral("go")}});
+        QTRY_VERIFY(ui->popups()->shown());
+        runtime.forceStop(QStringLiteral("com.example.tidy"));
+        QTRY_VERIFY(!ui->popups()->shown());
     }
 
     void pluginsHandleTheSameEventSideBySide()

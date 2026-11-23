@@ -88,6 +88,10 @@ public:
     // The running unit passed stillWorkingMs and isn't a job.
     bool stillWorking() const { return m_stillWorking; }
     bool inTimer() const { return m_running && m_running->kind == Unit::Kind::Timer; }
+    // The running unit answers the user: a command run with context.via other than api and ai, or a click in the
+    // plugin's own panel or dialog (a dialog's button too), or an accept, button or back of its own live quick pick or
+    // input box. A job keeps its command's answer.
+    bool answersUser() const;
     // What the running unit is: "load", "timer", or the command's or event's name; empty when idle.
     QString work() const;
     std::size_t timerCount() const { return m_timers.size(); }
@@ -132,6 +136,8 @@ private:
         std::unique_ptr<QTimer> clock;
         bool repeat = false;
     };
+    static bool isUserClick(const Unit &unit);
+    static bool isPopupAnswer(const Unit &unit);
     bool enqueue(Unit unit);
     void failPending(const QString &message);
     void startHelper();

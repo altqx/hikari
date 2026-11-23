@@ -193,6 +193,28 @@ private slots:
         QCOMPARE(read(user.filePath(QStringLiteral("automation/autoload/a.lua"))), QByteArray("a 4"));
     }
 
+    void aLargeReadOnlyBundledFileSeedsWhole()
+    {
+        QTemporaryDir program, user;
+        QVERIFY(program.isValid() && user.isValid());
+        const UserFolder folder(user.path(), user.filePath(QStringLiteral("cache")));
+        const QString dic = QStringLiteral("Dictionary/en_GB.dic");
+        QByteArray words;
+        for (int i = 0; words.size() < 300'000; ++i)
+            words += "word" + QByteArray::number(i) + '\n';
+        bundle(program.path(), {{dic, words}});
+        const QString bundled = program.filePath(dic);
+        QVERIFY(QFile::setPermissions(bundled, QFileDevice::ReadOwner | QFileDevice::ReadUser));
+
+        const UserFolder::SeedReport r = folder.seed(program.path());
+        QVERIFY(QFile::setPermissions(bundled, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+        QCOMPARE(r.copied, QStringList{QStringLiteral("dictionaries/en_GB.dic")});
+        const QString seeded = user.filePath(QStringLiteral("dictionaries/en_GB.dic"));
+        QCOMPARE(read(seeded), words);
+        QVERIFY(QFileInfo(seeded).isWritable());
+        QVERIFY(!QFileInfo::exists(seeded + QStringLiteral(".hikari-part")));
+    }
+
     void aFileTheBundleDroppedGoesUnlessChanged()
     {
         QTemporaryDir program, user;
