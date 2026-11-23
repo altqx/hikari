@@ -146,13 +146,25 @@ ApplicationWindow {
             closeReview.review(rows)
     }
     function openSubtitles(path) {
-        const result = root.app.reviewOpen(path)
+        root.continueOpen(root.app.reviewOpen(path))
+    }
+    function openPluginSubtitles(path, format) {
+        root.continueOpen(root.app.reviewOpenAs(path, format))
+    }
+    function continueOpen(result) {
         if (!result.ok || result.done)
             return
         else if (result.rows.length === 0)
             root.app.finishClose()
         else
             closeReview.review(result.rows)
+    }
+    Connections {
+        target: root.app
+        function onPluginOpenReviewed(shellWindow, result) {
+            if (shellWindow === root.shellWindow)
+                root.continueOpen(result)
+        }
     }
     function openFromExplorer(path, newTab) {
         const open = root.app.tabOfFile(root.shellWindow, path)
@@ -8459,8 +8471,7 @@ ApplicationWindow {
                 dockName: root.engineName("Styles")
                 minimumBodySize: Qt.size(180, 120)
                 anchors.fill: parent
-                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Styles", "Styles: %1").arg(shell.editingTitle)
-                                              : qsTranslate("HikariSub.Styles", "Styles")
+                title: qsTranslate("HikariSub.Styles", "Styles")
                 accessibleName: qsTranslate("HikariSub.Styles", "Styles")
                 StylesPanel {
                     id: stylesTool
@@ -9414,7 +9425,7 @@ ApplicationWindow {
     FileChooser {
         id: videoDialog
         objectName: "videoOpenDialog"
-        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)"), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("video", selectedFile)
             if (root.videoFullscreen.active)
@@ -9570,20 +9581,27 @@ ApplicationWindow {
         id: openDialog
         objectName: "subtitlesOpenDialog"
         title: qsTranslate("HikariSub.Documents", "Open subtitles")
+        readonly property var builtInFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+                                               qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
+                                               qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
+                                               qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)")]
+        property var pluginFormats: []
         function show() {
             const folder = root.pickerFolder("subtitles")
             if (folder.length > 0)
                 currentFolder = folder
+            pluginFormats = root.app.pluginOpenFormats()
+            nameFilters = builtInFilters.concat(root.app.pluginOpenFilters(),
+                                                [qsTranslate("HikariSub.Documents", "All files (*)")])
             open()
         }
-        nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
-                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
-                      qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
-                      qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
-                      qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
-            root.openChosenSubtitles(root.app.localPath(selectedFile))
+            const plugin = pluginFormats[selectedNameFilter.index - builtInFilters.length]
+            if (selectedNameFilter.index >= builtInFilters.length && plugin !== undefined)
+                root.openPluginSubtitles(root.app.localPath(selectedFile), plugin)
+            else
+                root.openChosenSubtitles(root.app.localPath(selectedFile))
         }
     }
 

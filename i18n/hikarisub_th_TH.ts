@@ -3789,6 +3789,42 @@ Output device: %2</source>
         <source>Import</source>
         <translation>นำเข้า</translation>
     </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the plugin that writes this format isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the document couldn’t be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t save.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be read: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is larger than 48 MiB, so no plugin can open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t open this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
@@ -4769,6 +4805,14 @@ Output device: %2</source>
     <message>
         <source>Close</source>
         <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t export this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t export.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14498,6 +14542,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>AI</translation>
     </message>
     <message>
+        <source>Autosave every</source>
+        <translation>บันทึกอัตโนมัติทุก</translation>
+    </message>
+    <message>
+        <source>seconds</source>
+        <translation>วินาที</translation>
+    </message>
+    <message>
+        <source>Seconds from a change to its autosave. Range from 5 to 3600</source>
+        <translation>จำนวนวินาทีนับจากการแก้ไขจนถึงการบันทึกอัตโนมัติ ช่วง 5 ถึง 3600</translation>
+    </message>
+    <message>
         <source>Trusted folders</source>
         <translation>โฟลเดอร์ที่เชื่อถือ</translation>
     </message>
@@ -19042,6 +19098,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>แก้ไข</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation>เพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Synch point</source>
+        <translation>จุดซิงก์</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>รายละเอียดการอัปเดต</translation>
+    </message>
+    <message>
         <source>Resolution</source>
         <translation>ความละเอียด</translation>
     </message>
@@ -19913,8 +19981,8 @@ because it was edited.</source>
         <translation>คำบรรยาย (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -21644,10 +21712,6 @@ Styles deleted:
     <message>
         <source>Styles</source>
         <translation>สไตล์</translation>
-    </message>
-    <message>
-        <source>Styles: %1</source>
-        <translation>สไตล์: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>
@@ -25232,6 +25296,10 @@ Styles deleted:
         <translation>ไฟล์ถัดไป</translation>
     </message>
     <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+    </message>
+    <message>
         <source>Choose keyframes file</source>
         <translation>เลือกไฟล์คีย์เฟรม</translation>
     </message>
@@ -25246,10 +25314,6 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
-    </message>
-    <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

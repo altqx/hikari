@@ -3789,6 +3789,42 @@ Output device: %2</source>
         <source>Import</source>
         <translation>가져오기</translation>
     </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 could not be saved: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the plugin that writes this format isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the document couldn’t be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t save.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be read: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is larger than 48 MiB, so no plugin can open it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 couldn’t open this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it isn’t running.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>
@@ -4769,6 +4805,14 @@ Output device: %2</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t export this file: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 isn’t running, so it can’t export.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -14498,6 +14542,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>AI</translation>
     </message>
     <message>
+        <source>Autosave every</source>
+        <translation>자동 저장 간격</translation>
+    </message>
+    <message>
+        <source>seconds</source>
+        <translation>초</translation>
+    </message>
+    <message>
+        <source>Seconds from a change to its autosave. Range from 5 to 3600</source>
+        <translation>변경 후 자동 저장까지의 초. 범위는 5부터 3600까지</translation>
+    </message>
+    <message>
         <source>Trusted folders</source>
         <translation>신뢰하는 폴더</translation>
     </message>
@@ -19042,6 +19098,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>편집</translation>
     </message>
     <message>
+        <source>More</source>
+        <translation>더 보기</translation>
+    </message>
+    <message>
+        <source>Synch point</source>
+        <translation>동기화 지점</translation>
+    </message>
+    <message>
+        <source>Update details</source>
+        <translation>업데이트 내용</translation>
+    </message>
+    <message>
         <source>Resolution</source>
         <translation>해상도</translation>
     </message>
@@ -19913,8 +19981,8 @@ because it was edited.</source>
         <translation>자막 (*.ass *.ssa *.srt *.sub *.txt *.mpl)</translation>
     </message>
     <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -21644,10 +21712,6 @@ Styles deleted:
     <message>
         <source>Styles</source>
         <translation>스타일</translation>
-    </message>
-    <message>
-        <source>Styles: %1</source>
-        <translation>스타일: %1</translation>
     </message>
     <message>
         <source>Delete unused styles</source>
@@ -25232,6 +25296,10 @@ Styles deleted:
         <translation>다음 파일</translation>
     </message>
     <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
+        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+    </message>
+    <message>
         <source>Choose keyframes file</source>
         <translation>키 프레임 파일 선택</translation>
     </message>
@@ -25246,10 +25314,6 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
-    </message>
-    <message>
-        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
-        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

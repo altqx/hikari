@@ -745,14 +745,8 @@
                   ]
                 },
                 "format": {
-                  "enum": [
-                    "ass",
-                    "srt",
-                    "tmplayer",
-                    "microdvd",
-                    "mpl2",
-                    "text"
-                  ]
+                  "type": "string",
+                  "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
                 },
                 "revision": {
                   "$ref": "#/$defs/Revision"
@@ -813,14 +807,8 @@
             ]
           },
           "format": {
-            "enum": [
-              "ass",
-              "srt",
-              "tmplayer",
-              "microdvd",
-              "mpl2",
-              "text"
-            ]
+            "type": "string",
+            "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
           },
           "revision": {
             "$ref": "#/$defs/Revision"
@@ -4343,6 +4331,64 @@
         },
         "required": [
           "ran"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "formats.list",
+      "access": "read",
+      "summary": "The subtitle formats HikariSub can open and export, built-in and from plugins.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "formats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ass, srt, … or plugin:<plugin id>/<format id>."
+                },
+                "title": {
+                  "type": "string"
+                },
+                "extensions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "import": {
+                  "type": "boolean"
+                },
+                "export": {
+                  "type": "boolean"
+                },
+                "plugin": {
+                  "type": "string",
+                  "description": "The plugin's id, for a plugin format."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "extensions",
+                "import",
+                "export"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "formats"
         ],
         "additionalProperties": false
       }

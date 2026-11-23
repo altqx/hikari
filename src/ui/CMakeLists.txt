@@ -92,8 +92,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/setting_labels.cpp
         -P ${CMAKE_CURRENT_SOURCE_DIR}/setting_labels.cmake
     DEPENDS ${hikari_setting_pages} ${CMAKE_CURRENT_SOURCE_DIR}/setting_labels.cmake VERBATIM)
 target_sources(hikari_ui PRIVATE setting_labels.h ${CMAKE_CURRENT_BINARY_DIR}/setting_labels.cpp)
-set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
-list(APPEND hikari_ui_qml_files StatusBar.qml StatusHelp.qml)
+set_source_files_properties(StatusHelp.qml TypeRoles.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+list(APPEND hikari_ui_qml_files StatusBar.qml StatusHelp.qml TypeRoles.qml)
 set_source_files_properties(MenuKeys.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 list(APPEND hikari_ui_qml_files MenuKeys.qml TextMenu.qml TextMenuItem.qml)
 target_sources(hikari_ui PRIVATE icon_theme.cpp icon_theme.h)

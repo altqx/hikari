@@ -39,8 +39,8 @@ template <std::size_t N> bool among(const std::array<std::string_view, N> &list,
 }
 
 constexpr std::array<std::string_view, 6> kSubtitles{"ass", "ssa", "srt", "sub", "txt", "mpl"};
-constexpr std::array<std::string_view, 15> kVideos{"avi", "mp4", "mkv",  "ogm", "wmv", "asf", "rmvb", "rm",
-                                                   "3gp", "ts",  "m2ts", "m4v", "flv", "webm", "mov"};
+constexpr std::array<std::string_view, 16> kVideos{"avi", "mp4", "mkv",  "ogm", "wmv", "asf", "rmvb", "rm",
+                                                   "3gp", "ts",  "m2ts", "m4v", "flv", "webm", "mov", "y4m"};
 constexpr std::array<std::string_view, 12> kAudio{"wav", "w64", "flac", "ac3", "eac3", "aac",
                                                   "ogg", "opus", "mp3", "m4a", "mka", "dts"};
 constexpr std::array<std::string_view, 4> kFonts{"ttf", "otf", "ttc", "pfb"};
