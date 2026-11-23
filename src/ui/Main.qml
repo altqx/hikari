@@ -9580,14 +9580,15 @@ ApplicationWindow {
                                                qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.krc *.qrc *.ttml)"),
                                                qsTranslate("HikariSub.Documents", "YouTube timed text (*.ytt *.srv3)"),
                                                qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)")]
+        readonly property string allFilesFilter: qsTranslate("HikariSub.Documents", "All files (*)")
         property var pluginFormats: []
+        nameFilters: builtInFilters.concat([allFilesFilter])
         function show() {
             const folder = root.pickerFolder("subtitles")
             if (folder.length > 0)
                 currentFolder = folder
             pluginFormats = root.app.pluginOpenFormats()
-            nameFilters = builtInFilters.concat(root.app.pluginOpenFilters(),
-                                                [qsTranslate("HikariSub.Documents", "All files (*)")])
+            nameFilters = builtInFilters.concat(root.app.pluginOpenFilters(), [allFilesFilter])
             open()
         }
         onAccepted: {
