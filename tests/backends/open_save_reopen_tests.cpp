@@ -91,7 +91,8 @@ TEST_F(Reopen, CopiedFileOpenEditSaveReopen)
     std::string expected = original;
     expected.replace(expected.find(",,Gate"), 6, ",,Gate, edited");
     const std::string lastProperty = "YCbCr Matrix: TV.601\r\n";
-    expected.insert(expected.find(lastProperty) + lastProperty.size(), "Active Line: 0\r\n");
+    expected.insert(expected.find(lastProperty) + lastProperty.size(),
+                    "Active Line: 0\r\n\r\n[Aegisub Project Garbage]\r\nActive Line: 0\r\n\r\n");
     EXPECT_EQ(slurp(dir / "copy.ass"), expected);
 
     ASSERT_TRUE(service.close(doc));

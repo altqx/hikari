@@ -272,9 +272,11 @@ private slots:
         const auto steps = s->historySize();
         QVERIFY(a.saveAs(path));
         a.waitForWrites();
-        QVERIFY(readAll(path).startsWith("[Script Info]\r\nActive Line: 1\r\n") ||
-                readAll(path).startsWith("[Script Info]\nActive Line: 1\n"));
+        const QByteArray saved = readAll(path).replace("\r\n", "\n");
+        QVERIFY2(saved.contains("; https://hikarisub.org/\nActive Line: 1\n"), saved.constData());
+        QVERIFY2(saved.contains("\n[Aegisub Project Garbage]\nActive Line: 1\n"), saved.constData());
         QVERIFY(s->document().scriptInfo(application::kActiveLineKey) == std::u8string(u8"1"));
+        QVERIFY(s->document().projectGarbage(application::kActiveLineKey) == std::u8string(u8"1"));
         QCOMPARE(s->historySize(), steps);
         QVERIFY(!s->isDirty());
     }
