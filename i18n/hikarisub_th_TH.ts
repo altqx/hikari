@@ -258,12 +258,32 @@
         <translation>เปลี่ยนโหมด</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>โมเดลปัจจุบัน</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>ค่าเริ่มต้นของเอเจนต์</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>ล่าสุด</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>กำลังโหลดโมเดล…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>โหลดโมเดลไม่ได้</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>การตั้งค่า › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -730,10 +750,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>การตั้งค่า › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
     </message>
@@ -896,6 +912,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>ใช้เวลานานกว่า 30 วินาที</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>เอเจนต์ไม่ได้ส่งรายการมา</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย %1…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>เพิ่มคีย์สำหรับ %1…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>ข้อเสนอ: %1</translation>
     </message>
@@ -1024,6 +1056,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>เปิด AI</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>ค้นหาโมเดล</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>ไม่มีโมเดลที่ตรงกัน</translation>
     </message>
 </context>
 <context>

@@ -324,11 +324,43 @@ TEST_F(AiSettingsTest, TestingAProviderShowsTheProvidersAnswer)
     page.test(QStringLiteral("openai"));
     ASSERT_TRUE(waitFor([&] { return row(page, 0).value(QStringLiteral("state")).toString() == QLatin1String("failed"); }));
     EXPECT_EQ(row(page, 0).value(QStringLiteral("error")).toString(), QStringLiteral("key"));
+    EXPECT_TRUE(page.lacksKey(QStringLiteral("openai")));
 
     chain.keys["openai"] = "sk";
     page.refreshModels();
     ASSERT_TRUE(waitFor([&] { return row(page, 0).value(QStringLiteral("state")).toString() == QLatin1String("ok"); }));
+    EXPECT_FALSE(page.lacksKey(QStringLiteral("openai")));
     EXPECT_EQ(row(page, 0).value(QStringLiteral("models")).toInt(), 1);
+}
+
+TEST_F(AiSettingsTest, ARoleRowsPickerListsOnlyProvidersModelsAndVisionOnlyThoseThatReadImages)
+{
+    ai::Provider google = ai::presetProvider(ai::Preset::Gemini, "gemini", "Google Gemini");
+    google.models = {{.id = "flash", .name = "Flash"}, {.id = "pro", .name = "Pro"}};
+    ai::Provider openRouter = ai::presetProvider(ai::Preset::OpenRouter, "openrouter", "OpenRouter");
+    openRouter.models = {{.id = "text/only", .name = "Text only"}};
+    stored.providers = {google, openRouter};
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    const auto ids = [&](const QString &role, const QString &current) {
+        QStringList out;
+        for (const QVariant &item : page.rolePickerItems(role, current, {}))
+            out << item.toMap().value(QStringLiteral("id")).toString();
+        return out;
+    };
+    const auto icon = [&](const QString &role, const QString &current, const QString &id) {
+        for (const QVariant &item : page.rolePickerItems(role, current, {}))
+            if (item.toMap().value(QStringLiteral("id")).toString() == id)
+                return item.toMap().value(QStringLiteral("icon")).toString();
+        return QString();
+    };
+    EXPECT_EQ(ids(QStringLiteral("chat"), {}),
+              (QStringList{QStringLiteral("gemini\tflash"), QStringLiteral("gemini\tpro"), QStringLiteral("openrouter\ttext/only")}));
+    EXPECT_EQ(ids(QStringLiteral("vision"), {}),
+              (QStringList{QStringLiteral("empty"), QStringLiteral("gemini\tflash"), QStringLiteral("gemini\tpro")}));
+    EXPECT_EQ(icon(QStringLiteral("vision"), {}, QStringLiteral("empty")), QStringLiteral("karaoke-check"));
+    EXPECT_EQ(icon(QStringLiteral("reviewer"), QStringLiteral("gemini\tpro"), QStringLiteral("gemini\tpro")), QStringLiteral("karaoke-check"));
+    EXPECT_EQ(icon(QStringLiteral("reviewer"), QStringLiteral("gemini\tpro"), QStringLiteral("empty")), QString());
 }
 
 TEST_F(AiSettingsTest, RoleModelsChangeOnlyWhenApplied)

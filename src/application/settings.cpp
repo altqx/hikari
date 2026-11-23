@@ -474,6 +474,7 @@ std::vector<SettingDefinition> &definitions()
         {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         {"ai.agent.models", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"ai.models.recent", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
         {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},

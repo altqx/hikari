@@ -439,6 +439,7 @@ if(HIKARI_AI_SIDECAR)
         HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_ui_ai_mcp_review_tests hikari_ai_sidecar)
 endif()
+hikari_add_gtest(hikari_ui_model_picker_tests SOURCES model_picker_tests.cpp LIBRARIES hikari_composition LABELS ui)
 hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
     LIBRARIES hikari_composition Qt6::Test Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"

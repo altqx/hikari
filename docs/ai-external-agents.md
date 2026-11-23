@@ -10,7 +10,7 @@ A thread can run on an agent the user already has, instead of Hikari's own loop 
 
 Claude runs through the Claude Agent SDK, on the user's own `claude` and its login. Hikari never starts, reads, stores or relays that login.
 
-- **Picking it.** When Qt finds `claude` on `PATH`, the panel's model menu lists **Claude Code** first. A thread on it has the model `agent:claude`, which Qt sends as `session/new`'s `agent`. Such a thread needs no provider: it uses the same sidecar as the MCP server.
+- **Picking it.** When Qt finds `claude` on `PATH`, the panel's model picker lists **Claude Code** first. A thread on it has the model `agent:claude`, which Qt sends as `session/new`'s `agent`. Such a thread needs no provider: it uses the same sidecar as the MCP server.
 - **One query per thread.** `session/new` with `"agent": "claude"` opens the session. Its first `session/prompt` starts one long-running query, and every later turn of the thread goes into the same query. When `claude` exits, the next turn starts a new query that resumes Claude's session.
 - **Only Hikari's tools.** The query runs with:
   - `tools: []`, so Claude's built-in tools are off;
@@ -36,7 +36,7 @@ Each version is fetched once. The SDK's `sdk.mjs` bundles what it needs, so its 
 
 Codex runs as `codex app-server`, on the user's own `codex` and a ChatGPT sign-in that belongs to HikariSub.
 
-- **Picking it.** When Qt finds `codex` on `PATH`, the model menu lists **Codex** after Claude Code. A thread on it has the model `agent:codex`.
+- **Picking it.** When Qt finds `codex` on `PATH`, the model picker lists **Codex** after Claude Code. A thread on it has the model `agent:codex`.
 - **Its own home and sign-in.** Qt starts Codex with `CODEX_HOME` set to `ai/agents/codex/home`, never `~/.codex`. Before the first Codex process starts, Qt writes that home's `auth.json` (readable only by the user) from HikariSub's sign-in in the keychain (`codex-chatgpt`, from Settings › AI). While Codex runs, only Codex refreshes the tokens. After the last Codex process exits, Qt puts the refreshed tokens back in the keychain and deletes the file. With no sign-in, Codex doesn't start. A file left behind for the same account is newer than the keychain, so Qt keeps it. If the user signed out while Codex ran, they stay signed out.
 - **A private tools channel.** For each Codex process, Qt opens an MCP server with a token of its own.
   - **Linux:** the server is on `127.0.0.1` with a random port. Codex gets it as `-c mcp_servers.hikari.url=…` and `bearer_token_env_var="HIKARI_MCP_TOKEN"`.
@@ -52,7 +52,7 @@ Codex runs as `codex app-server`, on the user's own `codex` and a ChatGPT sign-i
 
 Any agent that speaks the [Agent Client Protocol](https://agentclientprotocol.com) over stdio can run Hikari's agent loop: OpenCode (`opencode acp`), Antigravity (`agy acp`) and the user's own agents from Settings › AI › External agents.
 
-- **Picking one.** The model menu lists each ACP agent Qt finds after Claude Code and Codex. A thread on one has the model `agent:acp:<id>`: `opencode`, `antigravity`, or `custom-…` for the user's own agents.
+- **Picking one.** The model picker lists each ACP agent Qt finds after Claude Code and Codex. A thread on one has the model `agent:acp:<id>`: `opencode`, `antigravity`, or `custom-…` for the user's own agents.
 - **Hikari's tools only.** Qt's guard puts Hikari's tools in every `session/new` and `session/load` as the agent's only MCP server. The guard also sets the session's folder and drops extra folders. It tells the agent the client has no file system and no terminal, and refuses any call for them. When the agent says it takes HTTP MCP servers (`mcpCapabilities.http`), it gets the channel itself: `http://127.0.0.1:<port>/mcp` with the token as a `Bearer` header. Otherwise it gets the bridge: `hikarisub --mcp --channel-url <url>` over stdio, with the token in `HIKARI_MCP_TOKEN`. The bridge only relays to `127.0.0.1` and exits when its stdin closes or the channel goes away. On Windows every ACP agent gets the bridge, as `hikarisub --mcp --channel <pipe>`, to a pipe only its own AppContainer may open, as for Codex. Permission requests are allowed for Hikari's own tools only. Every other request is rejected.
 - **A sandbox of its own.** The agent has the network, but it can write only to its own state folders and a private work folder under `ai/agents/`. OpenCode writes to its XDG folders (`~/.config/opencode`, `~/.local/share/opencode`, `~/.cache/opencode`, `~/.local/state/opencode`). A custom agent gets `ai/agents/custom/<id>` and nothing else, and that folder is its home too.
 - **Antigravity's own profile.** Qt runs `agy acp --gemini-dir ai/agents/antigravity/gemini --app-data-dir app-data --disable-telemetry --include-default-customizations=false`, with `HOME` set inside the same profile, so agy never reads `~/.gemini`. Qt never passes `--dangerously-skip-permissions` or `--ide-mcp-port`. Settings › AI asks for agy 1.5.0 or newer (`agy update`).

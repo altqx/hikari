@@ -259,12 +259,32 @@
         <translation>பயன்முறையை மாற்று</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>தற்போதைய மாதிரி</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>முகவரின் இயல்புநிலை</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>சமீபத்தியவை</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>மாதிரிகளை ஏற்றுகிறது…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>மாதிரிகளை ஏற்ற முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்க</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>அமைப்புகள் › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -739,10 +759,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>அமைப்புகள் › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>புதிய இழைகளுக்கான இயல்புநிலை</translation>
     </message>
@@ -906,6 +922,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>இதற்கு 30 வினாடிகளுக்கு மேல் ஆனது.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>முகவர் பட்டியலை அனுப்பவில்லை.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>%1 மூலம் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>%1 க்கான விசையைச் சேர்…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>முன்மொழிவு: %1</translation>
     </message>
@@ -1037,6 +1069,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>AI ஐ இயக்கு</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>மாதிரிகளைத் தேடு</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>பொருந்தும் மாதிரிகள் இல்லை</translation>
     </message>
 </context>
 <context>

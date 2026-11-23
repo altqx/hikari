@@ -260,12 +260,32 @@
         <translation>Zmień tryb</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>bieżący model</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>Domyślny model agenta</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>Ostatnie</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>Wczytywanie modeli…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>Nie udało się wczytać modeli</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>Ustawienia › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -748,10 +768,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>Ustawienia › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>Domyślny dla nowych wątków</translation>
     </message>
@@ -916,6 +932,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>Trwało to dłużej niż 30 sekund.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>Agent nie przysłał listy.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>Zaloguj się przez %1…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>Dodaj klucz dla %1…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>Propozycja: %1</translation>
     </message>
@@ -1050,6 +1082,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>Włącz AI</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>Szukaj modeli</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>Brak pasujących modeli</translation>
     </message>
 </context>
 <context>

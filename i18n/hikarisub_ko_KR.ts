@@ -258,12 +258,32 @@
         <translation>모드 변경</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>현재 모델</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>에이전트 기본값</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>최근</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>모델을 불러오는 중…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>모델을 불러오지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>설정 › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -730,10 +750,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>설정 › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>새 스레드 기본값</translation>
     </message>
@@ -896,6 +912,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>30초 넘게 걸렸습니다.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>에이전트가 목록을 보내지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>%1로 로그인…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>%1 키 추가…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>제안: %1</translation>
     </message>
@@ -1024,6 +1056,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>AI 켜기</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>모델 검색</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>일치하는 모델 없음</translation>
     </message>
 </context>
 <context>
