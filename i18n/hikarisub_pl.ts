@@ -10797,12 +10797,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Macierz YCbCr wideo (%1) różni się od macierzy napisów (%2).</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo. Jeśli kolory napisów dopasowano do wideo %1, przekonwertuj je, aby wyglądały tak samo w tym wideo.</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo.</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>Przekonwertuj kolory i ustaw %1</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14546,6 +14554,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>Zachowaj macierz napisów</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>Przekonwertuj kolory i ustaw jak w wideo</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>

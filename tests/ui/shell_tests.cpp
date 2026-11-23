@@ -36839,7 +36839,7 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[Events]\n"
                     "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                    "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,line\n");
+                    "Dialogue: 0,0:00:00.00,0:00:02.00,Default,,0,0,0,,{\\c&H0000FF&}line\n");
         }
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -36896,6 +36896,21 @@ private slots:
         }, 500));
         QVERIFY(info(u8"YCbCr Matrix").isEmpty());
         QCOMPARE(application::sessionVideoMatrix(*session), "TV.601");
+
+        QVERIFY(application::setMatrix(*session, "TV.601"));
+        QVERIFY(application->video().reloadVideo());
+        QVERIFY(asked("YCbCr matrix mismatch"));
+        const auto choices = box->property("choices").toList();
+        QCOMPARE(choices.size(), 3);
+        QCOMPARE(choices.at(1).toMap().value(QStringLiteral("isDefault")).toBool(), true);
+        QCOMPARE(choices.at(2).toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Convert colours and set to TV.709"));
+        answer("convert", true);
+        QTRY_COMPARE(info(u8"YCbCr Matrix"), QStringLiteral("TV.709"));
+        QCOMPARE(session->history().back().name, std::string(application::kMatrixConversionStep));
+        QVERIFY(session->document().lines().front()->text == u8"{\\c&H0019FF&}line");
+        QCOMPARE(application->settingsStore()->integer("video.matrixMismatch"),
+                 int(application::VideoPropertyAction::ConvertColours));
         application->editor().discard();
     }
 

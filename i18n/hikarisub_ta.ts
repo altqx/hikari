@@ -10697,12 +10697,20 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவின் YCbCr மேட்ரிக்ச் (%1) வசன வரிகளுடையதிலிருந்து (%2) வேறுபடுகிறது.</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>இந்த வீடியோவின் வண்ணங்கள், வசன வரிகள் உருவாக்கப்பட்ட வீடியோவின் வண்ணங்களைப் போலவே தோன்றினால், வசன வரிகளின் மேட்ரிக்சை வீடியோவினுடையதற்கு அமைக்கவும். வசன வரிகளின் வண்ணங்கள் %1 வீடியோவுக்குப் பொருத்தப்பட்டிருந்தால், இந்த வீடியோவிலும் அவை அப்படியே தோன்ற அவற்றை மாற்றவும்.</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>இந்த வீடியோவின் வண்ணங்கள், வசன வரிகள் உருவாக்கப்பட்ட வீடியோவின் வண்ணங்களைப் போலவே தோன்றினால், வசன வரிகளின் மேட்ரிக்சை வீடியோவினுடையதற்கு அமைக்கவும்.</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>%1 ஐ வை</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>வண்ணங்களை மாற்றி %1 ஆக அமை</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14430,6 +14438,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>வசன வரிகளுடையதை வை</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>வண்ணங்களை மாற்றி வீடியோவினுடையதற்கு அமை</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>

@@ -10597,12 +10597,20 @@ Failed to copy %2 fonts.</source>
         <translation>เมทริกซ์ YCbCr ของวิดีโอ (%1) ต่างจากของคำบรรยาย (%2)</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>หากสีของวิดีโอนี้ดูเหมือนกับสีของวิดีโอที่ใช้ทำคำบรรยาย ให้ตั้งเมทริกซ์ของคำบรรยายเป็นค่าของวิดีโอ หากสีของคำบรรยายถูกปรับให้เข้ากับวิดีโอ %1 ให้แปลงสีเพื่อให้ดูเหมือนเดิมบนวิดีโอนี้</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>หากสีของวิดีโอนี้ดูเหมือนกับสีของวิดีโอที่ใช้ทำคำบรรยาย ให้ตั้งเมทริกซ์ของคำบรรยายเป็นค่าของวิดีโอ</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>คง %1 ไว้</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>แปลงสีแล้วตั้งเป็น %1</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14314,6 +14322,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>คงค่าของคำบรรยายไว้</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>แปลงสีแล้วตั้งเป็นค่าของวิดีโอ</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>

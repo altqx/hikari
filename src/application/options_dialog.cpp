@@ -146,7 +146,7 @@ constexpr OptionsBinding kBindings[] = {
     {"ai.promptCaching", Check, Ai},
     {"video.handleSize", Number, Video, 50, 400},
     {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
-    {"video.matrixMismatch", IndexChoice, Video, 0, 0, 3},
+    {"video.matrixMismatch", IndexChoice, Video, 0, 0, 4},
     {"video.missingLayoutRes", IndexChoice, Video, 0, 0, 4},
     {"video.layoutResMismatch", IndexChoice, Video, 0, 0, 3},
     {"video.untaggedMatrixWarning", Check, Video},
