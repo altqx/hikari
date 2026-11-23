@@ -222,7 +222,7 @@ Popup {
                 anchors.leftMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
                 width: visible ? 16 : 0
-                iconRole: "notice-" + (box.severity.length > 0 ? box.severity : "info")
+                iconRole: box.severity === "error" ? "notice-error" : box.severity === "warning" ? "notice-warning" : "notice-info"
             }
             Text {
                 id: lineText
