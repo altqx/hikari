@@ -17576,6 +17576,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>번역 모드가 아닐 때만 작동합니다</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>패키지에 이 컴퓨터용 프로그램 %1(이)가 없습니다.</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>%2에서 %1(을)를 다운로드합니다(%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>이 컴퓨터에서 사용할 수 없음</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>프로그램</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>%1: 이 컴퓨터에서 사용할 수 없음</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>%1: 다운로드되지 않음</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>%1 다운로드 중…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>지금 다운로드</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>%1에 필요한 프로그램을 다운로드합니다</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>프로그램을 다운로드하지 않았습니다: “플러그인의 인터넷 연결 허용”이 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>%1(을)를 다운로드하지 못했습니다: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>플러그인이 지정한 파일이 아닙니다.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>압축을 풀 수 없습니다(%1).</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>%1(이)가 들어 있지 않습니다.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>저장할 수 없습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

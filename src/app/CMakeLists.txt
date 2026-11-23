@@ -47,6 +47,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     plugin_manager.cpp include/hikari/app/plugin_manager.h
     plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
     plugin_programs.cpp include/hikari/app/plugin_programs.h
+    plugin_program_downloads.cpp include/hikari/app/plugin_program_downloads.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_nodes.cpp include/hikari/app/plugin_nodes.h
     plugin_content.cpp include/hikari/app/plugin_content.h

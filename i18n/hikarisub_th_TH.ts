@@ -17576,6 +17576,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>ทำงานได้เฉพาะนอกโหมดการแปล</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>แพ็กเกจไม่มีโปรแกรมสำหรับคอมพิวเตอร์เครื่องนี้ %1</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>ดาวน์โหลด %1 จาก %2 (%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>ไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>โปรแกรม</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>%1 ไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>ยังไม่ได้ดาวน์โหลด %1</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>กำลังดาวน์โหลด %1…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>ดาวน์โหลดเลย</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>ดาวน์โหลดโปรแกรมที่ %1 ต้องใช้</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>ยังไม่ได้ดาวน์โหลดโปรแกรมของปลั๊กอิน: “อนุญาตให้ปลั๊กอินเชื่อมต่ออินเทอร์เน็ต” ปิดอยู่</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>ดาวน์โหลด %1 ไม่ได้: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>ไฟล์ที่ดาวน์โหลดไม่ใช่ไฟล์ที่ปลั๊กอินระบุไว้</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>แตกไฟล์ไม่ได้ (%1)</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>ไฟล์ไม่มี %1 อยู่ข้างใน</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>บันทึกไฟล์ไว้ไม่ได้</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

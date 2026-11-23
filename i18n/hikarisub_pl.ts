@@ -17830,6 +17830,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>Działa tylko poza trybem tłumaczenia</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>Pakiet nie zawiera programu %1 dla tego komputera.</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>Pobiera %1 z %2 (%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>Niedostępna na tym komputerze</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>Programy</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>Program %1 jest niedostępny na tym komputerze</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>Program %1 nie został pobrany</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>Pobieranie programu %1…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>Pobierz teraz</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>Pobiera programy potrzebne wtyczce %1</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>Programy wtyczki nie zostały pobrane: opcja „Pozwól wtyczkom łączyć się z internetem” jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>Nie można pobrać programu %1: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>to nie jest plik wskazany przez wtyczkę.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>nie można go rozpakować (%1).</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>nie zawiera %1.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>nie można go zapisać.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

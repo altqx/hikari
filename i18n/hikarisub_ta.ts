@@ -17703,6 +17703,66 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Works only outside Translation mode</source>
         <translation>மொழிபெயர்ப்பு பயன்முறைக்கு வெளியே மட்டுமே இயங்கும்</translation>
     </message>
+    <message>
+        <source>The package lacks its program for this computer, %1.</source>
+        <translation>தொகுப்பில் இந்தக் கணினிக்கான அதன் நிரலான %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>Downloads %1 from %2 (%3)</source>
+        <translation>%2 இலிருந்து %1 ஐப் பதிவிறக்குகிறது (%3)</translation>
+    </message>
+    <message>
+        <source>Not available for this computer</source>
+        <translation>இந்தக் கணினிக்குக் கிடைக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Programs</source>
+        <translation>நிரல்கள்</translation>
+    </message>
+    <message>
+        <source>%1 isn’t available for this computer</source>
+        <translation>%1 இந்தக் கணினிக்குக் கிடைக்கவில்லை</translation>
+    </message>
+    <message>
+        <source>%1 isn’t downloaded</source>
+        <translation>%1 பதிவிறக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>%1 ஐப் பதிவிறக்குகிறது…</translation>
+    </message>
+    <message>
+        <source>Download now</source>
+        <translation>இப்போது பதிவிறக்கு</translation>
+    </message>
+    <message>
+        <source>Downloads the programs %1 needs</source>
+        <translation>%1 க்குத் தேவையான நிரல்களைப் பதிவிறக்குகிறது</translation>
+    </message>
+    <message>
+        <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
+        <translation>இதன் நிரல்கள் பதிவிறக்கப்படவில்லை: “செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி” முடக்கத்தில் உள்ளது.</translation>
+    </message>
+    <message>
+        <source>%1 couldn’t be downloaded: %2</source>
+        <translation>%1 ஐப் பதிவிறக்க முடியவில்லை: %2</translation>
+    </message>
+    <message>
+        <source>it isn’t the file the plugin names.</source>
+        <translation>அது செருகுநிரல் குறிப்பிடும் கோப்பு அல்ல.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be unpacked (%1).</source>
+        <translation>அதைப் பிரித்தெடுக்க முடியவில்லை (%1).</translation>
+    </message>
+    <message>
+        <source>it doesn’t hold %1.</source>
+        <translation>அதில் %1 இல்லை.</translation>
+    </message>
+    <message>
+        <source>it couldn’t be kept.</source>
+        <translation>அதைச் சேமிக்க முடியவில்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

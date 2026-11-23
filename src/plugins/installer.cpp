@@ -304,7 +304,17 @@ std::expected<void, std::string> Installer::setEnabled(std::string_view id, bool
 
 std::expected<Manifest, std::string> Installer::installedManifest(std::string_view id) const
 {
-    const fs::path file = m_folders.plugins / fromUtf8(id) / std::string(kManifestName);
+    return manifestIn(m_folders.plugins / fromUtf8(id), id);
+}
+
+std::expected<Manifest, std::string> Installer::previousManifest(std::string_view id) const
+{
+    return manifestIn(previousFolder(id), id);
+}
+
+std::expected<Manifest, std::string> Installer::manifestIn(const fs::path &folder, std::string_view id) const
+{
+    const fs::path file = folder / std::string(kManifestName);
     std::ifstream in(file, std::ios::binary);
     std::stringstream text;
     text << in.rdbuf();
