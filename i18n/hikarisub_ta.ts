@@ -17621,63 +17621,63 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The package lacks its program for this computer, %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>தொகுப்பில் இந்தக் கணினிக்கான அதன் நிரலான %1 இல்லை.</translation>
     </message>
     <message>
         <source>Downloads %1 from %2 (%3)</source>
-        <translation type="unfinished"></translation>
+        <translation>%2 இலிருந்து %1 ஐப் பதிவிறக்குகிறது (%3)</translation>
     </message>
     <message>
         <source>Not available for this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>இந்தக் கணினிக்குக் கிடைக்கவில்லை</translation>
     </message>
     <message>
         <source>Programs</source>
-        <translation type="unfinished"></translation>
+        <translation>நிரல்கள்</translation>
     </message>
     <message>
         <source>%1 isn’t available for this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 இந்தக் கணினிக்குக் கிடைக்கவில்லை</translation>
     </message>
     <message>
         <source>%1 isn’t downloaded</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 பதிவிறக்கப்படவில்லை</translation>
     </message>
     <message>
         <source>Downloading %1…</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 ஐப் பதிவிறக்குகிறது…</translation>
     </message>
     <message>
         <source>Download now</source>
-        <translation type="unfinished"></translation>
+        <translation>இப்போது பதிவிறக்கு</translation>
     </message>
     <message>
         <source>Downloads the programs %1 needs</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 க்குத் தேவையான நிரல்களைப் பதிவிறக்குகிறது</translation>
     </message>
     <message>
         <source>Its programs aren’t downloaded: “Let plugins connect to the internet” is off.</source>
-        <translation type="unfinished"></translation>
+        <translation>இதன் நிரல்கள் பதிவிறக்கப்படவில்லை: “செருகுநிரல்கள் இணையத்துடன் இணைய அனுமதி” முடக்கத்தில் உள்ளது.</translation>
     </message>
     <message>
         <source>%1 couldn’t be downloaded: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 ஐப் பதிவிறக்க முடியவில்லை: %2</translation>
     </message>
     <message>
         <source>it isn’t the file the plugin names.</source>
-        <translation type="unfinished"></translation>
+        <translation>அது செருகுநிரல் குறிப்பிடும் கோப்பு அல்ல.</translation>
     </message>
     <message>
         <source>it couldn’t be unpacked (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>அதைப் பிரித்தெடுக்க முடியவில்லை (%1).</translation>
     </message>
     <message>
         <source>it doesn’t hold %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>அதில் %1 இல்லை.</translation>
     </message>
     <message>
         <source>it couldn’t be kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>அதைச் சேமிக்க முடியவில்லை.</translation>
     </message>
 </context>
 <context>
