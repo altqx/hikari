@@ -10,6 +10,7 @@
 #include "hikari/app/plugin_program_downloads.h"
 #include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_ui.h"
+#include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/conditions.h"
 #include "hikari/plugins/installer.h"
@@ -180,6 +181,12 @@ public:
                         backends::PluginProcess::FormatDone done);
     bool importFile(const Format &format, std::string bytes, const std::string &fileName,
                     backends::PluginProcess::FormatDone done);
+    // The MCP servers of the plugins that are on, named "<title> (<plugin name>)".
+    std::vector<backends::ai::McpServerEntry> mcpServers() const;
+    // How a plugin's MCP server starts in the plugin's sandbox, or why it can't.
+    std::expected<backends::ProgramProcess::Options, QString> mcpServerStart(const backends::ai::McpServerEntry &server) const;
+    // The installed plugins, as of the last sync; nullopt before a registry was read.
+    const std::optional<std::set<std::string>> &installed() const { return m_installed; }
 
 signals:
     void commandsChanged();
@@ -192,6 +199,7 @@ signals:
     void marksChanged();
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
+    void mcpServersChanged();
 
 private:
     struct Running;
@@ -247,6 +255,9 @@ private:
     int m_marksRevision = 0;
     int m_programsRevision = 0;
     void endJob(const std::string &plugin);
+    void renewMcpServers(Running &plugin);
+    std::int64_t m_mcpRevision = 0;
+    std::optional<std::set<std::string>> m_installed;
     void rework();
     QVariantList m_working;
     int m_windowsRevision = 0;

@@ -8,7 +8,8 @@ The user can add MCP servers in Settings › AI, and the in-app agent gets their
 | --- | --- |
 | `McpClients` in the sidecar (`src/ai-sidecar/src/mcp/client.ts`) | Speaks MCP on `@modelcontextprotocol/sdk` 1.x. It connects each server, lists its tools and offers them as one tool group per server. Before each call, it asks Qt. |
 | `McpClients` (`src/backends/ai_mcp_clients.*`) | Starts each stdio server, relays each HTTP server's requests with its secrets, reads every message, and admits each tool call through the thread's gate. |
-| `AiMcpServers` (`src/app/ai_mcp_servers.*`) | The server list in Settings › AI: `ai.mcp.servers`, plus the secrets in the keychain. |
+| `AiMcpServers` (`src/app/ai_mcp_servers.*`) | The server list in Settings › AI: `ai.mcp.servers`, plus the secrets in the keychain, and the [plugin servers](#plugin-servers) the user turned on in `ai.mcp.pluginServers`. |
+| `PluginRuntime::mcpServers` (`src/app/plugin_runtime.*`) | The servers of the plugins that are on, and how each starts in its plugin's sandbox. |
 | `AgentThreads::gateMcp` (`src/backends/ai_agent.cpp`) | Decides a tool call by the thread's mode and the tool's hints. |
 
 The SDK stays on 1.x while the Claude Agent SDK's peer range is `^1.29`.
@@ -22,6 +23,16 @@ The SDK stays on 1.x while the Claude Agent SDK's peer range is `^1.29`.
   - Like the agent CLIs, they end with the sidecar: when it is lost, stops or is refused, `AgentBroker` kills them. On Linux they also get `PR_SET_PDEATHSIG`, and on Windows a kill-on-close job.
 - **HTTP servers** (streamable HTTP) go through `_hikari/http.request` with the target `{kind: "mcp", id}`. The sidecar only knows a placeholder URL. Qt sends every request to the URL from the settings, adds `Authorization: Bearer` from the keychain, and masks the token in what it relays back. The key rule for plain HTTP applies: a token goes over `http` only to this computer or a tailnet peer.
 - **Changes apply at once.** A changed server gets a new revision, and the sidecar connects to it again. A removed server can't start any more.
+
+## Plugin servers
+
+A plugin's `contributes.mcpServers` entry names one of its programs ([plugins](plugins.md#ai-tools-and-mcp-servers), #1228).
+
+- **Its id** is `p-<the first 8 hex digits of the SHA-256 of "<plugin id>/<server id>">-<server id>`, so two plugins' servers never meet. Its name is `<title> (<plugin name>)`.
+- **Off until turned on.** It is listed while its plugin is on, and runs only once the user turns it on. That choice, the trust and the approved tools are a `{id, plugin, trusted, approved}` row in `ai.mcp.pluginServers`; it has no secrets.
+- **Started in the plugin's sandbox**, the one its plugin's [programs](plugins.md#programs) get: the program and arguments the manifest declares, its own environment with `${setting:<id>}` filled in, and the plugin's data folder as its working folder. `AgentBroker` refuses to start it when the sandbox can't apply in full, and gives it no variable but its own.
+- **When it changes.** A new plugin version, a changed plugin setting or a finished download gives it a new revision, so the sidecar connects again. A program that isn't downloaded or available here answers the start with why.
+- **When it goes.** Turning the plugin off removes the server from every thread. Uninstalling it also forgets the row.
 
 ## The link
 
@@ -67,10 +78,14 @@ The **MCP servers** row sits in the MCP section, under the MCP server's settings
 
 The environment and the token go to the keychain (`mcp-server:<id>`), never to the settings file, and they are never shown again. On Edit, leaving them empty keeps them.
 
+A plugin's server is listed after the user's, with "From a plugin, in its sandbox" instead of a command and an On switch instead of Edit and Delete. While it is off, it has no status, trust or tools.
+
 Each row shows the command or URL, the status ("Starts when the agent needs it", "Starting…", "Connected · N tools" or "Failed: …"), Edit and Delete, and the trust check box. Once the server has run, its tools are listed: one that may change things but isn't destructive gets "Run <tool> without asking"; the others say "only reads, never asks" or "asks every time". A note says that servers run as the user, outside the AI component's sandbox, and that changes apply at once.
 
 ## Tests
 
 - `hikari_ai_sidecar_bun_tests` (`src/ai-sidecar/test/mcp/client.test.ts`) uses a real SDK server behind a fake relayed process: nothing starts before a session, tools are grouped and named per server, every call asks Qt first and a refused one never reaches the server, `search_tools` finds a server's group, a thread on a scripted Anthropic provider finds a server's tool after the cached prefix as a `tool_reference` block and calls it, a server's name is cut to 40 characters, a changed or removed server stops, a server that exits is started again, and HTTP goes through the relay.
-- `hikari_backends_ai_mcp_clients_tests`: hints from the server's own list (pages too) with MCP's defaults, admissions that work once and only for those arguments, the allowed methods, JSON and event-stream answers, the settings rows and secrets, a stdio server started unsandboxed with its own arguments and secrets, a call Qt didn't admit answered with an error, servers ending with the sidecar, a removed server refused, and the HTTP target with its URL, token and guard.
+- `hikari_backends_ai_mcp_clients_tests`: hints from the server's own list (pages too) with MCP's defaults, admissions that work once and only for those arguments, the allowed methods, JSON and event-stream answers, the settings rows and secrets, a stdio server started unsandboxed with its own arguments and secrets, a plugin server started in its sandbox with only its declared arguments and own environment, a plugin server that can't start saying why, a call Qt didn't admit answered with an error, servers ending with the sidecar, a removed server refused, and the HTTP target with its URL, token and guard.
+- `hikari_ui_ai_settings_tests`: a plugin server is off until turned on, keeps its trust and approvals in its own row, leaves with its plugin, and is forgotten once the plugin is uninstalled.
+- `hikari_plugins_tests`: a manifest's `mcpServers` name a declared program without `"api": true`, their ids are unique, and a new one asks for more on update.
 - `hikari_backends_ai_agent_tests`: trust and the decision table, the allowance key, and a thread whose MCP calls run, ask and always ask, with the ask naming the server.

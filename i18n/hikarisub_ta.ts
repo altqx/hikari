@@ -17408,6 +17408,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml இல் வரி %1 இல் பிழை உள்ளது.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>செருகுநிரலிலிருந்து, அதன் சாண்ட்பாக்ஸில்</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>இயக்கத்தில்</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18491,6 +18499,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>இந்தச் செருகுநிரல் %1 என்ற நிரல்; அது இந்தக் கணினிக்குக் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>அமைப்புகள் › AI இல் MCP சேவையகங்களை வழங்குகிறது, நீங்கள் இயக்கும் வரை அவை முடக்கத்தில் இருக்கும்: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>செருகுநிரல் இயக்கத்தில் இல்லை.</translation>
     </message>
 </context>
 <context>

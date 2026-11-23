@@ -17546,6 +17546,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml ma błąd w wierszu %1.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>Z wtyczki, w jej piaskownicy</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączone</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18630,6 +18638,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>Ta wtyczka to program %1, który jest niedostępny na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>Udostępnia serwery MCP w Ustawienia › AI, wyłączone, dopóki ich nie włączysz: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>Wtyczka jest wyłączona.</translation>
     </message>
 </context>
 <context>
