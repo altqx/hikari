@@ -12893,13 +12893,13 @@ private slots:
         QVERIFY(!names.isEmpty());
         QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
         QVERIFY(find->property("editText").toString() != QStringLiteral("alpha"));
-        QVERIFY(dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
+        QCOMPARE(dialogItem("selectLinesDialog", "selectMatch")->property("currentIndex").toInt(), 2);
         QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
         QCOMPARE(find->property("editText").toString(), QStringLiteral("^$"));
         QVERIFY(QMetaObject::invokeMethod(styles, "revert"));
         QTRY_VERIFY(!styles->property("visible").toBool());
         QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));
-        QVERIFY(!dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
+        QCOMPARE(dialogItem("selectLinesDialog", "selectMatch")->property("currentIndex").toInt(), 0);
         auto *fields = dialogItem("selectLinesDialog", "selectField");
         QCOMPARE(fields->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectChooseStyles"), "click"));
@@ -12931,6 +12931,49 @@ private slots:
             {{QStringLiteral("find"), QStringLiteral("BET")}, {QStringLiteral("field"), 0}, {QStringLiteral("action"), 1}}, false);
         QCOMPARE(QGuiApplication::clipboard()->text(),
                  QStringLiteral("Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\r\n"));
+        application->editor().discard();
+    }
+
+    void selectLinesDialogExactAndIntersect()
+    {
+        const QString path = dir.filePath(QStringLiteral("select-exact.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Alpha\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,beta\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        auto *dialog = named("selectLinesDialog");
+        QVERIFY(QMetaObject::invokeMethod(named("selectLinesMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        dialogItem("selectLinesDialog", "selectFindText")->setProperty("editText", QStringLiteral("alpha"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMatch1"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMode0"), "click"));
+        auto *toasts = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("toastStack"));
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
+        QTRY_VERIFY(toastWith(QStringLiteral("1 lines selected.")));
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[0]->id});
+
+        session->setSelection(
+            application::Selection{lines[1]->id, {lines[0]->id, lines[1]->id, lines[2]->id}, lines[1]->id, {}});
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMatch0"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMode3"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
+        QTRY_VERIFY(toastWith(QStringLiteral("1 lines removed from selection.")));
+        QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        const QVariantMap saved = application->selectLinesSettings();
+        QCOMPARE(saved.value(QStringLiteral("match")).toInt(), 0);
+        QCOMPARE(saved.value(QStringLiteral("mode")).toInt(), 3);
+        application->saveSelectLinesSettings({{QStringLiteral("match"), 0}, {QStringLiteral("mode"), 0}});
         application->editor().discard();
     }
 

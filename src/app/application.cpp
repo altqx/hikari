@@ -4976,12 +4976,14 @@ application::SelectLinesSettings selectSettings(const QVariantMap &m, int option
     s.find = utf8(m.value(QStringLiteral("find")).toString());
     s.with = m.value(QStringLiteral("with"), s.with).toBool();
     s.matchCase = m.value(QStringLiteral("matchCase"), s.matchCase).toBool();
-    s.regex = m.value(QStringLiteral("regex"), s.regex).toBool();
+    s.match = static_cast<S::Match>(std::clamp(m.value(QStringLiteral("match"), int(s.match)).toInt(), 0,
+                                               int(S::Match::Regex)));
     s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field"), int(s.field)).toInt(), 0,
                                                int(S::Field::Overlaps)));
     s.dialogues = m.value(QStringLiteral("dialogues"), s.dialogues).toBool();
     s.comments = m.value(QStringLiteral("comments"), s.comments).toBool();
-    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0, 2));
+    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0,
+                                             int(S::Mode::Intersect)));
     s.action = static_cast<S::Action>(std::clamp(m.value(QStringLiteral("action"), int(s.action)).toInt(), 0, 6));
     return s;
 }
@@ -4996,7 +4998,7 @@ QVariantMap Application::selectLinesSettings() const
     const auto s = application::selectLinesFromOptions(m_selectOptions);
     return {{QStringLiteral("with"), s.with},
             {QStringLiteral("matchCase"), s.matchCase},
-            {QStringLiteral("regex"), s.regex},
+            {QStringLiteral("match"), int(s.match)},
             {QStringLiteral("field"), int(s.field)},
             {QStringLiteral("dialogues"), s.dialogues},
             {QStringLiteral("comments"), s.comments},
@@ -5063,10 +5065,15 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     m_settings->set("selectLines.recentSelections", m_selectRecent);
     saveSelectLinesSettings(map);
     using M = application::SelectLinesSettings::Mode;
-    return settings.mode == M::Select           ? QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count)
-           : settings.mode == M::AddToSelection ? QCoreApplication::translate("HikariSub.SelectLines",
-                                                                              "%1 lines added to selection.").arg(count)
-                                                : QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    switch (settings.mode) {
+    case M::Select: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count);
+    case M::AddToSelection:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines added to selection.").arg(count);
+    case M::Deselect: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    case M::Intersect:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines removed from selection.").arg(count);
+    }
+    return {};
 }
 
 QString Application::selectStylesPattern(const QStringList &styles) const
