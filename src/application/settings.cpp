@@ -505,6 +505,7 @@ std::vector<SettingDefinition> &definitions()
         {"video.layoutResMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.untaggedMatrixWarning", "", Bool, Profile, Mapped, false, true},
         {"video.hdrWarning", "", Bool, Profile, Mapped, false, true},
+        {"autosave.intervalSeconds", "", Int, Profile, Mapped, false, std::int64_t{20}},
     });
     return table;
 }

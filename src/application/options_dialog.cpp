@@ -190,6 +190,7 @@ constexpr OptionsBinding kBindings[] = {
     {"privacy.discordLinkUrl", Text, Updates},
     {"audio.spectrumCurve", IndexChoice, Audio, 0, 0, 3},
     {"audio.timingKeysEverywhere", IndexChoice, Audio, 0, 0, 3},
+    {"autosave.intervalSeconds", Number, General, 5, 3600},
     {"grid.cpsWarning", Number, Grid, 1, 100},
     {"grid.cpsError", Number, Grid, 1, 100},
     {"grid.lineLength", Number, Grid, 1, 1000},

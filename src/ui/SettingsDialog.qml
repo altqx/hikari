@@ -637,6 +637,14 @@ DialogWindow {
                                 tip: qsTr("Number of autosaves can be set from 2 to 1000000")
                             }
                         }
+                        SettingsRow {
+                            iconRole: "autosave"
+                            text: qsTr("Autosave every")
+                            SettingNumber {
+                                setting: "autosave.intervalSeconds"; from: 5; to: 3600; unit: qsTr("seconds")
+                                name: qsTr("Autosave every"); tip: qsTr("Seconds from a change to its autosave. Range from 5 to 3600")
+                            }
+                        }
                     }
                     SettingsSection {
                         objectName: "settingsNoticesGroup"

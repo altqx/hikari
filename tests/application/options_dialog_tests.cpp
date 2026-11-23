@@ -386,7 +386,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     for (std::size_t i = 0; const auto &[id, max, fallback] : {std::tuple{"grid.cpsWarning", 100, 15}, std::tuple{"grid.cpsError", 100, 30},
                                                                std::tuple{"grid.lineLength", 1000, 43},
                                                                std::tuple{"grid.maxLines", 20, 2}}) {
-        const auto &limit = all[std::size(kLegacy) + 93 + i++];
+        const auto &limit = all[std::size(kLegacy) + 94 + i++];
         EXPECT_EQ(limit.setting, id);
         EXPECT_EQ(limit.control, OptionsControl::Number) << id;
         EXPECT_EQ(limit.page, OptionsPage::Grid) << id;
@@ -395,8 +395,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(std::get<std::int64_t>(findSetting(id)->defaultValue), fallback) << id;
     }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 99);
-    const auto &hostApi = all[std::size(kLegacy) + 97];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 100);
+    const auto &hostApi = all[std::size(kLegacy) + 98];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -407,7 +407,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 97);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 98);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -421,6 +421,9 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     }
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->min, 2);
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->max, 1000000);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->min, 5);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->max, 3600);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->page, OptionsPage::General);
     EXPECT_EQ(findOptionsBinding("audio.delay")->min, -50000000);
     EXPECT_EQ(findOptionsBinding("program.tabTextMaxChars")->min, 20);
     EXPECT_EQ(findOptionsBinding("automation.loadingMethod")->entries, 4);

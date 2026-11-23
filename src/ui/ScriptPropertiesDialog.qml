@@ -38,6 +38,9 @@ DialogWindow {
         editingField.text = p.originalEditing
         timingField.text = p.originalTiming
         updatedField.text = p.updatedBy
+        synchField.text = p.synchPoint
+        detailsField.text = p.updateDetails
+        moreSection.expanded = p.synchPoint !== "" || p.updateDetails !== ""
         widthField.value = p.playResX
         heightField.value = p.playResY
         layoutWidthField.value = p.layoutResX
@@ -86,6 +89,7 @@ DialogWindow {
     function values() {
         return { title: titleField.text, originalScript: scriptField.text, originalTranslation: translationField.text,
                  originalEditing: editingField.text, originalTiming: timingField.text, updatedBy: updatedField.text,
+                 synchPoint: synchField.text, updateDetails: detailsField.text,
                  playResX: widthField.value, playResY: heightField.value,
                  layoutResX: layoutWidthField.value, layoutResY: layoutHeightField.value,
                  matrix: matrixBox.currentIndex, wrapStyle: wrapBox.currentIndex,
@@ -130,6 +134,23 @@ DialogWindow {
             WideField { id: timingField; objectName: "propTimer"; Accessible.name: qsTr("Timer"); onTextEdited: dialog.mark("originalTiming") }
             FieldLabel { text: qsTr("Editing") }
             WideField { id: updatedField; objectName: "propEditing"; Accessible.name: qsTr("Editing"); onTextEdited: dialog.mark("updatedBy") }
+        }
+    }
+    FormSection {
+        id: moreSection
+        objectName: "propMore"
+        title: qsTr("More")
+        expanded: false
+        onToggled: on => moreSection.expanded = on
+        GridLayout {
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 6
+            Layout.fillWidth: true
+            FieldLabel { text: qsTr("Synch point") }
+            WideField { id: synchField; objectName: "propSynchPoint"; Accessible.name: qsTr("Synch point"); onTextEdited: dialog.mark("synchPoint") }
+            FieldLabel { text: qsTr("Update details") }
+            WideField { id: detailsField; objectName: "propUpdateDetails"; Accessible.name: qsTr("Update details"); onTextEdited: dialog.mark("updateDetails") }
         }
     }
     FormSection {
