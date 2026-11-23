@@ -1082,6 +1082,13 @@
             <numerusform>%1 · %n fixes</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n line; the limit is %1.</numerusform>
+            <numerusform>%n lines; the limit is %1.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.QuickPick</name>

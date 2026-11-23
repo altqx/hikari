@@ -6829,33 +6829,33 @@ Failed to copy %2 fonts.</source>
     </message>
     <message numerus="yes">
         <source>%n error(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>오류 %n개</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n warning(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>경고 %n개</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n info</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>정보 %n개</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n hint(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>힌트 %n개</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n problem(s): %1</source>
         <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>문제 %n개: %1</numerusform>
         </translation>
     </message>
 </context>
@@ -7116,7 +7116,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Quick fix</source>
-        <translation type="unfinished"></translation>
+        <translation>빠른 수정</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14091,6 +14091,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>자막 파일은 스크립트 속성에서 자체 제한을 설정할 수 있습니다.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>읽기 제한 문제 표시</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>분할</translation>
     </message>
@@ -17974,23 +17978,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Errors</source>
-        <translation type="unfinished"></translation>
+        <translation>오류</translation>
     </message>
     <message>
         <source>Warnings</source>
-        <translation type="unfinished"></translation>
+        <translation>경고</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation type="unfinished"></translation>
+        <translation>정보</translation>
     </message>
     <message>
         <source>Hints</source>
-        <translation type="unfinished"></translation>
+        <translation>힌트</translation>
     </message>
     <message>
         <source>Line %1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>%1번 줄 · %2</translation>
     </message>
     <message>
         <source>QC notes</source>
@@ -18002,15 +18006,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Quick fix</source>
-        <translation type="unfinished"></translation>
+        <translation>빠른 수정</translation>
     </message>
     <message>
         <source>The chosen row has no quick fixes.</source>
-        <translation type="unfinished"></translation>
+        <translation>선택한 행에 빠른 수정이 없습니다.</translation>
     </message>
     <message>
         <source>No problem at the caret has a quick fix.</source>
-        <translation type="unfinished"></translation>
+        <translation>커서 위치에 빠른 수정을 적용할 수 있는 문제가 없습니다.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18035,7 +18039,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 · %2</source>
         <comment>A problem&apos;s message, then its source</comment>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Add QC note…</source>
@@ -18043,27 +18047,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Problems</source>
-        <translation type="unfinished"></translation>
+        <translation>문제</translation>
     </message>
     <message>
         <source>error</source>
-        <translation type="unfinished"></translation>
+        <translation>오류</translation>
     </message>
     <message>
         <source>warning</source>
-        <translation type="unfinished"></translation>
+        <translation>경고</translation>
     </message>
     <message>
         <source>info</source>
-        <translation type="unfinished"></translation>
+        <translation>정보</translation>
     </message>
     <message>
         <source>hint</source>
-        <translation type="unfinished"></translation>
+        <translation>힌트</translation>
     </message>
     <message>
         <source>The fix could not be applied. Its line changed since the problem was found.</source>
-        <translation type="unfinished"></translation>
+        <translation>수정을 적용하지 못했습니다. 문제를 찾은 뒤 해당 줄이 변경되었습니다.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18161,7 +18165,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>No quick fixes</source>
-        <translation type="unfinished"></translation>
+        <translation>빠른 수정 없음</translation>
     </message>
     <message>
         <source>Import notes file</source>
@@ -18201,8 +18205,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>%n problem(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>문제 %n개</numerusform>
         </translation>
     </message>
     <message>
@@ -18233,7 +18237,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>All sources</source>
-        <translation type="unfinished"></translation>
+        <translation>모든 소스</translation>
     </message>
     <message>
         <source>%1 of %2</source>
@@ -18257,8 +18261,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>%1 · %n fix(es)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%1 · 수정 %n개</numerusform>
         </translation>
     </message>
     <message>
@@ -18338,6 +18342,24 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>저장</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>초당 문자 수가 %1입니다. 제한은 %2입니다.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>%1번째 줄은 %2자입니다. 제한은 %3자입니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n줄입니다. 제한은 %1줄입니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>읽기</translation>
     </message>
 </context>
 <context>

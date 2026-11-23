@@ -6961,43 +6961,43 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message numerus="yes">
         <source>%n error(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n błąd</numerusform>
+            <numerusform>%n błędy</numerusform>
+            <numerusform>%n błędów</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n warning(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n ostrzeżenie</numerusform>
+            <numerusform>%n ostrzeżenia</numerusform>
+            <numerusform>%n ostrzeżeń</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n info</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n informacja</numerusform>
+            <numerusform>%n informacje</numerusform>
+            <numerusform>%n informacji</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n hint(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n wskazówka</numerusform>
+            <numerusform>%n wskazówki</numerusform>
+            <numerusform>%n wskazówek</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n problem(s): %1</source>
         <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n problem: %1</numerusform>
+            <numerusform>%n problemy: %1</numerusform>
+            <numerusform>%n problemów: %1</numerusform>
         </translation>
     </message>
 </context>
@@ -7260,7 +7260,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Quick fix</source>
-        <translation type="unfinished"></translation>
+        <translation>Szybka poprawka</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14333,6 +14333,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Plik napisów może ustawić własne limity we właściwościach skryptu.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>Pokazuj problemy z limitami czytania</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>Dzielenie</translation>
     </message>
@@ -18238,23 +18242,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Errors</source>
-        <translation type="unfinished"></translation>
+        <translation>Błędy</translation>
     </message>
     <message>
         <source>Warnings</source>
-        <translation type="unfinished"></translation>
+        <translation>Ostrzeżenia</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation type="unfinished"></translation>
+        <translation>Informacje</translation>
     </message>
     <message>
         <source>Hints</source>
-        <translation type="unfinished"></translation>
+        <translation>Wskazówki</translation>
     </message>
     <message>
         <source>Line %1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Linijka %1 · %2</translation>
     </message>
     <message>
         <source>QC notes</source>
@@ -18266,15 +18270,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Quick fix</source>
-        <translation type="unfinished"></translation>
+        <translation>Szybka poprawka</translation>
     </message>
     <message>
         <source>The chosen row has no quick fixes.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybrany wiersz nie ma szybkich poprawek.</translation>
     </message>
     <message>
         <source>No problem at the caret has a quick fix.</source>
-        <translation type="unfinished"></translation>
+        <translation>Żaden problem w miejscu kursora nie ma szybkiej poprawki.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18299,7 +18303,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 · %2</source>
         <comment>A problem&apos;s message, then its source</comment>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Add QC note…</source>
@@ -18307,27 +18311,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Problems</source>
-        <translation type="unfinished"></translation>
+        <translation>Problemy</translation>
     </message>
     <message>
         <source>error</source>
-        <translation type="unfinished"></translation>
+        <translation>błąd</translation>
     </message>
     <message>
         <source>warning</source>
-        <translation type="unfinished"></translation>
+        <translation>ostrzeżenie</translation>
     </message>
     <message>
         <source>info</source>
-        <translation type="unfinished"></translation>
+        <translation>informacja</translation>
     </message>
     <message>
         <source>hint</source>
-        <translation type="unfinished"></translation>
+        <translation>wskazówka</translation>
     </message>
     <message>
         <source>The fix could not be applied. Its line changed since the problem was found.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się zastosować poprawki. Jej linijka zmieniła się od wykrycia problemu.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18443,7 +18447,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>No quick fixes</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak szybkich poprawek</translation>
     </message>
     <message>
         <source>Import notes file</source>
@@ -18487,10 +18491,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>%n problem(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problemy</numerusform>
+            <numerusform>%n problemów</numerusform>
         </translation>
     </message>
     <message>
@@ -18523,7 +18527,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>All sources</source>
-        <translation type="unfinished"></translation>
+        <translation>Wszystkie źródła</translation>
     </message>
     <message>
         <source>%1 of %2</source>
@@ -18547,10 +18551,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>%1 · %n fix(es)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%1 · %n poprawka</numerusform>
+            <numerusform>%1 · %n poprawki</numerusform>
+            <numerusform>%1 · %n poprawek</numerusform>
         </translation>
     </message>
     <message>
@@ -18630,6 +18634,26 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Save</source>
         <translation>Zapisz</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>Szybkość czytania %1 CPS; limit wynosi %2.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>Liczba znaków w wierszu %1: %2; limit wynosi %3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n wiersz; limit wynosi %1.</numerusform>
+            <numerusform>%n wiersze; limit wynosi %1.</numerusform>
+            <numerusform>%n wierszy; limit wynosi %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>Czytelność</translation>
     </message>
 </context>
 <context>

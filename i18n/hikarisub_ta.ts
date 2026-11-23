@@ -6895,38 +6895,38 @@ Failed to copy %2 fonts.</source>
     </message>
     <message numerus="yes">
         <source>%n error(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n பிழை</numerusform>
+            <numerusform>%n பிழைகள்</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n warning(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n எச்சரிக்கை</numerusform>
+            <numerusform>%n எச்சரிக்கைகள்</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n info</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n தகவல்</numerusform>
+            <numerusform>%n தகவல்</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n hint(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n குறிப்பு</numerusform>
+            <numerusform>%n குறிப்புகள்</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>%n problem(s): %1</source>
         <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n சிக்கல்: %1</numerusform>
+            <numerusform>%n சிக்கல்கள்: %1</numerusform>
         </translation>
     </message>
 </context>
@@ -7188,7 +7188,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Quick fix</source>
-        <translation type="unfinished"></translation>
+        <translation>விரைவாகச் சரிசெய்</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14212,6 +14212,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒரு வசனக் கோப்பு தனது சொந்த வரம்புகளை ஸ்கிரிப்ட் பண்புகளில் அமைக்கலாம்.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>வாசிப்பு வரம்புச் சிக்கல்களைக் காட்டு</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>பிரித்தல்</translation>
     </message>
@@ -18106,23 +18110,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Errors</source>
-        <translation type="unfinished"></translation>
+        <translation>பிழைகள்</translation>
     </message>
     <message>
         <source>Warnings</source>
-        <translation type="unfinished"></translation>
+        <translation>எச்சரிக்கைகள்</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation type="unfinished"></translation>
+        <translation>தகவல்</translation>
     </message>
     <message>
         <source>Hints</source>
-        <translation type="unfinished"></translation>
+        <translation>குறிப்புகள்</translation>
     </message>
     <message>
         <source>Line %1 · %2</source>
-        <translation type="unfinished"></translation>
+        <translation>வரி %1 · %2</translation>
     </message>
     <message>
         <source>QC notes</source>
@@ -18134,15 +18138,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Quick fix</source>
-        <translation type="unfinished"></translation>
+        <translation>விரைவாகச் சரிசெய்</translation>
     </message>
     <message>
         <source>The chosen row has no quick fixes.</source>
-        <translation type="unfinished"></translation>
+        <translation>தேர்ந்தெடுத்த வரிசையில் விரைவுத் திருத்தங்கள் இல்லை.</translation>
     </message>
     <message>
         <source>No problem at the caret has a quick fix.</source>
-        <translation type="unfinished"></translation>
+        <translation>கர்சரில் உள்ள எந்தச் சிக்கலுக்கும் விரைவுத் திருத்தம் இல்லை.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18167,7 +18171,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 · %2</source>
         <comment>A problem&apos;s message, then its source</comment>
-        <translation type="unfinished"></translation>
+        <translation>%1 · %2</translation>
     </message>
     <message>
         <source>Add QC note…</source>
@@ -18175,27 +18179,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Problems</source>
-        <translation type="unfinished"></translation>
+        <translation>சிக்கல்கள்</translation>
     </message>
     <message>
         <source>error</source>
-        <translation type="unfinished"></translation>
+        <translation>பிழை</translation>
     </message>
     <message>
         <source>warning</source>
-        <translation type="unfinished"></translation>
+        <translation>எச்சரிக்கை</translation>
     </message>
     <message>
         <source>info</source>
-        <translation type="unfinished"></translation>
+        <translation>தகவல்</translation>
     </message>
     <message>
         <source>hint</source>
-        <translation type="unfinished"></translation>
+        <translation>குறிப்பு</translation>
     </message>
     <message>
         <source>The fix could not be applied. Its line changed since the problem was found.</source>
-        <translation type="unfinished"></translation>
+        <translation>திருத்தத்தைப் பயன்படுத்த முடியவில்லை. சிக்கல் கண்டறியப்பட்டதிலிருந்து அதன் வரி மாறியுள்ளது.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18302,7 +18306,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>No quick fixes</source>
-        <translation type="unfinished"></translation>
+        <translation>விரைவுத் திருத்தங்கள் இல்லை</translation>
     </message>
     <message>
         <source>Import notes file</source>
@@ -18344,9 +18348,9 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>%n problem(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n சிக்கல்</numerusform>
+            <numerusform>%n சிக்கல்கள்</numerusform>
         </translation>
     </message>
     <message>
@@ -18378,7 +18382,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>All sources</source>
-        <translation type="unfinished"></translation>
+        <translation>அனைத்து மூலங்களும்</translation>
     </message>
     <message>
         <source>%1 of %2</source>
@@ -18402,9 +18406,9 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message numerus="yes">
         <source>%1 · %n fix(es)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%1 · %n திருத்தம்</numerusform>
+            <numerusform>%1 · %n திருத்தங்கள்</numerusform>
         </translation>
     </message>
     <message>
@@ -18484,6 +18488,25 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>சேமி</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>%1 CPS இல் வாசிக்கப்படுகிறது; வரம்பு %2.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>உரை வரி %1 இல் %2 எழுத்துகள் உள்ளன; வரம்பு %3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n உரை வரி; வரம்பு %1.</numerusform>
+            <numerusform>%n உரை வரிகள்; வரம்பு %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>வாசிப்பு</translation>
     </message>
 </context>
 <context>
