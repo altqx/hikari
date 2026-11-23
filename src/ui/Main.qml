@@ -2927,6 +2927,76 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
         }
         Action {
+            id: jumpToAction
+            text: qsTr("Jump to"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_JUMP_TO")) root.editVideoTime()
+        }
+        Action {
+            id: videoZoom50Action
+            text: qsTr("Zoom 50 %"); enabled: root.video.hasVideo
+            checkable: true
+            checked: root.videoView.zoomed && root.videoView.readoutPercent === 50
+            onTriggered: {
+                checked = Qt.binding(() => root.videoView.zoomed && root.videoView.readoutPercent === 50)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_50")) root.videoView.zoomTo(50)
+            }
+        }
+        Action {
+            id: videoZoom100Action
+            text: qsTr("Zoom 100 %"); enabled: root.video.hasVideo
+            checkable: true
+            checked: root.videoView.zoomed && root.videoView.readoutPercent === 100
+            onTriggered: {
+                checked = Qt.binding(() => root.videoView.zoomed && root.videoView.readoutPercent === 100)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_100")) root.videoView.zoomTo(100)
+            }
+        }
+        Action {
+            id: videoZoom200Action
+            text: qsTr("Zoom 200 %"); enabled: root.video.hasVideo
+            checkable: true
+            checked: root.videoView.zoomed && root.videoView.readoutPercent === 200
+            onTriggered: {
+                checked = Qt.binding(() => root.videoView.zoomed && root.videoView.readoutPercent === 200)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_200")) root.videoView.zoomTo(200)
+            }
+        }
+        Action {
+            id: videoZoomInAction
+            text: qsTr("Zoom in"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_IN")) root.videoView.zoomStep(1)
+        }
+        Action {
+            id: videoZoomOutAction
+            text: qsTr("Zoom out"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_OUT")) root.videoView.zoomStep(-1)
+        }
+        Action {
+            id: videoZoomFitAction
+            text: qsTr("Fit to panel"); enabled: root.video.hasVideo
+            checkable: true
+            checked: !root.videoView.zoomed
+            onTriggered: {
+                checked = Qt.binding(() => !root.videoView.zoomed)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_FIT")) root.videoView.resetZoom()
+            }
+        }
+        Action {
+            id: videoZoomDevicePixelsAction
+            text: qsTr("1:1 device pixels"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS")) root.videoView.zoomToDevicePixels()
+        }
+        Action {
+            id: nextSubtitleBoundaryAction
+            text: qsTr("Next subtitle boundary"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_SUBTITLE_BOUNDARY")) root.stepSubtitleBoundary(1)
+        }
+        Action {
+            id: previousSubtitleBoundaryAction
+            text: qsTr("Previous subtitle boundary"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY")) root.stepSubtitleBoundary(-1)
+        }
+        Action {
             id: renderCostAction
             text: qsTr("Render cost"); enabled: root.video.hasVideo
             checkable: true
@@ -3891,6 +3961,20 @@ ApplicationWindow {
                     enabled: root.video.loaded
                     onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
                 }
+                ShellMenuItem {
+                    command: "VIDEO_PREVIOUS_FILE"
+                    iconRole: "media-previous-file"
+                    objectName: "previousVideoFileMenuItem"
+                    text: qsTr("Previous file")
+                    onTriggered: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3)) root.videoHotkey("VIDEO_PREVIOUS_FILE")
+                }
+                ShellMenuItem {
+                    command: "VIDEO_NEXT_FILE"
+                    iconRole: "media-next-file"
+                    objectName: "nextVideoFileMenuItem"
+                    text: qsTr("Next file")
+                    onTriggered: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3)) root.videoHotkey("VIDEO_NEXT_FILE")
+                }
                 MenuSeparator {}
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_KEYFRAMES"
@@ -3995,6 +4079,24 @@ ApplicationWindow {
                     help: qsTr("Moves video to end time")
                     iconRole: "video-to-end-time"
                     action: goToEndAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY"
+                    objectName: "previousSubtitleBoundaryMenuItem"
+                    help: qsTr("Moves the video to the previous start or end of a line")
+                    action: previousSubtitleBoundaryAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_NEXT_SUBTITLE_BOUNDARY"
+                    objectName: "nextSubtitleBoundaryMenuItem"
+                    help: qsTr("Moves the video to the next start or end of a line")
+                    action: nextSubtitleBoundaryAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_JUMP_TO"
+                    objectName: "jumpToMenuItem"
+                    help: qsTr("Types a time or a frame to show")
+                    action: jumpToAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
@@ -4181,6 +4283,46 @@ ApplicationWindow {
                     iconRole: "zoom-reset"
                     objectName: "resetVideoZoomMenuItem"
                     action: resetVideoZoomAction
+                }
+                ShellMenu {
+                    objectName: "videoZoomLevelMenu"
+                    title: qsTr("Zoom level")
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_FIT"
+                        objectName: "videoZoomFitMenuItem"
+                        action: videoZoomFitAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_50"
+                        objectName: "videoZoom50MenuItem"
+                        action: videoZoom50Action
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_100"
+                        objectName: "videoZoom100MenuItem"
+                        action: videoZoom100Action
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_200"
+                        objectName: "videoZoom200MenuItem"
+                        action: videoZoom200Action
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"
+                        objectName: "videoZoomDevicePixelsMenuItem"
+                        action: videoZoomDevicePixelsAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_IN"
+                        objectName: "videoZoomInMenuItem"
+                        action: videoZoomInAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_OUT"
+                        objectName: "videoZoomOutMenuItem"
+                        action: videoZoomOutAction
+                    }
                 }
                 ShellMenuItem {
                     iconRole: "render-cost"
@@ -5888,44 +6030,41 @@ ApplicationWindow {
                         restoreMode: Binding.RestoreNone
                     }
                     enabled: root.video.hasVideo
-                    focusPolicy: Qt.NoFocus
-                    Accessible.name: qsTranslate("HikariSub.Video", "Video position")
+                    focusPolicy: Qt.TabFocus
+                    Accessible.name: qsTranslate("HikariSub.Video", "Seek bar")
+                    Accessible.description: root.video.timecode
                     onMoved: root.video.seekBarMoved(Math.round(value), pressed)
                     onPressedChanged: if (!pressed) root.video.seekBarReleased()
-                }
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.minimumHeight: 24
-                    spacing: 10
-                    Label {
-                        objectName: "videoTimes"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        elide: Text.ElideRight
-                        text: root.video.times
-                        font.features: { "tnum": 1 }
-                        color: root.video.keyframeShown ? Theme.warning : palette.windowText
-                        Accessible.name: qsTranslate("HikariSub.Video", "Video times")
-                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line’s start frame; "
-                                                     + "milliseconds from the line’s start and end")
-                        HoverHandler { id: timesHover }
-                        ToolTip.visible: timesHover.hovered && text.length > 0
-                        ToolTip.text: Accessible.description
+                    Keys.onPressed: event => {
+                        if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.KeypadModifier)
+                            return
+                        switch (event.key) {
+                        case Qt.Key_Left: root.video.stepFrames(-1); break
+                        case Qt.Key_Right: root.video.stepFrames(1); break
+                        case Qt.Key_PageUp: root.video.previousKeyframe(); break
+                        case Qt.Key_PageDown: root.video.nextKeyframe(); break
+                        case Qt.Key_Home: root.video.showFrameAt(0); break
+                        case Qt.Key_End: root.video.showFrameAt(root.video.frameCount - 1); break
+                        default: return
+                        }
+                        event.accepted = true
                     }
-                    VisualPointerReadout {
-                        tools: root.visualTools
-                    }
+                    FocusRing { control: videoSeekBar }
                 }
                 RowLayout {
                     id: videoTransport
+                    objectName: "videoTransport"
                     Layout.fillWidth: true
+                    Layout.minimumHeight: 34
+                    spacing: 2
                     IconToolButton {
-                        objectName: "previousFile"
-                        iconRole: "media-previous-file"
-                        text: qsTranslate("HikariSub.Video", "Previous file")
+                        objectName: "previousFrame"
+                        iconRole: "frame-previous"
+                        text: qsTranslate("HikariSub.Video", "Previous frame")
+                        enabled: root.video.hasVideo && root.video.frame > 0
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Previous file"), "VIDEO_PREVIOUS_FILE", 3)
-                        onClicked: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3, "bitmap")) videoFileQuestion.ask(false)
+                        tip: root.bitmapTip(text, "GLOBAL_PREVIOUS_FRAME", 0)
+                        onClicked: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME", 0, "bitmap")) root.video.stepFrames(-1)
                     }
                     IconToolButton {
                         objectName: "playPause"
@@ -5936,6 +6075,16 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play or pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
+                    IconToolButton {
+                        objectName: "nextFrame"
+                        iconRole: "frame-next"
+                        text: qsTranslate("HikariSub.Video", "Next frame")
+                        enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
+                        focusPolicy: Qt.NoFocus
+                        tip: root.bitmapTip(text, "GLOBAL_NEXT_FRAME", 0)
+                        onClicked: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME", 0, "bitmap")) root.video.stepFrames(1)
+                    }
+                    ToolSeparator { Layout.fillHeight: true; Layout.maximumHeight: 24 }
                     IconToolButton {
                         objectName: "playActualLine"
                         iconRole: "play-line"
@@ -5960,39 +6109,53 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Stop"), "VIDEO_STOP", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
-                    IconToolButton {
-                        objectName: "nextFile"
-                        iconRole: "media-next-file"
-                        text: qsTranslate("HikariSub.Video", "Next file")
-                        focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Next file"), "VIDEO_NEXT_FILE", 3)
-                        onClicked: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) videoFileQuestion.ask(true)
-                    }
-                    IconToolButton {
-                        objectName: "previousFrame"
-                        iconRole: "frame-previous"
-                        text: qsTranslate("HikariSub.Video", "Previous frame")
-                        enabled: root.video.hasVideo && root.video.frame > 0
-                        focusPolicy: Qt.NoFocus
-                        onClicked: root.video.stepFrames(-1)
+                    VideoTimeField {
+                        id: videoTimeField
+                        objectName: "videoTimes"
+                        Layout.leftMargin: 8
+                        video: root.video
+                        tip: root.videoTimeTip
                     }
                     Label {
                         objectName: "videoStatus"
-                        text: root.video.status
+                        Layout.leftMargin: 8
                         Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
+                        Layout.minimumWidth: 0
+                        elide: Text.ElideRight
+                        //: The video's frame readout: %1 the shown frame, %2 how many frames the video has
+                        text: root.video.loaded && root.video.frame >= 0
+                              ? qsTranslate("HikariSub.Video", "frame %1 / %2").arg(root.video.frame).arg(root.video.frameCount)
+                              : root.video.status
+                        color: Theme.muted
+                        font.family: "monospace"
+                        font.features: { "tnum": 1 }
                     }
-                    IconToolButton {
-                        objectName: "nextFrame"
-                        iconRole: "frame-next"
-                        text: qsTranslate("HikariSub.Video", "Next frame")
-                        enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
-                        focusPolicy: Qt.NoFocus
-                        onClicked: root.video.stepFrames(1)
+                    VisualPointerReadout {
+                        tools: root.visualTools
+                    }
+                    VideoZoomReadout {
+                        shell: root
                     }
                     VideoVolumeSlider {
                         view: root.videoView
                         hasVideo: root.video.hasVideo
+                    }
+                }
+                RowLayout {
+                    objectName: "videoJumpError"
+                    visible: videoTimeField.jumpError.length > 0
+                    Layout.fillWidth: true
+                    spacing: 4
+                    Icon {
+                        iconRole: "notice-warning"
+                        color: Theme.danger
+                        accentColor: Theme.danger
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        text: videoTimeField.jumpError
+                        color: Theme.danger
+                        wrapMode: Text.Wrap
                     }
                 }
                 }
@@ -10973,6 +11136,19 @@ ApplicationWindow {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
+    readonly property string videoTimeTip: {
+        const key = root.boundKeys("GLOBAL_JUMP_TO", 0)
+        const jump = key.length ? qsTranslate("HikariSub.Video", "Jump to") + " (" + key + ")" : qsTranslate("HikariSub.Video", "Jump to")
+        const distance = root.video.lineDistance
+        if (distance.frames === undefined || root.shell.activeLineNumber <= 0)
+            return jump
+        const signedFrames = n => (n < 0 ? "−" : "+") + Math.abs(n)
+        const signedMs = n => n < 0 ? "−" + -n : n > 0 ? "+" + n : "0"
+        //: The video time's tooltip: %1 signed frames, %2 the active line's number, %3 and %4 signed milliseconds
+        return qsTranslate("HikariSub.Video", "%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end")
+                   .arg(signedFrames(distance.frames)).arg(root.shell.activeLineNumber)
+                   .arg(signedMs(distance.fromStart)).arg(signedMs(distance.fromEnd)) + "\n" + jump
+    }
     function bitmapTip(text, symbol, window, unboundKey) {
         const key = root.boundKeys(symbol, window) || (unboundKey ?? "")
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
@@ -11175,6 +11351,13 @@ ApplicationWindow {
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
+        GLOBAL_JUMP_TO: jumpToAction,
+        GLOBAL_VIDEO_ZOOM_50: videoZoom50Action, GLOBAL_VIDEO_ZOOM_100: videoZoom100Action,
+        GLOBAL_VIDEO_ZOOM_200: videoZoom200Action, GLOBAL_VIDEO_ZOOM_IN: videoZoomInAction,
+        GLOBAL_VIDEO_ZOOM_OUT: videoZoomOutAction, GLOBAL_VIDEO_ZOOM_FIT: videoZoomFitAction,
+        GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS: videoZoomDevicePixelsAction,
+        GLOBAL_NEXT_SUBTITLE_BOUNDARY: nextSubtitleBoundaryAction,
+        GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY: previousSubtitleBoundaryAction,
         GLOBAL_VIDEO_RENDER_COST: renderCostAction,
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
         GLOBAL_OPEN_FOLDER: openFolderAction, GLOBAL_CLOSE_PROJECT: closeProjectAction,
@@ -11306,6 +11489,20 @@ ApplicationWindow {
     Connections {
         target: root.hotkeys
         function onInstalledChanged() { root.applyMenuShortcuts() }
+    }
+    function editVideoTime() {
+        if (root.videoFullscreen.active)
+            return videoFullscreenWindow.editTime()
+        root.showPanel(videoDock)
+        return videoTimeField.edit()
+    }
+    function stepSubtitleBoundary(direction) {
+        const frame = root.video.boundaryInLine(direction)
+        if (frame >= 0)
+            return root.video.showFrameAt(frame)
+        if (!root.app.editingDocument() || !root.editor.nextLine(direction))
+            return false
+        return direction > 0 ? root.video.goToLineStart() : root.video.goToLineEnd()
     }
     function runGlobalHotkey(symbol) {
         return root.hotkeys.report(symbol, root.hotkeys.rehearsing() || root.byKey(() => root.globalHotkey(symbol)))

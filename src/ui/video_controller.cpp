@@ -5,6 +5,7 @@
 #include "hikari/application/jump_target.h"
 #include "hikari/application/subtitle_boundary.h"
 #include "hikari/application/video_details.h"
+#include "hikari/application/video_fullscreen.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -403,28 +404,24 @@ bool VideoController::stop()
     return done;
 }
 
-QString VideoController::times() const
+QString VideoController::timecode() const
 {
     const auto shown = m_session.reportedFrame();
     const auto start = shown ? m_session.frameStart(*shown) : std::nullopt;
-    if (!start)
+    return start ? QString::fromStdString(application::fullscreenTimecode(start->microseconds() / 1000)) : QString();
+}
+
+QVariantMap VideoController::lineDistance() const
+{
+    const auto shown = m_session.reportedFrame();
+    const auto start = shown ? m_session.frameStart(*shown) : std::nullopt;
+    if (!start || !m_lineTimes)
         return {};
     const std::int64_t ms = start->microseconds() / 1000;
-    QString out = QStringLiteral("%1:%2:%3,%4;  %5;  ")
-                      .arg(ms / 3'600'000, 2, 10, QLatin1Char('0'))
-                      .arg(ms / 60'000 % 60, 2, 10, QLatin1Char('0'))
-                      .arg(ms / 1000 % 60, 2, 10, QLatin1Char('0'))
-                      .arg(ms % 1000, 3, 10, QLatin1Char('0'))
-                      .arg(*shown);
-    if (m_lineTimes) {
-        const int lineFrame = m_session.frameAtOrAfter(m_lineTimes->first).value_or(0);
-        out += QStringLiteral("%1;  ").arg(*shown - lineFrame);
-    }
-    if (m_lineTimes) {
-        auto zeroIt = [](core::DocumentTime t) { return t.microseconds() / 1000 / 10 * 10; };
-        out += QStringLiteral("%1 ms, %2 ms").arg(ms - zeroIt(m_lineTimes->first)).arg(ms - zeroIt(m_lineTimes->second));
-    }
-    return out;
+    const auto centiseconds = [](core::DocumentTime t) { return t.microseconds() / 1000 / 10 * 10; };
+    return {{QStringLiteral("frames"), *shown - m_session.frameAtOrAfter(m_lineTimes->first).value_or(0)},
+            {QStringLiteral("fromStart"), qint64(ms - centiseconds(m_lineTimes->first))},
+            {QStringLiteral("fromEnd"), qint64(ms - centiseconds(m_lineTimes->second))}};
 }
 
 bool VideoController::keyframeShown() const
@@ -468,6 +465,19 @@ QVariantMap VideoController::jumpTarget(const QString &text) const
     out.insert(QStringLiteral("frame"), qint64(frame));
     out.insert(QStringLiteral("time"), qint64(timeOf(frame)));
     return out;
+}
+
+bool VideoController::jumpTo(const QString &text)
+{
+    const QVariantMap target = jumpTarget(text);
+    if (target.isEmpty())
+        return false;
+    if (!target.contains(QStringLiteral("frame")))
+        return true;
+    if (playing())
+        pause();
+    showFrameAt(target.value(QStringLiteral("frame")).toInt());
+    return true;
 }
 
 void VideoController::seekBarMoved(int frame, bool held)

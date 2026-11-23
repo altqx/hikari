@@ -126,7 +126,9 @@ list(APPEND hikari_ui_qml_files VideoContextMenu.qml AspectRatioDialog.qml Video
     VideoRenderCost.qml
     VideoTemplateBadge.qml
     VideoNodeBadge.qml
-    VideoVolumeSlider.qml)
+    VideoVolumeSlider.qml
+    VideoTimeField.qml
+    VideoZoomReadout.qml)
 list(APPEND hikari_ui_qml_files VideoFollowChoices.qml)
 list(APPEND hikari_ui_qml_files AudioOutputMenu.qml MenuRadioItem.qml MenuHeading.qml)
 list(APPEND hikari_ui_qml_files LineBreaksMenu.qml ChangeCaseMenu.qml)

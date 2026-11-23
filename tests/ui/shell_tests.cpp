@@ -742,6 +742,15 @@ class ShellTest : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
+    bool runGlobal(const char *symbol) const
+    {
+        return QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_ARG(QVariant, QString::fromLatin1(symbol)));
+    }
+    bool askForVideoFile(bool next) const
+    {
+        return QMetaObject::invokeMethod(window, "runVideoHotkey",
+                                         Q_ARG(QVariant, QString::fromLatin1(next ? "VIDEO_NEXT_FILE" : "VIDEO_PREVIOUS_FILE")));
+    }
     void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
     bool timingBesideTheLineEditor()
     {
@@ -28280,19 +28289,19 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("video.dontAskForBadResolution"), true);
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
-        QTRY_VERIFY_WITH_TIMEOUT(!video.times().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(!video.lineDistance().isEmpty(), 20000);
         auto *display = item("audioDisplay");
         const auto &view = audio.view();
         for (const bool disabled : {false, true}) {
             application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), disabled);
-            const QString before = video.times();
+            const QVariantMap before = video.lineDistance();
             const int endX = int(view.xAtMs(audio.selectionEnd()));
             QTest::mouseMove(window, display->mapToScene(QPointF(endX, 10)).toPoint());
             QTest::mousePress(window, Qt::LeftButton, {}, display->mapToScene(QPointF(endX, 10)).toPoint());
             QTest::mouseMove(window, display->mapToScene(QPointF(endX + 20, 10)).toPoint());
             QTest::mouseRelease(window, Qt::LeftButton, {}, display->mapToScene(QPointF(endX + 20, 10)).toPoint());
             QVERIFY(!audio.modified());
-            QTRY_VERIFY(video.times() != before);
+            QTRY_VERIFY(video.lineDistance() != before);
             QTest::mouseMove(window, kOverNoPanel);
         }
     }
@@ -37360,7 +37369,7 @@ private slots:
             save(compact, QStringLiteral("aspect-window-") + code);
             QVERIFY(QMetaObject::invokeMethod(compact, "reject"));
             QTRY_VERIFY(!compact->isVisible());
-            QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+            QVERIFY(askForVideoFile(true));
             QQuickWindow *box = nullptr;
             QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
             save(box, QStringLiteral("next-file-") + code);
@@ -37470,7 +37479,7 @@ private slots:
         auto &video = application->video();
         video.openVideo(own.filePath(QStringLiteral("0.mkv")));
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QVERIFY(askForVideoFile(true));
         QQuickWindow *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
         auto *detail = messageBoxItem("messageBoxDetail");
@@ -37502,7 +37511,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         auto *question = named("videoFileQuestion");
         QVERIFY(question);
-        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QVERIFY(askForVideoFile(true));
         QObject *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
         QCOMPARE(box->property("title").toString(), QStringLiteral("Next file"));
@@ -37515,7 +37524,7 @@ private slots:
         QCOMPARE(QString::fromStdString(video.session().path()), videos[0]);
         QCOMPARE(application->nextVideoFileName(true), QStringLiteral("b.MKV"));
         QCOMPARE(application->nextVideoFileName(false), QString());
-        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QVERIFY(askForVideoFile(true));
         QTRY_VERIFY(box->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
@@ -37532,7 +37541,7 @@ private slots:
         QVERIFY(video.playing());
         QVERIFY(application->nextVideoFile(true));
         QVERIFY(!video.playing());
-        QVERIFY(QMetaObject::invokeMethod(visualItem("previousFile"), "click"));
+        QVERIFY(askForVideoFile(false));
         QTRY_VERIFY(box->property("visible").toBool());
         QCOMPARE(box->property("title").toString(), QStringLiteral("Previous file"));
         QCOMPARE(box->property("text").toString(), QStringLiteral("Open the previous video in this folder?"));
@@ -37542,12 +37551,12 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         QCOMPARE(application->settingsStore()->list("notices.hiddenQuestions"), QStringList{QStringLiteral("videoFileWalk")});
-        QVERIFY(QMetaObject::invokeMethod(visualItem("previousFile"), "click"));
+        QVERIFY(askForVideoFile(false));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[0], 20000);
         QVERIFY(!box->property("visible").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         application->settingsStore()->set("notices.hiddenQuestions", QStringList());
-        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QVERIFY(askForVideoFile(true));
         QTRY_VERIFY(box->property("visible").toBool());
         QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
         video.openVideo(videos[2]);
@@ -37828,8 +37837,8 @@ private slots:
         QVERIFY(!application->nextVideoFile(false));
         auto *question = named("videoFileQuestion");
         QVERIFY(question);
-        for (const char *button : {"nextFile", "previousFile"}) {
-            QVERIFY(QMetaObject::invokeMethod(visualItem(button), "click"));
+        for (const bool next : {true, false}) {
+            QVERIFY(askForVideoFile(next));
             QObject *box = nullptr;
             QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
             QCOMPARE(box->property("detail").toString(), QString());
@@ -38296,6 +38305,173 @@ private slots:
         QCOMPARE(tools.videoView().zoomModel(), application::visual::ZoomModel::Aegisub35);
     }
 
+    void videoTransportRowShowsTheTimeAndJumpsTo()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto &video = application->video();
+        QVERIFY(!visualItem("previousFile"));
+        QVERIFY(!visualItem("nextFile"));
+        auto *times = item("videoTimes");
+        QTRY_VERIFY(!video.timecode().isEmpty());
+        QTRY_COMPARE(times->property("time").toString(), video.timecode());
+        QTRY_COMPARE(item("videoStatus")->property("text").toString(),
+                     QStringLiteral("frame %1 / %2").arg(video.frame()).arg(video.frameCount()));
+        QVERIFY(item("videoTransport")->height() >= 34);
+
+        const int start = video.frame();
+        auto *field = item("videoTimeField");
+        QVERIFY(runGlobal("GLOBAL_JUMP_TO"));
+        QTRY_VERIFY(field->isVisible() && field->hasActiveFocus());
+        QCOMPARE(field->property("selectedText").toString(), video.timecode());
+        QTest::keyClicks(window, QStringLiteral("+3f"));
+        press(Qt::Key_Return);
+        QTRY_COMPARE(video.frame(), start + 3);
+        QTRY_VERIFY(!field->isVisible());
+
+        QVERIFY(runGlobal("GLOBAL_JUMP_TO"));
+        QTRY_VERIFY(field->hasActiveFocus());
+        QTest::keyClicks(window, QStringLiteral("3:99"));
+        press(Qt::Key_Return);
+        QVERIFY(field->isVisible());
+        QTRY_VERIFY(item("videoJumpError")->isVisible());
+        QVERIFY2(times->property("jumpError").toString().startsWith(QStringLiteral("Not a time or frame: 3:99. Try ")),
+                 qPrintable(times->property("jumpError").toString()));
+        QCOMPARE(video.frame(), start + 3);
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!field->isVisible());
+        QVERIFY(!item("videoJumpError")->isVisible());
+        QCOMPARE(video.frame(), start + 3);
+
+        QVERIFY(QMetaObject::invokeMethod(item("videoTime"), "click"));
+        QTRY_VERIFY(field->hasActiveFocus());
+        QTest::keyClicks(window, QStringLiteral("0"));
+        press(Qt::Key_Return);
+        QTRY_COMPARE(video.frame(), 0);
+    }
+    void videoZoomReadoutAndSeekBarKeys()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto &video = application->video();
+        auto &view = application->videoView();
+        auto *readout = item("videoZoomReadout");
+        QCOMPARE(readout->property("text").toString(), QStringLiteral("Fit"));
+        QVERIFY(QMetaObject::invokeMethod(readout, "click"));
+        auto *menu = named("videoZoomReadoutMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(named("videoZoomReadoutFit")->property("checked").toBool());
+        QCOMPARE(named("videoZoomReadout200")->property("text").toString(), QStringLiteral("200 %"));
+        triggerAction("videoZoomReadout200");
+        QTRY_COMPARE(readout->property("text").toString(), QStringLiteral("200 %"));
+        QCOMPARE(view.readoutPercent(), 200);
+        QTRY_VERIFY(named("videoZoomReadout200")->property("checked").toBool());
+        QVERIFY(!named("videoZoomReadoutFit")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QVERIFY(runGlobal("GLOBAL_RESET_VIDEO_ZOOM"));
+        QTRY_COMPARE(readout->property("text").toString(), QStringLiteral("Fit"));
+        QVERIFY(runGlobal("GLOBAL_VIDEO_ZOOM_IN"));
+        QTRY_VERIFY(readout->property("text").toString() != QStringLiteral("Fit"));
+        QVERIFY(runGlobal("GLOBAL_VIDEO_ZOOM_FIT"));
+        QTRY_COMPARE(readout->property("text").toString(), QStringLiteral("Fit"));
+
+        auto *bar = item("videoSlider");
+        QCOMPARE(bar->property("focusPolicy").toInt(), int(Qt::TabFocus));
+        bar->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(bar->hasActiveFocus());
+        QVERIFY(findItem(bar, QStringLiteral("focusRing"))->isVisible());
+        const int at = video.frame();
+        press(Qt::Key_Right);
+        QTRY_COMPARE(video.frame(), at + 1);
+        press(Qt::Key_Left);
+        QTRY_COMPARE(video.frame(), at);
+        press(Qt::Key_End);
+        QTRY_COMPARE(video.frame(), video.frameCount() - 1);
+        press(Qt::Key_Home);
+        QTRY_COMPARE(video.frame(), 0);
+        const auto &keyframes = video.session().keyframes();
+        const auto next = std::upper_bound(keyframes.begin(), keyframes.end(), 0);
+        if (next != keyframes.end()) {
+            press(Qt::Key_PageDown);
+            QTRY_COMPARE(video.frame(), *next);
+            press(Qt::Key_PageUp);
+            QTRY_COMPARE(video.frame(), 0);
+        }
+    }
+    void subtitleBoundariesStepThroughTheLines()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(folder.isValid());
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), folder.filePath(QStringLiteral("clip.mkv"))));
+        QFile f(folder.filePath(QStringLiteral("two.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
+        auto &video = application->video();
+        video.openVideo(folder.filePath(QStringLiteral("clip.mkv")));
+        QTRY_VERIFY_WITH_TIMEOUT(video.loaded() && !video.timecode().isEmpty(), 20000);
+        QTRY_COMPARE(application->shell().activeLineNumber(), 1);
+        const auto &session = video.session();
+        const auto firstAt = [&](std::int64_t ms) { return session.frameAtOrAfter(core::DocumentTime(ms * 1000)).value_or(-1); };
+        const auto lastBefore = [&](std::int64_t ms) { return session.lastFrameBefore(core::DocumentTime(ms * 1000)).value_or(-1); };
+        QVERIFY(runGlobal("GLOBAL_NEXT_SUBTITLE_BOUNDARY"));
+        QTRY_COMPARE(video.frame(), firstAt(1000));
+        QVERIFY(runGlobal("GLOBAL_NEXT_SUBTITLE_BOUNDARY"));
+        QTRY_COMPARE(video.frame(), lastBefore(2000));
+        QVERIFY(runGlobal("GLOBAL_NEXT_SUBTITLE_BOUNDARY"));
+        QTRY_COMPARE(application->shell().activeLineNumber(), 2);
+        QTRY_COMPARE(video.frame(), firstAt(3000));
+        QVERIFY(runGlobal("GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY"));
+        QTRY_COMPARE(application->shell().activeLineNumber(), 1);
+        QTRY_COMPARE(video.frame(), lastBefore(2000));
+
+        auto *text = item("lineText");
+        text->forceActiveFocus();
+        QTRY_VERIFY(text->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(text, "selectAll"));
+        QVERIFY(QMetaObject::invokeMethod(text, "deselect"));
+        text->setProperty("cursorPosition", text->property("length"));
+        const int shown = video.frame();
+        press(Qt::Key_Left, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(!text->property("selectedText").toString().isEmpty());
+        QTest::qWait(100);
+        QCOMPARE(video.frame(), shown);
+    }
+    void fullScreenStripJumpsToAndShowsTheZoom()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QCOMPARE(fullscreenItem("fullscreenZoomReadout")->property("text").toString(), QStringLiteral("Fit"));
+        QVERIFY(runGlobal("GLOBAL_JUMP_TO"));
+        auto *field = findItem(fullscreenItem("fullscreenTime"), QStringLiteral("videoTimeField"));
+        QVERIFY(field);
+        QTRY_VERIFY(field->isVisible() && field->hasActiveFocus());
+        QVERIFY(fs.barShown());
+        QTest::keyClicks(fsWindow, QStringLiteral("+2f"));
+        QTest::keyClick(fsWindow, Qt::Key_Return);
+        QTRY_COMPARE(application->video().frame(), 32);
+        QTRY_VERIFY(!field->isVisible());
+        QVERIFY(fs.leave());
+        QTRY_VERIFY(!fsWindow->isVisible());
+    }
     void videoViewZoomAspectAndVolume()
     {
         restartWithoutSound();
@@ -39705,7 +39881,7 @@ private slots:
         QTRY_VERIFY(fsWindow->isExposed());
         QVERIFY(becomesFocusWindow(fsWindow));
         QCOMPARE(fullscreenItem("fullscreenStartTime")->property("text").toString(), fs.positionText());
-        QCOMPARE(fullscreenItem("fullscreenTime")->property("text").toString(), fs.positionText());
+        QCOMPARE(fullscreenItem("fullscreenTime")->property("time").toString(), fs.positionText());
         QVERIFY(fs.positionText().startsWith(QStringLiteral("0:00:0")));
         QVERIFY(fs.lengthText().startsWith(QStringLiteral("0:00:0")));
         QCOMPARE(fullscreenItem("fullscreenLength")->property("text").toString(), fs.lengthText());
@@ -40287,7 +40463,7 @@ private slots:
         QCOMPARE(aspectWindow->transientParent(), window);
         QVERIFY(QMetaObject::invokeMethod(aspect, "close"));
         QTRY_VERIFY(!aspectWindow->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QVERIFY(askForVideoFile(true));
         QTRY_VERIFY(box->property("visible").toBool());
         QCOMPARE(qobject_cast<QWindow *>(box)->transientParent(), window);
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
