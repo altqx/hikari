@@ -4,6 +4,7 @@
 #include "hikari/app/crash_record.h"
 #include "hikari/app/crash_report.h"
 #include "hikari/app/crash_reports.h"
+#include "hikari/app/hang_watchdog.h"
 #include "log_controller.h"
 #include "settings_store.h"
 
@@ -20,6 +21,9 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <chrono>
+#include <optional>
+#include <thread>
 
 #ifdef Q_OS_UNIX
 #include <sys/stat.h>
@@ -27,6 +31,7 @@
 
 using hikari::app::Analytics;
 using hikari::app::CrashReports;
+using hikari::app::HangWatchdog;
 using hikari::test::AnalyticsEndpoint;
 namespace crash = hikari::app::crash;
 namespace report = hikari::app::report;
@@ -348,6 +353,23 @@ private slots:
         QCOMPARE(parts.size(), 4);
         QVERIFY2(parts.value(2).split(u',').contains(kProbeModule), qPrintable(out));
         QVERIFY2(parts.value(3).split(u',').contains(kProbeModule), qPrintable(out));
+    }
+
+    void freezeBeforeTheFirstFrameIsTheStarts()
+    {
+        HangWatchdog watchdog({path("hang-record.txt"), QStringLiteral("0.1.0-test.1"), 300, 50});
+        QSignalSpy recovered(&watchdog, &HangWatchdog::recovered);
+        const auto freeze = [&]() -> std::optional<crash::Record> {
+            std::this_thread::sleep_for(std::chrono::milliseconds(800));
+            if (!recovered.wait(5000))
+                return std::nullopt;
+            return recovered.takeFirst().at(0).value<crash::Record>();
+        };
+        const auto atStart = freeze();
+        QVERIFY(atStart && atStart->startup);
+        watchdog.firstFrameShown();
+        const auto later = freeze();
+        QVERIFY(later && !later->startup);
     }
 
     void freezeKilledLeadsToReportAtNextStart()
@@ -846,6 +868,7 @@ private slots:
         const QJsonObject exception = propertiesOf(analytics.queued(), QStringLiteral("$exception"));
         QCOMPARE(exception.value(QStringLiteral("$exception_level")).toString(), QStringLiteral("error"));
         QCOMPARE(exception.value(QStringLiteral("freeze_seconds")).toInt(), 12);
+        QCOMPARE(exception.value(QStringLiteral("freeze_phase")).toString(), QStringLiteral("running"));
         QString why;
         QVERIFY2(AnalyticsEndpoint::closedOnly(analytics.queued(), &why), qPrintable(why));
         reports.dismiss(QStringLiteral("freeze"));
@@ -1052,12 +1075,20 @@ private slots:
         QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\nseconds 12\n"));
         QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism watchdog\n"));
         QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype APP_HANG\nmechanism watchdog\nseconds twelve\n"));
+        QVERIFY(check("hikari-crash 1\nversion 0.1.0\ntype APP_HANG\nmechanism watchdog\nseconds 12\nphase startup\n"));
+        QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype APP_HANG\nmechanism watchdog\nseconds 12\nphase later\n"));
+        QVERIFY(!check("hikari-crash 1\nversion 0.1.0\ntype SIGSEGV\nmechanism signal\nphase startup\n"));
         const crash::Record freeze{QStringLiteral("APP_HANG"), QStringLiteral("watchdog"), QStringLiteral("0.1.0"),
                                    {{QStringLiteral("hikarisub"), 0x31c0a8}, {QStringLiteral("other"), 0}}, 40};
         QVERIFY(crash::write(path("hang-record.txt"), freeze));
         const auto back = crash::read(path("hang-record.txt"));
         QVERIFY(back);
         QCOMPARE(back->seconds, 40);
+        QVERIFY(!back->startup);
+        crash::Record atStart = freeze;
+        atStart.startup = true;
+        QVERIFY(crash::write(path("hang-record.txt"), atStart));
+        QVERIFY(crash::read(path("hang-record.txt"))->startup);
         QCOMPARE(back->frames.size(), 2);
         QCOMPARE(back->frames.first().offset, quint64(0x31c0a8));
 

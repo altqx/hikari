@@ -165,6 +165,7 @@ void HangWatchdog::watch()
                       captureStack(*m_watched), int((now - beat) / 1000)};
             if (m_render)
                 record.renderFrames = captureStack(*m_render);
+            record.startup = !m_shown.load();
             crash::write(m_config.recordPath, record);
             written = now;
         } else if (beat > frozenFrom) {
