@@ -178,6 +178,7 @@ Grid > Translation matching… [GRID_TRANSLATION_DIALOG]
 Grid > Add QC note… [GLOBAL_ADD_QC_NOTE]
 Grid > -
 Grid > Delete text [GLOBAL_REMOVE_TEXT]
+Grid > Delete text, keep tags [GLOBAL_REMOVE_TEXT_KEEP_TAGS]
 Grid > Delete 1 line(s) [GLOBAL_REMOVE_LINES]
 Grid header
 Grid header > Layer [GRID_HIDE_LAYER]

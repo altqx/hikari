@@ -6782,6 +6782,17 @@ bool Application::deleteText()
     return done;
 }
 
+bool Application::deleteTextKeepTags()
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::deleteTextKeepTags(*session, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
 bool Application::textCommand(const QString &command)
 {
     using application::text_commands::Command;

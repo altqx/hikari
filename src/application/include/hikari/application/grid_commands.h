@@ -39,6 +39,9 @@ std::expected<void, CommandRefusal> deleteLines(EditSession &session);
 // Empties the text of each shown selected Line (the translation stays), one step even when it
 // already was; refused with none shown and selected.
 std::expected<void, CommandRefusal> deleteText(EditSession &session, const LineVisible &visible = {});
+// Aegisub's edit/clear/text: as deleteText, but each Line keeps its override and comment blocks
+// and drawings; plain text, \N, \n and \h go.
+std::expected<void, CommandRefusal> deleteTextKeepTags(EditSession &session, const LineVisible &visible = {});
 
 enum class JoinKind {
     Join,         // 2 to 20 selected: earliest Start, latest End, texts joined with \N

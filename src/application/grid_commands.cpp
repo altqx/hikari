@@ -1,6 +1,7 @@
 #include "hikari/application/grid_commands.h"
 
 #include "hikari/core/line_groups.h"
+#include "hikari/core/text_projection.h"
 
 #include <algorithm>
 #include <cmath>
@@ -271,24 +272,58 @@ std::expected<void, CommandRefusal> deleteLines(EditSession &session)
     return {};
 }
 
-std::expected<void, CommandRefusal> deleteText(EditSession &session, const LineVisible &visible)
+namespace {
+
+std::u8string tagsOnly(std::u8string_view text)
 {
-    std::vector<core::LineId> lines;
+    const auto raw = core::toUtf16(text);
+    std::u16string kept;
+    for (const auto &span : core::project(raw).spans) {
+        const auto piece = std::u16string_view(raw).substr(span.rawStart, span.rawEnd - span.rawStart);
+        const bool closedBlock = piece.starts_with(u'{') && piece.ends_with(u'}');
+        if (span.kind == core::SpanKind::HiddenOverride || span.kind == core::SpanKind::DrawingPayload ||
+            (span.kind == core::SpanKind::Malformed && closedBlock))
+            kept += piece;
+    }
+    return core::toUtf8(kept);
+}
+
+std::expected<void, CommandRefusal> replaceShownSelectedText(EditSession &session, const LineVisible &visible,
+                                                             std::string name,
+                                                             std::u8string (*newText)(std::u8string_view))
+{
+    std::map<core::LineId, std::u8string> lines;
+    std::set<core::LineId> touched;
     for (const auto *l : linesOf(session))
-        if (session.selection().selected.contains(l->id) && (!visible || visible(l->id)))
-            lines.push_back(l->id);
+        if (session.selection().selected.contains(l->id) && (!visible || visible(l->id))) {
+            lines.emplace(l->id, newText(l->text));
+            touched.insert(l->id);
+        }
     if (lines.empty())
         return std::unexpected(CommandRefusal::Invalid);
-    const auto ran = session.run(Command{"Deleting text", session.revision(), {lines.begin(), lines.end()},
+    const auto ran = session.run(Command{std::move(name), session.revision(), std::move(touched),
                                          [&](core::Document &d) {
-                                             for (const auto id : lines)
-                                                 if (!d.setLineText(id, {}))
+                                             for (const auto &[id, text] : lines)
+                                                 if (!d.setLineText(id, text))
                                                      return false;
                                              return true;
                                          }});
     if (!ran)
         return std::unexpected(ran.error());
     return {};
+}
+
+}
+
+std::expected<void, CommandRefusal> deleteText(EditSession &session, const LineVisible &visible)
+{
+    return replaceShownSelectedText(session, visible, "Deleting text",
+                                    [](std::u8string_view) { return std::u8string(); });
+}
+
+std::expected<void, CommandRefusal> deleteTextKeepTags(EditSession &session, const LineVisible &visible)
+{
+    return replaceShownSelectedText(session, visible, "Deleting text, keeping tags", tagsOnly);
 }
 
 namespace {

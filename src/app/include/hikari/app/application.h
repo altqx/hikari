@@ -499,6 +499,7 @@ public:
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
     Q_INVOKABLE bool deleteText();
+    Q_INVOKABLE bool deleteTextKeepTags();
     // AU20 text commands on the shown selection, one undo step each. command: "balancedBreak",
     // "breakLeft", "breakRight", "removeBreaks", "wrapAtBreaksOnly", "lowercase", "uppercase",
     // "titleCase", "sentenceCase", "fullWidth", "halfWidth", "swapAlternatives".

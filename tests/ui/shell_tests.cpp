@@ -3280,6 +3280,36 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Deleting text"));
     }
 
+    void deleteTextKeepTagsLeavesTheTagBlocks()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "keep-tags.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,"
+                                                "{\\b1}first{\\i1} line\n"
+                                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QTRY_VERIFY(item("lineText")->property("text").toString().contains(QStringLiteral("first")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_A, Qt::ControlModifier);
+        const auto steps = session->historySize();
+        auto *menuItem = named("deleteTextKeepTags");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Delete text, keep tags"));
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_REMOVE_TEXT_KEEP_TAGS"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Deleting text, keeping tags"));
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("{\\b1}{\\i1}"));
+        QCOMPARE(text(session->document().lines()[1]), QString());
+        QVERIFY(application->editor().undo());
+        QCOMPARE(text(session->document().lines()[1]), QStringLiteral("second"));
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_REMOVE_TEXT_KEEP_TAGS"))));
+        QVERIFY(ran.toBool());
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("{\\b1}{\\i1}"));
+    }
+
     void altArrowsMoveTheSelectedLinesInOneStep()
     {
         QVERIFY(application->openFile(episode));

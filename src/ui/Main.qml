@@ -8241,6 +8241,7 @@ ApplicationWindow {
                         }
                         MenuSeparator {}
                         ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TEXT_KEEP_TAGS"; iconRole: "clear"; objectName: "deleteTextKeepTags"; text: qsTranslate("HikariSub.Grid", "Delete text, keep tags"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT_KEEP_TAGS")) root.app.deleteTextKeepTags() }
                         ShellMenuItem {
                             command: "GLOBAL_REMOVE_LINES"
                             iconRole: "delete"
@@ -11456,6 +11457,7 @@ ApplicationWindow {
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
+        case "GLOBAL_REMOVE_TEXT_KEEP_TAGS": if (editing) root.app.deleteTextKeepTags(); return true
         case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true

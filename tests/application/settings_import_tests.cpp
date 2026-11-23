@@ -258,7 +258,8 @@ TEST(SettingsImport, AegisubContextsPickThePanel)
     const Plan plan = buildPlan({aegisub(R"({
         "Default": {"video/frame/next": ["Ctrl-KP_6"], "edit/line/copy": ["Ctrl-C"]},
         "Video": {"video/frame/next": ["Right"]},
-        "Subtitle Grid": {"video/frame/next/keyframe": ["Shift-Right"], "grid/move/up": ["Alt-KP_8"]},
+        "Subtitle Grid": {"video/frame/next/keyframe": ["Shift-Right"], "grid/move/up": ["Alt-KP_8"],
+                          "edit/clear": ["Ctrl-Delete"], "edit/clear/text": ["Ctrl-Shift-Delete"]},
         "Subtitle Edit Box": {"edit/color/primary": ["Alt-1"]},
         "Audio": {"time/length/increase": ["KP_Add"]},
         "Always": {"time/next": ["KP_2"]}
@@ -269,6 +270,9 @@ TEST(SettingsImport, AegisubContextsPickThePanel)
     EXPECT_EQ(rowOf(plan, "shortcut:GRID_COPY:S").value, SettingValue(std::string("Ctrl-C")));
     EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_GO_TO_NEXT_KEYFRAME:S").value, SettingValue(std::string("Shift-Right")));
     EXPECT_EQ(rowOf(plan, "shortcut:GRID_MOVE_UP:S").value, SettingValue(std::string("Alt-Num 8")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_REMOVE_TEXT:S").value, SettingValue(std::string("Ctrl-Delete")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_REMOVE_TEXT_KEEP_TAGS:S").value,
+              SettingValue(std::string("Ctrl-Shift-Delete")));
     EXPECT_EQ(rowOf(plan, "shortcut:EDITBOX_CHANGE_COLOR_PRIMARY:E").value, SettingValue(std::string("Alt-1")));
     EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_END_FRAME_LATER:A").value, SettingValue(std::string("Num +")));
     EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_NEXT:A").value, SettingValue(std::string("Num 2")));
@@ -542,7 +546,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 419);
+    EXPECT_EQ(bound, 420);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
