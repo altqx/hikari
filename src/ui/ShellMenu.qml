@@ -10,6 +10,8 @@ Menu {
     property string detailText
     // False hides this submenu's row in its parent menu.
     property bool shown: true
+    // Rows draw their labels from the first opening on, so unopened menus cost little at start (#1334).
+    property bool hasOpened: false
     property Component lazyContent
     property MenuContent lazyItems
     signal built()
@@ -49,6 +51,7 @@ Menu {
     }
     onAboutToShow: {
         ShellMenus.menuShowing()
+        hasOpened = true
         build()
         StatusHelp.menuOpened()
     }
