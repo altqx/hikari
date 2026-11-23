@@ -7068,7 +7068,7 @@ private slots:
 
     void menuBarIsTheListedOne()
     {
-        static const QRegularExpression byData(QStringLiteral(R"(^(macro_|recent\w*\d+$|viewLayoutSaved\d+$))"));
+        static const QRegularExpression byData(QStringLiteral(R"(^(macro_|pluginMenu_|recent\w*\d+$|viewLayoutSaved\d+$))"));
         QStringList shown;
         QVERIFY(buildMenus());
         QObject *bar = named("appMenus");
@@ -7088,7 +7088,7 @@ private slots:
     void contextMenusAreTheListedOnes()
     {
         static const QRegularExpression byData(
-            QStringLiteral(R"((^macro_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$|^tabMenuTab\d+$))"));
+            QStringLiteral(R"((^macro_|^pluginMenu_|^statusItemToggle_|Recent\w*\d+$|Stream\d+$|Chapter\d+$|Filter\d+$|Monitor\d+$|^tabMenuTab\d+$))"));
         QVERIFY(application->openFile(episode));
         QQuickItem *field = stylesFilter();
         QVERIFY(field);
@@ -7131,6 +7131,7 @@ private slots:
             {QStringLiteral("Tag button"), named("tagButtonMenu")},
             {QStringLiteral("Tag list"), named("lineTextTagListOptions")},
             {QStringLiteral("Explorer row"), named("explorerRowMenu")},
+            {QStringLiteral("Status bar"), named("statusBarMenu")},
         };
         QStringList missing;
         for (const auto &[name, menu] : listed)

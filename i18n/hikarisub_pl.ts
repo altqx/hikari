@@ -17669,6 +17669,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json wskazuje w %2 polecenie „%1”, którego nie deklaruje.</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json przypisuje %1 dwa razy, w %2.</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>Element paska stanu: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>Skrót: %1 dla %2</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 jest już zajęty przez %2</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>Wymaga otwartego pliku</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>Działa tylko bez otwartego pliku</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>Wymaga zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>Działa tylko bez zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>Wymaga co najmniej dwóch zaznaczonych linijek</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>Działa tylko z jedną zaznaczoną linijką lub bez zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>Wymaga otwartego wideo</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>Działa tylko bez otwartego wideo</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>Wymaga otwartego audio</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>Działa tylko bez otwartego audio</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>Wymaga linijki karaoke</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>Działa tylko na linijce bez karaoke</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>Wymaga trybu tłumaczenia</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>Działa tylko poza trybem tłumaczenia</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

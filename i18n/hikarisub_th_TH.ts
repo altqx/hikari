@@ -17417,6 +17417,82 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Can read your files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.</source>
+        <translation>hikari-plugin.json อ้างถึงคำสั่ง “%1” ที่ %2 ซึ่งไม่ได้ประกาศไว้</translation>
+    </message>
+    <message>
+        <source>hikari-plugin.json binds %1 twice, at %2.</source>
+        <translation>hikari-plugin.json กำหนด %1 ซ้ำสองครั้ง ที่ %2</translation>
+    </message>
+    <message>
+        <source>Status bar item: %1</source>
+        <translation>รายการในแถบสถานะ: %1</translation>
+    </message>
+    <message>
+        <source>Shortcut: %1 for %2</source>
+        <translation>ปุ่มลัด: %1 สำหรับ %2</translation>
+    </message>
+    <message>
+        <source>%1 is taken by %2</source>
+        <translation>%1 ถูกใช้โดย %2 แล้ว</translation>
+    </message>
+    <message>
+        <source>Needs an open file</source>
+        <translation>ต้องมีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open file</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีไฟล์ที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a selection</source>
+        <translation>ต้องมีการเลือก</translation>
+    </message>
+    <message>
+        <source>Works only without a selection</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีการเลือก</translation>
+    </message>
+    <message>
+        <source>Needs two or more selected lines</source>
+        <translation>ต้องเลือกตั้งแต่สองบรรทัดขึ้นไป</translation>
+    </message>
+    <message>
+        <source>Works only with one line selected or none</source>
+        <translation>ทำงานได้เฉพาะเมื่อเลือกบรรทัดเดียวหรือไม่ได้เลือก</translation>
+    </message>
+    <message>
+        <source>Needs an open video</source>
+        <translation>ต้องมีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without an open video</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีวิดีโอที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs open audio</source>
+        <translation>ต้องมีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Works only without open audio</source>
+        <translation>ทำงานได้เฉพาะเมื่อไม่มีเสียงที่เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Needs a karaoke line</source>
+        <translation>ต้องเป็นบรรทัดคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Works only on a line without karaoke</source>
+        <translation>ทำงานได้เฉพาะบนบรรทัดที่ไม่มีคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Needs Translation mode</source>
+        <translation>ต้องอยู่ในโหมดการแปล</translation>
+    </message>
+    <message>
+        <source>Works only outside Translation mode</source>
+        <translation>ทำงานได้เฉพาะนอกโหมดการแปล</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
