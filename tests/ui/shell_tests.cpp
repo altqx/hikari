@@ -19548,7 +19548,10 @@ private slots:
         auto *field = dialogItem("settingsDialog", "setting_scriptProperties.translation");
         QVERIFY(on && field);
         QTRY_VERIFY(field->isVisible());
-        QVERIFY(!dialogItem("settingsDialog", "overridden_scriptProperties.translation")->isVisible());
+        auto *row = dialogItem("settingsDialog", "settingRow_scriptProperties.translation");
+        QVERIFY(row);
+        auto *elsewhere = row->findChild<QQuickItem *>(QStringLiteral("settingElsewhere"));
+        QVERIFY(elsewhere && !elsewhere->isVisible());
         QVERIFY(QMetaObject::invokeMethod(on, "click"));
         field->forceActiveFocus();
         QTRY_VERIFY(field->hasActiveFocus());
@@ -20353,7 +20356,7 @@ private slots:
         QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), 2);
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 20);
-        QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QString());
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QStringLiteral("200"));
         QCOMPARE(dialogItem("settingsDialog", "setting_program.language")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());

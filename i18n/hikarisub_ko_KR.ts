@@ -1614,7 +1614,15 @@ Output device: %2</source>
         <translation type="unfinished">프로젝트</translation>
     </message>
     <message>
-        <source>Mine</source>
+        <source>Yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1654,15 +1662,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4858,6 +4858,10 @@ Output device: %2</source>
         <translation>삭제</translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Refresh fonts</source>
         <translation>글꼴 새로 고침</translation>
     </message>
@@ -5038,7 +5042,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
+        <source>Copy to yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5126,15 +5134,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7164,6 +7164,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shortcut “%1” is invalid</source>
         <translation>단축키 “%1”(이)가 유효하지 않습니다</translation>
+    </message>
+    <message>
+        <source>Also on %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>%1 takes it</source>
@@ -11345,7 +11349,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished">프로젝트</translation>
     </message>
     <message>
-        <source>Mine</source>
+        <source>Yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11357,7 +11361,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 in mine</source>
+        <source>%1 in yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11365,7 +11369,7 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save to mine</source>
+        <source>Save to yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13469,7 +13473,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Apply</source>
-        <translation>적용</translation>
+        <translation type="vanished">적용</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -13481,7 +13485,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>OK</source>
-        <translation>확인</translation>
+        <translation type="vanished">확인</translation>
     </message>
     <message>
         <source>Font size</source>
@@ -13761,7 +13765,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
-        <translation>확인 또는 적용을 누르면 모든 페이지가 기본값으로 돌아가며, 취소하면 설정이 유지됩니다. 단축키와 모양은 그대로 유지되므로 해당 페이지에서 따로 재설정하십시오.</translation>
+        <translation type="vanished">확인 또는 적용을 누르면 모든 페이지가 기본값으로 돌아가며, 취소하면 설정이 유지됩니다. 단축키와 모양은 그대로 유지되므로 해당 페이지에서 따로 재설정하십시오.</translation>
     </message>
     <message>
         <source>Reset all</source>
@@ -13773,19 +13777,19 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Resets the settings on this page to their defaults</source>
-        <translation>현재 페이지의 설정을 기본값으로 되돌리기</translation>
+        <translation type="vanished">현재 페이지의 설정을 기본값으로 되돌리기</translation>
     </message>
     <message>
         <source>More resets</source>
-        <translation>기타 재설정</translation>
+        <translation type="vanished">기타 재설정</translation>
     </message>
     <message>
         <source>Reset this page</source>
-        <translation>이 페이지 재설정</translation>
+        <translation type="vanished">이 페이지 재설정</translation>
     </message>
     <message>
         <source>Reset all settings…</source>
-        <translation>모든 설정 재설정…</translation>
+        <translation type="vanished">모든 설정 재설정…</translation>
     </message>
     <message>
         <source>Interface language</source>
@@ -13978,6 +13982,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>활성 줄</translation>
     </message>
     <message>
+        <source>Export</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discord</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Glossary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change the active line when adding to the selection</source>
         <translation>선택 항목에 추가할 때 활성 줄 변경</translation>
     </message>
@@ -13988,6 +14008,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>전체 화면 종료 후 보이는 줄 찾기</translation>
+    </message>
+    <message>
+        <source>Activities</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Columns</source>
@@ -14116,6 +14140,96 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>가운데 버튼으로 끌면 화면이 이동합니다. 터치패드에서 두 손가락을 오므리거나 벌리면 포인터를 중심으로 확대/축소합니다.</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This window has no project, so the link opens the Yours tab.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waits for trust</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset the settings on %1 to their defaults?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcuts and the appearance stay as they are: reset them on their own pages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resets every setting but the shortcuts and the appearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open settings file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Modified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n setting(s) match</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Settings contents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset page…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub keeps the last values it could read, and your changes here wait until it reads again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing is changed here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No settings match “%1”.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -14439,7 +14553,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Set shortcuts</source>
-        <translation>설정된 단축키</translation>
+        <translation type="vanished">설정된 단축키</translation>
     </message>
     <message>
         <source>Global shortcuts</source>
@@ -14518,6 +14632,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>먼저 적용 또는 취소를 누르십시오. 가져온 항목은 즉시 추가됩니다.</translation>
     </message>
     <message>
+        <source>Macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -14556,6 +14682,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Checking</source>
         <translation>확인</translation>
+    </message>
+    <message>
+        <source>Translator model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reviewer model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never send to AI</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Check for updates automatically</source>
@@ -14796,6 +14934,32 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Import legacy shortcuts</source>
         <translation>이전 버전 단축키 가져오기</translation>
+    </message>
+    <message>
+        <source>No plugin has settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n shortcuts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Manage plugin…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is turned off. Its settings apply when it’s on.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a number.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -15301,10 +15465,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Project</source>
         <translation type="unfinished">프로젝트</translation>
-    </message>
-    <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Built in</source>
@@ -16235,6 +16395,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add an MCP server</source>
         <translation type="unfinished"></translation>
     </message>
@@ -16396,6 +16560,42 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The audio panel’s shortcuts also work in the video and the line editor, as most already do in the grid. Unlike Aegisub’s Medusa keys, arrows, Page Up and Down, Home, End, Enter, Tab and Escape keep their panel’s meaning. In a text box only shortcuts with Ctrl, Alt or Meta work.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy setting id</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>settings.toml has an error on line %1.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -17047,6 +17247,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>설정</translation>
     </message>
     <message>
+        <source>Open in Settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Update from file…</source>
         <translation>파일에서 업데이트…</translation>
     </message>
@@ -17060,7 +17264,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Setting not kept</source>
-        <translation>설정을 저장하지 않음</translation>
+        <translation type="vanished">설정을 저장하지 않음</translation>
     </message>
     <message>
         <source>Install from file…</source>
@@ -17087,6 +17291,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Close</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Also in Settings › Updates and privacy</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose a plugin package</source>
@@ -17521,7 +17729,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Project</source>
-        <translation>프로젝트</translation>
+        <translation type="vanished">프로젝트</translation>
     </message>
     <message>
         <source>Uses yours</source>
@@ -17534,6 +17742,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Set in project.local.toml</source>
         <translation>project.local.toml에서 설정됨</translation>
+    </message>
+    <message>
+        <source>Project: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Not set</source>
@@ -17569,7 +17781,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>project.toml could not be written, so some Project settings were not saved.</source>
-        <translation>project.toml에 쓸 수 없어 일부 프로젝트 설정이 저장되지 않았습니다.</translation>
+        <translation type="vanished">project.toml에 쓸 수 없어 일부 프로젝트 설정이 저장되지 않았습니다.</translation>
     </message>
     <message>
         <source>Saving a file writes the switched-on fields into its Script Info.</source>
@@ -17692,23 +17904,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Discord</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>In this project</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Show name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Details (first line)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>State (second line)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21283,10 +21483,6 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>From plugins</source>
         <translation type="unfinished"></translation>
     </message>
@@ -21295,15 +21491,7 @@ because it was edited.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -21475,8 +21663,20 @@ because it was edited.</source>
         <translation>적용</translation>
     </message>
     <message>
+        <source>Yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New catalogue</source>
         <translation>새 목록</translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -24121,7 +24321,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
+        <source>Yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -24133,6 +24333,14 @@ Styles deleted:
         <translation>프리셋 이름 바꾸기…</translation>
     </message>
     <message>
+        <source>Copy to yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete preset…</source>
         <translation>프리셋 삭제…</translation>
     </message>
@@ -24141,15 +24349,7 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26504,7 +26704,15 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
+        <source>Yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -26604,15 +26812,7 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27807,7 +28007,7 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mine</source>
+        <source>Yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -27867,15 +28067,15 @@ do not work on comments</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Copy to mine</source>
+        <source>Copy to yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to yours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move to project</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Move to mine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
