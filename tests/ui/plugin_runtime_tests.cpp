@@ -876,9 +876,11 @@ private slots:
         QVERIFY(content.styleCatalogues[0].pluginName == u8"Kit");
         QVERIFY(content.styleCatalogues[0].title == u8"Signs");
         QCOMPARE(QString::fromStdU16String(content.styleCatalogues[0].file.u16string()),
-                 QDir::cleanPath(folder + QStringLiteral("/styles/signs.sty")));
+                 QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/styles/signs.sty"))));
         QCOMPARE(content.karaokePresets.size(), 1u);
         QVERIFY(content.karaokePresets[0].title.empty());
+        QCOMPARE(QString::fromStdU16String(content.karaokePresets[0].file.u16string()),
+                 QDir::toNativeSeparators(QDir::cleanPath(folder + QStringLiteral("/presets/glow.ass"))));
 
         turn(false);
         runtime.sync();

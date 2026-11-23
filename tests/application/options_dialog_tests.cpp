@@ -7,6 +7,7 @@
 #include <optional>
 
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -382,9 +383,28 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     }
     EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->min, 1);
     EXPECT_EQ(findOptionsBinding("privacy.discordIdleMinutes")->max, 120);
+    const std::tuple<std::string_view, OptionsControl, int> fullscreen[] = {
+        {"video.fullscreenBarPosition", OptionsControl::IndexChoice, 2},
+        {"video.fullscreenBar", OptionsControl::IndexChoice, 3},
+        {"video.fullscreenHidePointer", OptionsControl::Check, 0},
+        {"video.fullscreenOverlays", OptionsControl::Check, 0},
+        {"video.fullscreenOpensIn", OptionsControl::IndexChoice, 2}};
+    for (std::size_t i = 0; const auto &[id, control, entries] : fullscreen) {
+        const auto &binding = all[std::size(kLegacy) + 94 + i++];
+        EXPECT_EQ(binding.setting, id);
+        EXPECT_EQ(binding.control, control) << id;
+        EXPECT_EQ(binding.page, OptionsPage::Video) << id;
+        EXPECT_EQ(binding.entries, entries) << id;
+        ASSERT_NE(findSetting(id), nullptr) << id;
+    }
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("video.fullscreenBarPosition")->defaultValue), 0);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("video.fullscreenBar")->defaultValue), 0);
+    EXPECT_TRUE(std::get<bool>(findSetting("video.fullscreenHidePointer")->defaultValue));
+    EXPECT_TRUE(std::get<bool>(findSetting("video.fullscreenOverlays")->defaultValue));
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("video.fullscreenOpensIn")->defaultValue), 0);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 95);
-    const auto &hostApi = all[std::size(kLegacy) + 93];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 101);
+    const auto &hostApi = all[std::size(kLegacy) + 99];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -395,7 +415,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 93);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 99);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -409,6 +429,9 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     }
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->min, 2);
     EXPECT_EQ(findOptionsBinding("autosave.maxFiles")->max, 1000000);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->min, 5);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->max, 3600);
+    EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->page, OptionsPage::General);
     EXPECT_EQ(findOptionsBinding("audio.delay")->min, -50000000);
     EXPECT_EQ(findOptionsBinding("program.tabTextMaxChars")->min, 20);
     EXPECT_EQ(findOptionsBinding("automation.loadingMethod")->entries, 4);

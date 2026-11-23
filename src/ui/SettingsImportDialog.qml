@@ -9,7 +9,7 @@ DialogWindow {
     id: dialog
     objectName: "settingsImportDialog"
     required property var importer
-    title: qsTr("Import legacy settings")
+    title: qsTr("Import settings")
     dialogId: "settingsImport"
     modal: true
     resizable: true
@@ -56,8 +56,8 @@ DialogWindow {
             title: qsTr("Roll back import"),
             text: qsTr("Go back to the settings you had before the last import?"),
             detail: edits.length === 0
-                    ? qsTr("They take effect the next time HikariSub starts. The legacy installation is not changed.")
-                    : qsTr("These settings you changed since go back too: %1. The legacy installation is not changed.")
+                    ? qsTr("They take effect the next time HikariSub starts. The files you imported from are not changed.")
+                    : qsTr("These settings you changed since go back too: %1. The files you imported from are not changed.")
                           .arg(edits.join(", ")),
             severity: "warning",
             choices: [
@@ -78,7 +78,7 @@ DialogWindow {
     FolderChooser {
         id: folderDialog
         objectName: "settingsImportFolderDialog"
-        title: qsTr("Choose the folder of a legacy installation")
+        title: qsTr("Choose a HikariSub 0.0.x installation or Aegisub settings folder")
         onAccepted: dialog.addFolder(selectedFolder.toString())
     }
 
@@ -89,7 +89,7 @@ DialogWindow {
         Layout.preferredWidth: 732
         Layout.bottomMargin: 6
         Repeater {
-            model: [qsTr("Installation"), qsTr("Review"), qsTr("Import")]
+            model: [qsTr("Source"), qsTr("Review"), qsTr("Import")]
             RowLayout {
                 id: stepItem
                 required property string modelData
@@ -145,11 +145,11 @@ DialogWindow {
         ColumnLayout {
             spacing: 6
             Label {
-                text: qsTr("Choose the legacy installation to import from")
+                text: qsTr("Choose what to import from")
                 font: dialog.fontAt(14, Font.DemiBold)
             }
             Label {
-                text: qsTr("HikariSub 0.0.x installations found on this computer. Nothing in them is changed.")
+                text: qsTr("HikariSub 0.0.x installations and Aegisub settings folders found on this computer. Nothing in them is changed.")
                 color: Theme.muted
                 wrapMode: Text.WordWrap
                 Layout.fillWidth: true
@@ -170,7 +170,7 @@ DialogWindow {
                     activeFocusOnTab: true
                     highlightMoveDuration: 0
                     Accessible.role: Accessible.List
-                    Accessible.name: qsTr("Legacy installations")
+                    Accessible.name: qsTr("Places to import from")
                     Keys.onUpPressed: dialog.chooseRoot(Math.max(0, currentIndex - 1))
                     Keys.onDownPressed: dialog.chooseRoot(Math.min(count - 1, currentIndex + 1))
                     delegate: ItemDelegate {
@@ -227,7 +227,7 @@ DialogWindow {
                 Label {
                     anchors.centerIn: parent
                     visible: rootList.count === 0
-                    text: qsTr("No legacy installation was found. Choose its folder.")
+                    text: qsTr("Nothing to import was found. Choose a folder.")
                     color: Theme.muted
                 }
             }
@@ -318,7 +318,7 @@ DialogWindow {
             }
             Label {
                 text: review.conflictsOnly
-                      ? qsTr("A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.")
+                      ? qsTr("A conflict is a setting the files you import from set differently from yours. The proposed choice is ticked; untick what you want to keep.")
                       : qsTr("Every record read, with its status. Only conflicts can be imported.")
                 color: Theme.muted
                 wrapMode: Text.WordWrap

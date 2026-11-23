@@ -378,6 +378,25 @@ private slots:
         QVERIFY2(clock.elapsed() >= 4900, qPrintable(QString::number(clock.elapsed())));
     }
 
+    void theAutosaveIntervalSettingSetsTheTimer()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("interval.ass")), "x");
+        app::Application a(options());
+        QCOMPARE(a.autosaveIntervalMs(), 20'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 1);
+        QCOMPARE(a.autosaveIntervalMs(), 5'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 100'000);
+        QCOMPARE(a.autosaveIntervalMs(), 3'600'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 5);
+        QVERIFY(a.openFile(path));
+        a.editor().textEdited(QStringLiteral("y"), 1);
+        QVERIFY(a.editor().commit());
+        const auto document = *a.workspace().editingTarget();
+        QTest::qWait(4'000);
+        QVERIFY(a.autosavePending(document));
+        QTRY_VERIFY_WITH_TIMEOUT(!a.autosavePending(document), 4'000);
+    }
+
     void aSlowDiskLeavesTheWindowResponsiveWhileAutosaving()
     {
         const QString path = writeFile(dir.filePath(QStringLiteral("slow.ass")), "x");

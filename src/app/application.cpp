@@ -1249,7 +1249,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
-    m_autosaveIntervalMs = options.autosaveIntervalMs;
+    m_autosaveIntervalOverrideMs = options.autosaveIntervalMs;
     m_spellingText = backends::legacySpellingText(true);
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     m_spellingOn = m_settings->boolean("editor.spellchecker");
@@ -4140,6 +4140,15 @@ std::string Application::recoveryKey(application::DocumentId document) const
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
 }
 
+int Application::autosaveIntervalMs() const
+{
+    if (m_autosaveIntervalOverrideMs)
+        return *m_autosaveIntervalOverrideMs;
+    const auto *binding = application::findOptionsBinding("autosave.intervalSeconds");
+    const auto seconds = std::clamp<std::int64_t>(m_settings->integer64("autosave.intervalSeconds"), binding->min, binding->max);
+    return static_cast<int>(seconds * 1000);
+}
+
 void Application::scheduleAutosave(std::optional<application::DocumentId> document)
 {
     if (!m_recovery || !m_recovery->enabled())
@@ -4152,7 +4161,7 @@ void Application::scheduleAutosave(std::optional<application::DocumentId> docume
     if (!timer) {
         timer = new QTimer(this);
         timer->setSingleShot(true);
-        timer->setInterval(m_autosaveIntervalMs);
+        timer->setInterval(autosaveIntervalMs());
         const auto id = *target;
         connect(timer, &QTimer::timeout, this, [this, id] { autosave(id, false); });
     }
@@ -6470,7 +6479,9 @@ QVariantMap Application::scriptProperties()
             {QStringLiteral("originalTranslation"), q(p.originalTranslation)},
             {QStringLiteral("originalEditing"), q(p.originalEditing)},
             {QStringLiteral("originalTiming"), q(p.originalTiming)},
+            {QStringLiteral("synchPoint"), q(p.synchPoint)},
             {QStringLiteral("updatedBy"), q(p.updatedBy)},
+            {QStringLiteral("updateDetails"), q(p.updateDetails)},
             {QStringLiteral("playResX"), p.playResX},
             {QStringLiteral("playResY"), p.playResY},
             {QStringLiteral("layoutResX"), p.layoutResX},
@@ -6497,7 +6508,9 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     p.originalTranslation = toU8(values.value(QStringLiteral("originalTranslation")).toString());
     p.originalEditing = toU8(values.value(QStringLiteral("originalEditing")).toString());
     p.originalTiming = toU8(values.value(QStringLiteral("originalTiming")).toString());
+    p.synchPoint = toU8(values.value(QStringLiteral("synchPoint")).toString());
     p.updatedBy = toU8(values.value(QStringLiteral("updatedBy")).toString());
+    p.updateDetails = toU8(values.value(QStringLiteral("updateDetails")).toString());
     p.playResX = values.value(QStringLiteral("playResX")).toInt();
     p.playResY = values.value(QStringLiteral("playResY")).toInt();
     p.layoutResX = values.value(QStringLiteral("layoutResX")).toInt();
@@ -6522,7 +6535,9 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     e.originalTranslation = edited("originalTranslation");
     e.originalEditing = edited("originalEditing");
     e.originalTiming = edited("originalTiming");
+    e.synchPoint = edited("synchPoint");
     e.updatedBy = edited("updatedBy");
+    e.updateDetails = edited("updateDetails");
     e.playResX = edited("playResX");
     e.playResY = edited("playResY");
     e.layoutResX = edited("layoutResX");
@@ -7216,6 +7231,10 @@ void Application::settingChanged(const QString &id)
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
+    else if (id == QLatin1String("autosave.intervalSeconds"))
+        for (auto &[document, timer] : m_autosaveTimers)
+            if (timer)
+                timer->setInterval(autosaveIntervalMs());
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         for (auto *views : allViews())
             views->shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
