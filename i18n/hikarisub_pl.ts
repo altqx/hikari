@@ -3915,14 +3915,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>różne</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>Liczba znaków w każdym wierszu. Nie więcej niż 43 znaki, najwyżej 2 wiersze.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>Znaki na sekundę. Nie więcej niż 15.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>Pokaż czasy</translation>
     </message>
@@ -4337,6 +4329,18 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>Tag zaczyna się od ukośnika odwrotnego, na przykład \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersz.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersze.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wierszy.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>Znaki na sekundę. Wartość powinna wynosić %1 lub mniej.</translation>
     </message>
 </context>
 <context>
@@ -10797,12 +10801,20 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Macierz YCbCr wideo (%1) różni się od macierzy napisów (%2).</translation>
     </message>
     <message>
+        <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s. If the subtitles’ colours were matched to a %1 video, convert them so that they look the same on this one.</source>
+        <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo. Jeśli kolory napisów dopasowano do wideo %1, przekonwertuj je, aby wyglądały tak samo w tym wideo.</translation>
+    </message>
+    <message>
         <source>If this video’s colours look the same as those of the video the subtitles were made for, set the subtitles’ matrix to the video’s.</source>
         <translation>Jeśli kolory tego wideo wyglądają tak samo jak kolory wideo, do którego powstały napisy, ustaw macierz napisów jak w wideo.</translation>
     </message>
     <message>
         <source>Keep %1</source>
         <translation>Zachowaj %1</translation>
+    </message>
+    <message>
+        <source>Convert colours and set to %1</source>
+        <translation>Przekonwertuj kolory i ustaw %1</translation>
     </message>
     <message>
         <source>Set the layout resolution?</source>
@@ -14272,6 +14284,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Licz spacje i interpunkcję w CPS</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>Linijki czytane szybciej są zabarwiane, coraz mocniej aż do poziomu błędu.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>Plik napisów może ustawić własne limity we właściwościach skryptu.</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>Dzielenie</translation>
     </message>
@@ -14630,6 +14670,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Keep the subtitles’</source>
         <translation>Zachowaj macierz napisów</translation>
+    </message>
+    <message>
+        <source>Convert the colours and set it to the video’s</source>
+        <translation>Przekonwertuj kolory i ustaw jak w wideo</translation>
     </message>
     <message>
         <source>No layout resolution in the subtitles</source>
@@ -15342,6 +15386,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A built-in theme could not be read, so Dark is shown.</source>
         <translation>Nie udało się odczytać wbudowanego motywu, więc jest wyświetlany motyw Ciemny.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A plugin&apos;s spelling dictionary: %1 is its title, %2 the plugin&apos;s name.</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>Put .dic and .aff files in the “Dictionary” folder</source>
@@ -19686,6 +19735,30 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Rendering</source>
         <translation>Renderowanie</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>Limity czytania</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>Używaj moich ustawień</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
     </message>
     <message>
         <source>Save</source>

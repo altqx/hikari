@@ -260,7 +260,19 @@ std::optional<std::pair<fs::path, fs::path>> SpellChecker::findPair(std::u16stri
         if (fileExists(dic) && fileExists(aff))
             return std::pair{aff, dic};
     }
+    for (const PluginDictionary &dictionary : m_pluginDictionaries)
+        if (dictionary.language == symbol && fileExists(dictionary.aff) && fileExists(dictionary.dic))
+            return std::pair{dictionary.aff, dictionary.dic};
     return std::nullopt;
+}
+
+std::vector<std::u16string> SpellChecker::symbols() const
+{
+    auto out = availableDictionaries(m_folders);
+    for (const PluginDictionary &dictionary : m_pluginDictionaries)
+        if (std::ranges::find(out, dictionary.language) == out.end())
+            out.push_back(dictionary.language);
+    return out;
 }
 
 SpellChecker::Status SpellChecker::initialize(std::u16string_view language)
@@ -279,7 +291,7 @@ SpellChecker::Status SpellChecker::initialize(std::u16string_view language)
     m_dictionaries.back().scripts = scriptsOf(name, aff);
     m_dictionaries.back().backend = std::move(backend);
     m_dictionaries.back().loaded = true;
-    for (auto &symbol : availableDictionaries(m_folders)) {
+    for (auto &symbol : symbols()) {
         if (symbol == name)
             continue;
         if (const auto other = findPair(symbol)) {

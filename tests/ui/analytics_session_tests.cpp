@@ -68,6 +68,7 @@ class AnalyticsSessionTest : public QObject {
         options.settingsFile = folder + QStringLiteral("/settings.toml");
         options.playbackAudio = false;
         options.analytics = analytics;
+        options.legacySettingsFolders = QStringList{};
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));

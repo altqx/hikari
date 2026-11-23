@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/reading_limits.h"
 #include "hikari/application/settings.h"
 
 #include <expected>
@@ -18,6 +19,7 @@ struct ScriptProperties {
     int wrapStyle = 0;
     bool reverseCollisions = false;
     bool scaledBorderAndShadow = true;
+    std::optional<ReadingLimits> readingLimits; // written only when edited; nothing removes the keys
 };
 
 // The dialog's YCbCr matrix choices: "None", "TV.601", "PC.601", ... "PC.240M".
@@ -29,7 +31,7 @@ ScriptProperties scriptProperties(const core::Document &document);
 struct ScriptPropertiesEdits {
     bool title = false, originalScript = false, originalTranslation = false, originalEditing = false,
          originalTiming = false, synchPoint = false, updatedBy = false, updateDetails = false, playResX = false,
-         playResY = false, layoutResX = false, layoutResY = false;
+         playResY = false, layoutResX = false, layoutResY = false, readingLimits = false;
 };
 
 // One undo step ("Changing the subtitle header"); none when nothing changed.

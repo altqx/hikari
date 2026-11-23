@@ -108,6 +108,7 @@ class GrammarUiTests : public QObject {
         } else {
             o.spellingBackend = {};
         }
+        o.legacySettingsFolders = QStringList{};
         application = std::make_unique<app::Application>(o);
         engine = std::make_unique<QQmlApplicationEngine>();
         hikari::ui::attachDocking(*engine);

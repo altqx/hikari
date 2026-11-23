@@ -1620,6 +1620,26 @@ DialogWindow {
                         key: "grid.counting"
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps" }
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps" }
+                        SettingsRow {
+                            host: dialog
+                            setting: "grid.cpsWarning"
+                            SettingNumber { setting: "grid.cpsWarning"; from: 1; to: 100; unit: qsTr("CPS") }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "grid.cpsError"
+                            SettingNumber { setting: "grid.cpsError"; from: 1; to: 100; unit: qsTr("CPS") }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "grid.lineLength"
+                            SettingNumber { setting: "grid.lineLength"; from: 1; to: 1000 }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "grid.maxLines"
+                            SettingNumber { setting: "grid.maxLines"; from: 1; to: 20 }
+                        }
                     }
                     Section {
                         key: "grid.splitting"
@@ -1852,7 +1872,7 @@ DialogWindow {
                                 { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s")] },
                                 { setting: "video.matrixMismatch", text: qsTr("A different YCbCr matrix from the video’s"),
-                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Convert the colours and set it to the video’s")] },
                                 { setting: "video.missingLayoutRes", text: qsTr("No layout resolution in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Set it to the script resolution")] },
                                 { setting: "video.layoutResMismatch", text: qsTr("A different layout resolution from the video’s"),
