@@ -545,8 +545,9 @@ add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari
 hikari_add_qttest(hikari_ui_release_screenshots_tests SOURCES release_screenshots_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_release_screenshots_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}"
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
-    HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm")
-add_dependencies(hikari_ui_release_screenshots_tests hikari_fake_ai_sidecar hikari_lrelease)
+    HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm"
+    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>" HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
+add_dependencies(hikari_ui_release_screenshots_tests hikari_fake_ai_sidecar hikari_lrelease hikari_plugin_helper)
 hikari_add_qttest(hikari_ui_explorer_panel_tests SOURCES explorer_panel_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE

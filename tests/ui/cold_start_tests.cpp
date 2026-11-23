@@ -1,6 +1,7 @@
 #include "hikari/app/application.h"
 #include "docking.h"
 
+#include <QElapsedTimer>
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -75,6 +76,23 @@ class ColdStartTests : public QObject {
         }
         return menus;
     }
+    static bool isMenuRow(const QObject *object)
+    {
+        for (const QMetaObject *type = object->metaObject(); type; type = type->superClass())
+            if (QByteArrayView(type->className()).startsWith("ShellMenuItem_QMLTYPE"))
+                return true;
+        return false;
+    }
+    static bool drawn(const QObject *row)
+    {
+        const auto *content = row->property("contentItem").value<QQuickItem *>();
+        return content && content->property("item").value<QObject *>();
+    }
+    static bool inUnopenedMenu(const QObject *row)
+    {
+        const auto *menu = row->property("menu").value<QObject *>();
+        return menu && menu->property("hasOpened") == false;
+    }
 
 private slots:
     void cleanup()
@@ -116,6 +134,32 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menus.first(), "open"));
         QTRY_VERIFY(menus.first()->property("count").toInt() > 0);
         QVERIFY(window->findChild<QObject *>(QStringLiteral("openFolderMenuItem")));
+    }
+
+    void menuRowsDrawOnTheirMenusFirstOpen()
+    {
+        start();
+        const QList<QObject *> everything = window->findChildren<QObject *>();
+        qInfo("%lld objects at start", static_cast<long long>(everything.size()));
+        QList<QObject *> waiting;
+        for (QObject *object : everything)
+            if (isMenuRow(object) && inUnopenedMenu(object))
+                waiting << object;
+        QVERIFY2(waiting.size() > 300, qPrintable(QString::number(waiting.size())));
+        for (QObject *row : waiting)
+            QVERIFY2(!drawn(row), qPrintable(row->property("text").toString()));
+
+        auto *menu = window->findChild<QObject *>(QStringLiteral("gridMenu"));
+        QVERIFY(menu && menu->property("hasOpened") == false);
+        QElapsedTimer opening;
+        opening.start();
+        QVERIFY(QMetaObject::invokeMethod(menu, "open"));
+        qInfo("gridMenu's first open held the window for %lld ms", static_cast<long long>(opening.elapsed()));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        for (QObject *row : waiting)
+            if (row->property("menu").value<QObject *>() == menu)
+                QVERIFY2(drawn(row), qPrintable(row->property("text").toString()));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 };
 

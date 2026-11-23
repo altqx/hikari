@@ -234,6 +234,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+    QGuiApplication::setApplicationVersion(QStringLiteral(HIKARI_VERSION));
     const UpdateEnvironment updateEnvironment = UpdateEnvironment::current();
     const auto folderEnvironment = folderEnvironmentOf(updateEnvironment);
     const UserFolder userFolder = UserFolder::locate(folderEnvironment);
@@ -368,6 +369,9 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
                          [dog = watchdog.get()] { dog->recordRenderThread(); }, Qt::DirectConnection);
         QObject::connect(window, &QQuickWindow::sceneGraphInvalidated, watchdog.get(),
                          [dog = watchdog.get()] { dog->forgetRenderThread(); }, Qt::DirectConnection);
+        QObject::connect(window, &QQuickWindow::frameSwapped, watchdog.get(),
+                         [dog = watchdog.get()] { dog->firstFrameShown(); },
+                         Qt::ConnectionType(Qt::DirectConnection | Qt::SingleShotConnection));
     }
     if (mode == StartupMode::ExitAfterWindowCreated) {
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });
@@ -488,6 +492,7 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
         QGuiApplication app(argc, argv);
         QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
         QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+        QGuiApplication::setApplicationVersion(QStringLiteral(HIKARI_VERSION));
         if (startup.exportDocs->empty()) {
             std::fprintf(stderr, "--export-docs needs a folder\n");
             return 2;

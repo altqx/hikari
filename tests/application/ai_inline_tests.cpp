@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <string>
+#include <vector>
 
 using namespace hikari;
 using namespace hikari::application::ai_inline;
@@ -131,4 +132,34 @@ TEST(AiInline, ActionIdsRoundTrip)
     for (const Action a : {Action::Rewrite, Action::Shorten, Action::Spelling, Action::Translate, Action::Custom})
         EXPECT_EQ(actionFromId(actionId(a)), a);
     EXPECT_FALSE(actionFromId("timing"));
+}
+
+TEST(AiInline, SynonymsSendTheWordInItsLineWithoutTags)
+{
+    const core::LineRecord l = line(u8"{\\i1}A big{\\i0} house");
+    const std::size_t at = std::u8string_view(l.text).find(u8"big");
+    const Prepared p = prepareSynonyms(l, {{u8"Before"}, {u8"After"}}, std::pair{at, at + 3});
+    EXPECT_NE(p.user.find("<line>A <word>big</word> house</line>"), std::string::npos);
+    EXPECT_NE(p.user.find("Lines before:\nBefore\n"), std::string::npos);
+    EXPECT_NE(p.user.find("Speaker: Mio"), std::string::npos);
+    EXPECT_EQ(p.user.find("\\i1"), std::string::npos);
+    EXPECT_NE(p.system.find("up to 8 replacements"), std::string::npos);
+    EXPECT_EQ(s(p.sent), "big");
+}
+
+TEST(AiInline, SynonymsAreReadOnePerLineWithoutMarksRepeatsTheWordOrTags)
+{
+    const auto read = [](std::string_view answer) {
+        std::vector<std::string> out;
+        for (const std::u8string &word : readSynonyms(answer, u8"big"))
+            out.push_back(s(word));
+        return out;
+    };
+    EXPECT_EQ(read("1. large\n2) Huge\n- vast\n* \"great\"\n• “immense”\nLarge\nBig\n{\\i1}bold\n\n  sizeable  "),
+              (std::vector<std::string>{"large", "Huge", "vast", "great", "immense", "sizeable"}));
+    EXPECT_EQ(read("```\nlarge\n```"), std::vector<std::string>{"large"});
+    EXPECT_TRUE(read("").empty());
+    EXPECT_TRUE(read("big\nBIG").empty());
+    EXPECT_EQ(read("a\nb\nc\nd\ne\nf\ng\nh\ni\nj").size(), kMaxSynonyms);
+    EXPECT_TRUE(read(std::string(kMaxSynonymBytes + 1, 'x')).empty());
 }

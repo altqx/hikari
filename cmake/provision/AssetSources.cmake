@@ -1,13 +1,14 @@
-# vcpkg asset-source script: a GNU download tries gnu.org briefly, then mirrors of the same tree (vcpkg waits minutes
-# on each port URL while gnu.org is down); any other download is fetched as given, all checked against vcpkg's SHA512.
+# vcpkg asset-source script: the download's own URL (a GNU one briefly, then mirrors of the same tree, since vcpkg
+# waits minutes on each port URL while gnu.org is down), then our copy on the vcpkg-assets release, all checked
+# against vcpkg's SHA512. fill-asset-mirror.sh adds copies to that release.
 #
 #   cmake -DHIKARI_ASSET_URL=<url> -DHIKARI_ASSET_SHA512=<sha512>
-#         -DHIKARI_ASSET_DST=<file> -P GnuMirrors.cmake
+#         -DHIKARI_ASSET_DST=<file> -P AssetSources.cmake
 cmake_minimum_required(VERSION 3.25)
 
 foreach(var HIKARI_ASSET_URL HIKARI_ASSET_SHA512 HIKARI_ASSET_DST)
     if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
-        message(FATAL_ERROR "GnuMirrors.cmake needs -D${var}")
+        message(FATAL_ERROR "AssetSources.cmake needs -D${var}")
     endif()
 endforeach()
 
@@ -28,6 +29,7 @@ if(HIKARI_ASSET_URL MATCHES "^https?://(ftp\\.gnu\\.org/(pub/)?gnu|ftpmirror\\.g
 endif()
 
 string(TOLOWER "${HIKARI_ASSET_SHA512}" expected)
+list(APPEND urls "https://github.com/altqx/hikari/releases/download/vcpkg-assets/${expected}")
 set(part "${HIKARI_ASSET_DST}.part")
 set(timeout ${first_timeout})
 foreach(url IN LISTS urls)

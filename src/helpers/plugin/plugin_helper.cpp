@@ -213,10 +213,11 @@ int main()
         if (command != protocol::Command::Run)
             return r.terminal(Outcome::Unsupported);
         const std::string id = in.str();
-        if (!in.ok() || !in.atEnd())
+        auto call = Json::parse(in.str());
+        if (!in.ok() || !in.atEnd() || !call || !call->isObject())
             return r.terminal(Outcome::InvalidInput);
         ServiceHost host(r);
-        finish(r, g_state->run(id, host));
+        finish(r, g_state->run(id, *call, host));
     };
     const RequestHandler onEvent = [](const Frame &event, Responder &r) {
         if (!g_state)

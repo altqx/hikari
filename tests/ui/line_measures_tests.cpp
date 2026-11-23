@@ -40,6 +40,15 @@ private slots:
         QVERIFY(measureLine(QString(44, QLatin1Char('x')), core::SubtitleFormat::Ass).badWraps);
     }
 
+    void badWrapsFollowTheLimitsGiven()
+    {
+        const ui::MeasureOptions limits{.lineLength = 5, .maxLines = 3};
+        QVERIFY(!measureLine(QStringLiteral("abcde\\Nb\\Nc"), core::SubtitleFormat::Ass, limits).badWraps);
+        QVERIFY(measureLine(QStringLiteral("abcdef"), core::SubtitleFormat::Ass, limits).badWraps);
+        QVERIFY(measureLine(QStringLiteral("a\\Nb\\Nc\\Nd"), core::SubtitleFormat::Ass, limits).badWraps);
+        QVERIFY(measureLine(QStringLiteral("a\\Nb"), core::SubtitleFormat::Ass, {.maxLines = 1}).badWraps);
+    }
+
     void allCharactersWhenAsked()
     {
         ui::MeasureOptions all{true, true};

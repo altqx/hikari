@@ -176,7 +176,7 @@ void VideoFullscreenController::setBarPosition(BarPosition position)
 
 bool VideoFullscreenController::stripReserved() const
 {
-    return application::fullscreenStripReserved(
+    return m_mode == Mode::Simple && application::fullscreenStripReserved(
         application::fullscreenBarPosition(m_settings.integer("video.fullscreenBarPosition")),
         application::fullscreenBarMode(barMode()));
 }
@@ -192,6 +192,8 @@ void VideoFullscreenController::setMode(Mode mode)
         return;
     m_mode = mode;
     emit modeChanged();
+    emit panelChanged();
+    updateBar();
 }
 
 void VideoFullscreenController::cycleBarMode()
@@ -248,8 +250,9 @@ void VideoFullscreenController::updateBar()
 {
     const application::FullscreenBarState state{m_awake, m_video.playing(), m_menuOpen, m_pointerOverBar};
     const auto mode = application::fullscreenBarMode(barMode());
-    const bool shown = m_active && application::fullscreenBarShown(mode, state);
-    const bool hidden = m_active && application::fullscreenPointerHidden(m_settings.boolean("video.fullscreenHidePointer"), state);
+    const bool simple = m_active && m_mode == Mode::Simple;
+    const bool shown = simple && application::fullscreenBarShown(mode, state);
+    const bool hidden = simple && application::fullscreenPointerHidden(m_settings.boolean("video.fullscreenHidePointer"), state);
     if (shown == m_barShown && hidden == m_cursorHidden)
         return;
     m_barShown = shown;
@@ -292,6 +295,12 @@ QString VideoFullscreenController::lengthText() const
     return QString::fromStdString(application::fullscreenTimecode(m_video.hasVideo() ? m_video.session().durationMs() : 0));
 }
 
+QString VideoFullscreenController::videoSize() const
+{
+    const auto geometry = m_video.hasVideo() ? m_video.session().sourceGeometry() : application::visual::SourceGeometry{};
+    return geometry.valid() ? QStringLiteral("%1 × %2").arg(geometry.width).arg(geometry.height) : QString();
+}
+
 QString VideoFullscreenController::videoName() const
 {
     if (!m_video.hasVideo())
@@ -305,6 +314,18 @@ bool VideoFullscreenController::toggle(int monitor)
     if (!m_video.hasVideo())
         return false;
     return m_active ? leave() : enter(monitor);
+}
+
+bool VideoFullscreenController::toggleTypesetting()
+{
+    if (!m_video.hasVideo())
+        return false;
+    if (m_active && m_mode == Mode::Typesetting)
+        return leave();
+    if (!m_active && !enter(0))
+        return false;
+    setMode(Mode::Typesetting);
+    return true;
 }
 
 bool VideoFullscreenController::showOn(int monitor)

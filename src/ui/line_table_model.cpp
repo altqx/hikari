@@ -34,6 +34,15 @@ QString qs(const std::u8string &s)
     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
 }
 
+QString swapTags(const QString &text, core::SubtitleFormat format, const QString &swap)
+{
+    static const core::LegacyRegex ass(u"\\{[^\\{]*\\}", core::LegacyRegex::Advanced);
+    static const core::LegacyRegex srt(u"\\<[^\\<]*\\>", core::LegacyRegex::Advanced);
+    std::u16string raw = text.toStdU16String();
+    (format == core::SubtitleFormat::Srt ? srt : ass).replaceAll(raw, swap.toStdU16String());
+    return QString::fromStdU16String(raw);
+}
+
 QString legacyTime(const core::TimeField &time, std::optional<std::int64_t> frame, core::SubtitleFormat format)
 {
     const std::int64_t ms = time.value.microseconds() / 1000;
@@ -177,12 +186,13 @@ const LineTableModel::Measures &LineTableModel::measuresOf(const Row &row) const
     const core::LineRecord &line = row.line;
     if (!line.comment) {
         const auto &text = m_translationMode && !line.translation.empty() ? line.translation : line.text;
-        const LineMeasures measured = measureLine(qs(text), m_format);
+        const LineMeasures measured =
+            measureLine(qs(text), m_format, MeasureOptions{.lineLength = m_limits.lineLength, .maxLines = m_limits.maxLines});
         if (m_format != core::SubtitleFormat::TMPlayer) {
             const int cps = legacyCps(measured.chars, line.start.value.microseconds() / 1000,
                                       line.end.value.microseconds() / 1000);
             m.cps = QString::number(cps);
-            m.cpsTooHigh = cps > 15;
+            m.cpsSeverity = application::cpsSeverity(m_limits, cps);
         }
         m.wraps = measured.wraps;
         m.badWraps = measured.badWraps;
@@ -197,14 +207,9 @@ const QString &LineTableModel::shownTextOf(const Row &row) const
         return *row.shownText;
     const core::LineRecord &line = row.line;
     QString text = qs(!m_showOriginal && m_translationMode && !line.translation.empty() ? line.translation : line.text);
-    if (tagsSwapped()) {
-        static const core::LegacyRegex ass(u"\\{[^\\{]*\\}", core::LegacyRegex::Advanced);
-        static const core::LegacyRegex srt(u"\\<[^\\<]*\\>", core::LegacyRegex::Advanced);
-        std::u16string raw = text.toStdU16String();
+    if (tagsSwapped())
         // MUST KILL: m_tagSwap is a regex replacement, so "&" and "\0".."\9" in the swap text are back-references
-        (m_format == core::SubtitleFormat::Srt ? srt : ass).replaceAll(raw, m_tagSwap.toStdU16String());
-        text = QString::fromStdU16String(raw);
-    }
+        text = swapTags(text, m_format, m_tagSwap);
     row.shownText = std::move(text);
     return *row.shownText;
 }
@@ -269,6 +274,21 @@ void LineTableModel::setHideTags(bool hide, const QString &swap)
     }
     if (!m_rows.empty())
         emit dataChanged(index(0, TextColumn), index(rowCount() - 1, TextColumn), {Qt::DisplayRole, SpellMarksRole});
+}
+
+void LineTableModel::setReadingLimits(const application::ReadingLimits &profile)
+{
+    m_profileLimits = profile;
+    const auto limits = m_scriptLimits.over(profile);
+    if (limits == m_limits)
+        return;
+    m_limits = limits;
+    for (const Row &row : m_rows)
+        row.measures.reset();
+    if (m_draft)
+        m_draft->measures.reset();
+    if (!m_rows.empty())
+        emit dataChanged(index(0, CpsColumn), index(rowCount() - 1, WrapsColumn), {CpsSeverityRole, BadWrapsRole});
 }
 
 int LineTableModel::labelSlot(int state)
@@ -361,6 +381,8 @@ void LineTableModel::setDocument(const core::Document &document,
     m_draft.reset();
     m_draftRow = -1;
     m_format = document.format();
+    m_scriptLimits = application::scriptReadingLimits(document);
+    m_limits = m_scriptLimits.over(m_profileLimits);
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
     m_styles.clear();
     m_tooManyStyles = false;
@@ -455,8 +477,11 @@ void LineTableModel::setSelection(const application::Selection &selection, std::
     for (const auto &id : {m_selection.active, selection.active, m_anchor, anchor})
         if (id)
             touched.push_back(*id);
+    const bool activeMoved = selection.active != m_selection.active;
     m_selection = selection;
     m_anchor = anchor;
+    if (activeMoved)
+        emit activeChanged();
     emitStateChanged(touched);
 }
 
@@ -540,6 +565,19 @@ const core::LineRecord *LineTableModel::recordAt(int row) const
     return &m_rows[static_cast<std::size_t>(row)].line;
 }
 
+bool LineTableModel::matchesText(int row, const QString &text) const
+{
+    const core::LineRecord *line = recordAt(row);
+    if (!line)
+        return false;
+    const auto has = [&](const std::u8string &field) { return qs(field).contains(text, Qt::CaseInsensitive); };
+    const auto hasWithoutTags = [&](const std::u8string &field) {
+        return swapTags(qs(field), m_format, {}).contains(text, Qt::CaseInsensitive);
+    };
+    return hasWithoutTags(line->text) || (m_translationMode && hasWithoutTags(line->translation)) || has(line->actor) ||
+           has(line->effect) || has(line->style);
+}
+
 int LineTableModel::rowCount(const QModelIndex &parent) const
 {
     return parent.isValid() ? 0 : static_cast<int>(m_rows.size());
@@ -567,8 +605,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case Qt::DisplayRole: return foldedData(run, index.column());
         case HiddenBlockRole: return m_rows[std::size_t(run.blockRow)].blockMark;
         case HiddenBlockRowRole: return run.blockRow;
+        case CpsSeverityRole: return 0.0;
         case CommentRole:
-        case CpsTooHighRole:
         case BadWrapsRole:
         case DraftRole:
         case UnplacedRunsRole: return false;
@@ -630,8 +668,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.groupClosed;
     case GroupDepthRole:
         return static_cast<int>(core::groupDepth(line));
-    case CpsTooHighRole:
-        return measuresOf(r).cpsTooHigh;
+    case CpsSeverityRole:
+        return measuresOf(r).cpsSeverity;
     case BadWrapsRole:
         return measuresOf(r).badWraps;
     case SpellMarksRole:
@@ -868,7 +906,7 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {AnchorRole, "anchor"},
                   {StartMicrosecondsRole, "startMicroseconds"},
                   {EndMicrosecondsRole, "endMicroseconds"},
-                  {CpsTooHighRole, "cpsTooHigh"},
+                  {CpsSeverityRole, "cpsSeverity"},
                   {BadWrapsRole, "badWraps"},
                   {SpellMarksRole, "spellMarks"},
                   {ComparisonRole, "comparison"},
@@ -893,6 +931,7 @@ void LineFilterModel::setLineModel(LineTableModel *model)
 {
     m_lines = model;
     setSourceModel(model);
+    connect(model, &LineTableModel::activeChanged, this, &LineFilterModel::pinActive);
 }
 
 void LineFilterModel::setPredicate(Predicate predicate)
@@ -900,6 +939,23 @@ void LineFilterModel::setPredicate(Predicate predicate)
     beginFilterChange();
     m_predicate = std::move(predicate);
     endFilterChange(Direction::Rows);
+}
+
+void LineFilterModel::setText(const QString &text)
+{
+    if (text == m_text)
+        return;
+    beginFilterChange();
+    m_text = text;
+    pinActive();
+    endFilterChange(Direction::Rows);
+}
+
+void LineFilterModel::pinActive()
+{
+    const auto active = m_lines ? m_lines->selection().active : std::nullopt;
+    const auto row = active ? m_lines->rowOf(*active) : std::nullopt;
+    m_pinned = row && !m_text.isEmpty() && m_lines->matchesText(*row, m_text) ? active : std::nullopt;
 }
 
 bool LineFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &) const
@@ -924,17 +980,24 @@ QSortFilterProxyModel::DataChangeRelevanceFlags LineFilterModel::dataChangeRelev
     static constexpr std::array kMarksOnly{int(LineTableModel::ActiveRole), int(LineTableModel::SelectedRole),
                                            int(LineTableModel::AnchorRole), int(LineTableModel::SpellMarksRole),
                                            int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole)};
-    if (!roles.isEmpty() && std::ranges::all_of(roles, [](int role) { return std::ranges::contains(kMarksOnly, role); }))
+    const bool activeMatters = !m_text.isEmpty() && roles.contains(int(LineTableModel::ActiveRole));
+    if (!activeMatters && !roles.isEmpty() &&
+        std::ranges::all_of(roles, [](int role) { return std::ranges::contains(kMarksOnly, role); }))
         return DataChangeRelevanceFlag::NotRelevant;
     return QSortFilterProxyModel::dataChangeRelevanceFlags(sourceTopLeft, sourceBottomRight, roles);
 }
 
 bool LineFilterModel::passes(int sourceRow) const
 {
-    if (!m_lines || !m_predicate)
+    if (!m_lines || (!m_predicate && m_text.isEmpty()))
         return true;
     const core::LineRecord *record = m_lines->recordAt(sourceRow);
-    return record && m_predicate(*record);
+    return record && (!m_predicate || m_predicate(*record)) && matchesText(sourceRow, *record);
+}
+
+bool LineFilterModel::matchesText(int sourceRow, const core::LineRecord &record) const
+{
+    return m_text.isEmpty() || record.id == m_pinned || m_lines->matchesText(sourceRow, m_text);
 }
 
 int LineFilterModel::hiddenSelectedCount() const

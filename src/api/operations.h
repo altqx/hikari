@@ -61,6 +61,10 @@ std::string lowerAscii(std::string_view s);
 // document.apply: the edits as one undo step, recorded for review when the caller is reviewed.
 Result documentApply(const Context &context, const Json &params);
 std::unexpected<Error> noVideo();
+// A plugin handler's context.via for this caller: "ai" or "api".
+std::string_view viaOf(const Caller &caller);
+// refused, reason disabled, with the reason commands.list gives the plugin command.
+std::unexpected<Error> disabled(const PluginHost &plugins, std::string_view command);
 bool videoOpen(const Context &context);
 const core::LineRecord *findLine(const core::Document &document, core::LineId id);
 std::unexpected<Error> noLine(core::LineId id);
