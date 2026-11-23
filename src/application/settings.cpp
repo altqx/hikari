@@ -425,6 +425,7 @@ std::vector<SettingDefinition> &definitions()
         {"grid.cpsError", "", Int, Profile, Mapped, false, std::int64_t{30}},
         {"grid.lineLength", "", Int, Profile, Mapped, false, std::int64_t{43}},
         {"grid.maxLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
+        {"problems.reading", "", Bool, Profile, Mapped, false, true},
         // Setting ids the Karaoke layout turned on and nobody changed since.
         {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},

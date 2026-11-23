@@ -74,7 +74,7 @@ TEST(ApiRegistry, EveryEventIsWellFormed)
         EXPECT_FALSE(checkSchema(event.data, registry.defs())) << event.name;
     }
     EXPECT_EQ(names, (std::set<std::string>{"document.changed", "document.saved", "selection.changed",
-                                            "documents.changed", "panel.changed", "command.ran", "project.changed",
+                                            "documents.changed", "panel.changed", "command.ran", "project.changed", "problems.changed",
                                             "macro.ran", "program.output", "program.exited"}));
 }
 

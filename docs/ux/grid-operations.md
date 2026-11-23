@@ -76,3 +76,4 @@ The named G45 obligations transferred from [Painted-Grid accessibility and perfo
 - **Grid:** the CPS cell is tinted with the Grid warning colour at Aegisub 3.5's alpha, `min((cps − warning + 1) / (error − warning + 1), 1)`, so it deepens from the warning to the error level. An error level under the warning tints fully past the warning. The Wraps cell is tinted when a line is longer than the characters-per-line limit or there are more lines than the Lines limit.
 - **Line editor:** the Wraps and CPS counters show the limits, turn the warning colour past the warning level and the danger colour at the error level.
 - **AI Shorten** sends the Lines over the CPS warning and asks for that speed.
+- **Problems list:** the `reading` source lists each Line past a limit, unless **Show reading-limit problems** (`problems.reading`) is off ([Language features and problems](../plugins.md#language-features-and-problems)).

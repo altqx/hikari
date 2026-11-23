@@ -24,6 +24,7 @@
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/problems_controller.h"
+#include "hikari/app/reading_problems.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
@@ -1467,6 +1468,7 @@ private:
     std::unique_ptr<AiPlugins> m_aiPlugins;
     application::RowMarks m_rowMarks;
     application::Problems m_problems;
+    ReadingProblems m_readingProblems{m_problems};
     std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
@@ -1715,6 +1717,7 @@ private:
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
+    void syncReadingProblems();
     std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);

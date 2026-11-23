@@ -2610,6 +2610,7 @@ void Application::refreshViews()
     }
     m_rowMarks.keepOnly(m_workspace.documents());
     m_problems.keepOnly(m_workspace.documents());
+    syncReadingProblems();
     shell().setRowMarks(rowMarksOf(target));
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();
@@ -5538,6 +5539,20 @@ int spellingRoleOf(const application::EditSession *session)
 
 }
 
+void Application::syncReadingProblems()
+{
+    m_readingProblems.setSettings(ReadingProblems::Settings{
+        .shown = m_settings->boolean("problems.reading"),
+        .profile = application::profileReadingLimits(m_settings->settings()),
+        .allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps"),
+        .allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps"),
+    });
+    std::vector<std::pair<application::DocumentId, const application::EditSession *>> open;
+    for (const application::DocumentId id : m_workspace.documents())
+        open.emplace_back(id, m_files->session(id));
+    m_readingProblems.sync(open);
+}
+
 std::optional<std::u16string> Application::editorRaw(int role) const
 {
     return activeLineRaw(targetSession(), role);
@@ -7334,6 +7349,7 @@ void Application::settingChanged(const QString &id)
         for (auto *views : allViews())
             views->editor->optionsChanged();
         refreshVideo();
+        syncReadingProblems();
     }
     else if (id == QLatin1String("grid.cpsWarning") || id == QLatin1String("grid.cpsError") ||
              id == QLatin1String("grid.lineLength") || id == QLatin1String("grid.maxLines")) {
@@ -7341,7 +7357,10 @@ void Application::settingChanged(const QString &id)
             views->shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
             views->editor->optionsChanged();
         }
+        syncReadingProblems();
     }
+    else if (id == QLatin1String("problems.reading"))
+        syncReadingProblems();
     else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
         for (auto *views : allViews())
             views->editor->setShowTags(!m_settings->boolean("editor.hideTags"));

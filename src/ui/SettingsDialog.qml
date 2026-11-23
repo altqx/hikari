@@ -1089,6 +1089,7 @@ DialogWindow {
                             note: qsTr("A subtitle file can set its own limits in Script properties.")
                             SettingNumber { setting: "grid.maxLines"; from: 1; to: 20; name: qsTr("Lines") }
                         }
+                        SettingCheck { setting: "problems.reading"; text: qsTr("Show reading-limit problems") }
                     }
                     SettingsSection {
                         title: qsTr("Splitting")

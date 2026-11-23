@@ -261,7 +261,7 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
                                              "effects.apply", "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "marks.clear", "marks.set",
                                              "panels.close", "panels.focus", "panels.open", "plugins.install", "plugins.run",
-                                             "plugins.scaffold", "presence.set_text", "programs.run", "programs.send",
+                                             "plugins.scaffold", "presence.set_text", "problems.clear", "problems.fix", "problems.set", "programs.run", "programs.send",
                                              "programs.start", "programs.stop", "selection.set", "settings.set", "status_items.set",
                                              "translation.project_write", "typeset.apply", "video.set_keyframes"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";

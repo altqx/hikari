@@ -1,4 +1,5 @@
 #include "hikari/app/problems_controller.h"
+#include "hikari/app/reading_problems.h"
 
 #include "hikari/core/text_projection.h"
 
@@ -107,6 +108,8 @@ void addProblemMarks(ui::LineTableModel::RowMarks &marks, const application::Pro
         lines.emplace(line->id.value, line);
     absl::flat_hash_map<std::uint64_t, std::array<int, 4>> counts;
     for (const application::HeldProblem &held : problems.of(id)) {
+        if (held.source == ReadingProblems::kSource)
+            continue;
         const auto line = lines.find(held.problem.line.value);
         if (line != lines.end() && current(held, line->second))
             ++counts[held.problem.line.value][std::size_t(held.problem.severity)];

@@ -368,6 +368,44 @@ private slots:
         QTRY_VERIFY(colours(0).isEmpty());
         QVERIFY(colours(1).isEmpty());
     }
+
+    void readingProblemsFollowTheLimitsAndTheSetting()
+    {
+        start({QStringLiteral("short"), QString(40, QLatin1Char('a')), QString(50, QLatin1Char('b')),
+               QStringLiteral("one\\Ntwo\\Nthree")});
+        const auto reading = [&] {
+            const std::vector<const core::LineRecord *> lines = target()->document().lines();
+            QStringList out;
+            for (const application::HeldProblem &held : application->problems().of(document()))
+                if (held.source == app::ReadingProblems::kSource)
+                    out << QStringLiteral("%1 %2 %3")
+                               .arg(std::ranges::find_if(lines, [&](const core::LineRecord *line) {
+                                        return line->id == held.problem.line;
+                                    }) - lines.begin())
+                               .arg(int(held.problem.severity))
+                               .arg(QString::fromStdString(held.problem.message));
+            return out;
+        };
+        const QStringList all{
+            QStringLiteral("1 0 Reads at 40 CPS; the limit is 30."),
+            QStringLiteral("2 0 Reads at 50 CPS; the limit is 30."),
+            QStringLiteral("2 1 Line 1 has 50 characters; the limit is 43."),
+            QStringLiteral("3 1 3 line(s); the limit is 2."),
+        };
+        QTRY_COMPARE(reading(), all);
+        QCOMPARE(application->problems().name(std::string(app::ReadingProblems::kSource)), "Reading");
+        auto *grid = application->shell().lines();
+        for (int row = 0; row < 4; ++row)
+            QVERIFY(grid->index(row, 0).data(ui::LineTableModel::RowMarkColoursRole).toList().isEmpty());
+
+        application->settingsStore()->setValue(QStringLiteral("grid.cpsError"), 45);
+        QTRY_COMPARE(reading().value(0), QStringLiteral("1 1 Reads at 40 CPS; the limit is 15."));
+
+        application->settingsStore()->setValue(QStringLiteral("problems.reading"), false);
+        QTRY_VERIFY(reading().isEmpty());
+        application->settingsStore()->setValue(QStringLiteral("problems.reading"), true);
+        QTRY_COMPARE(reading().size(), 4);
+    }
 };
 
 QTEST_MAIN(ProblemsUiTests)

@@ -877,6 +877,7 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
 **The problems list.** It is the QC notes panel grown, titled **Problems** with dock id `QcNotes` and panel registry 12 unchanged.
 
 - **What it holds.** The open QC notes as the `QC notes` source, and every plugin's and language server's problems, grouped by Line in Document order.
+- **Reading.** HikariSub's own source `reading` lists the Lines past the [reading limits](ux/grid-operations.md#reading-limits) as whole-Line problems: an error at the CPS error level, a warning at the CPS warning level, and a warning for each line longer than the characters-per-line limit and for more lines than the Lines limit. Comment Lines are skipped and there are no quick fixes. The Grid's CPS and Wraps tint already shows these, so they get no Grid marks. **Show reading-limit problems** (`problems.reading`, on by default) in Settings › Grid › Counting turns the source off (Q799).
 - **QC notes.** A note sits on the Line the QC notes panel already matches it to (the latest start at its time, else the nearest within 15 seconds), or under No line. Its section is its source's `set`. QC notes keep their own Grid flags and get no problem marks.
 - **The toolbar.** It filters by severity and source and keeps QC notes' own Add note and import and export.
 - **Using a row.** Choosing a row selects its Line and seeks the video to its start. A row's quick fixes are in its menu and under Quick fix (Alt+Enter, Global 5373) in the line editor.

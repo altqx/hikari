@@ -19465,6 +19465,7 @@ private slots:
               {"grid.cpsError", nullptr},
               {"grid.lineLength", nullptr},
               {"grid.maxLines", nullptr},
+              {"problems.reading", "Show reading-limit problems"},
               {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr},
