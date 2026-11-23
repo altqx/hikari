@@ -611,8 +611,8 @@ Application::Application(QObject *parent) : Application(Options{}, parent) {}
 
 Application::Application(Options options, QObject *parent) : QObject(parent)
 {
-    application::setInstalledVersion(
-        (options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion).toStdString());
+    const QString appVersion = options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion;
+    application::setInstalledVersion(appVersion.toStdString());
     // MUST KILL: read before anything below may write a settings file
     const bool firstStart = !options.settingsFile.isEmpty() && !ui::SettingsStore::filesExist(options.settingsFile);
     m_reader = backends::makeFileReader();
@@ -702,7 +702,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         noteRemovedRules();
         m_importStore->recover();
     }
-    m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
+    m_settingsImport = std::make_unique<SettingsImportController>(
+        m_importStore.get(), options.legacySettingsFolders.value_or(SettingsImportStore::defaultCandidates()));
     if (firstStart && Localisation::firstStartLanguage(options.systemUiLanguages) == u"pl") {
         m_settings->set("program.language", QStringLiteral("pl"));
         m_settings->set("editor.dictionaryLanguage", QStringLiteral("pl"));
@@ -735,6 +736,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
+    m_exportRecipes = std::make_unique<ui::ExportRecipes>(*m_settings);
+    m_luaExportFilters = std::make_unique<LuaExportFilters>(*m_automation);
     m_selectOptions = m_settings->integer("selectLines.options");
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
@@ -745,6 +748,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     choosePlayer();
     setUpTranslationControls();
     setUpFileArrangements();
+    m_files->setGeneratorVersion(toU8(appVersion));
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     m_automation->setLog([this](const QString &line, AutomationShell::LogLine kind) {
@@ -933,12 +937,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
-    m_automationHotkeys->setPluginRunner([this](const QString &command) { return m_pluginRuntime->run(command); });
-    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(),
-            [this] { m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands()); });
+    m_automationHotkeys->setPluginRunner(
+        [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
+    connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
+        m_automationHotkeys->setPluginCommands(m_pluginRuntime->commands());
+        m_automationHotkeys->setPluginDefaults(m_pluginRuntime->keybindings());
+    });
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
+    connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
+    QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
     m_analytics = std::make_unique<Analytics>(*m_settings, options.analytics);
     m_analytics->setAiVersions([this] { return m_ai->versionProperties(); });
     m_crashReports = std::make_unique<CrashReports>(*m_settings, *m_analytics, *m_log, options.crashReports);
@@ -1246,7 +1255,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
-    m_autosaveIntervalMs = options.autosaveIntervalMs;
+    m_autosaveIntervalOverrideMs = options.autosaveIntervalMs;
     m_spellingText = backends::legacySpellingText(true);
     m_bundledDictionaryDir = options.bundledDictionaryDir;
     m_spellingOn = m_settings->boolean("editor.spellchecker");
@@ -1917,6 +1926,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
         o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
         o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        o.limits = application::profileReadingLimits(m_settings->settings());
         o.softLineBreak = m_settings->boolean("editor.softLineBreak");
         return o;
     });
@@ -2002,6 +2012,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
             Q_EMIT m_review->currentChanged();
     });
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
     v.shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
@@ -2302,9 +2313,7 @@ void selectLegacyActiveLine(application::EditSession &session)
         return;
     std::size_t active = 0;
     if (session.document().format() == core::SubtitleFormat::Ass) {
-        const auto value = session.document().scriptInfo(u8"Active Line").value_or(std::u8string());
-        const std::string text(value.begin(), value.end());
-        const long n = std::strtol(text.c_str(), nullptr, 10);
+        const long n = application::savedView(session.document()).activeLine.value_or(0);
         if (n > 0 && static_cast<std::size_t>(n) < lines.size())
             active = static_cast<std::size_t>(n);
     }
@@ -2533,6 +2542,8 @@ void Application::refreshViews()
         m_fontCatalogs->projectChanged();
     if (m_shiftTimes)
         m_shiftTimes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
+    if (m_exportRecipes)
+        m_exportRecipes->setProjectRoot(m_projects ? m_projects->root(m_workspace.activeWindow()) : QString());
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -4137,6 +4148,15 @@ std::string Application::recoveryKey(application::DocumentId document) const
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
 }
 
+int Application::autosaveIntervalMs() const
+{
+    if (m_autosaveIntervalOverrideMs)
+        return *m_autosaveIntervalOverrideMs;
+    const auto *binding = application::findOptionsBinding("autosave.intervalSeconds");
+    const auto seconds = std::clamp<std::int64_t>(m_settings->integer64("autosave.intervalSeconds"), binding->min, binding->max);
+    return static_cast<int>(seconds * 1000);
+}
+
 void Application::scheduleAutosave(std::optional<application::DocumentId> document)
 {
     if (!m_recovery || !m_recovery->enabled())
@@ -4149,7 +4169,7 @@ void Application::scheduleAutosave(std::optional<application::DocumentId> docume
     if (!timer) {
         timer = new QTimer(this);
         timer->setSingleShot(true);
-        timer->setInterval(m_autosaveIntervalMs);
+        timer->setInterval(autosaveIntervalMs());
         const auto id = *target;
         connect(timer, &QTimer::timeout, this, [this, id] { autosave(id, false); });
     }
@@ -4187,7 +4207,7 @@ bool Application::autosave(application::DocumentId document, bool now)
     if (layout)
         saved.setHikariProperty(application::kLayoutKey, *layout);
     m_files->applyProjectGarbage(document, m_files->destination(document).value_or(application::DestinationKey{}),
-                                 saved);
+                                 saved, activeLine);
     content.bytes = core::encodeSubtitle(saved, m_files->saveOptions());
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
@@ -4211,7 +4231,7 @@ bool Application::autosave(application::DocumentId document, bool now)
     auto write = [store = *m_recovery, key, content = std::move(content)]() mutable { return store.write(key, content); };
     auto wrote = [this, document, activeLine](bool written) {
         if (auto *s = m_files->session(document); written && activeLine && s)
-            s->amendScriptInfo(application::kActiveLineKey, *activeLine);
+            application::amendActiveLine(*s, *activeLine);
     };
     if (!now) {
         m_recoveryWrites.put(QString::fromStdString(key), std::move(write), std::move(wrote));
@@ -4373,7 +4393,7 @@ QVariantList Application::legacyAutosaves()
         if (const auto receipt = m_importStore ? m_importStore->activeReceipt() : std::nullopt;
             receipt && !receipt->root.empty())
             roots << QString::fromStdString(receipt->root);
-        for (const auto &root : SettingsImportStore::discoverRoots(SettingsImportStore::defaultCandidates()))
+        for (const auto &root : SettingsImportStore::discoverRoots(m_settingsImport->defaultFolders()))
             roots << root.path;
         for (const QString &root : std::as_const(roots))
             if (QFileInfo(root + QStringLiteral("/Subs")).isDir()) {
@@ -5313,8 +5333,12 @@ application::SpellChecker *Application::spellChecker(int shellWindow)
     if (!slot->started) {
         slot->started = true;
         if (settings.boolean("editor.spellchecker")) {
+            slot->checker->setPluginDictionaries(m_pluginDictionaries);
             const auto status = slot->checker->initialize(language.toStdU16String());
-            if (status != application::SpellChecker::Status::Ready) {
+            if (status == application::SpellChecker::Status::NoDictionary && !m_pluginDictionariesRead) {
+                slot->started = false;
+                m_spellingWaitsForPlugins = true;
+            } else if (status != application::SpellChecker::Status::Ready) {
                 if (!views(shellWindow).settings->overridden("editor.dictionaryLanguage"))
                     m_settings->set("editor.spellchecker", false);
                 const bool noDictionary = status == application::SpellChecker::Status::NoDictionary;
@@ -5380,6 +5404,18 @@ void Application::restartSpellChecker()
         slot.started = false;
     }
     emit spellCheckerRestarted();
+}
+
+void Application::readPluginDictionaries()
+{
+    auto dictionaries = application::pluginContent().dictionaries;
+    m_pluginDictionariesRead = true;
+    if (!std::exchange(m_spellingWaitsForPlugins, false) && dictionaries == m_pluginDictionaries)
+        return;
+    m_pluginDictionaries = std::move(dictionaries);
+    m_sampleChecker.reset();
+    restartSpellChecker();
+    spellingRefresh();
 }
 
 void Application::spellingRefresh()
@@ -6462,12 +6498,20 @@ QVariantMap Application::scriptProperties()
         videoHeight = geometry.height;
     }
     const bool link = m_settings->boolean("scriptProperties.linkResolutions");
+    const auto limits = application::readingLimits(session->document(), application::profileReadingLimits(m_settings->settings()));
+    const QVariantMap readingLimits{{QStringLiteral("own"), !application::scriptReadingLimits(session->document()).empty()},
+                                    {QStringLiteral("cpsWarning"), limits.cpsWarning},
+                                    {QStringLiteral("cpsError"), limits.cpsError},
+                                    {QStringLiteral("lineLength"), limits.lineLength},
+                                    {QStringLiteral("maxLines"), limits.maxLines}};
     return {{QStringLiteral("title"), q(p.title)},
             {QStringLiteral("originalScript"), q(p.originalScript)},
             {QStringLiteral("originalTranslation"), q(p.originalTranslation)},
             {QStringLiteral("originalEditing"), q(p.originalEditing)},
             {QStringLiteral("originalTiming"), q(p.originalTiming)},
+            {QStringLiteral("synchPoint"), q(p.synchPoint)},
             {QStringLiteral("updatedBy"), q(p.updatedBy)},
+            {QStringLiteral("updateDetails"), q(p.updateDetails)},
             {QStringLiteral("playResX"), p.playResX},
             {QStringLiteral("playResY"), p.playResY},
             {QStringLiteral("layoutResX"), p.layoutResX},
@@ -6479,7 +6523,8 @@ QVariantMap Application::scriptProperties()
             {QStringLiteral("scaledBorderAndShadow"), p.scaledBorderAndShadow},
             {QStringLiteral("videoWidth"), videoWidth},
             {QStringLiteral("videoHeight"), videoHeight},
-            {QStringLiteral("linkResolutions"), link}};
+            {QStringLiteral("linkResolutions"), link},
+            {QStringLiteral("readingLimits"), readingLimits}};
 }
 
 bool Application::applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions)
@@ -6494,7 +6539,9 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     p.originalTranslation = toU8(values.value(QStringLiteral("originalTranslation")).toString());
     p.originalEditing = toU8(values.value(QStringLiteral("originalEditing")).toString());
     p.originalTiming = toU8(values.value(QStringLiteral("originalTiming")).toString());
+    p.synchPoint = toU8(values.value(QStringLiteral("synchPoint")).toString());
     p.updatedBy = toU8(values.value(QStringLiteral("updatedBy")).toString());
+    p.updateDetails = toU8(values.value(QStringLiteral("updateDetails")).toString());
     p.playResX = values.value(QStringLiteral("playResX")).toInt();
     p.playResY = values.value(QStringLiteral("playResY")).toInt();
     p.layoutResX = values.value(QStringLiteral("layoutResX")).toInt();
@@ -6519,11 +6566,20 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     e.originalTranslation = edited("originalTranslation");
     e.originalEditing = edited("originalEditing");
     e.originalTiming = edited("originalTiming");
+    e.synchPoint = edited("synchPoint");
     e.updatedBy = edited("updatedBy");
+    e.updateDetails = edited("updateDetails");
     e.playResX = edited("playResX");
     e.playResY = edited("playResY");
     e.layoutResX = edited("layoutResX");
     e.layoutResY = edited("layoutResY");
+    e.readingLimits = edited("readingLimits");
+    if (const QVariantMap limits = values.value(QStringLiteral("readingLimits")).toMap();
+        limits.value(QStringLiteral("own")).toBool())
+        p.readingLimits = application::ReadingLimits{limits.value(QStringLiteral("cpsWarning")).toInt(),
+                                                     limits.value(QStringLiteral("cpsError")).toInt(),
+                                                     limits.value(QStringLiteral("lineLength")).toInt(),
+                                                     limits.value(QStringLiteral("maxLines")).toInt()};
     const bool done = application::applyScriptProperties(*session, p, e, linkResolutions).has_value();
     editor().reloadFromSession();
     refreshViews();
@@ -7213,7 +7269,11 @@ void Application::settingChanged(const QString &id)
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
-    else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
+    else if (id == QLatin1String("autosave.intervalSeconds")) {
+        for (auto &[document, timer] : m_autosaveTimers)
+            if (timer)
+                timer->setInterval(autosaveIntervalMs());
+    } else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         for (auto *views : allViews())
             views->shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     else if (id == QLatin1String("grid.columnWidths") && !m_resettingSettings)
@@ -7229,6 +7289,13 @@ void Application::settingChanged(const QString &id)
         for (auto *views : allViews())
             views->editor->optionsChanged();
         refreshVideo();
+    }
+    else if (id == QLatin1String("grid.cpsWarning") || id == QLatin1String("grid.cpsError") ||
+             id == QLatin1String("grid.lineLength") || id == QLatin1String("grid.maxLines")) {
+        for (auto *views : allViews()) {
+            views->shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
+            views->editor->optionsChanged();
+        }
     }
     else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
         for (auto *views : allViews())
@@ -7296,6 +7363,11 @@ QString languageName(const QString &tag)
 namespace {
 
 QString qs(std::string_view s)
+{
+    return QString::fromUtf8(s.data(), qsizetype(s.size()));
+}
+
+QString qs(std::u8string_view s)
 {
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
 }
@@ -7400,6 +7472,16 @@ QVariantMap Application::openSettingsDialog()
             const QString name = qstr(symbol);
             lists.dictionarySymbols.push_back(name.toStdString());
             lists.dictionaryNames.push_back(languageName(name).toStdString());
+        }
+        for (const auto &dictionary : m_pluginDictionaries) {
+            const std::string symbol = qstr(dictionary.language).toStdString();
+            if (std::ranges::find(lists.dictionarySymbols, symbol) != lists.dictionarySymbols.end())
+                continue;
+            lists.dictionarySymbols.push_back(symbol);
+            //: A plugin's spelling dictionary: %1 is its title, %2 the plugin's name.
+            lists.dictionaryNames.push_back(QCoreApplication::translate("HikariSub.Options", "%1 (%2)")
+                                                .arg(qs(dictionary.title), qs(dictionary.pluginName))
+                                                .toStdString());
         }
     }
     {
@@ -7657,8 +7739,8 @@ bool Application::gettingStartedDue() const
 QVariantMap Application::openGettingStarted()
 {
     QVariantMap opened = openSettingsDialog();
-    opened.insert(QStringLiteral("legacy"), m_importStore && !SettingsImportStore::discoverRoots(
-                                                                 SettingsImportStore::defaultCandidates()).isEmpty());
+    opened.insert(QStringLiteral("legacy"), m_importStore &&
+                                                 !SettingsImportStore::discoverRoots(m_settingsImport->defaultFolders()).isEmpty());
     return opened;
 }
 
@@ -7734,6 +7816,7 @@ QVariantList Application::sampleSpellingMarks(const QString &text, bool on, int 
         for (const QString &folder : std::as_const(m_dictionaryDirs))
             folders.emplace_back(folder.toStdU16String());
         m_sampleChecker = std::make_unique<application::SpellChecker>(std::move(folders), m_spellingLoader);
+        m_sampleChecker->setPluginDictionaries(m_pluginDictionaries);
         m_sampleCheckerLanguage = language;
         m_sampleCheckerReady = m_sampleChecker->initialize(language.toStdU16String()) == application::SpellChecker::Status::Ready;
     }

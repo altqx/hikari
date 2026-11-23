@@ -1218,9 +1218,15 @@ void LineGrid::paint(QPainter *painter)
         x = columnLeft(widths, 0);
         for (int c = 0; c < columns; ++c) {
             const int mc = modelColumn(c);
-            if ((mc == LineTableModel::CpsColumn && idx.data(LineTableModel::CpsTooHighRole).toBool()) ||
-                (mc == LineTableModel::WrapsColumn && idx.data(LineTableModel::BadWrapsRole).toBool()))
+            if (mc == LineTableModel::CpsColumn) {
+                if (const double severity = idx.data(LineTableModel::CpsSeverityRole).toDouble(); severity > 0) {
+                    QColor tint = content.gridWarning;
+                    tint.setAlphaF(tint.alphaF() * severity);
+                    painter->fillRect(QRectF(x, top, widths[c], rh), tint);
+                }
+            } else if (mc == LineTableModel::WrapsColumn && idx.data(LineTableModel::BadWrapsRole).toBool()) {
                 painter->fillRect(QRectF(x, top, widths[c], rh), content.gridWarning);
+            }
             QString text = m_model->index(row, mc).data().toString();
             if (mc == LineTableModel::NumberColumn && idx.data(LineTableModel::GroupRole).toInt() == 1) {
                 const QRectF box(x + 4, top + (rh - 9) / 2, 9, 9);

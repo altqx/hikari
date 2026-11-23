@@ -24,7 +24,7 @@ Map the existing [dialog schema](https://github.com/altqx/hikari/blob/20d647c4c7
 
 Preserve synchronous `dialog.display` results, name-keyed values, custom labels, close/cancel returning false plus readback, and file-picker nil on cancellation. Do not silently enable the currently truncated third button-ID argument, repair ignored float-step behavior or reinterpret alpha values. Unknown/malformed controls retain characterized errors.
 
-Likewise, retain the current `register_filter` stub until an individually approved change exists; `set_undo_point` follows Aegisub since C06-set-undo-point. Validation currently receives mutable userdata; making it read-only, caching it, or adding speculative invocations can change scripts. Preserve characterized invocation order/count and mutations through the serialized owner; asynchronous menu feedback requires a fixture and explicit treatment under compatibility entries C06–C08. [Registration/validation source](https://github.com/altqx/hikari/blob/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/HikariSub/Automation.cpp).
+`set_undo_point` and `register_filter` follow Aegisub since C06-set-undo-point and C06-register-filter. Validation currently receives mutable userdata; making it read-only, caching it, or adding speculative invocations can change scripts. Preserve characterized invocation order/count and mutations through the serialized owner; asynchronous menu feedback requires a fixture and explicit treatment under compatibility entries C06–C08. [Registration/validation source](https://github.com/altqx/hikari/blob/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/HikariSub/Automation.cpp).
 
 ## Completion, progress and cancellation
 

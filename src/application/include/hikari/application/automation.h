@@ -19,12 +19,22 @@ struct ScriptMacro {
     bool hasIsActive = false;
 };
 
+// aegisub.register_filter(name, description, priority, process, config).
+struct ScriptFilter {
+    std::string name;
+    std::string description;
+    int priority = 0;
+    bool hasConfig = false;
+    bool operator==(const ScriptFilter &) const = default;
+};
+
 struct ScriptInfo {
     std::string name; // script_name, or the file name when the script sets none
     std::string description;
     std::string author;
     std::string version;
     std::vector<ScriptMacro> macros;
+    std::vector<ScriptFilter> filters;
     // Files the top level loaded as Lua code, transitively, first load first,
     // each once, as absolute normalized UTF-8 paths; excludes the script itself.
     std::vector<std::string> loadedFiles;

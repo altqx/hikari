@@ -3,6 +3,7 @@
 #include "hikari/api/json.h"
 #include "hikari/minisign/minisign.h"
 
+#include <cstdint>
 #include <expected>
 #include <cstdint>
 #include <filesystem>

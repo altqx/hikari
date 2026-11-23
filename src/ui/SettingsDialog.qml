@@ -637,6 +637,14 @@ DialogWindow {
                                 tip: qsTr("Number of autosaves can be set from 2 to 1000000")
                             }
                         }
+                        SettingsRow {
+                            iconRole: "autosave"
+                            text: qsTr("Autosave every")
+                            SettingNumber {
+                                setting: "autosave.intervalSeconds"; from: 5; to: 3600; unit: qsTr("seconds")
+                                name: qsTr("Autosave every"); tip: qsTr("Seconds from a change to its autosave. Range from 5 to 3600")
+                            }
+                        }
                     }
                     SettingsSection {
                         objectName: "settingsNoticesGroup"
@@ -738,7 +746,7 @@ DialogWindow {
                             IconTextButton {
                                 iconRole: "import"
                                 objectName: "settingsImportLegacy"
-                                text: qsTr("Import legacy settings…")
+                                text: qsTr("Import settings…")
                                 enabled: dialog.importer !== null && dialog.importer.available
                                 onClicked: dialog.legacyImportRequested()
                             }
@@ -1063,6 +1071,24 @@ DialogWindow {
                         title: qsTr("Counting")
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps"; text: qsTr("Count spaces and punctuation for wraps") }
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
+                        SettingsRow {
+                            text: qsTr("CPS warning")
+                            note: qsTr("Lines that read faster are tinted, more strongly up to the error level.")
+                            SettingNumber { setting: "grid.cpsWarning"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS warning") }
+                        }
+                        SettingsRow {
+                            text: qsTr("CPS error")
+                            SettingNumber { setting: "grid.cpsError"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS error") }
+                        }
+                        SettingsRow {
+                            text: qsTr("Characters per line")
+                            SettingNumber { setting: "grid.lineLength"; from: 1; to: 1000; name: qsTr("Characters per line") }
+                        }
+                        SettingsRow {
+                            text: qsTr("Lines")
+                            note: qsTr("A subtitle file can set its own limits in Script properties.")
+                            SettingNumber { setting: "grid.maxLines"; from: 1; to: 20; name: qsTr("Lines") }
+                        }
                     }
                     SettingsSection {
                         title: qsTr("Splitting")
@@ -1091,8 +1117,42 @@ DialogWindow {
                 SettingsPage {
                     objectName: "settingsPageVideo"
                     SettingsSection {
-                        title: qsTr("Playback")
+                        objectName: "settingsFullscreen"
+                        title: qsTr("Full screen")
                         ruled: false
+                        SettingsRow {
+                            iconRole: "fullscreen"
+                            text: qsTr("Bar position")
+                            note: qsTr("Below keeps the whole picture in view; the bar sits in the black strip under it.")
+                            SettingChoice {
+                                setting: "video.fullscreenBarPosition"
+                                model: [qsTr("Below the picture (letterbox)"), qsTr("Over the picture")]
+                                Accessible.name: qsTr("Bar position")
+                            }
+                        }
+                        SettingsRow {
+                            iconRole: "show-toolbar"
+                            text: qsTr("Show bar")
+                            note: qsTr("Auto-hide shows it when the pointer moves or a key is pressed, and hides it 2 seconds later while playing. Below the picture, the strip stays reserved.")
+                            SettingChoice {
+                                setting: "video.fullscreenBar"
+                                model: [qsTr("Auto-hide"), qsTr("Always"), qsTr("Never")]
+                                Accessible.name: qsTr("Show bar")
+                            }
+                        }
+                        SettingCheck { setting: "video.fullscreenHidePointer"; text: qsTr("Hide the pointer with the bar") }
+                        SettingCheck { setting: "video.fullscreenOverlays"; text: qsTr("Show the render time and position overlays") }
+                        SettingsRow {
+                            text: qsTr("Opens in")
+                            SettingChoice {
+                                setting: "video.fullscreenOpensIn"
+                                model: [qsTr("Simple"), qsTr("Typesetting")]
+                                Accessible.name: qsTr("Opens in")
+                            }
+                        }
+                    }
+                    SettingsSection {
+                        title: qsTr("Playback")
                         SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
                         SettingCheck { setting: "video.fullScreenOnStart"; text: qsTr("Open video from the context menu in full screen") }
                         SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video at the active line’s time") }

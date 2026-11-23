@@ -208,8 +208,9 @@ public:
     // becomes modified and no prepared command goes stale. False when the
     // Document is not ASS.
     bool amendScriptInfo(std::u8string_view key, std::u8string value);
-    // The same for the [Hikari] section.
+    // The same for the [Hikari] section and for Project Garbage.
     bool amendHikariProperty(std::u8string_view key, std::u8string value);
+    bool amendProjectGarbage(std::u8string_view key, std::u8string value);
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
     // File › New made this Document in this run of the app; never saved with it.
     void markNewDocument() { m_newDocument = true; }

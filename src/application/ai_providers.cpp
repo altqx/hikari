@@ -217,7 +217,7 @@ void Providers::store(Provider provider, std::optional<std::string> key,
                       std::function<void(std::optional<SaveError>)> done)
 {
     const bool newKey = key && !key->empty();
-    auto commit = [this, provider, key, newKey, done](std::optional<KeyError> error) mutable {
+    auto saveConfig = [this, provider, key, newKey, done](std::optional<KeyError> error) mutable {
         if (error) {
             done(saveErrorOf(*error));
             return;
@@ -230,13 +230,13 @@ void Providers::store(Provider provider, std::optional<std::string> key,
             *it = provider;
         if (!next.roles.contains(Role::Chat) && !provider.models.empty())
             next.roles[Role::Chat] = {provider.id, provider.models.front().id};
-        if (!m_configs.save(next)) {
-            if (newKey && !m_config.provider(provider.id))
+        const bool existed = m_config.provider(provider.id) != nullptr;
+        if (!commit(std::move(next))) {
+            if (newKey && !existed)
                 m_keys.remove(provider.id, [](std::optional<KeyError>) {});
             done(SaveError::Config);
             return;
         }
-        m_config = std::move(next);
         if (newKey)
             m_keyCache[provider.id] = *key;
         else if (key)
@@ -244,9 +244,9 @@ void Providers::store(Provider provider, std::optional<std::string> key,
         done(std::nullopt);
     };
     if (newKey)
-        m_keys.write(provider.id, *key, std::move(commit));
+        m_keys.write(provider.id, *key, std::move(saveConfig));
     else
-        commit(std::nullopt);
+        saveConfig(std::nullopt);
 }
 
 void Providers::remove(const std::string &providerId, std::function<void(std::optional<SaveError>)> done)
@@ -254,11 +254,10 @@ void Providers::remove(const std::string &providerId, std::function<void(std::op
     Config next = m_config;
     std::erase_if(next.providers, [&](const Provider &p) { return p.id == providerId; });
     std::erase_if(next.roles, [&](const auto &entry) { return entry.second.providerId == providerId; });
-    if (!m_configs.save(next)) {
+    if (!commit(std::move(next))) {
         done(SaveError::Config);
         return;
     }
-    m_config = std::move(next);
     m_keyCache.erase(providerId);
     m_keys.remove(providerId, [done](std::optional<KeyError> error) {
         done(error && *error != KeyError::NotFound ? std::optional(saveErrorOf(*error)) : std::nullopt);
@@ -284,12 +283,7 @@ void Providers::signOut(const std::string &providerId, std::function<void(std::o
             return;
         }
         it->signedIn = false;
-        if (!m_configs.save(next)) {
-            done(SaveError::Config);
-            return;
-        }
-        m_config = std::move(next);
-        done(std::nullopt);
+        done(commit(std::move(next)) ? std::nullopt : std::optional(SaveError::Config));
     });
 }
 
@@ -299,10 +293,7 @@ bool Providers::assign(Role role, ModelRef model)
         return false;
     Config next = m_config;
     next.roles[role] = std::move(model);
-    if (!m_configs.save(next))
-        return false;
-    m_config = std::move(next);
-    return true;
+    return commit(std::move(next));
 }
 
 bool Providers::unassign(Role role)
@@ -310,10 +301,7 @@ bool Providers::unassign(Role role)
     Config next = m_config;
     if (!next.roles.erase(role))
         return true;
-    if (!m_configs.save(next))
-        return false;
-    m_config = std::move(next);
-    return true;
+    return commit(std::move(next));
 }
 
 bool Providers::setCapabilities(const std::string &providerId, const std::string &modelId, Capabilities capabilities)
@@ -323,10 +311,7 @@ bool Providers::setCapabilities(const std::string &providerId, const std::string
     if (it == next.providers.end())
         return false;
     it->capabilityOverrides[modelId] = capabilities;
-    if (!m_configs.save(next))
-        return false;
-    m_config = std::move(next);
-    return true;
+    return commit(std::move(next));
 }
 
 bool Providers::setModels(const std::string &providerId, std::vector<Model> models)
@@ -338,9 +323,16 @@ bool Providers::setModels(const std::string &providerId, std::vector<Model> mode
     it->models = std::move(models);
     if (!next.roles.contains(Role::Chat) && !it->models.empty())
         next.roles[Role::Chat] = {providerId, it->models.front().id};
+    return commit(std::move(next));
+}
+
+bool Providers::commit(Config next)
+{
     if (!m_configs.save(next))
         return false;
     m_config = std::move(next);
+    if (m_changed)
+        m_changed();
     return true;
 }
 

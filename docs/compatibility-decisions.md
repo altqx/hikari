@@ -6,6 +6,18 @@ Where HikariSub's automation API and file formats knowingly differ from what the
 
 `aegisub.set_undo_point(description)` closes an undo step, as in Aegisub 3.5.1. A run applies as one history step for each undo point that closed changes, named "Automation: <description>", then one for the changes after the last point, named after the macro. An undo point with no changes since the last one adds nothing. A run that errors or is cancelled applies no step. Validation and anything outside a macro run raise Aegisub's "Attempt to set an undo point in a context where it makes no sense to do so." It used to do nothing, so every run was one step. Steps keep HikariSub's "Automation: " prefix, which Aegisub doesn't add. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q586 (2026-11-17).
 
+## C06-register-filter
+
+`aegisub.register_filter(name, description, priority, process, config)` registers an export filter, as in Aegisub 3.5.1, and Export as can run it before it writes. The processing function gets the subtitles of a copy of the Document and a table of its settings, keyed by control name; with no config function the table is empty. The config function gets the subtitles read-only and an empty options table, and returns a dialog table, which HikariSub draws inside Export as. A processing function that isn't a function raises "The filter processing function must be a function". `set_undo_point` raises in a filter (C06-set-undo-point). A runtime error in the config function is reported as "Runtime error in Lua config dialog function:" and the step gets an empty table, as Aegisub logs it and shows no dialog. It used to register nothing. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772 (2026-11-18).
+
+## C06-transform-framerate
+
+Transform frame rate, Aegisub's Transform Framerate export filter, changes the same times: each Line's start and end, `\move`, `\fad`, `\fade`, `\t` and the karaoke tags, through Aegisub's frame mapping, truncated to centiseconds. It rewrites only those numbers. Aegisub parses each override block and writes it back, which also normalises the rest of the block's text, so the two can differ in spacing and number format outside the times. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772.
+
+## C06-export-filters-line
+
+The `Export Filters` line in `[Aegisub Project Garbage]` is read as Before export's "From this file (Aegisub)" list. It is written back on the next save only after an export that ran steps. Aegisub keeps whatever list its Export dialog last showed. An export without steps leaves it alone, so a file shared with Aegisub keeps its list. The templater's filter keeps its English name, "Karaoke template", in every language, where Aegisub translates it, so the line matches across languages. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772.
+
 ## FA4-getpixel-rgb
 
 `frame:getPixel(x, y)` returns three integers, r, g and b, as arch1t3cht's fork does. It used to return one packed integer (`b * 65536 + g * 256 + r`). Outside the frame it returns nil. [FA4 #561](https://github.com/altqx/hikari/issues/561), owner decision 2026-10-31.
@@ -419,3 +431,7 @@ The release that ships the native karaoke templater (0.1.0-beta.4) resets the us
 ## 1007-relaunch-shell-only
 
 An elevated setup that relaunches HikariSub after an update (`/UPDATE /RELAUNCH` for all users, or a start asked for during the update) starts it only through the desktop's own shell, so it runs as the desktop user and is never elevated. When the shell can't start it, the setup starts nothing and writes why to `Updates\setup-<copy>.log`. An interactive setup then says "HikariSub is installed. Start it from the Start menu." Legacy 0.0.1 used StdUtils `ExecShellAsUser`, which then started HikariSub elevated. Both the Qt setup and legacy's setup now do this. [#918](https://github.com/altqx/hikari/issues/918) (Qt, #993), [#1007](https://github.com/altqx/hikari/issues/1007) (legacy), owner decision 2026-11-16 (Q560).
+
+## 1261-aegisub-hotkey-import
+
+Import settings also reads Aegisub's `hotkey.json`, both the 3.2 and later string form (`"Ctrl-Shift-S"`) and 3.1's `{"modifiers", "key"}` objects, arch1t3cht's builds included. Mapping version 1 is the table in `src/application/settings_import_aegisub.cpp`: every Aegisub command gets a HikariSub command or the reason it has none, and the review lists those rows with that reason. A context picks the panel: Audio and Always (Medusa keys) go to Audio, Video to Video, Subtitle Grid to the grid, Subtitle Edit Box to the edit box (grid commands stay in the grid), Default to the command's own panel. Translation and Styling Assistant keys are listed, since HikariSub has no such windows. HikariSub keeps one key per command in each panel, so a second Aegisub key goes to the `_ALT` command where one exists (Commit, Previous, Next…) and further keys are listed. A HikariSub default Aegisub leaves without a key can be unbound; a default whose keys an Aegisub command takes is unbound with it. The fixtures in `tests/fixtures/aegisub-hotkeys` are each version's `default_hotkey.json` with two user edits. Each parity pack adds its own commands' rows. [#1261](https://github.com/altqx/hikari/issues/1261).

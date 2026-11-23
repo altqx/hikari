@@ -30,6 +30,7 @@ TEST(Explorer, ClassifiesTheFileTypesHikariSubUses)
     EXPECT_EQ(classify("notes.txt"), FileKind::Subtitles);
     EXPECT_EQ(classify("ep01.mkv"), FileKind::Video);
     EXPECT_EQ(classify("ep01.MOV"), FileKind::Video);
+    EXPECT_EQ(classify("ep01.y4m"), FileKind::Video);
     EXPECT_EQ(classify("ep01.flac"), FileKind::Audio);
     EXPECT_EQ(classify("ep01_keyframes.txt"), FileKind::Keyframes);
     EXPECT_EQ(classify("x264.stats"), FileKind::Keyframes);
