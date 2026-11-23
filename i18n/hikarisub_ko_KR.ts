@@ -18197,21 +18197,21 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>뒤로</translation>
     </message>
     <message>
         <source>Back (Alt+Left)</source>
-        <translation type="unfinished"></translation>
+        <translation>뒤로 (Alt+Left)</translation>
     </message>
     <message numerus="yes">
         <source>%n picked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>%n개 선택</numerusform>
         </translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>확인</translation>
     </message>
     <message>
         <source>unavailable: %1</source>
@@ -18385,11 +18385,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Hide</source>
-        <translation type="unfinished"></translation>
+        <translation>숨김</translation>
     </message>
     <message>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation>표시</translation>
     </message>
 </context>
 <context>

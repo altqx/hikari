@@ -18473,23 +18473,23 @@ Linijki [Sekcja] je grupują.</translation>
     </message>
     <message>
         <source>Back</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstecz</translation>
     </message>
     <message>
         <source>Back (Alt+Left)</source>
-        <translation type="unfinished"></translation>
+        <translation>Wstecz (Alt+Left)</translation>
     </message>
     <message numerus="yes">
         <source>%n picked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Wybrano: %n</numerusform>
+            <numerusform>Wybrano: %n</numerusform>
+            <numerusform>Wybrano: %n</numerusform>
         </translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>unavailable: %1</source>
@@ -18677,11 +18677,11 @@ Linijki [Sekcja] je grupują.</translation>
     </message>
     <message>
         <source>Hide</source>
-        <translation type="unfinished"></translation>
+        <translation>Ukryj</translation>
     </message>
     <message>
         <source>Show</source>
-        <translation type="unfinished"></translation>
+        <translation>Pokaż</translation>
     </message>
 </context>
 <context>
