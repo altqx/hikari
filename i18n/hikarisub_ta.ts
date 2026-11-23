@@ -8620,6 +8620,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>முழுத் திரை டைப்செட்டிங்</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -25566,6 +25570,14 @@ Styles deleted:
         <translation>இயக்கு அல்லது இடைநிறுத்து</translation>
     </message>
     <message>
+        <source>Full screen typesetting</source>
+        <translation>முழுத் திரை டைப்செட்டிங்</translation>
+    </message>
+    <message>
+        <source>Opens the video full screen with the visual tools, the active line and its tools beside it</source>
+        <translation>காட்சிக் கருவிகளுடன் வீடியோவை முழுத் திரையில் திறக்கும்; செயலில் உள்ள வரியும் அதன் கருவிகளும் அருகில் இருக்கும்</translation>
+    </message>
+    <message>
         <source>Video</source>
         <translation>வீடியோ</translation>
     </message>
@@ -25854,12 +25866,31 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Visual tools</source>
-        <translation>காட்சிக் கருவிகள்</translation>
-    </message>
-    <message>
         <source>Simple</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Typesetting</source>
+        <translation>டைப்செட்டிங்</translation>
+    </message>
+    <message>
+        <source>Video status</source>
+        <translation>வீடியோ நிலை</translation>
+    </message>
+    <message>
+        <source>Frame %1</source>
+        <extracomment>The full-screen status row: %1 the video&apos;s current frame number</extracomment>
+        <translation>சட்டகம் %1</translation>
+    </message>
+    <message>
+        <source>Line %1 of %2</source>
+        <extracomment>The full-screen status row: %1 the active Line&apos;s number, %2 how many Lines the file has</extracomment>
+        <translation>வரி %1 / %2</translation>
+    </message>
+    <message>
+        <source>Line %1 text</source>
+        <extracomment>The full-screen line box&apos;s name: %1 the active Line&apos;s number</extracomment>
+        <translation>வரி %1 உரை</translation>
     </message>
     <message>
         <source>Typeset</source>
@@ -26243,6 +26274,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>வரி %1: %2</translation>
     </message>
     <message>
@@ -26495,6 +26527,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Move</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>நகர்வு</translation>
     </message>
     <message>
@@ -26591,6 +26624,32 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Changes the active line</source>
         <translation>செயலில் உள்ள வரியை மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>On the frame</source>
+        <translation>சட்டகத்தில்</translation>
+    </message>
+    <message>
+        <source>%1 · %2</source>
+        <extracomment>A handle a visual tool draws on the frame: %1 its name, %2 its shape</extracomment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
+        <source>Apply to</source>
+        <translation>பயன்படுத்துமிடம்</translation>
+    </message>
+    <message>
+        <source>This line</source>
+        <translation>இந்த வரி</translation>
+    </message>
+    <message>
+        <source>Picked lines (%1)</source>
+        <extracomment>Apply to: the lines picked for the visual tools; %1 how many</extracomment>
+        <translation>எடுத்த வரிகள் (%1)</translation>
+    </message>
+    <message>
+        <source>Picks the selected lines: the tools edit them, not the active line</source>
+        <translation>தேர்ந்தெடுத்த வரிகளை எடுக்கும்: கருவிகள் செயலில் உள்ள வரியை அல்ல, அவற்றைத் திருத்தும்</translation>
     </message>
     <message>
         <source>More options</source>
@@ -27000,6 +27059,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Drawing</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>வரைபடம்</translation>
     </message>
     <message>
@@ -27163,6 +27223,10 @@ or codecs or a splitter may be missing</source>
         <translation>வடிவம்: %1</translation>
     </message>
     <message>
+        <source>Visual tools</source>
+        <translation>காட்சிக் கருவிகள்</translation>
+    </message>
+    <message>
         <source>More tools</source>
         <translation>மேலும் கருவிகள்</translation>
     </message>
@@ -27216,6 +27280,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Gradient</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>சாய்வு</translation>
     </message>
     <message>
@@ -27275,12 +27340,220 @@ or codecs or a splitter may be missing</source>
         <translation>Hydra</translation>
     </message>
     <message>
+        <source>Pointer</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>சுட்டி</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Scale</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>அளவீடு</translation>
+    </message>
+    <message>
+        <source>Tilt X / Y</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>X / Y சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Rectangle clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>செவ்வகக் கிளிப்</translation>
+    </message>
+    <message>
+        <source>Vector clip</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>திசையன் கிளிப்</translation>
+    </message>
+    <message>
+        <source>Shift positions</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>நிலை நகர்த்தி</translation>
+    </message>
+    <message>
+        <source>All tags</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
+        <translation>எல்லா குறிச்சொற்களும்</translation>
+    </message>
+    <message>
         <source>Perspective</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>பார்வைக்கோணம்</translation>
     </message>
     <message>
         <source>Text on path</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>பாதையில் உரை</translation>
+    </message>
+    <message>
+        <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
+        <translation>நிலையைப் படிக்கப் படத்தின் மீது சுட்டவும். Ctrl-சொடுக்கு வரியை அங்கே வைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.</source>
+        <translation>வரியை வைக்க இழுக்கவும். Shift உடன் இழுத்தால் ஒரு அச்சில் மட்டும் நகரும். வலது சொடுக்கு அதைச் சுட்டியின் இடத்தில் வைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag the start or end point; right-drag sets the end. The line travels between them.</source>
+        <translation>தொடக்க அல்லது முடிவுப் புள்ளியை இழுக்கவும்; வலது பொத்தானால் இழுத்தால் முடிவு அமையும். வரி அவற்றுக்கு இடையே நகரும்.</translation>
+    </message>
+    <message>
+        <source>Drag to stretch across, right-drag to stretch up. Shift-drag scales both.</source>
+        <translation>குறுக்காக நீட்ட இழுக்கவும், மேலே நீட்ட வலது பொத்தானால் இழுக்கவும். Shift உடன் இழுத்தால் இரண்டும் அளவிடப்படும்.</translation>
+    </message>
+    <message>
+        <source>Drag round the origin to turn the text. Drag the origin to move it.</source>
+        <translation>உரையைச் சுழற்ற மூலப்புள்ளியைச் சுற்றி இழுக்கவும். மூலப்புள்ளியை நகர்த்த அதை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.</source>
+        <translation>Y அச்சில் சுழற்றப் பக்கவாட்டில் இழுக்கவும், X அச்சில் சுழற்ற வலது பொத்தானால் மேலே அல்லது கீழே இழுக்கவும். மூலப்புள்ளியை நகர்த்த அதை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.</source>
+        <translation>ஒரு பெட்டியை இழுக்கவும். உள்ளே இருப்பது மட்டுமே தெரியும். அளவை மாற்ற அதன் ஓரங்களையும், நகர்த்த உள்ளேயும் இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Only what is inside shows.</source>
+        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும். உள்ளே இருப்பது மட்டுமே தெரியும்.</translation>
+    </message>
+    <message>
+        <source>Click to add points, drag them to reshape. Or pick a shape and drag a box.</source>
+        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும். அல்லது ஒரு வடிவத்தைத் தேர்ந்தெடுத்து ஒரு பெட்டியை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.</source>
+        <translation>எடுத்த வரிகளின் நிலைகள், கிளிப்புகள், மூலப்புள்ளிகளை ஒன்றாக நகர்த்த இழுக்கவும். Shift ஒரு அச்சைப் பூட்டும்.</translation>
+    </message>
+    <message>
+        <source>Choose a tag, then drag sideways on the picture to change it. Shift for small steps.</source>
+        <translation>ஒரு குறிச்சொல்லைத் தேர்ந்தெடுத்து, அதை மாற்றப் படத்தின் மீது பக்கவாட்டில் இழுக்கவும். சிறு படிகளுக்கு Shift.</translation>
+    </message>
+    <message>
+        <source>Drag the corners to lay the text on a surface. Drag inside to move it.</source>
+        <translation>உரையை ஒரு பரப்பின் மீது அமைக்க மூலைகளை இழுக்கவும். அதை நகர்த்த உள்ளே இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies.</source>
+        <translation>சாய்வின் திசையை அமைக்க உரையின் குறுக்கே இழுக்கவும். சரிசெய்ய முனைகளை இழுக்கவும்; Enter பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>Click to add path points, drag them to shape the path. The text follows; Enter applies.</source>
+        <translation>பாதைப் புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், பாதையை வடிவமைக்க அவற்றை இழுக்கவும். உரை அதைப் பின்தொடரும்; Enter பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>square</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>சதுரம்</translation>
+    </message>
+    <message>
+        <source>circle</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>வட்டம்</translation>
+    </message>
+    <message>
+        <source>cross</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>குறுக்குக்குறி</translation>
+    </message>
+    <message>
+        <source>line</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>கோடு</translation>
+    </message>
+    <message>
+        <source>arrow</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>அம்பு</translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
+        <translation>வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Start point</source>
+        <translation>தொடக்கப் புள்ளி</translation>
+    </message>
+    <message>
+        <source>End point</source>
+        <translation>முடிவுப் புள்ளி</translation>
+    </message>
+    <message>
+        <source>Path</source>
+        <translation>பாதை</translation>
+    </message>
+    <message>
+        <source>Current position</source>
+        <translation>தற்போதைய நிலை</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation>அகலம்</translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation>உயரம்</translation>
+    </message>
+    <message>
+        <source>Both</source>
+        <translation>இரண்டும்</translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation>கோணம்</translation>
+    </message>
+    <message>
+        <source>Tilt grid</source>
+        <translation>சுழற்சிக் கட்டம்</translation>
+    </message>
+    <message>
+        <source>Edges and corners</source>
+        <translation>ஓரங்களும் மூலைகளும்</translation>
+    </message>
+    <message>
+        <source>Point</source>
+        <translation>புள்ளி</translation>
+    </message>
+    <message>
+        <source>Curve handle</source>
+        <translation>வளைவுக் கைப்பிடி</translation>
+    </message>
+    <message>
+        <source>Position and move start</source>
+        <translation>நிலையும் நகர்வுத் தொடக்கமும்</translation>
+    </message>
+    <message>
+        <source>Move end</source>
+        <translation>நகர்வு முடிவு</translation>
+    </message>
+    <message>
+        <source>Clip and drawing</source>
+        <translation>கிளிப்பும் வரைபடமும்</translation>
+    </message>
+    <message>
+        <source>Changed line</source>
+        <translation>மாற்றப்பட்ட வரி</translation>
+    </message>
+    <message>
+        <source>Corners</source>
+        <translation>மூலைகள்</translation>
+    </message>
+    <message>
+        <source>Plane corners</source>
+        <translation>தள மூலைகள்</translation>
+    </message>
+    <message>
+        <source>Start and end</source>
+        <translation>தொடக்கமும் முடிவும்</translation>
+    </message>
+    <message>
+        <source>P1, P2 and P3</source>
+        <translation>P1, P2 மற்றும் P3</translation>
     </message>
     <message>
         <source>\org mode</source>
@@ -27642,6 +27915,7 @@ increasing or decreasing the value.</source>
     </message>
     <message>
         <source>Rotate</source>
+        <extracomment>A visual tool&apos;s short name in the full-screen tool rail</extracomment>
         <translation>சுழற்று</translation>
     </message>
     <message>
