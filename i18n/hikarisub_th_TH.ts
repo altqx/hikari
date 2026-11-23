@@ -4587,12 +4587,290 @@ Output device: %2</source>
         <translation>มีไฟล์ชื่อนี้อยู่แล้ว</translation>
     </message>
     <message>
+        <source>From this file (Aegisub)</source>
+        <translation>จากไฟล์นี้ (Aegisub)</translation>
+    </message>
+    <message>
+        <source>Unsaved steps</source>
+        <translation>ขั้นตอนที่ยังไม่ได้บันทึก</translation>
+    </message>
+    <message>
+        <source>No steps</source>
+        <translation>ไม่มีขั้นตอน</translation>
+    </message>
+    <message>
+        <source>The script is busy or isn’t loaded, so its settings can’t be shown.</source>
+        <translation>สคริปต์กำลังทำงานอยู่หรือยังไม่ได้โหลด จึงแสดงการตั้งค่าของสคริปต์ไม่ได้</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>แท็ก %n ประเภท</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing chosen</source>
+        <translation>ไม่ได้เลือกไว้</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>ไม่คงที่</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>%1, reversed</source>
+        <translation>%1 แบบย้อนกลับ</translation>
+    </message>
+    <message>
+        <source>Templates in this file</source>
+        <translation>เทมเพลตของไฟล์</translation>
+    </message>
+    <message>
+        <source>Lines whose style is missing</source>
+        <translation>บรรทัดที่ไม่พบสไตล์</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation>โปรเจกต์นี้</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>ของคุณ</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>ในตัว</translation>
+    </message>
+    <message>
+        <source>Lua · %1</source>
+        <translation>Lua · %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>สร้าง %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Skipped: its script isn’t loaded</source>
+        <translation>ข้ามแล้ว: ยังไม่ได้โหลดสคริปต์</translation>
+    </message>
+    <message>
+        <source>Didn’t run</source>
+        <translation>ไม่ได้ทำงาน</translation>
+    </message>
+    <message>
+        <source>Variable needs a video or timecodes file</source>
+        <translation>แบบไม่คงที่ต้องมีวิดีโอหรือไฟล์ไทม์โค้ด</translation>
+    </message>
+    <message>
+        <source>Enter frame rates above 0</source>
+        <translation>ป้อนอัตราเฟรมที่มากกว่า 0</translation>
+    </message>
+    <message>
+        <source>A macro is running, so the script couldn’t start</source>
+        <translation>มีแมโครกำลังทำงานอยู่ จึงเริ่มสคริปต์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Couldn’t apply the script’s changes</source>
+        <translation>นำการเปลี่ยนแปลงของสคริปต์ไปใช้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Stopped with a script error</source>
+        <translation>สคริปต์หยุดทำงานเพราะเกิดข้อผิดพลาด</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (สร้าง %n บรรทัด)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ran before export: %1.</source>
+        <translation>เรียกใช้ก่อนส่งออก: %1</translation>
+    </message>
+    <message>
+        <source>Before export · %1 · step %2 of %3</source>
+        <translation>ก่อนส่งออก · %1 · ขั้นตอนที่ %2 จาก %3</translation>
+    </message>
+    <message>
+        <source>Before export: %1</source>
+        <translation>ก่อนส่งออก: %1</translation>
+    </message>
+    <message>
+        <source>changed</source>
+        <translation>เปลี่ยนแล้ว</translation>
+    </message>
+    <message>
+        <source>Add steps</source>
+        <translation>เพิ่มขั้นตอน</translation>
+    </message>
+    <message>
+        <source>Hide steps</source>
+        <translation>ซ่อนขั้นตอน</translation>
+    </message>
+    <message>
+        <source>Show steps</source>
+        <translation>แสดงขั้นตอน</translation>
+    </message>
+    <message>
+        <source>Writes the document as it is.</source>
+        <translation>เขียนเอกสารตามที่เป็นอยู่</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s recipe of the same name</source>
+        <translation>ถูกซ่อนโดยสูตรของโปรเจกต์ที่มีชื่อเดียวกัน</translation>
+    </message>
+    <message>
+        <source>Save recipe…</source>
+        <translation>บันทึกสูตร…</translation>
+    </message>
+    <message>
+        <source>Manage recipes…</source>
+        <translation>จัดการสูตร…</translation>
+    </message>
+    <message>
+        <source>Run in this order on a copy; the document doesn’t change.</source>
+        <translation>เรียกใช้ตามลำดับนี้บนสำเนา เอกสารจะไม่เปลี่ยน</translation>
+    </message>
+    <message>
+        <source>Run %1</source>
+        <translation>เรียกใช้ %1</translation>
+    </message>
+    <message>
+        <source>%1 isn’t loaded · Export skips it</source>
+        <translation>ยังไม่ได้โหลด %1 · การส่งออกจะข้ามขั้นตอนนี้</translation>
+    </message>
+    <message>
+        <source>Settings for %1</source>
+        <translation>การตั้งค่าสำหรับ %1</translation>
+    </message>
+    <message>
+        <source>More for %1</source>
+        <translation>เพิ่มเติมสำหรับ %1</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>ย้ายขึ้น</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>ย้ายลง</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>ย้ายไปบนสุด</translation>
+    </message>
+    <message>
+        <source>Reset settings</source>
+        <translation>รีเซ็ตการตั้งค่า</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n ขั้นตอนจะไม่ทำงาน เพราะยังไม่ได้โหลดสคริปต์</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not saved. “%1” failed.</source>
+        <translation>ไม่ได้บันทึก “%1” ล้มเหลว</translation>
+    </message>
+    <message>
+        <source>Turn it off and export</source>
+        <translation>ปิดขั้นตอนนี้แล้วส่งออก</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>Write the file: didn’t run</source>
+        <translation>เขียนไฟล์: ไม่ได้ทำงาน</translation>
+    </message>
+    <message>
+        <source>Nothing was written, and the document is unchanged.</source>
+        <translation>ไม่ได้เขียนสิ่งใด เอกสารไม่มีการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Input frame rate</source>
+        <translation>อัตราเฟรมขาเข้า</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>จากวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>เอาต์พุต</translation>
+    </message>
+    <message>
+        <source>Variable (the loaded timecodes)</source>
+        <translation>ไม่คงที่ (ไทม์โค้ดที่โหลดไว้)</translation>
+    </message>
+    <message>
+        <source>Constant</source>
+        <translation>คงที่</translation>
+    </message>
+    <message>
+        <source>Output frame rate</source>
+        <translation>อัตราเฟรมขาออก</translation>
+    </message>
+    <message>
+        <source>Reverse the transformation</source>
+        <translation>ย้อนการแปลง</translation>
+    </message>
+    <message>
+        <source>Settings from %1</source>
+        <translation>การตั้งค่าจาก %1</translation>
+    </message>
+    <message>
+        <source>Asking the script…</source>
+        <translation>กำลังถามสคริปต์…</translation>
+    </message>
+    <message>
+        <source>Save recipe</source>
+        <translation>บันทึกสูตร</translation>
+    </message>
+    <message>
+        <source>Recipe name</source>
+        <translation>ชื่อสูตร</translation>
+    </message>
+    <message>
+        <source>A recipe with this name exists; saving replaces it.</source>
+        <translation>มีสูตรชื่อนี้อยู่แล้ว การบันทึกจะแทนที่สูตรนั้น</translation>
+    </message>
+    <message>
         <source>Replace</source>
         <translation>แทนที่</translation>
     </message>
     <message>
+        <source>Save</source>
+        <translation>บันทึก</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Manage recipes</source>
+        <translation>จัดการสูตร</translation>
+    </message>
+    <message>
+        <source>Name of %1</source>
+        <translation>ชื่อของ %1</translation>
+    </message>
+    <message>
+        <source>Delete %1</source>
+        <translation>ลบ %1</translation>
     </message>
     <message>
         <source>Format</source>
@@ -4749,6 +5027,10 @@ Output device: %2</source>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>จะไม่คงรูปแบบข้อความ สี และตำแหน่งไว้</translation>
+    </message>
+    <message>
+        <source>Before export</source>
+        <translation>ก่อนส่งออก</translation>
     </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -25923,6 +26205,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>บรรทัด %1: %2</translation>
     </message>
     <message>

@@ -45,7 +45,7 @@ get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DI
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 target_link_libraries(hikari_ui PUBLIC Hikari::tomlplusplus)
 hikari_module(hikari_ui ALLOW hikari_application hikari_core hikari_themes "Qt6::*" "hikari_ui*" "KDAB::*" Hikari::tomlplusplus)
-list(APPEND hikari_ui_qml_files AutomationNotices.qml)
+list(APPEND hikari_ui_qml_files AutomationNotices.qml ScriptDialogControls.qml BeforeExportSteps.qml)
 list(APPEND hikari_ui_qml_files AutomationResetDialog.qml)
 list(APPEND hikari_ui_qml_files FileChooser.qml FolderChooser.qml)
 list(APPEND hikari_ui_qml_files AutomationProgress.qml RunLogLine.qml PluginJobCards.qml)

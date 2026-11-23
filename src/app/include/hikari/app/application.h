@@ -731,6 +731,10 @@ public:
     // newList, fromFile (empty without an Export Filters line): [{id, on, settings}], recipes: [{name, tier,
     // hidden}], hasProject}.
     Q_INVOKABLE QVariantMap exportSteps() const;
+    // Asks a Lua step's script for its settings dialog, showing `settings`; exportStepDialogReady answers.
+    Q_INVOKABLE bool askExportStepDialog(const QString &id, const QVariantMap &settings);
+    // The settings a step's dialog values give, by control name.
+    Q_INVOKABLE QVariantMap exportStepSettings(const QString &id, const QVariantList &values) const;
     Q_INVOKABLE QVariantList exportRecipe(const QString &name, const QString &tier) const;
     Q_INVOKABLE bool saveExportRecipe(const QString &name, const QString &tier, const QVariantList &steps);
     Q_INVOKABLE bool removeExportRecipe(const QString &name, const QString &tier);
@@ -1199,6 +1203,10 @@ signals:
     void documentWriteFailed(qulonglong document);
     // An exportTo that answered pending: its result, as exportTo gives one.
     void pluginExportFinished(const QVariantMap &result);
+    // A pending exportTo's Before export step has started; step counts from 1.
+    void exportStepStarted(const QString &name, int step, int count);
+    // {controls, columns} as AutomationDialogController gives them, or {problem}.
+    void exportStepDialogReady(const QString &id, const QVariantMap &dialog);
     // A file a plugin read is ready to open in `shellWindow`: reviewOpen's result.
     void pluginOpenReviewed(int shellWindow, const QVariantMap &result);
     // A later start handed files over, about to open.
@@ -1545,6 +1553,7 @@ private:
     std::unique_ptr<ui::ExportRecipes> m_exportRecipes;
     std::unique_ptr<LuaExportFilters> m_luaExportFilters;
     std::map<std::uint64_t, std::string> m_exportFiltersToSave;
+    std::map<QString, application::DialogRequest> m_exportStepDialogs;
     int m_selectOptions = 0;
     std::optional<core::ConversionOptions> assConversionOptions() const;
     std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;

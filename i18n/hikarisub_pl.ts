@@ -4665,12 +4665,300 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Plik o tej nazwie już istnieje.</translation>
     </message>
     <message>
+        <source>From this file (Aegisub)</source>
+        <translation>Z tego pliku (Aegisub)</translation>
+    </message>
+    <message>
+        <source>Unsaved steps</source>
+        <translation>Niezapisane kroki</translation>
+    </message>
+    <message>
+        <source>No steps</source>
+        <translation>Brak kroków</translation>
+    </message>
+    <message>
+        <source>The script is busy or isn’t loaded, so its settings can’t be shown.</source>
+        <translation>Skrypt jest zajęty lub nie jest wczytany, więc nie można pokazać jego ustawień.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>%n rodzaj tagów</numerusform>
+            <numerusform>%n rodzaje tagów</numerusform>
+            <numerusform>%n rodzajów tagów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing chosen</source>
+        <translation>Nic nie wybrano</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>Zmienna</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>%1, reversed</source>
+        <translation>%1, odwrotnie</translation>
+    </message>
+    <message>
+        <source>Templates in this file</source>
+        <translation>Szablony z pliku</translation>
+    </message>
+    <message>
+        <source>Lines whose style is missing</source>
+        <translation>Linijki z brakującym stylem</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation>Ten projekt</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>Twoje</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>Wbudowany</translation>
+    </message>
+    <message>
+        <source>Lua · %1</source>
+        <translation>Lua · %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>Utworzono %n linijkę</numerusform>
+            <numerusform>Utworzono %n linijki</numerusform>
+            <numerusform>Utworzono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>Zmieniono %n linijkę</numerusform>
+            <numerusform>Zmieniono %n linijki</numerusform>
+            <numerusform>Zmieniono %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Skipped: its script isn’t loaded</source>
+        <translation>Pominięto: jego skrypt nie jest wczytany</translation>
+    </message>
+    <message>
+        <source>Didn’t run</source>
+        <translation>Nie uruchomiono</translation>
+    </message>
+    <message>
+        <source>Variable needs a video or timecodes file</source>
+        <translation>Zmienna wymaga wideo lub pliku kodów czasowych</translation>
+    </message>
+    <message>
+        <source>Enter frame rates above 0</source>
+        <translation>Wpisz liczby klatek na sekundę większe od 0</translation>
+    </message>
+    <message>
+        <source>A macro is running, so the script couldn’t start</source>
+        <translation>Działa makro, więc nie można było uruchomić skryptu</translation>
+    </message>
+    <message>
+        <source>Couldn’t apply the script’s changes</source>
+        <translation>Nie można było zastosować zmian skryptu</translation>
+    </message>
+    <message>
+        <source>Stopped with a script error</source>
+        <translation>Skrypt zatrzymał się z błędem</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (utworzono %n linijkę)</numerusform>
+            <numerusform>%1 (utworzono %n linijki)</numerusform>
+            <numerusform>%1 (utworzono %n linijek)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ran before export: %1.</source>
+        <translation>Uruchomiono przed eksportem: %1.</translation>
+    </message>
+    <message>
+        <source>Before export · %1 · step %2 of %3</source>
+        <translation>Przed eksportem · %1 · krok %2 z %3</translation>
+    </message>
+    <message>
+        <source>Before export: %1</source>
+        <translation>Przed eksportem: %1</translation>
+    </message>
+    <message>
+        <source>changed</source>
+        <translation>zmieniony</translation>
+    </message>
+    <message>
+        <source>Add steps</source>
+        <translation>Dodaj kroki</translation>
+    </message>
+    <message>
+        <source>Hide steps</source>
+        <translation>Ukryj kroki</translation>
+    </message>
+    <message>
+        <source>Show steps</source>
+        <translation>Pokaż kroki</translation>
+    </message>
+    <message>
+        <source>Writes the document as it is.</source>
+        <translation>Zapisuje dokument bez zmian.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s recipe of the same name</source>
+        <translation>Ukryty przez przepis projektu o tej samej nazwie</translation>
+    </message>
+    <message>
+        <source>Save recipe…</source>
+        <translation>Zapisz przepis…</translation>
+    </message>
+    <message>
+        <source>Manage recipes…</source>
+        <translation>Zarządzaj przepisami…</translation>
+    </message>
+    <message>
+        <source>Run in this order on a copy; the document doesn’t change.</source>
+        <translation>Uruchamiane w tej kolejności na kopii; dokument się nie zmienia.</translation>
+    </message>
+    <message>
+        <source>Run %1</source>
+        <translation>Uruchom: %1</translation>
+    </message>
+    <message>
+        <source>%1 isn’t loaded · Export skips it</source>
+        <translation>%1 nie jest wczytany · Eksport go pominie</translation>
+    </message>
+    <message>
+        <source>Settings for %1</source>
+        <translation>Ustawienia dla: %1</translation>
+    </message>
+    <message>
+        <source>More for %1</source>
+        <translation>Więcej dla: %1</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>Przenieś w górę</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>Przenieś w dół</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>Przesuń na początek</translation>
+    </message>
+    <message>
+        <source>Reset settings</source>
+        <translation>Przywróć ustawienia</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n krok nie zostanie uruchomiony: jego skrypt nie jest wczytany.</numerusform>
+            <numerusform>%n kroki nie zostaną uruchomione: ich skrypty nie są wczytane.</numerusform>
+            <numerusform>%n kroków nie zostanie uruchomionych: ich skrypty nie są wczytane.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not saved. “%1” failed.</source>
+        <translation>Nie zapisano. Krok „%1” nie powiódł się.</translation>
+    </message>
+    <message>
+        <source>Turn it off and export</source>
+        <translation>Wyłącz go i eksportuj</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Write the file: didn’t run</source>
+        <translation>Zapis pliku: nie uruchomiono</translation>
+    </message>
+    <message>
+        <source>Nothing was written, and the document is unchanged.</source>
+        <translation>Nic nie zapisano. Dokument się nie zmienił.</translation>
+    </message>
+    <message>
+        <source>Input frame rate</source>
+        <translation>Wejściowa liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>Z wideo</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>Wyjście</translation>
+    </message>
+    <message>
+        <source>Variable (the loaded timecodes)</source>
+        <translation>Zmienna (wczytane kody czasowe)</translation>
+    </message>
+    <message>
+        <source>Constant</source>
+        <translation>Stała</translation>
+    </message>
+    <message>
+        <source>Output frame rate</source>
+        <translation>Wyjściowa liczba klatek na sekundę</translation>
+    </message>
+    <message>
+        <source>Reverse the transformation</source>
+        <translation>Odwróć przekształcenie</translation>
+    </message>
+    <message>
+        <source>Settings from %1</source>
+        <translation>Ustawienia z %1</translation>
+    </message>
+    <message>
+        <source>Asking the script…</source>
+        <translation>Odpytywanie skryptu…</translation>
+    </message>
+    <message>
+        <source>Save recipe</source>
+        <translation>Zapisz przepis</translation>
+    </message>
+    <message>
+        <source>Recipe name</source>
+        <translation>Nazwa przepisu</translation>
+    </message>
+    <message>
+        <source>A recipe with this name exists; saving replaces it.</source>
+        <translation>Przepis o tej nazwie już istnieje; zapisanie go zastąpi.</translation>
+    </message>
+    <message>
         <source>Replace</source>
         <translation>Zastąp</translation>
     </message>
     <message>
+        <source>Save</source>
+        <translation>Zapisz</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Manage recipes</source>
+        <translation>Zarządzaj przepisami</translation>
+    </message>
+    <message>
+        <source>Name of %1</source>
+        <translation>Nazwa: %1</translation>
+    </message>
+    <message>
+        <source>Delete %1</source>
+        <translation>Usuń %1</translation>
     </message>
     <message>
         <source>Format</source>
@@ -4827,6 +5115,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>Formatowanie, kolory i położenie nie są zachowywane.</translation>
+    </message>
+    <message>
+        <source>Before export</source>
+        <translation>Przed eksportem</translation>
     </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -26371,6 +26663,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>Wiersz %1: %2</translation>
     </message>
     <message>

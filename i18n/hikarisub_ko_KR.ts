@@ -4587,12 +4587,290 @@ Output device: %2</source>
         <translation>같은 이름의 파일이 이미 있습니다.</translation>
     </message>
     <message>
+        <source>From this file (Aegisub)</source>
+        <translation>이 파일에서 (Aegisub)</translation>
+    </message>
+    <message>
+        <source>Unsaved steps</source>
+        <translation>저장하지 않은 단계</translation>
+    </message>
+    <message>
+        <source>No steps</source>
+        <translation>단계 없음</translation>
+    </message>
+    <message>
+        <source>The script is busy or isn’t loaded, so its settings can’t be shown.</source>
+        <translation>스크립트가 사용 중이거나 불러오지 않아 설정을 표시할 수 없습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>태그 종류 %n개</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing chosen</source>
+        <translation>선택한 항목 없음</translation>
+    </message>
+    <message>
+        <source>Variable</source>
+        <translation>가변</translation>
+    </message>
+    <message>
+        <source>%1 → %2</source>
+        <translation>%1 → %2</translation>
+    </message>
+    <message>
+        <source>%1, reversed</source>
+        <translation>%1, 역변환</translation>
+    </message>
+    <message>
+        <source>Templates in this file</source>
+        <translation>파일의 템플릿</translation>
+    </message>
+    <message>
+        <source>Lines whose style is missing</source>
+        <translation>스타일을 찾을 수 없는 줄</translation>
+    </message>
+    <message>
+        <source>This project</source>
+        <translation>이 프로젝트</translation>
+    </message>
+    <message>
+        <source>Yours</source>
+        <translation>내 레시피</translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation>기본 제공</translation>
+    </message>
+    <message>
+        <source>Lua · %1</source>
+        <translation>Lua · %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>%n줄 생성됨</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>%n줄 변경됨</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Skipped: its script isn’t loaded</source>
+        <translation>건너뜀: 스크립트를 불러오지 않음</translation>
+    </message>
+    <message>
+        <source>Didn’t run</source>
+        <translation>실행 안 됨</translation>
+    </message>
+    <message>
+        <source>Variable needs a video or timecodes file</source>
+        <translation>가변에는 영상 또는 타임코드 파일이 필요합니다</translation>
+    </message>
+    <message>
+        <source>Enter frame rates above 0</source>
+        <translation>0보다 큰 프레임 속도를 입력하십시오</translation>
+    </message>
+    <message>
+        <source>A macro is running, so the script couldn’t start</source>
+        <translation>매크로가 실행 중이어서 스크립트를 시작하지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Couldn’t apply the script’s changes</source>
+        <translation>스크립트의 변경 사항을 적용하지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Stopped with a script error</source>
+        <translation>스크립트가 오류로 중지되었습니다</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1(%n줄 생성됨)</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Ran before export: %1.</source>
+        <translation>내보내기 전에 실행함: %1.</translation>
+    </message>
+    <message>
+        <source>Before export · %1 · step %2 of %3</source>
+        <translation>내보내기 전 · %1 · %2/%3단계</translation>
+    </message>
+    <message>
+        <source>Before export: %1</source>
+        <translation>내보내기 전: %1</translation>
+    </message>
+    <message>
+        <source>changed</source>
+        <translation>변경됨</translation>
+    </message>
+    <message>
+        <source>Add steps</source>
+        <translation>단계 추가</translation>
+    </message>
+    <message>
+        <source>Hide steps</source>
+        <translation>단계 숨김</translation>
+    </message>
+    <message>
+        <source>Show steps</source>
+        <translation>단계 표시</translation>
+    </message>
+    <message>
+        <source>Writes the document as it is.</source>
+        <translation>문서를 있는 그대로 내보냅니다.</translation>
+    </message>
+    <message>
+        <source>Hidden by the project’s recipe of the same name</source>
+        <translation>이름이 같은 프로젝트 레시피에 가려짐</translation>
+    </message>
+    <message>
+        <source>Save recipe…</source>
+        <translation>레시피 저장…</translation>
+    </message>
+    <message>
+        <source>Manage recipes…</source>
+        <translation>레시피 관리…</translation>
+    </message>
+    <message>
+        <source>Run in this order on a copy; the document doesn’t change.</source>
+        <translation>사본에서 이 순서대로 실행하며, 문서는 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Run %1</source>
+        <translation>%1 실행</translation>
+    </message>
+    <message>
+        <source>%1 isn’t loaded · Export skips it</source>
+        <translation>%1 불러오지 않음 · 내보낼 때 건너뜀</translation>
+    </message>
+    <message>
+        <source>Settings for %1</source>
+        <translation>%1 설정</translation>
+    </message>
+    <message>
+        <source>More for %1</source>
+        <translation>%1 추가 작업</translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation>위로 이동</translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation>아래로 이동</translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation>맨 위로 이동</translation>
+    </message>
+    <message>
+        <source>Reset settings</source>
+        <translation>설정 재설정</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>단계 %n개는 스크립트를 불러오지 않아 실행되지 않습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Not saved. “%1” failed.</source>
+        <translation>저장되지 않았습니다. “%1” 단계가 실패했습니다.</translation>
+    </message>
+    <message>
+        <source>Turn it off and export</source>
+        <translation>끄고 내보내기</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>Write the file: didn’t run</source>
+        <translation>파일 쓰기: 실행 안 됨</translation>
+    </message>
+    <message>
+        <source>Nothing was written, and the document is unchanged.</source>
+        <translation>아무것도 쓰지 않았습니다. 문서는 바뀌지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Input frame rate</source>
+        <translation>입력 프레임 속도</translation>
+    </message>
+    <message>
+        <source>From video</source>
+        <translation>영상에서</translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation>출력</translation>
+    </message>
+    <message>
+        <source>Variable (the loaded timecodes)</source>
+        <translation>가변(불러온 타임코드)</translation>
+    </message>
+    <message>
+        <source>Constant</source>
+        <translation>고정</translation>
+    </message>
+    <message>
+        <source>Output frame rate</source>
+        <translation>출력 프레임 속도</translation>
+    </message>
+    <message>
+        <source>Reverse the transformation</source>
+        <translation>역변환</translation>
+    </message>
+    <message>
+        <source>Settings from %1</source>
+        <translation>%1의 설정</translation>
+    </message>
+    <message>
+        <source>Asking the script…</source>
+        <translation>스크립트에 묻는 중…</translation>
+    </message>
+    <message>
+        <source>Save recipe</source>
+        <translation>레시피 저장</translation>
+    </message>
+    <message>
+        <source>Recipe name</source>
+        <translation>레시피 이름</translation>
+    </message>
+    <message>
+        <source>A recipe with this name exists; saving replaces it.</source>
+        <translation>같은 이름의 레시피가 있습니다. 저장하면 교체됩니다.</translation>
+    </message>
+    <message>
         <source>Replace</source>
         <translation>바꾸기</translation>
     </message>
     <message>
+        <source>Save</source>
+        <translation>저장</translation>
+    </message>
+    <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Manage recipes</source>
+        <translation>레시피 관리</translation>
+    </message>
+    <message>
+        <source>Name of %1</source>
+        <translation>%1의 이름</translation>
+    </message>
+    <message>
+        <source>Delete %1</source>
+        <translation>%1 삭제</translation>
     </message>
     <message>
         <source>Format</source>
@@ -4749,6 +5027,10 @@ Output device: %2</source>
     <message>
         <source>Formatting, colours and positions are not kept.</source>
         <translation>서식, 색, 위치는 유지되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Before export</source>
+        <translation>내보내기 전</translation>
     </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
@@ -25923,6 +26205,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Line %1: %2</source>
+        <extracomment>The full screen strip&apos;s current line: %1 its number, %2 its text</extracomment>
         <translation>%1번째 줄: %2</translation>
     </message>
     <message>

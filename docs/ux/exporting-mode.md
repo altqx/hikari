@@ -22,7 +22,7 @@ A write that fails shows, under the form, the `notice-warning` glyph in `danger`
 
 Q767–Q772 ([#1216](https://github.com/altqx/hikari/issues/1216) PM-4). Export as can run steps on a copy of the Document before it writes, as Aegisub's export filters do. The Document never changes.
 
-**The row** (Q767). Under Options, a **Before export** row holds the recipe combo, its **Project** or **Yours** chip, "changed" in `muted` when the steps differ from the saved recipe, and **Add steps** (no recipe) or **Show steps** / **Hide steps** (quiet). The default is **No steps**, and the row then says "Writes the Document as it is." in `muted`.
+**The row** (Q767). Under Options, a **Before export** row holds the recipe combo, its **Project** or **Yours** chip, "changed" in `muted` when the steps differ from the saved recipe, and **Add steps** (no recipe) or **Show steps** / **Hide steps** (quiet). The default is **No steps**, and the row then says "Writes the document as it is." in `muted`.
 
 **The steps** open under the row in a panel with a 1-unit `line` boundary, radius 6. Its header on `raised` says "Run in this order on a copy; the Document doesn't change." in `muted`, with **Save recipe…** as a quiet split button. The steps are:
 
@@ -47,11 +47,11 @@ Q767–Q772 ([#1216](https://github.com/altqx/hikari/issues/1216) PM-4). Export 
 
 **A missing script** (Q772). A step whose Lua script isn't loaded, or whose Project script isn't trusted, stays in the list with its on box off and "sign-fx.lua isn't loaded · Export skips it" in `warning`. The footer says "1 step won't run: its script isn't loaded." Export stays on.
 
-**Running.** The progress line names the step: "Before export · Transform frame rate · step 3 of 3", then the write (Q752). After a clean export, one `muted` line under Q751's success line names the steps that ran: "Ran before export: Apply karaoke template (42 Lines made), Sign blur pass, Transform frame rate."
+**Running.** The progress line names the step: "Before export · Transform frame rate · step 3 of 3", then the write (Q752). After a clean export, one `muted` line under Q751's success line names the steps that ran: "Ran before export: Apply karaoke template (42 lines made), Sign blur pass, Transform frame rate."
 
-**A failing step** (Q771). The export stops and nothing is written. Under the form, a panel with a header on `raised`: the `notice-error` glyph in `danger` and "Not saved. “Sign blur pass” failed on line 58." in semibold, with **Turn it off and export** and **Details** (the traceback), both quiet. Each step is a row: done with `karaoke-check` in `success` and what it did, failed with `notice-warning` in `danger` and the error in `danger` monospace, or "didn't run" in `muted`; the write is the last row. The footer says "Nothing was written. The Document is unchanged." with **Close** and **Export**.
+**A failing step** (Q771). The export stops and nothing is written. Under the form, a panel with a header on `raised`: the `notice-error` glyph in `danger` and "Not saved. “Sign blur pass” failed on line 58." in semibold, with **Turn it off and export** and **Details** (the traceback), both quiet. Each step is a row: done with `karaoke-check` in `success` and what it did, failed with `notice-warning` in `danger` and the error in `danger` monospace, or "didn't run" in `muted`; the write is the last row. The footer says "Nothing was written, and the document is unchanged." with **Close** and **Export**.
 
-**Lua steps** depend on PM-4's `register_filter`, a no-op today (`src/helpers/lua/lua_helper.cpp:340`). Until it lands, the list holds the four built-in steps.
+**Lua steps** are the loaded scripts' `register_filter` filters ([C06-register-filter](../compatibility-decisions.md#c06-register-filter)).
 
 ## Collect fonts
 

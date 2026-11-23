@@ -319,6 +319,41 @@
             <numerusform>Style options for %n styles saved in the subtitle file.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n tag kind(s)</source>
+        <translation>
+            <numerusform>%n tag kind</numerusform>
+            <numerusform>%n tag kinds</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) made</source>
+        <translation>
+            <numerusform>%n line made</numerusform>
+            <numerusform>%n lines made</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) changed</source>
+        <translation>
+            <numerusform>%n line changed</numerusform>
+            <numerusform>%n lines changed</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 (%n line(s) made)</source>
+        <translation>
+            <numerusform>%1 (%n line made)</numerusform>
+            <numerusform>%1 (%n lines made)</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n step(s) won’t run: its script isn’t loaded.</source>
+        <translation>
+            <numerusform>%n step won’t run: its script isn’t loaded.</numerusform>
+            <numerusform>%n steps won’t run: their scripts aren’t loaded.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Fonts</name>
