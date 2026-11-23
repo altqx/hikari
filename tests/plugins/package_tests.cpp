@@ -150,6 +150,36 @@ TEST(PluginPackage, OversizePackagesAreRefused)
     EXPECT_EQ(problem(plugin({{"big.bin", std::vector<std::byte>(kMaxPackageBytes)}})).kind, Kind::TooLarge);
 }
 
+std::vector<PackageFile> withPrograms(std::vector<PackageFile> extra)
+{
+    const std::string other = thisPlatform() == "linux-x64" ? "windows-x64" : "linux-x64";
+    const std::string manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1,
+        "main": "lua/main.lua", "authors": ["Ana"], "permissions": {"programs": "Checks"},
+        "contributes": {"programs": [{"id": "tool", "title": "Tool", "platforms": {
+            ")" + std::string(thisPlatform()) + R"(": {"path": "bin/here/tool"}, ")" + other + R"(": {"path": "bin/other/tool"}}}]}})";
+    std::vector<PackageFile> files{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
+    files.insert(files.end(), extra.begin(), extra.end());
+    return files;
+}
+
+TEST(PluginPackage, APackageBuiltForOnePlatformMayHold256Megabytes)
+{
+    const std::vector<std::byte> big(kMaxPackageBytes + 1);
+    EXPECT_TRUE(openPackage(withPrograms({{"bin/here/tool", bytes("x")}, {"big.bin", big}}), 1));
+    EXPECT_EQ(problem(withPrograms({{"bin/here/tool", bytes("x")}, {"bin/other/tool", bytes("y")}, {"big.bin", big}})).kind,
+              Kind::TooLarge);
+    EXPECT_EQ(problem(withPrograms({{"bin/here/tool", bytes("x")}, {"big.bin", std::vector<std::byte>(kMaxPlatformPackageBytes)}}))
+                  .kind,
+              Kind::TooLarge);
+}
+
+TEST(PluginPackage, ABundledProgramForThisComputerMustBeInThePackage)
+{
+    const PackageProblem missing = problem(withPrograms({{"bin/other/tool", bytes("y")}}));
+    EXPECT_EQ(missing.kind, Kind::MissingProgram);
+    EXPECT_EQ(missing.path, "bin/here/tool");
+}
+
 TEST(PluginPackage, MediaThatFollowsTheRulesOpens)
 {
     EXPECT_TRUE(opens(R"("icon": "media/icon.png", "screenshots": [{"path": "media/a.png", "caption": "A"},
@@ -313,6 +343,7 @@ TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
         "api": 1, "main": "lua/main.lua", "authors": ["Ana"],
         "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
                         "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
+                        "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}],
                         "layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]}})";
     const auto files = [&](std::vector<PackageFile> extra) {
         std::vector<PackageFile> out{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
@@ -321,33 +352,71 @@ TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
     };
     const PackageFile styles{"styles/signs.sty", bytes("Style: Sign,Arial,20")};
     const PackageFile preset{"presets/glow.ass", bytes("[Script Info]")};
+    const PackageFile graph{"graphs/sparkle.json", bytes("{}")};
     const PackageFile layout{"layouts/quiet.json", bytes("{}")};
 
-    const PackageProblem missing = problem(files({styles, layout}));
+    const PackageProblem missing = problem(files({styles, graph, layout}));
     EXPECT_EQ(missing.kind, Kind::MissingContent);
     EXPECT_EQ(missing.path, "presets/glow.ass");
-    EXPECT_EQ(problem(files({styles, preset})).path, "layouts/quiet.json");
-    EXPECT_TRUE(openPackage(files({styles, preset, layout}), 1)) << "with no checks set, a file need only be there";
+    EXPECT_EQ(problem(files({styles, preset, layout})).path, "graphs/sparkle.json");
+    EXPECT_EQ(problem(files({styles, preset, graph})).path, "layouts/quiet.json");
+    EXPECT_TRUE(openPackage(files({styles, preset, graph, layout}), 1)) << "with no checks set, a file need only be there";
 
     ContentFileChecks checks;
     checks.styleCatalogue = [](std::span<const std::byte>) { return std::optional<std::string>(); };
     checks.karaokePreset = [](std::span<const std::byte> data) {
         return data.size() < 20 ? std::optional<std::string>("is too short") : std::nullopt;
     };
-    const auto refused = openPackage(files({styles, preset, layout}), 1, checks);
+    const auto refused = openPackage(files({styles, preset, graph, layout}), 1, checks);
     ASSERT_FALSE(refused);
     EXPECT_EQ(refused.error().kind, Kind::BadContent);
     EXPECT_EQ(refused.error().path, "presets/glow.ass");
     EXPECT_EQ(refused.error().detail, "is too short");
+    EXPECT_TRUE(openPackage(files({styles, graph, layout, {"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")}}), 1, checks));
+    checks.graph = [](std::span<const std::byte>) { return std::optional<std::string>("is not a graph"); };
+    const auto notAGraph = openPackage(files({styles, graph, layout, {"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")}}), 1, checks);
+    ASSERT_FALSE(notAGraph);
+    EXPECT_EQ(notAGraph.error().path, "graphs/sparkle.json");
+    EXPECT_EQ(notAGraph.error().detail, "is not a graph");
+    checks.graph = nullptr;
     const PackageFile longPreset{"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")};
-    EXPECT_TRUE(openPackage(files({styles, longPreset, layout}), 1, checks));
     checks.layout = [](std::span<const std::byte> data) {
         return data.size() < 3 ? std::optional<std::string>("isn't a layout") : std::nullopt;
     };
-    const auto notALayout = openPackage(files({styles, longPreset, layout}), 1, checks);
+    const auto notALayout = openPackage(files({styles, longPreset, graph, layout}), 1, checks);
     ASSERT_FALSE(notALayout);
     EXPECT_EQ(notALayout.error().kind, Kind::BadContent);
     EXPECT_EQ(notALayout.error().path, "layouts/quiet.json");
+}
+
+TEST(PluginPackage, ADictionaryNeedsBothFilesAndEachPassesItsCheck)
+{
+    constexpr std::string_view manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0",
+        "api": 1, "main": "lua/main.lua", "authors": ["Ana"],
+        "contributes": {"dictionaries": [{"language": "pl", "title": "Polski", "aff": "dict/pl.aff", "dic": "dict/pl.dic"}]}})";
+    const auto files = [&](std::vector<PackageFile> extra) {
+        std::vector<PackageFile> out{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
+        out.insert(out.end(), extra.begin(), extra.end());
+        return out;
+    };
+    const PackageFile aff{"dict/pl.aff", bytes("SET UTF-8\n")};
+    const PackageFile dic{"dict/pl.dic", bytes("1\nkot\n")};
+
+    EXPECT_EQ(problem(files({dic})).path, "dict/pl.aff");
+    const PackageProblem noDic = problem(files({aff}));
+    EXPECT_EQ(noDic.kind, Kind::MissingContent);
+    EXPECT_EQ(noDic.path, "dict/pl.dic");
+
+    ContentFileChecks checks;
+    checks.dictionaryDic = [](std::span<const std::byte> data) {
+        return data.front() == std::byte{'0'} ? std::optional<std::string>("is empty") : std::nullopt;
+    };
+    EXPECT_TRUE(openPackage(files({aff, dic}), 1, checks));
+    const auto refused = openPackage(files({aff, {"dict/pl.dic", bytes("0\n")}}), 1, checks);
+    ASSERT_FALSE(refused);
+    EXPECT_EQ(refused.error().kind, Kind::BadContent);
+    EXPECT_EQ(refused.error().path, "dict/pl.dic");
+    EXPECT_EQ(refused.error().detail, "is empty");
 }
 
 TEST(PluginPackage, TheImportRuleReadsQmlAndScriptsAsWritten)

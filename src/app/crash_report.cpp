@@ -369,8 +369,10 @@ QJsonObject Report::exceptionProperties() const
                     {QStringLiteral("$exception_level"), recovered ? QStringLiteral("error") : QStringLiteral("fatal")},
                     {QStringLiteral("crashed_version"), record->version},
                     {QStringLiteral("report_id"), id}};
-    if (record->freeze())
+    if (record->freeze()) {
         out.insert(QStringLiteral("freeze_seconds"), record->seconds);
+        out.insert(QStringLiteral("freeze_phase"), record->startup ? QStringLiteral("startup") : QStringLiteral("running"));
+    }
     if (!images.isEmpty())
         out.insert(QStringLiteral("$debug_images"), images);
     return out;

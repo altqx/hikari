@@ -10,6 +10,8 @@
 #include <QQuickView>
 #include <QtTest>
 
+#include <vector>
+
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 using hikari::backends::AutomationManager;
@@ -220,6 +222,29 @@ private slots:
         controller->cancel();
         QTRY_VERIFY(!controller->busy());
         QTRY_VERIFY(item(QStringLiteral("run_0_2"))->property("enabled").toBool());
+    }
+
+    void anExportFilterRunsWhileNoMacroDoes()
+    {
+        const QString filters = QStringLiteral(HIKARI_LUA_FIXTURES "/export_filters.lua");
+        const QString macros = QStringLiteral(HIKARI_LUA_FIXTURES "/host-fixture.lua");
+        controller->load(filters);
+        controller->load(macros);
+        QTRY_COMPARE(scriptState(0), QStringLiteral("ready"));
+        QTRY_COMPARE(scriptState(1), QStringLiteral("ready"));
+        using Outcome = hikari::backends::LuaScriptHost::RunOutcome;
+        std::vector<Outcome> finished;
+        QObject receiver;
+        connect(manager.get(), &AutomationManager::runFinished, &receiver,
+                [&](const QString &, Outcome outcome, const QString &) { finished.push_back(outcome); });
+        QVERIFY(manager->runFilter(filters.toStdString(), 1, {}, {}));
+        QVERIFY(manager->busy());
+        QVERIFY(!manager->run(macros.toStdString(), 2));
+        QVERIFY(!manager->runFilter(filters.toStdString(), 0, {}, {}));
+        QTRY_COMPARE(finished.size(), 1u);
+        QVERIFY(finished.front() == Outcome::Ok);
+        QVERIFY(manager->host(filters.toStdString())->lastResult());
+        QVERIFY(!manager->runFilter(filters.toStdString(), 99, {}, {}));
     }
 };
 

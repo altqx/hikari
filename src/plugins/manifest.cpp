@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <functional>
 #include <set>
 
 namespace hikari::plugins {
@@ -65,6 +66,70 @@ std::vector<Command> commands(const Json *list)
     return out;
 }
 
+std::vector<MenuPlacement> menus(const Json *list)
+{
+    std::vector<MenuPlacement> out;
+    if (list)
+        for (const Json &item : list->asArray()) {
+            const std::string location = text(item, "location");
+            out.push_back({text(item, "command"),
+                           location == "grid.context"         ? MenuLocation::Grid
+                           : location == "lineEditor.context" ? MenuLocation::LineEditor
+                                                              : MenuLocation::MenuBar,
+                           text(item, "group")});
+        }
+    return out;
+}
+
+std::vector<StatusItem> statusItems(const Json *list)
+{
+    std::vector<StatusItem> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "text"), text(item, "icon"),
+                           text(item, "tooltip"), text(item, "command")});
+    return out;
+}
+
+std::vector<Keybinding> keybindings(const Json *list)
+{
+    std::vector<Keybinding> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "command"), text(item, "key")});
+    return out;
+}
+
+std::optional<ManifestProblem> badReferences(const Manifest &m)
+{
+    const auto declared = [&](const std::string &command) {
+        return command.empty() || std::ranges::find(m.commands, command, &Command::id) != m.commands.end();
+    };
+    const auto unknown = [](const std::string &at, const std::string &command) {
+        return ManifestProblem{Kind::UnknownCommand, at, command, 0};
+    };
+    std::set<std::pair<MenuLocation, std::string>> placed;
+    for (std::size_t i = 0; i < m.menus.size(); ++i) {
+        const std::string at = "/contributes/menus/" + std::to_string(i) + "/command";
+        if (!declared(m.menus[i].command))
+            return unknown(at, m.menus[i].command);
+        if (!placed.insert({m.menus[i].location, m.menus[i].command}).second)
+            return ManifestProblem{Kind::DuplicateId, at, m.menus[i].command, 0};
+    }
+    for (std::size_t i = 0; i < m.statusItems.size(); ++i)
+        if (!declared(m.statusItems[i].command))
+            return unknown("/contributes/statusItems/" + std::to_string(i) + "/command", m.statusItems[i].command);
+    std::set<std::string> keys;
+    for (std::size_t i = 0; i < m.keybindings.size(); ++i) {
+        const std::string at = "/contributes/keybindings/" + std::to_string(i);
+        if (!declared(m.keybindings[i].command))
+            return unknown(at + "/command", m.keybindings[i].command);
+        if (!keys.insert(m.keybindings[i].key).second)
+            return ManifestProblem{Kind::DuplicateKey, at + "/key", m.keybindings[i].key, 0};
+    }
+    return std::nullopt;
+}
+
 std::vector<Panel> panels(const Json *list)
 {
     std::vector<Panel> out;
@@ -86,6 +151,15 @@ std::vector<ContentFile> contentFiles(const Json *list)
     if (list && list->isArray())
         for (const Json &item : list->asArray())
             out.push_back({text(item, "id"), text(item, "title"), text(item, "path")});
+    return out;
+}
+
+std::vector<Dictionary> dictionaries(const Json *list)
+{
+    std::vector<Dictionary> out;
+    if (list && list->isArray())
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "language"), text(item, "title"), text(item, "aff"), text(item, "dic")});
     return out;
 }
 
@@ -226,14 +300,20 @@ std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
     return std::nullopt;
 }
 
-template <typename Items>
-std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
+template <typename Items, typename Key>
+std::optional<ManifestProblem> repeated(const Items &items, const std::string &at, Key key, std::string_view field)
 {
     std::set<std::string> seen;
     for (std::size_t i = 0; i < items.size(); ++i)
-        if (!seen.insert(items[i].id).second)
-            return ManifestProblem{Kind::DuplicateId, at + "/" + std::to_string(i) + "/id", items[i].id, 0};
+        if (const std::string &value = std::invoke(key, items[i]); !seen.insert(value).second)
+            return ManifestProblem{Kind::DuplicateId, at + "/" + std::to_string(i) + "/" + std::string(field), value, 0};
     return std::nullopt;
+}
+
+template <typename Items>
+std::optional<ManifestProblem> repeated(const Items &items, const std::string &at)
+{
+    return repeated(items, at, &Items::value_type::id, "id");
 }
 
 SettingType settingType(std::string_view type)
@@ -359,6 +439,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     if (const Json *contributes = json.find("contributes")) {
         m.commands = commands(contributes->find("commands"));
         m.panels = panels(contributes->find("panels"));
+        m.menus = menus(contributes->find("menus"));
+        m.statusItems = statusItems(contributes->find("statusItems"));
+        m.keybindings = keybindings(contributes->find("keybindings"));
         if (const Json *settings = contributes->find("settings"))
             for (const Json &s : settings->asArray())
                 m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
@@ -366,6 +449,8 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.formats = formats(contributes->find("formats"));
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
+        m.dictionaries = dictionaries(contributes->find("dictionaries"));
+        m.graphs = contentFiles(contributes->find("graphs"));
         m.layouts = contentFiles(contributes->find("layouts"));
         m.programs = programs(contributes->find("programs"));
     }
@@ -373,9 +458,12 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
                          repeated(m.commands, "/contributes/commands"), repeated(m.panels, "/contributes/panels"),
                          repeated(m.settings, "/contributes/settings"), repeated(m.nodes, "/contributes/nodes"),
+                         repeated(m.statusItems, "/contributes/statusItems"), badReferences(m),
                          repeated(m.formats, "/contributes/formats"), repeated(m.programs, "/contributes/programs"),
                          repeated(m.styles, "/contributes/styles"),
                          repeated(m.karaokePresets, "/contributes/karaokePresets"),
+                         repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language"),
+                         repeated(m.graphs, "/contributes/graphs"),
                          repeated(m.layouts, "/contributes/layouts")})
         if (problem)
             return std::unexpected(*problem);

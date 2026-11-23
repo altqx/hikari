@@ -107,6 +107,7 @@ The marketplace website's Install in HikariSub opens `hikarisub://plugin/install
 | `<user folder>/plugin-data/<id>/` | The plugin's data. It survives updates; uninstall asks whether to remove it. |
 | `<cache>/plugins/<id>/` | The plugin's cache, cleared on every install and on uninstall. |
 | `<user folder>/plugins/.previous/<id>/` | The version the last update replaced, for Roll back. |
+| `<user folder>/plugin-programs/<id>/<sha256>/` | Its [downloaded programs](#programs), one folder per download. |
 | `<user folder>/plugins.json` | Per id: `version`, `enabled`, the pinned `key`, the remembered folder `grants`, the `settings` a plugin or the user changed, `source`, and `installed`, its place in install order (kept across updates, which decides which plugin's [format](#formats) reads a file first); for [updates](#updates-roll-back-and-revocation), `autoUpdate` (only when off), `skip`, `previous`, `held` and `revoked` (`reason`, `lastGood`). |
 | `<user folder>/marketplace.json` | `serial`: the highest marketplace index serial accepted. |
 
@@ -165,7 +166,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 
 | Member | What it does |
 | --- | --- |
-| `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. |
+| `hikari.commands.register(id, fn)` | Gives a command from the manifest's `contributes.commands` its handler, once. An id the manifest doesn't declare is refused. The handler is `fn(args, context)`: `args` is a table (`{}` from a menu, key or status item) and `context.via` says what ran it: `menu`, `key`, `status`, `api` or `ai`. |
 | `hikari.commands.run(id)` | Runs a HikariSub command (`GLOBAL_SAVE_SUBS`), as `commands.run` does. |
 | `hikari.call(operation, params)` | Calls any [Hikari API](api.md) operation as the plugin. It returns the result, or `nil` and the error `{code, message, data}`. Without `documents.all` the plugin sees the editing target only. |
 | `hikari.events.on(name, fn)` | Calls `fn(data)` for each Hikari API event of that name (`document.changed`, `document.saved`, `selection.changed`, `documents.changed`, `panel.changed`, `command.ran`, `project.changed`, `macro.ran`). An unknown name is refused. `document.saved` comes once the file is on disk; `command.ran` only says a command was triggered, so a Save that asks first reports before anything is written. |
@@ -215,7 +216,7 @@ Only one plugin edits at a time, app-wide. An edit waits for another plugin's ed
 
 ## Commands and shortcuts
 
-A command `greet` of `com.example.hello` is `plugin.com.example.hello.greet`. While the plugin runs, its commands sit in the Automation menu after Plugins…, in a submenu named after the plugin. In Settings › Shortcuts, the **Plugin shortcuts** filter lists them. A plugin command's shortcut is global, and it is kept with the macro shortcuts in the hotkeys file. A shortcut whose plugin isn't installed or turned on stays listed with a note, ready for when it comes back.
+A command `greet` of `com.example.hello` is `plugin.com.example.hello.greet`. While the plugin runs, its commands sit in the Automation menu after Plugins…, in a submenu named after the plugin. In Settings › Shortcuts, the **Plugin shortcuts** filter lists them. A plugin command's shortcut is global, and it is kept with the macro shortcuts in the hotkeys file. A shortcut whose plugin isn't installed or turned on stays listed with a note, ready for when it comes back. A plugin can also place its commands in right-click menus and the menu bar, show status bar items, suggest default shortcuts and disable a command under conditions; see [Menus, status items and shortcuts](#menus-status-items-and-shortcuts).
 
 When a command fails, its error shows in a toast. When a plugin fails to load, the toast says it didn't start, and its details hold the error. Errors in event handlers go to the Log panel only.
 
@@ -670,7 +671,7 @@ A command whose conditions fail is disabled in every menu and the palette, and i
 
 - **When a default applies.** It applies while the plugin runs, unless the user bound or cleared that command's shortcut, or the key is taken.
 - **When the key is taken.** A key that the user, HikariSub or an earlier-installed plugin already binds stays theirs, in any context. The plugin's default is dropped, and Settings › Shortcuts and the plugin's details say "Ctrl+Alt+K is taken by <owner>".
-- **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A default never overwrites a kept row. Plugin shortcuts stay global.
+- **Changing it.** The user changes or clears a plugin default like any shortcut, and the change is kept in the hotkeys file with the other plugin shortcuts. A cleared default is kept as a row without keys, so it stays cleared. A default never overwrites a kept row. Plugin shortcuts stay global.
 
 ### Quick picks and input boxes
 
@@ -798,8 +799,8 @@ The palette itself is #1236's, in the command palette spec (`docs/ux/command-pal
   - A program with no entry for this platform is unavailable, and so is what needs it. The plugin manager says "<title> isn't available for this computer". The plugin still installs, unless it is a program plugin whose `main` program is missing.
 - **Bundled.** `path` is the program's file in the package. Its folder and the files beside it are readable by the program.
 - **Downloaded.**
-  - **When.** HikariSub downloads the file at install, or at the first start after an update, with the same request rules as [`hikari.net.fetch`](#network): HTTPS, at most 5 redirects, no cookies.
-  - **The check.** It checks `size` (at most 1 GiB) and `sha256` before unpacking. A `zip` or `tar.gz` archive is unpacked with the [package path rules](#the-package), and `entry` names the program inside it.
+  - **When.** HikariSub downloads the file when the plugin starts and lacks it: after an install, after an update, or after a download that failed. It uses the same request rules as [`hikari.net.fetch`](#network): HTTPS, at most 5 redirects, no cookies.
+  - **The check.** It checks `size` (at most 1 GiB) and `sha256` before unpacking. A `zip` or `tar.gz` archive is unpacked with the [package path rules](#the-package), into at most 16384 files and 1 GiB, with no links. `entry` names the program inside it. A file that isn't an archive keeps the name its URL ends in.
   - **Where it goes.** It is kept in `<user folder>/plugin-programs/<plugin id>/<sha256>/` until neither the installed version nor the one kept for Roll back names that hash, or the plugin is uninstalled.
   - **The install question** shows each download's host and size.
   - **When it can't.** The download obeys "Let plugins connect to the internet". With that off, or offline, the program is "not downloaded", and the plugin's details offer Download now.

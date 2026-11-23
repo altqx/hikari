@@ -13,6 +13,8 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QKeySequence>
+#include <QLocale>
 #include <QUrl>
 #include <private/qzipreader_p.h>
 
@@ -75,11 +77,11 @@ Unpacked unpack(const QByteArray &data)
             ++count;
         }
     }
-    if (total > qint64(plugins::kMaxPackageBytes) || count > plugins::kMaxPackageFiles)
+    if (total > qint64(plugins::kMaxPlatformPackageBytes) || count > plugins::kMaxPackageFiles)
         return Unpacked{{}, QCoreApplication::translate("HikariSub.Plugins",
                                                         "The package is too large: more than %1 files or %2 MB unpacked.")
                                 .arg(plugins::kMaxPackageFiles)
-                                .arg(plugins::kMaxPackageBytes / (1024 * 1024))};
+                                .arg(plugins::kMaxPlatformPackageBytes / (1024 * 1024))};
     Unpacked out;
     for (const QZipReader::FileInfo &entry : entries) {
         if (!entry.isFile)
@@ -109,6 +111,12 @@ QString manifestMessage(const ManifestProblem &problem)
             .arg(api::kApiVersion);
     case ManifestProblem::Kind::QmlNeedsFullTrust:
         return QCoreApplication::translate("HikariSub.Plugins", "Only Full trust plugins can ship QML panels.");
+    case ManifestProblem::Kind::UnknownCommand:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json names the command “%1” at %2, which it doesn’t declare.")
+            .arg(text(problem.detail), at);
+    case ManifestProblem::Kind::DuplicateKey:
+        return QCoreApplication::translate("HikariSub.Plugins", "hikari-plugin.json binds %1 twice, at %2.")
+            .arg(text(problem.detail), at);
     case ManifestProblem::Kind::Schema:
     case ManifestProblem::Kind::BadDefault:
         break;
@@ -123,7 +131,7 @@ QString packageMessage(const PackageProblem &problem)
     case PackageProblem::Kind::TooLarge:
         return QCoreApplication::translate("HikariSub.Plugins", "The package is too large: more than %1 files or %2 MB unpacked.")
             .arg(plugins::kMaxPackageFiles)
-            .arg(plugins::kMaxPackageBytes / (1024 * 1024));
+            .arg(problem.limit / (1024 * 1024));
     case PackageProblem::Kind::BadPath:
         return QCoreApplication::translate("HikariSub.Plugins", "The package holds a file name HikariSub won’t install: %1")
             .arg(text(problem.path));
@@ -131,6 +139,9 @@ QString packageMessage(const PackageProblem &problem)
         return QCoreApplication::translate("HikariSub.Plugins", "The package has no hikari-plugin.json at its top level.");
     case PackageProblem::Kind::MissingMain:
         return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its main file, %1.").arg(text(problem.path));
+    case PackageProblem::Kind::MissingProgram:
+        return QCoreApplication::translate("HikariSub.Plugins", "The package lacks its program for this computer, %1.")
+            .arg(text(problem.path));
     case PackageProblem::Kind::Media:
         return QCoreApplication::translate("HikariSub.Plugins", "The package breaks the media rules: %1 %2.")
             .arg(text(problem.path), text(problem.detail));
@@ -222,6 +233,14 @@ QStringList contributionLines(const plugins::Manifest &manifest)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Command: %1").arg(text(command.title));
     for (const plugins::Panel &panel : manifest.panels)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Panel: %1").arg(text(panel.title));
+    for (const plugins::StatusItem &item : manifest.statusItems)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Status bar item: %1").arg(text(item.title));
+    for (const plugins::Keybinding &binding : manifest.keybindings) {
+        const auto command = std::ranges::find(manifest.commands, binding.command, &plugins::Command::id);
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Shortcut: %1 for %2")
+                     .arg(QKeySequence::fromString(text(binding.key), QKeySequence::PortableText).toString(QKeySequence::NativeText),
+                          text(command->title));
+    }
     return lines;
 }
 
@@ -264,6 +283,12 @@ QString noUserFolder()
     return QCoreApplication::translate("HikariSub.Plugins", "Plugins need a user folder, and this copy has none.");
 }
 
+const plugins::ProgramDownload *downloadHere(const plugins::Program &program)
+{
+    const auto run = program.platforms.find(std::string(plugins::thisPlatform()));
+    return run == program.platforms.end() || !run->second.download ? nullptr : &*run->second.download;
+}
+
 bool isLowIntegrity(const plugins::Program &program)
 {
     return program.confinement == plugins::Confinement::LowIntegrity;
@@ -292,6 +317,12 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
     };
     if (next.permissions.programs)
         added << (more.runPrograms || !more.programs.empty());
+    for (const plugins::Program &program : next.programs)
+        if (const plugins::ProgramDownload *download = downloadHere(program)) {
+            const plugins::Program *had = current.program(program.id);
+            const plugins::ProgramDownload *before = had ? downloadHere(*had) : nullptr;
+            added << (!before || before->url != download->url || before->sha256 != download->sha256);
+        }
     if (std::ranges::any_of(next.programs, &plugins::Program::network))
         added << asksMore([](const plugins::Program &p) { return p.network; });
     if (std::ranges::any_of(next.programs, isLowIntegrity))
@@ -341,6 +372,10 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
                       : QCoreApplication::translate("HikariSub.Plugins", "Runs programs that come with it: %1: %2")
                             .arg(titles.join(QStringLiteral(", ")), text(*p.programs)));
     }
+    for (const plugins::Program &program : programs)
+        if (const plugins::ProgramDownload *download = downloadHere(program))
+            lines << QCoreApplication::translate("HikariSub.Plugins", "Downloads %1 from %2 (%3)")
+                         .arg(text(program.title), QUrl(text(download->url)).host(), QLocale().formattedDataSize(download->size));
     if (std::ranges::any_of(programs, &plugins::Program::network))
         lines << QCoreApplication::translate("HikariSub.Plugins", "Connects to the internet");
     if (std::ranges::any_of(programs, isLowIntegrity))
@@ -441,8 +476,8 @@ QVariantMap PluginManager::review(const QUrl &url)
         return refused(QCoreApplication::translate("HikariSub.Plugins", "Plugins need a user folder, and this copy has none."));
     const QString file = url.isLocalFile() ? url.toLocalFile() : url.toString();
     QFile package(file);
-    if (QFileInfo(file).size() > qint64(plugins::kMaxPackageBytes))
-        return refused(packageMessage({PackageProblem::Kind::TooLarge, {}, {}}));
+    if (QFileInfo(file).size() > qint64(plugins::kMaxPlatformPackageBytes))
+        return refused(packageMessage({PackageProblem::Kind::TooLarge, {}, {}, {}, plugins::kMaxPlatformPackageBytes}));
     if (!package.open(QIODevice::ReadOnly))
         return refused(QCoreApplication::translate("HikariSub.Plugins", "HikariSub can’t read %1.").arg(QDir::toNativeSeparators(file)));
     const QByteArray data = package.readAll();

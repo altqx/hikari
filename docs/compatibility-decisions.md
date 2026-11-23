@@ -10,6 +10,14 @@ Where HikariSub's automation API and file formats knowingly differ from what the
 
 `aegisub.register_filter(name, description, priority, process, config)` registers an export filter, as in Aegisub 3.5.1, and Export as can run it before it writes. The processing function gets the subtitles of a copy of the Document and a table of its settings, keyed by control name; with no config function the table is empty. The config function gets the subtitles read-only and an empty options table, and returns a dialog table, which HikariSub draws inside Export as. A processing function that isn't a function raises "The filter processing function must be a function". `set_undo_point` raises in a filter (C06-set-undo-point). A runtime error in the config function is reported as "Runtime error in Lua config dialog function:" and the step gets an empty table, as Aegisub logs it and shows no dialog. It used to register nothing. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772 (2026-11-18).
 
+## C06-transform-framerate
+
+Transform frame rate, Aegisub's Transform Framerate export filter, changes the same times: each Line's start and end, `\move`, `\fad`, `\fade`, `\t` and the karaoke tags, through Aegisub's frame mapping, truncated to centiseconds. It rewrites only those numbers. Aegisub parses each override block and writes it back, which also normalises the rest of the block's text, so the two can differ in spacing and number format outside the times. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772.
+
+## C06-export-filters-line
+
+The `Export Filters` line in `[Aegisub Project Garbage]` is read as Before export's "From this file (Aegisub)" list. It is written back on the next save only after an export that ran steps. Aegisub keeps whatever list its Export dialog last showed. An export without steps leaves it alone, so a file shared with Aegisub keeps its list. The templater's filter keeps its English name, "Karaoke template", in every language, where Aegisub translates it, so the line matches across languages. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772.
+
 ## FA4-getpixel-rgb
 
 `frame:getPixel(x, y)` returns three integers, r, g and b, as arch1t3cht's fork does. It used to return one packed integer (`b * 65536 + g * 256 + r`). Outside the frame it returns nil. [FA4 #561](https://github.com/altqx/hikari/issues/561), owner decision 2026-10-31.
@@ -122,6 +130,8 @@ Vector clips are written with up to two decimal places, as Aegisub 3.5 writes th
 ## FA9-video-property-prompts
 
 When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix and LayoutRes, as Aegisub 3.5 does, and each question has its own row in Settings › Video. "Don't ask again" sets that row. 3.5's extra choice to remember the last answer is left out. [FA9 #566](https://github.com/altqx/hikari/issues/566), coordinator decision 2026-11-03.
+
+A mismatched matrix can also be converted: "Convert colours and set to …" converts every Style colour and each `\c`, `\1c`–`\4c` (inside `\t` too) as Aegisub's Resample does with its matrix option (`ycbcr_converter`), then sets the matrix, in one undo step. Karaoke `template` and `code` comments are left alone. "Set to …" stays the default button, so Enter never rewrites colours. A missing matrix and `None` are only set, never converted. [#1215](https://github.com/altqx/hikari/issues/1215), coordinator decision 2026-11-23.
 
 ## 738-resample-stretch-axis
 

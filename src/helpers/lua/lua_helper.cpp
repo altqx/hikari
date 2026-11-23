@@ -2837,6 +2837,16 @@ void registerMacro(lua_State *L, const std::string &name, const std::string &des
     g_script.info.macros.push_back({.name = name, .description = description, .hasValidate = true});
 }
 
+void registerFilter(lua_State *L, const std::string &name, const std::string &description, int priority,
+                    lua_CFunction run)
+{
+    lua_createtable(L, 0, 1);
+    lua_pushcfunction(L, run);
+    lua_setfield(L, -2, "run");
+    g_script.filters.push_back(luaL_ref(L, LUA_REGISTRYINDEX));
+    g_script.info.filters.push_back({.name = name, .description = description, .priority = priority});
+}
+
 }
 
 int main()

@@ -1071,6 +1071,24 @@ DialogWindow {
                         title: qsTr("Counting")
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps"; text: qsTr("Count spaces and punctuation for wraps") }
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps"; text: qsTr("Count spaces and punctuation for CPS") }
+                        SettingsRow {
+                            text: qsTr("CPS warning")
+                            note: qsTr("Lines that read faster are tinted, more strongly up to the error level.")
+                            SettingNumber { setting: "grid.cpsWarning"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS warning") }
+                        }
+                        SettingsRow {
+                            text: qsTr("CPS error")
+                            SettingNumber { setting: "grid.cpsError"; from: 1; to: 100; unit: qsTr("CPS"); name: qsTr("CPS error") }
+                        }
+                        SettingsRow {
+                            text: qsTr("Characters per line")
+                            SettingNumber { setting: "grid.lineLength"; from: 1; to: 1000; name: qsTr("Characters per line") }
+                        }
+                        SettingsRow {
+                            text: qsTr("Lines")
+                            note: qsTr("A subtitle file can set its own limits in Script properties.")
+                            SettingNumber { setting: "grid.maxLines"; from: 1; to: 20; name: qsTr("Lines") }
+                        }
                     }
                     SettingsSection {
                         title: qsTr("Splitting")
@@ -1303,7 +1321,7 @@ DialogWindow {
                                 { setting: "video.missingMatrix", text: qsTr("No YCbCr matrix in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s")] },
                                 { setting: "video.matrixMismatch", text: qsTr("A different YCbCr matrix from the video’s"),
-                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s")] },
+                                  choices: [qsTr("Keep the subtitles’"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Convert the colours and set it to the video’s")] },
                                 { setting: "video.missingLayoutRes", text: qsTr("No layout resolution in the subtitles"),
                                   choices: [qsTr("Leave it unset"), qsTr("Ask"), qsTr("Set it to the video’s"), qsTr("Set it to the script resolution")] },
                                 { setting: "video.layoutResMismatch", text: qsTr("A different layout resolution from the video’s"),

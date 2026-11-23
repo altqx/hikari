@@ -78,6 +78,8 @@ hikari_add_gtest(hikari_application_video_properties_tests SOURCES video_propert
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_script_properties_tests SOURCES script_properties_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_reading_limits_tests SOURCES reading_limits_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_shift_times_tests SOURCES shift_times_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_select_lines_tests SOURCES select_lines_tests.cpp
@@ -298,6 +300,8 @@ hikari_add_gtest(hikari_application_karaoke_templates_tests SOURCES karaoke_temp
     LIBRARIES hikari_application LABELS application)
 
 hikari_add_gtest(hikari_application_tag_removal_tests SOURCES tag_removal_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_export_steps_tests SOURCES export_steps_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_dependency_control_tests SOURCES dependency_control_tests.cpp
     LIBRARIES hikari_application LABELS application)

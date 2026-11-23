@@ -163,11 +163,22 @@ std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launc
     const auto run = program->platforms.find(std::string(plugins::thisPlatform()));
     if (run == program->platforms.end())
         return refusal(errors::kUnavailable, program->title + " isn't available for this computer.", "platform");
-    if (run->second.download)
-        return refusal(errors::kUnavailable, program->title + " isn't downloaded yet.", "not_downloaded");
-    const QString file = QDir(plugin->package).absoluteFilePath(qs(run->second.path));
-    if (!QFileInfo(file).isFile())
-        return refusal(errors::kUnavailable, program->title + " is missing from the plugin's package.", "missing");
+    QString file;
+    QString folder;
+    if (const auto &download = run->second.download) {
+        file = m_wiring.downloaded ? m_wiring.downloaded(pluginId, run->second) : QString();
+        if (file.isEmpty())
+            return refusal(errors::kUnavailable, program->title + " isn't downloaded yet.", "not_downloaded");
+        QDir kept = QFileInfo(file).dir();
+        for (std::size_t i = 0; i < std::ranges::count(download->entry, '/'); ++i)
+            kept.cdUp();
+        folder = kept.absolutePath();
+    } else {
+        file = QDir(plugin->package).absoluteFilePath(qs(run->second.path));
+        if (!QFileInfo(file).isFile())
+            return refusal(errors::kUnavailable, program->title + " is missing from the plugin's package.", "missing");
+        folder = QFileInfo(file).absolutePath();
+    }
 
     const bool networkAllowed = m_wiring.networkAllowed && m_wiring.networkAllowed();
     backends::sandbox::Profile profile;
@@ -181,7 +192,7 @@ std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launc
         profile.lowRightsHelper = m_wiring.lowRightsHelper;
     }
 #endif
-    profile.readExecute = {QFileInfo(file).absolutePath()};
+    profile.readExecute = {folder};
     profile.readWrite = {plugin->data, plugin->cache};
     for (const api::ProgramFile &granted : call.files)
         (granted.writable ? profile.readWrite : profile.read).push_back(pathOf(granted.path));

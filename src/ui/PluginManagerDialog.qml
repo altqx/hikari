@@ -10,6 +10,8 @@ DialogWindow {
     id: dialog
     objectName: "pluginManagerDialog"
     required property var manager
+    // Default shortcuts left out because their key is taken: command id -> note.
+    property var takenShortcuts: ({})
     property var runtime: null
     property var market: null
     property string view: "installed"
@@ -749,6 +751,14 @@ DialogWindow {
             }
         }
         Label {
+            objectName: "marketNotForThisComputer"
+            visible: market.listing.action === "unavailable"
+            text: qsTr("Not available for this computer")
+            color: Theme.danger
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        Label {
             objectName: "marketNeedsNewer"
             visible: market.listing.action === "incompatible"
             text: qsTr("It needs HikariSub %1 or later. Update HikariSub to install it.").arg(market.listing.needs)
@@ -1109,6 +1119,50 @@ DialogWindow {
             }
         }
         Heading {
+            visible: programsRepeater.count > 0
+            text: qsTr("Programs")
+        }
+        Repeater {
+            id: programsRepeater
+            model: {
+                dialog.runtime ? dialog.runtime.programsRevision : 0
+                return dialog.runtime ? dialog.runtime.programs(details.row.id) : []
+            }
+            RowLayout {
+                id: programRow
+                required property var modelData
+                spacing: 8
+                Layout.fillWidth: true
+                Label {
+                    objectName: "pluginProgram_" + programRow.modelData.title
+                    text: {
+                        const title = programRow.modelData.title
+                        switch (programRow.modelData.state) {
+                        case "unavailable":
+                            return qsTr("%1 isn’t available for this computer").arg(title)
+                        case "missing":
+                            return programRow.modelData.problem.length > 0 ? programRow.modelData.problem
+                                                                           : qsTr("%1 isn’t downloaded").arg(title)
+                        case "downloading":
+                            return qsTr("Downloading %1…").arg(title)
+                        }
+                        return title
+                    }
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
+                IconTextButton {
+                    objectName: "pluginDownloadPrograms"
+                    visible: programRow.modelData.state === "missing"
+                    iconRole: "check-updates"
+                    text: qsTr("Download now")
+                    tip: qsTr("Downloads the programs %1 needs").arg(details.row.name)
+                    onClicked: dialog.runtime.downloadPrograms(details.row.id)
+                }
+            }
+        }
+        Heading {
             visible: marksRepeater.count > 0
             text: qsTr("Marks")
         }
@@ -1155,6 +1209,18 @@ DialogWindow {
             Label {
                 required property string modelData
                 text: "• " + modelData
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+        }
+        Repeater {
+            model: Object.keys(dialog.takenShortcuts).filter(id => id.startsWith("plugin." + details.row.id + "."))
+            Label {
+                required property string modelData
+                objectName: "pluginTakenShortcut_" + modelData
+                text: dialog.takenShortcuts[modelData]
+                color: Theme.warning
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
