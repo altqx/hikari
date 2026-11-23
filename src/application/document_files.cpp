@@ -46,12 +46,24 @@ DocumentFiles::Entry *DocumentFiles::find(DocumentId document)
     return it == m_documents.end() ? nullptr : &it->second;
 }
 
-std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKey &destination)
+std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKey &destination, const ToUtf8 &toUtf8)
 {
     auto bytes = m_reader.read(destination);
     if (!bytes)
         return std::unexpected(StageFailure{openError(bytes.error()), std::nullopt});
     const std::u8string extension = extensionOf(destination.value);
+    if (toUtf8) {
+        auto text = toUtf8(*bytes);
+        if (!text)
+            return std::unexpected(StageFailure{OpenError::NotInEncoding, std::nullopt});
+        auto load = core::loadSubtitle(*text, extension);
+        if (!load)
+            return std::unexpected(StageFailure{OpenError::InvalidFormat, std::nullopt});
+        StagedOpen staged{destination, std::move(*load), std::nullopt, 0, 0};
+        staged.fileBytes = std::move(*bytes);
+        staged.converted = true;
+        return staged;
+    }
     if (const auto format = core::lyricsFormatOf(extension)) {
         if (core::lyricsEncrypted(*bytes, *format))
             return std::unexpected(StageFailure{OpenError::MalformedLyrics, core::LyricsProblem{core::LyricsProblem::Kind::Encrypted}});
@@ -86,12 +98,12 @@ std::expected<StagedOpen, StageFailure> DocumentFiles::stageOpen(const Destinati
     return stage(destination);
 }
 
-std::expected<StagedOpen, StageFailure> DocumentFiles::stageReload(DocumentId document)
+std::expected<StagedOpen, StageFailure> DocumentFiles::stageReload(DocumentId document, const ToUtf8 &toUtf8)
 {
     Entry *entry = find(document);
     if (!entry)
         return std::unexpected(StageFailure{OpenError::UnknownDocument, std::nullopt});
-    auto staged = stage(entry->destination);
+    auto staged = stage(entry->destination, toUtf8);
     if (staged) {
         staged->replaces = document;
         staged->expectedGeneration = entry->generation;
@@ -110,7 +122,8 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
         if (entry->generation != staged.expectedGeneration || entry->session->revision() != staged.expectedRevision)
             return std::unexpected(OpenError::StaleTarget);
         entry->session = std::make_unique<EditSession>(std::move(staged.load.document));
-        entry->session->markSaved(entry->session->contentId());
+        if (!staged.converted)
+            entry->session->markSaved(entry->session->contentId());
         entry->knownBytes = std::move(bytes);
         ++entry->generation;
         entry->lastSave.reset();

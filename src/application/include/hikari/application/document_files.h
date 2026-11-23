@@ -37,6 +37,7 @@ enum class OpenError {
     MalformedSrv3,
     UnknownDocument,
     StaleTarget,   // the Document changed or was replaced after staging
+    NotInEncoding, // the file is not text in the encoding it was reopened with
 };
 
 enum class SaveRefusal {
@@ -67,6 +68,8 @@ struct StagedOpen {
     bool imported = false;
     // The file as read, when the Document was built from it rather than parsed (a plugin's format).
     std::optional<std::vector<std::byte>> fileBytes;
+    // Built from the file converted to UTF-8: it starts modified, so its next save writes UTF-8.
+    bool converted = false;
 };
 
 // Gets a save's bytes later: nullopt when there are none, after the user was told why.
@@ -131,6 +134,8 @@ struct SaveStatus {
 
 // A lyrics file's bytes as UTF-8, or nullopt when they are not text.
 using LyricsDecoder = std::function<std::optional<std::vector<std::byte>>(std::span<const std::byte>)>;
+// A file's bytes as UTF-8, or nullopt when they are not text in the encoding it reads.
+using ToUtf8 = std::function<std::optional<std::vector<std::byte>>(std::span<const std::byte>)>;
 
 class DocumentFiles {
 public:
@@ -140,7 +145,8 @@ public:
     void setLyricsDecoder(LyricsDecoder decoder) { m_lyricsDecoder = std::move(decoder); }
 
     std::expected<StagedOpen, StageFailure> stageOpen(const DestinationKey &destination);
-    std::expected<StagedOpen, StageFailure> stageReload(DocumentId document);
+    // With `toUtf8`, the file is read through it and the replacement is converted.
+    std::expected<StagedOpen, StageFailure> stageReload(DocumentId document, const ToUtf8 &toUtf8 = {});
     // Publishes a staged open once: a new Document, or the replacement of the
     // one it was staged for when that Document is still exactly as it was.
     std::expected<DocumentId, OpenError> activate(StagedOpen staged);
@@ -202,7 +208,7 @@ private:
         std::optional<std::u8string> activeLine;
         std::optional<std::u8string> layout;
     };
-    std::expected<StagedOpen, StageFailure> stage(const DestinationKey &destination);
+    std::expected<StagedOpen, StageFailure> stage(const DestinationKey &destination, const ToUtf8 &toUtf8 = {});
     Entry *find(DocumentId document);
     void writeDeferred(PermitId permit, std::optional<std::vector<std::byte>> bytes);
 
