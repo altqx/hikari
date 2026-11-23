@@ -46,3 +46,11 @@
 {"call": "settings.get", "params": {"settings": ["grid.copyColumns"]}, "exact": {"values": {"grid.copyColumns": 3}}}
 {"call": "settings.set", "params": {"setting": "grid.copyColumns", "value": "three"}, "error": "invalid_params", "errorData": {"pointer": "/value"}}
 {"call": "settings.set", "params": {"setting": "grid.noSuchSetting", "value": 1}, "error": "not_found"}
+{"call": "settings.set", "params": {"setting": "plugin.org.example.word-count.countSpaces", "value": false}, "exact": {"setting": "plugin.org.example.word-count.countSpaces", "value": false}}
+{"call": "settings.set", "params": {"setting": "plugin.org.example.word-count.countSpaces", "value": "no"}, "error": "invalid_params", "errorData": {"pointer": "/value"}}
+{"call": "settings.set", "params": {"setting": "plugin.org.example.word-count.token", "value": "x"}, "error": "refused", "errorData": {"reason": "private"}}
+{"call": "settings.open", "params": {"setting": "grid.copyColumns"}, "exact": {"opened": true}}
+{"call": "settings.open", "params": {"setting": "plugin.org.example.word-count.countSpaces", "scope": "project"}, "exact": {"opened": true}}
+{"call": "settings.open", "params": {}, "exact": {"opened": true}}
+{"call": "settings.open", "params": {"setting": "grid.noSuchSetting"}, "error": "not_found"}
+{"call": "settings.open", "params": {"scope": "everywhere"}, "error": "invalid_params"}

@@ -16,6 +16,8 @@ Popup {
     property string accessibleName: title
     property string countText: ""
     property bool busy: false
+    property bool back: false
+    property var titleButtons: []
     property real hangFrom: 8
     property alias text: field.text
     readonly property alias list: list
@@ -28,6 +30,9 @@ Popup {
     signal textEdited(string before, string after)
     signal accepted(var item)
     signal secondary(var item)
+    signal picked(var ids)
+    signal backRequested()
+    signal buttonPressed(string button, string item)
     signal cancelled()
 
     property Item restoreFocus: null
@@ -53,6 +58,10 @@ Popup {
         close()
     }
     function choose() {
+        if (model.many) {
+            picked(model.pickedIds())
+            return
+        }
         const item = model.currentItem()
         if (item.id === undefined || (item.disabled ?? "").length > 0)
             return
@@ -108,9 +117,25 @@ Popup {
             objectName: "quickPickTitleRow"
             width: parent.width
             height: visible ? 30 : 0
-            visible: pick.title.length > 0 || pick.owner.length > 0 || pick.step.length > 0
-            Text {
+            visible: pick.title.length > 0 || pick.owner.length > 0 || pick.step.length > 0 || pick.back
+                     || pick.titleButtons.length > 0 || pick.model.many
+            IconToolButton {
+                id: backButton
+                objectName: "quickPickBack"
+                visible: pick.back
                 anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: visible ? 24 : 0
+                height: 24
+                padding: 0
+                focusPolicy: Qt.NoFocus
+                iconRole: "chevron-left"
+                text: qsTr("Back")
+                tip: qsTr("Back (Alt+Left)")
+                onClicked: pick.backRequested()
+            }
+            Text {
+                anchors.left: backButton.right
                 anchors.leftMargin: 6
                 anchors.right: trailing.left
                 anchors.rightMargin: 12
@@ -121,15 +146,52 @@ Popup {
                 font.weight: Font.DemiBold
                 color: Theme.text
             }
-            Text {
+            Row {
                 id: trailing
-                objectName: "quickPickTitleTrailing"
                 anchors.right: parent.right
-                anchors.rightMargin: 6
                 anchors.verticalCenter: parent.verticalCenter
-                text: [pick.step, pick.owner].filter(t => t.length > 0).join("  ")
-                textFormat: Text.PlainText
-                color: Theme.muted
+                spacing: 6
+                Text {
+                    objectName: "quickPickTitleTrailing"
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: [pick.step, pick.owner].filter(t => t.length > 0).join("  ")
+                    textFormat: Text.PlainText
+                    color: Theme.muted
+                }
+                Repeater {
+                    model: pick.titleButtons
+                    IconToolButton {
+                        required property var modelData
+                        objectName: "quickPickTitleButton_" + modelData.id
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 24
+                        height: 24
+                        padding: 0
+                        focusPolicy: Qt.NoFocus
+                        iconRole: modelData.icon
+                        text: modelData.tooltip
+                        onClicked: pick.buttonPressed(modelData.id, "")
+                    }
+                }
+                Text {
+                    objectName: "quickPickPickedCount"
+                    visible: pick.model.many
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: qsTr("%n picked", "", pick.model.pickedCount)
+                    textFormat: Text.PlainText
+                    color: Theme.muted
+                }
+                PrimaryButton {
+                    objectName: "quickPickOk"
+                    visible: pick.model.many
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitHeight: 24
+                    implicitWidth: 56
+                    padding: 0
+                    focusPolicy: Qt.NoFocus
+                    text: qsTr("OK")
+                    onClicked: pick.choose()
+                }
             }
         }
 
@@ -186,6 +248,16 @@ Popup {
                     case Qt.Key_Escape:
                         pick.cancel()
                         break
+                    case Qt.Key_Left:
+                        if (mods !== Qt.AltModifier || !pick.back)
+                            return
+                        pick.backRequested()
+                        break
+                    case Qt.Key_Tab:
+                        if (mods !== 0 || !pick.model.many)
+                            return
+                        list.forceActiveFocus()
+                        break
                     default:
                         return
                     }
@@ -222,6 +294,34 @@ Popup {
             highlightFollowsCurrentItem: false
             boundsBehavior: Flickable.StopAtBounds
             onCurrentIndexChanged: if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
+            activeFocusOnTab: false
+            Keys.onPressed: event => {
+                const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
+                if (event.key === Qt.Key_Space && mods === 0)
+                    pick.model.toggle(pick.model.current)
+                else if (event.key === Qt.Key_A && mods === Qt.ControlModifier)
+                    pick.model.pickAllShown()
+                else if (event.key === Qt.Key_Up || event.key === Qt.Key_Down)
+                    pick.model.move(event.key === Qt.Key_Up ? -1 : 1)
+                else if (event.key === Qt.Key_Home || event.key === Qt.Key_End)
+                    event.key === Qt.Key_Home ? pick.model.first() : pick.model.last()
+                else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_PageDown)
+                    pick.model.page(event.key === Qt.Key_PageUp ? -1 : 1, pick.visibleRows)
+                else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                    pick.choose()
+                else if (event.key === Qt.Key_Escape)
+                    pick.cancel()
+                else if (event.key === Qt.Key_Left && mods === Qt.AltModifier && pick.back)
+                    pick.backRequested()
+                else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
+                    field.forceActiveFocus()
+                else if (event.text.length > 0 && event.text >= " " && (mods & ~Qt.ShiftModifier) === 0) {
+                    field.forceActiveFocus()
+                    field.insert(field.cursorPosition, event.text)
+                } else
+                    return
+                event.accepted = true
+            }
             Accessible.role: Accessible.List
             Accessible.name: pick.accessibleName
             ScrollBar.vertical: ScrollBar {
@@ -240,6 +340,7 @@ Popup {
                     pick.model.current = index
                     pick.choose()
                 }
+                onButtonPressed: button => pick.buttonPressed(button, itemId)
             }
         }
 

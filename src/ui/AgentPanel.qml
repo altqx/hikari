@@ -1820,7 +1820,7 @@ FocusScope {
              : qsTr("Allow this action?")
     }
     function settingTitle(item) {
-        const name = SettingLabels.of(item.setting ?? "")
+        const name = SettingsCatalogue.label(item.setting ?? "")
         if (name.length === 0)
             return qsTr("Change a setting")
         return item.value === "true" ? qsTr("Turn on “%1”").arg(name)
@@ -1874,7 +1874,7 @@ FocusScope {
             }
             Label {
                 objectName: "agentAskSetting"
-                visible: ask.item.area === "setting" && SettingLabels.of(ask.item.setting ?? "").length === 0
+                visible: ask.item.area === "setting" && SettingsCatalogue.label(ask.item.setting ?? "").length === 0
                 Layout.fillWidth: true
                 wrapMode: Text.WrapAnywhere
                 textFormat: Text.PlainText

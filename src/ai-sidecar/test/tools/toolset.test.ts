@@ -46,7 +46,7 @@ describe("ToolSet", () => {
 
         const app = JSON.parse(textOf(await tools.call("search_tools", { group: "app" }))).tools;
         expect(app.map((t: { name: string }) => t.name).sort()).toEqual(["panels_close", "panels_focus", "panels_list",
-            "panels_open", "settings_get", "settings_list", "settings_set"]);
+            "panels_open", "settings_get", "settings_list", "settings_open", "settings_set"]);
         expect(app[0].inputSchema.type).toBe("object");
     });
 

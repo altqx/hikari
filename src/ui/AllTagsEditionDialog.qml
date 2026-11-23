@@ -709,13 +709,13 @@ DialogWindow {
         ShellMenuItem {
             objectName: "copyTagToTier"
             iconRole: "copy-to-tier"
-            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
             onTriggered: dialog.transfer(false)
         }
         ShellMenuItem {
             objectName: "moveTagToTier"
             iconRole: "move-to-tier"
-            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
             onTriggered: dialog.transfer(true)
         }
     }
@@ -736,7 +736,7 @@ DialogWindow {
             visible: dialog.tiered
             height: visible ? implicitHeight : 0
             iconRole: "copy-to-tier"
-            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            text: tierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
             onTriggered: dialog.transfer(false)
         }
         ShellMenuItem {
@@ -744,7 +744,7 @@ DialogWindow {
             visible: dialog.tiered
             height: visible ? implicitHeight : 0
             iconRole: "move-to-tier"
-            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            text: tierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
             onTriggered: dialog.transfer(true)
         }
         MenuSeparator { visible: dialog.tiered; height: visible ? implicitHeight : 0 }

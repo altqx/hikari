@@ -1184,6 +1184,7 @@
                   "enum": [
                     "boolean",
                     "integer",
+                    "number",
                     "string",
                     "stringList"
                   ]

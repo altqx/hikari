@@ -1054,9 +1054,40 @@ void SettingsFiles::flush()
             writeFile(file);
 }
 
+SettingsFiles::Reloaded SettingsFiles::reloadSettings()
+{
+    const auto bytes = application::readOwnedFile(pathOf(path(Settings)));
+    if (!bytes)
+        return {};
+    auto parsed = parseTomlFile(*bytes, kVersion);
+    if (auto *failure = std::get_if<application::ParseFailure>(&parsed)) {
+        m_settingsUnreadable = true;
+        return {{}, *failure};
+    }
+    std::vector<std::pair<const SettingDefinition *, std::optional<SettingValue>>> before, pending;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.disposition != application::SettingDisposition::Excluded && fileOf(setting) == Settings)
+            before.emplace_back(&setting, read(setting));
+    for (const auto &id : m_changed[Settings])
+        if (const auto *setting = application::findSetting(id))
+            pending.emplace_back(setting, read(*setting));
+    m_settings = std::move(std::get<toml::table>(parsed));
+    for (const auto &[setting, value] : pending)
+        value ? put(*setting, *value) : erase(*setting);
+    const bool waited = m_settingsUnreadable && m_dirty[Settings];
+    m_settingsUnreadable = false;
+    if (waited)
+        queueFlush(0);
+    Reloaded out;
+    for (const auto &[setting, value] : before)
+        if (read(*setting) != value)
+            out.changed.emplace_back(setting->id);
+    return out;
+}
+
 bool SettingsFiles::writeFile(File file)
 {
-    if (!m_writable[file])
+    if (!m_writable[file] || (file == Settings && m_settingsUnreadable))
         return false;
     QDir().mkpath(m_folder);
     QLockFile lock(m_folder + QStringLiteral("/.settings.lock"));

@@ -859,10 +859,24 @@
 <context>
     <name>HikariSub.Options</name>
     <message numerus="yes">
+        <source>%n setting(s) match</source>
+        <translation>
+            <numerusform>%n setting matches</numerusform>
+            <numerusform>%n settings match</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n rules</source>
         <translation>
             <numerusform>%n rule</numerusform>
             <numerusform>%n rules</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Show all %n shortcuts</source>
+        <translation>
+            <numerusform>Show the %n shortcut</numerusform>
+            <numerusform>Show all %n shortcuts</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1082,6 +1096,13 @@
         <translation>
             <numerusform>%n result</numerusform>
             <numerusform>%n results</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n picked</source>
+        <translation>
+            <numerusform>%n picked</numerusform>
+            <numerusform>%n picked</numerusform>
         </translation>
     </message>
 </context>
