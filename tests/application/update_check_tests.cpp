@@ -73,6 +73,7 @@ TEST(UpdateCheck, CandidatesBySemVerSkippingDraftsPrereleasesAndOtherTags)
         {"v0.1.8+build", "Build metadata", "bm", "", false, false, {}},
         {"v0.1.2", "Stable", "u3", "notes", false, false, {}},
         {"v0.1.2", "Twice", "u3b", "", false, false, {}},
+        {"vcpkg-assets", "Source mirror", "va", "", false, false, {}},
     };
     const auto stable = updateCandidates(feed, "0.1.0", true);
     ASSERT_EQ(stable.size(), 2u);
