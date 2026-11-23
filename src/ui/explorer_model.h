@@ -10,7 +10,9 @@
 #include <QVariantMap>
 #include <QtQmlIntegration>
 
+#include <atomic>
 #include <memory>
+#include <thread>
 #include <vector>
 
 namespace hikari::ui {
@@ -27,6 +29,7 @@ class ExplorerModel : public QAbstractListModel {
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(int currentRow READ currentRow WRITE setCurrentRow NOTIFY currentChanged)
     Q_PROPERTY(QString currentPath READ currentPath NOTIFY currentChanged)
+    Q_PROPERTY(bool scanning READ scanning NOTIFY scanningChanged)
 public:
     enum Role { NameRole = Qt::UserRole + 1, PathRole, DepthRole, KindRole, ExpandableRole, ExpandedRole };
     Q_ENUM(Role)
@@ -67,12 +70,18 @@ public:
     Q_INVOKABLE QVariantMap newSubtitleFile(const QString &folder, const QString &name);
     Q_INVOKABLE void refresh();
     Q_INVOKABLE static QString nativePath(const QString &path);
+    // Every file the Explorer would show, at any depth, sorted by path, as filesFound batches of
+    // {path, relative, name, kind}; a new scan replaces one still running.
+    Q_INVOKABLE void scanFiles();
+    bool scanning() const { return m_scanning; }
 
 signals:
     void folderChanged();
     void filterChanged();
     void countChanged();
     void currentChanged();
+    void scanningChanged();
+    void filesFound(const QVariantList &files, bool done);
 
 private:
     struct Node;
@@ -109,6 +118,9 @@ private:
     QFileSystemWatcher m_watcher;
     QSet<QString> m_pending;
     QTimer m_rescan;
+    bool m_scanning = false;
+    std::shared_ptr<std::atomic_int> m_scanGeneration = std::make_shared<std::atomic_int>(0);
+    std::jthread m_scan;
 };
 
 }

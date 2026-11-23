@@ -20,6 +20,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <algorithm>
 #include <memory>
 
 using namespace hikari;
@@ -133,8 +134,9 @@ private slots:
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
         provider.models = {{.id = "inline-upper", .name = "Upper", .price = ai::Price{.input = 0.5, .output = 0}}};
         config.providers.push_back(provider);
-        const bool cliOnly = QTest::currentTestFunction() == QByteArrayLiteral("anAgentCliAloneLeavesTheActionsOff");
-        if (!cliOnly)
+        const QByteArray test = QTest::currentTestFunction();
+        const bool cliOnly = test == QByteArrayLiteral("anAgentCliAloneLeavesTheActionsOff");
+        if (!cliOnly && test != QByteArrayLiteral("aProviderAddedWhileRunningIsInEveryModelListAtOnce"))
             config.roles[ai::Role::Chat] = {"or", "inline-upper"};
 
         const QString flags = at(QStringLiteral("local-bundle"));
@@ -461,6 +463,35 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("translation.sourceLanguage"), QStringLiteral(" Japanese "));
         translate();
         QCOMPARE(session().document().lines()[0]->translation, u8"Japanese: {\\i1}HELLO{\\i0} THERE");
+    }
+
+    void aProviderAddedWhileRunningIsInEveryModelListAtOnce()
+    {
+        QVERIFY(!inlineAi().ready().value(QStringLiteral("chat")).toBool());
+        const auto listed = [this](const QString &text) {
+            const QVariantList models = application->agent()->models();
+            return std::ranges::any_of(models, [&](const QVariant &m) { return m.toMap().value(QStringLiteral("text")) == text; });
+        };
+        QVERIFY(!listed(QStringLiteral("Fresh")));
+        QSignalSpy agentModels(application->agent(), &app::AgentController::modelsChanged);
+        QSignalSpy inlineModels(&inlineAi(), &app::InlineAiController::changed);
+
+        ai::Provider added = ai::presetProvider(ai::Preset::OpenAI, "openai", "OpenAI");
+        added.models = {{.id = "fresh", .name = "Fresh"}};
+        bool saved = false;
+        application->ai()->providers()->add(added, "sk-test", [&](std::optional<ai::SaveError> error) { saved = !error; });
+        QTRY_VERIFY(saved);
+        QVERIFY(agentModels.count() >= 1);
+        QVERIFY(inlineModels.count() >= 1);
+        QVERIFY(listed(QStringLiteral("Fresh")));
+        QVERIFY(inlineAi().ready().value(QStringLiteral("chat")).toBool());
+
+        agentModels.clear();
+        bool removed = false;
+        application->ai()->providers()->remove("openai", [&](std::optional<ai::SaveError> error) { removed = !error; });
+        QTRY_VERIFY(removed);
+        QVERIFY(agentModels.count() >= 1);
+        QVERIFY(!listed(QStringLiteral("Fresh")));
     }
 };
 

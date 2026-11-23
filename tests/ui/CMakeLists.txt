@@ -9,7 +9,7 @@ hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cp
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
-    LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
+    LIBRARIES hikari_composition Qt6::CorePrivate Qt6::QuickTest ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
           panels2=saveAsOffersAssForADocumentOfAnotherFormat
@@ -304,6 +304,7 @@ if(Python3_Interpreter_FOUND)
             "${PROJECT_SOURCE_DIR}")
     set_tests_properties(hikari_native_gate_windows_declared_skips PROPERTIES LABELS "native-gate" TIMEOUT 60)
 endif()
+hikari_add_qttest(hikari_ui_file_write_queue_tests SOURCES file_write_queue_tests.cpp LIBRARIES hikari_ui OFFSCREEN_ONLY)
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets
     PARTS envelope saving=aSaveBeforeTheSavedLayoutIsRestoredKeepsIt)
@@ -455,6 +456,9 @@ hikari_add_qttest(hikari_ui_plugin_runtime_tests OFFSCREEN_ONLY SOURCES plugin_r
 target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper)
+hikari_add_qttest(hikari_ui_plugin_programs_tests SOURCES plugin_programs_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_plugin_programs_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
+add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)
 hikari_add_qttest(hikari_ui_plugin_qml_panels_tests OFFSCREEN_ONLY SOURCES plugin_qml_panels_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_qml_panels_tests PRIVATE HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>"
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
@@ -477,6 +481,7 @@ hikari_add_qttest(hikari_ui_preset_tiers_tests SOURCES preset_tiers_tests.cpp LI
 hikari_add_qttest(hikari_ui_shell_menu_placement_tests SOURCES shell_menu_placement_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_explorer_model_tests SOURCES explorer_model_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_quick_pick_model_tests SOURCES quick_pick_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_list_files_tests PRIVATE
     HIKARI_LIST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/list-files"
@@ -548,6 +553,8 @@ target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_explorer_panel_tests hikari_media_helper hikari_media_fixtures)
 set_tests_properties(hikari_ui_explorer_panel_tests.offscreen PROPERTIES TIMEOUT 300)
+hikari_add_qttest(hikari_ui_quick_open_tests SOURCES quick_open_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition
     PARTS skills spelling=eachWindowSpellsWithItsProjectsDictionary trust=aNamedKeyNobodyHasAsksNoTrust)
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

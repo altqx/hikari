@@ -1,5 +1,6 @@
 #include "hikari/app/plugin_runtime.h"
 
+#include "hikari/app/plugin_content.h"
 #include "hikari/app/plugin_nodes.h"
 
 #include "log_controller.h"
@@ -65,18 +66,59 @@ QString analyticsFeature(std::string_view operation)
     return {};
 }
 
-QString stopReason(PluginProcess::StopReason reason, int timeLimitMs)
+QString stopReason(PluginProcess::StopReason reason)
 {
     switch (reason) {
-    case PluginProcess::StopReason::TimeLimit:
-        return QCoreApplication::translate("HikariSub.Plugins", "It ran for more than %n second(s).", nullptr,
-                                           std::max(1, timeLimitMs / 1000));
     case PluginProcess::StopReason::Crashed:
         return QCoreApplication::translate("HikariSub.Plugins", "It stopped unexpectedly.");
     case PluginProcess::StopReason::ForceStopped:
         break;
     }
     return QCoreApplication::translate("HikariSub.Plugins", "It was force stopped.");
+}
+
+QString conditionPhrase(std::string_view condition)
+{
+    const char *phrase = nullptr;
+    if (condition == "document")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs an open file");
+    else if (condition == "!document")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only without an open file");
+    else if (condition == "selection")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs a selection");
+    else if (condition == "!selection")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only without a selection");
+    else if (condition == "multipleLines")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs two or more selected lines");
+    else if (condition == "!multipleLines")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only with one line selected or none");
+    else if (condition == "video")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs an open video");
+    else if (condition == "!video")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only without an open video");
+    else if (condition == "audio")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs open audio");
+    else if (condition == "!audio")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only without open audio");
+    else if (condition == "karaoke")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs a karaoke line");
+    else if (condition == "!karaoke")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only on a line without karaoke");
+    else if (condition == "translation")
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Needs Translation mode");
+    else
+        phrase = QT_TRANSLATE_NOOP("HikariSub.Plugins", "Works only outside Translation mode");
+    return QCoreApplication::translate("HikariSub.Plugins", phrase);
+}
+
+QString menuLocation(plugins::MenuLocation location)
+{
+    switch (location) {
+    case plugins::MenuLocation::Grid: return QStringLiteral("grid.context");
+    case plugins::MenuLocation::LineEditor: return QStringLiteral("lineEditor.context");
+    case plugins::MenuLocation::MenuBar: break;
+    }
+    return QStringLiteral("menuBar");
 }
 
 std::string envelope(const api::Result &result)
@@ -97,7 +139,33 @@ struct PluginRuntime::Running {
     PluginFiles::Plugin files;
     std::unique_ptr<PluginProcess> process;
     std::vector<std::uint64_t> subscriptions;
+    struct Status {
+        plugins::StatusItem item; // with the plugin's latest text, icon and tooltip
+        QString tone = QStringLiteral("normal");
+        bool visible = true;
+    };
+    std::vector<Status> status;
+    bool loaded = false;
+    void resetStatus()
+    {
+        status.clear();
+        for (const plugins::StatusItem &item : manifest.statusItems)
+            status.push_back({item});
+    }
+    bool held = false;
 };
+
+namespace {
+
+QString commandTitle(const plugins::Manifest &manifest, const QString &command)
+{
+    for (const auto &c : manifest.commands)
+        if (qs(c.id) == command)
+            return qs(c.title);
+    return command;
+}
+
+}
 
 PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), m_wiring(std::move(wiring))
 {
@@ -127,6 +195,33 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
         return it == m_plugins.end() ? api::Json() : m_files->grantDropped(it->second->files, file);
     });
     wireQmlPanels();
+    wirePrograms();
+}
+
+void PluginRuntime::wirePrograms()
+{
+    if (!m_wiring.programs)
+        return;
+    m_wiring.programs->bind({
+        [this](const std::string &id) -> std::optional<PluginPrograms::Plugin> {
+            const auto it = m_plugins.find(id);
+            if (it == m_plugins.end() || !m_installer)
+                return std::nullopt;
+            const plugins::PluginFolders &f = m_installer->folders();
+            const fs::path own(std::u8string(id.begin(), id.end()));
+            auto folder = [&own](const fs::path &base) { return QString::fromStdU16String((base / own).u16string()); };
+            return PluginPrograms::Plugin{&it->second->manifest, folder(f.plugins), folder(f.data), folder(f.cache),
+                                          plugins::settingValues(it->second->manifest, storedSettings(id))};
+        },
+        m_wiring.networkAllowed,
+        [this](const std::string &id, const QString &line) {
+            const auto it = m_plugins.find(id);
+            if (m_wiring.log && it != m_plugins.end())
+                m_wiring.log->log(line, ui::LogController::Info, qs(it->second->manifest.name));
+        },
+        m_wiring.api,
+        m_wiring.lowRightsHelper,
+    });
 }
 
 void PluginRuntime::wireQmlPanels()
@@ -249,9 +344,11 @@ void PluginRuntime::sync()
     for (const auto &[window, project] : m_windows)
         onIn[window];
     std::map<std::string, plugins::Manifest> wanted;
+    std::vector<std::pair<std::int64_t, std::string>> order;
     std::vector<PluginUi::Plugin> installed;
     std::vector<application::PluginNode> nodes;
     std::map<std::string, std::string> unavailable;
+    application::PluginContent content;
     if (m_installer) {
         if (const auto registry = m_installer->registry())
             for (const auto &[id, entry] : *registry) {
@@ -272,6 +369,8 @@ void PluginRuntime::sync()
                 installed.push_back({id, manifest->name, runs, manifest->panels,
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
+                if (pluginContentShows(entry, *manifest))
+                    addPluginContent(content, id, *manifest, root);
                 if (!manifest->nodes.empty()) {
                     std::expected<std::vector<application::PluginNode>, std::string> own = std::unexpected(std::string());
                     if (pluginNodesRun(entry, *manifest))
@@ -284,8 +383,10 @@ void PluginRuntime::sync()
                         m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Its nodes can’t run: %1").arg(qs(own.error())),
                                           ui::LogController::Error, qs(manifest->name));
                 }
-                if (runs)
+                if (runs) {
+                    order.emplace_back(entry.installed, id);
                     wanted.emplace(id, std::move(*manifest));
+                }
             }
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
@@ -305,11 +406,54 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id))
             m_plugins.emplace(id, launch(id, std::move(manifest)));
+    std::ranges::sort(order);
+    m_installOrder.clear();
+    for (auto &[installed, id] : order)
+        m_installOrder.push_back(std::move(id));
     m_userOn = std::move(userOn);
     m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
+    application::setPluginContent(std::move(content));
     m_ui->setPlugins(std::move(installed));
     relist();
+}
+
+std::vector<PluginRuntime::Format> PluginRuntime::formats() const
+{
+    std::vector<Format> out;
+    for (const std::string &id : m_installOrder) {
+        const auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            continue;
+        const plugins::Manifest &m = it->second->manifest;
+        for (const auto &format : m.formats)
+            out.push_back({"plugin:" + id + "/" + format.id, id, m.name, format});
+    }
+    return out;
+}
+
+std::optional<PluginRuntime::Format> PluginRuntime::format(const std::string &id) const
+{
+    for (Format &f : formats())
+        if (f.id == id)
+            return std::move(f);
+    return std::nullopt;
+}
+
+bool PluginRuntime::exportDocument(const Format &format, const api::Json &snapshot, const api::Json &options,
+                                   PluginProcess::FormatDone done)
+{
+    const auto it = m_plugins.find(format.plugin);
+    return it != m_plugins.end() && format.format.exports &&
+           it->second->process->exportDocument(format.format.id, snapshot.dump(), options.dump(), std::move(done));
+}
+
+bool PluginRuntime::importFile(const Format &format, std::string bytes, const std::string &fileName,
+                               PluginProcess::FormatDone done)
+{
+    const auto it = m_plugins.find(format.plugin);
+    return it != m_plugins.end() && format.format.imports &&
+           it->second->process->importFile(format.format.id, std::move(bytes), fileName, std::move(done));
 }
 
 std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string &id, plugins::Manifest manifest)
@@ -320,6 +464,8 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     raw->manifest = std::move(manifest);
     raw->caller = api::Caller{"plugin:" + id, raw->manifest.name, raw->manifest.permissions.allDocuments.has_value()};
     raw->caller.vcsRead = raw->manifest.permissions.vcsRead.has_value();
+    raw->caller.programs = raw->manifest.permissions.programs.has_value();
+    raw->caller.presence = raw->manifest.permissions.presence.has_value();
     raw->files = PluginFiles::Plugin{id, raw->caller.id, raw->manifest.permissions.files};
     auto load = [this, raw] {
         protocol::LoadRequest request;
@@ -334,10 +480,17 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         request.settings = plugins::settingValues(m, storedSettings(raw->id)).dump();
         for (const auto &command : m.commands)
             request.commands.push_back(command.id);
+        for (const auto &format : m.formats) {
+            if (format.exports)
+                request.exporters.push_back(format.id);
+            if (format.imports)
+                request.importers.push_back(format.id);
+        }
         return request;
     };
     raw->process = std::make_unique<PluginProcess>(m_wiring.helperPath, load, m_wiring.limits);
     PluginProcess *process = raw->process.get();
+    process->setBackground(raw->manifest.permissions.background.has_value());
     if (m_wiring.sandbox && m_installer && raw->manifest.tier == plugins::Tier::Restricted) {
         const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
         process->setSandbox(backends::pluginProfile(m_wiring.helperPath, QString::fromStdU16String(root.u16string()), id));
@@ -351,15 +504,17 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         releaseLock(*raw);
         emit idle(qs(raw->id));
     });
-    connect(process, &PluginProcess::stopped, this, [this, raw] { emit idle(qs(raw->id)); });
+    connect(process, &PluginProcess::stopped, this, [this, raw] {
+        emit idle(qs(raw->id));
+        rework();
+    });
+    connect(process, &PluginProcess::workChanged, this, &PluginRuntime::rework);
     connect(process, &PluginProcess::jobBegan, this, [this, raw](const QString &command, const QString &title) {
         if (m_wiring.featureUsed)
             m_wiring.featureUsed(QStringLiteral("job"));
-        QString commandTitle = command;
-        for (const auto &c : raw->manifest.commands)
-            if (qs(c.id) == command)
-                commandTitle = qs(c.title);
-        Job job{raw->id, qs(raw->manifest.name), title.isEmpty() ? commandTitle : title, {}, -1, false, false, {}};
+        const QString what = command.isEmpty() ? QCoreApplication::translate("HikariSub.Plugins", "A timer")
+                                               : commandTitle(raw->manifest, command);
+        Job job{raw->id, qs(raw->manifest.name), title.isEmpty() ? what : title, {}, -1, false, false, {}};
         endJob(raw->id);
         m_jobs.push_back(std::move(job));
         emit jobsChanged();
@@ -373,7 +528,19 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
             }
     });
     connect(process, &PluginProcess::jobEnded, this, [this, raw] { endJob(raw->id); });
-    connect(process, &PluginProcess::loaded, this, [this, raw] { m_ui->running(raw->id); });
+    raw->resetStatus();
+    connect(process, &PluginProcess::loaded, this, [this, raw] {
+        m_ui->running(raw->id);
+        raw->loaded = true;
+        emit statusItemsChanged();
+    });
+    const auto hideStatus = [this, raw] {
+        raw->loaded = false;
+        raw->resetStatus();
+        emit statusItemsChanged();
+    };
+    connect(process, &PluginProcess::loadFailed, this, hideStatus);
+    connect(process, &PluginProcess::stopped, this, hideStatus);
     connect(process, &PluginProcess::loadFailed, this, [this, raw, name, log](const QString &message) {
         unsubscribe(*raw);
         releaseLock(*raw);
@@ -383,12 +550,10 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
             log()->notice(ui::LogController::Error, name, QCoreApplication::translate("HikariSub.Plugins", "The plugin didn’t start."), message);
     });
     connect(process, &PluginProcess::commandFailed, this, [raw, name, log](const QString &command, const QString &message) {
-        QString title = command;
-        for (const auto &c : raw->manifest.commands)
-            if (qs(c.id) == command)
-                title = qs(c.title);
         if (log())
-            log()->notice(ui::LogController::Error, name, QCoreApplication::translate("HikariSub.Plugins", "“%1” failed.").arg(title), message);
+            log()->notice(ui::LogController::Error, name,
+                          QCoreApplication::translate("HikariSub.Plugins", "“%1” failed.").arg(commandTitle(raw->manifest, command)),
+                          message);
     });
     connect(process, &PluginProcess::eventFailed, this, [name, log](const QString &event, const QString &message) {
         if (log())
@@ -398,17 +563,10 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         unsubscribe(*raw);
         releaseLock(*raw);
         endAccess(*raw);
-        m_ui->stopped(raw->id, QStringLiteral("stopped"), stopReason(reason, m_wiring.limits.timeLimitMs));
+        m_ui->stopped(raw->id, QStringLiteral("stopped"), stopReason(reason));
         if (!log())
             return;
         switch (reason) {
-        case PluginProcess::StopReason::TimeLimit:
-            log()->notice(ui::LogController::Warning, name,
-                          QCoreApplication::translate("HikariSub.Plugins",
-                                                      "The plugin ran for more than %n second(s), so HikariSub stopped it. "
-                                                      "Its next command starts it again.",
-                                                      nullptr, std::max(1, m_wiring.limits.timeLimitMs / 1000)));
-            break;
         case PluginProcess::StopReason::Crashed:
             log()->notice(ui::LogController::Error, name,
                           QCoreApplication::translate("HikariSub.Plugins", "The plugin stopped unexpectedly. Its next command starts it again."),
@@ -469,7 +627,9 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
         PluginProcess *process = plugin.process.get();
         const std::uint64_t subscription =
             m_wiring.api->subscribe(plugin.caller, {request.name}, [this, process, id = plugin.id](const api::Event &event) {
-                if (onIn(qs(id), m_wiring.activeWindow ? m_wiring.activeWindow() : 0))
+                if (event.name.starts_with("program."))
+                    process->deliver(event.name, event.data.dump(), {});
+                else if (onIn(qs(id), m_wiring.activeWindow ? m_wiring.activeWindow() : 0))
                     process->push(event.name, event.data.dump());
             });
         if (subscription == 0) {
@@ -628,6 +788,8 @@ void PluginRuntime::endAccess(Running &plugin)
 {
     m_network->cancel(plugin.id);
     m_files->end(plugin.id, plugin.caller.id);
+    if (m_wiring.programs)
+        m_wiring.programs->end(plugin.id);
     if (m_wiring.marks)
         m_wiring.marks->clearOwner(plugin.caller.id);
     endJob(plugin.id);
@@ -647,7 +809,7 @@ void PluginRuntime::unsubscribe(Running &plugin)
     plugin.subscriptions.clear();
 }
 
-void PluginRuntime::relist()
+std::vector<const PluginRuntime::Running *> PluginRuntime::byName() const
 {
     std::vector<const Running *> order;
     for (const auto &[id, plugin] : m_plugins)
@@ -657,49 +819,243 @@ void PluginRuntime::relist()
     std::ranges::stable_sort(order, [&](const Running *a, const Running *b) {
         return collator.compare(qs(a->manifest.name), qs(b->manifest.name)) < 0;
     });
-    QVariantList commands;
-    for (const Running *plugin : order) {
+    return order;
+}
+
+void PluginRuntime::rework()
+{
+    QVariantList working;
+    for (const Running *plugin : byName()) {
+        const PluginProcess &process = *plugin->process;
+        const bool background = plugin->manifest.permissions.background.has_value();
+        if (!process.stillWorking() && !(background && (process.inTimer() || process.inJob())))
+            continue;
+        QString what;
+        const QString work = process.work();
+        if (const auto job = std::ranges::find(m_jobs, plugin->id, &Job::plugin); job != m_jobs.end())
+            what = job->title;
+        else if (work == QStringLiteral("load"))
+            what = QCoreApplication::translate("HikariSub.Plugins", "Starting");
+        else if (work == QStringLiteral("timer"))
+            what = QCoreApplication::translate("HikariSub.Plugins", "A timer");
+        else
+            what = commandTitle(plugin->manifest, work);
+        working << QVariantMap{{QStringLiteral("plugin"), qs(plugin->id)},
+                               {QStringLiteral("name"), qs(plugin->manifest.name)},
+                               {QStringLiteral("what"), what},
+                               {QStringLiteral("background"), background},
+                               {QStringLiteral("stillWorking"), process.stillWorking()}};
+    }
+    if (working == m_working)
+        return;
+    m_working = std::move(working);
+    emit workingChanged();
+}
+
+void PluginRuntime::relist()
+{
+    QVariantList commands, menuItems;
+    for (const Running *plugin : byName()) {
         const QString name = qs(plugin->manifest.name);
+        const auto idOf = [&](const std::string &command) { return qs(std::string(kCommandPrefix) + plugin->id + "." + command); };
         for (const auto &command : plugin->manifest.commands)
-            commands << QVariantMap{{QStringLiteral("id"), qs(std::string(kCommandPrefix) + plugin->id + "." + command.id)},
+            commands << QVariantMap{{QStringLiteral("id"), idOf(command.id)},
                                     {QStringLiteral("plugin"), qs(plugin->id)},
                                     {QStringLiteral("pluginName"), name},
                                     {QStringLiteral("title"), qs(command.title)},
-                                    {QStringLiteral("titles"), QStringList{name, qs(command.title)}}};
+                                    {QStringLiteral("titles"), QStringList{name, qs(command.title)}},
+                                    {QStringLiteral("icon"), qs(command.icon)},
+                                    {QStringLiteral("description"), qs(command.description)},
+                                    {QStringLiteral("palette"), command.palette}};
+        for (const plugins::MenuPlacement &placement : plugin->manifest.menus) {
+            const auto command = std::ranges::find(plugin->manifest.commands, placement.command, &plugins::Command::id);
+            menuItems << QVariantMap{{QStringLiteral("id"), idOf(placement.command)},
+                                     {QStringLiteral("plugin"), qs(plugin->id)},
+                                     {QStringLiteral("pluginName"), name},
+                                     {QStringLiteral("title"), qs(command->title)},
+                                     {QStringLiteral("icon"), qs(command->icon)},
+                                     {QStringLiteral("location"), menuLocation(placement.location)},
+                                     {QStringLiteral("group"), qs(placement.group)},
+                                     {QStringLiteral("name"), qs("pluginMenu_" + plugin->id + "_" + placement.command)}};
+        }
     }
-    if (commands == m_commands)
+    if (commands == m_commands && menuItems == m_menuItems)
         return;
     m_commands = std::move(commands);
+    m_menuItems = std::move(menuItems);
     emit commandsChanged();
+    emit statusItemsChanged();
 }
 
-bool PluginRuntime::run(const QString &commandId)
+const plugins::Command *PluginRuntime::command(const QString &commandId, Running **plugin) const
 {
     const std::string id = commandId.toStdString();
     const auto cut = id.rfind('.');
     if (!id.starts_with(kCommandPrefix) || cut == std::string::npos || cut <= kCommandPrefix.size())
-        return false;
+        return nullptr;
     const auto it = m_plugins.find(id.substr(kCommandPrefix.size(), cut - kCommandPrefix.size()));
     if (it == m_plugins.end())
-        return false;
-    const std::string command = id.substr(cut + 1);
+        return nullptr;
     const auto &declared = it->second->manifest.commands;
-    if (std::ranges::find(declared, command, &plugins::Contribution::id) == declared.end())
+    const auto found = std::ranges::find(declared, id.substr(cut + 1), &plugins::Command::id);
+    if (found == declared.end())
+        return nullptr;
+    if (plugin)
+        *plugin = it->second.get();
+    return &*found;
+}
+
+void PluginRuntime::setConditions(int shellWindow, const QVariantMap &facts)
+{
+    const plugins::ConditionFacts next{facts.value(QStringLiteral("document")).toBool(),
+                                       facts.value(QStringLiteral("selectedLines")).toInt(),
+                                       facts.value(QStringLiteral("video")).toBool(),
+                                       facts.value(QStringLiteral("audio")).toBool(),
+                                       facts.value(QStringLiteral("karaoke")).toBool(),
+                                       facts.value(QStringLiteral("translation")).toBool()};
+    const auto it = m_conditions.find(shellWindow);
+    if (it != m_conditions.end() && it->second.document == next.document &&
+        it->second.selectedLines == next.selectedLines && it->second.video == next.video &&
+        it->second.audio == next.audio && it->second.karaoke == next.karaoke && it->second.translation == next.translation)
+        return;
+    m_conditions[shellWindow] = next;
+    ++m_conditionsRevision;
+    emit conditionsChanged();
+}
+
+void PluginRuntime::forgetWindow(int shellWindow)
+{
+    if (m_conditions.erase(shellWindow)) {
+        ++m_conditionsRevision;
+        emit conditionsChanged();
+    }
+}
+
+QString PluginRuntime::disabledReason(const QString &commandId, int shellWindow) const
+{
+    const plugins::Command *found = command(commandId);
+    if (!found || found->when.empty())
+        return {};
+    if (shellWindow < 0 && m_wiring.activeWindow)
+        shellWindow = m_wiring.activeWindow();
+    const auto facts = m_conditions.find(shellWindow);
+    const auto failing = plugins::failingCondition(found->when, facts == m_conditions.end() ? plugins::ConditionFacts{} : facts->second);
+    return failing ? conditionPhrase(*failing) : QString();
+}
+
+bool PluginRuntime::run(const QString &commandId, const QString &via)
+{
+    Running *plugin = nullptr;
+    const plugins::Command *found = command(commandId, &plugin);
+    if (!found || !disabledReason(commandId).isEmpty())
         return false;
-    PluginProcess &process = *it->second->process;
+    PluginProcess &process = *plugin->process;
+    if (plugin->held) {
+        if (m_wiring.log)
+            m_wiring.log->notice(ui::LogController::Info, qs(plugin->manifest.name),
+                                 QCoreApplication::translate("HikariSub.Plugins", "The plugin is stopped. Start it again in its details."));
+        return false;
+    }
     if (process.state() == PluginProcess::State::LoadFailed) {
         if (m_wiring.log)
-            m_wiring.log->notice(ui::LogController::Error, qs(it->second->manifest.name), QCoreApplication::translate("HikariSub.Plugins", "The plugin isn’t running."),
+            m_wiring.log->notice(ui::LogController::Error, qs(plugin->manifest.name), QCoreApplication::translate("HikariSub.Plugins", "The plugin isn’t running."),
                                  process.loadError());
         return false;
     }
-    return process.run(command);
+    const api::Json call = api::Json::object(
+        {{"args", api::Json::object()}, {"context", api::Json::object({{"via", api::Json(via.toStdString())}})}});
+    return process.run(found->id, call.dump());
+}
+
+api::StatusItemSet PluginRuntime::setStatusItem(const std::string &pluginId, const api::StatusItemChange &change)
+{
+    const auto it = m_plugins.find(pluginId);
+    if (it == m_plugins.end() || !it->second->loaded)
+        return api::StatusItemSet::NotRunning;
+    auto &status = it->second->status;
+    const auto found = std::ranges::find_if(status, [&](const Running::Status &s) { return s.item.id == change.item; });
+    if (found == status.end())
+        return api::StatusItemSet::UnknownItem;
+    Running::Status next = *found;
+    if (change.text)
+        next.item.text = *change.text;
+    if (change.icon)
+        next.item.icon = *change.icon;
+    if (change.tooltip)
+        next.item.tooltip = *change.tooltip;
+    if (change.tone)
+        next.tone = qs(*change.tone);
+    if (change.visible)
+        next.visible = *change.visible;
+    if (next.item.text.empty() && next.item.icon.empty())
+        return api::StatusItemSet::Empty;
+    *found = std::move(next);
+    emit statusItemsChanged();
+    return api::StatusItemSet::Set;
+}
+
+QVariantList PluginRuntime::statusItems() const
+{
+    QVariantList out;
+    for (const Running *running : byName()) {
+        const Running &plugin = *running;
+        if (!plugin.loaded)
+            continue;
+        for (const Running::Status &s : plugin.status)
+            if (s.visible)
+                out << QVariantMap{{QStringLiteral("plugin"), qs(plugin.id)},
+                                   {QStringLiteral("pluginName"), qs(plugin.manifest.name)},
+                                   {QStringLiteral("item"), qs(s.item.id)},
+                                   {QStringLiteral("key"), qs(plugin.id + "/" + s.item.id)},
+                                   {QStringLiteral("title"), qs(s.item.title)},
+                                   {QStringLiteral("text"), qs(s.item.text)},
+                                   {QStringLiteral("icon"), qs(s.item.icon)},
+                                   {QStringLiteral("tooltip"), qs(s.item.tooltip)},
+                                   {QStringLiteral("tone"), s.tone},
+                                   {QStringLiteral("command"),
+                                    s.item.command.empty() ? QString() : qs(std::string(kCommandPrefix) + plugin.id + "." + s.item.command)}};
+    }
+    return out;
+}
+
+QVariantList PluginRuntime::keybindings() const
+{
+    QVariantList out;
+    for (const std::string &id : m_installOrder) {
+        const auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            continue;
+        const Running *plugin = it->second.get();
+        for (const plugins::Keybinding &binding : plugin->manifest.keybindings)
+            out << QVariantMap{{QStringLiteral("id"), qs(std::string(kCommandPrefix) + plugin->id + "." + binding.command)},
+                               {QStringLiteral("keys"), qs(binding.key)},
+                               {QStringLiteral("pluginName"), qs(plugin->manifest.name)}};
+    }
+    return out;
+}
+
+QVariantList PluginRuntime::statusItemTitles() const
+{
+    QVariantList out;
+    for (const Running *running : byName()) {
+        const Running &plugin = *running;
+        if (!plugin.loaded)
+            continue;
+        for (const Running::Status &s : plugin.status)
+            out << QVariantMap{{QStringLiteral("plugin"), qs(plugin.id)},
+                               {QStringLiteral("key"), qs(plugin.id + "/" + s.item.id)},
+                               {QStringLiteral("title"), qs(s.item.title)},
+                               {QStringLiteral("pluginName"), qs(plugin.manifest.name)}};
+    }
+    return out;
 }
 
 void PluginRuntime::restart(const QString &pluginId)
 {
-    if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end())
+    if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end()) {
+        it->second->held = false;
         it->second->process->start();
+    }
 }
 
 void PluginRuntime::settingChanged(const QString &pluginId, const QString &setting, const QString &json)
@@ -719,6 +1075,15 @@ void PluginRuntime::forceStop(const QString &pluginId)
         it->second->process->forceStop();
 }
 
+void PluginRuntime::stopWorking(const QString &pluginId)
+{
+    const auto it = m_plugins.find(pluginId.toStdString());
+    if (it == m_plugins.end())
+        return;
+    it->second->held = it->second->manifest.permissions.background.has_value();
+    it->second->process->forceStop();
+}
+
 bool PluginRuntime::sandboxed() const
 {
     return m_wiring.sandbox && backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete();
@@ -734,6 +1099,24 @@ bool PluginRuntime::busy(const QString &pluginId) const
 {
     const PluginProcess *running = process(pluginId);
     return running && running->busy();
+}
+
+QSet<QString> PluginRuntime::runningIds() const
+{
+    QSet<QString> ids;
+    for (const auto &[id, plugin] : m_plugins)
+        ids.insert(QString::fromStdString(id));
+    return ids;
+}
+
+QVariantList PluginRuntime::presencePlugins() const
+{
+    QVariantList found;
+    for (const auto &[id, plugin] : m_plugins)
+        if (plugin->manifest.permissions.presence)
+            found << QVariantMap{{QStringLiteral("id"), QString::fromStdString(id)},
+                                 {QStringLiteral("name"), QString::fromStdString(plugin->manifest.name)}};
+    return found;
 }
 
 }

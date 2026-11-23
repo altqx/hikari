@@ -15,22 +15,28 @@ F.Menu {
     }
     // A ListView doesn't lay out again when a row becomes visible while the menu is closed.
     onAboutToShow: (contentItem as ListView)?.forceLayout()
+    Binding { target: control.palette; property: "text"; value: StyleColours.text; when: StyleColours.themed }
+    Binding { target: control.palette; property: "windowText"; value: StyleColours.text; when: StyleColours.themed }
+    Binding { target: control.palette; property: "highlight"; value: StyleColours.accent; when: StyleColours.themed }
+    Binding { target: control.palette; property: "highlightedText"; value: StyleColours.onAccent; when: StyleColours.themed }
     implicitWidth: Math.max(implicitBackgroundWidth + leftInset + rightInset,
                             Math.min(480, widestItem) + leftPadding + rightPadding)
     background: Rectangle {
         implicitWidth: 200
         implicitHeight: 20
-        color: control.palette.base
-        // Fusion outlines its menu in the window colour darkened 140%, about 1.1:1 on dark panels.
-        border.color: control.palette.mid
+        radius: 6
+        color: StyleColours.themed ? StyleColours.panel : control.palette.base
+        border.color: StyleColours.themed ? StyleColours.line : control.palette.mid
 
         Rectangle {
             z: -1
             x: 1; y: 1
             width: parent.width
             height: parent.height
+            radius: parent.radius
             color: control.palette.shadow
             opacity: 0.2
+            visible: !StyleColours.highContrast
         }
     }
 }

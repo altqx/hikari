@@ -8,6 +8,7 @@
 
 #include <QJSValue>
 #include <QObject>
+#include <QVariantList>
 
 #include <functional>
 #include <map>
@@ -75,6 +76,8 @@ public:
             setKeyframes;
         application::RowMarks *marks = nullptr;
         application::VcsPort *vcs = nullptr;
+        api::ProgramHost *programs = nullptr;
+        api::PresenceHost *presence = nullptr;
     };
     explicit ApiHost(Wiring wiring, QObject *parent = nullptr);
     ~ApiHost() override;
@@ -89,10 +92,16 @@ public:
     void setPanelHandler(const QJSValue &handler) { m_panelHandler = handler; }
     Q_INVOKABLE void commandRan(const QString &command, bool ok);
     Q_INVOKABLE void panelChanged(const QString &panel);
+    // commands.list's commands, for the command palette.
+    Q_INVOKABLE QVariantList commands();
+    // An operation as the command palette's caller; the result, or undefined when it failed or answers later.
+    Q_INVOKABLE QVariant call(const QString &operation, const QVariantMap &params = {});
 
     const application::Workspace &workspace() const override { return m_wiring.workspace; }
     application::EditSession *session(application::DocumentId document) const override;
     std::optional<std::string> path(application::DocumentId document) const override;
+    std::optional<std::string> pluginFormat(application::DocumentId document) const override;
+    void setPluginFormat(std::function<std::optional<std::string>(application::DocumentId)> format) { m_pluginFormat = std::move(format); }
     bool select(application::DocumentId document, const application::Selection &selection) override;
     void committed(application::DocumentId document) override;
 
@@ -125,6 +134,7 @@ private:
     QJSValue callPanels(std::string_view panel, const char *action) const;
 
     Wiring m_wiring;
+    std::function<std::optional<std::string>(application::DocumentId)> m_pluginFormat;
     application::AiReview m_review;
     std::unique_ptr<api::SkillTiers> m_skills;
     api::Api m_api;

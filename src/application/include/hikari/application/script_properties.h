@@ -10,7 +10,8 @@
 namespace hikari::application {
 
 struct ScriptProperties {
-    std::u8string title, originalScript, originalTranslation, originalEditing, originalTiming, updatedBy;
+    std::u8string title, originalScript, originalTranslation, originalEditing, originalTiming, synchPoint, updatedBy,
+        updateDetails;
     int playResX = 0, playResY = 0;     // missing values filled (1280x720, or 16:9 / 9:16)
     int layoutResX = 0, layoutResY = 0; // 0 when absent
     int matrix = 0;                     // index in matrixNames(); 0 (None) when absent or unknown
@@ -27,8 +28,8 @@ ScriptProperties scriptProperties(const core::Document &document);
 
 struct ScriptPropertiesEdits {
     bool title = false, originalScript = false, originalTranslation = false, originalEditing = false,
-         originalTiming = false, updatedBy = false, playResX = false, playResY = false, layoutResX = false,
-         layoutResY = false;
+         originalTiming = false, synchPoint = false, updatedBy = false, updateDetails = false, playResX = false,
+         playResY = false, layoutResX = false, layoutResY = false;
 };
 
 // One undo step ("Changing the subtitle header"); none when nothing changed.

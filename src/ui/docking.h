@@ -68,7 +68,7 @@ void setLayoutLocked(bool locked);
 bool layoutLocked();
 
 namespace dockchrome {
-inline constexpr int kHeaderHeight = 35;
+inline constexpr int kHeaderHeight = 30;
 inline constexpr int kTabGap = 12;
 inline constexpr int kResizeGrip = 4;
 QRect resizedFrom(const QRect &from, Qt::Edges edges, QPoint delta, QSize minimum);

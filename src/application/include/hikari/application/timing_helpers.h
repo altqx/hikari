@@ -25,6 +25,12 @@ std::expected<void, CommandRefusal> snapToAdjacentKeyframe(EditSession &session,
                                                            std::span<const int> keyframes, TimingEdge edge,
                                                            TimingToward toward);
 
+// A scene runs from a keyframe (or frame 0) up to the next keyframe (or the
+// video's end). One selected Line takes the scene holding `videoFrame`; with
+// several, each takes the scene holding its own start.
+std::expected<void, CommandRefusal> snapToScene(EditSession &session, const LegacyTimebase &timebase,
+                                                std::span<const int> keyframes, int videoFrame);
+
 // Adding moves each selected Line's start earlier (end later) by `amountMs`,
 // stopping at the previous (next) uncommented Line's end (start) and at 0.
 // Removing does the reverse and keeps at least one frame.
@@ -32,9 +38,15 @@ std::expected<void, CommandRefusal> changeLead(EditSession &session, const Legac
                                                bool add, int amountMs);
 
 // Each selected Line's start (or end) moves by `frames` whole frames; at least
-// one frame stays and a start stays at frame 0 or later.
+// one frame stays and a start stays at frame 0 or later. `shiftFollowing` moves
+// every Line below the last selected one by the same frames.
 std::expected<void, CommandRefusal> nudgeEdgeByFrames(EditSession &session, const LegacyTimebase &timebase,
-                                                      TimingEdge edge, int frames);
+                                                      TimingEdge edge, int frames, bool shiftFollowing = false);
+
+// As nudgeEdgeByFrames, by `ms`, for a Document with no exact timebase; at least
+// 10 ms stay.
+std::expected<void, CommandRefusal> nudgeEdgeByMs(EditSession &session, TimingEdge edge, int ms,
+                                                  bool shiftFollowing);
 
 // The previous uncommented Line's end becomes the active Line's start (or the
 // next one's start becomes its end); the active Line keeps its times.
@@ -75,5 +87,13 @@ std::optional<TimingSuggestion> suggestTiming(const core::Document &document, co
 // The suggestion, with `startMs`/`endMs` as given, in one step. Refused (Invalid)
 // when the end is before the start.
 std::expected<void, CommandRefusal> acceptTiming(EditSession &session, const TimingSuggestion &suggestion);
+
+struct TimeSpanMs {
+    int startMs = 0, endMs = 0;
+};
+
+// From the earliest selected Line start to the latest selected Line end; none
+// when nothing is selected or the span is empty.
+std::optional<TimeSpanMs> selectedLinesSpan(const EditSession &session);
 
 }

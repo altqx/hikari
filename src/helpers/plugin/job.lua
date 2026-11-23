@@ -48,3 +48,73 @@ hikari.marks = {
         return result.marks
     end,
 }
+
+hikari.status = {
+    set = function(item, fields)
+        if type(item) ~= "string" or (fields ~= nil and type(fields) ~= "table") then
+            error("hikari.status.set takes a status item id and {text, icon, tooltip, tone, visible}", 2)
+        end
+        fields = fields or {}
+        return refused(call("status_items.set", { item = item, text = fields.text, icon = fields.icon,
+            tooltip = fields.tooltip, tone = fields.tone, visible = fields.visible }))
+    end,
+}
+
+local function programCall(what, program, options)
+    if type(program) ~= "string" or program == "" then
+        error(what .. " needs the id of a program the manifest declares", 3)
+    end
+    if options ~= nil and type(options) ~= "table" then
+        error(what .. " takes a table of options", 3)
+    end
+    options = options or {}
+    local handles
+    if options.files ~= nil then
+        handles = {}
+        for i, file in ipairs(options.files) do
+            handles[i] = type(file) == "table" and file.file or file
+        end
+        handles = array(handles)
+    end
+    return {
+        program = program,
+        args = options.args and array(options.args) or nil,
+        files = handles,
+        stdin = options.stdin,
+        encoding = options.encoding,
+        timeout = options.timeout,
+    }
+end
+
+local function process(what, p)
+    if type(p) ~= "string" or p == "" then
+        error(what .. " needs a process from hikari.programs.start", 3)
+    end
+    return p
+end
+
+hikari.programs = {
+    run = function(program, options)
+        return call("programs.run", programCall("hikari.programs.run", program, options))
+    end,
+    start = function(program, options)
+        local params = programCall("hikari.programs.start", program, options)
+        if params.stdin ~= nil or params.timeout ~= nil then
+            error("hikari.programs.start takes no stdin or timeout; send to the process instead", 2)
+        end
+        local result, err = call("programs.start", params)
+        if not result then
+            return nil, err
+        end
+        return result.process
+    end,
+    send = function(p, data, close)
+        if data ~= nil and type(data) ~= "string" then
+            error("hikari.programs.send takes the data as text", 2)
+        end
+        return refused(call("programs.send", { process = process("hikari.programs.send", p), data = data, close = close == true or nil }))
+    end,
+    stop = function(p)
+        return refused(call("programs.stop", { process = process("hikari.programs.stop", p) }))
+    end,
+}

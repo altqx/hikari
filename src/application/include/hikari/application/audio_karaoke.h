@@ -70,6 +70,10 @@ public:
     // Long \k syllables become \kf; with none left as \k, they go back to \k.
     // False when no syllable is that long.
     bool switchLongToKf(int thresholdMs, int curStartMs);
+    // Syllable `i`'s end moves by up to `deltaMs`, staying between its neighbours;
+    // `shiftFollowing` moves every later end with it, the Line's end excepted. False
+    // for the last syllable or when nothing moves.
+    bool moveSyllableEnd(int i, int deltaMs, bool shiftFollowing, int curStartMs);
 
     std::pair<int, int> syllableTimes(int i, int curStartMs) const;
     std::pair<int, int> visibleTimes(int i, int curStartMs, int curEndMs) const;

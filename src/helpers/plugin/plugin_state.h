@@ -3,10 +3,12 @@
 #include "hikari/api/json.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <expected>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 struct lua_State;
@@ -15,8 +17,8 @@ namespace hikari::plugin_helper {
 
 enum class Tier { Restricted, Unrestricted };
 enum class Level { Info, Warning, Error };
-// What a request beyond the Hikari API is about: panels and dialogs, files, or the network.
-enum class Area { Ui, Files, Net, Job };
+// What a request beyond the Hikari API is about: panels and dialogs, files, the network, a job or a timer.
+enum class Area { Ui, Files, Net, Job, Timer };
 
 // What a plugin asks of HikariSub. Each call blocks until HikariSub answers.
 class Host {
@@ -39,10 +41,12 @@ struct Options {
     std::string id;
     std::string version;
     Tier tier = Tier::Restricted;
-    std::size_t memoryLimit = 256u << 20;
+    std::size_t memoryLimit = std::size_t(2) << 30;
     std::string locale;
     api::Json settings = api::Json::object();
     std::vector<std::string> commands;
+    std::vector<std::string> exporters; // format ids
+    std::vector<std::string> importers;
 };
 
 // One plugin's LuaJIT state and its `hikari` global.
@@ -55,9 +59,18 @@ public:
     PluginState &operator=(const PluginState &) = delete;
 
     std::vector<std::string> handledCommands() const;
-    std::expected<void, std::string> run(const std::string &command, Host &host);
+    // `call` is {args, context}; a missing one reaches the handler as an empty table.
+    std::expected<void, std::string> run(const std::string &command, const api::Json &call, Host &host);
     // Runs every handler for `event`; the error is the first handler's.
     std::expected<void, std::string> dispatch(const std::string &event, const api::Json &data, Host &host);
+    // Runs the timer's callback; `last` forgets it afterwards. An unknown id does nothing.
+    std::expected<void, std::string> fire(std::int64_t timer, bool last, Host &host);
+    // The file's bytes, from the format's hikari.formats.exporter handler.
+    std::expected<std::string, std::string> exportDocument(const std::string &format, const api::Json &snapshot,
+                                                           const api::Json &options, Host &host);
+    // What the format's hikari.formats.importer handler made of the file: {lines, styles, info}, unchecked.
+    std::expected<api::Json, std::string> importFile(const std::string &format, std::string_view bytes,
+                                                     const std::string &name, Host &host);
     std::size_t memoryInUse() const { return m_budget.used; }
 
     struct Budget {
@@ -71,7 +84,9 @@ private:
     explicit PluginState(Options options);
     std::expected<void, std::string> open();
     std::expected<void, std::string> runPrelude();
-    std::expected<void, std::string> protectedCall(int arguments, Host &host);
+    // On success the `results` values are left on the stack.
+    std::expected<void, std::string> protectedCall(int arguments, Host &host, int results = 0);
+    bool pushFormatHandler(const char *key, const std::string &format);
     std::expected<void, std::string> readCatalog();
 
     Options m_options;

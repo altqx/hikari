@@ -115,6 +115,9 @@ DialogWindow {
     }
 
     readonly property string stagedTheme: Theme.code
+    readonly property var pairSettings: ({light: "appearance.lightTheme", dark: "appearance.darkTheme",
+                                          highContrastLight: "appearance.highContrastLightTheme",
+                                          highContrastDark: "appearance.highContrastDarkTheme"})
     readonly property var stagedThemeInfo: Theme.themes().find(t => t.code === stagedTheme) ?? ({dark: Theme.dark, highContrast: Theme.highContrast})
     // Never read: it lists theme.cpp's names for lupdate; qsTranslate finds them by source.
     readonly property var themeTexts: [QT_TRANSLATE_NOOP("HikariSub.Options", "Light"),
@@ -492,7 +495,7 @@ DialogWindow {
                 explanation: setup.importing
                              ? qsTr("The next pages start from these values; a change there wins over the imported one.")
                              : qsTr("HikariSub 0.0.x is installed on this computer. Nothing in it is changed.")
-                later: qsTr("Later: Settings › General › Import legacy settings…")
+                later: qsTr("Later: Settings › General › Import settings…")
                 RowLayout {
                     id: importChoices
                     spacing: 16
@@ -511,7 +514,7 @@ DialogWindow {
                         objectName: "gettingStartedImportNo"
                         iconRole: "settings"
                         text: qsTr("Set up from scratch")
-                        description: qsTr("Start from HikariSub’s defaults. Settings › General › Import legacy settings… can still bring them over later.")
+                        description: qsTr("Start from HikariSub’s defaults. Settings › General › Import settings… can still bring them over later.")
                         checked: !setup.importing
                         onClicked: setup.importing = false
                         Layout.preferredWidth: 300
@@ -606,6 +609,7 @@ DialogWindow {
                             checked: setup.stagedTheme === modelData.code
                             onClicked: {
                                 setup.put("appearance.theme", modelData.code)
+                                setup.put(setup.pairSettings[modelData.type], modelData.code)
                                 if (setup.values["appearance.followSystem"] === true)
                                     setup.put("appearance.followSystem", false)
                             }
@@ -614,12 +618,11 @@ DialogWindow {
                 }
                 RowLayout {
                     objectName: "gettingStartedAccents"
-                    visible: setup.stagedThemeInfo.highContrast !== true
+                    visible: accents.length > 0
                     spacing: 4
                     Layout.alignment: Qt.AlignHCenter
-                    readonly property string setting: setup.stagedThemeInfo.dark ? "appearance.darkAccent" : "appearance.lightAccent"
-                    readonly property var accents: Theme.accents(setup.stagedThemeInfo.dark === true)
-                    readonly property string chosen: setup.values[setting] ?? "green"
+                    readonly property var accents: Theme.accentsOf(setup.stagedTheme)
+                    readonly property string chosen: Theme.accentChoice(setup.values["appearance.accents"] ?? [], setup.stagedTheme)
                     Label { text: qsTr("Accent colour"); Layout.rightMargin: 10 }
                     Repeater {
                         model: parent.accents
@@ -635,7 +638,8 @@ DialogWindow {
                             Accessible.role: Accessible.RadioButton
                             Accessible.name: ToolTip.text
                             Accessible.checked: chosen
-                            onClicked: setup.put(parent.setting, modelData.key)
+                            onClicked: setup.put("appearance.accents", Theme.withAccentChoice(
+                                setup.values["appearance.accents"] ?? [], setup.stagedTheme, modelData.key))
                             background: Rectangle {
                                 radius: width / 2
                                 color: "transparent"

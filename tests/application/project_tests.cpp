@@ -47,6 +47,10 @@ TEST_F(ProjectFolders, AFolderOpensAsAFolderWhateverItsName)
     }
     const auto file = touch("plain.ass").u8string();
     EXPECT_EQ(openKindOf(std::string(file.begin(), file.end()), true), OpenKind::Subtitles);
+    const std::vector<std::string> plugins{"stl"};
+    EXPECT_EQ(openKindOf("/x/a.stl", false), OpenKind::Video);
+    EXPECT_EQ(openKindOf("/x/a.STL", false, plugins), OpenKind::Subtitles);
+    EXPECT_EQ(openKindOf("/x/a.stl", true, plugins), OpenKind::Subtitles);
 }
 
 TEST_F(ProjectFolders, TheNearestDotHikariFolderCounts)

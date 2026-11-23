@@ -235,9 +235,15 @@ FocusScope {
                         Sentence { text: qsTr("End on to the next start if within") }
                         MsBox { key: "thresholdEnd"; Accessible.name: qsTr("End on to the next start if within") }
                     }
+                    RowLayout {
+                        spacing: 8
+                        Sentence { text: qsTr("Join lines that overlap by up to") }
+                        MsBox { key: "maxOverlap"; Accessible.name: qsTr("Join lines that overlap by up to") }
+                    }
                     Label {
                         objectName: "ppGapsNeed"
                         visible: gaps.on && panel.settings.thresholdStart === 0 && panel.settings.thresholdEnd === 0
+                                 && panel.settings.maxOverlap === 0
                         text: qsTr("Both gap limits are 0 ms. Raise one to close gaps.")
                         color: Theme.warning
                         wrapMode: Text.WordWrap

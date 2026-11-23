@@ -25,7 +25,8 @@ RowLayout {
         {id: "subtitleProperties", name: qsTranslate("HikariSub.Options", "Script properties"), iconRole: "script-properties"},
         {id: "translation", name: qsTranslate("HikariSub.Translation", "Translation"), iconRole: "translation-mode"},
         {id: "export", name: qsTranslate("HikariSub.Export", "Export"), iconRole: "export"},
-        {id: "ai", name: qsTranslate("HikariSub.Options", "AI"), iconRole: "ai-assistant"}
+        {id: "ai", name: qsTranslate("HikariSub.Options", "AI"), iconRole: "ai-assistant"},
+        {id: "updates", name: qsTranslate("HikariSub.Options", "Updates and privacy"), iconRole: "check-updates"}
     ]
     readonly property var scriptFields: [
         {id: "title", name: qsTranslate("HikariSub.ScriptProperties", "Title")},
@@ -41,10 +42,10 @@ RowLayout {
         {id: "srt", text: "SubRip (SRT)"},
         {id: "vtt", text: "WebVTT"},
         {id: "sbv", text: "YouTube SBV"},
-        {id: "txt", text: qsTranslate("HikariSub.Export", "Plain text")},
-        {id: "mdvd", text: "MicroDVD"},
+        {id: "text", text: qsTranslate("HikariSub.Export", "Plain text")},
+        {id: "microdvd", text: "MicroDVD"},
         {id: "mpl2", text: "MPL2"},
-        {id: "tmp", text: "TMPlayer"},
+        {id: "tmplayer", text: "TMPlayer"},
         {id: "ttml", text: "TTML (IMSC1)"},
         {id: "dfxp", text: "DFXP"},
         {id: "srv3", text: qsTranslate("HikariSub.Export", "YouTube timed text (srv3)")}
@@ -421,6 +422,7 @@ RowLayout {
                 app: project.app
                 shellWindow: project.shellWindow
             }
+            DiscordProjectSection { project: project }
         }
     }
 }

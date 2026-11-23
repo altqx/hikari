@@ -38,7 +38,17 @@ namespace hikari::backends::lua {
 inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
-enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4, RunNodes = 5 };
+// RunFilter: a filter index, its settings as an encoded DialogRequest, then the snapshot; answers a MacroResult.
+// FilterConfig: a filter index, then the snapshot; answers the config dialog as an encoded DialogRequest.
+enum class Command : std::int32_t {
+    Load = 1,
+    Run = 2,
+    RunValidated = 3,
+    Validate = 4,
+    RunNodes = 5,
+    RunFilter = 6,
+    FilterConfig = 7
+};
 // Started: the macro itself begins, after its validation function.
 enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4, Started = 5 };
 enum class Service : std::int32_t { Dialog = 1, Host = 2 };

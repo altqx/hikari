@@ -231,7 +231,7 @@ TEST(AgentPolicy, EffectsWritesAskInManualModeLikeOtherWrites)
 TEST(AgentPolicy, RunningAMacroAlwaysAsksAndMarksNeverAsk)
 {
     EXPECT_EQ(riskOf("automation.run_macro", Json::object({{"macro", "Strip tags"}})), Risk::Programs);
-    for (const std::string operation : {"marks.set", "marks.clear"})
+    for (const std::string operation : {"marks.set", "marks.clear", "status_items.set"})
         EXPECT_FALSE(asksPermission(operation)) << operation;
 }
 
@@ -241,6 +241,13 @@ TEST(AgentPolicy, SettingKeyframesAsksLikeOtherWrites)
     EXPECT_TRUE(asksPermission("video.set_keyframes"));
     EXPECT_EQ(decide(AgentMode::Manual, "video.set_keyframes", false, false), Decision::Ask);
     EXPECT_EQ(decide(AgentMode::Auto, "video.set_keyframes", false, false), Decision::Judge);
+}
+
+TEST(AgentPolicy, SettingTheDiscordStatusTextAlwaysAsks)
+{
+    EXPECT_EQ(riskOf("presence.set_text", Json::object({{"text", "Ep 5"}})), Risk::Network);
+    EXPECT_TRUE(asksPermission("presence.set_text"));
+    EXPECT_EQ(decide(AgentMode::FullAccess, "presence.set_text", true, true), Decision::AlwaysAsk);
 }
 
 TEST(AgentPolicy, EveryWriteOperationIsClassified)
@@ -254,7 +261,8 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
                                              "effects.apply", "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "marks.clear", "marks.set",
                                              "panels.close", "panels.focus", "panels.open", "plugins.install", "plugins.run",
-                                             "plugins.scaffold", "selection.set", "settings.set",
+                                             "plugins.scaffold", "presence.set_text", "programs.run", "programs.send",
+                                             "programs.start", "programs.stop", "selection.set", "settings.set", "status_items.set",
                                              "translation.project_write", "typeset.apply", "video.set_keyframes"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }

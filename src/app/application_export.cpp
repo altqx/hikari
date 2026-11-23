@@ -1,6 +1,8 @@
 #include "hikari/app/application.h"
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/export_steps.h"
+#include "hikari/application/export_format_ids.h"
 #include "hikari/application/style_manager.h"
 #include "hikari/core/export.h"
 #include "hikari/core/srv3.h"
@@ -12,14 +14,16 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPointer>
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QStringList>
 #include <QUrl>
 
 #include <algorithm>
-#include <set>
 #include <cmath>
+#include <memory>
+#include <set>
 
 namespace hikari::app {
 
@@ -35,11 +39,11 @@ struct ExportFormatRow {
 };
 
 constexpr ExportFormatRow kExportFormats[] = {
-    {"srt", ExportFormat::Srt, "srt"},      {"vtt", ExportFormat::WebVtt, "vtt"},
-    {"sbv", ExportFormat::Sbv, "sbv"},      {"txt", ExportFormat::PlainText, "txt"},
-    {"mdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
-    {"tmp", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
-    {"dfxp", ExportFormat::Dfxp, "dfxp"},   {"srv3", ExportFormat::Srv3, "ytt"},
+    {"srt", ExportFormat::Srt, "srt"},           {"vtt", ExportFormat::WebVtt, "vtt"},
+    {"sbv", ExportFormat::Sbv, "sbv"},           {"text", ExportFormat::PlainText, "txt"},
+    {"microdvd", ExportFormat::MicroDvd, "sub"}, {"mpl2", ExportFormat::Mpl2, "txt"},
+    {"tmplayer", ExportFormat::TMPlayer, "txt"}, {"ttml", ExportFormat::Ttml, "ttml"},
+    {"dfxp", ExportFormat::Dfxp, "dfxp"},        {"srv3", ExportFormat::Srv3, "ytt"},
 };
 
 constexpr std::pair<const char *, bool core::ExportOptions::*> kExportFlags[] = {
@@ -65,6 +69,21 @@ const ExportFormatRow *exportFormatNamed(const QString &id)
 QString rowKey(const QString &row)
 {
     return row.left(row.indexOf(u'\t'));
+}
+
+QStringList currentChoices(QStringList rows)
+{
+    for (QString &row : rows) {
+        const qsizetype tab = row.indexOf(u'\t');
+        QJsonObject choice = QJsonDocument::fromJson(row.mid(tab + 1).toUtf8()).object();
+        const QString format = choice.value(QStringLiteral("format")).toString();
+        const std::string current(application::currentExportFormat(format.toStdString()));
+        if (tab < 0 || current == format.toStdString())
+            continue;
+        choice.insert(QStringLiteral("format"), QString::fromStdString(current));
+        row = row.left(tab + 1) + QString::fromUtf8(QJsonDocument(choice).toJson(QJsonDocument::Compact));
+    }
+    return rows;
 }
 
 QJsonObject rememberedRow(const QStringList &rows, const QString &key)
@@ -288,7 +307,65 @@ QVariantMap problem(const QString &text)
     return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), text}};
 }
 
+QString stateText(application::ExportStepOutcome::State state)
+{
+    using State = application::ExportStepOutcome::State;
+    switch (state) {
+    case State::Done:
+        return QStringLiteral("done");
+    case State::Failed:
+        return QStringLiteral("failed");
+    case State::NotRun:
+        return QStringLiteral("notRun");
+    case State::Skipped:
+        return QStringLiteral("skipped");
+    }
+    return {};
 }
+
+QString problemText(application::ExportStepOutcome::Problem problem)
+{
+    using Problem = application::ExportStepOutcome::Problem;
+    switch (problem) {
+    case Problem::None:
+        return {};
+    case Problem::ScriptError:
+        return QStringLiteral("scriptError");
+    case Problem::NotApplied:
+        return QStringLiteral("notApplied");
+    case Problem::NoTimecodes:
+        return QStringLiteral("noTimecodes");
+    case Problem::BadFrameRate:
+        return QStringLiteral("badFrameRate");
+    case Problem::Busy:
+        return QStringLiteral("busy");
+    }
+    return {};
+}
+
+QVariantList stepRows(const std::vector<application::ExportStepOutcome> &steps)
+{
+    QVariantList rows;
+    for (const auto &step : steps)
+        rows << QVariantMap{{QStringLiteral("id"), QString::fromStdString(step.id)},
+                            {QStringLiteral("name"), QString::fromStdString(step.name)},
+                            {QStringLiteral("state"), stateText(step.state)},
+                            {QStringLiteral("lines"), step.lines},
+                            {QStringLiteral("problem"), problemText(step.problem)},
+                            {QStringLiteral("error"), QString::fromStdString(step.error)}};
+    return rows;
+}
+
+}
+
+struct Application::ExportWrite {
+    QString path, formatId;
+    ExportFormat format;
+    core::ExportOptions options;
+    QString lines, language;
+    std::vector<core::Srv3StyleOptions> srv3Saved;
+    std::optional<std::vector<core::Srv3StyleOptions>> srv3Changed;
+};
 
 QString Application::exportKey(application::DocumentId document) const
 {
@@ -308,7 +385,7 @@ QVariantMap Application::exportSetup() const
     const QString key = exportKey(*target);
     const auto *project = views(m_workspace.window(*target).value_or(m_workspace.activeWindow())).settings->project();
     const QJsonObject saved =
-        startingExport(m_settings->list("export.choices"), key, project ? project->exportJson() : std::string());
+        startingExport(currentChoices(m_settings->list("export.choices")), key, project ? project->exportJson() : std::string());
 
     const core::ExportOptions defaults;
     QVariantMap options;
@@ -340,16 +417,23 @@ QVariantMap Application::exportSetup() const
         shown += shownSet.contains(line->id) ? 1 : 0;
     }
 
-    QString format = saved.value(QStringLiteral("format")).toString();
-    if (!exportFormatNamed(format))
-        format = QStringLiteral("srt");
     QVariantMap extensions;
     for (const auto &row : kExportFormats)
         extensions.insert(QLatin1String(row.id), QLatin1String(row.extension));
+    QVariantList plugins;
+    for (const auto &f : pluginFormats(false)) {
+        const QString id = QString::fromStdString(f.id);
+        extensions.insert(id, QString::fromStdString(f.format.extensions.front()));
+        plugins << QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("text"), formatText(f)}};
+    }
+    QString format = saved.value(QStringLiteral("format")).toString();
+    if (!extensions.contains(format))
+        format = QStringLiteral("srt");
     const QFileInfo file(key);
     return {{QStringLiteral("format"), format},
             {QStringLiteral("options"), options},
             {QStringLiteral("extensions"), extensions},
+            {QStringLiteral("pluginFormats"), plugins},
             {QStringLiteral("all"), all},
             {QStringLiteral("selected"), selected},
             {QStringLiteral("shown"), shown},
@@ -364,19 +448,22 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
     const auto target = m_workspace.editingTarget();
     const auto *session = target ? m_files->session(*target) : nullptr;
     const auto *format = exportFormatNamed(formatId);
+    const auto plugin = format || !m_pluginRuntime ? std::nullopt : m_pluginRuntime->format(formatId.toStdString());
     QString path = file.toLocalFile();
-    if (!session || !format || path.isEmpty())
+    if (!session || (!format && !(plugin && plugin->format.exports)) || path.isEmpty())
         return problem(QCoreApplication::translate("HikariSub.Export", "There is nothing to export."));
     if (QFileInfo(path).isRelative())
         return problem(QCoreApplication::translate("HikariSub.Export", "Enter the file’s full path, or choose it with Browse…"));
     if (QFileInfo(path).suffix().isEmpty())
-        path += u'.' + QLatin1String(format->extension);
+        path += u'.' + (format ? QLatin1String(format->extension) : QString::fromStdString(plugin->format.extensions.front()));
     if (QFileInfo(path).isDir())
         return problem(QCoreApplication::translate("HikariSub.Export", "“%1” is a folder.").arg(QDir::toNativeSeparators(path)));
     if (QFileInfo::exists(path) && !values.value(QStringLiteral("replace")).toBool())
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("exists"), true},
                 {QStringLiteral("name"), QFileInfo(path).fileName()}};
+    if (plugin)
+        return exportPluginFormat(*target, *plugin, path, values);
 
     core::ExportOptions options;
     for (const auto &[name, flag] : kExportFlags)
@@ -402,6 +489,10 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
         options.lines = std::set<core::LineId>(shown.begin(), shown.end());
     }
 
+    const auto recipe = ui::ExportRecipes::recipeOf(values.value(QStringLiteral("steps")).toList());
+    const bool withSteps = std::ranges::any_of(recipe.steps, &application::ExportStep::on);
+    if (withSteps)
+        commitTemplates();
     auto draft = activeViews().editorDocument == target ? editor().draftDocument() : std::nullopt;
     const auto srv3Saved = core::srv3StyleOptions(session->document());
     std::optional<std::vector<core::Srv3StyleOptions>> srv3Changed;
@@ -416,42 +507,51 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
         }
     }
     const core::Document &document = draft ? *draft : session->document();
-    const core::ExportResult result = core::exportDocument(document, format->format, options);
+    auto write = std::make_shared<ExportWrite>(
+        ExportWrite{path, formatId, format->format, options, lines, language, srv3Saved, std::move(srv3Changed)});
+    if (!withSteps)
+        return writeExport(*target, *write, document);
+    return exportAfterSteps(*target, std::move(write), recipe, document);
+}
+
+QVariantMap Application::writeExport(application::DocumentId target, const ExportWrite &write,
+                                     const core::Document &document)
+{
+    const core::ExportResult result = core::exportDocument(document, write.format, write.options);
     if (!result.refusal.empty())
         return problem(QCoreApplication::translate("HikariSub.Export", "YouTube timed text couldn’t be made from this file: %1")
                            .arg(QString::fromStdString(result.refusal)));
 
-    QSaveFile out(path);
+    QSaveFile out(write.path);
     if (!out.open(QIODevice::WriteOnly) ||
         out.write(reinterpret_cast<const char *>(result.bytes.data()), qint64(result.bytes.size())) !=
             qint64(result.bytes.size()) ||
         !out.commit())
-        return problem(QCoreApplication::translate("HikariSub.Export", "Couldn’t write %1: %2").arg(QFileInfo(path).fileName(), out.errorString()));
+        return problem(QCoreApplication::translate("HikariSub.Export", "Couldn’t write %1: %2").arg(QFileInfo(write.path).fileName(), out.errorString()));
 
     int srv3Styles = 0;
-    if (srv3Changed) {
-        auto *editable = m_files->session(*target);
+    if (auto *editable = m_files->session(target); editable && write.srv3Changed) {
         const auto ran = editable->run(application::Command{
             "Set srv3 style options", editable->revision(), {},
-            [&](core::Document &d) { return core::setSrv3StyleOptions(d, *srv3Changed); }});
+            [&](core::Document &d) { return core::setSrv3StyleOptions(d, *write.srv3Changed); }});
         if (ran)
-            srv3Styles = srv3StylesChanged(srv3Saved, *srv3Changed);
+            srv3Styles = srv3StylesChanged(write.srv3Saved, *write.srv3Changed);
     }
 
-    QJsonObject choice{{QStringLiteral("format"), formatId},
-                       {QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines}};
+    QJsonObject choice{{QStringLiteral("format"), write.formatId},
+                       {QStringLiteral("lines"), write.lines.isEmpty() ? QStringLiteral("all") : write.lines}};
     for (const auto &[name, flag] : kExportFlags)
-        choice.insert(QLatin1String(name), options.*flag);
-    choice.insert(QStringLiteral("ttmlNetflix"), options.ttmlProfile == core::TtmlProfile::Netflix);
-    const QJsonObject before = rememberedExport(m_settings->list("export.choices"), exportKey(*target));
+        choice.insert(QLatin1String(name), write.options.*flag);
+    choice.insert(QStringLiteral("ttmlNetflix"), write.options.ttmlProfile == core::TtmlProfile::Netflix);
+    const QJsonObject before = rememberedExport(currentChoices(m_settings->list("export.choices")), exportKey(target));
     choice.insert(QStringLiteral("language"),
-                  isTtml(format->format) ? language : before.value(QStringLiteral("language")).toString());
-    if (framesIn(format->format, options))
-        choice.insert(QStringLiteral("fps"), options.fps);
+                  isTtml(write.format) ? write.language : before.value(QStringLiteral("language")).toString());
+    if (framesIn(write.format, write.options))
+        choice.insert(QStringLiteral("fps"), write.options.fps);
     else if (const double kept = before.value(QStringLiteral("fps")).toDouble(); kept >= 1)
         choice.insert(QStringLiteral("fps"), kept);
     m_settings->setValue(QStringLiteral("export.choices"),
-                         rememberedWith(m_settings->list("export.choices"), exportKey(*target), choice));
+                         rememberedWith(currentChoices(m_settings->list("export.choices")), exportKey(target), choice));
 
     std::map<std::uint64_t, int> rows;
     int row = 0;
@@ -462,19 +562,130 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
         QStringList losses;
         for (const ExportLoss loss : kLossOrder)
             if (note.has(loss))
-                losses << lossText(loss, format->format);
+                losses << lossText(loss, write.format);
         notes << QVariantMap{{QStringLiteral("line"), QVariant::fromValue<qulonglong>(note.line.value)},
                              {QStringLiteral("number"), rows[note.line.value]},
                              {QStringLiteral("losses"), losses.join(QStringLiteral("; "))}};
     }
     return {{QStringLiteral("ok"), true},
-            {QStringLiteral("file"), QUrl::fromLocalFile(path)},
-            {QStringLiteral("document"), QVariant::fromValue<qulonglong>(target->value)},
+            {QStringLiteral("file"), QUrl::fromLocalFile(write.path)},
+            {QStringLiteral("document"), QVariant::fromValue<qulonglong>(target.value)},
             {QStringLiteral("written"), result.linesWritten},
             {QStringLiteral("comments"), result.commentsSkipped},
             {QStringLiteral("empty"), result.emptySkipped},
             {QStringLiteral("srv3Styles"), srv3Styles},
             {QStringLiteral("notes"), notes}};
+}
+
+QVariantMap Application::exportAfterSteps(application::DocumentId target, std::shared_ptr<ExportWrite> write,
+                                          const application::ExportRecipe &recipe, const core::Document &document)
+{
+    const auto available = application::availableSteps(m_automation->scripts());
+    std::set<core::LineId> before;
+    for (const auto *line : document.lines())
+        before.insert(line->id);
+    auto returned = std::make_shared<bool>(false);
+    auto answer = std::make_shared<std::optional<QVariantMap>>();
+    QPointer<Application> self(this);
+    const auto finished = [self, target, write, recipe, available, before = std::move(before), returned,
+                           answer](application::ExportStepsResult result) {
+        if (!self)
+            return;
+        QVariantMap out;
+        if (result.failed) {
+            out = {{QStringLiteral("ok"), false}, {QStringLiteral("stepsFailed"), true}};
+        } else {
+            if (write->options.lines)
+                for (const auto *line : result.document.lines())
+                    if (!before.contains(line->id))
+                        write->options.lines->insert(line->id);
+            out = self->writeExport(target, *write, result.document);
+            if (out.value(QStringLiteral("ok")).toBool())
+                self->m_exportFiltersToSave[target.value] = application::exportFiltersLine(recipe, available);
+        }
+        out.insert(QStringLiteral("steps"), stepRows(result.steps));
+        if (*returned)
+            emit self->pluginExportFinished(out);
+        else
+            *answer = std::move(out);
+    };
+    application::runExportSteps(document, recipe, available,
+                                {activeMedia().video->session().aegisubFrameTimes(), m_luaExportFilters.get()},
+                                finished);
+    *returned = true;
+    if (*answer)
+        return **answer;
+    return {{QStringLiteral("ok"), false}, {QStringLiteral("pending"), true}};
+}
+
+QVariantMap Application::exportSteps() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return {};
+    const auto available = application::availableSteps(m_automation->scripts());
+    QVariantList steps;
+    for (const auto &step : available)
+        steps << QVariantMap{{QStringLiteral("id"), QString::fromStdString(step.id)},
+                             {QStringLiteral("name"), QString::fromStdString(step.name)},
+                             {QStringLiteral("priority"), step.priority},
+                             {QStringLiteral("hasConfig"), step.hasConfig},
+                             {QStringLiteral("script"), QString::fromStdString(step.script)}};
+    const auto recorded = m_exportFiltersToSave.find(target->value);
+    const auto names = recorded != m_exportFiltersToSave.end() ? application::exportFilterNames(recorded->second)
+                                                              : application::exportFilterNames(session->document());
+    return {{QStringLiteral("available"), steps},
+            {QStringLiteral("newList"), ui::ExportRecipes::stepsOf(application::newStepList(available))},
+            {QStringLiteral("fromFile"),
+             names.empty() ? QVariantList()
+                           : ui::ExportRecipes::stepsOf(application::recipeFromExportFilters(names, available))},
+            {QStringLiteral("recipes"), m_exportRecipes->rows()},
+            {QStringLiteral("hasProject"), m_exportRecipes->hasProject()}};
+}
+
+QVariantList Application::exportRecipe(const QString &name, const QString &tier) const
+{
+    const auto recipe = m_exportRecipes->recipe(name, ui::tierFromText(tier));
+    return recipe ? ui::ExportRecipes::stepsOf(*recipe) : QVariantList();
+}
+
+bool Application::saveExportRecipe(const QString &name, const QString &tier, const QVariantList &steps)
+{
+    const auto t = ui::tierFromText(tier);
+    return t && m_exportRecipes->save(name, *t, ui::ExportRecipes::recipeOf(steps));
+}
+
+bool Application::removeExportRecipe(const QString &name, const QString &tier)
+{
+    const auto t = ui::tierFromText(tier);
+    return t && m_exportRecipes->remove(name, *t);
+}
+
+bool Application::renameExportRecipe(const QString &tier, const QString &from, const QString &to)
+{
+    const auto t = ui::tierFromText(tier);
+    return t && m_exportRecipes->rename(*t, from, to);
+}
+
+QVariantMap Application::exportPluginFormat(application::DocumentId target, const PluginRuntime::Format &format,
+                                            const QString &path, const QVariantMap &values)
+{
+    const auto *session = m_files->session(target);
+    const QString lines = values.value(QStringLiteral("lines")).toString();
+    std::optional<std::set<core::LineId>> only;
+    if (lines == QLatin1String("selected")) {
+        only = session->selection().selected;
+    } else if (lines == QLatin1String("shown")) {
+        const auto shown = shell().actionLines();
+        only = std::set<core::LineId>(shown.begin(), shown.end());
+    }
+    QJsonObject choice = rememberedExport(currentChoices(m_settings->list("export.choices")), exportKey(target));
+    choice.insert(QStringLiteral("format"), QString::fromStdString(format.id));
+    choice.insert(QStringLiteral("lines"), lines.isEmpty() ? QStringLiteral("all") : lines);
+    m_settings->setValue(QStringLiteral("export.choices"),
+                         rememberedWith(currentChoices(m_settings->list("export.choices")), exportKey(target), choice));
+    return exportThroughPlugin(target, format, path, only, values.value(QStringLiteral("fps")).toDouble());
 }
 
 }

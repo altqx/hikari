@@ -40,6 +40,8 @@ struct ShiftTimesSettings {
     int postprocessor = 0;
     int leadIn = 0, leadOut = 0;
     int thresholdStart = 0, thresholdEnd = 0;
+    // Continuous times also join Lines that overlap by up to this, where the gap limits would split a gap.
+    int maxOverlap = 0;
     int keyframeBeforeStart = 0, keyframeAfterStart = 0, keyframeBeforeEnd = 0, keyframeAfterEnd = 0;
 };
 
@@ -69,6 +71,7 @@ enum ShiftRule : unsigned {
     GapClosed = 4,
     SnappedStart = 8,
     SnappedEnd = 16,
+    OverlapClosed = 32,
 };
 
 struct ShiftedLine {

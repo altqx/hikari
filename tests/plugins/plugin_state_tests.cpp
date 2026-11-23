@@ -278,6 +278,16 @@ TEST_F(PluginStateTest, TheMemoryLimitStopsAGreedyPlugin)
     EXPECT_EQ(state.error(), "the plugin ran out of memory: it may hold 8 MB");
 }
 
+TEST_F(PluginStateTest, APluginMayHoldTwoGigabytes)
+{
+    EXPECT_EQ(Options{}.memoryLimit, std::size_t(2) << 30);
+    Options o = options();
+    o.memoryLimit = std::size_t(1) << 30;
+    auto state = load("local s = string.rep('x', 1100000000)", o);
+    ASSERT_FALSE(state);
+    EXPECT_EQ(state.error(), "the plugin ran out of memory: it may hold 1 GB");
+}
+
 TEST_F(PluginStateTest, AMemoryErrorInACommandLeavesThePluginUsable)
 {
     Options o = options();
@@ -286,8 +296,8 @@ TEST_F(PluginStateTest, AMemoryErrorInACommandLeavesThePluginUsable)
                       "for i = 1, 1e7 do t[i] = string.rep('x', 100) .. i end end) "
                       "hikari.commands.register('count', function() hikari.notify('still here') end)", o);
     ASSERT_TRUE(state) << state.error();
-    EXPECT_FALSE((*state)->run("greet", m_host));
-    EXPECT_TRUE((*state)->run("count", m_host));
+    EXPECT_FALSE((*state)->run("greet", Json::object(), m_host));
+    EXPECT_TRUE((*state)->run("count", Json::object(), m_host));
     EXPECT_EQ(m_host.texts(), std::vector<std::string>{"still here"});
     EXPECT_LT((*state)->memoryInUse(), o.memoryLimit);
 }
@@ -306,12 +316,22 @@ TEST_F(PluginStateTest, CommandsRunTheirRegisteredHandlers)
     auto state = load("hikari.commands.register('greet', function() hikari.notify(hikari.settings.get('greeting')) end)");
     ASSERT_TRUE(state) << state.error();
     EXPECT_EQ((*state)->handledCommands(), std::vector<std::string>{"greet"});
-    ASSERT_TRUE((*state)->run("greet", m_host));
+    ASSERT_TRUE((*state)->run("greet", Json::object(), m_host));
     EXPECT_EQ(m_host.texts(), std::vector<std::string>{"hello"});
     EXPECT_TRUE(m_host.notices.back().toast);
-    auto unhandled = (*state)->run("count", m_host);
+    auto unhandled = (*state)->run("count", Json::object(), m_host);
     ASSERT_FALSE(unhandled);
     EXPECT_NE(unhandled.error().find("hikari.commands.register"), std::string::npos);
+}
+
+TEST_F(PluginStateTest, AHandlerGetsItsArgsAndHowItWasRun)
+{
+    auto state = load("hikari.commands.register('greet', function(args, context) "
+                      "hikari.notify(context.via .. ' ' .. tostring(args.name)) end)");
+    ASSERT_TRUE(state) << state.error();
+    ASSERT_TRUE((*state)->run("greet", *Json::parse(R"({"args": {"name": "Ana"}, "context": {"via": "menu"}})"), m_host));
+    ASSERT_TRUE((*state)->run("greet", *Json::parse(R"({"context": {"via": "key"}})"), m_host));
+    EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"menu Ana", "key nil"}));
 }
 
 TEST_F(PluginStateTest, OnlyDeclaredCommandsTakeHandlersAndOnlyOnce)
@@ -329,7 +349,7 @@ TEST_F(PluginStateTest, AnErrorCarriesItsPlaceAndTraceback)
     write("lua/broken.lua", "return {go = function() error('broke here') end}");
     auto state = load("hikari.commands.register('greet', function() require('broken').go() end)");
     ASSERT_TRUE(state) << state.error();
-    auto ran = (*state)->run("greet", m_host);
+    auto ran = (*state)->run("greet", Json::object(), m_host);
     ASSERT_FALSE(ran);
     EXPECT_NE(ran.error().find("lua/broken.lua:1: broke here"), std::string::npos) << ran.error();
     EXPECT_NE(ran.error().find("stack traceback"), std::string::npos) << ran.error();
@@ -342,7 +362,7 @@ TEST_F(PluginStateTest, SettingsReadAndWriteThroughHikariSub)
                       "hikari.settings.set('count', hikari.settings.get('count') + 1) "
                       "hikari.notify(tostring(hikari.settings.get('count'))) end)");
     ASSERT_TRUE(state) << state.error();
-    ASSERT_TRUE((*state)->run("count", m_host));
+    ASSERT_TRUE((*state)->run("count", Json::object(), m_host));
     ASSERT_EQ(m_host.settings.size(), 1u);
     EXPECT_EQ(m_host.settings[0].first, "count");
     EXPECT_EQ(m_host.settings[0].second, Json(4));
@@ -350,7 +370,7 @@ TEST_F(PluginStateTest, SettingsReadAndWriteThroughHikariSub)
 
     m_host.settingRefusal = "“count” must be at most 5";
     m_host.notices.clear();
-    auto refused = (*state)->run("count", m_host);
+    auto refused = (*state)->run("count", Json::object(), m_host);
     ASSERT_FALSE(refused);
     EXPECT_NE(refused.error().find("“count” must be at most 5"), std::string::npos);
     EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
@@ -362,7 +382,7 @@ TEST_F(PluginStateTest, ASettingChangedInThePluginManagerReadsAtOnce)
     ASSERT_TRUE(state) << state.error();
     ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "count"}, {"value", 2}}), m_host));
     ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "other"}, {"value", 9}}), m_host));
-    ASSERT_TRUE((*state)->run("greet", m_host));
+    ASSERT_TRUE((*state)->run("greet", Json::object(), m_host));
     EXPECT_EQ(m_host.texts(), std::vector<std::string>{"2"});
     EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
 }

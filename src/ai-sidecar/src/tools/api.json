@@ -707,6 +707,11 @@
         "muted"
       ],
       "description": "A theme role, so the mark follows the theme and high contrast."
+    },
+    "ProgramProcess": {
+      "type": "string",
+      "pattern": "^p[0-9]{1,9}$",
+      "description": "A started program, such as p1."
     }
   },
   "operations": [
@@ -740,14 +745,8 @@
                   ]
                 },
                 "format": {
-                  "enum": [
-                    "ass",
-                    "srt",
-                    "tmplayer",
-                    "microdvd",
-                    "mpl2",
-                    "text"
-                  ]
+                  "type": "string",
+                  "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
                 },
                 "revision": {
                   "$ref": "#/$defs/Revision"
@@ -808,14 +807,8 @@
             ]
           },
           "format": {
-            "enum": [
-              "ass",
-              "srt",
-              "tmplayer",
-              "microdvd",
-              "mpl2",
-              "text"
-            ]
+            "type": "string",
+            "description": "A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>."
           },
           "revision": {
             "$ref": "#/$defs/Revision"
@@ -4343,6 +4336,122 @@
       }
     },
     {
+      "name": "status_items.set",
+      "access": "write",
+      "summary": "Changes one of the caller's status bar items. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64,
+            "description": "An id from contributes.statusItems."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Empty: icon only."
+          },
+          "icon": {
+            "type": "string",
+            "maxLength": 68,
+            "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$",
+            "description": "An icon role or own:<id>; empty: text only."
+          },
+          "tooltip": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "tone": {
+            "enum": [
+              "normal",
+              "warning",
+              "danger"
+            ]
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "formats.list",
+      "access": "read",
+      "summary": "The subtitle formats HikariSub can open and export, built-in and from plugins.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "formats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ass, srt, … or plugin:<plugin id>/<format id>."
+                },
+                "title": {
+                  "type": "string"
+                },
+                "extensions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "import": {
+                  "type": "boolean"
+                },
+                "export": {
+                  "type": "boolean"
+                },
+                "plugin": {
+                  "type": "string",
+                  "description": "The plugin's id, for a plugin format."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "extensions",
+                "import",
+                "export"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "formats"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "typeset.perspective",
       "access": "read",
       "summary": "The Line's text with the tags that render it on a quad (VT3's perspective solver): \\pos, \\org, \\frx, \\fry, \\frz, \\fax, \\fscx and \\fscy.",
@@ -5411,6 +5520,31 @@
       }
     },
     {
+      "name": "presence.set_text",
+      "access": "write",
+      "summary": "Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
+            "description": "Plain text; empty clears it."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "karaoke.syllables",
       "access": "read",
       "summary": "A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.",
@@ -6223,6 +6357,209 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "programs.run",
+      "access": "write",
+      "summary": "Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "string",
+              "maxLength": 32768
+            },
+            "description": "${file:N} becomes the path of files[N], which the program may then open."
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string",
+              "description": "A file or folder handle the plugin holds."
+            },
+            "description": "Read-only unless the handle is writable."
+          },
+          "stdin": {
+            "type": "string",
+            "maxLength": 16777216
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ],
+            "description": "Of stdin, stdout and stderr; utf8 when omitted."
+          },
+          "timeout": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 86400000,
+            "description": "Milliseconds; 60000 when omitted."
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          }
+        },
+        "required": [
+          "exitCode",
+          "stdout",
+          "stderr",
+          "encoding"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.start",
+      "access": "write",
+      "summary": "Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "string",
+              "maxLength": 32768
+            }
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string"
+            }
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ],
+            "description": "Of what program.output carries and programs.send takes."
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.send",
+      "access": "write",
+      "summary": "Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "data": {
+            "type": "string",
+            "maxLength": 16777216
+          },
+          "close": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.stop",
+      "access": "write",
+      "summary": "Ends a started program and its children. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
   "events": [
@@ -6265,6 +6602,67 @@
           "document",
           "revision",
           "step"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "program.output",
+      "summary": "A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "stream": {
+            "enum": [
+              "stdout",
+              "stderr"
+            ]
+          },
+          "data": {
+            "type": "string"
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          }
+        },
+        "required": [
+          "process",
+          "stream",
+          "data",
+          "encoding"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "program.exited",
+      "summary": "A started program ended. Only its plugin hears it.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "exitCode": {
+            "type": "integer"
+          },
+          "stopped": {
+            "type": "boolean",
+            "description": "true when programs.stop or the plugin's end stopped it."
+          }
+        },
+        "required": [
+          "process",
+          "exitCode",
+          "stopped"
         ],
         "additionalProperties": false
       }

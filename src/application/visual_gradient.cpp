@@ -555,7 +555,7 @@ bool GradientTool::apply(VisualHost &host)
 
 Overlay GradientTool::overlay(const VisualHost &host) const
 {
-    Overlay out;
+    Overlay out{.handles = host.handleColours()};
     out.unit = unitOf(host);
     if (!m_placed)
         return out;

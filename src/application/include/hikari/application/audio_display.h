@@ -69,6 +69,8 @@ public:
     // Null `store`: in RAM, with the channels of the first append.
     DisplayAudio(int sampleRate, std::int64_t sampleCount, std::unique_ptr<AudioStore> store = nullptr);
     static DisplayAudio silence(int sampleRate, std::int64_t sampleCount);
+    // Full-scale white noise, the same samples on every read.
+    static DisplayAudio noise(int sampleRate, std::int64_t sampleCount);
 
     // False when the store cannot keep them.
     bool appendFrames(const std::int16_t *interleaved, std::int64_t frames, int channels);
@@ -94,6 +96,7 @@ private:
     int m_rate = 0;
     std::int64_t m_count = 0;
     bool m_silence = false;
+    bool m_noise = false;
     bool m_finished = false;
     std::unique_ptr<AudioStore> m_store;
     mutable std::vector<std::int16_t> m_frames;
