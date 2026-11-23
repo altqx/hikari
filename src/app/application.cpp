@@ -702,7 +702,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         noteRemovedRules();
         m_importStore->recover();
     }
-    m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
+    m_settingsImport = std::make_unique<SettingsImportController>(
+        m_importStore.get(), options.legacySettingsFolders.value_or(SettingsImportStore::defaultCandidates()));
     if (firstStart && Localisation::firstStartLanguage(options.systemUiLanguages) == u"pl") {
         m_settings->set("program.language", QStringLiteral("pl"));
         m_settings->set("editor.dictionaryLanguage", QStringLiteral("pl"));
@@ -4388,7 +4389,7 @@ QVariantList Application::legacyAutosaves()
         if (const auto receipt = m_importStore ? m_importStore->activeReceipt() : std::nullopt;
             receipt && !receipt->root.empty())
             roots << QString::fromStdString(receipt->root);
-        for (const auto &root : SettingsImportStore::discoverRoots(SettingsImportStore::defaultCandidates()))
+        for (const auto &root : SettingsImportStore::discoverRoots(m_settingsImport->defaultFolders()))
             roots << root.path;
         for (const QString &root : std::as_const(roots))
             if (QFileInfo(root + QStringLiteral("/Subs")).isDir()) {
@@ -7682,8 +7683,8 @@ bool Application::gettingStartedDue() const
 QVariantMap Application::openGettingStarted()
 {
     QVariantMap opened = openSettingsDialog();
-    opened.insert(QStringLiteral("legacy"), m_importStore && !SettingsImportStore::discoverRoots(
-                                                                 SettingsImportStore::defaultCandidates()).isEmpty());
+    opened.insert(QStringLiteral("legacy"), m_importStore &&
+                                                 !SettingsImportStore::discoverRoots(m_settingsImport->defaultFolders()).isEmpty());
     return opened;
 }
 

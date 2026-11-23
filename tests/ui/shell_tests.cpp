@@ -1048,7 +1048,7 @@ private slots:
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
         original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
-        application = new app::Application;
+        application = newApplication({});
         loadMainWindow();
         QTRY_VERIFY(window->property("sideBarsLoaded").toBool());
     }
@@ -12792,6 +12792,11 @@ private slots:
     }
 
 private:
+    static app::Application *newApplication(app::Application::Options options)
+    {
+        options.legacySettingsFolders = QStringList{qEnvironmentVariable("XDG_DATA_HOME") + QStringLiteral("/HikariSub/Legacy")};
+        return new app::Application(std::move(options));
+    }
     void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {}, bool gettingStarted = false,
                              application::SpellingBackendLoader loader = {})
     {
@@ -12806,7 +12811,7 @@ private:
         else if (loader)
             options.spellingBackend = std::move(loader);
         options.bundledDictionaryDir = bundled;
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
     static void writeDictionary(const QString &home, const QString &folder = QStringLiteral("Dictionary"))
@@ -12907,7 +12912,7 @@ private:
         app::Application::Options options;
         options.settingsFile = file;
         options.spellingBackend = {};
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
 
@@ -12921,7 +12926,7 @@ private:
     {
         delete engine;
         delete application;
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
 
@@ -12932,7 +12937,7 @@ private:
         app::Application::Options options;
         options.playbackAudio = false;
         options.mediaHelper = helper;
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
     }
 
@@ -24045,7 +24050,7 @@ private slots:
         app::Application::Options options;
         options.indexDir = folder.filePath(QStringLiteral("Indices"));
         options.audioCacheDir = folder.filePath(QStringLiteral("AudioCache"));
-        application = new app::Application(options);
+        application = newApplication(options);
         const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
         auto &audio = application->audio();
@@ -24162,7 +24167,7 @@ private slots:
         app::Application::Options options;
         options.indexDir = indices;
         options.audioCacheDir = folder.filePath(QStringLiteral("AudioCache"));
-        application = new app::Application(options);
+        application = newApplication(options);
         const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
         QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
         auto &audio = application->audio();
@@ -28603,7 +28608,7 @@ private slots:
             made.push_back(o.hostApi);
             return std::make_unique<backends::SimulatedOutput>();
         };
-        application = new app::Application(options);
+        application = newApplication(options);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
         engine->setInitialProperties(application->qmlProperties());
@@ -28698,7 +28703,7 @@ private slots:
             application = nullptr;
         });
         const auto start = [&] {
-            application = new app::Application(options);
+            application = newApplication(options);
             engine = new QQmlApplicationEngine;
             hikari::ui::attachDocking(*engine);
             engine->setInitialProperties(application->qmlProperties());
@@ -28839,7 +28844,7 @@ private slots:
             engine = nullptr;
             application = nullptr;
         });
-        application = new app::Application(options);
+        application = newApplication(options);
         loadMainWindow();
         if (QTest::currentTestFailed())
             return;
