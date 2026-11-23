@@ -4,6 +4,7 @@
 #include "hikari/application/ai_providers.h"
 #include "hikari/backends/ai_sidecar_host.h"
 
+#include <QCryptographicHash>
 #include <QProcessEnvironment>
 #include <QUrl>
 
@@ -155,6 +156,13 @@ Json mcpServersToJson(const std::vector<McpServerEntry> &servers)
     for (const McpServerEntry &server : servers)
         out.push(server.toJson());
     return out;
+}
+
+std::string pluginMcpServerId(const std::string &plugin, const std::string &server)
+{
+    const QByteArray hash =
+        QCryptographicHash::hash(QByteArray::fromStdString(plugin + "/" + server), QCryptographicHash::Sha256).toHex();
+    return "p-" + hash.left(8).toStdString() + "-" + server;
 }
 
 std::string newMcpServerId(const std::string &name, const std::vector<McpServerEntry> &servers)
@@ -372,15 +380,19 @@ void McpClients::setServers(std::vector<McpServerEntry> servers)
 void McpClients::load(std::function<void()> done)
 {
     const std::uint64_t generation = ++m_generation;
-    auto remaining = std::make_shared<std::size_t>(m_servers.size());
+    std::vector<std::string> added;
+    for (const McpServerEntry &server : m_servers)
+        if (server.plugin.empty())
+            added.push_back(server.id);
+    auto remaining = std::make_shared<std::size_t>(added.size());
     auto secrets = std::make_shared<std::map<std::string, McpSecrets>>();
-    if (m_servers.empty()) {
+    if (added.empty()) {
         m_secrets.clear();
         return done();
     }
-    for (const McpServerEntry &server : m_servers)
-        m_keys.read(mcpSecretEntry(server.id), [this, alive = std::weak_ptr(m_alive), generation, remaining, secrets,
-                                                id = server.id, done](app::KeyResult result) {
+    for (const std::string &id : added)
+        m_keys.read(mcpSecretEntry(id), [this, alive = std::weak_ptr(m_alive), generation, remaining, secrets, id,
+                                         done](app::KeyResult result) {
             if (!alive.lock() || generation != m_generation)
                 return;
             if (const auto *text = std::get_if<std::string>(&result))
@@ -403,6 +415,11 @@ void McpClients::registerStdio()
     for (const McpServerEntry &server : m_servers) {
         if (server.transport != McpServerEntry::Transport::Stdio)
             continue;
+        if (!server.plugin.empty()) {
+            m_broker->add("mcp:" + server.id, pluginSpec(server));
+            m_registered.insert(server.id);
+            continue;
+        }
         QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
         if (const auto secrets = m_secrets.find(server.id); secrets != m_secrets.end())
             for (const auto &[name, value] : secrets->second.environment)
@@ -420,6 +437,25 @@ void McpClients::registerStdio()
                                 .guard = [t = traffic(server.id)] { return mcpStdioGuard(t); }});
         m_registered.insert(server.id);
     }
+}
+
+AgentSpec McpClients::pluginSpec(const McpServerEntry &server)
+{
+    std::expected<ProgramProcess::Options, QString> options = std::unexpected(QStringLiteral("The plugin isn't running."));
+    if (m_pluginStart)
+        options = m_pluginStart(server);
+    if (!options)
+        return AgentSpec{.refuse = [why = options.error()](const QStringList &) { return why; }};
+    return AgentSpec{.program = options->program,
+                     .arguments = options->arguments,
+                     .profile = std::move(options->profile),
+                     .confined = true,
+                     .workingDirectory = options->workingDirectory,
+                     .environment = options->environment,
+                     .refuse = [](const QStringList &arguments) {
+                         return arguments.isEmpty() ? QString() : QStringLiteral("Hikari picks an MCP server's arguments");
+                     },
+                     .guard = [t = traffic(server.id)] { return mcpStdioGuard(t); }};
 }
 
 void McpClients::announce()

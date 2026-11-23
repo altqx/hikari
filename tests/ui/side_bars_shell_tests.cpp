@@ -344,6 +344,76 @@ private slots:
         QCOMPARE(panels.last().value<QQuickItem *>(), panel("searchPanel"));
     }
 
+    void draggingTheInnerEdgeResizesTheSideBar_data()
+    {
+        QTest::addColumn<QString>("bars");
+        QTest::addColumn<QSize>("size");
+        QTest::addColumn<bool>("left");
+        const QString one = QStringLiteral(R"({"first":{"hidden":true},"second":{"panels":["Search"]}})");
+        const QString both = QStringLiteral(R"({"first":{"panels":["Log"]},"second":{"panels":["Search"]}})");
+        QTest::addRow("right, 1366x768") << one << QSize(1366, 768) << false;
+        QTest::addRow("right, maximised") << one << QSize() << false;
+        QTest::addRow("left of both, 1920x1080") << both << QSize(1920, 1080) << true;
+        QTest::addRow("right of both, 1920x1080") << both << QSize(1920, 1080) << false;
+        QTest::addRow("right of both, 1366x768") << both << QSize(1366, 768) << false;
+    }
+    void draggingTheInnerEdgeResizesTheSideBar()
+    {
+        QFETCH(QString, bars);
+        QFETCH(QSize, size);
+        QFETCH(bool, left);
+        start(bars);
+        if (window->screen()->availableGeometry().width() < 1366)
+            QSKIP("needs a screen wide enough for the window, like screen-2560x1440.json");
+        if (size.isEmpty())
+            window->showMaximized();
+        else
+            window->resize(size);
+        const char *name = left ? "leftSideBar" : "rightSideBar";
+        QTRY_VERIFY(shown(name));
+        QTRY_VERIFY(middleLeast() > 0);
+        QQuickItem *bar = item(name);
+        QQuickItem *middle = item("dockingArea");
+        const auto settled = [&] {
+            const bool sized = size.isEmpty() ? window->windowStates().testFlag(Qt::WindowMaximized) : window->size() == size;
+            const bool atEdge = left ? bar->x() == 0 && middle->x() == bar->width()
+                                     : bar->x() + bar->width() == window->width() && middle->x() + middle->width() == bar->x();
+            const QString fresh = QStringLiteral("sideBarWidth(%1.width)")
+                                      .arg(left ? QStringLiteral("leftSideBarState") : QStringLiteral("rightSideBarState"));
+            return sized && window->contentItem()->size() == QSizeF(window->size()) && atEdge
+                   && root()->property("arrangementSettled").toBool() && qRound(bar->width()) == shell(fresh).toInt();
+        };
+        QQuickItem *grip = in(name, QStringLiteral("sideBarGrip"));
+        QVERIFY(grip);
+        const QString key = left == shell(QStringLiteral("firstSideBarOnLeft")).toBool() ? QStringLiteral("first")
+                                                                                         : QStringLiteral("second");
+        const auto savedWidth = [&] {
+            return saved().value(key).toObject().value(QStringLiteral("width")).toInt(hikari::application::kSideBarStartWidth);
+        };
+        const auto drag = [&](int outward) {
+            const QPoint at = grip->mapToScene(QPointF(grip->width() / 2, grip->height() / 2)).toPoint();
+            const QPoint by(left ? outward : -outward, 0);
+            QTest::mouseMove(window, at);
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
+            for (int i = 1; i <= 10; ++i)
+                QTest::mouseMove(window, at + by * i / 10);
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at + by);
+        };
+        for (const int outward : {80, -40}) {
+            QTRY_VERIFY(settled());
+            const int room = shell(QStringLiteral("sideBarRoom()")).toInt();
+            const int expected = std::min(qRound(bar->width()) + outward, room);
+            if (expected < hikari::application::kSideBarMinimumWidth)
+                continue;
+            drag(outward);
+            QTRY_COMPARE(qRound(bar->width()), expected);
+            QTRY_VERIFY2(savedWidth() == expected,
+                         qPrintable(QStringLiteral("expected %1 in %2").arg(expected).arg(application->sideBars(shellWindow()))));
+            QVERIFY2(middle->width() >= middleLeast(),
+                     qPrintable(QStringLiteral("middle %1 < %2").arg(middle->width()).arg(middleLeast())));
+        }
+    }
+
     void aDraggedEdgeBelowTheMinimumHidesTheSideBar()
     {
         start();

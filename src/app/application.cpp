@@ -30,6 +30,7 @@
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
 #include "hikari/application/select_lines.h"
+#include "hikari/application/matrix_conversion.h"
 #include "hikari/application/resample.h"
 #include "hikari/application/position_commands.h"
 #include "hikari/application/visual_transform.h"
@@ -829,12 +830,20 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                 QString::fromStdString(value.dump()));
             return refused.isEmpty() ? std::nullopt : std::optional(refused.toStdString());
         },
-        m_pluginPrograms.get(), m_presence.get()});
+        m_pluginPrograms.get(), m_presence.get(), &m_problems});
     m_apiHost->setPluginFormat([this](application::DocumentId document) { return fileFormat(document); });
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
     m_rowMarks.setObserver([this](application::DocumentId document) { showRowMarks(document); });
+    m_problems.setObserver([this](application::DocumentId document, std::vector<std::string> sources) {
+        m_apiHost->api().problemsChanged(document, sources);
+        for (WindowViews *v : allViews())
+            if (v->editorDocument == document)
+                v->shell->setRowMarks(rowMarksOf(document));
+        if (m_problemsList)
+            m_problemsList->problemsChanged(document);
+    });
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -873,7 +882,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         m_aiScripts.get(), m_automation.get(),
-        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
+        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); },
+        [this](const QString &providerId) { return m_aiSettings->lacksKey(providerId); },
+        [this] { return m_aiSettings->codexSignedOut(); }});
+    connect(m_aiSettings.get(), &AiSettings::providersChanged, m_agent.get(), &AgentController::modelsChanged);
+    connect(m_aiSettings.get(), &AiSettings::codexChanged, m_agent.get(), &AgentController::modelsChanged);
     m_skillsSettings = std::make_unique<SkillsSettings>(
         m_userFolder, [this](int window) { return m_projects ? m_projects->root(window) : QString(); });
     m_ai->setProjectKeys([this](const std::string &project, const std::string &providerId) {
@@ -930,6 +943,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     pluginWiring.marks = &m_rowMarks;
+    pluginWiring.problems = &m_problems;
     pluginWiring.programs = m_pluginPrograms.get();
 #ifdef Q_OS_WIN
     pluginWiring.lowRightsHelper = QCoreApplication::applicationDirPath() + QStringLiteral("/hikarisub-confine.exe");
@@ -957,6 +971,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
+    m_ai->setPluginMcpStart([runtime = QPointer(m_pluginRuntime.get())](const backends::ai::McpServerEntry &server)
+                                -> std::expected<backends::ProgramProcess::Options, QString> {
+        if (!runtime)
+            return std::unexpected(QStringLiteral("HikariSub is closing."));
+        return runtime->mcpServerStart(server);
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::mcpServersChanged, m_ai.get(), [this] {
+        if (const auto &installed = m_pluginRuntime->installed())
+            m_ai->keepPluginMcpChoices(*installed);
+        m_ai->setPluginMcpServers(m_pluginRuntime->mcpServers());
+    });
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
     QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
@@ -1135,6 +1160,29 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             shell().setQcMarks(std::move(marks), current);
         };
         m_qcNotes = std::make_unique<QcNotesController>(*m_settings, std::move(hooks));
+    }
+    {
+        ProblemsController::Hooks hooks;
+        hooks.document = [this] { return m_workspace.editingTarget(); };
+        hooks.session = [this] { return targetSession(); };
+        hooks.selectLine = [this](core::LineId line) { selectLine(line.value); };
+        hooks.seek = [this](int ms) { return activeMedia().video->hasVideo() && activeMedia().video->session().seekToMs(ms); };
+        hooks.fix = [this](application::DocumentId document, const std::string &problem, int fix) {
+            bool fixed = false;
+            m_apiHost->api().call(api::Caller{"hikarisub.problems", "Problems", true}, "problems.fix",
+                                  api::Json::object({{"document", api::Json(document.value)},
+                                                     {"problem", api::Json(problem)},
+                                                     {"fix", api::Json(std::int64_t(fix))}}),
+                                  [&](const api::Result &result) { fixed = result.has_value(); });
+            if (fixed) {
+                editor().reloadFromSession();
+                refreshViews();
+            }
+            return fixed;
+        };
+        hooks.editorRaw = [this](int role) { return editorRaw(role); };
+        hooks.displaySpan = [this](int role, int from, int to) { return editor().displaySpan(role, from, to); };
+        m_problemsList = std::make_unique<ProblemsController>(m_problems, *m_qcNotes, std::move(hooks));
     }
     {
         FontCollectorController::Hooks hooks;
@@ -2601,6 +2649,8 @@ void Application::refreshViews()
         editor().setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
     }
     m_rowMarks.keepOnly(m_workspace.documents());
+    m_problems.keepOnly(m_workspace.documents());
+    syncReadingProblems();
     shell().setRowMarks(rowMarksOf(target));
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();
@@ -2610,6 +2660,8 @@ void Application::refreshViews()
     kanjiTimer().documentEdited();
     if (m_qcNotes)
         m_qcNotes->documentEdited();
+    if (m_problemsList)
+        m_problemsList->documentEdited();
     refreshVideo();
     refreshAudio();
     if (activeViews().statusBar)
@@ -2679,6 +2731,8 @@ ui::LineTableModel::RowMarks Application::rowMarksOf(std::optional<application::
     ui::LineTableModel::RowMarks out;
     if (!document)
         return out;
+    if (const auto *session = m_files->session(*document))
+        addProblemMarks(out, m_problems, *document, session->document());
     for (const auto &[line, marks] : m_rowMarks.shown(*document))
         for (const application::OwnedMark &mark : marks) {
             const QString note = QCoreApplication::translate("HikariSub.Grid", "%1: %2",
@@ -3951,6 +4005,36 @@ int Application::selectedLineCount(bool shownOnly) const
         return int(selected.size());
     const auto shown = shownLines();
     return int(std::ranges::count_if(selected, [&](core::LineId id) { return shown(id); }));
+}
+
+QVariantMap Application::styleStep(int direction) const
+{
+    auto *session = targetSession();
+    if (!session || !session->selection().active)
+        return {};
+    const core::LineId active = *session->selection().active;
+    const auto grid = shell().actionLines();
+    const auto picked = visualTools().batchCount() > 1 ? visualTools().batchTargets() : std::vector<core::LineId>{};
+    const std::set<core::LineId> stops(picked.begin(), picked.end());
+    const auto stop = [&](core::LineId id) { return id != active && (stops.empty() || stops.contains(id)); };
+    const auto at = std::ranges::find(grid, active);
+    std::optional<core::LineId> next;
+    if (direction > 0) {
+        for (auto it = at == grid.end() ? grid.begin() : std::next(at); it != grid.end() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    } else if (direction < 0 && at != grid.end()) {
+        for (auto it = std::make_reverse_iterator(at); it != grid.rend() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    }
+    QVariantMap out{{QStringLiteral("from"), QVariant::fromValue(active.value)},
+                    {QStringLiteral("fromNumber"), shell().lineNumber(active).value_or(0)}};
+    if (const auto number = next ? shell().lineNumber(*next) : std::nullopt) {
+        out.insert(QStringLiteral("id"), QVariant::fromValue(next->value));
+        out.insert(QStringLiteral("number"), *number);
+    }
+    return out;
 }
 
 QVariantList Application::columnChoices(bool paste)
@@ -5536,6 +5620,20 @@ int spellingRoleOf(const application::EditSession *session)
 
 }
 
+void Application::syncReadingProblems()
+{
+    m_readingProblems.setSettings(ReadingProblems::Settings{
+        .shown = m_settings->boolean("problems.reading"),
+        .profile = application::profileReadingLimits(m_settings->settings()),
+        .allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps"),
+        .allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps"),
+    });
+    std::vector<std::pair<application::DocumentId, const application::EditSession *>> open;
+    for (const application::DocumentId id : m_workspace.documents())
+        open.emplace_back(id, m_files->session(id));
+    m_readingProblems.sync(open);
+}
+
 std::optional<std::u16string> Application::editorRaw(int role) const
 {
     return activeLineRaw(targetSession(), role);
@@ -6165,20 +6263,43 @@ QVariantMap Application::resampleValues() const
     const auto subs = application::scriptResolution(session->document());
     application::Resolution video = subs;
     const bool hasVideo = activeMedia().video->session().state() == application::VideoSession::State::Ready && activeMedia().video->session().lastFrame();
-    if (hasVideo)
-        video = {activeMedia().video->session().sourceGeometry().width, activeMedia().video->session().sourceGeometry().height};
+    std::string videoMatrix;
+    if (hasVideo) {
+        const auto &videoSession = activeMedia().video->session();
+        video = {videoSession.sourceGeometry().width, videoSession.sourceGeometry().height};
+        videoMatrix = application::recommendedMatrix(videoSession.colour(), video.width, video.height);
+    }
+    QStringList matrices;
+    for (const auto &m : application::matrixNames())
+        if (const std::string name(m.begin(), m.end()); application::namesConvertibleMatrix(name))
+            matrices << QString::fromStdString(name);
+    const auto info = session->document().scriptInfo(u8"YCbCr Matrix");
+    const std::string written = info ? std::string(info->begin(), info->end()) : std::string();
     return {{QStringLiteral("subsWidth"), subs.width},
             {QStringLiteral("subsHeight"), subs.height},
             {QStringLiteral("videoWidth"), video.width},
             {QStringLiteral("videoHeight"), video.height},
-            {QStringLiteral("hasVideo"), hasVideo}};
+            {QStringLiteral("hasVideo"), hasVideo},
+            {QStringLiteral("matrix"), application::namesConvertibleMatrix(written) ? QString::fromStdString(written) : QString()},
+            {QStringLiteral("videoMatrix"),
+             application::namesConvertibleMatrix(videoMatrix) ? QString::fromStdString(videoMatrix) : QString()},
+            {QStringLiteral("matrices"), matrices}};
 }
 
-bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations)
+QVariantList Application::resampleEdges(int subsWidth, int subsHeight, int width, int height, bool crop) const
+{
+    const auto e = application::fittingEdges({subsWidth, subsHeight}, {width, height}, crop);
+    return {e.left, e.right, e.top, e.bottom};
+}
+
+bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations,
+                           const QVariantList &edges, const QString &matrix)
 {
     if ((subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
         return false;
-    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations);
+    const auto edge = [&](int i) { return edges.size() == 4 ? edges.at(i).toInt() : 0; };
+    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations,
+                            {edge(0), edge(1), edge(2), edge(3)}, matrix.toStdString());
 }
 
 bool Application::matchVideoResolution(int option)
@@ -6192,7 +6313,7 @@ bool Application::matchVideoResolution(int option)
 }
 
 bool Application::changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
-                                   bool adjustRotations)
+                                   bool adjustRotations, application::Edges edges, const std::string &matrix)
 {
     auto *session = targetSession();
     if (!session)
@@ -6200,6 +6321,8 @@ bool Application::changeResolution(int fromWidth, int fromHeight, int width, int
     QStringList unscaled, unadjusted;
     application::ResampleOptions options;
     options.stretch = stretch;
+    options.edges = edges;
+    options.matrix = matrix;
     options.adjustRotations = adjustRotations;
     const auto &video = activeMedia().video->session();
     if (video.state() == application::VideoSession::State::Ready && video.lastFrame())
@@ -7272,6 +7395,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
+            {QStringLiteral("problems"), QVariant::fromValue(static_cast<QObject *>(m_problemsList.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
@@ -7331,6 +7455,7 @@ void Application::settingChanged(const QString &id)
         for (auto *views : allViews())
             views->editor->optionsChanged();
         refreshVideo();
+        syncReadingProblems();
     }
     else if (id == QLatin1String("grid.cpsWarning") || id == QLatin1String("grid.cpsError") ||
              id == QLatin1String("grid.lineLength") || id == QLatin1String("grid.maxLines")) {
@@ -7338,7 +7463,10 @@ void Application::settingChanged(const QString &id)
             views->shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
             views->editor->optionsChanged();
         }
+        syncReadingProblems();
     }
+    else if (id == QLatin1String("problems.reading"))
+        syncReadingProblems();
     else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
         for (auto *views : allViews())
             views->editor->setShowTags(!m_settings->boolean("editor.hideTags"));

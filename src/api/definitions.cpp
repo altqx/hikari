@@ -156,6 +156,34 @@ void addDefinitions(Registry &registry)
         "required": ["values"],
         "anyOf": [{"required": ["key"]}, {"required": ["controls"]}],
         "additionalProperties": false})"));
+    registry.define("Problem", schema(R"({"type": "object", "properties": {
+        "id": {"type": "string", "maxLength": 64, "description": "Given by problems.list; problems.set ignores it."},
+        "line": {"$ref": "#/$defs/LineId", "description": "Absent only for a QC note that matches no Line."},
+        "time": {"type": "integer", "description": "A QC note's time in milliseconds; problems.set ignores it."},
+        "field": {"enum": ["text", "translation"], "description": "text when omitted."},
+        "from": {"type": "integer", "minimum": 0,
+            "description": "UTF-16 offset in the field; with to, the squiggle. The whole Line when omitted."},
+        "to": {"type": "integer", "minimum": 0},
+        "severity": {"enum": ["error", "warning", "info", "hint"]},
+        "message": {"type": "string", "minLength": 1, "maxLength": 500},
+        "code": {"type": "string", "minLength": 1, "maxLength": 64, "description": "The check's own name, such as a grammar rule."},
+        "source": {"type": "object", "description": "Given by problems.list.", "properties": {
+            "kind": {"enum": ["qc", "plugin", "server"]},
+            "id": {"type": "string", "description": "qc, a plugin id, or plugin:<plugin id>/<server id>."},
+            "set": {"type": "string", "description": "The plugin's own source name from problems.set, or a QC note's section."},
+            "name": {"type": "string", "description": "What the problems list shows."}},
+            "required": ["kind", "id", "name"], "additionalProperties": false},
+        "fixes": {"type": "array", "maxItems": 8, "items": {"type": "object", "properties": {
+            "title": {"type": "string", "minLength": 1, "maxLength": 100},
+            "edits": {"type": "array", "minItems": 1, "maxItems": 64,
+                "description": "Replacements in this Line's field, by UTF-16 offsets in the text the problem was set against.",
+                "items": {"type": "object", "properties": {
+                    "from": {"type": "integer", "minimum": 0},
+                    "to": {"type": "integer", "minimum": 0},
+                    "insert": {"type": "string", "maxLength": 10000}},
+                    "required": ["from", "to", "insert"], "additionalProperties": false}}},
+            "required": ["title", "edits"], "additionalProperties": false}}},
+        "required": ["severity", "message"], "additionalProperties": false})"));
     registry.define("MarkColour", schema(R"({"enum": ["accent", "warning", "danger", "success", "muted"],
         "description": "A theme role, so the mark follows the theme and high contrast."})"));
 }

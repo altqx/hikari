@@ -60,6 +60,7 @@ ApiHost::ApiHost(Wiring wiring, QObject *parent)
           .programs = m_wiring.programs,
           .presence = m_wiring.presence,
           .settingsWindow = this,
+          .problems = m_wiring.problems,
       }),
       m_seenProject(project())
 {
