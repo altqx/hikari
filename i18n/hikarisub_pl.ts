@@ -8942,7 +8942,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Synonym</source>
-        <translation type="unfinished"></translation>
+        <translation>Synonim</translation>
     </message>
     <message>
         <source>AI actions</source>
@@ -8974,23 +8974,23 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Suggest synonyms</source>
-        <translation type="unfinished"></translation>
+        <translation>Zaproponuj synonimy</translation>
     </message>
     <message>
         <source>No synonyms for “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak synonimów dla “%1”</translation>
     </message>
     <message>
         <source>Couldn’t suggest synonyms: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie można zaproponować synonimów: %1</translation>
     </message>
     <message>
         <source>Today’s cost cap is reached.</source>
-        <translation type="unfinished"></translation>
+        <translation>Osiągnięto dzisiejszy limit kosztów.</translation>
     </message>
     <message>
         <source>Finding synonyms…</source>
-        <translation type="unfinished"></translation>
+        <translation>Szukanie synonimów…</translation>
     </message>
     <message>
         <source>Translate to %1</source>

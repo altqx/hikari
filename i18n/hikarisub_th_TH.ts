@@ -8808,7 +8808,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Synonym</source>
-        <translation type="unfinished"></translation>
+        <translation>คำพ้องความหมาย</translation>
     </message>
     <message>
         <source>AI actions</source>
@@ -8838,23 +8838,23 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Suggest synonyms</source>
-        <translation type="unfinished"></translation>
+        <translation>แนะนำคำพ้องความหมาย</translation>
     </message>
     <message>
         <source>No synonyms for “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>ไม่มีคำพ้องความหมายของ “%1”</translation>
     </message>
     <message>
         <source>Couldn’t suggest synonyms: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>แนะนำคำพ้องความหมายไม่ได้: %1</translation>
     </message>
     <message>
         <source>Today’s cost cap is reached.</source>
-        <translation type="unfinished"></translation>
+        <translation>ถึงเพดานค่าใช้จ่ายของวันนี้แล้ว</translation>
     </message>
     <message>
         <source>Finding synonyms…</source>
-        <translation type="unfinished"></translation>
+        <translation>กำลังหาคำพ้องความหมาย…</translation>
     </message>
     <message>
         <source>Translate to %1</source>

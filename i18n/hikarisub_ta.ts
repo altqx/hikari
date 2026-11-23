@@ -8875,7 +8875,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Synonym</source>
-        <translation type="unfinished"></translation>
+        <translation>ஒத்த சொல்</translation>
     </message>
     <message>
         <source>AI actions</source>
@@ -8906,23 +8906,23 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Suggest synonyms</source>
-        <translation type="unfinished"></translation>
+        <translation>ஒத்த சொற்களைப் பரிந்துரை</translation>
     </message>
     <message>
         <source>No synonyms for “%1”</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” க்கு ஒத்த சொற்கள் இல்லை</translation>
     </message>
     <message>
         <source>Couldn’t suggest synonyms: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ஒத்த சொற்களைப் பரிந்துரைக்க முடியவில்லை: %1</translation>
     </message>
     <message>
         <source>Today’s cost cap is reached.</source>
-        <translation type="unfinished"></translation>
+        <translation>இன்றைய செலவு வரம்பு எட்டப்பட்டது.</translation>
     </message>
     <message>
         <source>Finding synonyms…</source>
-        <translation type="unfinished"></translation>
+        <translation>ஒத்த சொற்களைத் தேடுகிறது…</translation>
     </message>
     <message>
         <source>Translate to %1</source>
