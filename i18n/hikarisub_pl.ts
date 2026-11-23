@@ -3915,14 +3915,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>różne</translation>
     </message>
     <message>
-        <source>Number of characters in each line. Keep it at 43 or under, in at most 2 lines.</source>
-        <translation>Liczba znaków w każdym wierszu. Nie więcej niż 43 znaki, najwyżej 2 wiersze.</translation>
-    </message>
-    <message>
-        <source>Characters per second. Keep it at 15 or under.</source>
-        <translation>Znaki na sekundę. Nie więcej niż 15.</translation>
-    </message>
-    <message>
         <source>Show times</source>
         <translation>Pokaż czasy</translation>
     </message>
@@ -4337,6 +4329,18 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>A tag starts with a backslash, for example \blur2</source>
         <translation>Tag zaczyna się od ukośnika odwrotnego, na przykład \blur2</translation>
+    </message>
+    <message numerus="yes">
+        <source>Number of characters in each line. Keep it at %1 or under, in at most %n line(s).</source>
+        <translation>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersz.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wiersze.</numerusform>
+            <numerusform>Liczba znaków w każdym wierszu. Wartość powinna wynosić %1 lub mniej, a linijka może mieć najwyżej %n wierszy.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Characters per second. Keep it at %1 or under.</source>
+        <translation>Znaki na sekundę. Wartość powinna wynosić %1 lub mniej.</translation>
     </message>
 </context>
 <context>
@@ -14248,6 +14252,34 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Licz spacje i interpunkcję w CPS</translation>
     </message>
     <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>Lines that read faster are tinted, more strongly up to the error level.</source>
+        <translation>Linijki czytane szybciej są zabarwiane, coraz mocniej aż do poziomu błędu.</translation>
+    </message>
+    <message>
+        <source>CPS</source>
+        <translation>CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
+    </message>
+    <message>
+        <source>A subtitle file can set its own limits in Script properties.</source>
+        <translation>Plik napisów może ustawić własne limity we właściwościach skryptu.</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>Dzielenie</translation>
     </message>
@@ -19487,6 +19519,30 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Rendering</source>
         <translation>Renderowanie</translation>
+    </message>
+    <message>
+        <source>Reading limits</source>
+        <translation>Limity czytania</translation>
+    </message>
+    <message>
+        <source>Use my settings</source>
+        <translation>Używaj moich ustawień</translation>
+    </message>
+    <message>
+        <source>CPS warning</source>
+        <translation>Ostrzeżenie CPS</translation>
+    </message>
+    <message>
+        <source>CPS error</source>
+        <translation>Błąd CPS</translation>
+    </message>
+    <message>
+        <source>Characters per line</source>
+        <translation>Znaki w wierszu</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Wiersze</translation>
     </message>
     <message>
         <source>Save</source>

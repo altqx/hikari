@@ -3,11 +3,13 @@
 #include "hikari/application/document_files.h"
 #include "hikari/application/editor_fields.h"
 #include "hikari/application/legacy_timebase.h"
+#include "hikari/application/reading_limits.h"
 #include "hikari/core/editor_syntax.h"
 #include "hikari/core/editor_font_colour.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_transfer.h"
 #include "hikari/core/tag_commands.h"
+#include "line_measures.h"
 #include "tag_list_controller.h"
 
 #include <QElapsedTimer>
@@ -78,6 +80,10 @@ class LineEditorController : public QObject {
     Q_PROPERTY(bool charsWarning READ charsWarning NOTIFY changed)
     Q_PROPERTY(QString cpsText READ cpsText NOTIFY changed)
     Q_PROPERTY(bool cpsWarning READ cpsWarning NOTIFY changed)
+    Q_PROPERTY(bool cpsError READ cpsError NOTIFY changed)
+    Q_PROPERTY(int cpsLimit READ cpsLimit NOTIFY changed)
+    Q_PROPERTY(int lineLength READ lineLength NOTIFY changed)
+    Q_PROPERTY(int maxLines READ maxLines NOTIFY changed)
     Q_PROPERTY(bool startWarning READ startWarning NOTIFY changed)
     Q_PROPERTY(bool endWarning READ endWarning NOTIFY changed)
     Q_PROPERTY(bool durationWarning READ durationWarning NOTIFY changed)
@@ -104,6 +110,7 @@ public:
         bool dontAdvanceOnTimes = false;
         bool allCharsForCps = false;
         bool allCharsForWraps = false;
+        application::ReadingLimits limits;
         bool softLineBreak = false;
     };
 
@@ -158,11 +165,15 @@ public:
     QStringList effects() const { return m_effects; }
     int alignmentIndex() const { return m_alignment >= 1 && m_alignment <= 9 ? m_alignment - 1 : -1; }
     bool alignmentMixed() const;
-    // MUST KILL: charsText and cpsText hard-code the limits 43 and 15 and a "0/86" placeholder without a Line
+    application::ReadingLimits readingLimits() const;
     QString charsText() const;
     bool charsWarning() const;
     QString cpsText() const;
-    bool cpsWarning() const;
+    bool cpsWarning() const { return cpsSeverity() > 0; }
+    bool cpsError() const { return cpsSeverity() >= 1; }
+    int cpsLimit() const { return readingLimits().cpsWarning; }
+    int lineLength() const { return readingLimits().lineLength; }
+    int maxLines() const { return readingLimits().maxLines; }
     bool startWarning() const { return m_timeWarning[0]; }
     bool endWarning() const { return m_timeWarning[1]; }
     bool durationWarning() const { return m_timeWarning[2]; }
@@ -387,6 +398,8 @@ private:
     QString problemText() const;
 
     Options options() const { return m_options ? m_options() : Options{}; }
+    MeasureOptions measureOptions() const;
+    double cpsSeverity() const;
     std::optional<core::LineRecord> committedRecord() const;
     // MUST KILL: visual keeps the time fields' warning colour
     bool sendDraft(bool leaving = false, bool visual = false, std::optional<application::ContentId> amending = std::nullopt);

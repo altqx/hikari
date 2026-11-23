@@ -1926,6 +1926,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
         o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
         o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        o.limits = application::profileReadingLimits(m_settings->settings());
         o.softLineBreak = m_settings->boolean("editor.softLineBreak");
         return o;
     });
@@ -2011,6 +2012,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
             Q_EMIT m_review->currentChanged();
     });
     v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
     v.shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
@@ -6496,6 +6498,12 @@ QVariantMap Application::scriptProperties()
         videoHeight = geometry.height;
     }
     const bool link = m_settings->boolean("scriptProperties.linkResolutions");
+    const auto limits = application::readingLimits(session->document(), application::profileReadingLimits(m_settings->settings()));
+    const QVariantMap readingLimits{{QStringLiteral("own"), !application::scriptReadingLimits(session->document()).empty()},
+                                    {QStringLiteral("cpsWarning"), limits.cpsWarning},
+                                    {QStringLiteral("cpsError"), limits.cpsError},
+                                    {QStringLiteral("lineLength"), limits.lineLength},
+                                    {QStringLiteral("maxLines"), limits.maxLines}};
     return {{QStringLiteral("title"), q(p.title)},
             {QStringLiteral("originalScript"), q(p.originalScript)},
             {QStringLiteral("originalTranslation"), q(p.originalTranslation)},
@@ -6515,7 +6523,8 @@ QVariantMap Application::scriptProperties()
             {QStringLiteral("scaledBorderAndShadow"), p.scaledBorderAndShadow},
             {QStringLiteral("videoWidth"), videoWidth},
             {QStringLiteral("videoHeight"), videoHeight},
-            {QStringLiteral("linkResolutions"), link}};
+            {QStringLiteral("linkResolutions"), link},
+            {QStringLiteral("readingLimits"), readingLimits}};
 }
 
 bool Application::applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions)
@@ -6564,6 +6573,13 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     e.playResY = edited("playResY");
     e.layoutResX = edited("layoutResX");
     e.layoutResY = edited("layoutResY");
+    e.readingLimits = edited("readingLimits");
+    if (const QVariantMap limits = values.value(QStringLiteral("readingLimits")).toMap();
+        limits.value(QStringLiteral("own")).toBool())
+        p.readingLimits = application::ReadingLimits{limits.value(QStringLiteral("cpsWarning")).toInt(),
+                                                     limits.value(QStringLiteral("cpsError")).toInt(),
+                                                     limits.value(QStringLiteral("lineLength")).toInt(),
+                                                     limits.value(QStringLiteral("maxLines")).toInt()};
     const bool done = application::applyScriptProperties(*session, p, e, linkResolutions).has_value();
     editor().reloadFromSession();
     refreshViews();
@@ -7273,6 +7289,13 @@ void Application::settingChanged(const QString &id)
         for (auto *views : allViews())
             views->editor->optionsChanged();
         refreshVideo();
+    }
+    else if (id == QLatin1String("grid.cpsWarning") || id == QLatin1String("grid.cpsError") ||
+             id == QLatin1String("grid.lineLength") || id == QLatin1String("grid.maxLines")) {
+        for (auto *views : allViews()) {
+            views->shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
+            views->editor->optionsChanged();
+        }
     }
     else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
         for (auto *views : allViews())
