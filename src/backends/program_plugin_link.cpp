@@ -39,6 +39,17 @@ QJsonValue parsed(const std::string &json)
     return document.isArray() ? document.array().first() : QJsonValue();
 }
 
+QString sourceKey(const QString &source)
+{
+    if (source == QLatin1String("panel") || source == QLatin1String("dialog"))
+        return source;
+    if (source == QLatin1String("quick_pick"))
+        return QStringLiteral("pick");
+    if (source == QLatin1String("input_box"))
+        return QStringLiteral("box");
+    return {};
+}
+
 std::vector<std::byte> bytesOf(const QByteArray &data)
 {
     const auto *first = reinterpret_cast<const std::byte *>(data.constData());
@@ -194,10 +205,11 @@ std::expected<std::uint64_t, helper::HostError> ProgramPluginLink::send(std::vec
             const QJsonObject change = data.toObject();
             m_settings.insert(change.value(QStringLiteral("id")).toString(), change.value(QStringLiteral("value")));
         }
-        if (event.startsWith(QLatin1String("panel:")) || event.startsWith(QLatin1String("dialog:"))) {
-            const qsizetype colon = event.indexOf(QLatin1Char(':'));
-            method = event.left(colon);
-            params = {{method, event.mid(colon + 1)}, {QStringLiteral("event"), data}};
+        const qsizetype colon = event.indexOf(QLatin1Char(':'));
+        const QString source = event.left(colon);
+        if (const QString key = sourceKey(source); colon > 0 && !key.isEmpty()) {
+            method = source;
+            params = {{key, event.mid(colon + 1)}, {QStringLiteral("event"), data}};
         } else {
             method = QStringLiteral("event");
             params = {{QStringLiteral("name"), event}, {QStringLiteral("data"), data}};

@@ -207,6 +207,11 @@ private slots:
         const QString event = m_log.filter(QStringLiteral("\"method\":\"event\"")).value(0);
         QVERIFY(event.contains(QStringLiteral("\"name\":\"document.changed\"")));
         QVERIFY(m_log.filter(QStringLiteral("\"panel\":\"main\"")).size() == 1);
+        QVERIFY(process->deliver("quick_pick:q1", R"({"kind":"accept","picked":["a"]})", {}));
+        QVERIFY(process->deliver("input_box:b1", R"({"kind":"value","value":"x"})", {}));
+        QTRY_VERIFY_WITH_TIMEOUT(m_log.filter(QStringLiteral("\"method\":\"input_box\"")).size() == 1, 20000);
+        QVERIFY(m_log.filter(QStringLiteral("\"method\":\"quick_pick\"")).value(0).contains(QStringLiteral("\"pick\":\"q1\"")));
+        QVERIFY(m_log.filter(QStringLiteral("\"method\":\"input_box\"")).value(0).contains(QStringLiteral("\"box\":\"b1\"")));
     }
 
     void anEditTakesTheTurnAndMakesOneGroup()
