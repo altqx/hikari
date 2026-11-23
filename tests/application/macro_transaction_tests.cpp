@@ -526,19 +526,28 @@ MacroDialogueLine fresh(std::string text)
     return d;
 }
 
-std::chrono::nanoseconds fastestMiddleEdit(std::size_t lines)
+struct EditTimes {
+    std::chrono::nanoseconds snapshot = std::chrono::nanoseconds::max(), edit = snapshot;
+};
+
+void timeMiddleEdit(std::size_t lines, EditTimes &fastest)
 {
-    auto fastest = std::chrono::nanoseconds::max();
-    for (int run = 0; run < 5; ++run) {
-        EditSession session{load(bigScript(lines))};
-        const MacroSnapshot s = *snapshotForMacro(session);
-        MacroResult r = unchanged(s);
-        r.dialogues[lines / 2].text = "edited";
-        const auto start = std::chrono::steady_clock::now();
-        EXPECT_TRUE(applyMacroResult(session, s, r, "Edit"));
-        fastest = std::min(fastest, std::chrono::nanoseconds(std::chrono::steady_clock::now() - start));
-    }
-    return fastest;
+    EditSession session{load(bigScript(lines))};
+    const auto started = std::chrono::steady_clock::now();
+    const MacroSnapshot s = *snapshotForMacro(session);
+    const auto snapshotted = std::chrono::steady_clock::now();
+    MacroResult r = unchanged(s);
+    r.dialogues[lines / 2].text = "edited";
+    const auto editing = std::chrono::steady_clock::now();
+    EXPECT_TRUE(applyMacroResult(session, s, r, "Edit"));
+    const auto edited = std::chrono::steady_clock::now();
+    fastest.snapshot = std::min(fastest.snapshot, std::chrono::nanoseconds(snapshotted - started));
+    fastest.edit = std::min(fastest.edit, std::chrono::nanoseconds(edited - editing));
+}
+
+double ratio(std::chrono::nanoseconds large, std::chrono::nanoseconds small)
+{
+    return double(large.count()) / double(small.count());
 }
 
 struct BigMacroTest : ::testing::Test {
@@ -553,10 +562,14 @@ struct BigMacroTest : ::testing::Test {
 
 TEST_F(BigMacroTest, OneEditAppliesInLinearTime)
 {
-    const auto small = fastestMiddleEdit(kLines / 4);
-    const auto large = fastestMiddleEdit(kLines);
-    EXPECT_LT(large, small * 8) << "4x the lines took " << double(large.count()) / double(small.count())
-                                << "x as long; linear is about 4x, quadratic 16x";
+    EditTimes small, large;
+    for (int round = 0; round < 7; ++round) {
+        timeMiddleEdit(kLines / 4, small);
+        timeMiddleEdit(kLines * 2, large);
+    }
+    const double edit = ratio(large.edit, small.edit), snapshot = ratio(large.snapshot, small.snapshot);
+    EXPECT_LT(edit, 4 * snapshot) << "8x the lines took " << edit << "x as long to edit and " << snapshot
+                                  << "x as long to snapshot; a linear edit keeps pace, a quadratic one takes 8x longer";
     r.dialogues[kLines / 2].text = "edited";
     ASSERT_TRUE(applyMacroResult(session, s, r, "Edit"));
     const auto after = texts(session);
