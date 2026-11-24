@@ -28601,14 +28601,6 @@ or codecs or a splitter may be missing</source>
         <translation>“클립 반전”은 안쪽을 보일지 바깥쪽을 보일지 전환합니다.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation type="vanished">점 이동, 직선·베지어 곡선·B-스플라인 추가, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
-    </message>
-    <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation type="vanished">클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오.</translation>
-    </message>
-    <message>
         <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
         <translation>점 이동, 직선·베지어 곡선·B-스플라인 추가, 자유 곡선 그리기, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
     </message>

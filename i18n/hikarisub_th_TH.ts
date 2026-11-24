@@ -28601,14 +28601,6 @@ or codecs or a splitter may be missing</source>
         <translation>“กลับด้านคลิป” จะสลับระหว่างแสดงส่วนที่อยู่ข้างในและส่วนที่อยู่ข้างนอก</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation type="vanished">เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline เพิ่มจุดแยก หรือลบจุด</translation>
-    </message>
-    <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation type="vanished">คลิกเพื่อเพิ่มจุด แล้วลากจุดเพื่อปรับรูปร่าง</translation>
-    </message>
-    <message>
         <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
         <translation>เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline วาดมือเปล่า เพิ่มจุดแยก หรือลบจุด</translation>
     </message>

@@ -29105,14 +29105,6 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Odwróć wycinek przełącza między pokazywaniem tego, co w środku, a tego, co na zewnątrz.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation type="vanished">Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
-    </message>
-    <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation type="vanished">Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt.</translation>
-    </message>
-    <message>
         <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
         <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, rysowanie odręczne, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
     </message>

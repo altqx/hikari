@@ -28853,14 +28853,6 @@ or codecs or a splitter may be missing</source>
         <translation>“கிளிப்பைத் தலைகீழாக்கு” உள்ளே இருப்பதைக் காட்டுவதற்கும் வெளியே இருப்பதைக் காட்டுவதற்கும் இடையே மாற்றும்.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation type="vanished">ஒரு பயன்முறையைத் தேர்ந்தெடுக்கவும்: புள்ளிகளை நகர்த்துதல்; ஒரு கோடு, பெசியர் வளைவு அல்லது பி-ச்ப்ளைனைச் சேர்த்தல்; ஒரு தனிப் புள்ளியைச் சேர்த்தல் அல்லது ஒன்றை நீக்குதல்.</translation>
-    </message>
-    <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation type="vanished">புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும்.</translation>
-    </message>
-    <message>
         <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
         <translation>ஒரு பயன்முறையைத் தேர்ந்தெடுக்கவும்: புள்ளிகளை நகர்த்துதல்; ஒரு கோடு, பெசியர் வளைவு அல்லது பி-ச்ப்ளைனைச் சேர்த்தல்; கையால் வரைதல்; ஒரு தனிப் புள்ளியைச் சேர்த்தல் அல்லது ஒன்றை நீக்குதல்.</translation>
     </message>
