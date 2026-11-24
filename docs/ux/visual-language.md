@@ -425,6 +425,8 @@ The preview text of "Change the size only" says which way the text goes: "smalle
 
 "Don’t ask again" keeps today's meaning: it sets `video.dontAskForBadResolution`, and Settings → Notices → Ask again brings the question back. Subtitles › Resample subtitles stays the place to do it later. The strings live in the `HikariSub.Conversion` context.
 
+Subtitles › Resample subtitles, with its letterbox and crop edges and its matrix choice, is specified in [resample.md](resample.md).
+
 ## Fixes by area
 
 The Gate A inventory of main 344efa574 found the items below. Each is cut into a code card by area after the beta.4 tag. Numbers are the inventory's findings.

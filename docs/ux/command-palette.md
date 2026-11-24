@@ -120,6 +120,10 @@ The palette and Quick Open are uses of one component. App flows and plugins get 
   - Enter, from the field or the list, answers with the picked set. Items can start picked.
 - **Busy**: while the caller is still filling the list or checking input, a 2-unit `accent` bar runs along the field's bottom edge. The list keeps what it has.
 
+### Anchored at a control
+
+A caller can open the frame at a control instead of under the title bar. It opens above the control when there's more room above, and below it otherwise, with its leading edge on the control's, moved left as needed to stay inside the area the caller gives. The caller gives the width. The [model picker](agent-panel.md#the-model-picker) opens this way.
+
 ### The input box
 
 The same frame with the field and no list:

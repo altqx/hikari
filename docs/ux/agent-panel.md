@@ -44,6 +44,61 @@ With no provider and no agent, the panel's empty state keeps today's words: the 
 
 **While the AI component downloads**, or after its download failed, a strip under the header says "Getting the AI component: %1 of %2 MB", or "The AI component didn’t download. Check your connection and try again." with **Retry**.
 
+## The model picker
+
+[#1343](https://github.com/altqx/hikari/issues/1343). The composer's model button opens a searchable list of every model the panel can use, grouped by where it comes from. It replaced the model menu. Inline AI has no model control of its own; its actions use the role models from Settings › AI.
+
+**Settings › AI's role rows** (Q802) open the same picker at the role's dropdown, which shows the chosen model. That picker lists only the providers' models, with no Recent group, no agents and no Settings › AI… row. Every role but Chat starts with "Same as chat", and Vision lists only models that read images. As before, the choice applies as the page applies it.
+
+### Placement and look
+
+- **The shared quick pick**, [anchored at the button](command-palette.md#anchored-at-a-control).
+- **Size.** It is 360 wide, or the panel's width less 16 when that is narrower, and at least 280. It stays 8 inside the panel's edges, sliding left from the button when it would cross the panel's trailing edge.
+- **Everything else is as the quick pick:** rows, group headings, scrolling, matched letters, disabled rows, the busy bar, no backdrop. No title row and no foot.
+
+### Rows
+
+From the top, with an empty field, in the old menu's order (Q803):
+
+1. **Recent**: the last 5 models chosen in any thread (`ai.models.recent`), newest first. A model that is no longer offered drops out. A Recent row's description is its source instead of the id: "Anthropic", or for an agent model the button's form, "Claude Code · Opus".
+2. **One group per agent** the panel offers: "Claude Code", then "Codex", then each ACP agent by its name. Each starts with "Agent default", followed by the models the agent lists. An agent that isn't found, or isn't offered here ([External agents](../ai-external-agents.md)), has no group.
+3. **One group per provider**, in Settings › AI's order, under the provider's name.
+
+A row's name is the model's name. Outside Recent its description is the model id, in `muted`, when it differs from the name. The current model has the `karaoke-check` glyph in the icon gutter, in Recent and in its group, and its accessible description adds "current model".
+
+### Typing
+
+- The placeholder is "Search models".
+- Typing matches the model's name, then its id, then its provider's or agent's name, with the quick pick's matching.
+- Groups stay and empty ones hide. Recent hides while there is text.
+- The first match is current, so Enter picks the top match. With no match: "No matching models".
+
+### Providers and agents that can't be used yet
+
+These rows use Settings › AI's words, and each opens Settings › AI.
+
+- **A provider that signs in**, while signed out: one row, "Sign in with OpenRouter…".
+- **A provider that needs a key**, while it has none: one row, "Add a key for Anthropic…".
+- **Codex** without HikariSub's ChatGPT sign-in: one row, "Sign in with ChatGPT…".
+- **The last row**, "Settings › AI…", led by the `settings` glyph, ends the list without a group.
+
+The picker reads no keychain. It goes by the last key and sign-in state Settings › AI knows in this run: a sign-out, or a test or request that failed on the key, and Settings › AI's own Codex check. Right after a restart, a provider whose key went missing outside HikariSub lists its models until a request fails on the key.
+
+### Refresh
+
+- **It opens at once** with the cached lists: the providers' saved catalogues and the agents' last lists.
+- **An agent's list loads once per run**, on the first open, as [AI agent](../ai-agent.md) says. Opening the picker again doesn't load it again.
+- **While a load runs**, the busy bar shows and rows update in place, the current row staying on the same model. "Loading models…", disabled, sits under the agent's "Agent default" row until its first list arrives.
+- **A load that fails or times out** keeps the last list, then shows a disabled "Couldn’t load models" with the reason in `muted`, then **Try again** with the `refresh` glyph, which loads it again with the picker open.
+- **A provider** added, signed in, signed out or removed while the picker is open updates it in place (#1332).
+
+### Keyboard
+
+- **Up and Down** move through the rows, wrapping and skipping headings. **Page Up** and **Page Down** move a page.
+- **Enter** picks and closes. The next message uses the chosen model, and focus goes to the message box.
+- **Esc**, a press outside, or the window losing focus closes the picker with no change, and focus goes back where it was.
+- No new shortcut.
+
 ## Discord
 
 Presence shows **With the AI agent** (`agent`), off by default. Its art is the `ai-assistant` glyph on #F6B8F0 ([Art](discord-presence.md#art)).
