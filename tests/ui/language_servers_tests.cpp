@@ -165,7 +165,7 @@ private slots:
         const app::ServerText blank = app::serverText(m_session->document(), ProblemField::Text, plugins::LanguageServer::Tags::Blank);
         QCOMPARE(blank.text, QStringLiteral("a      bad  end\n\n") + QString::fromUtf8("\xC3\xA9\xF0\x9F\x98\x80 bad"));
         QCOMPARE(blank.lengths, (std::vector<int>{15, 0, 7}));
-        QCOMPARE(blank.comments, (std::vector<bool>{false, true, false}));
+        QCOMPARE(blank.comments, boost::dynamic_bitset<>(std::string("010")));
         const app::ServerText kept = app::serverText(m_session->document(), ProblemField::Text, plugins::LanguageServer::Tags::Keep);
         QVERIFY(kept.text.startsWith(QStringLiteral("a {\\i1}bad\\Nend\n\n")));
     }

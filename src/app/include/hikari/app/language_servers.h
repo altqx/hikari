@@ -11,6 +11,8 @@
 #include <QString>
 #include <QTimer>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <cstdint>
 #include <deque>
 #include <functional>
@@ -28,7 +30,7 @@ struct ServerText {
     QString text;
     std::vector<core::LineId> lines;
     std::vector<int> lengths; // UTF-16; 0 for a Comment Line
-    std::vector<bool> comments;
+    boost::dynamic_bitset<> comments;
     std::vector<std::u8string> fields;
 };
 
