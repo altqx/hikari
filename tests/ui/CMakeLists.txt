@@ -645,6 +645,8 @@ endif()
 hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_dialog_frame_tests SOURCES dialog_frame_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
+hikari_add_qttest(hikari_ui_association_offer_tests SOURCES association_offer_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 Qt6::QuickTest)
 hikari_add_qttest(hikari_ui_popup_kit_tests SOURCES popup_kit_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 Qt6::QuickTest)
 hikari_add_qttest(hikari_ui_qml_engine_tests SOURCES qml_engine_tests.cpp LIBRARIES hikari_composition)

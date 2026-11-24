@@ -159,7 +159,6 @@ Window {
             sourceComponent: FullscreenTypesetting {
                 shell: fs.shell
                 controller: fs.controller
-                dialogs: fs.visible
                 onPictureFocusRequested: keyScope.focusPicture()
             }
         }

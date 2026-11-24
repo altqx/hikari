@@ -6030,6 +6030,7 @@ ApplicationWindow {
                     settings: root.app.settings
                     Layout.minimumWidth: 0
                     tools: root.visualTools
+                    keyOf: symbol => root.boundKeys(symbol, 3)
                 }
                 Slider {
                     objectName: "videoSlider"
@@ -8599,6 +8600,7 @@ ApplicationWindow {
                     id: agentPanelOn
                     AgentPanel {
                         agent: root.agent
+                        quickInput: appQuickInput
                         aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
                         onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
@@ -9201,6 +9203,7 @@ ApplicationWindow {
             visible: root.workspaceLayout.nodeEffects
             Layout.fillWidth: true
             controller: root.nodeEffects
+            quickInput: appQuickInput
             onLeave: root.setNodeEffects(false)
             onProblemChosen: node => {
                 root.nodeEffects.selection = [node]
@@ -9567,6 +9570,7 @@ ApplicationWindow {
         objectName: "matroskaSubtitles"
         matroska: root.matroska
         settings: root.app.settings
+        quickInput: appQuickInput
         notify: root.notify
         documentTitle: () => root.currentTab().title || ""
         videoName: () => root.currentTab().video || ""
@@ -10163,29 +10167,23 @@ ApplicationWindow {
             root.audio.openAudioUrl(selectedFile)
         }
     }
-    ListChooser {
-        id: audioTrackChooser
-        objectName: "audioTrackChooser"
-        settings: root.app.settings
-        Connections {
-            target: root.audio
-            function onTrackChoicesChanged() {
-                if (root.audio.trackChoices.length > 0) {
-                    audioTrackChooser.choose({
-                        title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
-                        rows: root.audio.trackChoices,
-                        acceptText: qsTranslate("HikariSub.Audio", "Open")
-                    }, row => {
-                        if (row >= 0)
-                            root.audio.chooseTrack(row)
-                        else
-                            root.audio.cancelTrackChoice()
-                    })
-                } else if (audioTrackChooser.opened) {
-                    audioTrackChooser.done = null
-                    audioTrackChooser.none()
-                }
+    Connections {
+        target: root.audio
+        function onTrackChoicesChanged() {
+            if (root.audio.trackChoices.length === 0) {
+                appQuickInput.dismissFrom(root.audio)
+                return
             }
+            appQuickInput.pickFrom({
+                title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
+                items: root.audio.trackChoices.map((label, row) => ({ id: String(row), label: label })),
+                from: root.audio
+            }, id => {
+                if (id === null)
+                    root.audio.cancelTrackChoice()
+                else
+                    root.audio.chooseTrack(Number(id))
+            })
         }
     }
     FileChooser {
@@ -11039,6 +11037,7 @@ ApplicationWindow {
     Connections {
         target: quickOpen.popup
         function onOpened() {
+            appQuickInput.cancel()
             if (root.pluginUi)
                 root.pluginUi.popups.dismissShown()
         }
@@ -11048,7 +11047,20 @@ ApplicationWindow {
         objectName: "pluginQuickInput"
         popups: root.pluginUi ? root.pluginUi.popups : null
         hangFrom: quickOpen.hangFrom
-        onShowing: quickOpen.close()
+        onShowing: {
+            quickOpen.close()
+            appQuickInput.cancel()
+        }
+    }
+    AppQuickInput {
+        id: appQuickInput
+        objectName: "appQuickInput"
+        hangFrom: quickOpen.hangFrom
+        onShowing: {
+            quickOpen.close()
+            if (root.pluginUi)
+                root.pluginUi.popups.dismissShown()
+        }
     }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]

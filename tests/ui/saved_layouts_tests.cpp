@@ -868,6 +868,14 @@ private slots:
         QTRY_VERIFY(layouts().savedLayouts().isEmpty());
         QCOMPARE(layouts().layout(), QString());
         QTRY_VERIFY(!savedItem("viewLayout", QStringLiteral("Quiet (Kit)")));
+
+        saveAs(QStringLiteral("Kept"));
+        QVERIFY(QFile::remove(layoutsFile()));
+        emit application->pluginManager()->pluginsChanged();
+        QCoreApplication::processEvents();
+        QCOMPARE(layouts().savedLayouts().size(), 1);
+        QCOMPARE(row(0).value(QStringLiteral("name")).toString(), QStringLiteral("Kept"));
+        QVERIFY(layouts().applySavedLayout(QStringLiteral("Kept")));
         stop();
     }
 
