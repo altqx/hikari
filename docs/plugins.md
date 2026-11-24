@@ -137,7 +137,7 @@ threshold = 0.4
 Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin> in that plugin's panel menu. Installed counts the updates that wait for the user, and the newer versions that won't install automatically. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates" and "Install updates automatically".
 
 - **The list.** Each row shows the package icon, name, version and signer (From the marketplace for a marketplace install). HikariSub's own plugins carry the By HikariSub icon, named on hover. It shows a state only when the plugin isn't simply running: Revoked, <version> waits for you, Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
-- **The details.** What the plugin is and who made it, with the By HikariSub badge for HikariSub's own plugins, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off. A marketplace plugin has its own "Install updates automatically", and Roll back to <version> sits beside the version when a replaced copy is kept. A held update shows a bar with Review…; a revoked plugin shows a red bar with Install <last good> and Uninstall….
+- **The details.** What the plugin is and who made it, with the By HikariSub badge for HikariSub's own plugins, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off. A marketplace plugin has its own "Install updates automatically". A plugin with [AI tools](#ai-tools-and-mcp-servers) has "Trust <plugin>'s tool marks", off by default and kept across updates. Roll back to <version> sits beside the version when a replaced copy is kept. A held update shows a bar with Review…; a revoked plugin shows a red bar with Install <last good> and Uninstall….
 - **Remembered folders.** Each folder the user let the plugin keep, with Forget. A forgotten folder is asked for again, and the plugin's open files in it close.
 - **Settings.** Open in Settings… shows the plugin's section under Settings › Plugins, where its settings are kept ([Settings, grown](#settings-grown)).
 - **Errors.** A plugin that didn't start, crashed or was stopped shows the error and its traceback, with Start again and Copy.
@@ -922,7 +922,7 @@ end)
 
 ### AI tools and MCP servers
 
-#1228.
+[#1228](https://github.com/altqx/hikari/issues/1228).
 
 **AI tools.** Each `contributes.aiTools` entry is `{command, description, parameters, result, mark}`.
 
@@ -934,7 +934,7 @@ end)
 - **Who runs it.** The command runs as the plugin, with the plugin's grants, never the AI's.
 - **What stays always-ask.** `plugins.run`, `commands.run` of a `plugin.` command, and plugin commands without an `aiTools` entry stay on the always-ask list.
 - **Over MCP.** HikariSub's MCP server lists a plugin's trusted `read` tools with `readOnlyHint`. It lists no `write` tool, as it refuses every write but `document.apply`.
-- **Docs.** #1228 amends [ai-agent.md](ai-agent.md)'s always-ask list and classification, [ai-mcp.md](ai-mcp.md) and [ai-mcp-clients.md](ai-mcp-clients.md) to match. `problems.fix` is a write that asks by the thread's mode.
+- **How HikariSub does it.** [ai-agent.md](ai-agent.md) has the gate, [ai-mcp-clients.md](ai-mcp-clients.md#plugins-ai-tools) the link and the checks, and [ai-mcp.md](ai-mcp.md) the MCP listing. `problems.fix` is a write that asks by the thread's mode.
 
 **MCP servers.** Each `contributes.mcpServers` entry is `{id, title, description, program}`.
 

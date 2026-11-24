@@ -1123,6 +1123,25 @@ DialogWindow {
                 checked = Qt.binding(() => details.row.autoUpdate)
             }
         }
+        CheckBox {
+            objectName: "pluginTrustToolMarks_" + details.row.id
+            visible: details.row.aiTools
+            text: qsTr("Trust %1’s tool marks").arg(details.row.name)
+            checked: details.row.trustToolMarks
+            onToggled: {
+                const problem = dialog.manager.setTrustToolMarks(details.row.id, checked)
+                if (problem.length > 0)
+                    dialog.tell(qsTr("Plugin not changed"), problem)
+                checked = Qt.binding(() => details.row.trustToolMarks)
+            }
+        }
+        Label {
+            visible: details.row.aiTools
+            text: qsTr("Its read AI tools then run without asking, and can’t change anything. Until then, every one of its tools counts as a change.")
+            color: Theme.muted
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
         Rectangle {
             objectName: "pluginDetailsError"
             visible: ["failed", "stopped"].includes(details.runState.status)

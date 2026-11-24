@@ -18929,6 +18929,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>நீங்கள் ஏற்றத்தை நீக்கும் வரை, நிறுவப்பட்ட %1 ஐ ஒரு டெவ் செருகுநிரல் மேலெழுதுகிறது.</translation>
     </message>
     <message>
+        <source>Trust %1’s tool marks</source>
+        <translation>%1 இன் கருவிக் குறிகளை நம்பு</translation>
+    </message>
+    <message>
+        <source>Its read AI tools then run without asking, and can’t change anything. Until then, every one of its tools counts as a change.</source>
+        <translation>அதன் பிறகு அதன் படிக்கும் AI கருவிகள் கேட்காமல் இயங்கும், எதையும் மாற்ற முடியாது. அதுவரை அதன் ஒவ்வொரு கருவியும் ஒரு மாற்றமாகக் கணக்கிடப்படும்.</translation>
+    </message>
+    <message>
         <source>Choose a plugin folder</source>
         <translation>செருகுநிரல் கோப்புறையைத் தேர்வுசெய்</translation>
     </message>

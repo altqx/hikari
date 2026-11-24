@@ -189,6 +189,13 @@ bool PluginProcess::run(const std::string &command, const std::string &call, For
     return enqueue(Unit{Unit::Kind::Command, command, call, {}, std::move(done)});
 }
 
+bool PluginProcess::runReadTool(const std::string &command, const std::string &call, FormatDone done)
+{
+    Unit unit{Unit::Kind::Command, command, call, {}, std::move(done)};
+    unit.readTool = true;
+    return enqueue(std::move(unit));
+}
+
 bool PluginProcess::exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson,
                                    FormatDone done)
 {

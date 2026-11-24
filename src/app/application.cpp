@@ -1006,6 +1006,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_ai->keepPluginMcpChoices(*installed);
         m_ai->setPluginMcpServers(m_pluginRuntime->mcpServers());
     });
+    m_ai->setPluginToolRun([runtime = QPointer(m_pluginRuntime.get())](const backends::ai::PluginToolEntry &tool,
+                                                                         const api::Json &arguments,
+                                                                         backends::ai::PluginTools::Answer answer) {
+        if (!runtime)
+            return answer(std::unexpected(api::Error{std::string(api::errors::kUnavailable), "HikariSub is closing.", {}}));
+        runtime->runAiTool(tool, arguments, std::move(answer));
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::aiToolsChanged, m_ai.get(),
+            [this] { m_ai->setPluginTools(m_pluginRuntime->aiTools()); });
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
     QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);

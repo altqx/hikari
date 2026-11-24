@@ -18789,6 +18789,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>설치된 %1(은)는 불러오기를 해제할 때까지 개발 플러그인으로 대체됩니다.</translation>
     </message>
     <message>
+        <source>Trust %1’s tool marks</source>
+        <translation>%1의 도구 표시 신뢰</translation>
+    </message>
+    <message>
+        <source>Its read AI tools then run without asking, and can’t change anything. Until then, every one of its tools counts as a change.</source>
+        <translation>이후 읽기용 AI 도구는 묻지 않고 실행되며 아무것도 변경할 수 없습니다. 그 전까지는 모든 도구가 변경으로 간주됩니다.</translation>
+    </message>
+    <message>
         <source>Choose a plugin folder</source>
         <translation>플러그인 폴더 선택</translation>
     </message>
