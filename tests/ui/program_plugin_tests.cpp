@@ -298,7 +298,7 @@ private slots:
         auto process = plugin();
         QSignalSpy finished(process.get(), &PluginProcess::finished);
         process->start();
-        QVERIFY(process->run("count"));
+        QVERIFY(process->run("count", R"({"args":{},"context":{"via":"menu"}})"));
         QVERIFY(finished.wait(20000));
         QCOMPARE(m_served.size(), std::size_t(2));
         QCOMPARE(m_served[0].name, std::string("lines.list"));
