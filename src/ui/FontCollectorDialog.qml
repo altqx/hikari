@@ -524,10 +524,9 @@ DialogWindow {
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             onClicked: dialog.close()
         },
-        Button {
+        PrimaryButton {
             id: startButton
             objectName: "fontCollectorStart"
-            highlighted: true
             text: qsTr("Start")
             enabled: !dialog.working
             rightPadding: 12 + startChevron.width + 8

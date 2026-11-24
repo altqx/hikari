@@ -12582,6 +12582,17 @@ private slots:
         QTRY_COMPARE(session->selection().active, std::optional(lines[2]->id));
         collectorWindow->requestActivate();
         QVERIFY(QTest::qWaitForWindowActive(collectorWindow));
+        auto *startButton = dialogItem("fontCollectorDialog", "fontCollectorStart");
+        QVERIFY(QString::fromLatin1(startButton->metaObject()->className()).startsWith(QLatin1String("PrimaryButton")));
+        startButton->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(startButton->hasActiveFocus());
+        auto *startMenu = dialog->findChild<QObject *>(QStringLiteral("fontCollectorStartMenuPopup"));
+        QVERIFY(startMenu);
+        QTest::keyClick(collectorWindow, Qt::Key_Down, Qt::AltModifier);
+        QTRY_VERIFY(startMenu->property("opened").toBool());
+        QTest::keyClick(collectorWindow, Qt::Key_Escape);
+        QTRY_VERIFY(!startMenu->property("visible").toBool());
+        QVERIFY(dialog->property("visible").toBool());
 
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
         QCOMPARE(application->settingsStore()->integer("fontCollector.action"), 1);

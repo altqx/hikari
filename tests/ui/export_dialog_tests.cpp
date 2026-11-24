@@ -298,7 +298,8 @@ private slots:
         QCOMPARE(dialog()->property("format").toString(), QStringLiteral("microdvd"));
         QCOMPARE(part("exportFps")->property("text").toString(), QStringLiteral("25"));
         QVERIFY(part<QObject>("exportMerge")->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QVERIFY(!part("exportClose")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(part("exportCancel"), "click"));
 
         QVERIFY(!open("new.ass").isEmpty());
         openDialog();
@@ -581,7 +582,8 @@ private slots:
         QCOMPARE(part("exportNothingLost")->height(), 30.0);
         QVERIFY(part("exportShowFile")->isVisible());
         QVERIFY(!part("exportRun")->isVisible());
-        QVERIFY(part<QObject>("exportClose")->property("highlighted").toBool());
+        QVERIFY(QString::fromLatin1(part<QObject>("exportClose")->metaObject()->className()).startsWith(QLatin1String("PrimaryButton")));
+        QVERIFY(!part("exportCancel")->isVisible());
     }
 
     void beforeExportStartsWithNoStepsAndRunsTheOnesTurnedOn()

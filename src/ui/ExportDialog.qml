@@ -783,11 +783,13 @@ DialogWindow {
         font: dialog.fontAt(12)
     }
     buttons: [
-        Button {
+        PrimaryButton {
             id: exportButton
+            // DialogButtonBox keeps a hidden button's spacing; the negative width takes it back.
+            implicitWidth: visible ? Math.max(80, implicitContentWidth + leftPadding + rightPadding)
+                                   : -(DialogButtonBox.buttonBox ? DialogButtonBox.buttonBox.spacing : 0)
             objectName: "exportRun"
             visible: !dialog.reported
-            highlighted: true
             text: qsTr("Export")
             enabled: destination.text.trim().length > 0 && dialog.fpsValid && !dialog.exporting
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
@@ -801,11 +803,21 @@ DialogWindow {
             DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
             onClicked: dialog.app.showInFolder(dialog.app.localPath(dialog.report.file))
         },
-        Button {
+        FooterButton {
+            objectName: "exportCancel"
+            visible: !dialog.reported
+            text: qsTr("Cancel")
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: dialog.close()
+        },
+        PrimaryButton {
             id: closeButton
+            // DialogButtonBox keeps a hidden button's spacing; the negative width takes it back.
+            implicitWidth: visible ? Math.max(80, implicitContentWidth + leftPadding + rightPadding)
+                                   : -(DialogButtonBox.buttonBox ? DialogButtonBox.buttonBox.spacing : 0)
             objectName: "exportClose"
-            highlighted: dialog.reported
-            text: dialog.reported ? qsTr("Close") : qsTr("Cancel")
+            visible: dialog.reported
+            text: qsTr("Close")
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             onClicked: dialog.close()
         }
