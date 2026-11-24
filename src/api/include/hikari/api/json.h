@@ -6,5 +6,6 @@ namespace hikari::api {
 
 using json::isUtf8;
 using json::Json;
+using json::mismatch;
 
 }

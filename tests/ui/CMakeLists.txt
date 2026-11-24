@@ -465,6 +465,10 @@ target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper hikari_plugin_test_program)
 target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
+hikari_add_qttest(hikari_ui_plugin_test_harness_tests OFFSCREEN_ONLY SOURCES plugin_test_harness_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_plugin_test_harness_tests PRIVATE
+    HIKARI_HARNESS_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness")
+add_dependencies(hikari_ui_plugin_test_harness_tests hikari_plugin_helper)
 hikari_add_qttest(hikari_ui_plugin_programs_tests SOURCES plugin_programs_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_programs_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)
