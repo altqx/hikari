@@ -421,6 +421,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Quick fix"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Full screen typesetting"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Reopen with encoding…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Attachments…"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

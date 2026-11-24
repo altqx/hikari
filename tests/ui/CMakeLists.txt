@@ -201,6 +201,9 @@ hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBR
 target_compile_definitions(hikari_ui_open_reload_tests PRIVATE
     HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_qttest(hikari_ui_recovery_tests SOURCES recovery_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_attachments_tests SOURCES attachments_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_attachments_tests PRIVATE
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments")
 hikari_add_qttest(hikari_ui_automation_hotkeys_tests SOURCES automation_hotkeys_ui_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_automation_hotkeys_tests PRIVATE
     HIKARI_AUTOLOAD_DIR="${HIKARI_AUTOMATION_STAGE}/Autoload"

@@ -7,6 +7,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_comparison.cpp
     application_video.cpp
     application_timecodes.cpp
+    application_attachments.cpp
     application_encodings.cpp
     application_reference.cpp
     application_tab_menu.cpp

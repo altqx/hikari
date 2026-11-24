@@ -2672,6 +2672,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     emit encodingSuggestionChanged();
+    emit attachmentsChanged();
     noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());

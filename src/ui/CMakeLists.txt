@@ -183,7 +183,7 @@ list(APPEND hikari_ui_qml_files MessageBox.qml DangerButton.qml Popover.qml Popo
 list(APPEND hikari_ui_qml_files HidableQuestion.qml)
 list(APPEND hikari_ui_qml_files TierChip.qml TierSaveButton.qml TierSaveMenu.qml)
 list(APPEND hikari_ui_qml_files SetNewFpsWindow.qml)
-list(APPEND hikari_ui_qml_files LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
+list(APPEND hikari_ui_qml_files LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml Attachments.qml StartupOffer.qml)
 list(APPEND hikari_ui_qml_files SpellingAddedWords.qml ResampleWindow.qml)
 list(APPEND hikari_ui_qml_files PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml InterpolateLinesWindow.qml
     ExtendTrackingWindow.qml BlurAndGlowLayersDialog.qml)
