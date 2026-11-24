@@ -153,6 +153,19 @@ struct McpServer {
     std::string program;
 };
 
+struct LanguageServer {
+    enum class Scope { Document, Line };
+    enum class Tags { Blank, Keep };
+    std::string id;
+    std::string title;
+    std::string program;
+    Scope scope = Scope::Document;
+    std::vector<std::string> fields; // "text", "translation"
+    Tags tags = Tags::Blank;
+    std::string languageId = "plaintext";
+    api::Json initializationOptions; // null without one
+};
+
 // "linux-x64", "windows-arm64", …: the platform key of the computer HikariSub runs on.
 std::string_view thisPlatform();
 
@@ -228,6 +241,7 @@ struct Manifest {
     std::vector<ContentFile> graphs;
     std::vector<ContentFile> layouts;
     std::vector<McpServer> mcpServers;
+    std::vector<LanguageServer> languageServers;
     std::vector<ColourTheme> themes;
     std::vector<IconTheme> iconThemes;
     std::vector<OwnIcon> icons;

@@ -1,4 +1,5 @@
 #include "hikari/application/explorer.h"
+#include "hikari/application/video_extensions.h"
 
 #include <gtest/gtest.h>
 
@@ -21,6 +22,12 @@ std::vector<std::string> namesOf(const std::vector<std::string> &names, const Gr
     return out;
 }
 
+}
+
+TEST(Explorer, ClassifiesEveryVideoExtensionAsVideo)
+{
+    for (const auto extension : hikari::application::kVideoExtensions)
+        EXPECT_EQ(classify("ep01." + std::string(extension)), FileKind::Video) << extension;
 }
 
 TEST(Explorer, ClassifiesTheFileTypesHikariSubUses)

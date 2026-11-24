@@ -7507,6 +7507,33 @@ Failed to copy %2 fonts.</source>
         <source>Filter the Grid</source>
         <translation>자막 목록 필터</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>줄 위로 이동</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>줄 아래로 이동</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>글자 삭제, 태그 유지</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 표시</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 숨기기</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9490,6 +9517,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>자막 목록에서 태그 표시 방식 순환</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>자막 목록에서 태그 표시</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>자막 목록에서 태그를 기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>글자 삭제, 태그 유지</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>줄 위로 이동</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>줄 아래로 이동</translation>
     </message>
 </context>
 <context>
@@ -12615,14 +12670,6 @@ Failed to copy %2 fonts.</source>
         <translation>먼저 파일을 여세요</translation>
     </message>
     <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>자막 목록에서 태그를 표시하거나 숨깁니다</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>자막 목록에서 태그 숨기기</translation>
-    </message>
-    <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>줄 편집기에서 태그를 표시하거나 숨깁니다</translation>
     </message>
@@ -12689,6 +12736,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>자막 목록에서 태그를 표시하거나, 기호로 바꾸거나, 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>자막 목록의 태그</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>자막 목록에서 태그를 그대로 표시합니다</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>자막 목록의 각 태그 블록을 설정 › 자막 목록에서 지정한 기호로 표시합니다</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>자막 목록에서 태그를 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>숨기기</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>현재 영상 프레임에 표시되는 줄을 자막 목록에서 색으로 강조합니다</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
     </message>
 </context>
 <context>
@@ -15515,7 +15598,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>먼저 적용 또는 취소를 누르십시오. 가져온 항목은 즉시 추가됩니다.</translation>
+        <translation type="vanished">먼저 적용 또는 취소를 누르십시오. 가져온 항목은 즉시 추가됩니다.</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16549,7 +16632,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>AI를 다시 켜려면 확인 또는 적용을 누르세요.</translation>
+        <translation type="vanished">AI를 다시 켜려면 확인 또는 적용을 누르세요.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -16899,7 +16982,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
+        <translation type="vanished">JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17228,10 +17311,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>요청은 추가한 공급자와 %1에만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
     </message>
@@ -17364,6 +17443,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>JSON 설정에는 주소가 필요하며, HikariSub가 127.0.0.1에서 수신을 시작하면 주소가 채워집니다.</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -18716,6 +18799,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>이제 매니페스트에 지정된 ID가 “%1”입니다. 불러오기를 해제하고 폴더를 다시 불러오십시오.</translation>
+    </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1이(가) 멈췄습니다: %2</translation>
     </message>
 </context>
 <context>
@@ -21188,6 +21275,26 @@ because it was edited.</source>
         <source>Overlapping lines</source>
         <translation>겹치는 줄</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>부분 일치</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>정확히 일치</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>일치 방식</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>선택과 교차</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>선택 항목에서 %1개 줄을 제외했습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21451,7 +21558,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -26796,7 +26903,7 @@ Styles deleted:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -26813,6 +26920,10 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>영상 (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

@@ -7584,6 +7584,33 @@ Failed to copy %2 fonts.</source>
         <source>Filter the Grid</source>
         <translation>கட்டத்தை வடிகட்டு</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: காட்டு</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: மறை</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9568,6 +9595,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைச் சுழற்று</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
     </message>
 </context>
 <context>
@@ -12731,14 +12786,6 @@ Failed to copy %2 fonts.</source>
         <translation>முதலில் ஒரு கோப்பைத் திறக்கவும்</translation>
     </message>
     <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களை மறை</translation>
-    </message>
-    <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>வரி திருத்தியில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
     </message>
@@ -12805,6 +12852,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது, மாற்றுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை உள்ளபடியே காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>கட்டத்தில் ஒவ்வொரு குறிச்சொல் தொகுதியையும் அமைப்புகள் › கட்டம் இல் அமைத்த அடையாளமாகக் காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>மறை</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>தற்போதைய வீடியோ சட்டகத்தில் தெரியும் வரிகளைக் கட்டத்தில் நிறமிடுகிறது</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
     </message>
 </context>
 <context>
@@ -15643,7 +15726,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>முதலில் பயன்படுத்து அல்லது ரத்துசெய் அழுத்தவும்: இறக்குமதி உடனே சேர்க்கப்படும்</translation>
+        <translation type="vanished">முதலில் பயன்படுத்து அல்லது ரத்துசெய் அழுத்தவும்: இறக்குமதி உடனே சேர்க்கப்படும்</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16685,7 +16768,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>AI ஐ மீண்டும் இயக்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+        <translation type="vanished">AI ஐ மீண்டும் இயக்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -17036,7 +17119,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+        <translation type="vanished">JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17366,10 +17449,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அடைகிறது.</translation>
     </message>
@@ -17503,6 +17582,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>JSON அமைப்புக்கு முகவரி தேவை; HikariSub 127.0.0.1 இல் கேட்கத் தொடங்கியதும் அது கிடைக்கும்.</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -18856,6 +18939,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>அதன் மேனிஃபெச்ட் இப்போது அடையாளம் “%1” என்கிறது. அதன் ஏற்றத்தை நீக்கி, கோப்புறையை மீண்டும் ஏற்றவும்.</translation>
+    </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 நின்றது: %2</translation>
     </message>
 </context>
 <context>
@@ -21371,6 +21458,26 @@ because it was edited.</source>
         <source>Overlapping lines</source>
         <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகள்</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>கொண்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>துல்லியமான பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>தேர்வுடன் பொதுவானவற்றை மட்டும் வை</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>%1 வரிகள் தேர்விலிருந்து நீக்கப்பட்டன.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21635,7 +21742,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27036,7 +27143,7 @@ Styles deleted:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -27053,6 +27160,10 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>வீடியோ (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

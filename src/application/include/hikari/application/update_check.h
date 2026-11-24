@@ -273,6 +273,17 @@ std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
 // different versions; with no file, the kind alone.
 std::string whatsNewCopyKey(std::string_view kindToken, std::string_view path);
 
+// --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>] [--timeout <ms>] [--json]
+struct PluginTestArguments {
+    std::string folder;
+    std::string script;
+    std::string document;
+    int stepTimeoutMs = 10'000;
+    bool json = false;
+    // What is wrong with the command line; empty when nothing is.
+    std::string problem;
+};
+
 // The program's own switches; the rest of the command line is left as it is.
 struct StartupArguments {
     bool printVersion = false;
@@ -285,6 +296,7 @@ struct StartupArguments {
     std::string mcpChannelUrl; // --channel-url <url> with --mcp: the same over HTTP
     WindowRequest window = WindowRequest::Default; // the last of -n/--new-window and -r/--reuse-window
     bool openFolder = false; // --open-folder: show the Open folder picker
+    std::optional<PluginTestArguments> testPlugin;
     std::vector<std::string> rest;
 };
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments);

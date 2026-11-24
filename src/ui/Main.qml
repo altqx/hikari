@@ -3145,6 +3145,17 @@ ApplicationWindow {
             }
         }
         Action {
+            id: markCurrentFrameAction
+            text: qsTr("Mark lines on the current frame")
+            checkable: true
+            checked: root.app.markCurrentFrame
+            onToggled: {
+                if (!root.hotkeyGesture("GLOBAL_GRID_MARK_CURRENT_FRAME"))
+                    root.app.markCurrentFrame = checked
+                checked = Qt.binding(() => root.app.markCurrentFrame)
+            }
+        }
+        Action {
             id: gettingStartedAction
             text: qsTr("Getting &started")
             onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) root.lazy(gettingStartedDialogLoader).openSetup()
@@ -4708,21 +4719,48 @@ ApplicationWindow {
                     action: fullScreenTypesettingAction
                 }
                 MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_HIDE_TAGS"
-                    id: hideTagsItem
-                    help: qsTr("Shows or hides tags in the Grid")
+                ShellMenu {
+                    help: qsTr("Shows, replaces or hides tags in the Grid")
                     iconRole: "hide-tags"
-                    objectName: "hideTagsMenuItem"
-                    text: qsTr("Hide tags in the Grid")
-                    checkable: true
-                    checked: root.shell.hideTags
-                    keepsMenuOpen: false
-                    onTriggered: {
-                        checked = Qt.binding(() => root.shell.hideTags)
-                        if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS"))
-                            root.app.toggleHideTags()
+                    objectName: "gridTagsMenu"
+                    title: qsTr("Tags in the Grid")
+                    component GridTagsItem: MenuRadioItem {
+                        required property int mode
+                        checked: root.shell.tagsMode === mode
+                        onTriggered: {
+                            checked = Qt.binding(() => root.shell.tagsMode === mode)
+                            if (!root.hotkeyGesture(command))
+                                root.app.setGridTagsMode(mode)
+                        }
                     }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_SHOW"
+                        help: qsTr("Shows tags in the Grid as they are")
+                        objectName: "gridTagsShowMenuItem"
+                        text: qsTr("Show")
+                        mode: 0
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_REPLACE"
+                        help: qsTr("Shows each tag block in the Grid as the symbol set in Settings › Grid")
+                        objectName: "gridTagsReplaceMenuItem"
+                        text: qsTr("Replace with symbol")
+                        mode: 1
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_HIDE"
+                        help: qsTr("Hides tags in the Grid")
+                        objectName: "gridTagsHideMenuItem"
+                        text: qsTr("Hide")
+                        mode: 2
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_GRID_MARK_CURRENT_FRAME"
+                    help: qsTr("Tints the lines in the Grid that show on the current video frame")
+                    iconRole: "select-visible"
+                    objectName: "markCurrentFrameMenuItem"
+                    action: markCurrentFrameAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_EDITOR_HIDE_TAGS"
@@ -8096,8 +8134,12 @@ ApplicationWindow {
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
                         property bool reviewShown: false
                         property bool hasFolds: false
+                        property bool canMoveUp: false
+                        property bool canMoveDown: false
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
+                            canMoveUp = root.app.canMoveLines(true)
+                            canMoveDown = root.app.canMoveLines(false)
                             canShiftTranslation = root.app.canShiftTranslation()
                             reviewShown = root.review.on && root.review.current.count !== undefined
                             hasFolds = root.app.canConvertFolds()
@@ -8280,6 +8322,22 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_UP"
+                            iconRole: "move-up"
+                            objectName: "moveLinesUp"
+                            text: qsTranslate("HikariSub.Grid", "Move lines up")
+                            enabled: gridMenu.canMoveUp
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_UP")) root.app.moveLines(true)
+                        }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_DOWN"
+                            iconRole: "move-down"
+                            objectName: "moveLinesDown"
+                            text: qsTranslate("HikariSub.Grid", "Move lines down")
+                            enabled: gridMenu.canMoveDown
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_DOWN")) root.app.moveLines(false)
+                        }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
                             iconRole: "continuous-next"
@@ -8435,6 +8493,7 @@ ApplicationWindow {
                         }
                         MenuSeparator {}
                         ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TEXT_KEEP_TAGS"; iconRole: "clear"; objectName: "deleteTextKeepTags"; text: qsTranslate("HikariSub.Grid", "Delete text, keep tags"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT_KEEP_TAGS")) root.app.deleteTextKeepTags() }
                         ShellMenuItem {
                             command: "GLOBAL_REMOVE_LINES"
                             iconRole: "delete"
@@ -9793,7 +9852,7 @@ ApplicationWindow {
     FileChooser {
         id: videoDialog
         objectName: "videoOpenDialog"
-        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Video", "Video (%1)").arg(root.app.videoFilePatterns()), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("video", selectedFile)
             if (root.videoFullscreen.active)
@@ -11521,6 +11580,7 @@ ApplicationWindow {
         GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
+        GLOBAL_GRID_MARK_CURRENT_FRAME: markCurrentFrameAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
         GLOBAL_NODE_EFFECTS: nodeEffectsAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
@@ -11778,10 +11838,14 @@ ApplicationWindow {
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
-        case "GLOBAL_HIDE_TAGS": root.app.toggleHideTags(); return true
+        case "GLOBAL_HIDE_TAGS": root.app.cycleGridTagsMode(); return true
+        case "GLOBAL_GRID_TAGS_SHOW": root.app.setGridTagsMode(0); return true
+        case "GLOBAL_GRID_TAGS_REPLACE": root.app.setGridTagsMode(1); return true
+        case "GLOBAL_GRID_TAGS_HIDE": root.app.setGridTagsMode(2); return true
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
+        case "GLOBAL_REMOVE_TEXT_KEEP_TAGS": if (editing) root.app.deleteTextKeepTags(); return true
         case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true
@@ -11921,6 +11985,8 @@ ApplicationWindow {
         case "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME": if (video) root.app.insertLine(true, "frame"); return true
         case "GRID_INSERT_AFTER_WITH_VIDEO_FRAME": if (video) root.app.insertLine(false, "frame"); return true
         case "GRID_SWAP_LINES": root.app.swapLines(); return true
+        case "GRID_MOVE_UP": root.app.moveLines(true); return true
+        case "GRID_MOVE_DOWN": root.app.moveLines(false); return true
         case "GRID_JOIN_LINES": root.app.joinLines("join"); return true
         case "GRID_JOIN_TO_FIRST_LINE": root.app.joinLines("first"); return true
         case "GRID_JOIN_TO_LAST_LINE": root.app.joinLines("last"); return true

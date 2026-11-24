@@ -577,7 +577,7 @@ private slots:
             QVERIFY2(!row(name), name);
         QVERIFY(row("viewLayoutSaveAs"));
         QVERIFY(row("viewLayoutLock"));
-        QVERIFY(row("hideTagsMenuItem"));
+        QVERIFY(row("gridTagsHideMenuItem"));
         for (const char *name : {"panelCloseGrid", "panelFloatGrid", "movePanel", "viewResetSideBars", "showExplorer"})
             QCOMPARE(window->findChild<QObject *>(QLatin1String(name))->property("reason").toString(),
                      QStringLiteral("Layout is locked"));

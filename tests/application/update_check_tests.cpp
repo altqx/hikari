@@ -433,6 +433,37 @@ TEST(StartupArguments, WindowFlagsLeaveTheFiles)
     EXPECT_EQ(parseStartupArguments({"-n", "-r"}).window, WindowRequest::Reuse);
 }
 
+TEST(StartupArguments, TestPluginTakesAFolderAScriptAndItsOptions)
+{
+    const auto a = parseStartupArguments({"--test-plugin", "my-plugin", "tests.jsonl", "--document", "fixture.ass",
+                                          "--timeout", "2500", "--json"});
+    ASSERT_TRUE(a.testPlugin);
+    EXPECT_EQ(a.testPlugin->folder, "my-plugin");
+    EXPECT_EQ(a.testPlugin->script, "tests.jsonl");
+    EXPECT_EQ(a.testPlugin->document, "fixture.ass");
+    EXPECT_EQ(a.testPlugin->stepTimeoutMs, 2500);
+    EXPECT_TRUE(a.testPlugin->json);
+    EXPECT_TRUE(a.testPlugin->problem.empty());
+    EXPECT_TRUE(a.rest.empty());
+
+    const auto plain = parseStartupArguments({"--test-plugin", "my-plugin", "tests.jsonl"});
+    EXPECT_EQ(plain.testPlugin->stepTimeoutMs, 10'000);
+    EXPECT_FALSE(plain.testPlugin->json);
+    EXPECT_FALSE(parseStartupArguments({"episode.ass"}).testPlugin);
+}
+
+TEST(StartupArguments, ABadTestPluginCommandLineSaysWhy)
+{
+    EXPECT_EQ(parseStartupArguments({"--test-plugin", "my-plugin"}).testPlugin->problem,
+              "--test-plugin needs a plugin folder and a tests.jsonl file");
+    EXPECT_EQ(parseStartupArguments({"--test-plugin", "p", "t.jsonl", "--timeout", "soon"}).testPlugin->problem,
+              "--timeout needs a number of milliseconds above 0");
+    EXPECT_EQ(parseStartupArguments({"--test-plugin", "p", "t.jsonl", "--document"}).testPlugin->problem,
+              "--document needs a value");
+    EXPECT_EQ(parseStartupArguments({"--test-plugin", "p", "t.jsonl", "--verbose"}).testPlugin->problem,
+              "unknown option --verbose");
+}
+
 TEST(StartupArguments, OpenFolderAsksForAFolder)
 {
     EXPECT_FALSE(parseStartupArguments({"show"}).openFolder);

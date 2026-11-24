@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 #include "hikari/app/matroska_controller.h"
+#include "hikari/application/video_extensions.h"
 #include "docking.h"
 #include "qtest_parts.h"
 #include "theme.h"
@@ -271,6 +272,24 @@ private slots:
         const QString audio = dialog->property("nameFilters").toStringList().value(0);
         for (const char *pattern : {"*.webm", "*.mka", "*.opus"})
             QVERIFY2(audio.contains(QLatin1String(pattern)), qPrintable(audio));
+    }
+
+    void theVideoPickersListEveryVideoExtension()
+    {
+        start();
+        QStringList patterns;
+        for (const auto extension : hikari::application::kVideoExtensions)
+            patterns << QStringLiteral("*.") + QLatin1StringView(extension);
+        const QString expected = QStringLiteral("Video (%1)").arg(patterns.join(u' '));
+        QCOMPARE(named("videoOpenDialog")->property("nameFilters").toStringList().value(0), expected);
+
+        QObject *relink = named("relinkDialog");
+        QVERIFY(relink);
+        const QVariantMap entry{{QStringLiteral("row"), 0}, {QStringLiteral("kind"), QStringLiteral("video")},
+                                {QStringLiteral("path"), dir.filePath(QStringLiteral("gone/ep01.mkv"))}};
+        QVERIFY(QMetaObject::invokeMethod(relink->parent(), "relink", Q_ARG(QVariant, entry)));
+        QCOMPARE(relink->property("nameFilters").toStringList().value(0), expected);
+        QVERIFY(QMetaObject::invokeMethod(relink, "close"));
     }
 
     void pickersStartWhereTheirKindWasLeft()
