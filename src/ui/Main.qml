@@ -6038,14 +6038,14 @@ ApplicationWindow {
                     id: templateBadge
                     x: presenter.x + 8
                     y: presenter.y + 8
-                    visible: root.templateEditor.videoPreview && !root.nodeEffects.videoPreview && root.video.hasVideo
+                    visible: root.templateEditor.videoPreview && !nodeBadge.visible && root.video.hasVideo
                     controller: root.templateEditor
                 }
                 VideoNodeBadge {
                     id: nodeBadge
                     x: presenter.x + 8
                     y: presenter.y + 8
-                    visible: root.nodeEffects.videoPreview && root.video.hasVideo
+                    visible: (root.nodeEffects.videoPreview || root.nodeEffects.previewBlocked.length > 0) && root.video.hasVideo
                     controller: root.nodeEffects
                 }
                 VideoRenderCost {

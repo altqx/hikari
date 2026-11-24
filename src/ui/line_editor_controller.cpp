@@ -1334,6 +1334,12 @@ void LineEditorController::placeCaretAfterChange(const QString (&before)[2])
     }
 }
 
+void LineEditorController::beforeHistoryMove()
+{
+    for (const auto &hook : m_beforeHistoryMove)
+        hook();
+}
+
 bool LineEditorController::undo()
 {
     auto *s = session();
@@ -1359,6 +1365,7 @@ bool LineEditorController::undo()
         placeCaretAfterChange(before);
         return true;
     }
+    beforeHistoryMove();
     const auto revision = s->revision();
     if (!s->undo()) {
         fail(problemText());
@@ -1398,6 +1405,7 @@ bool LineEditorController::redo()
         placeCaretAfterChange(before);
         return true;
     }
+    beforeHistoryMove();
     if (!s->redo())
         return false;
     m_shownLine.reset();
@@ -2229,6 +2237,7 @@ bool LineEditorController::goToHistory(int step)
     auto *s = session();
     if (!s || step < 0)
         return false;
+    beforeHistoryMove();
     const auto revision = s->revision();
     if (!s->goTo(static_cast<std::size_t>(step))) {
         fail(problemText());

@@ -2296,6 +2296,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
             showVideoSubtitles();
     });
     effects->shareTrustWith(v.templateEditor.get());
+    v.editor->addBeforeHistoryMove([effects] { effects->commit(); });
     effects->setLuaNodes([this] { return &luaNodes(); });
     effects->setGlyphs([this] { return &glyphOutlines(); });
     effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {

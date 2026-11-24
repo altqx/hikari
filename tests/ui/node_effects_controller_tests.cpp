@@ -70,6 +70,42 @@ QVariantMap nodeNamed(const NodeEffectsController &c, const QString &id)
     return {};
 }
 
+std::vector<core::LineId> lineIds(const application::EditSession &s)
+{
+    std::vector<core::LineId> out;
+    for (const core::LineRecord *l : s.document().lines())
+        out.push_back(l->id);
+    return out;
+}
+
+const core::LineRecord *lineOf(const core::Document &doc, core::LineId id)
+{
+    for (const core::LineRecord *l : doc.lines())
+        if (l->id == id)
+            return l;
+    return nullptr;
+}
+
+bool setLineText(application::EditSession &s, core::LineId id, std::u8string text)
+{
+    application::Command command;
+    command.name = "Edit Line";
+    command.expectedRevision = s.revision();
+    command.apply = [&](core::Document &d) {
+        return d.editLine(id, [&](core::LineRecord &l) { l.text = text; });
+    };
+    return s.run(command).has_value();
+}
+
+int shakeIndex()
+{
+    const auto all = application::typesettingGraphs();
+    for (std::size_t i = 0; i < all.size(); ++i)
+        if (all[i].id == "shake")
+            return int(i);
+    return -1;
+}
+
 }
 
 class NodeEffectsControllerTests : public QObject {
@@ -364,6 +400,163 @@ private slots:
         const auto at = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == dialogue[2]; });
         QVERIFY(at != lines.end() && (*at)->comment);
         QVERIFY(application::isGeneratedBy(**(at + 1), u8"Typewriter"));
+    }
+
+    void anUndoUnderAPendingEditIsNotOverwritten()
+    {
+        QVERIFY(controller().newGraph());
+        const QString random = controller().addNode(QStringLiteral("math.random"), 400, 40);
+        controller().commit();
+        const std::size_t before = m_session->historyCursor();
+        controller().moveNode(random, 600, 300);
+        QVERIFY(m_session->undo());
+        controller().refresh();
+        QVERIFY(nodeNamed(controller(), random).isEmpty());
+        controller().commit();
+        QCOMPARE(m_session->historyCursor(), before - 1);
+        QVERIFY(m_session->canRedo());
+        controller().refresh();
+        QVERIFY(nodeNamed(controller(), random).isEmpty());
+    }
+
+    void aCommitBeforeUndoMakesOneUndoTakeBackTheLastGraphEdit()
+    {
+        QVERIFY(controller().newGraph());
+        const QString random = controller().addNode(QStringLiteral("math.random"), 400, 40);
+        controller().commit();
+        controller().moveNode(random, 600, 300);
+        controller().commit();
+        QVERIFY(m_session->undo());
+        controller().refresh();
+        QCOMPARE(nodeNamed(controller(), random).value(QStringLiteral("x")).toDouble(), 400.0);
+    }
+
+    void aLineEditUnderAPendingEditIsNotOverwritten()
+    {
+        QVERIFY(controller().newGraph());
+        const QString random = controller().addNode(QStringLiteral("math.random"), 400, 40);
+        controller().commit();
+        const core::LineId graphLine{controller().current()};
+        controller().moveNode(random, 600, 300);
+        const std::u8string typed = lineOf(m_session->document(), graphLine)->text + u8" ";
+        QVERIFY(setLineText(*m_session, graphLine, typed));
+        controller().commit();
+        QCOMPARE(lineOf(m_session->document(), graphLine)->text, typed);
+        QCOMPARE(historyNames(*m_session).back(), std::string("Edit Line"));
+    }
+
+    void anEditElsewhereKeepsThePendingEdit()
+    {
+        const core::LineId other = lineIds(*m_session).front();
+        QVERIFY(controller().newGraph());
+        const QString random = controller().addNode(QStringLiteral("math.random"), 400, 40);
+        controller().commit();
+        controller().moveNode(random, 600, 300);
+        QVERIFY(setLineText(*m_session, other, u8"hello"));
+        controller().refresh();
+        controller().commit();
+        QCOMPARE(lineOf(m_session->document(), other)->text, std::u8string(u8"hello"));
+        QCOMPARE(historyNames(*m_session).back(), std::string("Edit graph"));
+        QCOMPARE(nodeNamed(controller(), random).value(QStringLiteral("x")).toDouble(), 600.0);
+    }
+
+    void aTypesettingGraphPreviewsTheLinesItWasAppliedTo()
+    {
+        const auto dialogue = lineIds(*m_session);
+        controller().setTargetLines({dialogue[1]});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QVERIFY(controller().apply(false));
+
+        NodeEffectsController reopened;
+        reopened.setSessionSource([this] { return &*m_session; });
+        reopened.setEditable(true);
+        reopened.setDelays(0, 60000);
+        reopened.setShown(true);
+        QVERIFY(reopened.typesetting());
+        QCOMPARE(reopened.source(), qulonglong(dialogue[1].value));
+        QVERIFY(reopened.previewBlocked().isEmpty());
+        QTRY_VERIFY(!reopened.previewLines().isEmpty());
+        QVERIFY(reopened.videoPreview());
+    }
+
+    void thePreviewFollowsTheGridsLineWhenItIsASource()
+    {
+        const auto dialogue = lineIds(*m_session);
+        controller().setTargetLines({dialogue[0], dialogue[3]});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QCOMPARE(controller().source(), qulonglong(dialogue[0].value));
+        QSignalSpy preview(&controller(), &NodeEffectsController::previewChanged);
+        m_session->setSelection({dialogue[3], {dialogue[3]}, {}, {}});
+        controller().refresh();
+        QCOMPARE(controller().source(), qulonglong(dialogue[3].value));
+        QVERIFY(!preview.isEmpty());
+        m_session->setSelection({dialogue[2], {dialogue[2]}, {}, {}});
+        controller().refresh();
+        QCOMPARE(controller().source(), qulonglong(dialogue[3].value));
+    }
+
+    void withNoChosenLinesATypesettingGraphPreviewsOnTheGridsLine()
+    {
+        const auto dialogue = lineIds(*m_session);
+        m_session->setSelection({dialogue[2], {dialogue[2]}, {}, {}});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QVERIFY(controller().sources().isEmpty());
+        QCOMPARE(controller().source(), qulonglong(dialogue[2].value));
+        QTRY_VERIFY(controller().videoPreview());
+        QVERIFY(!controller().canApply());
+        m_session->setSelection({dialogue[0], {dialogue[0]}, {}, {}});
+        controller().refresh();
+        QCOMPARE(controller().source(), qulonglong(dialogue[0].value));
+    }
+
+    void aValueChangeRunsThePreviewAgain()
+    {
+        const auto dialogue = lineIds(*m_session);
+        controller().setTargetLines({dialogue[0]});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QTRY_VERIFY(!controller().previewLines().isEmpty());
+        const qsizetype before = controller().previewLines().size();
+        QSignalSpy video(&controller(), &NodeEffectsController::videoChanged);
+        controller().setField(QStringLiteral("step"), QStringLiteral("value"), 1000);
+        QTRY_VERIFY(controller().previewLines().size() < before);
+        QVERIFY(!video.isEmpty());
+        QVERIFY(!controller().previewKept());
+    }
+
+    void theVideoShowsTheSourceAsApplyLeavesIt()
+    {
+        const auto dialogue = lineIds(*m_session);
+        controller().setTargetLines({dialogue[0]});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QTRY_VERIFY(controller().videoPreview());
+        const auto shown = controller().videoDocument(m_session->document());
+        QVERIFY(shown);
+        QVERIFY(lineOf(*shown, dialogue[0])->comment);
+        QVERIFY(!lineOf(*shown, dialogue[1])->comment);
+    }
+
+    void theBadgeSaysWhyThereIsNoPreview()
+    {
+        const auto dialogue = lineIds(*m_session);
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QCOMPARE(controller().source(), qulonglong(0));
+        QCOMPARE(controller().previewBlocked(), QStringLiteral("noSource"));
+        QVERIFY(!controller().videoPreview());
+
+        controller().setTargetLines({dialogue[0]});
+        controller().disconnectInput(QStringLiteral("emit"), QStringLiteral("units"));
+        controller().commit();
+        QTRY_COMPARE(controller().previewBlocked(), QStringLiteral("problems"));
+
+        TemplateEditorController editor;
+        editor.setSessionSource([this] { return &*m_session; });
+        controller().shareTrustWith(&editor);
+        controller().addNode(QStringLiteral("lua.code"), 300, 200);
+        controller().commit();
+        QCOMPARE(controller().previewBlocked(), QStringLiteral("untrusted"));
+
+        controller().setPreviewOnVideo(false);
+        QVERIFY(controller().previewBlocked().isEmpty());
     }
 
     void groupingAndEnteringAGroup()
