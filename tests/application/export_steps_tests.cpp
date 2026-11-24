@@ -294,8 +294,7 @@ TEST(ExportSteps, StoppingARunningLuaStepEndsItAndRunsNoMore)
     const auto available = app::availableSteps({script("/p/sign-fx.lua", {{"Sign blur pass", "", 500, false}})});
     std::optional<app::ExportStepsResult> result;
     const auto stop = app::runExportSteps(
-        documentWith("Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,a
-"),
+        documentWith("Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,a\n"),
         {{{"lua:sign-fx.lua/Sign blur pass", true, {}}, {"fix-styles", true, {}}}}, available, {.filters = &filters},
         [&](app::ExportStepsResult r) { result = std::move(r); });
     ASSERT_FALSE(result);
@@ -320,8 +319,7 @@ TEST(ExportSteps, StoppingBetweenStepsRunsNoLaterStep)
     const auto available = app::availableSteps({script("/p/sign-fx.lua", {{"Sign blur pass", "", 500, false}})});
     std::optional<app::ExportStepsResult> result;
     const auto stop = app::runExportSteps(
-        documentWith("Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,a
-"),
+        documentWith("Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,a\n"),
         {{{"lua:sign-fx.lua/Sign blur pass", true, {}}, {"fix-styles", true, {}}}}, available, {.filters = &filters},
         [&](app::ExportStepsResult r) { result = std::move(r); });
     stop();
