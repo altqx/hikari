@@ -111,6 +111,15 @@ struct FormatContribution {
     bool exports = false;
 };
 
+struct CompletionProvider {
+    std::vector<std::string> triggers;
+    std::vector<std::string> fields;
+};
+
+struct HoverProvider {
+    std::vector<std::string> fields;
+};
+
 struct ProgramDownload {
     std::string url;
     std::string sha256;
@@ -142,6 +151,19 @@ struct McpServer {
     std::string title;
     std::string description;
     std::string program;
+};
+
+struct LanguageServer {
+    enum class Scope { Document, Line };
+    enum class Tags { Blank, Keep };
+    std::string id;
+    std::string title;
+    std::string program;
+    Scope scope = Scope::Document;
+    std::vector<std::string> fields; // "text", "translation"
+    Tags tags = Tags::Blank;
+    std::string languageId = "plaintext";
+    api::Json initializationOptions; // null without one
 };
 
 // "linux-x64", "windows-arm64", …: the platform key of the computer HikariSub runs on.
@@ -210,6 +232,8 @@ struct Manifest {
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
     std::vector<FormatContribution> formats;
+    std::optional<CompletionProvider> completion;
+    std::optional<HoverProvider> hover;
     std::vector<Program> programs;
     std::vector<ContentFile> styles;
     std::vector<ContentFile> karaokePresets;
@@ -217,6 +241,7 @@ struct Manifest {
     std::vector<ContentFile> graphs;
     std::vector<ContentFile> layouts;
     std::vector<McpServer> mcpServers;
+    std::vector<LanguageServer> languageServers;
     std::vector<ColourTheme> themes;
     std::vector<IconTheme> iconThemes;
     std::vector<OwnIcon> icons;

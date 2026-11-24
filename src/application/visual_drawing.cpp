@@ -718,6 +718,8 @@ void DrawingTool::reset(VisualHost &host)
         m_editor.normaliseFirst();
     syncMove(host);
     m_preview = m_offset != 0 ? offsetResult() : shape::Contours{};
+    m_editor.forgetStroke();
+    m_editor.smoothing = host.freehandSmoothing(family()).value_or(kDefaultSmoothing);
     host.toolChanged();
 }
 
@@ -922,8 +924,11 @@ void DrawingTool::pointer(const Pointer &event, VisualHost &host)
     if (event.kind == Pointer::Kind::Press && !host.gesture())
         m_began = false;
     m_inKey = false;
+    const bool stroking = m_editor.stroking();
     m_editor.pointer(event, frame(host), callbacks(host));
     m_editor.normaliseFirst();
+    if (stroking && !m_editor.stroking() && host.session())
+        m_strokeRevision = host.session()->revision();
     host.toolChanged();
 }
 
@@ -1221,6 +1226,8 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
         mode.enabled = m_shapeSelection == 0;
         mode.group = u"Points";
         out.push_back(std::move(mode));
+        if (i == VectorEditor::Spline)
+            out.push_back(freehandOption(m_editor, m_shapeSelection == 0));
     }
     ToolOption shapes;
     shapes.name = "shape";
@@ -1286,6 +1293,11 @@ bool DrawingTool::setOption(const std::string &name, int value, VisualHost &host
         host.toolChanged();
         return true;
     }
+    if (name == "freehand") {
+        m_editor.mode = VectorEditor::Freehand;
+        host.toolChanged();
+        return true;
+    }
     if (name == "join" && value >= 0 && value < static_cast<int>(std::size(kJoins))) {
         m_join = kJoins[value];
         m_preview = m_offset != 0 ? offsetResult() : shape::Contours{};
@@ -1320,6 +1332,7 @@ std::vector<ToolValue> DrawingTool::values(const VisualHost &host) const
 {
     if (m_shapeSelection != 0 || !host.session())
         return {};
+    std::vector<ToolValue> out = freehandValues(m_editor);
     ToolValue offset;
     offset.name = "offset";
     offset.label = u"Offset";
@@ -1327,17 +1340,59 @@ std::vector<ToolValue> DrawingTool::values(const VisualHost &host) const
     offset.editable = true;
     offset.group = u"Offset";
     offset.step = 0.1;
-    return {offset};
+    out.push_back(offset);
+    return out;
 }
 
 bool DrawingTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
     (void)edit;
+    if (const auto smoothing = smoothingOf(name, text); smoothing && m_shapeSelection == 0) {
+        m_editor.smoothing = *smoothing;
+        host.setFreehandSmoothing(family(), *smoothing);
+        if (m_editor.strokeCurves() && host.undoStep(m_strokeRevision)) {
+            m_editor.refitStroke();
+            m_placed = false;
+            commitPoints(host);
+            m_strokeRevision = host.session() ? host.session()->revision() : 0;
+        } else {
+            m_editor.forgetStroke();
+        }
+        host.toolChanged();
+        return true;
+    }
     double value = 0;
     if (name != "offset" || m_shapeSelection != 0 || !parseValue(text, value))
         return false;
     m_offset = value;
     m_preview = m_offset != 0 ? offsetResult() : shape::Contours{};
+    host.toolChanged();
+    return true;
+}
+
+void DrawingTool::commitPoints(VisualHost &host)
+{
+    m_began = false;
+    apply(host, false);
+    if (host.gesture())
+        apply(host, true);
+    m_began = false;
+}
+
+std::optional<Segment> DrawingTool::segmentAt(PointF pos, const VisualHost &host) const
+{
+    if (m_shapeSelection != 0 || m_shape >= 0 || !host.view().hasVideo())
+        return std::nullopt;
+    return m_editor.segmentAt(pos, frame(host));
+}
+
+bool DrawingTool::editSegment(Segment segment, SegmentEdit edit, PointF pos, VisualHost &host)
+{
+    if (m_shapeSelection != 0 || m_shape >= 0 || !host.view().hasVideo() ||
+        !m_editor.editSegment(segment, edit, pos, frame(host)))
+        return false;
+    m_editor.normaliseFirst();
+    commitPoints(host);
     host.toolChanged();
     return true;
 }

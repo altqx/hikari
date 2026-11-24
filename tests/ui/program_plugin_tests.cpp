@@ -128,9 +128,13 @@ private slots:
         QCOMPARE(params.value(QStringLiteral("plugin")).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("tester"));
         QCOMPARE(params.value(QStringLiteral("settings")).toObject().value(QStringLiteral("name")).toString(), QStringLiteral("Ann"));
 
-        QVERIFY(process->run("hello", R"({"args":{"n":2},"context":{"via":"palette"}})"));
+        std::optional<std::expected<std::string, QString>> result;
+        QVERIFY(process->run("hello", R"({"args":{"n":2},"context":{"via":"palette"}})",
+                             [&](std::expected<std::string, QString> r) { result = std::move(r); }));
         QVERIFY(finished.wait(20000));
         QCOMPARE(finished.first().first().toString(), QStringLiteral("hello"));
+        QVERIFY(result && result->has_value());
+        QCOMPARE(**result, std::string(R"({"ok":true})"));
         QCOMPARE(m_served.size(), std::size_t(2));
         QCOMPARE(m_served[0].service, backends::plugin::Service::Notify);
         QCOMPARE(m_served[0].level, backends::plugin::Level::Warning);
@@ -169,6 +173,38 @@ private slots:
             QJsonDocument::fromJson(logged(QStringLiteral("import ")).toUtf8()).object().value(QStringLiteral("params")).toObject();
         QCOMPARE(imported.value(QStringLiteral("data")).toString(), QStringLiteral("AQI="));
         QCOMPARE(imported.value(QStringLiteral("name")).toString(), QStringLiteral("a.txt"));
+    }
+
+    void providersAskCompleteAndHoverOverJsonRpc()
+    {
+        auto process = plugin();
+        process->start();
+        std::vector<std::expected<std::string, QString>> results;
+        const auto keep = [&](std::expected<std::string, QString> result) { results.push_back(std::move(result)); };
+        const auto json = [](const QJsonObject &o) { return QJsonDocument(o).toJson(QJsonDocument::Compact).toStdString(); };
+        const QString slash(QChar(u'\\'));
+        QVERIFY(process->provide("completion",
+                                 json({{QStringLiteral("text"), QStringLiteral("{") + slash},
+                                       {QStringLiteral("offset"), 2},
+                                       {QStringLiteral("trigger"), slash}}),
+                                 keep));
+        QTRY_COMPARE_WITH_TIMEOUT(results.size(), std::size_t(1), 20000);
+        QVERIFY(process->provide("hover", json({{QStringLiteral("text"), QStringLiteral("{") + slash + QStringLiteral("fad}")}, {QStringLiteral("offset"), 3}}), keep));
+        QTRY_COMPARE_WITH_TIMEOUT(results.size(), std::size_t(2), 20000);
+        QVERIFY(process->provide("hover", json({{QStringLiteral("text"), QString()}}), keep));
+        QTRY_COMPARE_WITH_TIMEOUT(results.size(), std::size_t(3), 20000);
+        const QJsonArray items = QJsonDocument::fromJson(QByteArray::fromStdString(results[0].value())).array();
+        QCOMPARE(items.size(), 1);
+        QCOMPARE(items[0].toObject().value(QStringLiteral("label")).toString(), slash + QStringLiteral("fad"));
+        QCOMPARE(items[0].toObject().value(QStringLiteral("from")).toInt(), 1);
+        const QJsonObject hover = QJsonDocument::fromJson(QByteArray::fromStdString(results[1].value())).object();
+        QCOMPARE(hover.value(QStringLiteral("text")).toString(), QStringLiteral("Fade"));
+        QCOMPARE(hover.value(QStringLiteral("to")).toInt(), 4);
+        QCOMPARE(results[2].value(), std::string("null"));
+        const QJsonObject asked =
+            QJsonDocument::fromJson(logged(QStringLiteral("complete ")).toUtf8()).object().value(QStringLiteral("params")).toObject();
+        QCOMPARE(asked.value(QStringLiteral("trigger")).toString(), slash);
+        QCOMPARE(asked.value(QStringLiteral("offset")).toInt(), 2);
     }
 
     void errorsComeBackAsJsonRpcErrors()

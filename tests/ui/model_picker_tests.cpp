@@ -64,6 +64,7 @@ TEST(ModelPicker, AgentsThenProvidersEachUnderItsNameWithTheIdWhenItDiffersAndSe
     EXPECT_EQ(byId(items, "anthropic\tsame").value("description").toString(), "");
     EXPECT_EQ(byId(items, "settings").value("action").toString(), "settings");
     EXPECT_EQ(byId(items, "settings").value("icon").toString(), "settings");
+    EXPECT_EQ(byId(items, "settings").value("key").toString(), "ai");
 }
 
 TEST(ModelPicker, TheCurrentModelIsMarkedInRecentAndInItsGroup)
@@ -111,10 +112,11 @@ TEST(ModelPicker, AGroupThatCantBeUsedShowsOnlyItsRowWhichOpensSettings)
 {
     ModelPickerRequest r = request();
     r.groups[1].blockedBy = QStringLiteral("Add a key for Anthropic…");
+    r.groups[1].blockedRow = QStringLiteral("ai.provider.anthropic");
     const QVariantList items = modelPickerItems(r);
     EXPECT_EQ(shown(items).mid(3, 2), (QStringList{"# Anthropic", "Add a key for Anthropic…"}));
     EXPECT_EQ(byId(items, "blocked\tanthropic").value("action").toString(), "settings");
-    EXPECT_EQ(byId(items, "blocked\tanthropic").value("key").toString(), "anthropic");
+    EXPECT_EQ(byId(items, "blocked\tanthropic").value("key").toString(), "ai.provider.anthropic");
     EXPECT_TRUE(byId(items, "anthropic\tsonnet-4").isEmpty());
 }
 

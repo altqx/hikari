@@ -277,6 +277,14 @@ std::vector<FormatContribution> formats(const Json *list)
     return out;
 }
 
+std::vector<std::string> providerFields(const Json &provider)
+{
+    std::vector<std::string> out = strings(provider.find("fields"));
+    if (out.empty())
+        out.push_back("text");
+    return out;
+}
+
 bool fitsPort(const Json &value, std::string_view type)
 {
     if (type == "Number" || type == "Time" || type == "Alpha")
@@ -365,6 +373,36 @@ std::vector<McpServer> mcpServers(const Json *list)
         for (const Json &item : list->asArray())
             out.push_back({text(item, "id"), text(item, "title"), text(item, "description"), text(item, "program")});
     return out;
+}
+
+std::vector<LanguageServer> languageServers(const Json *list)
+{
+    std::vector<LanguageServer> out;
+    if (!list)
+        return out;
+    for (const Json &item : list->asArray()) {
+        LanguageServer server{text(item, "id"), text(item, "title"), text(item, "program")};
+        server.scope = text(item, "scope") == "line" ? LanguageServer::Scope::Line : LanguageServer::Scope::Document;
+        server.fields = providerFields(item);
+        server.tags = text(item, "tags") == "keep" ? LanguageServer::Tags::Keep : LanguageServer::Tags::Blank;
+        if (const std::string language = text(item, "languageId"); !language.empty())
+            server.languageId = language;
+        if (const Json *options = item.find("initializationOptions"))
+            server.initializationOptions = *options;
+        out.push_back(std::move(server));
+    }
+    return out;
+}
+
+std::optional<ManifestProblem> badLanguageServer(const Manifest &m, std::size_t index)
+{
+    const std::string at = "/contributes/languageServers/" + std::to_string(index) + "/program";
+    const Program *program = m.program(m.languageServers[index].program);
+    if (!program)
+        return ManifestProblem{Kind::Schema, at, "names no program in contributes.programs", 0};
+    if (program->api)
+        return ManifestProblem{Kind::Schema, at, "a language server's program can't have \"api\": true", 0};
+    return std::nullopt;
 }
 
 std::optional<ManifestProblem> badMcpServer(const Manifest &m, std::size_t index)
@@ -546,6 +584,12 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                 m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
         m.nodes = nodes(contributes->find("nodes"));
         m.formats = formats(contributes->find("formats"));
+        if (const Json *providers = contributes->find("providers")) {
+            if (const Json *completion = providers->find("completion"))
+                m.completion = CompletionProvider{strings(completion->find("triggers")), providerFields(*completion)};
+            if (const Json *hover = providers->find("hover"))
+                m.hover = HoverProvider{providerFields(*hover)};
+        }
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.dictionaries = dictionaries(contributes->find("dictionaries"));
@@ -556,6 +600,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.icons = ownIcons(contributes->find("icons"));
         m.programs = programs(contributes->find("programs"));
         m.mcpServers = mcpServers(contributes->find("mcpServers"));
+        m.languageServers = languageServers(contributes->find("languageServers"));
     }
 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
@@ -569,6 +614,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.graphs, "/contributes/graphs"),
                          repeated(m.layouts, "/contributes/layouts"),
                          repeated(m.mcpServers, "/contributes/mcpServers"),
+                         repeated(m.languageServers, "/contributes/languageServers"),
                          repeated(m.themes, "/contributes/themes"), repeated(m.iconThemes, "/contributes/iconThemes"),
                          repeated(m.icons, "/contributes/icons"), unknownOwnIcon(json.find("contributes"), m),
                          codeWithoutMain(json)})
@@ -591,6 +637,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.mcpServers.size(); ++i)
         if (auto problem = badMcpServer(m, i))
+            return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.languageServers.size(); ++i)
+        if (auto problem = badLanguageServer(m, i))
             return std::unexpected(*problem);
     if (!m.mainProgram.empty()) {
         const Program *program = m.program(m.mainProgram);

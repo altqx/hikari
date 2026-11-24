@@ -11,6 +11,7 @@ hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LI
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate Qt6::QuickTest ZLIB::ZLIB Hikari::sodium
     PARTS documents
+          documents2=gridGesturesSelectRanges
           panels=panelsFloatDockHideAndKeepTheirState
           panels2=saveAsOffersAssForADocumentOfAnotherFormat
           panels3=spellCheckerWindowAndEditorMarks
@@ -34,7 +35,7 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           video=videoRecentListsAndDialogFolders
           video2=videoFullscreenLineBoxEditsStepsAndChoosesStyles
     PART_TIMEOUT 600)
-foreach(part documents visual visual2)
+foreach(part documents documents2 visual visual2)
     foreach(mode offscreen xvfb)
         if(TEST hikari_ui_shell_tests.${part}.${mode})
             set_property(TEST hikari_ui_shell_tests.${part}.${mode} APPEND PROPERTY
@@ -263,6 +264,8 @@ hikari_add_qttest(hikari_ui_node_effects_controller_tests SOURCES node_effects_c
 target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
+hikari_add_qttest(hikari_ui_tag_list_controller_tests SOURCES tag_list_controller_tests.cpp LIBRARIES hikari_ui OFFSCREEN_ONLY)
+target_include_directories(hikari_ui_tag_list_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 hikari_add_qttest(hikari_ui_template_editor_shell_tests SOURCES template_editor_shell_tests.cpp
     LIBRARIES hikari_composition
     PARTS editing previews=aFileRunsNoCodeUntilTheUserPreviewsIt)
@@ -469,6 +472,9 @@ add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)
 hikari_add_qttest(hikari_ui_program_plugin_tests SOURCES program_plugin_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_program_plugin_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_program_plugin_tests hikari_plugin_test_program)
+hikari_add_qttest(hikari_ui_language_servers_tests OFFSCREEN_ONLY SOURCES language_servers_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_language_servers_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
+add_dependencies(hikari_ui_language_servers_tests hikari_plugin_test_program)
 if(HIKARI_BUN)
     set(_hikari_word_count_dir "${PROJECT_SOURCE_DIR}/docs/examples/word-count")
     set(_hikari_sidecar_modules "${PROJECT_SOURCE_DIR}/src/ai-sidecar/node_modules")

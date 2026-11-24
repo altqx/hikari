@@ -57,7 +57,7 @@ const FamilyInfo &familyInfo(Family family);
 const std::array<Family, kFamilyCount> &railOrder();
 // The family a VIDEO_TOOL_* command chooses.
 std::optional<Family> familyOfHotkey(std::string_view symbol);
-// The vector clip tool's option a VIDEO_VECTOR_CLIP_* command sets: "mode0" to "mode5", or "invert".
+// The vector clip tool's option a VIDEO_VECTOR_CLIP_* command sets: "mode0" to "mode5", "freehand" or "invert".
 std::optional<std::string> vectorClipOptionOfHotkey(std::string_view symbol);
 
 // A pointer event over the video window, in its device pixels.
@@ -196,6 +196,14 @@ struct ToolOption {
     std::vector<std::string> choiceRoles; // a choice's entries' icons, by index
     bool afterValues = false; // shown after the tool's values
 };
+
+// A segment of a vector point editor: the index of the point its command starts at.
+struct Segment {
+    int index = -1;
+    bool curve = false;
+    bool operator==(const Segment &) const = default;
+};
+enum class SegmentEdit { MakeCurve, MakeStraight, InsertPoint, Delete };
 
 // A tool's last edit, which it can redo with other values in place of that
 // history step.
@@ -353,6 +361,17 @@ public:
     virtual bool ignoreFiltered() const { return false; }
     // The handle size setting: 1 is HikariSub legacy's size.
     virtual float handleScale() const { return 1.f; }
+    // The vector clip's and the drawing's Freehand Smoothing, kept per tool; nullopt: the default.
+    virtual std::optional<int> freehandSmoothing(Family family) const
+    {
+        (void)family;
+        return std::nullopt;
+    }
+    virtual void setFreehandSmoothing(Family family, int smoothing)
+    {
+        (void)family;
+        (void)smoothing;
+    }
     virtual void log(std::u16string_view text) { (void)text; }
     // The Line editor's selection in the text the tools edit, in UTF-16 code units.
     virtual std::pair<long, long> editorSelection() const { return {0, 0}; }
@@ -500,6 +519,22 @@ public:
         return false;
     }
     virtual void dismissLastChange() {}
+    // The segment a right-click at `pos` (device pixels) opens the segment menu on.
+    virtual std::optional<Segment> segmentAt(PointF pos, const VisualHost &host) const
+    {
+        (void)pos;
+        (void)host;
+        return std::nullopt;
+    }
+    // One history step; `pos` is where the menu opened. False when the segment is gone.
+    virtual bool editSegment(Segment segment, SegmentEdit edit, PointF pos, VisualHost &host)
+    {
+        (void)segment;
+        (void)edit;
+        (void)pos;
+        (void)host;
+        return false;
+    }
     // Esc with no gesture open: true when the tool dropped a pending step
     // (RotationZ's first point).
     virtual bool cancelPending(VisualHost &host)

@@ -1,5 +1,6 @@
 #include "hikari/backends/plugin_process.h"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -183,9 +184,9 @@ bool PluginProcess::enqueue(Unit unit)
     return true;
 }
 
-bool PluginProcess::run(const std::string &command, const std::string &call)
+bool PluginProcess::run(const std::string &command, const std::string &call, FormatDone done)
 {
-    return enqueue(Unit{Unit::Kind::Command, command, call, {}, {}});
+    return enqueue(Unit{Unit::Kind::Command, command, call, {}, std::move(done)});
 }
 
 bool PluginProcess::exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson,
@@ -197,6 +198,26 @@ bool PluginProcess::exportDocument(const std::string &format, std::string snapsh
 bool PluginProcess::importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done)
 {
     return enqueue(Unit{Unit::Kind::Import, format, std::move(bytes), std::move(fileName), std::move(done)});
+}
+
+bool PluginProcess::provide(const std::string &provider, std::string requestJson, FormatDone done)
+{
+    auto pending = std::make_shared<FormatDone>(std::move(done));
+    auto answer = [pending](std::expected<std::string, QString> result) {
+        if (FormatDone once = std::exchange(*pending, {}))
+            once(std::move(result));
+    };
+    const auto replaced = [&](const Unit &u) { return u.kind == Unit::Kind::Provide && u.name == provider; };
+    for (Unit &unit : m_queue)
+        if (replaced(unit))
+            unit.done(std::unexpected(QStringLiteral("a newer request replaced it")));
+    std::erase_if(m_queue, replaced);
+    Unit unit{Unit::Kind::Provide, provider, std::move(requestJson), {}, answer};
+    unit.deadline = QDeadlineTimer(m_limits.answerMs);
+    if (!enqueue(std::move(unit)))
+        return false;
+    QTimer::singleShot(m_limits.answerMs, this, [answer] { answer(std::unexpected(QStringLiteral("the plugin answered too late"))); });
+    return true;
 }
 
 void PluginProcess::failPending(const QString &message)
@@ -235,6 +256,17 @@ void PluginProcess::forceStop()
 
 void PluginProcess::end()
 {
+    std::vector<FormatDone> waiting;
+    for (Unit &unit : m_queue)
+        if (unit.done)
+            waiting.push_back(std::move(unit.done));
+    if (m_running && m_running->done)
+        waiting.push_back(std::move(m_running->done));
+    if (!waiting.empty())
+        QTimer::singleShot(0, QCoreApplication::instance(), [waiting = std::move(waiting)] {
+            for (const FormatDone &done : waiting)
+                done(std::unexpected(QStringLiteral("the plugin was stopped")));
+        });
     m_queue.clear();
     m_running.reset();
     m_watchdog.stop();
@@ -253,6 +285,10 @@ void PluginProcess::next()
     if (m_running || !m_host || !m_host->ready() || m_queue.empty())
         return;
     if (m_state != State::Ready && m_queue.front().kind != Unit::Kind::Load)
+        return;
+    while (!m_queue.empty() && m_queue.front().deadline.hasExpired())
+        m_queue.pop_front();
+    if (m_queue.empty())
         return;
     Unit unit = std::move(m_queue.front());
     m_queue.pop_front();
@@ -276,6 +312,10 @@ void PluginProcess::next()
         payload = w.take();
         unit.json.clear();
         unit.json.shrink_to_fit();
+    } else if (unit.kind == Unit::Kind::Provide) {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(plugin::Command::Provide)).str(unit.name).str(unit.json);
+        payload = w.take();
     } else {
         Writer w;
         w.str(unit.name).str(unit.json);
@@ -548,20 +588,21 @@ void PluginProcess::endUnit(Outcome outcome, const std::vector<std::byte> &paylo
         m_handled = std::move(*handled);
         m_state = State::Ready;
         emit loaded();
+    } else if (unit.kind == Unit::Kind::Command) {
+        if (unit.done)
+            unit.done(outcome == Outcome::Ok ? std::expected<std::string, QString>(helper::textOf(payload))
+                                             : std::unexpected(message));
+        if (outcome == Outcome::Ok)
+            emit finished(name);
+        else
+            emit commandFailed(name, message);
     } else if (unit.done) {
         if (outcome == Outcome::Ok)
             unit.done(helper::textOf(payload));
         else
             unit.done(std::unexpected(message));
-    } else if (outcome == Outcome::Ok) {
-        if (unit.kind == Unit::Kind::Command)
-            emit finished(name);
-    } else if (unit.kind == Unit::Kind::Command) {
-        emit commandFailed(name, message);
-    } else if (unit.kind == Unit::Kind::Timer) {
-        emit eventFailed(QStringLiteral("timer"), message);
-    } else {
-        emit eventFailed(name, message);
+    } else if (outcome != Outcome::Ok) {
+        emit eventFailed(unit.kind == Unit::Kind::Timer ? QStringLiteral("timer") : name, message);
     }
     next();
 }

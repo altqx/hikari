@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <fstream>
 #include <random>
 #include <sstream>
@@ -559,6 +560,140 @@ TEST_F(PluginInstaller, InstallingOverARevokedCopyTurnsItBackOn)
     ASSERT_TRUE(installer.setEnabled("com.example.hello", false));
     ASSERT_TRUE(installer.install(reviewed(plugin("1.2.0", &a), &a), false));
     EXPECT_FALSE(installed().enabled) << "a plugin you turned off stays off";
+}
+
+void writeFolder(const fs::path &root, const std::vector<PackageFile> &files)
+{
+    for (const PackageFile &file : files) {
+        fs::create_directories((root / file.path).parent_path());
+        std::ofstream(root / file.path, std::ios::binary)
+            .write(reinterpret_cast<const char *>(file.data.data()), std::streamsize(file.data.size()));
+    }
+}
+
+constexpr std::string_view kNameSetting =
+    R"(, "contributes": {"settings": [{"id": "name", "title": "Name", "type": "string", "default": ""}]})";
+
+TEST_F(PluginInstaller, ADevPluginRunsInPlaceWithItsOwnFolders)
+{
+    const fs::path dev = m_root / "work/hello";
+    writeFolder(dev, plugin("0.1.0"));
+    touch(dev / ".git/HEAD");
+
+    const auto r = installer.reviewDev(dev);
+    ASSERT_TRUE(r);
+    EXPECT_EQ(r->source, Source::Dev);
+    EXPECT_EQ(r->change, Change::Install);
+    EXPECT_TRUE(std::ranges::none_of(r->package.files, [](const PackageFile &f) { return f.path.starts_with(".git"); }));
+    ASSERT_TRUE(installer.installDev(*r, dev));
+
+    const InstalledPlugin entry = installed();
+    EXPECT_EQ(entry.source, Source::Dev);
+    EXPECT_EQ(fs::path(entry.path), fs::absolute(dev).lexically_normal());
+    EXPECT_FALSE(entry.autoUpdate);
+    EXPECT_FALSE(fs::exists(folder())) << "nothing is copied";
+    EXPECT_EQ(installer.codeFolder("com.example.hello"), fs::absolute(dev).lexically_normal());
+    EXPECT_EQ(installer.dataFolder("com.example.hello"), folders().data / ".dev/com.example.hello");
+    EXPECT_EQ(installer.cacheFolder("com.example.hello"), folders().cache / ".dev/com.example.hello");
+    EXPECT_TRUE(fs::is_directory(folders().data / ".dev/com.example.hello"));
+    EXPECT_EQ(installer.installedManifest("com.example.hello")->version, "0.1.0");
+
+    const std::string stored = read(folders().registry);
+    EXPECT_NE(stored.find(R"(".dev/com.example.hello")"), std::string::npos);
+    EXPECT_NE(stored.find(R"("source": "dev")"), std::string::npos);
+    EXPECT_FALSE(installer.install(*r, false)) << "a dev review is never copied in";
+}
+
+TEST_F(PluginInstaller, ADevPluginStandsInForTheInstalledOneUntilItIsUnloaded)
+{
+    ASSERT_TRUE(installer.install(reviewed(plugin("1.0.0", nullptr, kNameSetting)), false));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "name", "installed"));
+    touch(folders().data / "com.example.hello/notes.txt");
+    const fs::path dev = m_root / "work/hello";
+    writeFolder(dev, plugin("9.0.0", nullptr, kNameSetting));
+    ASSERT_TRUE(installer.installDev(*installer.reviewDev(dev), dev));
+
+    EXPECT_EQ(installed().source, Source::Dev);
+    EXPECT_EQ(installed().version, "9.0.0");
+    EXPECT_TRUE(installed().settings.asObject().empty()) << "a dev plugin never shares the installed one's choices";
+    const auto hidden = installer.overridden();
+    ASSERT_TRUE(hidden && hidden->contains("com.example.hello"));
+    EXPECT_EQ(hidden->at("com.example.hello").version, "1.0.0");
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "name", "dev"));
+    EXPECT_FALSE(fs::exists(installer.dataFolder("com.example.hello") / "notes.txt"));
+    EXPECT_EQ(installer.secretPrefix("com.example.hello"), "plugin-dev/com.example.hello/");
+
+    ASSERT_TRUE(installer.uninstall("com.example.hello", true));
+    EXPECT_TRUE(fs::exists(dev / "main.lua")) << "unloading never touches the folder";
+    EXPECT_FALSE(fs::exists(folders().data / ".dev/com.example.hello"));
+    EXPECT_EQ(installed().source, Source::File);
+    EXPECT_EQ(installed().version, "1.0.0");
+    EXPECT_EQ(installed().settings.find("name")->asString(), "installed");
+    EXPECT_TRUE(fs::exists(folders().data / "com.example.hello/notes.txt"));
+    EXPECT_TRUE(installer.overridden()->empty());
+    EXPECT_EQ(installer.secretPrefix("com.example.hello"), "plugin/com.example.hello/");
+}
+
+TEST_F(PluginInstaller, AReloadKeepsChoicesAndDataAndTakesTheNewManifest)
+{
+    const fs::path dev = m_root / "work/hello";
+    writeFolder(dev, plugin("0.1.0", nullptr, kNameSetting));
+    ASSERT_TRUE(installer.installDev(*installer.reviewDev(dev), dev));
+    ASSERT_TRUE(installer.setSetting("com.example.hello", "name", "kept"));
+    ASSERT_TRUE(installer.setEnabled("com.example.hello", false));
+    touch(installer.dataFolder("com.example.hello") / "notes.txt");
+    touch(installer.cacheFolder("com.example.hello") / "index.bin");
+
+    writeFolder(dev, plugin("0.2.0", nullptr, kNameSetting));
+    const auto r = installer.reviewDev(dev);
+    ASSERT_TRUE(r);
+    EXPECT_EQ(r->change, Change::Reinstall);
+    EXPECT_EQ(r->installedVersion, "0.1.0");
+    EXPECT_EQ(installer.acceptedManifest("com.example.hello")->version, "0.1.0");
+    ASSERT_TRUE(installer.installDev(*r, dev));
+
+    EXPECT_EQ(installed().version, "0.2.0");
+    EXPECT_FALSE(installed().enabled);
+    EXPECT_EQ(installed().settings.find("name")->asString(), "kept");
+    EXPECT_TRUE(fs::exists(installer.dataFolder("com.example.hello") / "notes.txt"));
+    EXPECT_TRUE(fs::exists(installer.cacheFolder("com.example.hello") / "index.bin"));
+    EXPECT_EQ(installer.acceptedManifest("com.example.hello")->version, "0.2.0");
+}
+
+TEST_F(PluginInstaller, ADevFolderFollowsThePackageRules)
+{
+    const fs::path dev = m_root / "work/hello";
+    writeFolder(dev, {{"hikari-plugin.json", bytes(manifest("0.1.0"))}});
+    const auto r = installer.reviewDev(dev);
+    ASSERT_FALSE(r);
+    EXPECT_EQ(r.error().package.kind, PackageProblem::Kind::MissingMain);
+    EXPECT_FALSE(installer.reviewDev(m_root / "nowhere"));
+#ifndef _WIN32
+    writeFolder(dev, plugin("0.1.0"));
+    fs::create_symlink("/etc/hostname", dev / "linked.txt");
+    const auto linked = installer.reviewDev(dev);
+    ASSERT_FALSE(linked);
+    EXPECT_EQ(linked.error().package.kind, PackageProblem::Kind::BadPath);
+    EXPECT_EQ(linked.error().package.path, "linked.txt");
+#endif
+}
+
+TEST(PluginRegistry, ADevEntryLivesOnlyUnderItsOwnKey)
+{
+    const fs::path file = fs::temp_directory_path() / ("hikari-registry-" + std::to_string(std::random_device{}()) + ".json");
+    const auto load = [&](std::string_view plugins) {
+        std::ofstream(file) << R"({"format": 1, "plugins": )" << plugins << "}";
+        return loadRegistry(file);
+    };
+    const auto good = load(R"({".dev/a.b": {"version": "1", "enabled": true, "source": "dev", "path": "/w/a", "accepted": "{}"}})");
+    ASSERT_TRUE(good);
+    EXPECT_EQ(good->at(devKey("a.b")).path, "/w/a");
+    ASSERT_TRUE(saveRegistry(file, *good));
+    EXPECT_EQ(loadRegistry(file)->at(devKey("a.b")).accepted, "{}");
+    EXPECT_FALSE(load(R"({"a.b": {"version": "1", "enabled": true, "source": "dev", "path": "/w/a"}})"));
+    EXPECT_FALSE(load(R"({".dev/a.b": {"version": "1", "enabled": true}})"));
+    EXPECT_FALSE(load(R"({".dev/a.b": {"version": "1", "enabled": true, "source": "dev"}})"));
+    fs::remove(file);
 }
 
 }

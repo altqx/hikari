@@ -27,6 +27,8 @@ struct ModelPickerGroup {
     std::vector<ModelPickerModel> models;
     /// Set: the group's one row instead of its models, such as "Add a key for Anthropic…".
     QString blockedBy;
+    /// The Settings row the blocked row opens, such as "ai.provider.anthropic".
+    QString blockedRow;
     bool loading = false;
     /// Set: the last load failed, for this reason.
     std::optional<QString> failure;

@@ -430,6 +430,33 @@ TEST_F(Files, ANewDocumentIsKaraOKButSavesNoModeLine)
     EXPECT_EQ(text(disk.files["/new.ass"]).find("Karaoke Templater"), std::string::npos);
 }
 
+TEST_F(Files, ANewDocumentStartsWithTheNewFileStyles)
+{
+    std::optional<NewFileStyles> styles;
+    service.setNewFileStyles([&] { return styles; });
+    const auto made = [&] {
+        const auto &document = service.session(service.createNew())->document();
+        std::vector<std::u8string> out{document.scriptInfo(u8"Last Style Storage").value_or(u8""),
+                                       document.lines().at(0)->style};
+        for (const auto &style : core::decodeStyles(document))
+            out.push_back(style.name + u8"," + style.fontname);
+        return out;
+    };
+    using Names = std::vector<std::u8string>;
+    EXPECT_EQ(made(), (Names{u8"Default", u8"Default", u8"Default,Garamond"}));
+    const auto style = [](std::u8string_view line) { return core::legacy::decodeStyle(line, false); };
+    styles = NewFileStyles{u8"House", {style(u8"Style: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1"),
+                                       style(u8"Style: Default,Verdana,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1")}};
+    EXPECT_EQ(made(), (Names{u8"House", u8"Default", u8"Sign,Arial", u8"Default,Verdana"}));
+    styles->styles.pop_back();
+    EXPECT_EQ(made(), (Names{u8"House", u8"Sign", u8"Sign,Arial"}));
+    const auto doc = service.createNew();
+    EXPECT_FALSE(service.session(doc)->isDirty());
+    EXPECT_TRUE(service.session(doc)->isNewDocument());
+    styles->styles.clear();
+    EXPECT_EQ(made(), (Names{u8"Default", u8"Default", u8"Default,Garamond"}));
+}
+
 TEST_F(Files, AnAcceptedExternalChangeIsWrittenOver)
 {
     const auto doc = open("/a.ass");
@@ -478,6 +505,39 @@ TEST_F(Files, SaveAsMovesTheAssociationOnlyAfterSuccess)
     finish(WriteOutcome::Written);
     EXPECT_EQ(service.destination(doc)->value, "/b.ass");
     EXPECT_EQ(writes.association(doc)->value, "/b.ass");
+}
+
+TEST_F(Files, APublishedSaveReportsTheFileItReplaced)
+{
+    std::vector<std::pair<std::string, std::string>> replaced;
+    service.setSavedOver([&](const DestinationKey &destination, std::vector<std::byte> previous) {
+        replaced.emplace_back(destination.value, text(previous));
+    });
+    const auto doc = open("/a.ass");
+    EditSession &s = *service.session(doc);
+    ASSERT_TRUE(s.editDraftText(line(doc, 0), u8"failed"));
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Failed);
+    EXPECT_TRUE(replaced.empty());
+
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    ASSERT_EQ(replaced.size(), 1u);
+    EXPECT_EQ(replaced[0], std::pair(std::string("/a.ass"), kAss));
+
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(replaced.size(), 1u);
+
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc, DestinationKey{"/new.ass"})));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(replaced.size(), 1u);
+
+    disk.files["/b.ass"] = bytesOf("theirs");
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc, DestinationKey{"/b.ass"})));
+    finish(WriteOutcome::DurabilityUncertain);
+    ASSERT_EQ(replaced.size(), 2u);
+    EXPECT_EQ(replaced[1], std::pair(std::string("/b.ass"), std::string("theirs")));
 }
 
 TEST_F(Files, SaveAsOntoAnotherOpenDocumentIsBlocked)

@@ -1,4 +1,6 @@
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_themes.h"
+#include "theme.h"
 #include "hikari/api/api.h"
 #include "hikari/backends/desktop_handoff.h"
 
@@ -9,6 +11,8 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
+
+#include <filesystem>
 
 using hikari::app::PluginManager;
 
@@ -272,6 +276,32 @@ private slots:
         QVERIFY(!manager.review(fixture("hello-1.0.0.hikariplugin")).value(QStringLiteral("dataOnly")).toBool());
     }
 
+    void aShownPluginThemeIsChoosableUntilItGoes()
+    {
+        PluginManager manager(folders());
+        QVERIFY(manager.review(fixture("looks-1.0.0-data-only.hikariplugin")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        const std::filesystem::path root = m_dir.filePath(QStringLiteral("user/plugins/com.example.looks")).toStdU16String();
+        hikari::plugins::Manifest manifest;
+        manifest.name = "Looks";
+        manifest.themes = {{"dusk", "Dusk", "dark", "themes/dusk.json"}};
+        const QString dusk = QStringLiteral("plugin:com.example.looks/dusk");
+
+        QVERIFY(hikari::app::syncPluginThemes(hikari::app::pluginThemesOf("com.example.looks", manifest, root, true)).isEmpty());
+        QVERIFY(hikari::ui::theme::find(dusk));
+        QCOMPARE(hikari::ui::theme::find(dusk)->plugin, QStringLiteral("Looks"));
+        QCOMPARE(hikari::ui::theme::typeOf(dusk), hikari::themes::Type::Dark);
+
+        QVERIFY(hikari::app::syncPluginThemes(hikari::app::pluginThemesOf("com.example.looks", manifest, root, false)).isEmpty());
+        QVERIFY(!hikari::ui::theme::find(dusk));
+
+        manifest.themes[0].path = "themes/gone.json";
+        const QStringList problems = hikari::app::syncPluginThemes(hikari::app::pluginThemesOf("com.example.looks", manifest, root, true));
+        QCOMPARE(problems.size(), 1);
+        QVERIFY(problems.first().startsWith(QStringLiteral("Dusk: ")));
+        QVERIFY(!hikari::ui::theme::find(dusk));
+    }
+
     void rememberedFoldersAreListedAndCanBeForgotten()
     {
         PluginManager manager(folders());
@@ -336,6 +366,63 @@ private slots:
         PluginManager manager(folders());
         QVERIFY(manager.problem().contains(QStringLiteral("plugins.json")));
         QVERIFY(refusal(manager, "hello-1.0.0.hikariplugin").contains(QStringLiteral("plugins.json")));
+    }
+
+    void aDevPluginReloadsWhenItsFilesChange()
+    {
+        PluginManager manager(folders());
+        const QString work = m_dir.filePath(QStringLiteral("work/hello"));
+        const auto write = [&](const char *version, const char *extra = "") {
+            QDir().mkpath(work);
+            QFile manifest(work + QStringLiteral("/hikari-plugin.json"));
+            QVERIFY(manifest.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            manifest.write(QByteArray(R"({"id": "com.example.hello", "name": "Hello", "api": 1, "main": "main.lua", "authors": ["Ana"], "version": ")") +
+                           version + "\"" + extra + "}");
+            QFile main(work + QStringLiteral("/main.lua"));
+            QVERIFY(main.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            main.write("return 1");
+        };
+        write("0.1.0");
+
+        const QVariantMap review = manager.reviewDev(QUrl::fromLocalFile(work));
+        QVERIFY2(review.value(QStringLiteral("ok")).toBool(), qPrintable(review.value(QStringLiteral("message")).toString()));
+        QVERIFY(review.value(QStringLiteral("dev")).toBool());
+        QCOMPARE(review.value(QStringLiteral("change")).toString(), QStringLiteral("install"));
+        QSignalSpy reloaded(&manager, &PluginManager::devReloaded);
+        QSignalSpy problem(&manager, &PluginManager::devProblem);
+        QCOMPARE(manager.install(false), QString());
+        QCOMPARE(reloaded.count(), 1);
+        QVariantMap row = only(manager);
+        QCOMPARE(row.value(QStringLiteral("source")).toString(), QStringLiteral("dev"));
+        QCOMPARE(row.value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(QDir::cleanPath(work)));
+        QVERIFY(!QFile::exists(installed("main.lua")));
+
+        write("0.2.0");
+        QTRY_COMPARE(reloaded.count(), 2);
+        QCOMPARE(only(manager).value(QStringLiteral("version")).toString(), QStringLiteral("0.2.0"));
+
+        QFile::remove(work + QStringLiteral("/main.lua"));
+        QTRY_COMPARE(problem.count(), 1);
+        row = only(manager);
+        QCOMPARE(row.value(QStringLiteral("version")).toString(), QStringLiteral("0.2.0"));
+        QVERIFY(!row.value(QStringLiteral("devProblem")).toString().isEmpty());
+
+        write("0.3.0", R"(, "permissions": {"background": "Watches files"})");
+        QTRY_COMPARE(problem.count(), 2);
+        row = only(manager);
+        QVERIFY(row.value(QStringLiteral("devAsks")).toBool());
+        QVERIFY(row.value(QStringLiteral("devProblem")).toString().isEmpty());
+        QCOMPARE(row.value(QStringLiteral("version")).toString(), QStringLiteral("0.2.0"));
+        const QVariantMap again = manager.reviewDev(row.value(QStringLiteral("folder")).toUrl());
+        QCOMPARE(again.value(QStringLiteral("change")).toString(), QStringLiteral("reinstall"));
+        QVERIFY(again.value(QStringLiteral("asksForMore")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        QVERIFY(!only(manager).value(QStringLiteral("devAsks")).toBool());
+        QCOMPARE(only(manager).value(QStringLiteral("version")).toString(), QStringLiteral("0.3.0"));
+
+        QCOMPARE(manager.uninstall(QStringLiteral("com.example.hello"), false), QString());
+        QVERIFY(manager.plugins().isEmpty());
+        QVERIFY(QFile::exists(work + QStringLiteral("/main.lua")));
     }
 
     void withoutAUserFolderNothingInstalls()

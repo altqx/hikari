@@ -28,6 +28,17 @@ DialogWindow {
             elide: Text.ElideMiddle
             Layout.fillWidth: true
         }
+        Label { text: qsTr("Encoding") }
+        ComboBox {
+            objectName: "textImportEncoding"
+            model: dialog.controller.encodings
+            textRole: "label"
+            valueRole: "name"
+            currentIndex: dialog.controller.encodings.findIndex(e => e.name === dialog.controller.encoding)
+            Layout.preferredWidth: 214
+            Accessible.name: qsTr("Encoding")
+            onActivated: dialog.controller.encoding = currentValue
+        }
         Label { text: qsTr("Actor separator") }
         TextField {
             objectName: "textImportActorSeparator"

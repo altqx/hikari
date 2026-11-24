@@ -9,6 +9,7 @@
 #include "hikari/backends/plugin_protocol.h"
 #include "hikari/backends/sandbox.h"
 
+#include <QDeadlineTimer>
 #include <QElapsedTimer>
 #include <QObject>
 #include <QTimer>
@@ -37,6 +38,7 @@ public:
     struct Limits {
         int stillWorkingMs = 10'000;
         std::size_t maxQueued = 64;
+        int answerMs = 1'000;
     };
 
     struct ServiceRequest {
@@ -72,14 +74,19 @@ public:
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.
-    // `call` is the JSON {args, context} the handler gets.
-    bool run(const std::string &command, const std::string &call);
-    // What a format call gives: the file's bytes for an export, the JSON {lines, styles, info} for an import;
-    // else the error to show. Called once, also when the helper stops first.
+    // What a call gives: a command's result as JSON (null when its handler returns nothing), the file's bytes for an
+    // export, the JSON {lines, styles, info} for an import; else the error to show. Called once, also when the helper
+    // stops first.
     using FormatDone = std::function<void(std::expected<std::string, QString>)>;
+    // `call` is the JSON {args, context} the handler gets.
+    bool run(const std::string &command, const std::string &call, FormatDone done = {});
     // Queued and started as run is.
     bool exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson, FormatDone done);
     bool importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done);
+    // Asks the plugin's hikari.providers handler ("completion" or "hover"); done gets its JSON answer. An answer
+    // later than answerMs gives an error instead and is dropped, and the plugin keeps running. A newer request
+    // for the same provider replaces a queued one.
+    bool provide(const std::string &provider, std::string requestJson, FormatDone done);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
     bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.
@@ -129,13 +136,14 @@ signals:
 
 private:
     struct Unit {
-        enum class Kind { Load, Command, Event, Timer, Export, Import } kind = Kind::Command;
+        enum class Kind { Load, Command, Event, Timer, Export, Import, Provide } kind = Kind::Command;
         std::string name;
         std::string json;
         std::string key; // Event: the coalesce key; Export: the options; Import: the file name
         FormatDone done;
         std::int64_t timer = 0;
         bool last = false;
+        QDeadlineTimer deadline = QDeadlineTimer::Forever;
     };
     struct Timer {
         std::unique_ptr<QTimer> clock;

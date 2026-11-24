@@ -968,36 +968,38 @@ TEST(DrawingGesture, AShapeDragIsOneStepAndAProtectedSessionRefusesIt)
     EXPECT_FALSE(ref.g);
 }
 
-TEST(DrawingOptions, SixModesAndTheShapeList)
+TEST(DrawingOptions, SevenModesAndTheShapeList)
 {
     TestHost host;
     setUp(host);
     DrawingTool tool;
     tool.reset(host);
     auto options = tool.options(host);
-    ASSERT_EQ(options.size(), 10u);
-    EXPECT_EQ(options[7].name, "pathfinder");
-    EXPECT_EQ(options[8].name, "join");
-    EXPECT_EQ(options[9].name, "offset");
-    const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"};
-    for (int i = 0; i < 6; ++i) {
+    ASSERT_EQ(options.size(), 11u);
+    EXPECT_EQ(options[8].name, "pathfinder");
+    EXPECT_EQ(options[9].name, "join");
+    EXPECT_EQ(options[10].name, "offset");
+    const char *roles[] = {"vector-drag",     "vector-line",  "vector-bezier", "vector-bspline",
+                           "vector-freehand", "vector-point", "vector-delete"};
+    for (int i = 0; i < 7; ++i) {
         EXPECT_EQ(options[i].iconRole, roles[i]);
         EXPECT_TRUE(options[i].enabled);
         EXPECT_EQ(options[i].checked, i == 1);
     }
-    EXPECT_EQ(options[6].kind, ToolOption::Kind::Choice);
-    EXPECT_EQ(options[6].iconRole, "shape-presets");
-    EXPECT_EQ(options[6].choices.size(), 7u);
-    EXPECT_EQ(options[6].index, 0);
+    EXPECT_EQ(options[7].kind, ToolOption::Kind::Choice);
+    EXPECT_EQ(options[7].iconRole, "shape-presets");
+    EXPECT_EQ(options[7].choices.size(), 7u);
+    EXPECT_EQ(options[7].index, 0);
     EXPECT_TRUE(tool.setOption("shape", 2, host));
     options = tool.options(host);
-    EXPECT_EQ(options.size(), 7u);
-    for (int i = 0; i < 6; ++i) {
+    EXPECT_EQ(options.size(), 8u);
+    for (int i = 0; i < 7; ++i) {
         EXPECT_FALSE(options[i].enabled);
         EXPECT_FALSE(options[i].checked);
     }
-    EXPECT_EQ(options[6].index, 2);
+    EXPECT_EQ(options[7].index, 2);
     EXPECT_FALSE(tool.setOption("mode0", 1, host));
+    EXPECT_FALSE(tool.setOption("freehand", 1, host));
     tool.setOption("shape", 0, host);
     tool.editor().mode = 0;
     Pointer wheel;

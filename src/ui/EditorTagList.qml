@@ -83,7 +83,7 @@ Item {
         tags.typedKey = ""
         if (!tags.enabled || typed.length !== 1)
             return
-        controller.typed(field.text, field.cursorPosition, typed)
+        controller.typed(field.text, field.cursorPosition, typed, field.role)
     }
 
     function afterComposition() {
@@ -99,7 +99,7 @@ Item {
         for (let i = 0; i < inserted; ++i) {
             const ch = now.charAt(at + i)
             text = text.substring(0, at + i) + ch + text.substring(at + i)
-            controller.typed(text, at + i + 1, ch)
+            controller.typed(text, at + i + 1, ch, field.role)
         }
     }
 

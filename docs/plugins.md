@@ -185,6 +185,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.job.begin{title}`, `hikari.job.progress(fraction, text)`, `hikari.job.cancelled()` | Turns the running command, a background plugin's timer callback, or a click in the plugin's own panel or dialog, into a job with a progress card and Cancel. See [Long jobs](#long-jobs). |
 | `hikari.timer.after(ms, fn)`, `hikari.timer.every(ms, fn)`, `hikari.timer.cancel(id)` | A background plugin's timers. See [Background plugins and time](#background-plugins-and-time). |
 | `hikari.formats.exporter(id, fn)`, `hikari.formats.importer(id, fn)` | Writes and reads a subtitle format from `contributes.formats`. See [Formats](#formats). |
+| `hikari.providers.completion(fn)`, `hikari.providers.hover(fn)` | Answers the line editor's completions and hovers from `contributes.providers`. See [Language features and problems](#language-features-and-problems). |
 | `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
 | `hikari.problems.set(problems, {revision, set, document})`, `hikari.problems.clear{document, set}`, `hikari.problems.list{document, lines, severity, source}`, `hikari.problems.fix(problem, fix, document)` | The plugin's problems: squiggles, Grid marks and rows of the Problems list. See [Language features and problems](#language-features-and-problems). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
@@ -1023,10 +1024,11 @@ end)
 
 - **Loading.** Install dev plugin… in the plugin manager's tool strip picks a folder holding `hikari-plugin.json` and runs it in place, without packing or signing. `plugins.json` keeps `"source": "dev"` and the folder's path.
 - **Its own data.** A dev plugin never shares an installed plugin's data, secrets or folder grants: it has `plugin-data/.dev/<id>/`, `<cache>/plugins/.dev/<id>/`, keychain entries under `plugin-dev/<id>/` and grants of its own.
-- **How it shows.** It carries a Dev badge and never updates by itself. While loaded, it overrides an installed plugin of the same id, which shows "Overridden by a dev plugin".
-- **Reloading.** When a file in the folder changes, HikariSub waits 300 ms, checks the manifest and package rules again, and restarts the plugin, keeping its data, settings and grants.
-- **Permissions.** A dev plugin gets the install question once. A reload that asks for more asks again.
-- **Errors** show in its details and the Log panel, like any plugin's.
+- **How it shows.** It carries a Dev badge and never updates by itself; the marketplace leaves it alone. While loaded, it overrides an installed plugin of the same id, and its details say "The installed <version> is overridden by a dev plugin until you unload it."
+- **Unloading.** Unload… in its details takes it out of `plugins.json`, and can remove its data. Its folder stays as it is, and an installed plugin of the same id runs again.
+- **Reloading.** When a file in the folder changes, HikariSub waits 300 ms, checks the manifest and package rules again, and restarts the plugin, keeping its data, settings and grants. Files and folders whose names start with `.` are skipped, and a symbolic link is refused.
+- **Permissions.** A dev plugin gets the install question once. A reload that asks for more than the user said yes to waits for them: its details offer Review…, which asks again.
+- **Errors.** A reload that breaks a rule keeps the last good files running. Why shows in its details and the Log panel; a plugin that doesn't start shows as any plugin's does.
 
 **Save a copy as a theme plugin…** (Q681). In the dev tools, this writes the theme being shown, built-in or a plugin's, as a new plugin folder: a `hikari-plugin.json` with one `contributes.themes` entry and the theme file with every key set, worked-out colours included. The folder is then loaded as a dev plugin.
 

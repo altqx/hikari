@@ -154,6 +154,8 @@ public:
     }
     // Starts a stopped plugin, or one that didn't start, again.
     Q_INVOKABLE void restart(const QString &pluginId);
+    // Ends the plugin and starts its files afresh, as after an update.
+    void reload(const QString &pluginId);
     // A setting the plugin manager changed, so that hikari.settings.get sees it at once.
     void settingChanged(const QString &pluginId, const QString &setting, const QString &json);
     PluginUi *ui() const { return m_ui; }
@@ -188,6 +190,35 @@ public:
     // The installed plugins, as of the last sync; nullopt before a registry was read.
     const std::optional<std::set<std::string>> &installed() const { return m_installed; }
 
+    struct Provider {
+        std::string plugin;
+        QString pluginName;
+        std::vector<std::string> triggers; // completion only
+    };
+    // The running plugins whose contributes.providers answer `provider` ("completion" or "hover") for `field`, in
+    // the order the plugins were installed.
+    std::vector<Provider> providers(std::string_view provider, std::string_view field) const;
+    // As exportDocument, for the plugin's hikari.providers handler.
+    bool provide(const std::string &plugin, const std::string &provider, const api::Json &request,
+                 backends::PluginProcess::FormatDone done);
+
+    struct LanguageServer {
+        std::string plugin;
+        QString pluginName;
+        plugins::LanguageServer server;
+        // Grows when the plugin starts again, its settings change or a program download changes.
+        std::int64_t revision = 0;
+    };
+    // The language servers of the plugins that are on, in the order the plugins were installed.
+    std::vector<LanguageServer> languageServers() const;
+    // How a language server starts in its plugin's sandbox, or why it can't.
+    std::expected<backends::ProgramProcess::Options, QString> languageServerStart(const std::string &plugin,
+                                                                                const std::string &server) const;
+    // The plugin's settings, as workspace/configuration answers them; an empty object for a plugin that isn't on.
+    api::Json pluginSettings(const std::string &plugin) const;
+    // A line in the Log panel under the plugin's name, at most 20 lines a minute.
+    void logProgramLine(const std::string &plugin, const QString &line);
+
 signals:
     void commandsChanged();
     void statusItemsChanged();
@@ -200,6 +231,7 @@ signals:
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
     void mcpServersChanged();
+    void languageServersChanged();
 
 private:
     struct Running;
@@ -255,9 +287,10 @@ private:
     int m_marksRevision = 0;
     int m_programsRevision = 0;
     void endJob(const std::string &plugin);
-    void renewMcpServers(Running &plugin);
-    std::int64_t m_mcpRevision = 0;
+    void renewServers(Running &plugin);
+    std::int64_t m_serversRevision = 0;
     std::optional<std::set<std::string>> m_installed;
+    std::set<std::string> m_reloading;
     void rework();
     QVariantList m_working;
     int m_windowsRevision = 0;

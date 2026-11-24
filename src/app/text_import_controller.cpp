@@ -1,16 +1,18 @@
 #include "hikari/app/text_import_controller.h"
 
 #include "hikari/application/text_import.h"
+#include "hikari/backends/text_encoding.h"
 #include "hikari/core/style.h"
 #include "settings_store.h"
 
-#include <QByteArrayView>
 #include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QVariantMap>
+
+#include <algorithm>
 
 namespace hikari::app {
 
@@ -30,13 +32,15 @@ std::u8string u8(const QString &s)
     return std::u8string(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
 }
 
-std::optional<std::u8string> textUtf8(QByteArrayView bytes)
+std::span<const std::byte> asBytes(const QByteArray &bytes)
 {
-    if (bytes.startsWith("\xEF\xBB\xBF"))
-        bytes = bytes.sliced(3);
-    if (!bytes.isValidUtf8())
-        return std::nullopt;
-    return std::u8string(reinterpret_cast<const char8_t *>(bytes.data()), static_cast<std::size_t>(bytes.size()));
+    return std::as_bytes(std::span(bytes.constData(), static_cast<std::size_t>(bytes.size())));
+}
+
+QVariantMap encodingRow(std::string_view name)
+{
+    return {{QStringLiteral("name"), QString::fromUtf8(name.data(), static_cast<qsizetype>(name.size()))},
+            {QStringLiteral("label"), QString::fromStdString(backends::encodingLabel(name))}};
 }
 
 }
@@ -148,7 +152,9 @@ bool TextImportController::load(const QString &path)
     m_path = path;
     m_fileName = QFileInfo(path).fileName();
     m_tooLarge = static_cast<std::size_t>(bytes.size()) > core::kMaxTextImportSize;
-    m_text = m_tooLarge ? std::nullopt : textUtf8(bytes);
+    m_bytes = m_tooLarge ? QByteArray() : bytes;
+    m_encoding = backends::suggestedEncoding(asBytes(m_bytes)).value_or("UTF-8");
+    decode();
 
     application::EditSession *target = m_hooks.target ? m_hooks.target() : nullptr;
     m_openFileAvailable = target && target->document().format() == core::SubtitleFormat::Ass;
@@ -173,6 +179,36 @@ bool TextImportController::load(const QString &path)
     return true;
 }
 
+void TextImportController::setEncoding(const QString &encoding)
+{
+    const std::string name = encoding.toStdString();
+    if (name.empty() || name == m_encoding)
+        return;
+    m_encoding = name;
+    decode();
+    reread();
+}
+
+QVariantList TextImportController::encodings() const
+{
+    QVariantList rows;
+    const auto offered = backends::reopenEncodings();
+    if (std::ranges::none_of(offered, [&](const backends::TextEncoding &e) { return e.name == m_encoding; }))
+        rows << encodingRow(m_encoding);
+    for (const backends::TextEncoding &encoding : offered)
+        rows << encodingRow(encoding.name);
+    return rows;
+}
+
+void TextImportController::decode()
+{
+    m_text.reset();
+    if (m_tooLarge)
+        return;
+    if (const auto utf8 = backends::utf8From(asBytes(m_bytes), m_encoding))
+        m_text = std::u8string(reinterpret_cast<const char8_t *>(utf8->data()), utf8->size());
+}
+
 void TextImportController::reread()
 {
     m_lines.clear();
@@ -181,8 +217,9 @@ void TextImportController::reread()
         m_problem = QCoreApplication::translate("HikariSub.Documents", "The file is larger than %n MB.", "",
                                                 static_cast<int>(core::kMaxTextImportSize >> 20));
     } else if (!m_text) {
-        m_problem = QCoreApplication::translate("HikariSub.Documents",
-                                                "The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.");
+        //: %1 is an encoding's name, as in the Encoding list.
+        m_problem = QCoreApplication::translate("HikariSub.Documents", "The file isn’t %1 text. Choose another encoding.")
+                        .arg(QString::fromStdString(backends::encodingLabel(m_encoding)));
     } else if (auto lines = core::importText(*m_text, m_options)) {
         m_lines = std::move(*lines);
     } else if (lines.error() == core::TextImportProblem::TimecodesFile) {

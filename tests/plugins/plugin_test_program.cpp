@@ -67,6 +67,12 @@ int rpc(const std::string &variant)
         } else if (has(line, "\"method\":\"import\"")) {
             std::cerr << "import " << line << std::endl;
             answer(id, has(line, "\"format\":\"bad\"") ? "[]" : R"({"lines":[{"text":"Read"}],"styles":[],"info":{}})");
+        } else if (has(line, "\"method\":\"complete\"")) {
+            std::cerr << "complete " << line << std::endl;
+            answer(id, R"([{"label":"\\fad","insert":"\\fad(","from":1,"to":2}])");
+        } else if (has(line, "\"method\":\"hover\"")) {
+            std::cerr << "hover " << line << std::endl;
+            answer(id, has(line, "\"text\":\"\"") ? "\"no\"" : R"({"text":"Fade","from":0,"to":4})");
         } else if (has(line, "\"command\":\"hello\"")) {
             std::cerr << "hello " << line << std::endl;
             std::cerr << "notify " << callHikari("hikari/notify", R"({"text":"hi","level":"warning"})") << std::endl;
@@ -91,6 +97,118 @@ int rpc(const std::string &variant)
         } else if (!id.empty()) {
             std::cerr << "got " << line << std::endl;
             answer(id, "null");
+        }
+    }
+    return 0;
+}
+
+std::string readFrame()
+{
+    std::size_t length = 0;
+    bool any = false;
+    for (std::string header; std::getline(std::cin, header);) {
+        if (!header.empty() && header.back() == '\r')
+            header.pop_back();
+        if (header.empty()) {
+            if (!any)
+                continue;
+            std::string body(length, '\0');
+            std::cin.read(body.data(), std::streamsize(length));
+            return std::cin ? body : std::string();
+        }
+        any = true;
+        if (header.rfind("Content-Length:", 0) == 0)
+            length = std::stoul(header.substr(15));
+    }
+    return {};
+}
+
+void sendFrame(const std::string &body)
+{
+    std::cout << "Content-Length: " << body.size() << "\r\n\r\n" << body << std::flush;
+}
+
+std::string stringAfter(const std::string &body, const std::string &key)
+{
+    std::size_t at = body.find("\"" + key + "\":\"");
+    if (at == std::string::npos)
+        return {};
+    std::string out;
+    for (at += key.size() + 4; at < body.size() && body[at] != '"'; ++at) {
+        if (body[at] != '\\') {
+            out += body[at];
+            continue;
+        }
+        const char escaped = body[++at];
+        out += escaped == 'n' ? '\n' : escaped == 't' ? '\t' : escaped;
+    }
+    return out;
+}
+
+std::string numberAfter(const std::string &body, const std::string &key)
+{
+    const std::size_t at = body.find("\"" + key + "\":");
+    if (at == std::string::npos)
+        return "null";
+    const std::size_t from = at + key.size() + 3;
+    return body.substr(from, body.find_first_of(",}", from) - from);
+}
+
+// A warning at each "bad", by LSP line and UTF-16 character.
+std::string badDiagnostics(const std::string &text)
+{
+    std::string out;
+    int line = 0, units = 0;
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text.compare(i, 3, "bad") == 0) {
+            const std::string start = "{\"line\":" + std::to_string(line) + ",\"character\":" + std::to_string(units) + "}";
+            const std::string end = "{\"line\":" + std::to_string(line) + ",\"character\":" + std::to_string(units + 3) + "}";
+            out += std::string(out.empty() ? "" : ",") + "{\"range\":{\"start\":" + start + ",\"end\":" + end +
+                   "},\"severity\":2,\"code\":\"Bad\",\"source\":\"fake\",\"message\":\"Avoid bad\"}";
+        }
+        const auto byte = static_cast<unsigned char>(text[i]);
+        if (byte == '\n') {
+            ++line;
+            units = 0;
+        } else if (byte < 0x80 || byte >= 0xC0) {
+            units += byte >= 0xF0 ? 2 : 1;
+        }
+    }
+    return "[" + out + "]";
+}
+
+// A language server, scripted for language_servers_tests; what HikariSub sends goes to stderr.
+int lsp(const std::string &variant)
+{
+    for (std::string body = readFrame(); !body.empty(); body = readFrame()) {
+        const std::string method = stringAfter(body, "method");
+        const std::string id = idOf(body);
+        if (method == "initialize") {
+            std::cerr << "init " << body << std::endl;
+            sendFrame("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"capabilities\":{\"textDocumentSync\":1}}}");
+        } else if (method == "initialized") {
+            sendFrame(R"({"jsonrpc":"2.0","id":"c1","method":"workspace/configuration","params":{"items":[{"section":"style"},{}]}})");
+            sendFrame(R"({"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"ready"}})");
+            sendFrame(R"({"jsonrpc":"2.0","method":"window/showMessage","params":{"type":1,"message":"look"}})");
+        } else if (method.empty()) {
+            std::cerr << "answer " << body << std::endl;
+        } else if (method == "textDocument/didOpen" || method == "textDocument/didChange") {
+            const std::string uri = stringAfter(body, "uri");
+            const std::string version = numberAfter(body, "version");
+            const std::string text = stringAfter(body, "text");
+            std::cerr << (method == "textDocument/didOpen" ? "open " : "change ") << uri << ' ' << version << ' ' << text
+                      << std::endl;
+            if (variant == "crash")
+                return 3;
+            sendFrame("{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/publishDiagnostics\",\"params\":{\"uri\":\"" + uri +
+                      "\",\"version\":" + version + ",\"diagnostics\":" + badDiagnostics(text) + "}}");
+        } else if (method == "textDocument/didClose") {
+            std::cerr << "close " << stringAfter(body, "uri") << std::endl;
+        } else if (method == "shutdown") {
+            std::cerr << "shutdown" << std::endl;
+            sendFrame("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":null}");
+        } else if (method == "exit") {
+            return 0;
         }
     }
     return 0;
@@ -144,6 +262,8 @@ int main(int argc, char **argv)
     }
     if (mode == "rpc")
         return rpc(argc > 2 ? argv[2] : "");
+    if (mode == "lsp")
+        return lsp(argc > 2 ? argv[2] : "");
     if (mode == "sleep") {
         std::this_thread::sleep_for(std::chrono::hours(1));
         return 0;

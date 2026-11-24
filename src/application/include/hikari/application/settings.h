@@ -159,6 +159,13 @@ std::span<const FoldedSetting> foldedSettings();
 std::vector<std::string> foldInto(std::vector<std::string> list, const FoldedSetting &folded, std::string_view value);
 // Withdrawn setting ids a profile may still hold (the INI store drops them).
 std::span<const std::string_view> retiredSettings();
+enum class GridTagsMode : std::int64_t { Show, ReplaceWithSymbol, Hide };
+inline constexpr std::string_view kGridTagsModeSetting = "grid.tagsMode";
+// The Bool that grid.tagsMode replaced; a profile holding it moves to grid.tagsMode once.
+inline constexpr std::string_view kRetiredHideTagsSetting = "grid.hideTags";
+// The mode of the old hide flag: off shows tags; on replaces them with the swap character,
+// or hides them when it is empty. nullopt is the default swap character.
+GridTagsMode gridTagsModeOfHideTags(bool hideTags, const std::optional<std::string> &swapCharacter);
 // "#RRGGBB" or "#RRGGBBAA" as 0xAARRGGBB; nullopt otherwise.
 std::optional<std::uint32_t> parseSettingColour(std::string_view text);
 

@@ -4097,7 +4097,12 @@ Output device: %2</source>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation>கோப்பு UTF-8 உரையாக இல்லை. உரைத் திருத்தியில் அதை UTF-8 ஆகச் சேமித்து, பின் இறக்குமதி செய்யவும்.</translation>
+        <translation type="vanished">கோப்பு UTF-8 உரையாக இல்லை. உரைத் திருத்தியில் அதை UTF-8 ஆகச் சேமித்து, பின் இறக்குமதி செய்யவும்.</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>கோப்பு %1 உரையாக இல்லை. வேறு குறியாக்கத்தைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
@@ -7584,6 +7589,33 @@ Failed to copy %2 fonts.</source>
         <source>Filter the Grid</source>
         <translation>கட்டத்தை வடிகட்டு</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: காட்டு</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: மறை</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -8746,6 +8778,10 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்த தொகுதியை வை</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>தானியங்கு நிறைவைத் தொடங்கு</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>கர்சரில் அசையைப் பிரி</translation>
     </message>
@@ -8956,6 +8992,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Vector clip: freehand</source>
+        <translation>திசையன் கிளிப்: கையால் வரைதல்</translation>
     </message>
     <message>
         <source>Import settings…</source>
@@ -9560,6 +9600,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைச் சுழற்று</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
     </message>
 </context>
 <context>
@@ -12723,14 +12791,6 @@ Failed to copy %2 fonts.</source>
         <translation>முதலில் ஒரு கோப்பைத் திறக்கவும்</translation>
     </message>
     <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களை மறை</translation>
-    </message>
-    <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>வரி திருத்தியில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
     </message>
@@ -12797,6 +12857,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது, மாற்றுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை உள்ளபடியே காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>கட்டத்தில் ஒவ்வொரு குறிச்சொல் தொகுதியையும் அமைப்புகள் › கட்டம் இல் அமைத்த அடையாளமாகக் காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>மறை</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>தற்போதைய வீடியோ சட்டகத்தில் தெரியும் வரிகளைக் கட்டத்தில் நிறமிடுகிறது</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
     </message>
 </context>
 <context>
@@ -14891,6 +14987,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>முழுத் திரையிலிருந்து வெளியேறிய பின் தெரியும் வரியைக் கண்டுபிடி</translation>
     </message>
     <message>
+        <source>Styles for new files</source>
+        <translation>புதிய கோப்புகளுக்கான பாணிகள்</translation>
+    </message>
+    <message>
+        <source>File › New starts with this style catalogue’s styles.</source>
+        <translation>கோப்பு › புதிய இந்தப் பாணிப் பட்டியலின் பாணிகளுடன் தொடங்கும்.</translation>
+    </message>
+    <message>
         <source>Activities</source>
         <translation>செயல்பாடுகள்</translation>
     </message>
@@ -15115,6 +15219,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>நடுப் பொத்தானால் இழுத்தால் படம் நகரும். தொடுதிட்டில் கிள்ளினால் சுட்டியைச் சுற்றிப் பெரிதாக்கும்.</translation>
     </message>
     <message>
+        <source>Built-in Default</source>
+        <translation>உள்ளமைந்த Default</translation>
+    </message>
+    <message>
         <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
         <translation>ஒரு திட்டப்பணியால் “%1” ஐ அமைக்க முடியாது, எனவே இது உங்களுடையவை தாவலில் திறக்கிறது.</translation>
     </message>
@@ -15204,6 +15312,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>No settings match “%1”.</source>
         <translation>“%1” உடன் எந்த அமைப்பும் பொருந்தவில்லை.</translation>
+    </message>
+    <message>
+        <source>Backup copies kept</source>
+        <translation>வைத்திருக்கும் காப்பு நகல்கள்</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>மீட்புக் கோப்புறையில் வைத்திருக்கும் ஒவ்வொரு கோப்பின் முந்தைய சேமிப்புகள். வரம்பு 0 முதல் 100 வரை</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -17620,6 +17736,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>இயக்கத்தில்</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>படவுருக்கள்</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>HikariSub இன் இடைமுகப் படவுருக்களை மாற்றுகிறது. கருப்பொருளில் இல்லாத படவுருக்கள் HikariSub இன் சொந்தப் படவுருக்களாகவே காட்டப்படும்.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18723,6 +18847,107 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Icon theme: %1</source>
         <translation>படவுரு கருப்பொருள்: %1</translation>
+    </message>
+    <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>கருப்பொருளைப் பயன்படுத்த முடியாது: %1</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
+        <translation>நீங்கள் ஒப்புக்கொண்டதை விட இது அதிகம் கேட்கிறது, எனவே நீங்கள் மதிப்பாய்வு செய்யும் வரை மாற்றம் காத்திருக்கிறது.</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
+        <translation>டெவ்</translation>
+    </message>
+    <message>
+        <source>Dev plugin, runs from %1</source>
+        <translation>டெவ் செருகுநிரல், %1 இலிருந்து இயங்குகிறது</translation>
+    </message>
+    <message>
+        <source>Load dev plugin</source>
+        <translation>டெவ் செருகுநிரலை ஏற்று</translation>
+    </message>
+    <message>
+        <source>Reload dev plugin</source>
+        <translation>டெவ் செருகுநிரலை மீண்டும் ஏற்று</translation>
+    </message>
+    <message>
+        <source>Load “%1” %2 from its folder?</source>
+        <translation>“%1” %2 ஐ அதன் கோப்புறையிலிருந்து ஏற்றவா?</translation>
+    </message>
+    <message>
+        <source>Reload “%1” %2 from its folder?</source>
+        <translation>“%1” %2 ஐ அதன் கோப்புறையிலிருந்து மீண்டும் ஏற்றவா?</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to</source>
+        <translation>நீங்கள் ஒப்புக்கொண்டதை விட இது அதிகம் கேட்கிறது</translation>
+    </message>
+    <message>
+        <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
+        <translation>டெவ் செருகுநிரல் %1 இலிருந்து உள்ளபடியே, கையொப்பமிடப்படாமல் இயங்கும்; அதன் கோப்புகள் மாறும்போது மீண்டும் ஏற்றப்படும். நிறுவப்பட்ட பிரதியிலிருந்து தனியாக, அது தனக்கென தரவு, அமைப்புகள், கோப்புறைகளை வைத்திருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Unload and remove its data</source>
+        <translation>ஏற்றத்தை நீக்கி, தரவையும் அகற்று</translation>
+    </message>
+    <message>
+        <source>Unload dev plugin</source>
+        <translation>டெவ் செருகுநிரலின் ஏற்றத்தை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Unload “%1”?</source>
+        <translation>“%1” இன் ஏற்றத்தை நீக்கவா?</translation>
+    </message>
+    <message>
+        <source>The installed %1 runs again.</source>
+        <translation>நிறுவப்பட்ட %1 மீண்டும் இயங்கும்.</translation>
+    </message>
+    <message>
+        <source>Its folder stays as it is.</source>
+        <translation>அதன் கோப்புறை அப்படியே இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Unload</source>
+        <translation>ஏற்றத்தை நீக்கு</translation>
+    </message>
+    <message>
+        <source>Plugin not unloaded</source>
+        <translation>செருகுநிரலின் ஏற்றம் நீக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Install dev plugin…</source>
+        <translation>டெவ் செருகுநிரலை நிறுவு…</translation>
+    </message>
+    <message>
+        <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
+        <translation>அதன் கோப்புகள் மாறின, ஆனால் HikariSub கடைசியாகச் சரியாக இருந்த கோப்புகளையே தொடர்ந்து இயக்கியது: %1</translation>
+    </message>
+    <message>
+        <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
+        <translation>அதன் கோப்புகள் மாறின, அவை நீங்கள் ஒப்புக்கொண்டதை விட அதிகம் கேட்கின்றன, எனவே மாற்றம் உங்களுக்காகக் காத்திருக்கிறது.</translation>
+    </message>
+    <message>
+        <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
+        <translation>நீங்கள் ஏற்றத்தை நீக்கும் வரை, நிறுவப்பட்ட %1 ஐ ஒரு டெவ் செருகுநிரல் மேலெழுதுகிறது.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin folder</source>
+        <translation>செருகுநிரல் கோப்புறையைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>Unload…</source>
+        <translation>ஏற்றத்தை நீக்கு…</translation>
+    </message>
+    <message>
+        <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
+        <translation>அதன் மேனிஃபெச்ட் இப்போது அடையாளம் “%1” என்கிறது. அதன் ஏற்றத்தை நீக்கி, கோப்புறையை மீண்டும் ஏற்றவும்.</translation>
+    </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 நின்றது: %2</translation>
     </message>
 </context>
 <context>
@@ -21258,6 +21483,26 @@ because it was edited.</source>
         <source>Overlapping lines</source>
         <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகள்</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>கொண்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>துல்லியமான பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>தேர்வுடன் பொதுவானவற்றை மட்டும் வை</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>%1 வரிகள் தேர்விலிருந்து நீக்கப்பட்டன.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21334,6 +21579,10 @@ because it was edited.</source>
         <translation>முந்தைய பதிப்பு</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>முந்தைய சேமிப்பு</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>முந்தைய பதிப்பின் தானியங்கு சேமிப்பு</translation>
     </message>
@@ -21358,8 +21607,12 @@ because it was edited.</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>ஒவ்வொன்றும் சேமிக்கப்படாத புதிய நகலாகத் திறக்கும்; அசல் கோப்பு மாறாது. முந்தைய சேமிப்புகள் என்பவை ஒரு சேமிப்பு மாற்றுவதற்கு முன்பு இருந்த கோப்பு. முந்தைய பதிப்பின் தானியங்கு சேமிப்புகள் படிக்க மட்டுமே.</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>ஒவ்வொன்றும் சேமிக்கப்படாத புதிய நகலாகத் திறக்கும்; அசல் கோப்பு மாறாது. முந்தைய பதிப்பின் தானியங்கு சேமிப்புகள் படிக்க மட்டுமே.</translation>
+        <translation type="vanished">ஒவ்வொன்றும் சேமிக்கப்படாத புதிய நகலாகத் திறக்கும்; அசல் கோப்பு மாறாது. முந்தைய பதிப்பின் தானியங்கு சேமிப்புகள் படிக்க மட்டுமே.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21514,7 +21767,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -21547,6 +21800,10 @@ because it was edited.</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1 ஐத் திறக்க முடியவில்லை; எதுவும் மாற்றப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (முந்தைய சேமிப்பு)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
@@ -26947,7 +27204,7 @@ Styles deleted:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -26964,6 +27221,10 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>வீடியோ (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27884,6 +28145,10 @@ or codecs or a splitter may be missing</source>
         <translation>மூலப்புள்ளி</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>கையால் வரைதல்</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>தளம்</translation>
     </message>
@@ -28731,6 +28996,11 @@ or codecs or a splitter may be missing</source>
         <translation>பாதையில் உரை</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>கையால் வரைதல்: அழுத்திப் பிடித்து வரையவும்.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>நிலையைப் படிக்கப் படத்தின் மீது சுட்டவும். Ctrl-சொடுக்கு வரியை அங்கே வைக்கும்.</translation>
     </message>
@@ -28901,16 +29171,20 @@ or codecs or a splitter may be missing</source>
         <translation>“கிளிப்பைத் தலைகீழாக்கு” உள்ளே இருப்பதைக் காட்டுவதற்கும் வெளியே இருப்பதைக் காட்டுவதற்கும் இடையே மாற்றும்.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>ஒரு பயன்முறையைத் தேர்ந்தெடுக்கவும்: புள்ளிகளை நகர்த்துதல்; ஒரு கோடு, பெசியர் வளைவு அல்லது பி-ச்ப்ளைனைச் சேர்த்தல்; ஒரு தனிப் புள்ளியைச் சேர்த்தல் அல்லது ஒன்றை நீக்குதல்.</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>ஒரு பயன்முறையைத் தேர்ந்தெடுக்கவும்: புள்ளிகளை நகர்த்துதல்; ஒரு கோடு, பெசியர் வளைவு அல்லது பி-ச்ப்ளைனைச் சேர்த்தல்; கையால் வரைதல்; ஒரு தனிப் புள்ளியைச் சேர்த்தல் அல்லது ஒன்றை நீக்குதல்.</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும்.</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும். ஒரு துண்டை வளைக்க, நேராக்க, பிளக்க அல்லது நீக்க அதை வலது சொடுக்கவும்.</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl-சொடுக்கு பல புள்ளிகளைத் தேர்ந்தெடுக்கும். இழுக்கும்போது Alt அழுத்தினால் வேறொரு புள்ளியின் x அல்லது y உடன் ஒட்டிப் பொருந்தும்.</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>கையால் வரைதலில், பொத்தானை அழுத்திப் பிடித்து வரையவும். வரைந்த கோட்டை வளைவுகள் எவ்வளவு நெருக்கமாகப் பின்பற்றுகின்றன என்பதை மென்மையாக்கல் அமைக்கிறது.</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -29151,6 +29425,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Add B-spline</source>
         <translation>பி-ச்ப்ளைனைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>மென்மையாக்கல்</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>வளைவுகள்</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -29776,6 +30058,23 @@ do not work on comments</source>
     <message>
         <source>More in the guide</source>
         <translation>வழிகாட்டியில் மேலும்</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>வளைவாக்கு</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>நேராக்கு</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>இங்கே புள்ளியைச் செருகு</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>துண்டை நீக்கு</translation>
     </message>
 </context>
 <context>
