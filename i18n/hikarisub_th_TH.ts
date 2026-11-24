@@ -25371,8 +25371,8 @@ Styles deleted:
         <translation>%1 มิลลิวินาที</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>ย้อนกลับ</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -25450,13 +25450,27 @@ Styles deleted:
         <source>Open keyframes…</source>
         <translation>เปิดคีย์เฟรม…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>แสดงการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>kf</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>การเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>ตัวช่วยจัดเวลา</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>

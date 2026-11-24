@@ -25821,8 +25821,8 @@ Usunięte style:
         <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>Wstecz</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -25900,13 +25900,29 @@ Usunięte style:
         <source>Open keyframes…</source>
         <translation>Otwórz klatki kluczowe…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n linijka się zmieni</numerusform>
+            <numerusform>%n linijki się zmienią</numerusform>
+            <numerusform>%n linijek się zmieni</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>Pokaż zmiany</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>kl.</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Zmiany</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>Asystent timingu</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
