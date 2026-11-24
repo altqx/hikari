@@ -18738,6 +18738,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
         <translation>டெவ்</translation>
     </message>
     <message>
