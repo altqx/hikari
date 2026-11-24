@@ -1,6 +1,5 @@
 #include "hikari/app/language_servers.h"
 
-#include "hikari/application/visual_transform.h"
 #include "hikari/backends/program_process.h"
 
 #include <QCoreApplication>
@@ -508,7 +507,11 @@ void LanguageServers::syncLines(Server &server, const Open &open, bool &changed)
         for (const auto &[id, s] : open)
             if (id == editing->first)
                 session = s;
-    const core::LineRecord *line = session ? application::findLine(session->document(), editing->second) : nullptr;
+    const core::LineRecord *line = nullptr;
+    if (session)
+        for (const core::LineRecord *record : session->document().lines())
+            if (record->id == editing->second)
+                line = record;
     for (auto it = server.texts.begin(); it != server.texts.end();) {
         if (line && std::get<0>(it->first) == editing->first.value && std::get<1>(it->first) == line->id.value) {
             ++it;
