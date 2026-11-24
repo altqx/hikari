@@ -231,6 +231,38 @@ private slots:
         QVERIFY(!differs());
     }
 
+    void aLegacyEncodingBarReopensAndTheMenuOffersEveryEncoding()
+    {
+        start();
+        const QString path = writeAss(dir.filePath(QStringLiteral("encoding/legacy.ass")), "\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd\x81\x41\x90\xa2\x8a\x45\x81\x42\x93\xfa\x96\x7b\x8c\xea\x82\xcc\x8e\x9a\x96\x8b\x82\xc5\x82\xb7\x81\x42\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd\x81\x41\x90\xa2\x8a\x45\x81\x42\x93\xfa\x96\x7b\x8c\xea\x82\xcc\x8e\x9a\x96\x8b\x82\xc5\x82\xb7\x81\x42\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd\x81\x41\x90\xa2\x8a\x45\x81\x42\x93\xfa\x96\x7b\x8c\xea\x82\xcc\x8e\x9a\x96\x8b\x82\xc5\x82\xb7\x81\x42");
+        QVERIFY(application->openFile(path));
+        QTRY_VERIFY(shown("encodingBar"));
+        QVERIFY(named("encodingBar")->property("text").toString().contains(QStringLiteral("Shift-JIS")));
+        QCOMPARE(named("encodingBarReopen")->property("text").toString(), QStringLiteral("Reopen as Shift-JIS"));
+
+        QVERIFY(QMetaObject::invokeMethod(window, "buildMenus"));
+        QObject *item = nullptr;
+        QTRY_VERIFY((item = named("reopenWithEncodingMenuItem")));
+        auto *action = item->property("action").value<QObject *>();
+        QVERIFY(action && action->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QObject *chooser = named("encodingChooser");
+        QVERIFY(chooser);
+        QTRY_VERIFY(chooser->property("opened").toBool());
+        const QVariantList rows = chooser->property("rows").toList();
+        QCOMPARE(rows.size(), 17);
+        QCOMPARE(rows.first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Shift-JIS"));
+        QCOMPARE(rows.first().toMap().value(QStringLiteral("detail")).toString(), QStringLiteral("Detected"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(!chooser->property("opened").toBool());
+        QVERIFY(shown("encodingBar"));
+
+        QVERIFY(QMetaObject::invokeMethod(named("encodingBarReopen"), "clicked"));
+        QTRY_VERIFY(!shown("encodingBar"));
+        QVERIFY(firstLine().startsWith(QStringLiteral("こんにちは、世界。")));
+        QVERIFY(target()->isDirty());
+    }
+
     void theAudioPickerListsWebmMatroskaAudioAndOpus()
     {
         start();

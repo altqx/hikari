@@ -10,6 +10,8 @@ if(WIN32)
 endif()
 hikari_add_gtest(hikari_backends_legacy_text_tests SOURCES legacy_text_file_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
+hikari_add_gtest(hikari_backends_text_encoding_tests SOURCES text_encoding_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
 hikari_add_gtest(hikari_backends_lyrics_text_tests SOURCES lyrics_text_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_lyrics_text_tests PRIVATE

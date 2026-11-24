@@ -3517,6 +3517,22 @@ Output device: %2</source>
         <translation>என்னுடையதை வை</translation>
     </message>
     <message>
+        <source>%1 looks like %2, not UTF-8. Reopening drops the changes you made here.</source>
+        <translation>%1 UTF-8 அல்ல, %2 போலத் தெரிகிறது. மீண்டும் திறந்தால் இங்கே செய்த மாற்றங்கள் நீக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>%1 looks like %2, not UTF-8.</source>
+        <translation>%1 UTF-8 அல்ல, %2 போலத் தெரிகிறது.</translation>
+    </message>
+    <message>
+        <source>Reopen as %1</source>
+        <translation>%1 ஆக மீண்டும் திற</translation>
+    </message>
+    <message>
+        <source>Other encoding…</source>
+        <translation>வேறு குறியாக்கம்…</translation>
+    </message>
+    <message>
         <source>Convert “%1” to ASS before saving it?</source>
         <translation>சேமிப்பதற்கு முன் “%1” ஐ ASS ஆக மாற்றவா?</translation>
     </message>
@@ -3591,6 +3607,22 @@ Output device: %2</source>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>உள்பொதிந்த வசன வரிகளுடன் கூடிய வீடியோக்கள் (*.mkv *.ogm)</translation>
+    </message>
+    <message>
+        <source>Reopening drops the changes you made here. The file then saves as UTF-8.</source>
+        <translation>மீண்டும் திறந்தால் இங்கே செய்த மாற்றங்கள் நீக்கப்படும். பின்னர் கோப்பு UTF-8 ஆகச் சேமிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>The file then saves as UTF-8.</source>
+        <translation>பின்னர் கோப்பு UTF-8 ஆகச் சேமிக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Detected</source>
+        <translation>கண்டறியப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Reopen</source>
+        <translation>மீண்டும் திற</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -3683,6 +3715,10 @@ Output device: %2</source>
     <message>
         <source>Choose where to save the untitled document.</source>
         <translation>தலைப்பிடப்படாத ஆவணத்தைச் சேமிக்கும் இடத்தைத் தேர்வுசெய்யவும்.</translation>
+    </message>
+    <message>
+        <source>The file is not text in that encoding; nothing was changed.</source>
+        <translation>அந்தக் குறியாக்கத்தில் கோப்பு உரையாக இல்லை; எதுவும் மாற்றப்படவில்லை.</translation>
     </message>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
@@ -4098,6 +4134,10 @@ Output device: %2</source>
     <message>
         <source>Comment: %1</source>
         <translation>கருத்து: %1</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding</source>
+        <translation>குறியாக்கத்துடன் மீண்டும் திற</translation>
     </message>
 </context>
 <context>
@@ -4772,12 +4812,20 @@ Output device: %2</source>
         <translation>1 முதல் 1000 வரையிலான சட்டக வீதத்தை உள்ளிடு.</translation>
     </message>
     <message>
+        <source>Choose an encoding from the list.</source>
+        <translation>பட்டியலிலிருந்து ஒரு குறியாக்கத்தைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
         <source>The style options can’t be saved in this file.</source>
         <translation>இந்தக் கோப்பில் பாணி விருப்பங்களைச் சேமிக்க முடியாது.</translation>
     </message>
     <message>
         <source>YouTube timed text couldn’t be made from this file: %1</source>
         <translation>இந்தக் கோப்பிலிருந்து YouTube நேரக் குறியிட்ட உரையை உருவாக்க முடியவில்லை: %1</translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written in %1.</source>
+        <translation>கோப்பை %1 இல் எழுத முடியவில்லை.</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -5155,8 +5203,24 @@ Output device: %2</source>
         <translation>%1 ஐ நீக்கு</translation>
     </message>
     <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>இந்தக் கோப்பின் எல்லா எழுத்துகளையும் %1 கொண்டிருக்க முடியாது</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>இவை மாற்று எழுத்தாக எழுதப்படும்: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>எப்படியும் எழுது</translation>
+    </message>
+    <message>
         <source>Format</source>
         <translation>வடிவம்</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>குறியாக்கம்</translation>
     </message>
     <message>
         <source>Lines</source>
@@ -9269,6 +9333,10 @@ Failed to copy %2 fonts.</source>
         <translation>முழுத் திரை டைப்செட்டிங்</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -12362,6 +12430,10 @@ Failed to copy %2 fonts.</source>
         <translation>வசனக் கோப்பைத் திறக்கிறது</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>வீடியோ கோப்பைத் திறக்கிறது</translation>
     </message>
@@ -12384,6 +12456,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>%1 ஐத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Reads the file again in the encoding you choose; it then saves as UTF-8</source>
+        <translation>நீங்கள் தேர்ந்தெடுக்கும் குறியாக்கத்தில் கோப்பை மீண்டும் படிக்கிறது; பின்னர் UTF-8 ஆகச் சேமிக்கப்படும்</translation>
+    </message>
+    <message>
+        <source>Open a saved file first</source>
+        <translation>முதலில் சேமித்த கோப்பைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>Turns a plain text file into lines, in the open file or a new one</source>
@@ -18638,6 +18718,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin isn’t on.</source>
         <translation>செருகுநிரல் இயக்கத்தில் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>வண்ணக் கருப்பொருள்: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>படவுரு கருப்பொருள்: %1</translation>
     </message>
 </context>
 <context>

@@ -5,6 +5,7 @@ File > Open folder… [GLOBAL_OPEN_FOLDER]
 File > Quick Open… [GLOBAL_QUICK_OPEN]
 File > Recently opened subtitles >
 File > Recently opened subtitles > None
+File > Reopen with encoding… [GLOBAL_REOPEN_WITH_ENCODING]
 File > -
 File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Import lyrics… [GLOBAL_IMPORT_LYRICS]

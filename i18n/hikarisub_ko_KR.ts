@@ -3483,6 +3483,22 @@ Output device: %2</source>
         <translation>내 변경 사항 유지</translation>
     </message>
     <message>
+        <source>%1 looks like %2, not UTF-8. Reopening drops the changes you made here.</source>
+        <translation>%1은(는) UTF-8이 아니라 %2(으)로 보입니다. 다시 열면 여기서 바꾼 내용이 사라집니다.</translation>
+    </message>
+    <message>
+        <source>%1 looks like %2, not UTF-8.</source>
+        <translation>%1은(는) UTF-8이 아니라 %2(으)로 보입니다.</translation>
+    </message>
+    <message>
+        <source>Reopen as %1</source>
+        <translation>%1(으)로 다시 열기</translation>
+    </message>
+    <message>
+        <source>Other encoding…</source>
+        <translation>다른 인코딩…</translation>
+    </message>
+    <message>
         <source>Convert “%1” to ASS before saving it?</source>
         <translation>저장하기 전에 “%1”을(를) ASS로 변환할까요?</translation>
     </message>
@@ -3557,6 +3573,22 @@ Output device: %2</source>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>자막이 포함된 영상 (*.mkv *.ogm)</translation>
+    </message>
+    <message>
+        <source>Reopening drops the changes you made here. The file then saves as UTF-8.</source>
+        <translation>다시 열면 여기서 바꾼 내용이 사라집니다. 이후 파일은 UTF-8로 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>The file then saves as UTF-8.</source>
+        <translation>이후 파일은 UTF-8로 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>Detected</source>
+        <translation>감지됨</translation>
+    </message>
+    <message>
+        <source>Reopen</source>
+        <translation>다시 열기</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -3649,6 +3681,10 @@ Output device: %2</source>
     <message>
         <source>Choose where to save the untitled document.</source>
         <translation>새 자막을 저장할 위치를 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>The file is not text in that encoding; nothing was changed.</source>
+        <translation>그 인코딩으로는 파일이 텍스트가 아닙니다. 아무것도 바뀌지 않았습니다.</translation>
     </message>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
@@ -4058,6 +4094,10 @@ Output device: %2</source>
     <message>
         <source>Comment: %1</source>
         <translation>주석: %1</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding</source>
+        <translation>인코딩을 지정해 다시 열기</translation>
     </message>
 </context>
 <context>
@@ -4731,12 +4771,20 @@ Output device: %2</source>
         <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
     </message>
     <message>
+        <source>Choose an encoding from the list.</source>
+        <translation>목록에서 인코딩을 고르세요.</translation>
+    </message>
+    <message>
         <source>The style options can’t be saved in this file.</source>
         <translation>이 파일에는 스타일 옵션을 저장할 수 없습니다.</translation>
     </message>
     <message>
         <source>YouTube timed text couldn’t be made from this file: %1</source>
         <translation>이 파일로 YouTube 시간 지정 텍스트를 만들 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written in %1.</source>
+        <translation>파일을 %1(으)로 쓸 수 없습니다.</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -5109,8 +5157,24 @@ Output device: %2</source>
         <translation>%1 삭제</translation>
     </message>
     <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>%1(으)로는 이 파일의 모든 문자를 담을 수 없습니다</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>다음 문자는 대체 문자로 기록됩니다: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>그래도 쓰기</translation>
+    </message>
+    <message>
         <source>Format</source>
         <translation>형식</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>인코딩</translation>
     </message>
     <message>
         <source>Lines</source>
@@ -9191,6 +9255,10 @@ Failed to copy %2 fonts.</source>
         <translation>전체 화면 식자</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>인코딩을 지정해 다시 열기…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -12246,6 +12314,10 @@ Failed to copy %2 fonts.</source>
         <translation>자막 파일을 엽니다</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>인코딩을 지정해 다시 열기…</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>영상 파일을 엽니다</translation>
     </message>
@@ -12268,6 +12340,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>%1을(를) 엽니다</translation>
+    </message>
+    <message>
+        <source>Reads the file again in the encoding you choose; it then saves as UTF-8</source>
+        <translation>고른 인코딩으로 파일을 다시 읽습니다. 이후 UTF-8로 저장됩니다</translation>
+    </message>
+    <message>
+        <source>Open a saved file first</source>
+        <translation>먼저 저장된 파일을 여세요</translation>
     </message>
     <message>
         <source>Turns a plain text file into lines, in the open file or a new one</source>
@@ -18498,6 +18578,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin isn’t on.</source>
         <translation>플러그인이 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>색상 테마: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>아이콘 테마: %1</translation>
     </message>
 </context>
 <context>
