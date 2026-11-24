@@ -1158,6 +1158,22 @@ QVariantMap AutomationShell::macroCheck(const QString &script, int ordinal) cons
     return out;
 }
 
+QVariantMap AutomationShell::commandCheck(const QString &command) const
+{
+    const std::string wanted = command.toStdString();
+    if (!wanted.starts_with("macro:"))
+        return {};
+    for (const auto &script : m_manager.scripts()) {
+        if (script.state != application::ScriptStatus::State::Ready && script.state != application::ScriptStatus::State::Running)
+            continue;
+        const std::string prefix = "macro:" + application::scriptFileName(script.path) + ":";
+        for (std::size_t i = 0; i < script.info.macros.size(); ++i)
+            if (wanted == prefix + std::to_string(i))
+                return macroCheck(QString::fromStdString(script.path), int(i));
+    }
+    return {};
+}
+
 void AutomationShell::runLastLoadedScript()
 {
     if (m_documentScripts.empty())

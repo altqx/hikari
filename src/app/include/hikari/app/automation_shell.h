@@ -169,6 +169,8 @@ public:
     // How the Automation menu shows a macro: `reason` when it can't run on the selection, `note` while it's being
     // checked, `help` from its validation function and `active` from its isactive function. Empty before a check.
     Q_INVOKABLE QVariantMap macroCheck(const QString &script, int ordinal) const;
+    // macroCheck for a commands.list macro command, "macro:<file>:<ordinal>"; empty for any other command.
+    Q_INVOKABLE QVariantMap commandCheck(const QString &command) const;
     int checksRevision() const { return m_checksRevision; }
     // The first macro of the last Document script; while another macro runs, it waits for it.
     Q_INVOKABLE void runLastLoadedScript();

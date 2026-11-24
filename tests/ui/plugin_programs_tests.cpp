@@ -147,7 +147,12 @@ private slots:
         QCOMPARE(lines[1], QDir::toNativeSeparators(folder(QStringLiteral("package"))));
         QCOMPARE(lines[2], QDir::toNativeSeparators(folder(QStringLiteral("data"))));
         QCOMPARE(lines[3], QStringLiteral("${nothing}"));
+#ifdef Q_OS_WIN
+        QVERIFY2(lines[4].startsWith(QStringLiteral("TEMP=")) && lines[4].endsWith(QStringLiteral("\\AC\\Temp"), Qt::CaseInsensitive),
+                 qPrintable(lines[4]));
+#else
         QCOMPARE(lines[4], QStringLiteral("TEMP=") + QDir::toNativeSeparators(folder(QStringLiteral("cache/tmp"))));
+#endif
         QCOMPARE(lines[5], QStringLiteral("SECRET=unset"));
     }
 

@@ -6071,6 +6071,7 @@ ApplicationWindow {
                     settings: root.app.settings
                     Layout.minimumWidth: 0
                     tools: root.visualTools
+                    keyOf: symbol => root.boundKeys(symbol, 3)
                 }
                 Slider {
                     objectName: "videoSlider"

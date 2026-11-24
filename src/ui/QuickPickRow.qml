@@ -27,6 +27,7 @@ Item {
     signal clicked()
     signal toggled()
     signal buttonPressed(string button)
+    readonly property bool marked: !many && !heading && item?.checkable === true
     readonly property var itemButtons: current && item && item.buttons ? item.buttons : []
 
     objectName: heading ? "quickPickHeading" + index : "quickPickRow_" + itemId
@@ -40,6 +41,8 @@ Item {
                                             : qsTranslate("HikariSub.QuickPick", "not picked")) : "",
                              tooltip].filter(t => t.length > 0).join(", ")
     Accessible.selected: current
+    Accessible.checkable: marked
+    Accessible.checked: marked && item?.checked === true
     Accessible.selectable: !heading
 
     Rectangle {
@@ -84,8 +87,17 @@ Item {
             focusPolicy: Qt.NoFocus
             onClicked: row.toggled()
         }
+        CheckBox {
+            objectName: "quickPickMark_" + row.itemId
+            visible: row.marked
+            anchors.centerIn: parent
+            checked: row.item?.checked === true
+            checkable: false
+            enabled: !row.unavailable
+            focusPolicy: Qt.NoFocus
+        }
         Icon {
-            visible: !row.many && row.icon.length > 0
+            visible: !row.many && !row.marked && row.icon.length > 0
             anchors.centerIn: parent
             iconRole: row.icon
             size: 16
