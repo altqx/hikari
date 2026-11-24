@@ -4,6 +4,7 @@
 #include "hikari/core/document.h"
 #include "hikari/core/text_import.h"
 
+#include <QByteArray>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -25,6 +26,10 @@ namespace hikari::app {
 class TextImportController : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString fileName READ fileName NOTIFY changed)
+    // The file's encoding, an ICU name; the one the bytes suggest after load.
+    Q_PROPERTY(QString encoding READ encoding WRITE setEncoding NOTIFY changed)
+    // {name, label} rows: Reopen with encoding's list, after the suggested encoding when the list lacks it.
+    Q_PROPERTY(QVariantList encodings READ encodings NOTIFY changed)
     Q_PROPERTY(QString actorSeparator READ actorSeparator WRITE setActorSeparator NOTIFY changed)
     Q_PROPERTY(QString commentStarter READ commentStarter WRITE setCommentStarter NOTIFY changed)
     Q_PROPERTY(bool keepBlankLines READ keepBlankLines WRITE setKeepBlankLines NOTIFY changed)
@@ -49,6 +54,9 @@ public:
     TextImportController(ui::SettingsStore &settings, Hooks hooks, QObject *parent = nullptr);
 
     QString fileName() const { return m_fileName; }
+    QString encoding() const { return QString::fromStdString(m_encoding); }
+    void setEncoding(const QString &encoding);
+    QVariantList encodings() const;
     QString actorSeparator() const;
     void setActorSeparator(const QString &separator);
     QString commentStarter() const;
@@ -77,6 +85,7 @@ signals:
     void changed();
 
 private:
+    void decode();
     void reread();
     void optionsChanged();
 
@@ -84,6 +93,8 @@ private:
     Hooks m_hooks;
     QString m_path;
     QString m_fileName;
+    QByteArray m_bytes;
+    std::string m_encoding = "UTF-8";
     std::optional<std::u8string> m_text;
     bool m_tooLarge = false;
     core::TextImportOptions m_options;

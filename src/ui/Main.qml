@@ -5219,6 +5219,47 @@ ApplicationWindow {
                   ? qsTranslate("HikariSub.QcNotes", "%1 · %2", "A problem's message, then its source").arg(field.hoveredProblem.message, field.hoveredProblem.source)
                   : ""
         }
+        HoverHandler {
+            id: providerHover
+            objectName: field.objectName + "ProviderHover"
+            onPointChanged: if (hovered) providerHoverTimer.restart()
+            onHoveredChanged: if (!hovered) {
+                providerHoverTimer.stop()
+                root.editor.tagList.clearHover()
+            }
+        }
+        function textAt(x, y) {
+            const at = field.positionAt(x, y)
+            const caret = field.positionToRectangle(at)
+            return Math.abs(caret.y + caret.height / 2 - y) > caret.height || at >= field.text.length ? -1 : at
+        }
+        Timer {
+            id: providerHoverTimer
+            interval: 500
+            onTriggered: {
+                const at = field.textAt(providerHover.point.position.x, providerHover.point.position.y)
+                if (at < 0)
+                    root.editor.tagList.clearHover()
+                else
+                    root.editor.tagList.hoverAt(field.role, field.text, at)
+            }
+        }
+        readonly property var providerHoverShown: {
+            const hover = root.editor.tagList.hover
+            if (!providerHover.hovered || hover.role !== field.role || field.hoveredProblem !== null)
+                return null
+            const at = field.textAt(providerHover.point.position.x, providerHover.point.position.y)
+            return at >= 0 && (hover.from === hover.to || (hover.from <= at && at < hover.to)) ? hover : null
+        }
+        ToolTip {
+            objectName: field.objectName + "ProviderTip"
+            visible: field.providerHoverShown !== null
+            x: providerHover.point.position.x
+            y: providerHover.point.position.y + 18
+            text: field.providerHoverShown
+                  ? qsTranslate("HikariSub.QcNotes", "%1 · %2", "A problem's message, then its source").arg(field.providerHoverShown.text, field.providerHoverShown.source)
+                  : ""
+        }
         Connections {
             target: root.problems
             function onChanged() { field.refreshMarks() }
@@ -11859,6 +11900,9 @@ ApplicationWindow {
         case "EDITBOX_COMMIT": root.editor.applyChanges(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
+        case "EDITBOX_TRIGGER_COMPLETION":
+            root.editor.tagList.trigger(field.text, field.cursorPosition, field.role)
+            return true
         case "EDITBOX_START_DIFFERENCE":
         case "EDITBOX_END_DIFFERENCE":
             root.editor.insertTimeDifference(action === "EDITBOX_END_DIFFERENCE", edited.selectionStart, edited.selectionEnd)

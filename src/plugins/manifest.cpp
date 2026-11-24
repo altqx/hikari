@@ -277,6 +277,14 @@ std::vector<FormatContribution> formats(const Json *list)
     return out;
 }
 
+std::vector<std::string> providerFields(const Json &provider)
+{
+    std::vector<std::string> out = strings(provider.find("fields"));
+    if (out.empty())
+        out.push_back("text");
+    return out;
+}
+
 bool fitsPort(const Json &value, std::string_view type)
 {
     if (type == "Number" || type == "Time" || type == "Alpha")
@@ -546,6 +554,12 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                 m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
         m.nodes = nodes(contributes->find("nodes"));
         m.formats = formats(contributes->find("formats"));
+        if (const Json *providers = contributes->find("providers")) {
+            if (const Json *completion = providers->find("completion"))
+                m.completion = CompletionProvider{strings(completion->find("triggers")), providerFields(*completion)};
+            if (const Json *hover = providers->find("hover"))
+                m.hover = HoverProvider{providerFields(*hover)};
+        }
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.dictionaries = dictionaries(contributes->find("dictionaries"));

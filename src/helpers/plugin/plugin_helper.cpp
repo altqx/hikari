@@ -142,6 +142,7 @@ void load(Reader &in, Responder &r)
     options.settings = std::move(*settings);
     options.commands = std::move(request->commands);
     options.exporters = std::move(request->exporters);
+    options.providers = std::move(request->providers);
     options.importers = std::move(request->importers);
     ServiceHost host(r);
     auto state = PluginState::load(std::move(options), host);
@@ -187,6 +188,19 @@ void importFile(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, bytesOf(result->dump()));
 }
 
+void provide(Reader &in, Responder &r)
+{
+    const std::string provider = in.str();
+    const auto request = Json::parse(in.str());
+    if (!in.ok() || !in.atEnd() || !request || !request->isObject())
+        return r.terminal(Outcome::InvalidInput);
+    ServiceHost host(r);
+    auto answer = g_state->provide(provider, *request, host);
+    if (!answer)
+        return r.terminal(Outcome::Failed, bytesOf(answer.error()));
+    r.terminal(Outcome::Ok, bytesOf(answer->dump()));
+}
+
 }
 
 int main()
@@ -210,6 +224,8 @@ int main()
             return exportDocument(in, r);
         if (command == protocol::Command::Import)
             return importFile(in, r);
+        if (command == protocol::Command::Provide)
+            return provide(in, r);
         if (command != protocol::Command::Run)
             return r.terminal(Outcome::Unsupported);
         const std::string id = in.str();
