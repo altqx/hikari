@@ -422,7 +422,6 @@ DialogWindow {
                                             required property int index
                                             objectName: "exportSrv3Shadow" + modelData.bit
                                             width: 52
-                                            height: Theme.controlHeight
                                             checkable: true
                                             enabled: srv3Row.row.hasShadow === true
                                             checked: (srv3Row.value.shadows & modelData.bit) !== 0
@@ -468,7 +467,6 @@ DialogWindow {
                                             readonly property string colour: srv3Row.value[modelData.key] || ""
                                             objectName: "exportSrv3Colour_" + modelData.key
                                             width: 30
-                                            height: Theme.smallControlHeight
                                             enabled: srv3Row.value.karaoke === true
                                             activeFocusOnTab: false
                                             Accessible.name: modelData.name.arg(srv3Row.row.name)
