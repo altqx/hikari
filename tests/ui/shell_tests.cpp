@@ -17431,9 +17431,21 @@ private slots:
                     settings.setValue(QStringLiteral("appearance.theme"), code);
                     window->resize(size);
                     QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
-                    QVERIFY(application->openFile(fontAss(qPrintable(QStringLiteral("%1-%2.ass").arg(QLatin1String(name)).arg(++file)),
-                        "Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,Wafer gym\n"
-                        "Dialogue: 0,0:00:05.00,0:00:07.00,Default,,0,0,0,,Second line\n")));
+                    const QString path = dir.filePath(QStringLiteral("%1-%2.ass").arg(QLatin1String(name)).arg(++file));
+                    {
+                        QFile f(path);
+                        QVERIFY(f.open(QIODevice::WriteOnly));
+                        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[V4+ Styles]\n"
+                                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                                "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                                "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                                "Style: Default,Tahoma,28,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                                "2,2,10,10,10,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
+                                "MarginV, Effect, Text\n"
+                                "Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,Wafer gym\n"
+                                "Dialogue: 0,0:00:05.00,0:00:07.00,Default,,0,0,0,,Second line\n");
+                    }
+                    QVERIFY(application->openFile(path));
                     auto &video = application->video().session();
                     application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
                     QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
