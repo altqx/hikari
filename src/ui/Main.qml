@@ -80,6 +80,7 @@ ApplicationWindow {
     required property var videoAnalysis
     required property var lyricsImport
     required property var qcNotes
+    required property var problems
     required property var fontCollector
     required property var fontCatalogs
     required property var matroska
@@ -809,11 +810,13 @@ ApplicationWindow {
         if (width !== root.sentShrinkableWidth && Docking.setShrinkableWidth(dockingArea.uniqueName, width))
             root.sentShrinkableWidth = width
     }
-    function sideBarWidth(bar) {
+    function sideBarRoom() {
         const shown = (root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)
         const middleLeast = root.arrangementSettled ? Docking.layoutMinimumSize(dockingArea.uniqueName).width : 0
-        const room = Math.max(SideBarModel.minimumWidth, (root.width - middleLeast) / Math.max(1, shown))
-        return Math.round(Math.min(bar.width, room))
+        return Math.floor(Math.max(SideBarModel.minimumWidth, (root.width - middleLeast) / Math.max(1, shown)))
+    }
+    function sideBarWidth(width) {
+        return Math.round(Math.max(SideBarModel.minimumWidth, Math.min(width, root.sideBarRoom())))
     }
     function showInSideBar(dock, focus) {
         root.setSideBars(SideBarModel.shown(root.sideBarsJson, root.panelName(dock)))
@@ -910,7 +913,8 @@ ApplicationWindow {
             return
         }
         (left ? leftSideBar : rightSideBar).liveWidth = -1
-        root.setSideBars(SideBarModel.widened(root.sideBarsJson, second, width))
+        const kept = width < SideBarModel.minimumWidth ? width : Math.min(width, root.sideBarRoom())
+        root.setSideBars(SideBarModel.widened(root.sideBarsJson, second, kept))
     }
     function sideBarPanelCycle() {
         const leftPanel = leftSideBar.visible && leftSideBar.slot.children.length > 0 ? leftSideBar.slot.children[0] : null
@@ -1365,6 +1369,49 @@ ApplicationWindow {
     function stepQcNote(forward) {
         if (!qcNotesTool.step(forward) && !root.panelShown(qcNotesDock))
             root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
+    }
+    function quickFix() {
+        const inList = qcNotesTool.activeFocus
+        const field = root.editedField()
+        const choices = inList ? qcNotesTool.quickFixChoices() : root.problems.editorFixesAt(field.role, field.cursorPosition)
+        if (choices.length === 0) {
+            root.notices.post("info", qsTranslate("HikariSub.QcNotes", "Quick fix"),
+                              inList ? qsTranslate("HikariSub.QcNotes", "The chosen row has no quick fixes.")
+                                     : qsTranslate("HikariSub.QcNotes", "No problem at the caret has a quick fix."))
+            return
+        }
+        if (choices.length === 1) {
+            root.problems.applyFix(choices[0].problem, choices[0].fix)
+            return
+        }
+        quickFixMenu.choices = choices
+        const at = inList ? qcNotesTool.chosenItem() : field
+        if (inList && at)
+            quickFixMenu.popup(at, 0, at.height)
+        else
+            quickFixMenu.popup(field, field.cursorRectangle.x, field.cursorRectangle.y + field.cursorRectangle.height)
+    }
+    ShellMenu {
+        id: quickFixMenu
+        objectName: "quickFixMenu"
+        property var choices: []
+        Instantiator {
+            model: quickFixMenu.choices
+            delegate: ShellMenuItem {
+                required property var modelData
+                required property int index
+                objectName: "quickFix" + index
+                iconRole: "edit"
+                text: modelData.title
+                detailText: modelData.source
+                onTriggered: {
+                    const choice = modelData
+                    Qt.callLater(() => root.problems.applyFix(choice.problem, choice.fix))
+                }
+            }
+            onObjectAdded: (index, object) => quickFixMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => quickFixMenu.removeItem(object)
+        }
     }
     function addQcNote(ms) {
         if (!root.qcNotes.editable) {
@@ -4394,6 +4441,7 @@ ApplicationWindow {
                     after: macrosSeparator
                     macros: automationMenu.lazyItems?.placed ? root.macroItems : []
                     enabled: !root.automation.running
+                    checkOf: macro => root.automation.checksRevision >= 0 ? root.automation.macroCheck(macro.path, macro.ordinal) : ({})
                     keys: macro => root.automationHotkeys.keys[root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal)] ?? ""
                     onTriggered: macro => {
                         if (root.hotkeys.shiftClicked(true)) {
@@ -5011,9 +5059,108 @@ ApplicationWindow {
         property int misspellPosition: -1
         property var grammarRanges: []
         property var grammar: ({})
+        property var problemMarks: []
         function refreshMarks() {
             spellMarks.ranges = spelled ? root.app.editorSpellingMarks(role) : []
             grammarRanges = spelled ? root.app.editorGrammarMarks(role) : []
+            problemMarks = root.problems.editorMarks(role)
+        }
+        Shape {
+            id: problemWaves
+            objectName: field.objectName + "Problems"
+            anchors.fill: parent
+            z: 1
+            visible: rows.length > 0
+            readonly property var rows: {
+                field.text
+                field.width
+                field.font
+                const out = []
+                for (const mark of field.problemMarks) {
+                    if (mark.from < 0 || mark.to <= mark.from || mark.to > field.length)
+                        continue
+                    for (const r of field.underlineRows(field.positionToRectangle(mark.from), field.positionToRectangle(mark.to)))
+                        if (r.width > 0)
+                            out.push({x: r.x, y: r.y, width: r.width, severity: mark.severity})
+                }
+                return out
+            }
+            function waves(severity) {
+                return rows.filter(r => r.severity === severity).map(r => {
+                    const points = []
+                    for (let x = 0; x <= r.width; x += 2)
+                        points.push(Qt.point(r.x + x, r.y - ((x / 2) % 2 === 0 ? 0.5 : 2.5)))
+                    return points
+                })
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsError"
+                strokeColor: Theme.danger
+                strokeWidth: 1.2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathMultiline { paths: problemWaves.waves("error") }
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsWarning"
+                strokeColor: Theme.warning
+                strokeWidth: 1.2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathMultiline { paths: problemWaves.waves("warning") }
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsInfo"
+                strokeColor: Theme.accent
+                strokeWidth: 1.2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathMultiline { paths: problemWaves.waves("info") }
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsHint"
+                strokeColor: Theme.muted
+                strokeWidth: 1.2
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [1, 2]
+                fillColor: "transparent"
+                capStyle: ShapePath.FlatCap
+                PathMultiline {
+                    paths: problemWaves.rows.filter(r => r.severity === "hint")
+                                            .map(r => [Qt.point(r.x, r.y - 1), Qt.point(r.x + r.width, r.y - 1)])
+                }
+            }
+        }
+        HoverHandler {
+            id: problemHover
+            objectName: field.objectName + "ProblemHover"
+            enabled: field.problemMarks.length > 0
+        }
+        function problemAt(x, y) {
+            const at = field.positionAt(x, y)
+            const caret = field.positionToRectangle(at)
+            if (Math.abs(caret.y + caret.height / 2 - y) > caret.height)
+                return null
+            return field.problemMarks.find(m => m.from <= at && at < m.to) ?? null
+        }
+        readonly property var hoveredProblem: problemHover.hovered
+            ? field.problemAt(problemHover.point.position.x, problemHover.point.position.y) : null
+        ToolTip {
+            objectName: field.objectName + "ProblemTip"
+            visible: field.hoveredProblem !== null
+            delay: 600
+            x: problemHover.point.position.x
+            y: problemHover.point.position.y + 18
+            text: field.hoveredProblem
+                  ? qsTranslate("HikariSub.QcNotes", "%1 · %2", "A problem's message, then its source").arg(field.hoveredProblem.message, field.hoveredProblem.source)
+                  : ""
+        }
+        Connections {
+            target: root.problems
+            function onChanged() { field.refreshMarks() }
         }
         onSpelledChanged: refreshMarks()
         // Qt Quick text draws straight underlines only, so the wavy one is a Shape.
@@ -5619,7 +5766,7 @@ ApplicationWindow {
         readonly property var state: onLeft ? root.leftSideBarState : root.rightSideBarState
         readonly property var dockShown: root.dockList.find(d => root.panelName(d) === shown) ?? null
         anchors { top: parent.top; bottom: parent.bottom }
-        width: liveWidth >= 0 ? Math.max(SideBarModel.minimumWidth, liveWidth) : root.sideBarWidth(state)
+        width: root.sideBarWidth(liveWidth >= 0 ? liveWidth : state.width)
         visible: (onLeft ? root.leftSideBarShown : root.rightSideBarShown) && !root.videoFullscreen.active
         entries: onLeft ? root.leftSideBarEntries : root.rightSideBarEntries
         shown: root.shownInSideBar(state, entries)
@@ -8356,7 +8503,7 @@ ApplicationWindow {
             objectName: "qcNotesDock"
             uniqueName: root.engineName("QcNotes")
             affinities: root.dockAffinities
-            title: qsTranslate("HikariSub.QcNotes", "QC notes")
+            title: qsTranslate("HikariSub.QcNotes", "Problems")
             Panel {
                 id: qcNotesPanel
                 objectName: "qcNotesPanel"
@@ -8364,12 +8511,13 @@ ApplicationWindow {
                 onActiveFocusChanged: root.app.presenceActivity(root.shellWindow, "reviewing", activeFocus)
                 minimumBodySize: qcNotesTool.minimumBodySize
                 anchors.fill: parent
-                title: qsTranslate("HikariSub.QcNotes", "QC notes")
+                title: qsTranslate("HikariSub.QcNotes", "Problems")
                 QcNotesPanel {
                     id: qcNotesTool
                     anchors.fill: parent
                     focus: true
                     qcNotes: root.qcNotes
+                    problems: root.problems
                     messages: root.messages
                     onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
                 }
@@ -8451,6 +8599,7 @@ ApplicationWindow {
                     id: agentPanelOn
                     AgentPanel {
                         agent: root.agent
+                        quickInput: appQuickInput
                         aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
                         onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
@@ -9053,6 +9202,7 @@ ApplicationWindow {
             visible: root.workspaceLayout.nodeEffects
             Layout.fillWidth: true
             controller: root.nodeEffects
+            quickInput: appQuickInput
             onLeave: root.setNodeEffects(false)
             onProblemChosen: node => {
                 root.nodeEffects.selection = [node]
@@ -9419,6 +9569,7 @@ ApplicationWindow {
         objectName: "matroskaSubtitles"
         matroska: root.matroska
         settings: root.app.settings
+        quickInput: appQuickInput
         notify: root.notify
         documentTitle: () => root.currentTab().title || ""
         videoName: () => root.currentTab().video || ""
@@ -10015,29 +10166,23 @@ ApplicationWindow {
             root.audio.openAudioUrl(selectedFile)
         }
     }
-    ListChooser {
-        id: audioTrackChooser
-        objectName: "audioTrackChooser"
-        settings: root.app.settings
-        Connections {
-            target: root.audio
-            function onTrackChoicesChanged() {
-                if (root.audio.trackChoices.length > 0) {
-                    audioTrackChooser.choose({
-                        title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
-                        rows: root.audio.trackChoices,
-                        acceptText: qsTranslate("HikariSub.Audio", "Open")
-                    }, row => {
-                        if (row >= 0)
-                            root.audio.chooseTrack(row)
-                        else
-                            root.audio.cancelTrackChoice()
-                    })
-                } else if (audioTrackChooser.opened) {
-                    audioTrackChooser.done = null
-                    audioTrackChooser.none()
-                }
+    Connections {
+        target: root.audio
+        function onTrackChoicesChanged() {
+            if (root.audio.trackChoices.length === 0) {
+                appQuickInput.dismissFrom(root.audio)
+                return
             }
+            appQuickInput.pickFrom({
+                title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
+                items: root.audio.trackChoices.map((label, row) => ({ id: String(row), label: label })),
+                from: root.audio
+            }, id => {
+                if (id === null)
+                    root.audio.cancelTrackChoice()
+                else
+                    root.audio.chooseTrack(Number(id))
+            })
         }
     }
     FileChooser {
@@ -10891,6 +11036,7 @@ ApplicationWindow {
     Connections {
         target: quickOpen.popup
         function onOpened() {
+            appQuickInput.cancel()
             if (root.pluginUi)
                 root.pluginUi.popups.dismissShown()
         }
@@ -10900,7 +11046,20 @@ ApplicationWindow {
         objectName: "pluginQuickInput"
         popups: root.pluginUi ? root.pluginUi.popups : null
         hangFrom: quickOpen.hangFrom
-        onShowing: quickOpen.close()
+        onShowing: {
+            quickOpen.close()
+            appQuickInput.cancel()
+        }
+    }
+    AppQuickInput {
+        id: appQuickInput
+        objectName: "appQuickInput"
+        hangFrom: quickOpen.hangFrom
+        onShowing: {
+            quickOpen.close()
+            if (root.pluginUi)
+                root.pluginUi.popups.dismissShown()
+        }
     }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]
@@ -11119,6 +11278,12 @@ ApplicationWindow {
         onTriggered: if (!root.hotkeyGesture("GLOBAL_AI_ACTIONS")) root.openInlineAiMenu()
     }
     Action {
+        id: quickFixAction
+        text: qsTranslate("HikariSub.Hotkeys", "Quick fix")
+        enabled: root.shell.hasEditingTarget
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_QUICK_FIX")) root.quickFix()
+    }
+    Action {
         id: repeatAiActionAction
         text: qsTranslate("HikariSub.Hotkeys", "Repeat last AI action")
         enabled: root.inlineAi.on && !!root.inlineAi.ready.any && !!root.inlineAi.last.action
@@ -11219,6 +11384,7 @@ ApplicationWindow {
         GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
         GLOBAL_SHOW_AI_AGENT: showAiAgentAction, GLOBAL_NEW_AI_THREAD: newAiThreadAction,
         GLOBAL_AI_ACTIONS: aiActionsAction, GLOBAL_REPEAT_AI_ACTION: repeatAiActionAction,
+        GLOBAL_QUICK_FIX: quickFixAction,
         GLOBAL_CLOSE_PAGE: closeAction,
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingAction, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesAction,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerAction, GLOBAL_OPEN_SUBS_RESAMPLE: resampleAction,

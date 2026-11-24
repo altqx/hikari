@@ -299,6 +299,22 @@ TEST_F(PluginProcessTest, MarksGoThroughTheHikariApi)
     EXPECT_EQ(m_calls[2], "marks.list {}");
 }
 
+TEST_F(PluginProcessTest, ProblemsGoThroughTheHikariApi)
+{
+    auto p = process(plugin("problems", "hikari.commands.register('greet', function() "
+                                        "hikari.problems.set({{line = 2, severity = 'warning', message = 'Odd'}}, "
+                                        "{revision = 4, set = 'grammar'}) "
+                                        "hikari.problems.list({severity = 'warning', lines = {2}}) "
+                                        "hikari.problems.fix('p1', 0) hikari.problems.clear({set = 'grammar'}) end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("greet", "{}"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    EXPECT_EQ(m_calls, (std::vector<std::string>{
+                           R"(problems.set {"problems":[{"line":2,"message":"Odd","severity":"warning"}],"revision":4,"set":"grammar"})",
+                           R"(problems.list {"lines":[2],"severity":"warning"})", R"(problems.fix {"fix":0,"problem":"p1"})",
+                           R"(problems.clear {"set":"grammar"})"}));
+}
+
 TEST_F(PluginProcessTest, ForceStopEndsAJobThatIgnoresCancel)
 {
     m_id = "example.chains";

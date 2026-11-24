@@ -7,6 +7,8 @@
 
 #include <array>
 #include <cstring>
+#include <filesystem>
+#include <system_error>
 
 namespace hikari::backends {
 
@@ -59,11 +61,38 @@ bool FolderCollectorOutput::open()
 
 bool FolderCollectorOutput::put(const std::u16string &name, const std::vector<std::byte> &bytes)
 {
-    QFile file(QDir(m_folder).filePath(qs(name)));
+    const QString path = QDir(m_folder).filePath(qs(name));
+    std::error_code removed;
+    std::filesystem::remove(std::filesystem::path(path.toStdU16String()), removed);
+    if (removed)
+        return false;
+    QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         return false;
     const qint64 n = file.write(reinterpret_cast<const char *>(bytes.data()), qint64(bytes.size()));
     return n == qint64(bytes.size()) && file.flush();
+}
+
+bool FolderCollectorOutput::link(const std::u16string &name, const std::u16string &target)
+{
+    namespace fs = std::filesystem;
+    const fs::path at(QDir(m_folder).filePath(qs(name)).toStdU16String());
+    std::error_code ec;
+    const fs::path to = fs::absolute(fs::path(target), ec);
+    if (ec)
+        return false;
+    if (std::error_code same; fs::equivalent(at, to, same))
+        return true;
+    fs::remove(at, ec);
+    if (ec)
+        return false;
+    fs::create_symlink(to, at, ec);
+#ifdef _WIN32
+    // Windows makes symbolic links only in Developer Mode or for an administrator.
+    if (ec)
+        fs::create_hard_link(to, at, ec);
+#endif
+    return !ec;
 }
 
 bool FolderCollectorOutput::label(const std::string &utf8Text)

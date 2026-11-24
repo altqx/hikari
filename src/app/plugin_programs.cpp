@@ -151,8 +151,8 @@ PluginPrograms::PluginPrograms(QObject *parent) : QObject(parent) {}
 
 PluginPrograms::~PluginPrograms() = default;
 
-std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launch(const std::string &pluginId,
-                                                                                const api::ProgramCall &call) const
+std::expected<ProgramProcess::Options, api::Error> PluginPrograms::launchOptions(const std::string &pluginId,
+                                                                             const api::ProgramCall &call) const
 {
     const std::optional<Plugin> plugin = m_wiring.plugin ? m_wiring.plugin(pluginId) : std::nullopt;
     if (!plugin || !plugin->manifest)
@@ -216,8 +216,24 @@ std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launc
     for (const auto &[name, value] : run->second.env)
         environment.insert(qs(name), declared(value).value_or(QString()));
 
-    return std::make_unique<ProgramProcess>(
-        ProgramProcess::Options{file, arguments, environment, plugin->data, std::move(profile)});
+    return ProgramProcess::Options{file, arguments, environment, plugin->data, std::move(profile)};
+}
+
+std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launch(const std::string &pluginId,
+                                                                                const api::ProgramCall &call) const
+{
+    auto options = launchOptions(pluginId, call);
+    if (!options)
+        return std::unexpected(options.error());
+    return std::make_unique<ProgramProcess>(std::move(*options));
+}
+
+std::expected<ProgramProcess::Options, api::Error> PluginPrograms::options(const std::string &pluginId,
+                                                                         const std::string &programId) const
+{
+    api::ProgramCall call;
+    call.program = programId;
+    return launchOptions(pluginId, call);
 }
 
 std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::prepare(const std::string &pluginId,

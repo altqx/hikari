@@ -204,6 +204,7 @@ bool LuaScriptHost::send(lua::Command command, int index, std::size_t features,
         m_refusedSize = payload.size();
         return false;
     }
+    stopCheck();
     // MUST KILL: the handler's request id is filled in only after request() returns.
     auto id = std::make_shared<std::uint64_t>(0);
     const auto sent = m_host->request(m_nextRun++, std::move(payload), [this, id](std::expected<Event, HostError> e) {
@@ -218,6 +219,46 @@ bool LuaScriptHost::send(lua::Command command, int index, std::size_t features,
     m_forceStopOffered = false;
     m_state = State::Running;
     return true;
+}
+
+bool LuaScriptHost::check(const application::MacroSnapshot &snapshot, std::chrono::milliseconds budget)
+{
+    if (m_state != State::Ready || m_checkRequest != 0 || budget.count() <= 0)
+        return false;
+    Writer w;
+    w.i32(static_cast<std::int32_t>(lua::Command::Check)).i32(static_cast<std::int32_t>(budget.count()));
+    auto payload = w.take();
+    const auto body = lua::encodeSnapshot(snapshot);
+    payload.insert(payload.end(), body.begin(), body.end());
+    if (payload.size() > helper::kMaxPayload)
+        return false;
+    m_lastChecks.reset();
+    const auto sent =
+        m_host->request(m_nextRun++, std::move(payload), [this](std::expected<Event, HostError> e) { onCheckEvent(std::move(e)); });
+    if (!sent)
+        return false;
+    m_checkRequest = *sent;
+    return true;
+}
+
+void LuaScriptHost::stopCheck()
+{
+    if (m_checkRequest != 0 && m_host)
+        m_host->cancel(m_checkRequest);
+}
+
+void LuaScriptHost::onCheckEvent(std::expected<Event, HostError> event)
+{
+    if (event && event->kind == Kind::Service) {
+        m_host->answer(m_checkRequest, event->call, Outcome::Unsupported);
+        return;
+    }
+    if (event && event->kind != Kind::Terminal)
+        return;
+    m_checkRequest = 0;
+    if (event && event->outcome == Outcome::Ok)
+        m_lastChecks = lua::decodeMacroChecks(event->payload);
+    emit checkFinished();
 }
 
 void LuaScriptHost::cancel()

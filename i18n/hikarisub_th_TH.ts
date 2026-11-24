@@ -258,12 +258,32 @@
         <translation>เปลี่ยนโหมด</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>โมเดลปัจจุบัน</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>ค่าเริ่มต้นของเอเจนต์</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>ล่าสุด</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>กำลังโหลดโมเดล…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>โหลดโมเดลไม่ได้</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>การตั้งค่า › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -730,10 +750,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>การตั้งค่า › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
     </message>
@@ -896,6 +912,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>ใช้เวลานานกว่า 30 วินาที</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>เอเจนต์ไม่ได้ส่งรายการมา</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย %1…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>เพิ่มคีย์สำหรับ %1…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>ข้อเสนอ: %1</translation>
     </message>
@@ -1024,6 +1056,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>เปิด AI</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>ค้นหาโมเดล</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>ไม่มีโมเดลที่ตรงกัน</translation>
     </message>
 </context>
 <context>
@@ -2354,6 +2394,18 @@ Output device: %2</source>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>เอกสารเปลี่ยนแปลงระหว่างที่แมโครทำงาน จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>กำลังตรวจสอบ…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>เรียกใช้กับส่วนที่เลือกนี้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>ฟังก์ชันตรวจสอบของแมโครหยุดทำงานเพราะเกิดข้อผิดพลาด</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -5594,6 +5646,10 @@ Output device: %2</source>
         <translation>ใส่ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ลงในไฟล์บีบอัด</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>ลิงก์ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ไว้ในโฟลเดอร์ ลิงก์จะใช้ไม่ได้หากย้ายหรือลบแบบอักษร</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>การเขียนไฟล์บีบอัดใหม่จะแทนที่ไฟล์นี้</translation>
     </message>
@@ -5626,8 +5682,16 @@ Output device: %2</source>
         <translation>คัดลอกไปยังโฟลเดอร์</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>ลิงก์ไปยังโฟลเดอร์</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>ไฟล์บีบอัด</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>แบบอักษรจากไฟล์ MKV จะถูกคัดลอก เพราะไม่มีไฟล์ให้ลิงก์</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5666,6 +5730,10 @@ Output device: %2</source>
         <translation>พร้อมเขียน %1</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>พร้อมลิงก์ไปยัง %1</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>พร้อมคัดลอกไปยัง %1</translation>
     </message>
@@ -5678,12 +5746,20 @@ Output device: %2</source>
         <translation>คัดลอกโดยระบุว่าไม่ครบ</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>ลิงก์โดยระบุว่าไม่ครบ</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>เขียนไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>คัดลอกแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>ลิงก์แบบอักษร</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -5974,6 +6050,22 @@ Output device: %2</source>
         <translation>ไม่สามารถบีบอัดแบบอักษร “%1” ได้</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>ลิงก์แบบอักษร “%1” แล้ว</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>ลิงก์แบบอักษร “%1” ไม่ได้ เปิดโหมดนักพัฒนา หรือใช้โฟลเดอร์บนไดรฟ์เดียวกับแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>ลิงก์แบบอักษร “%1” ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>เลือกโฟลเดอร์ที่ต้องการลิงก์แบบอักษร</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>ยังไม่ได้โหลดคำบรรยาย โปรดโหลดคำบรรยายหรือยกเลิกตัวเลือกนี้</translation>
     </message>
@@ -6069,12 +6161,24 @@ Output device: %2</source>
         <translation>คัดลอกแล้ว</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>คัดลอก %1 ที่ไม่มีไฟล์ให้ลิงก์</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>เสร็จสิ้น ลิงก์ %1</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>เสร็จสิ้น %1 %2</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>ไม่พบ %1</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>ไม่สามารถลิงก์ %1 ได้</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6099,6 +6203,10 @@ Output device: %2</source>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>ผลลัพธ์ถูกระบุว่าไม่ครบ (“%1”)</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>เสร็จสมบูรณ์ ลิงก์ %1</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6127,6 +6235,10 @@ Output device: %2</source>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>พร้อมเพิ่ม %1 ลงในไฟล์บีบอัด “%2”</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>พร้อมลิงก์ %1 ไปยัง “%2”</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -7245,6 +7357,37 @@ Failed to copy %2 fonts.</source>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>ข้อผิดพลาด %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>คำเตือน %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>ข้อมูล %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>คำแนะนำ %n รายการ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>ปัญหา %n รายการ: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>กรองตาราง</translation>
@@ -7504,6 +7647,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>แก้ไขด่วน</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14526,6 +14673,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไฟล์คำบรรยายสามารถกำหนดขีดจำกัดของตัวเองได้ในคุณสมบัติของสคริปต์</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>แสดงปัญหาขีดจำกัดการอ่าน</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>การแบ่ง</translation>
     </message>
@@ -17179,6 +17330,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml มีข้อผิดพลาดที่บรรทัด %1</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>มาจากปลั๊กอิน ทำงานในแซนด์บ็อกซ์ของปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18263,6 +18422,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ปลั๊กอินนี้คือโปรแกรม %1 ซึ่งไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
     </message>
     <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>มีเซิร์ฟเวอร์ MCP ให้ใช้ในการตั้งค่า › AI ซึ่งปิดอยู่จนกว่าคุณจะเปิด: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
+    </message>
+    <message>
         <source>Colour theme: %1</source>
         <translation>ธีมสี: %1</translation>
     </message>
@@ -18656,12 +18827,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>ข้อผิดพลาด</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>คำเตือน</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>ข้อมูล</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>คำแนะนำ</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>บรรทัด %1 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>โน้ต QC</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>ไม่มีโน้ตเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>แก้ไขด่วน</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>แถวที่เลือกไม่มีการแก้ไขด่วน</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>ปัญหาที่เคอร์เซอร์ไม่มีการแก้ไขด่วน</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18684,8 +18887,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ลบโน้ตทั้งหมด…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>เพิ่มโน้ต QC…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>ปัญหา</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>ข้อผิดพลาด</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>คำเตือน</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>ข้อมูล</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>คำแนะนำ</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>นำการแก้ไขไปใช้ไม่ได้ บรรทัดนั้นเปลี่ยนไปหลังจากพบปัญหา</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18782,6 +19014,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ลบทั้งหมด</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>ไม่มีการแก้ไขด่วน</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>นำเข้าไฟล์โน้ต</translation>
     </message>
@@ -18817,6 +19053,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>โน้ต %n รายการ</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>ปัญหา %n รายการ</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>เพิ่มโน้ต</translation>
@@ -18844,6 +19086,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ทั้งหมด</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>แหล่งที่มาทั้งหมด</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%1 จาก %2</translation>
     </message>
@@ -18862,6 +19108,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>ยังไม่เสร็จ</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · การแก้ไข %n รายการ</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -18940,6 +19192,24 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>บันทึก</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>อ่านที่ %1 CPS ขีดจำกัดคือ %2</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>บรรทัดข้อความที่ %1 มี %2 อักขระ ขีดจำกัดคือ %3</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>ข้อความ %n บรรทัด ขีดจำกัดคือ %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>การอ่าน</translation>
     </message>
 </context>
 <context>

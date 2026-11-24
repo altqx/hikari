@@ -148,6 +148,17 @@ struct MacroUndoStep {
     bool operator==(const MacroUndoStep &) const = default;
 };
 
+// What a macro's validation and isactive functions answered for one snapshot. A function that raised gives
+// Failed with its message as help; one that ran past its time budget gives TooSlow.
+struct MacroCheck {
+    enum class Verdict : std::int32_t { Valid = 0, Invalid = 1, Failed = 2, TooSlow = 3 };
+    int index = 0;
+    Verdict verdict = Verdict::Valid;
+    std::string help; // validation's second return, Aegisub's dynamic help text
+    std::optional<bool> active;
+    bool operator==(const MacroCheck &) const = default;
+};
+
 struct MacroResult {
     std::vector<MacroInfoLine> info;
     std::vector<MacroStyleLine> styles;

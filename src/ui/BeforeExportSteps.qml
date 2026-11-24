@@ -332,6 +332,7 @@ ColumnLayout {
         objectName: "beforeExportRecipeMenu"
         ShellMenuItem {
             objectName: "beforeExportNoSteps"
+            iconRole: "clear"
             text: qsTr("No steps")
             onTriggered: block.chooseNone()
         }
@@ -342,6 +343,7 @@ ColumnLayout {
                 required property var modelData
                 objectName: modelData.heading ? "" : "beforeExportRecipe_" + modelData.tier + "_" + modelData.name
                 text: modelData.heading ? modelData.heading : modelData.name
+                iconRole: modelData.heading ? "" : modelData.tier
                 enabled: !modelData.heading
                 font.strikeout: modelData.hidden === true
                 description: modelData.hidden === true ? qsTr("Hidden by the project’s recipe of the same name") : ""
@@ -353,18 +355,21 @@ ColumnLayout {
         MenuSeparator {}
         ShellMenuItem {
             objectName: "beforeExportFromFile"
+            iconRole: "import"
             text: qsTr("From this file (Aegisub)")
             enabled: (block.lists.fromFile ?? []).length > 0
             onTriggered: block.chooseFromFile()
         }
         ShellMenuItem {
             objectName: "beforeExportSaveRecipe"
+            iconRole: "save-as"
             text: qsTr("Save recipe…")
             enabled: block.steps.length > 0
             onTriggered: savePopover.openAt(recipeButton)
         }
         ShellMenuItem {
             objectName: "beforeExportManageRecipes"
+            iconRole: "edit"
             text: qsTr("Manage recipes…")
             enabled: (block.lists.recipes ?? []).length > 0
             onTriggered: managePopover.openAt(recipeButton)
@@ -512,22 +517,26 @@ ColumnLayout {
                             ShellMenu {
                                 id: stepMenu
                                 ShellMenuItem {
+                                    iconRole: "move-up"
                                     text: qsTr("Move up")
                                     enabled: stepRow.index > 0
                                     onTriggered: block.move(stepRow.index, stepRow.index - 1)
                                 }
                                 ShellMenuItem {
+                                    iconRole: "move-down"
                                     text: qsTr("Move down")
                                     enabled: stepRow.index < block.steps.length - 1
                                     onTriggered: block.move(stepRow.index, stepRow.index + 1)
                                 }
                                 ShellMenuItem {
+                                    iconRole: "move-to-top"
                                     text: qsTr("Move to top")
                                     enabled: stepRow.index > 0
                                     onTriggered: block.move(stepRow.index, 0)
                                 }
                                 MenuSeparator {}
                                 ShellMenuItem {
+                                    iconRole: "restore-default"
                                     text: qsTr("Reset settings")
                                     onTriggered: block.resetSettings(stepRow.index)
                                 }

@@ -571,6 +571,48 @@ class AgentPanelTest : public QObject {
     }
 
 private slots:
+    QObject *picks() const
+    {
+        QObject *picker = popup(QStringLiteral("agentModelPicker"));
+        return picker ? picker->property("model").value<QObject *>() : nullptr;
+    }
+    QStringList pickerRows() const
+    {
+        QStringList out;
+        auto *rows = qobject_cast<QAbstractItemModel *>(picks());
+        for (int row = 0; rows && row < rows->rowCount(); ++row) {
+            const QModelIndex at = rows->index(row, 0);
+            const auto role = [&](const QByteArray &name) { return rows->roleNames().key(name); };
+            out << (at.data(role("kind")).toString() == QLatin1String("heading") ? QStringLiteral("# ") + at.data(role("label")).toString()
+                                                                                 : at.data(role("label")).toString());
+        }
+        return out;
+    }
+    QVariantMap pickerRow(const QString &id) const
+    {
+        auto *rows = qobject_cast<QAbstractItemModel *>(picks());
+        const int item = rows ? rows->roleNames().key("item") : -1;
+        for (int row = 0; rows && row < rows->rowCount(); ++row)
+            if (const QVariantMap at = rows->index(row, 0).data(item).toMap(); at.value(QStringLiteral("id")).toString() == id)
+                return at;
+        return {};
+    }
+    void typeKeys(const QString &text)
+    {
+        for (const QChar c : text)
+            QTest::keyClick(window(), c.toLatin1());
+    }
+    bool openPicker()
+    {
+        return click(QStringLiteral("agentModelButton")) &&
+               QTest::qWaitFor([&] { return popup(QStringLiteral("agentModelPicker"))->property("opened").toBool(); });
+    }
+    bool pick(const QString &id)
+    {
+        bool found = false;
+        return QMetaObject::invokeMethod(picks(), "setCurrentById", Q_RETURN_ARG(bool, found), Q_ARG(QString, id)) && found &&
+               QMetaObject::invokeMethod(popup(QStringLiteral("agentModelPicker")), "choose");
+    }
     void initTestCase() { testing::removeStaleTemporaryDirs(); }
 
     void init()
@@ -624,8 +666,10 @@ private slots:
             ports.localSidecar = backends::ai::SidecarInstall{QStringLiteral("0.0.0-dev"), {}, flags, {}};
         }
         ports.agents = [](backends::ai::AgentBroker &, application::ai::KeyStore &) {};
-        const bool found = test == "agentsAreModelsOnlyWhenTheyAreFound" || test == "anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce"
-                           || test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem"
+        const bool found = test == "agentsAreModelsOnlyWhenTheyAreFound" || test == "anAgentsModelsLoadOnThePickersFirstOpenOnly"
+                           || test == "anAgentsLastModelsShowAtOnceAndAFailureSaysWhyAndOffersTryAgain"
+                           || test == "thePickerFiltersByNameIdAndSourceAndTheKeyboardPicksTheTopMatch"
+                           || test == "recentModelsComeFirstWithTheirSourceAndDropOnceGone"
                            || test == "aLongModelListOpensAboveTheModelButtonInAShortPanel";
         const bool onlyClaude = QTest::currentTestFunction() == QByteArrayLiteral("withOnlyClaudeCodeThePanelRunsOnIt");
         ports.agentOnPath = [found, onlyClaude](const QString &agent) {
@@ -642,7 +686,8 @@ private slots:
 
         if (test == "theAgentAndReviewOpenInTheAiSideBar")
             firstStartEmptyBefore = ui::SideBarModel::setFirstStartEmpty(false);
-        if (test == "anAgentsLastModelsShowAtOnceAndAFailureKeepsThem") {
+        if (test == "anAgentsLastModelsShowAtOnceAndAFailureSaysWhyAndOffersTryAgain"
+            || test == "thePickerFiltersByNameIdAndSourceAndTheKeyboardPicksTheTopMatch") {
             ui::SettingsStore seed(at(QStringLiteral("settings.toml")));
             seed.set(app::AgentController::kAgentModelsSetting,
                      QStringList{QStringLiteral(R"({"agent":"codex","models":[{"id":"gpt-x","name":"GPT X"}]})")});
@@ -933,7 +978,7 @@ private slots:
         QVERIFY(!kinds().contains(QStringLiteral("change")));
     }
 
-    void aThreadIsRenamedInItsOwnWindow()
+    void aThreadIsRenamedInTheInputBox()
     {
         openPanel();
         QVERIFY(click(QStringLiteral("agentNewThread")));
@@ -941,11 +986,11 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
         QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
         QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
-        QTRY_VERIFY(item(QStringLiteral("agentRenameField")));
-        item(QStringLiteral("agentRenameField"))->setProperty("text", QStringLiteral("Honorifics pass"));
-        QVERIFY(click(QStringLiteral("agentRenameOk")));
+        QTRY_VERIFY(item(QStringLiteral("inputBoxField")));
+        item(QStringLiteral("inputBoxField"))->setProperty("text", QStringLiteral("Honorifics pass"));
+        QTest::keyClick(window(), Qt::Key_Return);
         QTRY_COMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
-        QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
+        QTRY_VERIFY(!item(QStringLiteral("inputBoxField")));
     }
 
     void threadMenusFollowTheThreadRulesAndRowsAndAnswersHaveMenus()
@@ -976,12 +1021,11 @@ private slots:
         QCOMPARE(item(QStringLiteral("agentModeDefault"))->property("text").toString(), QStringLiteral("Default for new threads"));
         shootMenu(QStringLiteral("cx7-agent-mode"), window()->findChild<QObject *>(QStringLiteral("agentModeMenu")));
         QVERIFY(QMetaObject::invokeMethod(window()->findChild<QObject *>(QStringLiteral("agentModeMenu")), "close"));
-        auto *models = window()->findChild<QObject *>(QStringLiteral("agentModelMenu"));
+        auto *models = popup(QStringLiteral("agentModelPicker"));
         QVERIFY(models);
         QTRY_VERIFY(!window()->findChild<QObject *>(QStringLiteral("agentModeMenu"))->property("visible").toBool());
-        QVERIFY(click(QStringLiteral("agentModelButton")));
-        QTRY_VERIFY(item(QStringLiteral("agentModelSettings")));
-        QCOMPARE(item(QStringLiteral("agentModelSettings"))->property("text").toString(), QStringLiteral("Settings › AI"));
+        QVERIFY(openPicker());
+        QCOMPARE(pickerRow(QStringLiteral("settings")).value(QStringLiteral("label")).toString(), QStringLiteral("Settings › AI…"));
         shootMenu(QStringLiteral("cx7-agent-model"), models);
         QVERIFY(QMetaObject::invokeMethod(models, "close"));
         QTRY_VERIFY(!models->property("visible").toBool());
@@ -1374,10 +1418,9 @@ private slots:
         QQuickItem *button = item(QStringLiteral("agentModelButton"));
         QVERIFY(button);
         QCOMPARE(button->property("text").toString(), QStringLiteral("Choose a model"));
-        QVERIFY(click(QStringLiteral("agentModelButton")));
-        QTRY_VERIFY(item(QStringLiteral("agentModelSettings")));
-        QTRY_VERIFY(item(QStringLiteral("agentModel_or/m")));
-        QVERIFY(click(QStringLiteral("agentModel_or/m")));
+        QVERIFY(openPicker());
+        QVERIFY(!pickerRow(QStringLiteral("settings")).isEmpty());
+        QVERIFY(pick(QStringLiteral("or\tm")));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("or\tm"));
         QTRY_COMPARE(button->property("text").toString(), QStringLiteral("Fake model"));
     }
@@ -1448,56 +1491,33 @@ private slots:
         composerMenusFit(available);
     }
 
-    static QObject *row(QObject *menu, const QString &name)
-    {
-        const int count = menu ? menu->property("count").toInt() : 0;
-        for (int i = 0; i < count; ++i) {
-            QQuickItem *at = nullptr;
-            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, at), Q_ARG(int, i));
-            if (at && at->objectName() == name)
-                return at;
-        }
-        return nullptr;
-    }
-    QObject *openAgentModels(const QString &agentKey)
-    {
-        QObject *submenu = menu(QStringLiteral("agentModelMenu_") + agentKey);
-        if (submenu)
-            QMetaObject::invokeMethod(submenu, "open");
-        return submenu;
-    }
-
-    void anAgentsModelsLoadWhenItsSubmenuOpensOnlyOnce()
+    void anAgentsModelsLoadOnThePickersFirstOpenOnly()
     {
         openPanel();
         QCOMPARE(agent().agents().size(), 2);
-        QVERIFY(click(QStringLiteral("agentModelButton")));
-        QTRY_VERIFY(menu(QStringLiteral("agentModelMenu"))->property("opened").toBool());
         QCOMPARE(agent().agentModelsRevision(), 0);
-        QVERIFY(!agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
-
-        QObject *claude = openAgentModels(QStringLiteral("claude"));
-        QVERIFY(claude);
+        QVERIFY(openPicker());
         QVERIFY(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
-        QObject *loading = row(claude, QStringLiteral("agentModelsLoading_claude"));
-        QVERIFY(loading);
-        QVERIFY(loading->property("visible").toBool());
-        QVERIFY(!loading->property("enabled").toBool());
-        QVERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QVERIFY(popup(QStringLiteral("agentModelPicker"))->property("busy").toBool());
+        const QVariantMap loading = pickerRow(QStringLiteral("loading\tclaude"));
+        QCOMPARE(loading.value(QStringLiteral("label")).toString(), QStringLiteral("Loading models…"));
+        QVERIFY(!loading.value(QStringLiteral("disabled")).toString().isEmpty());
         QTRY_COMPARE(agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("models")).toList().size(), 2);
-        QVERIFY(!loading->property("visible").toBool());
-        QVERIFY(row(claude, QStringLiteral("agentModel_agent:claude/")));
-        QObject *opus = nullptr;
-        QTRY_VERIFY((opus = row(claude, QStringLiteral("agentModel_agent:claude/opus"))));
-        QVERIFY(QMetaObject::invokeMethod(opus, "click"));
+        QTRY_VERIFY(pickerRow(QStringLiteral("loading\tclaude")).isEmpty());
+        QCOMPARE(pickerRows().mid(0, 4), (QStringList{QStringLiteral("# Claude Code"), QStringLiteral("Agent default"),
+                                                      QStringLiteral("Sonnet"), QStringLiteral("Opus")}));
+        QCOMPARE(pickerRow(QStringLiteral("agent:claude\topus")).value(QStringLiteral("description")).toString(),
+                 QStringLiteral("opus"));
+        QVERIFY(pick(QStringLiteral("agent:claude\topus")));
         QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\topus"));
         QCOMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code · Opus"));
         QTRY_COMPARE(item(QStringLiteral("agentModelButton"))->property("text").toString(), QStringLiteral("Claude Code · Opus"));
+        QTRY_VERIFY(item(QStringLiteral("agentComposer"))->hasActiveFocus());
         QVERIFY(application->settingsStore()->list(app::AgentController::kAgentModelsSetting).join(QString()).contains(QLatin1String("opus")));
 
+        QTRY_VERIFY(!agent().agentModelsLoading());
         const int revision = agent().agentModelsRevision();
-        QMetaObject::invokeMethod(claude, "close");
-        QVERIFY(openAgentModels(QStringLiteral("claude")));
+        QVERIFY(openPicker());
         QVERIFY(!agent().agentModels(QStringLiteral("claude")).value(QStringLiteral("loading")).toBool());
         QCOMPARE(agent().agentModelsRevision(), revision);
 
@@ -1505,22 +1525,108 @@ private slots:
         QTRY_COMPARE(agent().thread().value(QStringLiteral("modelText")).toString(), QStringLiteral("Claude Code"));
     }
 
-    void anAgentsLastModelsShowAtOnceAndAFailureKeepsThem()
+    void anAgentsLastModelsShowAtOnceAndAFailureSaysWhyAndOffersTryAgain()
     {
         openPanel();
-        const auto codexModels = [this] {
-            return agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("models")).toList();
-        };
-        QCOMPARE(codexModels().size(), 1);
-        QCOMPARE(codexModels().at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("GPT X"));
-        QVERIFY(click(QStringLiteral("agentModelButton")));
-        QObject *codex = openAgentModels(QStringLiteral("codex"));
-        QVERIFY(codex);
+        QVERIFY(openPicker());
         QVERIFY(agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
-        QVERIFY(row(codex, QStringLiteral("agentModel_agent:codex/gpt-x")));
-        QTRY_VERIFY(!agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
-        QCOMPARE(codexModels().size(), 1);
-        QVERIFY(row(codex, QStringLiteral("agentModel_agent:codex/")));
+        QCOMPARE(pickerRow(QStringLiteral("agent:codex\tgpt-x")).value(QStringLiteral("label")).toString(), QStringLiteral("GPT X"));
+        QVERIFY(pickerRow(QStringLiteral("loading\tcodex")).isEmpty());
+        QTRY_VERIFY(!pickerRow(QStringLiteral("failed\tcodex")).isEmpty());
+        const QVariantMap failed = pickerRow(QStringLiteral("failed\tcodex"));
+        QCOMPARE(failed.value(QStringLiteral("label")).toString(), QStringLiteral("Couldn’t load models"));
+        QCOMPARE(failed.value(QStringLiteral("disabled")).toString(), QStringLiteral("signed out"));
+        QVERIFY(!pickerRow(QStringLiteral("agent:codex\tgpt-x")).isEmpty());
+        QCOMPARE(pickerRow(QStringLiteral("retry\tcodex")).value(QStringLiteral("label")).toString(), QStringLiteral("Try again"));
+
+        QVERIFY(pick(QStringLiteral("retry\tcodex")));
+        QVERIFY(popup(QStringLiteral("agentModelPicker"))->property("opened").toBool());
+        QTRY_VERIFY(pickerRow(QStringLiteral("failed\tcodex")).isEmpty() || agent().agentModels(QStringLiteral("codex")).value(QStringLiteral("loading")).toBool());
+        QTRY_VERIFY(!pickerRow(QStringLiteral("failed\tcodex")).isEmpty());
+        QVERIFY(!pickerRow(QStringLiteral("agent:codex\tgpt-x")).isEmpty());
+    }
+
+    void thePickerFiltersByNameIdAndSourceAndTheKeyboardPicksTheTopMatch()
+    {
+        openPanel();
+        const auto field = [this] { return item(QStringLiteral("quickPickField")); };
+        QVERIFY(openPicker());
+        QTRY_VERIFY(field() && field()->hasActiveFocus());
+        QVERIFY(pickerRow(QStringLiteral("or\tm")).value(QStringLiteral("icon")).toString() == QStringLiteral("karaoke-check"));
+        QCOMPARE(pickerRow(QStringLiteral("or\tm")).value(QStringLiteral("tooltip")).toString(), QStringLiteral("current model"));
+
+        typeKeys(QStringLiteral("opus"));
+        QTRY_COMPARE(pickerRows(), (QStringList{QStringLiteral("# Claude Code"), QStringLiteral("Opus")}));
+        field()->setProperty("text", QString());
+        typeKeys(QStringLiteral("gpt-x"));
+        QTRY_COMPARE(pickerRows(), (QStringList{QStringLiteral("# Codex"), QStringLiteral("GPT X")}));
+        field()->setProperty("text", QString());
+        typeKeys(QStringLiteral("openrouter"));
+        QTRY_COMPARE(pickerRows(), (QStringList{QStringLiteral("# OpenRouter"), QStringLiteral("Fake model")}));
+        field()->setProperty("text", QString());
+        typeKeys(QStringLiteral("zzzz"));
+        QTRY_COMPARE(pickerRows(), QStringList());
+        QVERIFY(item(QStringLiteral("quickPickEmpty")));
+        QCOMPARE(item(QStringLiteral("quickPickEmpty"))->property("text").toString(), QStringLiteral("No matching models"));
+
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!popup(QStringLiteral("agentModelPicker"))->property("visible").toBool());
+        QVERIFY(agent().current().isEmpty());
+
+        QVERIFY(openPicker());
+        QTest::keyClick(window(), Qt::Key_Up);
+        QCOMPARE(picks()->property("currentId").toString(), QStringLiteral("settings"));
+        QTest::keyClick(window(), Qt::Key_Down);
+        QVERIFY(picks()->property("currentId").toString() != QLatin1String("settings"));
+        typeKeys(QStringLiteral("sonnet"));
+        QTRY_COMPARE(picks()->property("currentId").toString(), QStringLiteral("agent:claude\tsonnet"));
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(agent().thread().value(QStringLiteral("model")).toString(), QStringLiteral("agent:claude\tsonnet"));
+    }
+
+    void recentModelsComeFirstWithTheirSourceAndDropOnceGone()
+    {
+        openPanel();
+        agent().newThread();
+        agent().setModel(QStringLiteral("agent:claude\t"));
+        agent().setModel(QStringLiteral("or\tm"));
+        agent().setModel(QStringLiteral("gone\tx"));
+        QCOMPARE(application->settingsStore()->list(app::AgentController::kRecentModelsSetting),
+                 (QStringList{QStringLiteral("gone\tx"), QStringLiteral("or\tm"), QStringLiteral("agent:claude\t")}));
+        agent().setModel(QStringLiteral("or\tm"));
+        QVERIFY(openPicker());
+        QCOMPARE(pickerRows().mid(0, 3), (QStringList{QStringLiteral("# Recent"), QStringLiteral("Fake model"),
+                                                      QStringLiteral("Agent default")}));
+        QCOMPARE(pickerRow(QStringLiteral("recent\tor\tm")).value(QStringLiteral("description")).toString(), QStringLiteral("OpenRouter"));
+        QCOMPARE(pickerRow(QStringLiteral("recent\tor\tm")).value(QStringLiteral("icon")).toString(), QStringLiteral("karaoke-check"));
+        QCOMPARE(pickerRow(QStringLiteral("or\tm")).value(QStringLiteral("icon")).toString(), QStringLiteral("karaoke-check"));
+        QCOMPARE(pickerRow(QStringLiteral("recent\tagent:claude\t")).value(QStringLiteral("description")).toString(),
+                 QStringLiteral("Claude Code"));
+        QVERIFY(pickerRow(QStringLiteral("recent\tgone\tx")).isEmpty());
+        typeKeys(QStringLiteral("fake"));
+        QTRY_VERIFY(!pickerRows().contains(QStringLiteral("# Recent")));
+    }
+
+    void aProviderWithoutItsKeyShowsOnlyItsKeyRowAndOneAddedAppearsInPlace()
+    {
+        openPanel();
+        QVERIFY(openPicker());
+        application->aiSettings()->signOutProvider(QStringLiteral("or"));
+        QTRY_VERIFY(!pickerRow(QStringLiteral("blocked\tor")).isEmpty());
+        QCOMPARE(pickerRow(QStringLiteral("blocked\tor")).value(QStringLiteral("label")).toString(), QStringLiteral("Sign in with OpenRouter…"));
+        QVERIFY(pickerRow(QStringLiteral("or\tm")).isEmpty());
+
+        ai::Provider added = ai::presetProvider(ai::Preset::Anthropic, "anthropic", "Anthropic");
+        added.models = {{.id = "claude-x", .name = "Claude X"}};
+        bool saved = false;
+        application->ai()->providers()->add(added, "sk-ant", [&](std::optional<ai::SaveError> error) { saved = !error; });
+        QTRY_VERIFY(saved);
+        QTRY_VERIFY(!pickerRow(QStringLiteral("anthropic\tclaude-x")).isEmpty());
+        QVERIFY(pickerRows().contains(QStringLiteral("# Anthropic")));
+        QVERIFY(popup(QStringLiteral("agentModelPicker"))->property("opened").toBool());
+
+        QVERIFY(pick(QStringLiteral("blocked\tor")));
+        QTRY_VERIFY(shell(QStringLiteral("settingsLoader.item !== null && settingsLoader.item.visible")).toBool());
     }
 
     void withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns()
@@ -1761,12 +1867,11 @@ private slots:
         QVERIFY(click(QStringLiteral("agentNewThread")));
         QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
         const QRectF at = onScene(item(QStringLiteral("agentModelButton")));
-        QVERIFY(click(QStringLiteral("agentModelButton")));
-        QTRY_VERIFY(popup(QStringLiteral("agentModelMenu"))->property("opened").toBool());
-        QTRY_VERIFY(item(QStringLiteral("agentModel_or/m14")));
+        QVERIFY(openPicker());
+        QVERIFY(!pickerRow(QStringLiteral("or\tm14")).isEmpty());
         QQuickTest::qWaitForPolish(window());
         QTest::qWait(100);
-        const QRectF r = popupOnScene(QStringLiteral("agentModelMenu"));
+        const QRectF r = popupOnScene(QStringLiteral("agentModelPicker"));
         QVERIFY2(r.bottom() <= at.top() + 1 && r.top() >= 0,
                  qPrintable(QStringLiteral("menu %1..%2 button top %3").arg(r.top()).arg(r.bottom()).arg(at.top())));
     }
@@ -1779,7 +1884,7 @@ private slots:
         QVERIFY(click(QStringLiteral("agentNewThread")));
         QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
         const QRectF view = onScene(item(QStringLiteral("agentView")));
-        for (const auto &[button, menu] : {std::pair{"agentModelButton", "agentModelMenu"}, std::pair{"agentModeButton", "agentModeMenu"}}) {
+        for (const auto &[button, menu] : {std::pair{"agentModelButton", "agentModelPicker"}, std::pair{"agentModeButton", "agentModeMenu"}}) {
             const QRectF at = onScene(item(QLatin1String(button)));
             QVERIFY(click(QLatin1String(button)));
             QTRY_VERIFY(popup(QLatin1String(menu))->property("opened").toBool());
@@ -1983,20 +2088,27 @@ private slots:
         QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
         QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
         QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
-        QTRY_VERIFY(item(QStringLiteral("agentRenameField")));
-        QQuickItem *field = item(QStringLiteral("agentRenameField"));
+        QTRY_VERIFY(item(QStringLiteral("inputBoxField")));
+        QQuickItem *field = item(QStringLiteral("inputBoxField"));
         QCOMPARE(field->property("selectedText").toString(), QStringLiteral("Honorifics pass"));
-        QVERIFY(!item(QStringLiteral("agentRenameOk"))->isEnabled());
+        QCOMPARE(item(QStringLiteral("inputBoxMessage"))->property("text").toString(), QStringLiteral("Thread name"));
         field->setProperty("text", QStringLiteral("   "));
-        QVERIFY(!item(QStringLiteral("agentRenameOk"))->isEnabled());
-        field->setProperty("text", QStringLiteral("Honorifics, second pass"));
-        QVERIFY(item(QStringLiteral("agentRenameOk"))->isEnabled());
-        field->setProperty("text", QString());
-        QTest::keyClick(field->window(), Qt::Key_Return);
-        QTest::qWait(100);
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_COMPARE(item(QStringLiteral("inputBoxMessage"))->property("text").toString(), QStringLiteral("Type a name."));
+        QVERIFY(item(QStringLiteral("inputBoxField")));
         QCOMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
-        QVERIFY(QMetaObject::invokeMethod(field->window(), "reject"));
-        QTRY_VERIFY(!item(QStringLiteral("agentRenameField")));
+        field->setProperty("text", QStringLiteral("Honorifics pass"));
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_VERIFY(!item(QStringLiteral("inputBoxField")));
+        QCOMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
+        QVERIFY(click(QStringLiteral("agentThreadMenuButton")));
+        QTRY_VERIFY(item(QStringLiteral("agentRenameThread")));
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("agentRenameThread")), "triggered"));
+        QTRY_VERIFY(item(QStringLiteral("inputBoxField")));
+        item(QStringLiteral("inputBoxField"))->setProperty("text", QStringLiteral("Honorifics, second pass"));
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!item(QStringLiteral("inputBoxField")));
+        QCOMPARE(agent().thread().value(QStringLiteral("title")).toString(), QStringLiteral("Honorifics pass"));
 
         for (QObject *open : window()->findChildren<QObject *>())
             if (open->inherits("QQuickPopup") && open->property("visible").toBool())
@@ -2081,7 +2193,7 @@ private slots:
                         QMetaObject::invokeMethod(at, "close");
         };
         const QRectF panel = onScreen(view);
-        for (const auto &[anchor, name] : {std::pair{"agentModelButton", "agentModelMenu"}, std::pair{"agentModeButton", "agentModeMenu"},
+        for (const auto &[anchor, name] : {std::pair{"agentModelButton", "agentModelPicker"}, std::pair{"agentModeButton", "agentModeMenu"},
                                            std::pair{"agentComposerBox", "agentAttachMenu"}}) {
             const QRectF at = onScreen(item(QLatin1String(anchor)));
             if (QLatin1String(name) == QLatin1String("agentAttachMenu")) {
