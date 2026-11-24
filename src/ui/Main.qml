@@ -79,6 +79,7 @@ ApplicationWindow {
     required property var alignToVideo
     required property var videoAnalysis
     required property var lyricsImport
+    required property var textImport
     required property var qcNotes
     required property var problems
     required property var fontCollector
@@ -3249,6 +3250,14 @@ ApplicationWindow {
                         text: qsTr("Import lyrics…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
                     }
+                    ShellMenuItem {
+                        command: "GLOBAL_IMPORT_TEXT"
+                        help: qsTr("Turns a plain text file into lines, in the open file or a new one")
+                        iconRole: "import"
+                        objectName: "importTextMenuItem"
+                        text: qsTr("Import text…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_TEXT")) textDialog.show()
+                    }
                     MenuSeparator {}
                     ShellMenuItem {
                         command: "GLOBAL_SAVE_SUBS"
@@ -6030,6 +6039,7 @@ ApplicationWindow {
                     settings: root.app.settings
                     Layout.minimumWidth: 0
                     tools: root.visualTools
+                    keyOf: symbol => root.boundKeys(symbol, 3)
                 }
                 Slider {
                     objectName: "videoSlider"
@@ -9754,6 +9764,41 @@ ApplicationWindow {
         lyricsImportLoader.active = true
         lyricsImportLoader.item.open()
     }
+    FileChooser {
+        id: textDialog
+        objectName: "textOpenDialog"
+        title: qsTranslate("HikariSub.Documents", "Import text")
+        nameFilters: [qsTranslate("HikariSub.Documents", "Text files (*.txt)"),
+                      qsTranslate("HikariSub.Documents", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("text", selectedFile)
+            root.openTextImport(root.app.localPath(selectedFile))
+        }
+        function show() {
+            const folder = root.pickerFolder("text")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+    }
+    Loader {
+        id: textImportLoader
+        active: false
+        sourceComponent: TextImportDialog {
+            controller: root.textImport
+            settings: root.app.settings
+            onChooseAnother: textDialog.show()
+        }
+    }
+    function openTextImport(path) {
+        if (!root.textImport.load(path)) {
+            root.notices.post("error", qsTranslate("HikariSub.Documents", "Import text"),
+                              qsTranslate("HikariSub.Documents", "Could not read %1.").arg(path))
+            return
+        }
+        textImportLoader.active = true
+        textImportLoader.item.open()
+    }
     Loader {
         id: dummyVideoLoader
         active: false
@@ -11569,6 +11614,7 @@ ApplicationWindow {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
         case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
+        case "GLOBAL_IMPORT_TEXT": textDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true

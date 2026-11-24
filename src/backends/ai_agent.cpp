@@ -82,8 +82,9 @@ constexpr std::array kRiskySettingPrefixes{
     RiskyName{"ai.", Risk::AiSettings, "It changes an AI setting."},
 };
 
-constexpr std::array<std::string_view, 7> kViewWrites{"selection.set", "panels.open", "panels.close",   "panels.focus",
-                                                     "marks.set",     "marks.clear", "status_items.set"};
+constexpr std::array<std::string_view, 8> kViewWrites{"selection.set", "panels.open",      "panels.close",
+                                                     "panels.focus",  "settings.open",    "marks.set",
+                                                     "marks.clear",   "status_items.set"};
 
 std::string stringAt(const Json &object, std::string_view key)
 {

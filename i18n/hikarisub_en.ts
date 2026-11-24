@@ -288,6 +288,13 @@
             <numerusform>and %n more lines</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>The file is larger than %n MB.</numerusform>
+            <numerusform>The file is larger than %n MB.</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Editor</name>

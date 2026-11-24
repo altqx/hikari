@@ -3531,6 +3531,14 @@ Output device: %2</source>
         <translation>อ่าน %1 ไม่ได้</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation>นำเข้าข้อความ</translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation>ไฟล์ข้อความ (*.txt)</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>เปิดคำบรรยาย</translation>
     </message>
@@ -4008,6 +4016,48 @@ Output device: %2</source>
     <message>
         <source>it isn’t running.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>ไฟล์มีขนาดใหญ่กว่า %n MB</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation>นี่คือไฟล์ไทม์โค้ด ให้เปิดด้วย วิดีโอ › เปิดไทม์โค้ด… แทน</translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation>ไฟล์ไม่มีบรรทัดที่จะนำเข้า</translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation>ตัวคั่นผู้พูด</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation>เครื่องหมายความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation>เก็บบรรทัดว่างไว้เป็นบรรทัดความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation>บรรทัดที่ไม่มีผู้พูดใช้ผู้พูดของบรรทัดก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
+        <translation>ความคิดเห็น: %1</translation>
     </message>
 </context>
 <context>
@@ -8997,6 +9047,10 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าเนื้อเพลง…</translation>
     </message>
     <message>
+        <source>Import text…</source>
+        <translation>นำเข้าข้อความ…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12210,6 +12264,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>เปิด %1</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation>แปลงไฟล์ข้อความธรรมดาเป็นบรรทัด ในไฟล์ที่เปิดอยู่หรือไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>นำเข้าข้อความ…</translation>
     </message>
     <message>
         <source>Saves the document</source>
@@ -27522,6 +27584,10 @@ or codecs or a splitter may be missing</source>
         <translation>เปลี่ยนบรรทัดปัจจุบัน</translation>
     </message>
     <message>
+        <source>How this tool works</source>
+        <translation>วิธีใช้เครื่องมือนี้</translation>
+    </message>
+    <message>
         <source>On the frame</source>
         <translation>บนเฟรม</translation>
     </message>
@@ -28336,6 +28402,254 @@ or codecs or a splitter may be missing</source>
         <translation>คลิกเพื่อเพิ่มจุดเส้นทาง ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง กด Enter เพื่อนำไปใช้</translation>
     </message>
     <message>
+        <source>Ctrl-click writes it.</source>
+        <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
+        <translation>เฉพาะเมื่อคุณ Ctrl+คลิก</translation>
+    </message>
+    <message>
+        <source>Moves the positions, move points, clips, drawings and origins already in the lines.</source>
+        <extracomment>The visual tool guide: what the Position shifter writes</extracomment>
+        <translation>ย้ายตำแหน่ง จุดการเคลื่อนตำแหน่ง คลิป ภาพวาด และจุดศูนย์กลางที่มีอยู่แล้วในบรรทัด</translation>
+    </message>
+    <message>
+        <source>Any tag from its list.</source>
+        <extracomment>The visual tool guide: what the All tags tool writes</extracomment>
+        <translation>แท็กใดก็ได้จากรายการของเครื่องมือ</translation>
+    </message>
+    <message>
+        <source>And the border and shadow sizes.</source>
+        <extracomment>The visual tool guide: what Perspective writes besides its tags</extracomment>
+        <translation>รวมถึงขนาดขอบและเงา</translation>
+    </message>
+    <message>
+        <source>Copies of the line in clip strips, a mask drawing, or tags for each character or line.</source>
+        <extracomment>The visual tool guide: what the Gradient tool writes</extracomment>
+        <translation>สำเนาของบรรทัดในแถบคลิป ภาพวาดมาสก์ หรือแท็กสำหรับแต่ละอักขระหรือแต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>A line for each letter, with its own position and rotation, along the path.</source>
+        <extracomment>The visual tool guide: what Text on path writes</extracomment>
+        <translation>บรรทัดสำหรับตัวอักษรแต่ละตัวตามเส้นทาง โดยแต่ละบรรทัดมีตำแหน่งและการหมุนของตัวเอง</translation>
+    </message>
+    <message>
+        <source>A cross follows the pointer and shows its script coordinates.</source>
+        <translation>กากบาทจะตามตัวชี้และแสดงพิกัดสคริปต์ของตัวชี้</translation>
+    </message>
+    <message>
+        <source>Ctrl-click or middle-click puts the line there.</source>
+        <translation>Ctrl+คลิกหรือคลิกปุ่มกลางเพื่อวางบรรทัดที่นั่น</translation>
+    </message>
+    <message>
+        <source>Drag anywhere on the picture to move the line; you need not grab it.</source>
+        <translation>ลากที่ใดก็ได้บนภาพเพื่อย้ายบรรทัด โดยไม่ต้องจับที่บรรทัด</translation>
+    </message>
+    <message>
+        <source>Shift locks the drag to one axis.</source>
+        <translation>กด Shift เพื่อล็อกการลากไว้ที่แกนเดียว</translation>
+    </message>
+    <message>
+        <source>A right-click puts the line at the pointer.</source>
+        <translation>คลิกขวาเพื่อวางบรรทัดที่ตัวชี้</translation>
+    </message>
+    <message>
+        <source>Set position by rectangle places the line by a rectangle you draw.</source>
+        <translation>“กำหนดตำแหน่งด้วยสี่เหลี่ยม” จะวางบรรทัดตามสี่เหลี่ยมที่คุณวาด</translation>
+    </message>
+    <message>
+        <source>The left button sets the start point, the right button the end point.</source>
+        <translation>ปุ่มซ้ายกำหนดจุดเริ่มต้น ปุ่มขวากำหนดจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Start and End take their times in milliseconds from the line’s start.</source>
+        <translation>“เริ่มต้น” และ “สิ้นสุด” ใช้เวลาเป็นมิลลิวินาทีนับจากเวลาเริ่มต้นของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Set movement using 2 points and the video position builds the move from a point on two frames.</source>
+        <translation>“กำหนดการเคลื่อนที่ด้วย 2 จุดและตำแหน่งวิดีโอ” จะสร้างการเคลื่อนตำแหน่งจากจุดบนสองเฟรม</translation>
+    </message>
+    <message>
+        <source>Left-drag scales the width, right-drag the height.</source>
+        <translation>ลากด้วยปุ่มซ้ายเพื่อปรับความกว้าง ลากด้วยปุ่มขวาเพื่อปรับความสูง</translation>
+    </message>
+    <message>
+        <source>Shift-drag or middle-drag scales both.</source>
+        <translation>ลากด้วยปุ่มกลางหรือ Shift+ลากเพื่อปรับขนาดทั้งสองแนว</translation>
+    </message>
+    <message>
+        <source>Set scale by rectangle scales the line to fit a rectangle you draw.</source>
+        <translation>“กำหนดขนาดด้วยสี่เหลี่ยม” จะปรับขนาดบรรทัดให้พอดีกับสี่เหลี่ยมที่คุณวาด</translation>
+    </message>
+    <message>
+        <source>Drag round the origin cross to turn the line.</source>
+        <translation>ลากรอบกากบาทจุดศูนย์กลางเพื่อหมุนบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drag the cross itself to move the origin.</source>
+        <translation>ลากตัวกากบาทเพื่อย้ายจุดศูนย์กลาง</translation>
+    </message>
+    <message>
+        <source>Set angle from 2 points takes the angle from two points you click along something in the picture.</source>
+        <translation>“กำหนดมุมจาก 2 จุด” จะหามุมจากสองจุดที่คุณคลิกตามแนวของสิ่งใดสิ่งหนึ่งในภาพ</translation>
+    </message>
+    <message>
+        <source>Left-drag turns the text round the vertical axis.</source>
+        <translation>ลากด้วยปุ่มซ้ายเพื่อหมุนข้อความรอบแกนแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Right-drag turns it round the horizontal axis; middle-drag does both.</source>
+        <translation>ลากด้วยปุ่มขวาเพื่อหมุนรอบแกนแนวนอน ลากด้วยปุ่มกลางเพื่อหมุนทั้งสองแกน</translation>
+    </message>
+    <message>
+        <source>Drag the origin cross to move the origin.</source>
+        <translation>ลากกากบาทจุดศูนย์กลางเพื่อย้ายจุดศูนย์กลาง</translation>
+    </message>
+    <message>
+        <source>Drag a rectangle on the picture.</source>
+        <translation>ลากสร้างสี่เหลี่ยมบนภาพ</translation>
+    </message>
+    <message>
+        <source>Drag its edges or corners to resize it, or inside it to move it.</source>
+        <translation>ลากขอบหรือมุมเพื่อปรับขนาด หรือลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Invert clip switches between showing what is inside and what is outside.</source>
+        <translation>“กลับด้านคลิป” จะสลับระหว่างแสดงส่วนที่อยู่ข้างในและส่วนที่อยู่ข้างนอก</translation>
+    </message>
+    <message>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
+        <translation>เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline เพิ่มจุดแยก หรือลบจุด</translation>
+    </message>
+    <message>
+        <source>Click to add points and drag them to reshape.</source>
+        <translation>คลิกเพื่อเพิ่มจุด แล้วลากจุดเพื่อปรับรูปร่าง</translation>
+    </message>
+    <message>
+        <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
+        <translation>Ctrl+คลิกเพื่อเลือกหลายจุด กด Alt ขณะลากเพื่อจัดให้ตรงกับค่า x หรือ y ของจุดอื่น</translation>
+    </message>
+    <message>
+        <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
+        <translation>หรือเลือกรูปร่างแล้วลากสร้างกรอบเพื่อวาด “แก้ไขรูปร่าง…” ใช้เพิ่มรูปร่างของคุณเอง</translation>
+    </message>
+    <message>
+        <source>Drag to move everything the Move toggles choose, by the same amount in every picked line.</source>
+        <translation>ลากเพื่อย้ายทุกอย่างที่ปุ่มสลับ “ย้าย” เลือกไว้ ไปเท่ากันในทุกบรรทัดที่ตรึงไว้</translation>
+    </message>
+    <message>
+        <source>Or type an amount in X and Y: each Enter shifts the lines by that much.</source>
+        <translation>หรือพิมพ์ระยะในช่อง X และ Y: กด Enter แต่ละครั้งจะเลื่อนบรรทัดไปตามระยะนั้น</translation>
+    </message>
+    <message>
+        <source>Choose a tag in the inspector.</source>
+        <translation>เลือกแท็กในตัวตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>Drag sideways on the picture, or turn the wheel, to change its value. Shift for small steps.</source>
+        <translation>ลากไปด้านข้างบนภาพ หรือหมุนล้อเมาส์ เพื่อเปลี่ยนค่า กด Shift เพื่อปรับทีละน้อย</translation>
+    </message>
+    <message>
+        <source>Set, Add, Multiply and Gradient decide how the value goes across characters or lines.</source>
+        <translation>“กำหนดค่า” “เพิ่ม” “คูณ” และ “ไล่ระดับ” กำหนดว่าค่าจะเปลี่ยนไปอย่างไรตามอักขระหรือบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drag a square corner to lay the text on a surface.</source>
+        <translation>ลากมุมสี่เหลี่ยมเพื่อวางข้อความบนพื้นผิว</translation>
+    </message>
+    <message>
+        <source>Drag inside the text to move it.</source>
+        <translation>ลากด้านในข้อความเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>While dragging a corner, Shift keeps it on an edge, Ctrl snaps it and Alt sizes about the centre.</source>
+        <translation>ขณะลากมุม กด Shift เพื่อให้มุมอยู่บนขอบ กด Ctrl เพื่อจัดให้ตรงตำแหน่ง และกด Alt เพื่อปรับขนาดรอบจุดกึ่งกลาง</translation>
+    </message>
+    <message>
+        <source>A double-click brings the nearest corner to the pointer.</source>
+        <translation>ดับเบิลคลิกเพื่อดึงมุมที่ใกล้ที่สุดมาที่ตัวชี้</translation>
+    </message>
+    <message>
+        <source>Choose a mode, then drag across the sign from where the gradient starts to where it ends.</source>
+        <translation>เลือกโหมด แล้วลากผ่านป้ายจากจุดเริ่มต้นถึงจุดสิ้นสุดของการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>Drag the ends and the other handles to adjust it; the preview follows.</source>
+        <translation>ลากปลายและจุดจับอื่น ๆ เพื่อปรับ ตัวอย่างจะเปลี่ยนตาม</translation>
+    </message>
+    <message>
+        <source>Enter applies the gradient as one step.</source>
+        <translation>กด Enter เพื่อนำการไล่ระดับไปใช้ในขั้นตอนเดียว</translation>
+    </message>
+    <message>
+        <source>Give the line a vector clip, or click on the picture to draw a path.</source>
+        <translation>ใส่คลิปเวกเตอร์ให้บรรทัด หรือคลิกบนภาพเพื่อวาดเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Drag the points to shape the path; the text follows it.</source>
+        <translation>ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Enter applies: each letter becomes its own line, and the original is kept as a comment.</source>
+        <translation>กด Enter เพื่อนำไปใช้: ตัวอักษรแต่ละตัวจะกลายเป็นบรรทัดของตัวเอง และบรรทัดต้นฉบับจะเก็บไว้เป็นความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Chooses this tool</source>
+        <extracomment>The visual tool guide&apos;s keys: what the tool&apos;s own key does</extracomment>
+        <translation>เลือกเครื่องมือนี้</translation>
+    </message>
+    <message>
+        <source>Arrow keys</source>
+        <extracomment>The visual tool guide&apos;s keys; the arrows work while the pointer is over the picture</extracomment>
+        <translation>ปุ่มลูกศร</translation>
+    </message>
+    <message>
+        <source>Change the scale by 1 %</source>
+        <translation>เปลี่ยนขนาดทีละ 1%</translation>
+    </message>
+    <message>
+        <source>Move the selected points by one pixel</source>
+        <translation>ย้ายจุดที่เลือกทีละหนึ่งพิกเซล</translation>
+    </message>
+    <message>
+        <source>Nudge by one pixel</source>
+        <translation>ขยับทีละหนึ่งพิกเซล</translation>
+    </message>
+    <message>
+        <source>Shift+Arrow keys</source>
+        <translation>Shift+ปุ่มลูกศร</translation>
+    </message>
+    <message>
+        <source>Nudge by a tenth of a pixel</source>
+        <translation>ขยับทีละหนึ่งในสิบพิกเซล</translation>
+    </message>
+    <message>
+        <source>Alt+Arrow keys</source>
+        <translation>Alt+ปุ่มลูกศร</translation>
+    </message>
+    <message>
+        <source>Nudge the end point</source>
+        <translation>ขยับจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Wheel</source>
+        <translation>ล้อเมาส์</translation>
+    </message>
+    <message>
+        <source>Steps through the modes</source>
+        <translation>สลับไปทีละโหมด</translation>
+    </message>
+    <message>
+        <source>Changes the value</source>
+        <translation>เปลี่ยนค่า</translation>
+    </message>
+    <message>
+        <source>Applies</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Drops the preview</source>
+        <translation>ละทิ้งตัวอย่าง</translation>
+    </message>
+    <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
         <translation>สี่เหลี่ยมจัตุรัส</translation>
@@ -29069,6 +29383,14 @@ do not work on comments</source>
     <message>
         <source>Nothing would be left of the drawing</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes</source>
+        <translation>สิ่งที่เขียน</translation>
+    </message>
+    <message>
+        <source>More in the guide</source>
+        <translation>ดูเพิ่มเติมในคู่มือ</translation>
     </message>
 </context>
 <context>
