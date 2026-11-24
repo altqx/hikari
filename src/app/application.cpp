@@ -960,6 +960,20 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
     m_languageProviders = std::make_unique<LanguageProviders>(*m_pluginRuntime);
+    m_languageServers = std::make_unique<LanguageServers>(LanguageServers::Wiring{
+        [this] { return m_pluginRuntime->languageServers(); },
+        [this](const std::string &plugin, const std::string &server) { return m_pluginRuntime->languageServerStart(plugin, server); },
+        [this](const std::string &plugin) { return m_pluginRuntime->pluginSettings(plugin); },
+        [this](const std::string &plugin, const QString &line) { m_pluginRuntime->logProgramLine(plugin, line); },
+        [this] {
+            LanguageServers::Open open;
+            for (const application::DocumentId id : m_workspace.documents())
+                open.emplace_back(id, m_files->session(id));
+            return open;
+        },
+        &m_problems,
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::languageServersChanged, m_languageServers.get(), &LanguageServers::serversChanged);
     m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
         return pluginSaveBytes(document, destination);
     });
@@ -2716,6 +2730,7 @@ void Application::refreshViews()
     m_rowMarks.keepOnly(m_workspace.documents());
     m_problems.keepOnly(m_workspace.documents());
     syncReadingProblems();
+    m_languageServers->sync();
     shell().setRowMarks(rowMarksOf(target));
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();

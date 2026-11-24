@@ -36,6 +36,7 @@
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/language_providers.h"
+#include "hikari/app/language_servers.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
@@ -1062,6 +1063,7 @@ public:
     Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
     PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
     LanguageProviders *languageProviders() const { return m_languageProviders.get(); }
+    LanguageServers *languageServers() const { return m_languageServers.get(); }
     QVariantMap qmlProperties(int shellWindow = 0);
     // A further shell window on the engine of the first (ADR 0025); MW2 gives it the user-facing moves.
     QQuickWindow *openShellWindow(QQmlEngine &engine);
@@ -1524,6 +1526,7 @@ private:
     std::unique_ptr<PluginPrograms> m_pluginPrograms;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<LanguageProviders> m_languageProviders;
+    std::unique_ptr<LanguageServers> m_languageServers;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
