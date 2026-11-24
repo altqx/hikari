@@ -18777,96 +18777,96 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Manifest podaje teraz identyfikator „%1”. Wyładuj wtyczkę i wczytaj folder ponownie.</translation>
     </message>
     <message>
         <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosi o więcej niż to, na co wyrażono zgodę, więc zmiana czeka, aż ją przejrzysz.</translation>
     </message>
     <message>
         <source>Dev</source>
         <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>Dev</translation>
     </message>
     <message>
         <source>Dev plugin, runs from %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Wtyczka deweloperska, uruchamiana z %1</translation>
     </message>
     <message>
         <source>Load dev plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj wtyczkę deweloperską</translation>
     </message>
     <message>
         <source>Reload dev plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytaj ponownie wtyczkę deweloperską</translation>
     </message>
     <message>
         <source>Load “%1” %2 from its folder?</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytać „%1” %2 z folderu wtyczki?</translation>
     </message>
     <message>
         <source>Reload “%1” %2 from its folder?</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytać ponownie „%1” %2 z folderu wtyczki?</translation>
     </message>
     <message>
         <source>It asks for more than you said yes to</source>
-        <translation type="unfinished"></translation>
+        <translation>Prosi o więcej niż to, na co wyrażono zgodę</translation>
     </message>
     <message>
         <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wtyczka deweloperska działa z %1 w obecnej postaci, bez podpisu, i wczytuje się ponownie, gdy zmienią się jej pliki. Ma własne dane, ustawienia i foldery, oddzielne od zainstalowanej kopii.</translation>
     </message>
     <message>
         <source>Unload and remove its data</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyładuj i usuń dane</translation>
     </message>
     <message>
         <source>Unload dev plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyładuj wtyczkę deweloperską</translation>
     </message>
     <message>
         <source>Unload “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyładować „%1”?</translation>
     </message>
     <message>
         <source>The installed %1 runs again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalowana wtyczka %1 znów będzie działać.</translation>
     </message>
     <message>
         <source>Its folder stays as it is.</source>
-        <translation type="unfinished"></translation>
+        <translation>Jej folder pozostaje bez zmian.</translation>
     </message>
     <message>
         <source>Unload</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyładuj</translation>
     </message>
     <message>
         <source>Plugin not unloaded</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie wyładowano wtyczki</translation>
     </message>
     <message>
         <source>Install dev plugin…</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstaluj wtyczkę deweloperską…</translation>
     </message>
     <message>
         <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki wtyczki się zmieniły, ale HikariSub nadal używa ostatniej działającej wersji: %1</translation>
     </message>
     <message>
         <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pliki wtyczki się zmieniły i proszą o więcej niż to, na co wyrażono zgodę, więc zmiana czeka na Ciebie.</translation>
     </message>
     <message>
         <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zainstalowana wtyczka %1 jest zastąpiona wtyczką deweloperską, dopóki jej nie wyładujesz.</translation>
     </message>
     <message>
         <source>Choose a plugin folder</source>
-        <translation type="unfinished"></translation>
+        <translation>Wybierz folder wtyczki</translation>
     </message>
     <message>
         <source>Unload…</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyładuj…</translation>
     </message>
 </context>
 <context>

@@ -18637,96 +18637,96 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
-        <translation type="unfinished"></translation>
+        <translation>அதன் மேனிஃபெச்ட் இப்போது அடையாளம் “%1” என்கிறது. அதன் ஏற்றத்தை நீக்கி, கோப்புறையை மீண்டும் ஏற்றவும்.</translation>
     </message>
     <message>
         <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
-        <translation type="unfinished"></translation>
+        <translation>நீங்கள் ஒப்புக்கொண்டதை விட இது அதிகம் கேட்கிறது, எனவே நீங்கள் மதிப்பாய்வு செய்யும் வரை மாற்றம் காத்திருக்கிறது.</translation>
     </message>
     <message>
         <source>Dev</source>
         <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
-        <translation type="unfinished"></translation>
+        <translation>டெவ்</translation>
     </message>
     <message>
         <source>Dev plugin, runs from %1</source>
-        <translation type="unfinished"></translation>
+        <translation>டெவ் செருகுநிரல், %1 இலிருந்து இயங்குகிறது</translation>
     </message>
     <message>
         <source>Load dev plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>டெவ் செருகுநிரலை ஏற்று</translation>
     </message>
     <message>
         <source>Reload dev plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>டெவ் செருகுநிரலை மீண்டும் ஏற்று</translation>
     </message>
     <message>
         <source>Load “%1” %2 from its folder?</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” %2 ஐ அதன் கோப்புறையிலிருந்து ஏற்றவா?</translation>
     </message>
     <message>
         <source>Reload “%1” %2 from its folder?</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” %2 ஐ அதன் கோப்புறையிலிருந்து மீண்டும் ஏற்றவா?</translation>
     </message>
     <message>
         <source>It asks for more than you said yes to</source>
-        <translation type="unfinished"></translation>
+        <translation>நீங்கள் ஒப்புக்கொண்டதை விட இது அதிகம் கேட்கிறது</translation>
     </message>
     <message>
         <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
-        <translation type="unfinished"></translation>
+        <translation>டெவ் செருகுநிரல் %1 இலிருந்து உள்ளபடியே, கையொப்பமிடப்படாமல் இயங்கும்; அதன் கோப்புகள் மாறும்போது மீண்டும் ஏற்றப்படும். நிறுவப்பட்ட பிரதியிலிருந்து தனியாக, அது தனக்கென தரவு, அமைப்புகள், கோப்புறைகளை வைத்திருக்கும்.</translation>
     </message>
     <message>
         <source>Unload and remove its data</source>
-        <translation type="unfinished"></translation>
+        <translation>ஏற்றத்தை நீக்கி, தரவையும் அகற்று</translation>
     </message>
     <message>
         <source>Unload dev plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>டெவ் செருகுநிரலின் ஏற்றத்தை நீக்கு</translation>
     </message>
     <message>
         <source>Unload “%1”?</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” இன் ஏற்றத்தை நீக்கவா?</translation>
     </message>
     <message>
         <source>The installed %1 runs again.</source>
-        <translation type="unfinished"></translation>
+        <translation>நிறுவப்பட்ட %1 மீண்டும் இயங்கும்.</translation>
     </message>
     <message>
         <source>Its folder stays as it is.</source>
-        <translation type="unfinished"></translation>
+        <translation>அதன் கோப்புறை அப்படியே இருக்கும்.</translation>
     </message>
     <message>
         <source>Unload</source>
-        <translation type="unfinished"></translation>
+        <translation>ஏற்றத்தை நீக்கு</translation>
     </message>
     <message>
         <source>Plugin not unloaded</source>
-        <translation type="unfinished"></translation>
+        <translation>செருகுநிரலின் ஏற்றம் நீக்கப்படவில்லை</translation>
     </message>
     <message>
         <source>Install dev plugin…</source>
-        <translation type="unfinished"></translation>
+        <translation>டெவ் செருகுநிரலை நிறுவு…</translation>
     </message>
     <message>
         <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>அதன் கோப்புகள் மாறின, ஆனால் HikariSub கடைசியாகச் சரியாக இருந்த கோப்புகளையே தொடர்ந்து இயக்கியது: %1</translation>
     </message>
     <message>
         <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
-        <translation type="unfinished"></translation>
+        <translation>அதன் கோப்புகள் மாறின, அவை நீங்கள் ஒப்புக்கொண்டதை விட அதிகம் கேட்கின்றன, எனவே மாற்றம் உங்களுக்காகக் காத்திருக்கிறது.</translation>
     </message>
     <message>
         <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
-        <translation type="unfinished"></translation>
+        <translation>நீங்கள் ஏற்றத்தை நீக்கும் வரை, நிறுவப்பட்ட %1 ஐ ஒரு டெவ் செருகுநிரல் மேலெழுதுகிறது.</translation>
     </message>
     <message>
         <source>Choose a plugin folder</source>
-        <translation type="unfinished"></translation>
+        <translation>செருகுநிரல் கோப்புறையைத் தேர்வுசெய்</translation>
     </message>
     <message>
         <source>Unload…</source>
-        <translation type="unfinished"></translation>
+        <translation>ஏற்றத்தை நீக்கு…</translation>
     </message>
 </context>
 <context>
