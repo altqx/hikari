@@ -80,6 +80,7 @@ which Automation scripts read, keeps legacy's text).
 | Margin | விளிம்பு | |
 | Outline / Shadow / Border | வெளிக்கோடு / நிழல் / எல்லை | |
 | Font | எழுத்துரு | |
+| Collect fonts | எழுத்துருக்களைச் சேகரி | The command and window; எழுத்துருக்களைச் சேகரிக்கிறது while it runs |
 | Bold / Italic / Underline / Strikeout | தடிமன் / சாய்வு / அடிக்கோடு / அடித்தல் | |
 | Colour | வண்ணம் | |
 | Original text / Translation | அசல் உரை / மொழிபெயர்ப்பு | |

@@ -56,7 +56,7 @@ that name so the two read alike. The English terms are those of `CONTEXT.md`.
 | Style catalog | 스타일 목록 | Legacy "Catalog" 목록 |
 | Font catalog | 글꼴 목록 | |
 | Font | 글꼴 | |
-| Font collector | 글꼴 수집기 | |
+| Collect fonts | 글꼴 모으기 | The command and window; 글꼴 모으는 중 while it runs |
 | Attachment | 첨부 파일 | |
 | Script properties | 스크립트 속성 | |
 | ASS override tag | ASS 재정의 태그 | "tag" alone 태그 |
@@ -184,7 +184,7 @@ that name so the two read alike. The English terms are those of `CONTEXT.md`.
 ## Hotkeys
 
 - A command's name on the Hotkeys page reads as its menu item, without the
-  accelerator: "Find and replace" 찾아서 바꾸기, "Font collector" 글꼴 수집기.
+  accelerator: "Find and replace" 찾아서 바꾸기, "Collect fonts…" 글꼴 모으기….
 - A name ending in " alt" is the second key for the same command: the base
   name plus " (보조)", "Commit alt" 적용 (보조).
 - Grid "Hide <column>" commands name the column: "Hide actor" 배우 열 숨김.

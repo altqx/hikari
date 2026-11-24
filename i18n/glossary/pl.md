@@ -47,7 +47,7 @@ first column below is the one to use.
 | Style manager | menedżer stylów | |
 | Style catalog | katalog stylów | |
 | Font catalog | katalog czcionek | |
-| Font collector | kolekcjoner czcionek | |
+| Collect fonts | zbierz czcionki | The command and window; "Zbieranie czcionek" while it runs. |
 | ASS override tag | tag (ASS) | Legacy "tag". |
 | Visual tool | narzędzie wizualne | |
 | Visual tool names | Wskaźnik pozycji, Pozycjonowanie tekstu, Ruch tekstu, Skalowanie tekstu, Obrót tekstu wokół osi Z, Obrót tekstu wokół osi X / Y, Wycinek prostokątny, Wycinek wektorowy, Rysunek wektorowy, Przesuwanie pozycji, Hydra, Perspektywa | Rail, Hotkeys page and tool bar. |

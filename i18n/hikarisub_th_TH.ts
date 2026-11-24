@@ -4752,6 +4752,58 @@ Output device: %2</source>
         <translation>รวมกับบรรทัดที่ซ้อนกันแล้ว</translation>
     </message>
     <message>
+        <source>Drawing</source>
+        <translation>ภาพวาด</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation>การแปลง</translation>
+    </message>
+    <message>
+        <source>Movement</source>
+        <translation>การเคลื่อนที่</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>เฟด</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>การหมุน</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>แบบอักษร</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>เส้นขอบ</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>สี</translation>
+    </message>
+    <message>
+        <source>Formatting</source>
+        <translation>การจัดรูปแบบ</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>ตำแหน่ง</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation>เอฟเฟกต์</translation>
+    </message>
+    <message>
+        <source>Merged</source>
+        <translation>รวมแล้ว</translation>
+    </message>
+    <message>
         <source>There is nothing to export.</source>
         <translation>ไม่มีอะไรให้ส่งออก</translation>
     </message>
@@ -4860,6 +4912,10 @@ Output device: %2</source>
         <translation>สีเงาของคำปัจจุบันของ %1</translation>
     </message>
     <message>
+        <source>Exporting</source>
+        <translation>กำลังส่งออก</translation>
+    </message>
+    <message>
         <source>Untitled</source>
         <translation>ไม่มีชื่อ</translation>
     </message>
@@ -4952,6 +5008,10 @@ Output device: %2</source>
     <message>
         <source>Didn’t run</source>
         <translation>ไม่ได้ทำงาน</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>หยุดแล้ว</translation>
     </message>
     <message>
         <source>Variable needs a video or timecodes file</source>
@@ -5206,6 +5266,10 @@ Output device: %2</source>
         <translation>ไฟล์ %1 (*.%2)</translation>
     </message>
     <message>
+        <source>plain text</source>
+        <translation>ข้อความธรรมดา</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
     </message>
@@ -5333,10 +5397,50 @@ Output device: %2</source>
         <source>Before export</source>
         <translation>ก่อนส่งออก</translation>
     </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>ปิดหน้าต่างได้ งานจะทำต่อไป</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>หยุด</translation>
+    </message>
+    <message>
+        <source>Stopped. Nothing was written.</source>
+        <translation>หยุดแล้ว ไม่ได้เขียนสิ่งใด</translation>
+    </message>
+    <message>
+        <source>Choose another folder…</source>
+        <translation>เลือกโฟลเดอร์อื่น…</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>ตกลง</translation>
+    </message>
+    <message>
+        <source>Choose a line to select it in the Grid.</source>
+        <translation>เลือกบรรทัดเพื่อเลือกบรรทัดนั้นในตาราง</translation>
+    </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>ส่งออก %n บรรทัดไปยัง “%1” แล้ว</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved. %n line(s) lost something %1 can’t carry.</source>
+        <translation>
+            <numerusform>บันทึกแล้ว %n บรรทัดสูญเสียบางอย่างที่ %1 เก็บไว้ไม่ได้</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Copy list</source>
+        <translation>คัดลอกรายการ</translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved %1 · %n line(s) · nothing lost</source>
+        <translation>
+            <numerusform>บันทึก %1 แล้ว · %n บรรทัด · ไม่มีสิ่งใดสูญหาย</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5359,11 +5463,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>What the format could not keep. Choose a line to show it.</source>
-        <translation>สิ่งที่รูปแบบนี้เก็บไว้ไม่ได้ เลือกบรรทัดเพื่อแสดงบรรทัดนั้น</translation>
+        <translation type="vanished">สิ่งที่รูปแบบนี้เก็บไว้ไม่ได้ เลือกบรรทัดเพื่อแสดงบรรทัดนั้น</translation>
     </message>
     <message>
         <source>Nothing was dropped or approximated</source>
-        <translation>ไม่มีสิ่งใดถูกตัดทิ้งหรือประมาณค่า</translation>
+        <translation type="vanished">ไม่มีสิ่งใดถูกตัดทิ้งหรือประมาณค่า</translation>
     </message>
     <message>
         <source>Export report</source>
@@ -5371,11 +5475,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Line</source>
-        <translation>บรรทัด</translation>
+        <translation type="vanished">บรรทัด</translation>
     </message>
     <message>
         <source>Dropped or approximated</source>
-        <translation>ตัดทิ้งหรือประมาณค่า</translation>
+        <translation type="vanished">ตัดทิ้งหรือประมาณค่า</translation>
     </message>
     <message>
         <source>Line %1: %2</source>
@@ -5384,6 +5488,10 @@ Output device: %2</source>
     <message>
         <source>Export</source>
         <translation>ส่งออก</translation>
+    </message>
+    <message>
+        <source>Show the file</source>
+        <translation>แสดงไฟล์</translation>
     </message>
     <message>
         <source>Close</source>
@@ -5396,6 +5504,14 @@ Output device: %2</source>
     <message>
         <source>%1 isn’t running, so it can’t export.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>ซ่อน</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>เปิด</translation>
     </message>
 </context>
 <context>
@@ -5730,7 +5846,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>ตัวรวบรวมแบบอักษร</translation>
+        <translation type="vanished">ตัวรวบรวมแบบอักษร</translation>
     </message>
     <message>
         <source>Select the folder where you want to copy fonts</source>
@@ -5742,11 +5858,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Select a folder</source>
-        <translation>เลือกโฟลเดอร์</translation>
+        <translation type="vanished">เลือกโฟลเดอร์</translation>
     </message>
     <message>
         <source>Font collector log</source>
-        <translation>ล็อกตัวรวบรวมแบบอักษร</translation>
+        <translation type="vanished">ล็อกตัวรวบรวมแบบอักษร</translation>
     </message>
     <message>
         <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
@@ -5763,6 +5879,10 @@ Output device: %2</source>
     <message>
         <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
         <translation>ลิงก์ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ไว้ในโฟลเดอร์ ลิงก์จะใช้ไม่ได้หากย้ายหรือลบแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Collect fonts</source>
+        <translation>รวบรวมแบบอักษร</translation>
     </message>
     <message>
         <source>Writing the new archive replaces it.</source>
@@ -5783,6 +5903,108 @@ Output device: %2</source>
     <message>
         <source>Keep existing</source>
         <translation>เก็บไฟล์เดิมไว้</translation>
+    </message>
+    <message>
+        <source>Bold Italic</source>
+        <translation>ตัวหนาเอียง</translation>
+    </message>
+    <message>
+        <source>Regular</source>
+        <translation>ปกติ</translation>
+    </message>
+    <message>
+        <source>Weight %1</source>
+        <translation>น้ำหนัก %1</translation>
+    </message>
+    <message>
+        <source>Not on this computer</source>
+        <translation>ไม่มีในคอมพิวเตอร์นี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t link: turn on Developer Mode, or use a folder on the font’s drive</source>
+        <translation>ลิงก์ไม่ได้: เปิดโหมดนักพัฒนา หรือใช้โฟลเดอร์ในไดรฟ์เดียวกับแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Couldn’t link</source>
+        <translation>ลิงก์ไม่ได้</translation>
+    </message>
+    <message>
+        <source>simulated bold and italic</source>
+        <translation>ตัวหนาและตัวเอียงจำลอง</translation>
+    </message>
+    <message>
+        <source>simulated bold</source>
+        <translation>ตัวหนาจำลอง</translation>
+    </message>
+    <message>
+        <source>simulated italic</source>
+        <translation>ตัวเอียงจำลอง</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font(s)</source>
+        <translation>
+            <numerusform>%n แบบอักษร</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n missing</source>
+        <translation>
+            <numerusform>ขาด %n</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made bold by the renderer</source>
+        <translation>
+            <numerusform>ตัวแสดงผลทำเป็นตัวหนา %n</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made italic by the renderer</source>
+        <translation>
+            <numerusform>ตัวแสดงผลทำเป็นตัวเอียง %n</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Zip archive adds %n file(s).</source>
+        <translation>
+            <numerusform>ไฟล์บีบอัดจะเพิ่ม %n ไฟล์</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Link to a folder links %1 and copies %2 that have no file to link to.</source>
+        <translation>ลิงก์ไปยังโฟลเดอร์จะลิงก์ %1 และคัดลอก %2 ที่ไม่มีไฟล์ให้ลิงก์</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n ไฟล์</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Link to a folder links %n file(s).</source>
+        <translation>
+            <numerusform>ลิงก์ไปยังโฟลเดอร์จะลิงก์ %n ไฟล์</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy to a folder copies %n file(s).</source>
+        <translation>
+            <numerusform>คัดลอกไปยังโฟลเดอร์จะคัดลอก %n ไฟล์</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Collecting fonts</source>
+        <translation>กำลังรวบรวมแบบอักษร</translation>
+    </message>
+    <message numerus="yes">
+        <source>Checking · %1 of %n font(s)</source>
+        <translation>
+            <numerusform>กำลังตรวจสอบ · %1 จาก %n แบบอักษร</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Checking fonts</source>
+        <translation>กำลังตรวจสอบแบบอักษร</translation>
     </message>
     <message>
         <source>Action</source>
@@ -5821,6 +6043,10 @@ Output device: %2</source>
         <translation>เลือกโฟลเดอร์</translation>
     </message>
     <message>
+        <source>Browse…</source>
+        <translation>เลือก…</translation>
+    </message>
+    <message>
         <source>Write beside the subtitles, in a “Fonts” folder</source>
         <translation>เขียนไว้ข้างคำบรรยาย ในโฟลเดอร์ “Fonts”</translation>
     </message>
@@ -5834,7 +6060,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Start lists the fonts the subtitles use.</source>
-        <translation>“เริ่มต้น” จะแสดงรายการแบบอักษรที่คำบรรยายใช้</translation>
+        <translation type="vanished">“เริ่มต้น” จะแสดงรายการแบบอักษรที่คำบรรยายใช้</translation>
     </message>
     <message>
         <source>Some fonts were not found, so the collection is incomplete.</source>
@@ -5881,12 +6107,36 @@ Output device: %2</source>
         <translation>แสดงโฟลเดอร์</translation>
     </message>
     <message>
+        <source>More ways to start</source>
+        <translation>วิธีเริ่มอื่นๆ</translation>
+    </message>
+    <message>
         <source>Start on all tabs</source>
         <translation>เริ่มต้นในแท็บทั้งหมด</translation>
     </message>
     <message>
         <source>Start</source>
         <translation>เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Font and style</source>
+        <translation>แบบอักษรและสไตล์</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>ไฟล์</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use, and whether this computer has each one.</source>
+        <translation>เริ่มจะแสดงรายการแบบอักษรที่คำบรรยายใช้ และบอกว่าคอมพิวเตอร์นี้มีแต่ละแบบหรือไม่</translation>
+    </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>ปิดหน้าต่างได้ งานจะทำต่อไป</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -6175,6 +6425,10 @@ Output device: %2</source>
     <message>
         <source>Couldn’t link font “%1”.</source>
         <translation>ลิงก์แบบอักษร “%1” ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Styles: %1</source>
+        <translation>สไตล์: %1</translation>
     </message>
     <message>
         <source>Select the folder where you want to link fonts</source>
@@ -8277,7 +8531,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>ตัวรวบรวมแบบอักษร</translation>
+        <translation type="vanished">ตัวรวบรวมแบบอักษร</translation>
     </message>
     <message>
         <source>User guide</source>
@@ -8870,6 +9124,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Play 500 ms after the end</source>
         <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Collect fonts…</source>
+        <translation>รวบรวมแบบอักษร…</translation>
     </message>
     <message>
         <source>Open subtitles…</source>
@@ -12208,7 +12466,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Font collector</source>
-        <translation>ตัวรวบรวม&amp;แบบอักษร</translation>
+        <translation type="vanished">ตัวรวบรวม&amp;แบบอักษร</translation>
     </message>
     <message>
         <source>R&amp;esample subtitles…</source>
@@ -12317,6 +12575,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens a subtitle file</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Collect &amp;fonts…</source>
+        <translation>รวบรวม&amp;แบบอักษร…</translation>
     </message>
     <message>
         <source>Reopen with encoding…</source>
