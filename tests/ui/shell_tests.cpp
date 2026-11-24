@@ -742,7 +742,7 @@ class ShellTest : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
-    void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
+    void widenForTheInspectorBar() { window->resize(2560, std::max(window->height(), 900)); }
     bool timingBesideTheLineEditor()
     {
         auto *timing = item<QQuickItem>("timingDock");
