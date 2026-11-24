@@ -420,6 +420,105 @@ TEST(PluginManifest, LayoutsRead)
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
 
+Json dataOnly(std::string_view contributes)
+{
+    Json json = minimal();
+    std::erase_if(json.asObject(), [](const Json::Member &m) { return m.key == "main"; });
+    json["contributes"] = *Json::parse(contributes);
+    return json;
+}
+
+TEST(PluginManifest, ThemesIconThemesAndIconsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({
+        "themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "themes/dusk.json"}],
+        "iconThemes": [{"id": "round", "title": "Round", "path": "icons/round"}],
+        "icons": [{"id": "spark", "path": "icons/spark.svg"}],
+        "commands": [{"id": "glow", "title": "Glow", "icon": "own:spark"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->themes.size(), 1u);
+    EXPECT_EQ(m->themes[0].id, "dusk");
+    EXPECT_EQ(m->themes[0].type, "dark");
+    EXPECT_EQ(m->themes[0].path, "themes/dusk.json");
+    ASSERT_EQ(m->iconThemes.size(), 1u);
+    EXPECT_EQ(m->iconThemes[0].title, "Round");
+    EXPECT_EQ(m->iconThemes[0].folder, "icons/round");
+    ASSERT_EQ(m->icons.size(), 1u);
+    EXPECT_EQ(m->icons[0].path, "icons/spark.svg");
+    EXPECT_FALSE(m->dataOnly());
+}
+
+TEST(PluginManifest, ThemeAndIconIdsDontRepeat)
+{
+    const std::pair<const char *, const char *> cases[] = {
+        {R"({"themes": [{"id": "a", "title": "A", "type": "dark", "path": "a.json"},
+                        {"id": "a", "title": "B", "type": "light", "path": "b.json"}]})", "/contributes/themes/1/id"},
+        {R"({"iconThemes": [{"id": "a", "title": "A", "path": "a"}, {"id": "a", "title": "B", "path": "b"}]})",
+         "/contributes/iconThemes/1/id"},
+        {R"({"icons": [{"id": "a", "path": "a.svg"}, {"id": "a", "path": "b.svg"}]})", "/contributes/icons/1/id"},
+    };
+    for (const auto &[contributes, at] : cases) {
+        Json json = minimal();
+        json["contributes"] = *Json::parse(contributes);
+        const ManifestProblem repeated = problem(json);
+        EXPECT_EQ(repeated.kind, Kind::DuplicateId) << contributes;
+        EXPECT_EQ(repeated.at, at);
+    }
+}
+
+TEST(PluginManifest, AnOwnIconMustBeDeclared)
+{
+    for (const char *list : {"commands", "panels", "statusItems"}) {
+        Json json = minimal();
+        json["contributes"] = *Json::parse(R"({"icons": [{"id": "spark", "path": "spark.svg"}]})");
+        json["contributes"][list] = *Json::parse(R"([{"id": "a", "title": "A", "icon": "own:spark"},
+                                                     {"id": "b", "title": "B", "icon": "own:gone"}])");
+        const ManifestProblem unknown = problem(json);
+        EXPECT_EQ(unknown.kind, Kind::Schema) << list;
+        EXPECT_EQ(unknown.at, "/contributes/" + std::string(list) + "/1/icon");
+        EXPECT_EQ(unknown.detail, "names no icon in contributes.icons");
+    }
+}
+
+TEST(PluginManifest, ADataOnlyPackageHoldsOnlyData)
+{
+    const auto m = parse(dataOnly(R"({"themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "dusk.json"}],
+                                     "styles": [{"id": "signs", "title": "Signs", "path": "signs.sty"}],
+                                     "commands": []})"));
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    EXPECT_TRUE(m->dataOnly());
+
+    const std::pair<const char *, const char *> code[] = {
+        {R"({"commands": [{"id": "a", "title": "A"}]})", "/contributes/commands"},
+        {R"({"panels": [{"id": "a", "title": "A"}]})", "/contributes/panels"},
+        {R"({"statusItems": [{"id": "a", "title": "A", "text": "A"}]})", "/contributes/statusItems"},
+    };
+    for (const auto &[contributes, at] : code) {
+        const ManifestProblem refused = problem(dataOnly(contributes));
+        EXPECT_EQ(refused.kind, Kind::Schema) << contributes;
+        EXPECT_EQ(refused.at, at);
+        EXPECT_EQ(refused.detail, "needs code, and a data-only package runs none");
+    }
+
+    Json settings = dataOnly(R"({"settings": [{"id": "s", "title": "S", "type": "boolean", "default": true}]})");
+    EXPECT_EQ(problem(settings).at, "/contributes/settings");
+    EXPECT_EQ(problem(settings).detail, "a data-only package has no settings");
+
+    Json permissions = dataOnly("{}");
+    permissions["permissions"] = *Json::parse(R"({"network": {"hosts": ["example.com"], "reason": "Fetches"}})");
+    EXPECT_EQ(problem(permissions).at, "/permissions");
+    EXPECT_EQ(problem(permissions).detail, "a data-only package asks for no permissions");
+    permissions["permissions"] = Json::object();
+    EXPECT_TRUE(parse(permissions));
+
+    Json unrestricted = dataOnly("{}");
+    unrestricted["tier"] = "unrestricted";
+    EXPECT_EQ(problem(unrestricted).at, "/tier");
+    EXPECT_EQ(problem(unrestricted).detail, "only a plugin with a Lua main can be unrestricted");
+}
+
 TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
 {
     Json json = minimal();

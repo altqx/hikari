@@ -5,6 +5,7 @@
 
 #include "hikari/plugins/archive.h"
 #include "hikari/plugins/qml_imports.h"
+#include "hikari/themes/theme.h"
 
 #include <algorithm>
 #include <fstream>
@@ -65,6 +66,49 @@ std::optional<PackageProblem> dictionaryProblem(const std::vector<Dictionary> &d
     return std::nullopt;
 }
 
+
+std::optional<PackageProblem> themeProblem(const std::vector<ColourTheme> &themes, const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    for (const ColourTheme &theme : themes) {
+        const auto file = std::ranges::find(files, theme.path, &PackageFile::path);
+        if (file == files.end())
+            return PackageProblem{Kind::MissingContent, theme.path, {}, {}};
+        const auto loaded = themes::load({reinterpret_cast<const char *>(file->data.data()), file->data.size()});
+        if (!loaded)
+            return PackageProblem{Kind::BadContent, theme.path, {},
+                                  "fails the theme check at " + (loaded.error().path.empty() ? "/" : loaded.error().path) +
+                                      ": " + loaded.error().message};
+        if (const std::string_view type = themes::typeName(loaded->type); type != theme.type)
+            return PackageProblem{Kind::BadContent, theme.path, {},
+                                  "is a " + std::string(type) + " theme, and hikari-plugin.json lists it as " + theme.type};
+    }
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> interfaceIconFileProblem(const std::string &path, const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    const auto file = std::ranges::find(files, path, &PackageFile::path);
+    if (file == files.end())
+        return PackageProblem{Kind::MissingContent, path, {}, {}};
+    if (auto refused = interfaceIconProblem(*file))
+        return PackageProblem{Kind::BadContent, path, {}, std::move(*refused)};
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> interfaceIconsProblem(const Manifest &manifest, const std::vector<std::string> &roles,
+                                                   const std::vector<PackageFile> &files)
+{
+    for (const IconTheme &theme : manifest.iconThemes)
+        for (const std::string &role : roles)
+            if (auto problem = interfaceIconFileProblem(theme.folder + "/" + role + ".svg", files))
+                return problem;
+    for (const OwnIcon &icon : manifest.icons)
+        if (auto problem = interfaceIconFileProblem(icon.path, files))
+            return problem;
+    return std::nullopt;
+}
 }
 
 std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion,
@@ -126,7 +170,8 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
                          contentProblem(manifest->karaokePresets, checks.karaokePreset, files),
                          dictionaryProblem(manifest->dictionaries, checks, files),
                          contentProblem(manifest->graphs, checks.graph, files),
-                         contentProblem(manifest->layouts, checks.layout, files)})
+                         contentProblem(manifest->layouts, checks.layout, files),
+                         themeProblem(manifest->themes, files), interfaceIconsProblem(*manifest, checks.iconRoles, files)})
         if (problem)
             return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};

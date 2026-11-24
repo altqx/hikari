@@ -8,7 +8,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 
 - Entry names are `/`-separated paths of letters, digits, spaces and `_ . - +`. HikariSub refuses an absolute path, `.` or `..`, a backslash or colon, a name ending in a dot or space, a Windows device name (`CON`, `NUL`, `COM1`…), two names that differ only in case, a file whose name is also a folder, and a link.
 - A package holds at most 4096 files and 64 MB unpacked.
-- `main` must be one of the package's files.
+- `main`, when there is one, must be one of the package's files. So must each theme file, each icon of an icon theme and each own icon, which also follow the [icon rules](#themes-and-icons).
 - The marketplace's media rules below hold for `icon`, `screenshots` and `README.md`.
 
 ## The manifest
@@ -20,7 +20,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `id` | yes | Reverse-DNS, lowercase, at least two parts: `com.example.line-tools`. It names the plugin's folders. |
 | `name`, `version` | yes | The shown name, and a semantic version 2.0.0 that orders updates. |
 | `api` | yes | The lowest Hikari API number the plugin needs. A higher number than HikariSub's `kApiVersion` is refused with both numbers. |
-| `main` | yes | The Lua file the helper runs. |
+| `main` | no | The Lua file the helper runs. A package without one runs no code; see [Kinds of package](#kinds-of-package). |
 | `authors` | yes | One or more names. The card's "author" is a list, as in research §6. |
 | `tier` | no | `restricted` (the default) or `unrestricted`, which needs the user's full trust. |
 | `description`, `license`, `homepage` | no | `license` is an SPDX expression; `homepage` is `https://`. |
@@ -617,7 +617,7 @@ A new download URL or hash for an existing program is not more, since the signed
 
 - keeps the [SVG rules](#media-and-readme);
 - has a `viewBox` of `0 0 16 16`;
-- draws in `currentColor` only, with an optional `<g id="accent">` layer that HikariSub paints in the accent.
+- draws in `currentColor` only, with an optional `<g id="accent">` layer that HikariSub paints in the accent. `fill`, `stroke`, `color`, `stop-color`, `flood-color` and `lighting-color`, as attributes or in `style`, take only `currentColor`, `none` or `inherit`, and a `<style>` element is refused.
 
 Other colours are refused, so the icons follow the theme and high contrast. A role that a later HikariSub adds shows the built-in icon until the theme covers it, and the plugin manager says how many roles the theme covers. Registry review checks the icons against the [icon grid](ux/icons.md).
 
