@@ -18635,6 +18635,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin isn’t on.</source>
         <translation>செருகுநிரல் இயக்கத்தில் இல்லை.</translation>
     </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>வண்ணக் கருப்பொருள்: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>படவுரு கருப்பொருள்: %1</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

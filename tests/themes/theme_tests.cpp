@@ -1,3 +1,4 @@
+#include "hikari/api/json.h"
 #include "hikari/themes/theme.h"
 
 #include <gtest/gtest.h>
@@ -9,12 +10,17 @@ using namespace hikari::themes;
 
 namespace {
 
-std::string read(const std::string &name)
+std::string readFile(const std::string &path)
 {
-    std::ifstream file(std::string(HIKARI_BUILTIN_THEMES) + "/" + name + ".json", std::ios::binary);
+    std::ifstream file(path, std::ios::binary);
     std::stringstream text;
     text << file.rdbuf();
     return text.str();
+}
+
+std::string read(const std::string &name)
+{
+    return readFile(std::string(HIKARI_BUILTIN_THEMES) + "/" + name + ".json");
 }
 
 Colour role(const Resolved &r, Role role)
@@ -191,4 +197,29 @@ TEST(Theme, EachAccentChoiceIsChecked)
     const auto problem = checkContrast(*file);
     ASSERT_TRUE(problem);
     EXPECT_NE(problem->message.find("with the accent dim"), std::string::npos) << problem->message;
+}
+
+TEST(ThemeVectors, LoadReportsEachVectorsFirstProblem)
+{
+    using hikari::api::Json;
+    const auto vectors = Json::parse(readFile(HIKARI_THEME_VECTORS));
+    ASSERT_TRUE(vectors);
+    for (const Json &vector : vectors->find("vectors")->asArray()) {
+        const std::string name = vector.find("name")->asString();
+        const std::string theme = vector.find("theme")->dump();
+        const Json &expected = *vector.find("problem");
+        const auto loaded = load(theme);
+        if (expected.isNull()) {
+            EXPECT_TRUE(loaded) << name << ": " << loaded.error().path << " " << loaded.error().message;
+            continue;
+        }
+        ASSERT_FALSE(loaded) << name;
+        if (expected.find("stage")->asString() == "schema") {
+            EXPECT_FALSE(parse(theme)) << name;
+            continue;
+        }
+        EXPECT_TRUE(parse(theme)) << name;
+        EXPECT_EQ(loaded.error().path, expected.find("path")->asString()) << name;
+        EXPECT_EQ(loaded.error().message, expected.find("message")->asString()) << name;
+    }
 }

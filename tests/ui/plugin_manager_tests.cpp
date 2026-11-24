@@ -258,6 +258,20 @@ private slots:
         QCOMPARE(kept.count(), 1);
     }
 
+    void aDataOnlyPackageShowsWhatItAddsAndAsksForNothing()
+    {
+        PluginManager manager(folders());
+        const QVariantMap review = manager.review(fixture("looks-1.0.0-data-only.hikariplugin"));
+        QVERIFY2(review.value(QStringLiteral("ok")).toBool(), qPrintable(review.value(QStringLiteral("message")).toString()));
+        QVERIFY(review.value(QStringLiteral("dataOnly")).toBool());
+        QCOMPARE(review.value(QStringLiteral("adds")).toStringList(), QStringList{QStringLiteral("Colour theme: Dusk")});
+        QVERIFY(review.value(QStringLiteral("permissions")).toStringList().isEmpty());
+        QCOMPARE(manager.install(false), QString());
+        QCOMPARE(only(manager).value(QStringLiteral("adds")).toStringList(), QStringList{QStringLiteral("Colour theme: Dusk")});
+
+        QVERIFY(!manager.review(fixture("hello-1.0.0.hikariplugin")).value(QStringLiteral("dataOnly")).toBool());
+    }
+
     void rememberedFoldersAreListedAndCanBeForgotten()
     {
         PluginManager manager(folders());

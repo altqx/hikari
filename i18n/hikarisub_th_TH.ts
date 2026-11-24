@@ -18495,6 +18495,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin isn’t on.</source>
         <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
     </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>ธีมสี: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>ธีมไอคอน: %1</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
