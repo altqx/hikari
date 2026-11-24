@@ -131,7 +131,7 @@ TEST_F(Select, FieldsStyleEffectAndTimes)
 TEST_F(Select, RegularExpressionsAndAnInvalidOne)
 {
     S s = find(u8"^h.*d$");
-    s.regex = true;
+    s.match = S::Match::Regex;
     EXPECT_EQ(run(s), 1);
     s.matchCase = true;
     EXPECT_EQ(run(s), 0);
@@ -156,7 +156,7 @@ TEST_F(Select, RegexMatchErrorsCountAsNoMatchAndAreReported)
     EditSession longLine{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," +
                               std::string(40, 'a') + "b\n")};
     S s = find(u8"(a+)+$");
-    s.regex = true;
+    s.match = S::Match::Regex;
     const auto r = selectLines(longLine, s);
     ASSERT_TRUE(r);
     EXPECT_EQ(r->count, 0);
@@ -177,6 +177,52 @@ TEST_F(Select, AddAndDeselectCount)
     EXPECT_EQ(run(s), 1);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{3}));
     EXPECT_EQ(activeRow(), 3u);
+}
+
+TEST_F(Select, IntersectKeepsSelectedMatchesAndCountsTheRest)
+{
+    select({0, 1, 2, 3}, 3);
+    S s = find(u8"Default", S::Field::Style);
+    s.mode = S::Mode::Intersect;
+    EXPECT_EQ(run(s), 2);
+    EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0, 2}));
+    EXPECT_EQ(activeRow(), 0u);
+    s = find(u8"hello");
+    s.mode = S::Mode::Intersect;
+    s.comments = true;
+    EXPECT_EQ(run(s), 1);
+    EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0}));
+    select({0, 1}, 0);
+    s.comments = false;
+    EXPECT_EQ(run(s), 1);
+    EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0}));
+    select({0, 2}, 2);
+    s.find = u8"(";
+    s.match = S::Match::Regex;
+    const auto invalid = selectLines(session, s);
+    ASSERT_TRUE(invalid && invalid->invalidExpression);
+    EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0, 2}));
+}
+
+TEST_F(Select, ExactComparesTheWholeField)
+{
+    S s = find(u8"hello world");
+    s.match = S::Match::Exact;
+    EXPECT_EQ(run(s), 1);
+    EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0}));
+    s.find = u8"hello";
+    s.comments = true;
+    EXPECT_EQ(run(s), 0);
+    s.find = u8"Hello World";
+    s.matchCase = true;
+    EXPECT_EQ(run(s), 1);
+    s.find = u8"hello world";
+    EXPECT_EQ(run(s), 0);
+    s = find(u8"sign", S::Field::Style);
+    s.match = S::Match::Exact;
+    s.with = false;
+    EXPECT_EQ(run(s), 2);
+    EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0, 2}));
 }
 
 TEST_F(Select, HiddenLinesAreSkippedUnlessFilteringIsIgnored)
@@ -316,7 +362,8 @@ TEST(SelectLinesOptions, LegacyBits)
     EXPECT_EQ(selectLinesOptions(S{}), 1 | 16 | 1024 | 4096 | 32768);
     S s;
     s.with = false;
-    s.matchCase = s.regex = true;
+    s.matchCase = true;
+    s.match = S::Match::Regex;
     s.field = S::Field::End;
     s.dialogues = false;
     s.comments = true;
@@ -328,6 +375,21 @@ TEST(SelectLinesOptions, LegacyBits)
     EXPECT_EQ(selectLinesOptions(back), bits);
     EXPECT_EQ(selectLinesOptions(selectLinesFromOptions(0)), selectLinesOptions(S{}));
     EXPECT_EQ(selectLinesFromOptions(32 | 64).field, S::Field::Style);
+    EXPECT_EQ(selectLinesFromOptions(8).match, S::Match::Regex);
+    EXPECT_EQ(selectLinesFromOptions(1 | 16).match, S::Match::Contains);
+}
+
+TEST(SelectLinesOptions, ExactAndIntersectBits)
+{
+    S s;
+    s.match = S::Match::Exact;
+    s.mode = S::Mode::Intersect;
+    const int bits = selectLinesOptions(s);
+    EXPECT_EQ(bits, 1 | 16 | 1024 | (1 << 23) | (1 << 24) | 32768);
+    const S back = selectLinesFromOptions(bits);
+    EXPECT_EQ(back.match, S::Match::Exact);
+    EXPECT_EQ(back.mode, S::Mode::Intersect);
+    EXPECT_EQ(selectLinesOptions(back), bits);
 }
 
 TEST(SelectLinesOptions, RecentListAndStylesPattern)

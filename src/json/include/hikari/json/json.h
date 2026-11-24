@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <expected>
 #include <initializer_list>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -93,5 +94,9 @@ struct Json::Member {
 };
 
 bool isUtf8(std::string_view text);
+
+// Where `expected` is not contained in `actual`, as "<path>: <why>": objects match by the keys expected names, arrays
+// item by item at equal length, other values by equality.
+std::optional<std::string> mismatch(const Json &expected, const Json &actual, const std::string &path = "");
 
 }

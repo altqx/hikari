@@ -246,6 +246,108 @@ TEST_F(GridCommandsTest, SwapTradesPlacesAndKeepsTheActiveRow)
     EXPECT_FALSE(swapLines(session));
 }
 
+namespace {
+
+EditSession lettered(std::string_view letters)
+{
+    std::string text = "[Events]\n";
+    for (const char letter : letters)
+        text += std::string("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,") + letter + "\n";
+    return EditSession{load(text)};
+}
+
+std::string letters(const EditSession &s)
+{
+    std::string out;
+    for (const auto *l : s.document().lines())
+        out += std::string(l->text.begin(), l->text.end());
+    return out;
+}
+
+void selectRows(EditSession &s, std::initializer_list<std::uint64_t> ids, std::uint64_t active)
+{
+    std::set<core::LineId> lines;
+    for (const auto id : ids)
+        lines.insert(core::LineId{id});
+    s.setSelection(Selection{core::LineId{active}, lines, core::LineId{active}, {}});
+}
+
+}
+
+TEST_F(GridCommandsTest, MoveUpAndDownTakeOneLineOneRowInOneStep)
+{
+    select({b}, b);
+    const auto steps = session.historySize();
+    ASSERT_TRUE(canMoveLines(session, true));
+    ASSERT_TRUE(moveLines(session, true));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"b", u8"a", u8"c"}));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Moving lines");
+    EXPECT_EQ(session.selection().active, b);
+    EXPECT_EQ(session.selection().selected, std::set<core::LineId>{b});
+    ASSERT_TRUE(moveLines(session, false));
+    ASSERT_TRUE(moveLines(session, false));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"c", u8"b"}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"c"}));
+}
+
+TEST_F(GridCommandsTest, MovingPastTheEdgeChangesNothing)
+{
+    select({a}, a);
+    const auto steps = session.historySize();
+    EXPECT_FALSE(canMoveLines(session, true));
+    EXPECT_FALSE(moveLines(session, true));
+    select({c}, c);
+    EXPECT_FALSE(canMoveLines(session, false));
+    EXPECT_FALSE(moveLines(session, false));
+    select({a, b, c}, b);
+    EXPECT_FALSE(moveLines(session, true));
+    EXPECT_FALSE(moveLines(session, false));
+    session.setSelection({});
+    EXPECT_FALSE(canMoveLines(session, true));
+    EXPECT_EQ(session.historySize(), steps);
+}
+
+TEST_F(GridCommandsTest, EachRunOfSelectedLinesMovesPastItsNeighbour)
+{
+    auto s = lettered("abcdefg");
+    selectRows(s, {2, 3, 5, 7}, 5);
+    const auto steps = s.historySize();
+    ASSERT_TRUE(moveLines(s, true));
+    EXPECT_EQ(letters(s), "bcaedgf");
+    EXPECT_EQ(s.historySize(), steps + 1);
+    EXPECT_EQ(s.selection().active, core::LineId{5});
+    EXPECT_EQ(s.selection().selected.size(), 4u);
+    ASSERT_TRUE(moveLines(s, false));
+    EXPECT_EQ(letters(s), "abcdefg");
+    ASSERT_TRUE(s.undo());
+    ASSERT_TRUE(s.undo());
+    EXPECT_EQ(letters(s), "abcdefg");
+}
+
+TEST_F(GridCommandsTest, ARunAtTheEdgeStaysWhileTheOthersMove)
+{
+    auto s = lettered("abcde");
+    selectRows(s, {1, 3}, 1);
+    ASSERT_TRUE(moveLines(s, true));
+    EXPECT_EQ(letters(s), "acbde");
+    selectRows(s, {2, 5}, 5);
+    ASSERT_TRUE(moveLines(s, false));
+    EXPECT_EQ(letters(s), "acdbe");
+}
+
+TEST_F(GridCommandsTest, MovesGoOverTheShownRows)
+{
+    auto s = lettered("abcd");
+    selectRows(s, {4}, 4);
+    const LineVisible shown = [](core::LineId id) { return id != core::LineId{3}; };
+    ASSERT_TRUE(moveLines(s, true, shown));
+    EXPECT_EQ(letters(s), "adcb");
+    selectRows(s, {3}, 3);
+    EXPECT_FALSE(canMoveLines(s, true, shown));
+}
+
 TEST_F(GridCommandsTest, ContinuousTimesFollowTheNeighbours)
 {
     select({b, c}, b);

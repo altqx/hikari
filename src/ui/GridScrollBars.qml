@@ -47,6 +47,18 @@ Item {
             value: vertical.range > 0 ? bars.grid.contentY / vertical.range : 0
         }
         onPositionChanged: if (pressed) bars.grid.contentY = position * range
+        Repeater {
+            objectName: bars.grid.objectName + "OnFrameTicks"
+            model: bars.grid.onFrameTicks
+            Rectangle {
+                required property real modelData
+                z: -0.5
+                width: vertical.width
+                height: 2
+                y: Math.round(modelData * vertical.height - height / 2)
+                color: Theme.warning
+            }
+        }
     }
 
     Bar {

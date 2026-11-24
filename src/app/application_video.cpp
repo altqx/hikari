@@ -2,6 +2,7 @@
 
 #include "hikari/application/keyframe_files.h"
 #include "hikari/application/legacy_dir.h"
+#include "hikari/application/video_extensions.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -220,6 +221,14 @@ void Application::closeKeyframes()
     }
     emit keyframesChanged();
     refreshViews();
+}
+
+QString Application::videoFilePatterns() const
+{
+    QStringList patterns;
+    for (const auto extension : application::kVideoExtensions)
+        patterns << QStringLiteral("*.") + QLatin1StringView(extension);
+    return patterns.join(u' ');
 }
 
 QUrl Application::videoDialogFolder() const

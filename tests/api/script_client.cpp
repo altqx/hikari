@@ -20,33 +20,6 @@ Caller pluginCaller()
     return Caller{"plugin:test", "Test plugin", false};
 }
 
-std::optional<std::string> mismatch(const Json &expected, const Json &actual, const std::string &path)
-{
-    if (expected.isObject() && actual.isObject()) {
-        for (const Json::Member &m : expected.asObject()) {
-            const Json *found = actual.find(m.key);
-            if (!found)
-                return path + "/" + m.key + ": missing";
-            if (auto problem = mismatch(m.value, *found, path + "/" + m.key))
-                return problem;
-        }
-        return std::nullopt;
-    }
-    if (expected.isArray() && actual.isArray()) {
-        const auto &e = expected.asArray();
-        const auto &a = actual.asArray();
-        if (e.size() != a.size())
-            return path + ": " + std::to_string(a.size()) + " items, expected " + std::to_string(e.size());
-        for (std::size_t i = 0; i < e.size(); ++i)
-            if (auto problem = mismatch(e[i], a[i], path + "/" + std::to_string(i)))
-                return problem;
-        return std::nullopt;
-    }
-    if (!(expected == actual))
-        return path + ": " + actual.dump() + ", expected " + expected.dump();
-    return std::nullopt;
-}
-
 const Json *pointer(const Json &value, std::string_view at)
 {
     const Json *current = &value;

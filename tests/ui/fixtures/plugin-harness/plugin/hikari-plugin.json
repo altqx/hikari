@@ -1,0 +1,6 @@
+{"id": "com.example.harness", "name": "Harness", "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"],
+ "contributes": {
+   "commands": [{"id": "greet", "title": "Greet"}, {"id": "shout", "title": "Shout"}, {"id": "ask", "title": "Ask"},
+                {"id": "pick", "title": "Pick"}, {"id": "seen", "title": "Seen"}, {"id": "spin", "title": "Spin"}],
+   "formats": [{"id": "cues", "title": "Cue list", "extensions": ["cue"], "export": true}],
+   "providers": {"completion": {"triggers": ["\\"], "fields": ["text"]}}}}

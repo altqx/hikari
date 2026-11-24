@@ -160,6 +160,14 @@ void finish(Responder &r, const std::expected<void, std::string> &done)
         r.terminal(Outcome::Failed, bytesOf(done.error()));
 }
 
+void finish(Responder &r, const std::expected<Json, std::string> &result)
+{
+    if (result)
+        r.terminal(Outcome::Ok, bytesOf(result->dump()));
+    else
+        r.terminal(Outcome::Failed, bytesOf(result.error()));
+}
+
 void exportDocument(Reader &in, Responder &r)
 {
     const std::string format = in.str();
