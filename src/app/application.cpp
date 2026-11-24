@@ -55,6 +55,7 @@
 #include "dialog_placement.h"
 #include "list_files.h"
 #include "project_file.h"
+#include "icon_theme.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -730,6 +731,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
     m_renderer.countCost(m_settings->boolean("video.renderCost"));
     ui::theme::useSettings(m_settings.get());
+    ui::icons::useSettings(m_settings.get());
     for (const QString &problem : ui::theme::loadProblems())
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Options", "Themes"),
                       QCoreApplication::translate("HikariSub.Options", "A built-in theme could not be read, so Dark is shown."),
@@ -7831,6 +7833,9 @@ bool validAppearance(std::string_view id, const QVariant &value)
             return ui::theme::find(value.toString()) && ui::theme::typeOf(value.toString()) == ui::theme::Type(i);
     if (id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting)
         return value.canConvert<QStringList>();
+    if (id == ui::icons::kThemeSetting)
+        return value.toString() == QLatin1String(ui::icons::kBuiltinTheme)
+            || std::ranges::contains(ui::icons::themes(), value.toString(), &ui::icons::PluginIconTheme::id);
     return false;
 }
 }

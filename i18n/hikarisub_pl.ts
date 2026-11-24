@@ -17763,6 +17763,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>Włączone</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>Ikony</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>Zastępuje ikony interfejsu HikariSub. Ikony, których motyw nie obejmuje, pozostają ikonami HikariSub.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

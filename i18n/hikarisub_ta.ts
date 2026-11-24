@@ -17624,6 +17624,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>இயக்கத்தில்</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>படவுருக்கள்</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>HikariSub இன் இடைமுகப் படவுருக்களை மாற்றுகிறது. கருப்பொருளில் இல்லாத படவுருக்கள் HikariSub இன் சொந்தப் படவுருக்களாகவே காட்டப்படும்.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

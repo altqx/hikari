@@ -28860,6 +28860,34 @@ private slots:
         QCOMPARE(code(), QStringLiteral("dark"));
     }
 
+    void anIconsSectionShowsOnlyWithPluginIconThemes()
+    {
+        auto &settings = *application->settingsStore();
+        const QString round = QStringLiteral("plugin:com.example.looks/round");
+        auto restore = qScopeGuard([&] { ui::icons::uninstallTheme(round); });
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("appearance");
+        QVERIFY(!dialogItem("settingsDialog", "appearanceIcons")->property("visible").toBool());
+
+        ui::icons::installTheme({round, QStringLiteral("Round"), QStringLiteral("Looks"), {}});
+        QTRY_VERIFY(dialogItem("settingsDialog", "appearanceIcons")->property("visible").toBool());
+        auto *box = dialogItem("settingsDialog", "setting_appearance.iconTheme");
+        QVERIFY(box);
+        QCOMPARE(box->property("count").toInt(), 2);
+        QCOMPARE(box->property("currentText").toString(), QStringLiteral("HikariSub"));
+        QVERIFY(QMetaObject::invokeMethod(box, "activated", Q_ARG(int, 1)));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.iconTheme")).toString(), round);
+        QTRY_COMPARE(box->property("currentText").toString(), QStringLiteral("Round — Looks"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("appearance.iconTheme"), round);
+
+        ui::icons::uninstallTheme(round);
+        QCOMPARE(settings.text("appearance.iconTheme"), QStringLiteral("hikarisub"));
+    }
+
     void themeSwitchRetintsEverySurface()
     {
         auto &settings = *application->settingsStore();
@@ -33466,7 +33494,9 @@ private slots:
         };
         const auto url = [](QObject *item) {
             QQmlExpression expression(qmlContext(item), item, QStringLiteral("icon.source.toString()"));
-            return expression.evaluate().toString();
+            const QString source = expression.evaluate().toString();
+            const QString generation = QLatin1Char('/') + QString::number(ui::icons::generation());
+            return source.endsWith(generation) ? source.chopped(generation.size()) : source;
         };
         struct Expected {
             const char *object, *role, *name;

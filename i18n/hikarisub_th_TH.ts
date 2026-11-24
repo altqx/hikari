@@ -17485,6 +17485,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>เปิด</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>ไอคอน</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>แทนที่ไอคอนในอินเทอร์เฟซของ HikariSub ไอคอนที่ธีมไม่มีจะแสดงเป็นไอคอนของ HikariSub เอง</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

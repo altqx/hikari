@@ -284,6 +284,8 @@ std::vector<SettingDefinition> &definitions()
         {"appearance.darkTheme", "", String, Profile, Mapped, false, std::string("dark")},
         {"appearance.highContrastLightTheme", "", String, Profile, Mapped, false, std::string("highContrastWhite")},
         {"appearance.highContrastDarkTheme", "", String, Profile, Mapped, false, std::string("highContrastBlack")},
+        // "hikarisub" or "plugin:<plugin id>/<icon theme id>".
+        {"appearance.iconTheme", "", String, Profile, Mapped, false, std::string("hikarisub")},
         // "<theme id>=<accent choice id>" rows.
         {"appearance.accents", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // "<theme id>/<role>=#RRGGBB" rows.
