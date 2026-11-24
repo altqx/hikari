@@ -105,8 +105,8 @@ Item {
             if (overlayItem.focusTarget)
                 overlayItem.focusTarget.forceActiveFocus()
             pickPress = overlayItem.pickPoint !== null
-            lastWasPick = pickPress
             if (pickPress) {
+                lastWasPick = true
                 const picked = overlayItem.tools.scriptPointAt(mouse.x, mouse.y)
                 if (mouse.button === Qt.LeftButton && picked.x !== undefined)
                     overlayItem.pickPoint(picked)
@@ -119,16 +119,22 @@ Item {
                 overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
         onReleased: mouse => {
-            if (pickPress)
+            if (pickPress) {
                 pickPress = false
-            else if (mouse.button === Qt.RightButton && segmentPress)
+                return
+            }
+            lastWasPick = false
+            if (mouse.button === Qt.RightButton && segmentPress)
                 segmentPress = false
             else
                 overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
         onDoubleClicked: mouse => {
-            if (!lastWasPick)
-                overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+            if (lastWasPick) {
+                lastWasPick = false
+                return
+            }
+            overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
         onWheel: wheel => {
             if (overlayItem.view && overlayItem.view.wheel(wheel.x, wheel.y, wheel.angleDelta.x / 120,

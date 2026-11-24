@@ -30405,6 +30405,26 @@ private slots:
         QTRY_VERIFY(pointerArea->property("cursorShape").toInt() != int(Qt::CrossCursor));
     }
 
+    void aDoubleClickThatBeginsWithAPickNeverReachesTheTool()
+    {
+        const auto setup = openAPointFieldOverVideo();
+        QVERIFY(setup);
+        auto &tools = application->visualTools();
+        auto &effects = application->nodeEffects();
+        QCOMPARE(tools.activeFamily(), 1);
+        const QString signBefore = textOfLine(*setup->session, setup->sign);
+        QVERIFY(signBefore.contains(QStringLiteral("\\pos(100,80)")));
+        const QPoint at = videoPoint(tools.videoRect().center() + QPointF(37, 21));
+
+        effects.pickPoint(QStringLiteral("point"));
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, at);
+        QTRY_VERIFY(effects.pickingPoint().isEmpty());
+        QCOMPARE(pointField(QStringLiteral("point")).toList().size(), 2);
+        QTest::qWait(50);
+        QVERIFY(!tools.gestureActive());
+        QCOMPARE(textOfLine(*setup->session, setup->sign), signBefore);
+    }
+
     void escapeOrARightClickCancelsPickOnTheVideo()
     {
         const auto setup = openAPointFieldOverVideo();
