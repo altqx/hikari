@@ -51,6 +51,9 @@
 # PL9: ApiReferenceMarkdown compares the generated reference byte for byte.
 /docs/api-reference.md text eol=lf
 
+# The type hints are compared byte for byte and read line by line on Windows too.
+/docs/types/** text eol=lf
+
 # AI14: the skill fixtures are compared byte for byte.
 /tests/api/skills/** -text
 

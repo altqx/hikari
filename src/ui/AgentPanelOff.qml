@@ -18,24 +18,24 @@ Item {
         width: off.width - 24
         implicitHeight: column.implicitHeight + 16
         height: implicitHeight
-        radius: 4
-        color: Theme.raised
+        radius: Theme.popupRadius
+        color: Theme.panel
         border.color: Theme.line
         border.width: 1
         ColumnLayout {
             id: column
-            x: 10
+            x: 12
             y: 8
-            width: parent.width - 20
-            spacing: 6
+            width: parent.width - 24
+            spacing: 8
             RowLayout {
-                spacing: 6
+                spacing: 8
                 Layout.fillWidth: true
                 Icon { size: 14; iconRole: "ai-assistant" }
                 Label {
                     objectName: "agentAiOffTitle"
                     text: qsTr("AI is off")
-                    font.bold: true
+                    font.weight: Font.DemiBold
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }
