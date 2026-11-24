@@ -1305,7 +1305,7 @@ std::optional<Segment> VectorEditor::segmentAt(PointF pos, const VectorFrame &fr
         return std::nullopt;
     const PointF at = toPoints(pos, frame);
     const Vec p{at.x, at.y};
-    const double reach = frame.pointArea() * frame.coeffW;
+    const double reach = static_cast<double>(frame.pointArea()) * frame.coeffW;
     std::optional<Segment> best;
     double bestDistance = reach;
     for (const Segment &s : segments()) {
