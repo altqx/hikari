@@ -289,7 +289,7 @@ private:
             QTimer::singleShot(0, &m_context, [this, popups, shown] {
                 if (popups->shown() != shown)
                     return;
-                const auto answer = nextAnswer(shown->kind() == QLatin1String("input_box") ? "an input box" : "a quick pick");
+                const auto answer = nextAnswer(shown->kind() == QLatin1String("box") ? "an input box" : "a quick pick");
                 if (!answer || answer->find("dismiss"))
                     return shown->dismiss();
                 if (answer->find("back"))

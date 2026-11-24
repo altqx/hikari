@@ -66,7 +66,7 @@ private slots:
         QVERIFY2(r.output.contains(QStringLiteral("fail.jsonl:2: call: /total: 2, expected 3\n")), qPrintable(r.output));
         QVERIFY2(r.output.contains(QStringLiteral("fail.jsonl:3: run: an input box opened with no answer step before it\n")),
                  qPrintable(r.output));
-        QVERIFY2(r.output.contains(QStringLiteral("fail.jsonl:4: expectDocument: the Document differs from episode.ass: line ")),
+        QVERIFY2(r.output.contains(QStringLiteral("fail.jsonl:4: expectDocument: the Document differs from shouted.ass: line 6: \"Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\", expected \"Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,FIRST\"\n")),
                  qPrintable(r.output));
         QVERIFY(r.output.endsWith(QStringLiteral("4 of 4 steps failed.\n")));
     }
