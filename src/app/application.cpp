@@ -2578,6 +2578,7 @@ void Application::refreshViews()
     }
     m_rowMarks.keepOnly(m_workspace.documents());
     shell().setRowMarks(rowMarksOf(target));
+    refreshFrameMarks();
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();
     // MUST KILL: must run after editor().setDocument above
@@ -7322,7 +7323,10 @@ void Application::settingChanged(const QString &id)
         choosePlayer();
     if (id == QLatin1String("subtitles.saveWithVideoName"))
         emit saveWithVideoNameChanged();
-    else if (id == QLatin1String("video.dontAskForBadResolution"))
+    else if (id == QLatin1String("grid.markCurrentFrame")) {
+        emit markCurrentFrameChanged();
+        refreshFrameMarks();
+    } else if (id == QLatin1String("video.dontAskForBadResolution"))
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));

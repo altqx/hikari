@@ -603,6 +603,51 @@ private slots:
         }
     }
 
+    void tintsAndTicksTheLinesOnTheCurrentFrame()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,plain\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,on frame\n"
+                             "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a comment\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,selected\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setDocument(core::loadAss(bytes).document);
+        model.setSelection({core::LineId{4}, {core::LineId{4}}}, core::LineId{4});
+        LineGrid grid;
+        grid.setSize(QSizeF(720, 160));
+        grid.setModel(&model);
+        QSignalSpy ticked(&grid, &LineGrid::onFrameTicksChanged);
+        model.setLinesOnFrame({core::LineId{2}, core::LineId{3}, core::LineId{4}});
+        QCOMPARE(ticked.count(), 1);
+        QCOMPARE(grid.onFrameTicks(), (QList<qreal>{1.5 / 4, 2.5 / 4, 3.5 / 4}));
+
+        const auto &roles = theme::current().roles;
+        const auto &content = theme::current().content;
+        const double rh = grid.rowHeight();
+        const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
+        const int right = int(grid.cellRect(0, 6).left()) - 6;
+        QImage image(720, 160, QImage::Format_ARGB32);
+        QPainter painter(&image);
+        grid.paint(&painter);
+        painter.end();
+        const QColor tint = onFrameTint(roles, content.gridAlternate);
+        QVERIFY(tint != content.gridAlternate && tint != roles.select && tint != content.gridComment);
+        QCOMPARE(image.pixelColor(right, rowY(0)), roles.panel);
+        QCOMPARE(image.pixelColor(right, rowY(1)), tint);
+        QCOMPARE(image.pixelColor(right, rowY(2)), content.gridComment);
+        QCOMPARE(image.pixelColor(right, rowY(3)), roles.select);
+
+        LineFilterModel filter;
+        filter.setLineModel(&model);
+        filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
+        grid.setModel(&filter);
+        QCOMPARE(grid.onFrameTicks(), (QList<qreal>{1.5 / 3, 2.5 / 3}));
+        model.setLinesOnFrame({});
+        QVERIFY(grid.onFrameTicks().isEmpty());
+    }
+
     void paintsCommentRows()
     {
         const char *script = "[Events]\n"

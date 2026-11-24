@@ -143,6 +143,7 @@ signals:
     // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
+    void markCurrentFrameChanged();
     void askForBadResolutionChanged();
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
@@ -469,6 +470,9 @@ public:
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
+    Q_PROPERTY(bool markCurrentFrame READ markCurrentFrame WRITE setMarkCurrentFrame NOTIFY markCurrentFrameChanged)
+    bool markCurrentFrame() const { return m_settings->boolean("grid.markCurrentFrame"); }
+    void setMarkCurrentFrame(bool on);
     Q_INVOKABLE void openWebsite();
     // kind: "panel" or "window" (guide_links.h); anything else opens the guide's home.
     Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
@@ -1653,6 +1657,8 @@ private:
     QTimer *m_editRefresh = nullptr;
     std::optional<core::LineId> m_leftEditedLine;
     void trackVideoFollow(WindowMedia &media);
+    std::vector<core::LineId> linesVisibleOnVideo(application::EditSession &session, const application::ShownLine &shown);
+    void refreshFrameMarks();
     void followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left);
     void followEditOn(const application::FollowedLine &line);
     void followShownLine(bool rowChanged, LineChangeOrigin origin);

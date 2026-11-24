@@ -523,6 +523,11 @@ void LineTableModel::emitRowChanged(int row)
 
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
+    emitLinesChanged(ids, {ActiveRole, SelectedRole, AnchorRole});
+}
+
+void LineTableModel::emitLinesChanged(const std::vector<core::LineId> &ids, const QList<int> &roles)
+{
     boost::dynamic_bitset<> touched(m_rows.size());
     for (const auto &id : ids)
         if (const auto row = rowOf(id))
@@ -531,8 +536,7 @@ void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
         auto last = first;
         while (last + 1 < touched.size() && touched[last + 1])
             ++last;
-        emit dataChanged(index(static_cast<int>(first), 0), index(static_cast<int>(last), ColumnCount - 1),
-                         {ActiveRole, SelectedRole, AnchorRole});
+        emit dataChanged(index(static_cast<int>(first), 0), index(static_cast<int>(last), ColumnCount - 1), roles);
         first = touched.find_next(last);
     }
 }
@@ -676,6 +680,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return QStringList();
     case QcCurrentRole:
         return m_qcCurrent == line.id;
+    case OnFrameRole:
+        return m_onFrame.contains(line.id.value);
     case RowMarkColoursRole:
     case RowMarkNotesRole: {
         const auto it = m_rowMarks.find(line.id.value);
@@ -705,6 +711,24 @@ void LineTableModel::setQcMarks(QcMarks marks, std::optional<core::LineId> curre
         emit headerDataChanged(Qt::Horizontal, NumberColumn, NumberColumn);
     if (!m_rows.empty())
         emit dataChanged(index(0, NumberColumn), index(rowCount() - 1, NumberColumn), {QcNotesRole, QcCurrentRole});
+}
+
+void LineTableModel::setLinesOnFrame(const std::vector<core::LineId> &lines)
+{
+    absl::flat_hash_set<std::uint64_t> next;
+    for (const auto &id : lines)
+        next.insert(id.value);
+    if (next == m_onFrame)
+        return;
+    std::vector<core::LineId> changed;
+    for (const auto id : m_onFrame)
+        if (!next.contains(id))
+            changed.push_back(core::LineId{id});
+    for (const auto id : next)
+        if (!m_onFrame.contains(id))
+            changed.push_back(core::LineId{id});
+    m_onFrame = std::move(next);
+    emitLinesChanged(changed, {OnFrameRole});
 }
 
 void LineTableModel::setRowMarks(RowMarks marks)
@@ -901,7 +925,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {QcNotesRole, "qcNotes"},
                   {QcCurrentRole, "qcCurrent"},
                   {RowMarkColoursRole, "rowMarkColours"},
-                  {RowMarkNotesRole, "rowMarkNotes"}});
+                  {RowMarkNotesRole, "rowMarkNotes"},
+                  {OnFrameRole, "onFrame"}});
     return roles;
 }
 
@@ -941,7 +966,8 @@ QSortFilterProxyModel::DataChangeRelevanceFlags LineFilterModel::dataChangeRelev
 {
     static constexpr std::array kMarksOnly{int(LineTableModel::ActiveRole), int(LineTableModel::SelectedRole),
                                            int(LineTableModel::AnchorRole), int(LineTableModel::SpellMarksRole),
-                                           int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole)};
+                                           int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole),
+                                           int(LineTableModel::OnFrameRole)};
     if (!roles.isEmpty() && std::ranges::all_of(roles, [](int role) { return std::ranges::contains(kMarksOnly, role); }))
         return DataChangeRelevanceFlag::NotRelevant;
     return QSortFilterProxyModel::dataChangeRelevanceFlags(sourceTopLeft, sourceBottomRight, roles);

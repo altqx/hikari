@@ -451,6 +451,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_GRID_TAGS_REPLACE", 5355},
         {"GLOBAL_GRID_TAGS_HIDE", 5356},
         {"GLOBAL_REMOVE_TEXT_KEEP_TAGS", 5357},
+        {"GLOBAL_GRID_MARK_CURRENT_FRAME", 5358},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
 };
 
@@ -872,6 +873,7 @@ constexpr NameRow kNames[] = {
         {5355, "Replace tags in the Grid with a symbol"},
         {5356, "Hide tags in the Grid"},
         {5357, "Delete text, keep tags"},
+        {5358, "Mark lines on the current frame"},
         {5374, "Full screen typesetting"},
 };
 

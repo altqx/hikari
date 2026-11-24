@@ -34055,6 +34055,63 @@ private slots:
         QTRY_VERIFY(!application->shell().filtered());
     }
 
+    void gridMarksTheLinesOnTheCurrentFrame()
+    {
+        const QString path = writeFile(dir, "pg-frame-marks.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:00.50,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.40,0:00:01.20,Default,,0,0,0,,b\n"
+                                       "Comment: 0,0:00:00.40,0:00:01.20,Default,,0,0,0,,note\n"
+                                       "Dialogue: 0,0:00:01.50,0:00:01.90,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        auto *grid = item("editingGrid");
+        auto *model = grid->property("model").value<QAbstractItemModel *>();
+        const auto marked = [&] {
+            std::set<core::LineId> found;
+            for (int row = 0; row < model->rowCount(); ++row)
+                if (const auto at = model->index(row, 0); at.data(ui::LineTableModel::OnFrameRole).toBool())
+                    found.insert(core::LineId{at.data(ui::LineTableModel::LineIdRole).toULongLong()});
+            return found;
+        };
+        const auto ticks = [&] { return grid->property("onFrameTicks").value<QList<qreal>>().size(); };
+        QVERIFY(application->markCurrentFrame());
+        QVERIFY(marked().empty());
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        QTRY_COMPARE(marked(), std::set<core::LineId>{lines[0]->id});
+        QVERIFY(application->video().showFrameAt(11));
+        QTRY_COMPARE(marked(), (std::set<core::LineId>{lines[0]->id, lines[1]->id}));
+        QCOMPARE(ticks(), 2);
+        QVERIFY(application->selectLinesVisibleOnVideo());
+        QCOMPARE(session->selection().selected, marked());
+        QVERIFY(application->video().showFrameAt(47));
+        QTRY_VERIFY(marked().empty());
+        QCOMPARE(ticks(), 0);
+        QVERIFY(application->video().showFrameAt(40));
+        QTRY_COMPARE(marked(), std::set<core::LineId>{lines[3]->id});
+
+        auto *menuItem = named("markCurrentFrameMenuItem");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_GRID_MARK_CURRENT_FRAME"));
+        QVERIFY(menuItem->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QVERIFY(!application->settingsStore()->boolean("grid.markCurrentFrame"));
+        QVERIFY(marked().empty());
+        QTRY_VERIFY(!menuItem->property("checked").toBool());
+        QVERIFY(application->video().showFrameAt(11));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 11);
+        QVERIFY(marked().empty());
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_GRID_MARK_CURRENT_FRAME"))));
+        QVERIFY(ran.toBool());
+        QVERIFY(application->settingsStore()->boolean("grid.markCurrentFrame"));
+        QCOMPARE(marked(), (std::set<core::LineId>{lines[0]->id, lines[1]->id}));
+        QTRY_VERIFY(menuItem->property("checked").toBool());
+    }
+
     void centerTimesWithinFramesKeepsEachFrame()
     {
         const QString path = writeFile(dir, "fa16-center.ass",

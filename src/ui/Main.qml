@@ -3078,6 +3078,17 @@ ApplicationWindow {
             }
         }
         Action {
+            id: markCurrentFrameAction
+            text: qsTr("Mark lines on the current frame")
+            checkable: true
+            checked: root.app.markCurrentFrame
+            onToggled: {
+                if (!root.hotkeyGesture("GLOBAL_GRID_MARK_CURRENT_FRAME"))
+                    root.app.markCurrentFrame = checked
+                checked = Qt.binding(() => root.app.markCurrentFrame)
+            }
+        }
+        Action {
             id: gettingStartedAction
             text: qsTr("Getting &started")
             onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) root.lazy(gettingStartedDialogLoader).openSetup()
@@ -4652,6 +4663,13 @@ ApplicationWindow {
                         text: qsTr("Hide")
                         mode: 2
                     }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_GRID_MARK_CURRENT_FRAME"
+                    help: qsTr("Tints the lines in the Grid that show on the current video frame")
+                    iconRole: "select-visible"
+                    objectName: "markCurrentFrameMenuItem"
+                    action: markCurrentFrameAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_EDITOR_HIDE_TAGS"
@@ -11218,6 +11236,7 @@ ApplicationWindow {
         GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
+        GLOBAL_GRID_MARK_CURRENT_FRAME: markCurrentFrameAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
         GLOBAL_NODE_EFFECTS: nodeEffectsAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,

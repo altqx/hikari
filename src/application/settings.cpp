@@ -421,6 +421,7 @@ std::vector<SettingDefinition> &definitions()
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         {"grid.columnWidths", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
+        {"grid.markCurrentFrame", "", Bool, Profile, Mapped, false, true},
         {"grid.cpsWarning", "", Int, Profile, Mapped, false, std::int64_t{15}},
         {"grid.cpsError", "", Int, Profile, Mapped, false, std::int64_t{30}},
         {"grid.lineLength", "", Int, Profile, Mapped, false, std::int64_t{43}},

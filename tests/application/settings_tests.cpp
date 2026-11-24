@@ -327,6 +327,16 @@ TEST(SettingsRegistry, TheOldHideTagsFlagIsATagsMode)
     EXPECT_EQ(gridTagsModeOfHideTags(true, std::string()), Hide);
 }
 
+TEST(SettingsRegistry, GridMarksTheCurrentFrameByDefaultAsAegisubDoes)
+{
+    const auto *mark = findSetting("grid.markCurrentFrame");
+    ASSERT_NE(mark, nullptr);
+    EXPECT_EQ(mark->type, SettingType::Bool);
+    EXPECT_EQ(mark->scope, SettingScope::Profile);
+    EXPECT_TRUE(mark->legacyKey.empty());
+    EXPECT_EQ(mark->defaultValue, SettingValue(true));
+}
+
 TEST(SettingsRegistry, FoldingKeepsAnEntryAlreadyInTheList)
 {
     const auto &dark = foldedSettings()[1];

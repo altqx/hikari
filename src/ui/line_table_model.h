@@ -92,6 +92,7 @@ public:
         // application::MarkColour values, one per plugin marking the Line
         RowMarkColoursRole,
         RowMarkNotesRole,
+        OnFrameRole,
     };
     enum class ReviewState { None, Waiting, EditedSince };
     // An AI change waiting on the Line; `before` is absent for an inserted Line.
@@ -165,6 +166,8 @@ public:
     };
     using RowMarks = absl::flat_hash_map<std::uint64_t, std::vector<RowMark>>;
     void setRowMarks(RowMarks marks);
+    void setLinesOnFrame(const std::vector<core::LineId> &lines);
+    const absl::flat_hash_set<std::uint64_t> &linesOnFrame() const { return m_onFrame; }
 
     void setFoldGenerated(bool on);
     bool foldGenerated() const { return m_foldGenerated; }
@@ -237,6 +240,7 @@ private:
     application::GridTagsMode m_tagsMode = application::GridTagsMode::Show;
     QString m_tagSwap;
     void emitStateChanged(const std::vector<core::LineId> &ids);
+    void emitLinesChanged(const std::vector<core::LineId> &ids, const QList<int> &roles);
 
     std::vector<Row> m_rows;
     absl::flat_hash_map<std::uint64_t, int> m_rowById;
@@ -260,6 +264,7 @@ private:
     QcMarks m_qcMarks;
     std::optional<core::LineId> m_qcCurrent;
     RowMarks m_rowMarks;
+    absl::flat_hash_set<std::uint64_t> m_onFrame;
     int m_headerBlock = 0;
     int m_hidden = 0;
     bool m_autoHide = false;

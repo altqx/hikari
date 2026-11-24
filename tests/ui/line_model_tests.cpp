@@ -334,6 +334,40 @@ private slots:
         QCOMPARE(runs.at(1).at(1).toModelIndex().row(), 2);
     }
 
+    void linesOnFrameSignalOnlyTheRowsThatChange()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        const auto onFrame = [&](int row) { return model.index(row, 0).data(LineTableModel::OnFrameRole).toBool(); };
+        QVERIFY(!onFrame(0) && !onFrame(1) && !onFrame(2));
+        QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+        model.setLinesOnFrame({core::LineId{1}, core::LineId{3}});
+        QVERIFY(onFrame(0) && !onFrame(1) && onFrame(2));
+        QCOMPARE(changed.count(), 2);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 0);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 0);
+        QCOMPARE(changed.at(1).at(0).toModelIndex().row(), 2);
+        QCOMPARE(changed.at(0).at(2).value<QList<int>>(), QList<int>{LineTableModel::OnFrameRole});
+
+        changed.clear();
+        model.setLinesOnFrame({core::LineId{3}, core::LineId{1}});
+        QCOMPARE(changed.count(), 0);
+
+        model.setLinesOnFrame({core::LineId{3}, core::LineId{2}});
+        QVERIFY(!onFrame(0) && onFrame(1) && onFrame(2));
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 0);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 1);
+
+        changed.clear();
+        model.setLinesOnFrame({});
+        QVERIFY(!onFrame(0) && !onFrame(1) && !onFrame(2));
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 1);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 2);
+        QCOMPARE(model.roleNames().value(LineTableModel::OnFrameRole), QByteArray("onFrame"));
+    }
+
     void marksAndSelectionDoNotRefilter()
     {
         LineTableModel model;
@@ -347,6 +381,7 @@ private slots:
         model.setSelection({core::LineId{3}, {core::LineId{1}, core::LineId{2}, core::LineId{3}}}, core::LineId{1});
         model.setRunMarks(true);
         model.setComparisonColours({QColor(1, 1, 1), QColor(2, 2, 2), QColor(3, 3, 3), QColor(4, 4, 4), QColor(5, 5, 5)});
+        model.setLinesOnFrame({core::LineId{1}, core::LineId{3}});
         QCOMPARE(asked, 0);
         model.setDraft(*model.recordAt(0));
         QVERIFY(asked > 0);
