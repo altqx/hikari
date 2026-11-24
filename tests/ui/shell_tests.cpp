@@ -31168,6 +31168,7 @@ private slots:
     {
         QTemporaryDir config;
         QVERIFY(config.isValid());
+        widenForTheInspectorBar();
         auto &tools = application->visualTools();
         const QString shapesFile = config.filePath(QStringLiteral("Config/shapes.toml"));
         tools.setShapesFile(ui::ListFile::make(shapesFile, {}, ui::kShapesFormat, nullptr));
@@ -31370,7 +31371,7 @@ private slots:
         QCOMPARE(editor->name(), QStringLiteral("box"));
         QCOMPARE(named("shapeNameErrorText")->property("text").toString(),
                  QStringLiteral("Another shape is named “circle”. Press Enter to replace it."));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "nameLeft"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesEditionPane"), "nameLeft"));
         QQuickWindow *box = nullptr;
         QTRY_VERIFY((box = messageBox("shapesMessages")) && box->isVisible());
         QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
@@ -40369,8 +40370,8 @@ private slots:
                     return w;
             return nullptr;
         };
-        QTRY_VERIFY(shapesWindow());
-        QCOMPARE(shapesWindow()->transientParent(), fsWindow);
+        QTRY_VERIFY(fullscreenItem("shapesEditionPane") && fullscreenItem("shapesEditionPane")->isVisible());
+        QVERIFY(!shapesWindow());
         shapes->addShape();
         QVERIFY(shapes->canUndo());
         QTemporaryDir tagsConfig;
@@ -40388,8 +40389,9 @@ private slots:
                     return w;
             return nullptr;
         };
-        QTRY_VERIFY(tagsWindow());
-        QCOMPARE(tagsWindow()->transientParent(), fsWindow);
+        QTRY_VERIFY(fullscreenItem("tagsEditionPane") && fullscreenItem("tagsEditionPane")->isVisible());
+        QVERIFY(!fullscreenItem("shapesEditionPane"));
+        QVERIFY(!tagsWindow());
         tags->addTag();
         QVERIFY(tags->canUndo());
         QVERIFY(fs.leave());
@@ -40596,6 +40598,140 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(panel, "applyFromList", Q_ARG(QVariant, QStringLiteral("Sign"))));
         QTRY_COMPARE(u8(line(2)->style), QStringLiteral("Sign"));
         QCOMPARE(application->shell().activeLineNumber(), 3);
+    }
+
+    void videoFullscreenInspectorHostsToolDialogsAndTheGuide()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &tools = application->visualTools();
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
+        QTRY_VERIFY(fullscreenItem("fullscreenTypesetting") && fullscreenItem("fullscreenTypesetting")->isVisible());
+        auto *inspector = fullscreenItem("fullscreenInspector");
+        const auto inside = [&](QQuickItem *item, QQuickItem *area) {
+            for (; item; item = item->parentItem())
+                if (item == area)
+                    return true;
+            return false;
+        };
+        const auto hoverClick = [&](QQuickItem *target) {
+            QTest::mouseMove(target->window(), target->mapToScene(QPointF(target->width() / 2, target->height() / 2)).toPoint());
+            QTest::qWaitFor([&] { return target->property("hovered").toBool(); }, 1000);
+            clickWith(target, Qt::NoModifier);
+        };
+        const auto shot = [&](QQuickItem *area, const QString &name) {
+            const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+            if (out.isEmpty())
+                return;
+            QVERIFY(QDir().mkpath(out));
+            const QRectF r = area->mapRectToScene(QRectF(0, 0, area->width(), area->height()));
+            const QImage image = fsWindow->grabWindow();
+            const qreal dpr = image.devicePixelRatio();
+            QVERIFY(image.copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toRect())
+                        .save(QDir(out).filePath(name + QLatin1Char('-') + QString::number(int(area->width())) + ".png")));
+        };
+
+        tools.selectFamily(2);
+        QTRY_VERIFY(fullscreenItem("visualInspectorGuide") && fullscreenItem("visualInspectorGuide")->isVisible());
+        auto *guide = fullscreenItem("fullscreenToolBar")->findChild<QObject *>(QStringLiteral("visualToolGuide"));
+        QVERIFY(guide);
+        hoverClick(fullscreenItem("visualInspectorGuide"));
+        QTRY_VERIFY(guide->property("opened").toBool());
+        auto *guideItem = guide->property("contentItem").value<QQuickItem *>();
+        QCOMPARE(guide->property("title").toString(), tools.families().at(2).toMap().value(QStringLiteral("name")).toString());
+        QCOMPARE(findItem(guideItem, QStringLiteral("visualToolGuideWrites"))->property("text").toString(),
+                 QStringLiteral("\\move(x1,y1,x2,y2,t1,t2)"));
+        QVERIFY(!findItem(guideItem, QStringLiteral("visualToolGuideNote"))->isVisible());
+        const auto lineCount = [&] {
+            int n = 0;
+            for (auto *label : findItem(guideItem, QStringLiteral("visualToolGuideLines"))->childItems())
+                n += label->isVisible() && !label->property("text").toString().isEmpty();
+            return n;
+        };
+        QTRY_COMPARE(lineCount(), 3);
+        QVERIFY(guideItem->mapToScene(QPointF(guideItem->width(), 0)).x() <= inspector->mapToScene(QPointF()).x());
+        bool chooses = false;
+        for (auto *label : findItem(guideItem, QStringLiteral("visualToolGuideKeys"))->childItems())
+            chooses = chooses || label->property("text").toString() == QStringLiteral("Chooses this tool");
+        QVERIFY(chooses);
+        auto *more = findItem(guideItem, QStringLiteral("visualToolGuideMore"));
+        QVERIFY(more && more->isVisible());
+        QTRY_VERIFY(more->hasActiveFocus());
+        hikari::test::desktop::clear();
+        QTest::keyClick(fsWindow, Qt::Key_Space);
+        QTRY_COMPARE(hikari::test::desktop::opened(),
+                     QList<QUrl>{QUrl(QStringLiteral("https://hikarisub.org/en/docs/typesetting/visual-tools#using-each-tool"))});
+        QTRY_VERIFY(!guide->property("visible").toBool());
+        tools.selectFamily(12);
+        hoverClick(fullscreenItem("visualInspectorGuide"));
+        QTRY_VERIFY(guide->property("opened").toBool());
+        QVERIFY(findItem(guideItem, QStringLiteral("visualToolGuideNote"))->isVisible());
+        QVERIFY(!findItem(guideItem, QStringLiteral("visualToolGuideWrites"))->isVisible());
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QTRY_VERIFY(!guide->property("visible").toBool());
+        QVERIFY(fs.active());
+
+        QTemporaryDir config;
+        QVERIFY(config.isValid());
+        tools.setShapesFile(ui::ListFile::make(config.filePath(QStringLiteral("shapes.toml")), {}, ui::kShapesFormat, nullptr));
+        tools.setAllTagsFile(ui::ListFile::make(config.filePath(QStringLiteral("tags.toml")), {}, ui::kTagsFormat, nullptr));
+        tools.selectFamily(8);
+        QTRY_VERIFY(fullscreenItem("visualOption_shape"));
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 99));
+        QPointer<ui::ShapeEditor> shapes = tools.shapeEditor();
+        QVERIFY(shapes);
+        auto *host = fullscreenItem("fullscreenToolDialog");
+        QTRY_VERIFY(host->isVisible() && fullscreenItem("shapesEditionPane") && fullscreenItem("shapesEditionPane")->isVisible());
+        QVERIFY(!inspector->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenToolDialogName")->property("text").toString(), QStringLiteral("Edit shapes"));
+        QCOMPARE(host->width(), inspector->width());
+        for (const char *name : {"shapeList", "shapeName", "shapeMode", "shapePreview", "shapesPaneUndo"}) {
+            auto *part = fullscreenItem(name);
+            QVERIFY2(part && part->isVisible(), name);
+            QVERIFY2(part->mapToItem(host, QPointF(part->width(), 0)).x() <= host->width(), name);
+        }
+        QTRY_VERIFY(inside(fsWindow->activeFocusItem(), fullscreenItem("shapesEditionPane")));
+        shapes->addShape();
+        QVERIFY(shapes->canUndo());
+        QTest::keyClick(fsWindow, Qt::Key_Z, Qt::ControlModifier);
+        QTRY_VERIFY(!shapes->canUndo());
+        QVERIFY(!application->editor().hasDraft());
+        shot(host, QStringLiteral("fullscreen-edit-shapes"));
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QTRY_VERIFY(!tools.shapeEditor());
+        QTRY_VERIFY(inspector->isVisible() && !host->isVisible());
+        QTRY_VERIFY(inside(fsWindow->activeFocusItem(), inspector));
+        QVERIFY(fs.active());
+
+        tools.selectFamily(10);
+        QTRY_VERIFY(fullscreenItem("visualOption_tag"));
+        QVERIFY(tools.setOption(QStringLiteral("edit"), 1));
+        QTRY_VERIFY(tools.tagsEditor());
+        QTRY_VERIFY(fullscreenItem("tagsEditionPane") && fullscreenItem("tagsEditionPane")->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenToolDialogName")->property("text").toString(), QStringLiteral("Edit tags"));
+        for (const char *name : {"tagsName", "tagCode", "tagStripPreview", "tagsPaneUndo"}) {
+            auto *part = fullscreenItem(name);
+            QVERIFY2(part && part->isVisible(), name);
+            QVERIFY2(part->mapToItem(host, QPointF(part->width(), 0)).x() <= host->width(), name);
+        }
+        shot(host, QStringLiteral("fullscreen-edit-tags"));
+        hoverClick(fullscreenItem("fullscreenToolDialogClose"));
+        QTRY_VERIFY(!tools.tagsEditor());
+        QTRY_VERIFY(inspector->isVisible());
+
+        tools.selectFamily(2);
+        QVERIFY(fs.leave());
+        QTRY_VERIFY(!fsWindow->isVisible());
+        QTRY_VERIFY(item("visualToolGuideButton") && item("visualToolGuideButton")->isVisible());
+        QCOMPARE(item("visualToolGuideButton")->property("tip").toString(),
+                 QStringLiteral("Drag the start or end point; right-drag sets the end. The line travels between them."));
+        tools.selectFamily(0);
     }
 
     void videoFullscreenOnStartLastsOneOpen()

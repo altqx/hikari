@@ -12,6 +12,7 @@ Control {
     readonly property var familyInfo: tools.families[family] ?? ({})
     readonly property bool batchTool: family > 0 && (familyInfo.available ?? false)
     property bool column: false
+    property var keyOf: symbol => ""
     readonly property string hint: texts.hint(family)
     padding: 0
     topPadding: 3
@@ -146,6 +147,7 @@ Control {
                                          swatch: v.swatch ? "#000000" : "", marked: v.marked === undefined ? undefined : false }))
     })
     readonly property real groupsRoom: availableWidth - (batchTool ? pickerWidth : 0)
+                                       - (rowGuide.visible ? rowGuide.implicitWidth + 4 : 0)
     readonly property int fitCount: {
         const n = segments.length
         if (column || !(availableWidth > 0))
@@ -170,7 +172,7 @@ Control {
     // Repeater.itemAt() is not bindable: bumped as the unseen copies are made.
     property int measuredItems: 0
     readonly property var foldedSegments: segments.slice(fitCount)
-    readonly property bool popoverOpen: morePopover.opened
+    readonly property bool popoverOpen: morePopover.opened || guide.opened
     readonly property real lineHeight: topPadding + 26 + bottomPadding
     readonly property bool shown: column || !pointer && (segments.length > 0 || batchTool)
     implicitHeight: column ? inspector.implicitHeight + topPadding + bottomPadding : shown ? lineHeight : 0
@@ -284,12 +286,25 @@ Control {
             Accessible.role: Accessible.Pane
             Accessible.name: texts.shortName(bar.family)
             Accessible.description: bar.hint
-            Label {
-                objectName: "visualInspectorName"
+            RowLayout {
                 Layout.fillWidth: true
-                text: texts.shortName(bar.family)
-                font.weight: Font.DemiBold
-                elide: Text.ElideRight
+                spacing: 4
+                Label {
+                    objectName: "visualInspectorName"
+                    Layout.fillWidth: true
+                    text: texts.shortName(bar.family)
+                    font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                }
+                IconToolButton {
+                    id: inspectorGuide
+                    objectName: "visualInspectorGuide"
+                    iconRole: "help"
+                    text: qsTr("How this tool works")
+                    checked: guide.visible
+                    focusPolicy: Qt.TabFocus
+                    onClicked: guide.openBeside(inspectorGuide, bar)
+                }
             }
             Rectangle {
                 objectName: "visualInspectorHint"
@@ -430,6 +445,19 @@ Control {
                 }
             }
             IconToolButton {
+                id: rowGuide
+                objectName: "visualToolGuideButton"
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 1
+                visible: bar.shown && bar.hint.length > 0
+                iconRole: "help"
+                text: qsTr("How this tool works")
+                tip: bar.hint
+                checked: guide.visible
+                focusPolicy: Qt.TabFocus
+                onClicked: guide.openBeside(rowGuide)
+            }
+            IconToolButton {
                 id: more
                 objectName: "visualToolMore"
                 Layout.alignment: Qt.AlignTop
@@ -525,7 +553,15 @@ Control {
             delegate: segmentDelegate
         }
     }
-    onFamilyChanged: morePopover.close()
+    VisualToolGuide {
+        id: guide
+        tools: bar.tools
+        keyOf: bar.keyOf
+    }
+    onFamilyChanged: {
+        morePopover.close()
+        guide.close()
+    }
     onFoldedSegmentsChanged: if (foldedSegments.length === 0) morePopover.close()
 
     property bool dialogs: true
