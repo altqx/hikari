@@ -307,7 +307,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>이름 바꾸기</translation>
+        <translation type="vanished">이름 바꾸기</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -752,10 +752,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>새 스레드 기본값</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1436,7 +1432,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>열기</translation>
+        <translation type="vanished">열기</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -4061,7 +4057,12 @@ Output device: %2</source>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation>파일이 UTF-8 텍스트가 아닙니다. 텍스트 편집기에서 UTF-8로 저장한 다음 가져오십시오.</translation>
+        <translation type="vanished">파일이 UTF-8 텍스트가 아닙니다. 텍스트 편집기에서 UTF-8로 저장한 다음 가져오십시오.</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>파일이 %1 텍스트가 아닙니다. 다른 인코딩을 선택하십시오.</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
@@ -8667,6 +8668,10 @@ Failed to copy %2 fonts.</source>
         <translation>다음 서식 구간 배치</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>자동 완성 호출</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>커서 위치에서 음절 분할</translation>
     </message>
@@ -12726,7 +12731,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>열기</translation>
+        <translation type="vanished">열기</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13263,7 +13268,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation type="obsolete">취소</translation>
     </message>
     <message>
         <source>Rename</source>

@@ -309,7 +309,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>Zmień nazwę</translation>
+        <translation type="vanished">Zmień nazwę</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -770,10 +770,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>Domyślny dla nowych wątków</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1462,7 +1458,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Otwórz</translation>
+        <translation type="vanished">Otwórz</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -4141,7 +4137,12 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation>Plik nie jest tekstem w kodowaniu UTF-8. Zapisz go jako UTF-8 w edytorze tekstu, a potem zaimportuj.</translation>
+        <translation type="vanished">Plik nie jest tekstem w kodowaniu UTF-8. Zapisz go jako UTF-8 w edytorze tekstu, a potem zaimportuj.</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>Plik nie jest tekstem w kodowaniu %1. Wybierz inne kodowanie.</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
@@ -8823,6 +8824,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wstaw następny fragment</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>Wywołaj uzupełnianie</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>Podziel sylabę w miejscu kursora</translation>
     </message>
@@ -12958,7 +12963,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Otwórz</translation>
+        <translation type="vanished">Otwórz</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13515,7 +13520,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation type="obsolete">Anuluj</translation>
     </message>
     <message>
         <source>Rename</source>

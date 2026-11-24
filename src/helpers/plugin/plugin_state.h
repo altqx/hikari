@@ -47,6 +47,7 @@ struct Options {
     std::vector<std::string> commands;
     std::vector<std::string> exporters; // format ids
     std::vector<std::string> importers;
+    std::vector<std::string> providers; // "completion", "hover"
 };
 
 // One plugin's LuaJIT state and its `hikari` global.
@@ -71,6 +72,8 @@ public:
     // What the format's hikari.formats.importer handler made of the file: {lines, styles, info}, unchecked.
     std::expected<api::Json, std::string> importFile(const std::string &format, std::string_view bytes,
                                                      const std::string &name, Host &host);
+    // The hikari.providers handler's answer to `request`, as Lua returned it: null when it returned nil.
+    std::expected<api::Json, std::string> provide(const std::string &provider, const api::Json &request, Host &host);
     std::size_t memoryInUse() const { return m_budget.used; }
 
     struct Budget {
