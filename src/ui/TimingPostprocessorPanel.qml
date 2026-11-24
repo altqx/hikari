@@ -118,6 +118,7 @@ FocusScope {
         CheckBox {
             id: toggle
             text: rule.title
+            leftPadding: 0
             checked: rule.on
             Accessible.name: rule.title
             onToggled: panel.setRule(rule.bit, checked)

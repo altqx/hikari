@@ -8679,6 +8679,34 @@ private slots:
         QTRY_VERIFY2(postprocessorShown(), qPrintable(root->property("sideBarsJson").toString()));
     }
 
+    void timingLayoutScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QObject *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        QVERIFY(application->openFile(episode));
+        for (const QSize size : {QSize(1280, 800), QSize(1366, 768)}) {
+            window->resize(size);
+            QTRY_COMPARE(window->size(), size);
+            QVERIFY(application->workspaceLayout().applyPreset(QStringLiteral("Timing")));
+            QVERIFY(application->workspaceLayout().resetCurrentLayout());
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/timing-%1x%2-").arg(size.width()).arg(size.height())
+                                                  + ui::theme::codeName(code) + QStringLiteral(".png")));
+            }
+        }
+    }
+
     void everyArrangementFitsTheDockingArea_data()
     {
         QTest::addColumn<QString>("arrangement");
