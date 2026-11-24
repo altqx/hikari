@@ -9031,7 +9031,7 @@ private slots:
             if (QTest::currentTestFailed())
                 return false;
             const QSize least = docking->layoutMinimumSize(mainName) + rows;
-            if (least == least.boundedTo(window->screen()->availableGeometry().size())) {
+            if (least == least.boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()))) {
                 ++fitted;
                 for (const char *name : panels) {
                     QQuickItem *panel = item(name);
