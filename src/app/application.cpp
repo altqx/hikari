@@ -55,6 +55,7 @@
 #include "dialog_placement.h"
 #include "list_files.h"
 #include "project_file.h"
+#include "icon_theme.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -77,6 +78,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QLocale>
+#include <QCryptographicHash>
 #include <QDir>
 #include <QUuid>
 #include <QCoreApplication>
@@ -631,6 +633,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_files->setLyricsDecoder([](std::span<const std::byte> bytes) {
         return backends::lyricsUtf8(bytes, backends::detectLyricsEncoding(bytes));
     });
+    m_files->setSavedOver([this](const application::DestinationKey &destination, std::vector<std::byte> previous) {
+        keepEarlierSave(destination, std::move(previous));
+    });
     m_log = std::make_unique<ui::LogController>();
     m_log->setActiveWindow([this] { return m_workspace.activeWindow(); });
     m_mediaHelper = mediaHelperPath(options.mediaHelper);
@@ -730,6 +735,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
     m_renderer.countCost(m_settings->boolean("video.renderCost"));
     ui::theme::useSettings(m_settings.get());
+    ui::icons::useSettings(m_settings.get());
     for (const QString &problem : ui::theme::loadProblems())
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Options", "Themes"),
                       QCoreApplication::translate("HikariSub.Options", "A built-in theme could not be read, so Dark is shown."),
@@ -964,6 +970,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
+    connect(m_pluginManager.get(), &PluginManager::devReloaded, m_pluginRuntime.get(), &PluginRuntime::reload);
+    connect(m_pluginManager.get(), &PluginManager::devProblem, this,
+            [this](const QString &, const QString &name, const QString &problem) { m_log->log(problem, ui::LogController::Error, name); });
     m_automationHotkeys->setPluginRunner(
         [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
@@ -1090,6 +1099,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
+        m_files->setNewFileStyles([this]() -> std::optional<application::NewFileStyles> {
+            const auto &window = views(m_workspace.activeWindow());
+            const std::string name = (window.settings ? window.settings->settings() : m_settings->settings()).text("new.styleCatalog");
+            if (name.empty())
+                return std::nullopt;
+            m_styleManager->projectChanged();
+            const std::u8string catalog(name.begin(), name.end());
+            auto styles = m_styleManager->catalogStore().list(catalog);
+            if (!styles)
+                return std::nullopt;
+            return application::NewFileStyles{catalog, std::move(*styles)};
+        });
     }
     {
         AlignToVideoController::Hooks hooks;
@@ -1332,6 +1353,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
+    m_earlierSaves = std::make_unique<application::RecoveryStore>(
+        m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path((m_recoveryDir + QStringLiteral("/saves")).toStdU16String()),
+        "saves", m_recoveryDir.isEmpty() ? 0 : m_settings->integer("autosave.savedCopies"));
     m_autosaveIntervalOverrideMs = options.autosaveIntervalMs;
     m_spellingText = backends::legacySpellingText(true);
     m_bundledDictionaryDir = options.bundledDictionaryDir;
@@ -2088,7 +2112,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         if (m_review)
             Q_EMIT m_review->currentChanged();
     });
-    v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    v.shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -2700,6 +2724,7 @@ void Application::refreshViews()
     m_problems.keepOnly(m_workspace.documents());
     syncReadingProblems();
     shell().setRowMarks(rowMarksOf(target));
+    refreshFrameMarks();
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();
     // MUST KILL: must run after editor().setDocument above
@@ -4430,16 +4455,15 @@ bool sessionEnded(const QString &dir, const std::string &session)
 
 }
 
-QVariantList Application::recoveryBundles() const
+namespace {
+
+QVariantList bundleRows(const application::RecoveryStore &store, const std::vector<application::RecoveryBundle> &bundles)
 {
     QVariantList out;
-    if (!m_recovery)
-        return out;
-    const QString dir = m_recoveryDir;
-    for (const auto &bundle : m_recovery->leftovers([&](const std::string &s) { return sessionEnded(dir, s); })) {
+    for (const auto &bundle : bundles) {
         QVariantList generations;
         for (auto it = bundle.generations.rbegin(); it != bundle.generations.rend(); ++it)
-            if (const auto content = m_recovery->read(bundle.key, *it))
+            if (const auto content = store.read(bundle.key, *it))
                 generations << QVariantMap{{QStringLiteral("generation"), QVariant::fromValue<qulonglong>(*it)},
                                            {QStringLiteral("written"), QDateTime::fromMSecsSinceEpoch(content->writtenMs).toString(Qt::ISODate)}};
         out << QVariantMap{{QStringLiteral("key"), QString::fromStdString(bundle.key)},
@@ -4449,6 +4473,54 @@ QVariantList Application::recoveryBundles() const
                            {QStringLiteral("generations"), generations}};
     }
     return out;
+}
+
+}
+
+QVariantList Application::recoveryBundles() const
+{
+    if (!m_recovery)
+        return {};
+    const QString dir = m_recoveryDir;
+    return bundleRows(*m_recovery, m_recovery->leftovers([&](const std::string &s) { return sessionEnded(dir, s); }));
+}
+
+void Application::keepEarlierSave(const application::DestinationKey &destination, std::vector<std::byte> previous)
+{
+    if (!m_earlierSaves || !m_earlierSaves->enabled())
+        return;
+    const QFileInfo file(QString::fromStdString(destination.value));
+    application::RecoveryContent content;
+    content.bytes = std::move(previous);
+    content.extension = file.suffix().toLower().toStdString();
+    content.title = file.fileName().toStdString();
+    content.originalPath = destination.value;
+    content.writtenMs = QDateTime::currentMSecsSinceEpoch();
+    const std::string key =
+        QCryptographicHash::hash(QByteArray::fromStdString(destination.value), QCryptographicHash::Sha1).toHex().left(16).toStdString();
+    m_recoveryWrites.put(QStringLiteral("saves-%1").arg(++m_earlierSaveWrites),
+                         [store = *m_earlierSaves, key, content = std::move(content)]() mutable { return store.write(key, content); });
+}
+
+QVariantList Application::earlierSaves()
+{
+    if (!m_earlierSaves)
+        return {};
+    m_recoveryWrites.finishWrites();
+    return bundleRows(*m_earlierSaves, m_earlierSaves->bundles());
+}
+
+bool Application::openEarlierSave(const QString &key, qulonglong generation)
+{
+    const auto content = m_earlierSaves ? m_earlierSaves->read(key.toStdString(), generation) : std::nullopt;
+    return content && openRecovered(*content, QCoreApplication::translate("HikariSub.Session", "%1 (earlier save)"));
+}
+
+void Application::deleteEarlierSaves(const QString &key)
+{
+    m_recoveryWrites.finishWrites();
+    if (m_earlierSaves)
+        m_earlierSaves->discard(key.toStdString());
 }
 
 QString Application::targetVideoPath() const
@@ -4520,29 +4592,31 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 bool Application::recoverBundle(const QString &key, qulonglong generation)
 {
     const auto content = m_recovery ? m_recovery->read(key.toStdString(), generation) : std::nullopt;
-    if (!content)
-        return false;
-    const std::u8string extension(content->extension.begin(), content->extension.end());
-    auto loaded = core::loadSubtitle(content->bytes, extension);
+    return content && openRecovered(*content, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)"));
+}
+
+bool Application::openRecovered(const application::RecoveryContent &content, const QString &titleFormat)
+{
+    const std::u8string extension(content.extension.begin(), content.extension.end());
+    auto loaded = core::loadSubtitle(content.bytes, extension);
     if (!loaded)
         return false;
     core::Document document = std::move(loaded->document);
-    if (content->frameRate)
-        if (const auto rate = core::FrameRate::make(content->frameRate->first, content->frameRate->second))
+    if (content.frameRate)
+        if (const auto rate = core::FrameRate::make(content.frameRate->first, content.frameRate->second))
             document.setFrameRate(*rate);
     const auto id = m_files->createUnsaved(std::move(document));
     auto *session = m_files->session(id);
     selectLegacyActiveLine(*session);
-    if (content->draftRow) {
+    if (content.draftRow) {
         const auto lines = session->document().lines();
-        if (*content->draftRow < lines.size()) {
-            const auto line = lines[*content->draftRow]->id;
+        if (*content.draftRow < lines.size()) {
+            const auto line = lines[*content.draftRow]->id;
             session->setSelection(application::Selection{line, {line}, line, {}});
-            session->editDraft(line, content->draft);
+            session->editDraft(line, content.draft);
         }
     }
-    m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)")
-                            .arg(QString::fromStdString(content->title)).toStdString());
+    m_workspace.add(id, titleFormat.arg(QString::fromStdString(content.title)).toStdString());
     takeFileArrangement(id);
     m_workspace.setEditingTarget(id);
     refreshViews();
@@ -5143,12 +5217,14 @@ application::SelectLinesSettings selectSettings(const QVariantMap &m, int option
     s.find = utf8(m.value(QStringLiteral("find")).toString());
     s.with = m.value(QStringLiteral("with"), s.with).toBool();
     s.matchCase = m.value(QStringLiteral("matchCase"), s.matchCase).toBool();
-    s.regex = m.value(QStringLiteral("regex"), s.regex).toBool();
+    s.match = static_cast<S::Match>(std::clamp(m.value(QStringLiteral("match"), int(s.match)).toInt(), 0,
+                                               int(S::Match::Regex)));
     s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field"), int(s.field)).toInt(), 0,
                                                int(S::Field::Overlaps)));
     s.dialogues = m.value(QStringLiteral("dialogues"), s.dialogues).toBool();
     s.comments = m.value(QStringLiteral("comments"), s.comments).toBool();
-    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0, 2));
+    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0,
+                                             int(S::Mode::Intersect)));
     s.action = static_cast<S::Action>(std::clamp(m.value(QStringLiteral("action"), int(s.action)).toInt(), 0, 6));
     return s;
 }
@@ -5163,7 +5239,7 @@ QVariantMap Application::selectLinesSettings() const
     const auto s = application::selectLinesFromOptions(m_selectOptions);
     return {{QStringLiteral("with"), s.with},
             {QStringLiteral("matchCase"), s.matchCase},
-            {QStringLiteral("regex"), s.regex},
+            {QStringLiteral("match"), int(s.match)},
             {QStringLiteral("field"), int(s.field)},
             {QStringLiteral("dialogues"), s.dialogues},
             {QStringLiteral("comments"), s.comments},
@@ -5230,10 +5306,15 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     m_settings->set("selectLines.recentSelections", m_selectRecent);
     saveSelectLinesSettings(map);
     using M = application::SelectLinesSettings::Mode;
-    return settings.mode == M::Select           ? QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count)
-           : settings.mode == M::AddToSelection ? QCoreApplication::translate("HikariSub.SelectLines",
-                                                                              "%1 lines added to selection.").arg(count)
-                                                : QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    switch (settings.mode) {
+    case M::Select: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count);
+    case M::AddToSelection:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines added to selection.").arg(count);
+    case M::Deselect: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    case M::Intersect:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines removed from selection.").arg(count);
+    }
+    return {};
 }
 
 QString Application::selectStylesPattern(const QStringList &styles) const
@@ -6978,10 +7059,32 @@ bool Application::deleteLines()
     return done;
 }
 
-void Application::toggleHideTags()
+application::GridTagsMode Application::gridTagsMode() const
 {
-    m_settings->set("grid.hideTags", !shell().hideTags());
-    shell().setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    return application::GridTagsMode(std::clamp<qint64>(m_settings->integer("grid.tagsMode"), 0, 2));
+}
+
+void Application::setGridTagsMode(int mode)
+{
+    m_settings->set("grid.tagsMode", std::clamp(mode, 0, 2));
+}
+
+void Application::cycleGridTagsMode()
+{
+    const int mode = (int(gridTagsMode()) + 1) % 3;
+    setGridTagsMode(mode);
+    const QString shown = std::array{
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Show"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Replace with symbol"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Hide")}[std::size_t(mode)];
+    shell().setStatusText(shown);
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, shown] {
+        if (shell().statusText() == shown)
+            shell().setStatusText(QString());
+    });
 }
 
 bool Application::deleteText()
@@ -6990,6 +7093,17 @@ bool Application::deleteText()
     if (!session)
         return false;
     const bool done = application::deleteText(*session, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::deleteTextKeepTags()
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::deleteTextKeepTags(*session, shownLines()).has_value();
     editor().reloadFromSession();
     refreshViews();
     return done;
@@ -7054,6 +7168,23 @@ bool Application::swapLines()
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+bool Application::moveLines(bool up)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::moveLines(*session, up, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::canMoveLines(bool up) const
+{
+    const auto *session = targetSession();
+    return session && application::canMoveLines(*session, up, shownLines());
 }
 
 bool Application::makeContinuous(bool withPrevious)
@@ -7480,10 +7611,15 @@ void Application::settingChanged(const QString &id)
         choosePlayer();
     if (id == QLatin1String("subtitles.saveWithVideoName"))
         emit saveWithVideoNameChanged();
-    else if (id == QLatin1String("video.dontAskForBadResolution"))
+    else if (id == QLatin1String("grid.markCurrentFrame")) {
+        emit markCurrentFrameChanged();
+        refreshFrameMarks();
+    } else if (id == QLatin1String("video.dontAskForBadResolution"))
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
+    else if (id == QLatin1String("autosave.savedCopies") && !m_recoveryDir.isEmpty() && m_earlierSaves)
+        m_earlierSaves->setCapacity(m_settings->integer("autosave.savedCopies"));
     else if (id == QLatin1String("autosave.intervalSeconds")) {
         for (auto &[document, timer] : m_autosaveTimers)
             if (timer)
@@ -7522,9 +7658,9 @@ void Application::settingChanged(const QString &id)
     else if (id == QLatin1String("editor.timesToFramesSwitch") && !m_resettingSettings)
         for (auto *views : allViews())
             views->editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
-    else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
+    else if (id == QLatin1String("grid.tagsMode") || id == QLatin1String("grid.tagsSwapCharacter"))
         for (auto *views : allViews())
-            views->shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+            views->shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     else if (id == QLatin1String("program.language"))
         switchLanguage();
     else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))
@@ -7831,6 +7967,9 @@ bool validAppearance(std::string_view id, const QVariant &value)
             return ui::theme::find(value.toString()) && ui::theme::typeOf(value.toString()) == ui::theme::Type(i);
     if (id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting)
         return value.canConvert<QStringList>();
+    if (id == ui::icons::kThemeSetting)
+        return value.toString() == QLatin1String(ui::icons::kBuiltinTheme)
+            || std::ranges::contains(ui::icons::themes(), value.toString(), &ui::icons::PluginIconTheme::id);
     return false;
 }
 }
@@ -7902,7 +8041,7 @@ namespace {
 constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage", "translation.glossary",
                                                "translation.translator", "translation.reviewer", "ai.exclude",
                                                "translation.targetLanguage", "export.format", "privacy.discordProject",
-                                               "privacy.discordShow"};
+                                               "privacy.discordShow", "new.styleCatalog"};
 
 void insertExtras(QVariantMap &values, const application::Settings &settings)
 {

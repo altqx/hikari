@@ -140,6 +140,8 @@ std::optional<std::string> vectorClipOptionOfHotkey(std::string_view symbol)
     for (std::size_t i = 0; i < std::size(kModes); ++i)
         if (kModes[i] == symbol)
             return "mode" + std::to_string(i);
+    if (symbol == "VIDEO_VECTOR_CLIP_FREEHAND")
+        return "freehand";
     if (symbol == "VIDEO_VECTOR_CLIP_INVERT")
         return "invert";
     return std::nullopt;

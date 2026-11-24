@@ -2422,6 +2422,35 @@ export interface ImportResult {
     info?: { [key: string]: string };
 }
 
+/** What `complete` and `hover` get. Offsets are UTF-16. */
+export interface ProviderParams {
+    document: number;
+    line: number;
+    field: string;
+    text: string;
+    offset: number;
+    /** The trigger character typed; null for Ctrl+Space and hovers. */
+    trigger: string | null;
+}
+
+export interface CompletionItem {
+    label: string;
+    /** Defaults to `label`. */
+    insert?: string;
+    detail?: string;
+    /** Defaults to the request's `offset`. */
+    from?: number;
+    to?: number;
+    /** `insert` has tab stops such as `${1:200}`. */
+    snippet?: boolean;
+}
+
+export interface Hover {
+    text: string;
+    from?: number;
+    to?: number;
+}
+
 /** What HikariSub asks the program, and what it answers. */
 export interface HostRequests {
     initialize: { params: InitializeParams; result: Record<string, never> };
@@ -2431,6 +2460,9 @@ export interface HostRequests {
     dialog: { params: DialogParams; result: null };
     quick_pick: { params: QuickPickParams; result: null };
     input_box: { params: InputBoxParams; result: null };
+    /** At most 200 items, within 1 second. */
+    complete: { params: ProviderParams; result: CompletionItem[] | null };
+    hover: { params: ProviderParams; result: Hover | null };
     export: { params: ExportParams; result: ExportResult };
     import: { params: ImportParams; result: ImportResult };
     shutdown: { params: Record<string, never>; result: null };

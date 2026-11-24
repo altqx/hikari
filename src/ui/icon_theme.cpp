@@ -1,7 +1,9 @@
 #include "icon_theme.h"
 
+#include "settings_store.h"
 #include "theme.h"
 
+#include <QCoreApplication>
 #include <QFile>
 #include <QGuiApplication>
 #include <QHash>
@@ -55,6 +57,115 @@ const Manifest &manifest()
 
 }
 
+namespace {
+
+class Hub : public QObject {
+    Q_OBJECT
+public:
+    static Hub &get()
+    {
+        static QPointer<Hub> hub;
+        if (!hub)
+            hub = new Hub(QCoreApplication::instance());
+        return *hub;
+    }
+
+    const PluginIconTheme *active() const
+    {
+        const QString id = settings ? settings->value(QLatin1String(kThemeSetting)).toString() : QString();
+        const auto it = std::ranges::find(themes, id, &PluginIconTheme::id);
+        return it == themes.end() ? nullptr : &*it;
+    }
+
+    void bump()
+    {
+        ++generation;
+        emit changed();
+    }
+
+    std::vector<PluginIconTheme> themes;
+    QHash<QString, QByteArray> own;
+    QPointer<SettingsStore> settings;
+    int generation = 0;
+
+signals:
+    void changed();
+
+private:
+    using QObject::QObject;
+};
+
+constexpr QLatin1StringView kOwnPrefix("own:");
+constexpr QLatin1StringView kPluginPrefix("plugin:");
+
+}
+
+void installTheme(PluginIconTheme theme)
+{
+    auto &list = Hub::get().themes;
+    const auto it = std::ranges::find(list, theme.id, &PluginIconTheme::id);
+    if (it != list.end() && it->title == theme.title && it->plugin == theme.plugin && it->icons == theme.icons)
+        return;
+    if (it != list.end())
+        *it = std::move(theme);
+    else
+        list.push_back(std::move(theme));
+    Hub::get().bump();
+}
+
+void uninstallTheme(const QString &id)
+{
+    Hub &hub = Hub::get();
+    if (std::erase_if(hub.themes, [&id](const PluginIconTheme &t) { return t.id == id; }) == 0)
+        return;
+    if (hub.settings && hub.settings->value(QLatin1String(kThemeSetting)).toString() == id)
+        hub.settings->setValue(QLatin1String(kThemeSetting), QLatin1String(kBuiltinTheme));
+    hub.bump();
+}
+
+const std::vector<PluginIconTheme> &themes()
+{
+    return Hub::get().themes;
+}
+
+void setOwnIcons(QHash<QString, QByteArray> icons)
+{
+    Hub &hub = Hub::get();
+    if (icons == hub.own)
+        return;
+    hub.own = std::move(icons);
+    hub.bump();
+}
+
+QString pluginIconRole(const QString &plugin, const QString &icon)
+{
+    return icon.startsWith(kOwnPrefix) ? kPluginPrefix + plugin + QLatin1Char(':') + icon.mid(kOwnPrefix.size()) : icon;
+}
+
+void useSettings(SettingsStore *settings)
+{
+    Hub &hub = Hub::get();
+    if (hub.settings)
+        QObject::disconnect(hub.settings, nullptr, &hub, nullptr);
+    hub.settings = settings;
+    if (settings)
+        QObject::connect(settings, &SettingsStore::changed, &hub, [&hub](const QString &id) {
+            if (id == QLatin1String(kThemeSetting))
+                hub.bump();
+        });
+    hub.bump();
+}
+
+int generation()
+{
+    return Hub::get().generation;
+}
+
+void onChanged(QObject *context, std::function<void()> slot)
+{
+    QObject::connect(&Hub::get(), &Hub::changed, context, std::move(slot));
+}
+
 QString resourcePath(const QString &role)
 {
     return QStringLiteral(":/qt/qml/Hikari/Ui/icons/") + role + QStringLiteral(".svg");
@@ -67,7 +178,7 @@ QStringList roles()
 
 bool exists(const QString &role)
 {
-    return manifest().entries.contains(role);
+    return manifest().entries.contains(role) || Hub::get().own.contains(role);
 }
 
 QString label(const QString &role)
@@ -83,8 +194,13 @@ bool mirrors(const QString &role)
 QByteArray source(const QString &role)
 {
     static QHash<QString, QByteArray> cache;
+    if (const auto own = Hub::get().own.constFind(role); own != Hub::get().own.cend())
+        return *own;
     if (!exists(role))
         return {};
+    if (const PluginIconTheme *theme = Hub::get().active())
+        if (const auto icon = theme->icons.constFind(role); icon != theme->icons.cend())
+            return *icon;
     auto it = cache.find(role);
     if (it == cache.end()) {
         QFile file(resourcePath(role));
@@ -130,7 +246,22 @@ QImage render(const QString &role, QSize pixels, const QColor &colour, const QCo
 IconTheme::IconTheme(QObject *parent) : QObject(parent)
 {
     theme::onChanged(this, [this] { refresh(); });
+    icons::onChanged(this, [this] {
+        for (const auto &[window, role] : std::as_const(m_windows))
+            if (window)
+                applyWindowIcon(window, role);
+        emit changed();
+    });
     refresh();
+}
+
+QVariantList IconTheme::themes() const
+{
+    QVariantList out;
+    for (const icons::PluginIconTheme &t : icons::themes())
+        out << QVariantMap{{QStringLiteral("id"), t.id}, {QStringLiteral("title"), t.title}, {QStringLiteral("plugin"), t.plugin},
+                           {QStringLiteral("covers"), t.icons.size()}};
+    return out;
 }
 
 IconTheme *IconTheme::create(QQmlEngine *engine, QJSEngine *)
@@ -143,9 +274,9 @@ IconTheme *IconTheme::create(QQmlEngine *engine, QJSEngine *)
 QUrl IconTheme::image(const QString &role, const QColor &colour, const QColor &accent, bool mirrored) const
 {
     const auto hex = [](const QColor &c) { return c.name(QColor::HexRgb).mid(1); };
-    return QUrl(QStringLiteral("image://%1/%2/%3/%4/%5")
+    return QUrl(QStringLiteral("image://%1/%2/%3/%4/%5/%6")
                     .arg(QLatin1String(IconImageProvider::kId), role, hex(colour), hex(accent),
-                         mirrored ? QStringLiteral("1") : QStringLiteral("0")));
+                         mirrored ? QStringLiteral("1") : QStringLiteral("0"), QString::number(icons::generation())));
 }
 
 void IconTheme::setWindowIcon(QObject *object, const QString &role)
@@ -197,7 +328,7 @@ QImage IconImageProvider::requestImage(const QString &id, QSize *size, const QSi
     }
     if (size)
         *size = pixels;
-    if (parts.size() != 4 || !icons::exists(parts[0])) {
+    if (parts.size() != 5 || !icons::exists(parts[0])) {
         QImage blank(pixels, QImage::Format_ARGB32_Premultiplied);
         blank.fill(Qt::transparent);
         return blank;
@@ -209,7 +340,10 @@ QImage IconImageProvider::requestImage(const QString &id, QSize *size, const QSi
     return image;
 }
 
-TintedSvg::TintedSvg(QQuickItem *parent) : QQuickPaintedItem(parent) {}
+TintedSvg::TintedSvg(QQuickItem *parent) : QQuickPaintedItem(parent)
+{
+    icons::onChanged(this, [this] { rebuild(); });
+}
 
 TintedSvg::~TintedSvg() = default;
 
@@ -273,3 +407,4 @@ void TintedSvg::paint(QPainter *painter)
 
 }
 
+#include "icon_theme.moc"

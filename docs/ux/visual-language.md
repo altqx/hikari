@@ -65,6 +65,10 @@ All components share the same semantic roles, and switching theme switches the w
 | Error | `danger` | `#FFADAD` | `#A51F31` | `#A00000` | `#FFADAD` |
 | Warning | `warning` | `#E0A030` | `#8A5A00` | `#6B4500` | `#FFD54A` |
 | Success | `success` | `#4DBA4D` | `#008000` | `#005A00` | `#7CFC7C` |
+| Error fill: the word being checked, a failed row | `dangerFill` | `danger` at 18 % | `danger` at 18 % | `panel`, 1-unit `danger` ring | `panel`, 1-unit `danger` ring |
+| Success fill: nothing lost, a finished run | `successFill` | `success` at 14 % | `success` at 14 % | `panel`, 1-unit `success` ring | `panel`, 1-unit `success` ring |
+
+A tint is only ever one of these fill roles, never an opacity picked at the call site; in high contrast a tint would fail contrast, so it becomes the ring. The code takes them from `theme::tintFill`.
 
 In theme files ([ADR 0034](../adr/0034-plugins-grow-into-an-extension-system.md)) `bg` is spelled `background` and `onaccent` is `onAccent`; the roles are the same.
 

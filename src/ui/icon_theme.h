@@ -2,6 +2,7 @@
 
 #include <QByteArray>
 #include <QColor>
+#include <QHash>
 #include <QImage>
 #include <QObject>
 #include <QPointer>
@@ -11,12 +12,16 @@
 #include <QWindow>
 #include <QString>
 #include <QStringList>
+#include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <array>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 class QQmlEngine;
 class QJSEngine;
@@ -24,7 +29,32 @@ class QSvgRenderer;
 
 namespace hikari::ui {
 
+class SettingsStore;
+
 namespace icons {
+
+inline constexpr const char *kThemeSetting = "appearance.iconTheme";
+inline constexpr const char *kBuiltinTheme = "hikarisub";
+
+// A plugin's icon theme (#1222): <role>.svg for the roles it covers.
+struct PluginIconTheme {
+    QString id; // plugin:<plugin id>/<theme id>
+    QString title;
+    QString plugin; // the plugin's name
+    QHash<QString, QByteArray> icons;
+};
+void installTheme(PluginIconTheme theme);
+// Falls appearance.iconTheme back to hikarisub when it names the theme.
+void uninstallTheme(const QString &id);
+const std::vector<PluginIconTheme> &themes();
+// Every shown plugin's own icons, by pluginIconRole.
+void setOwnIcons(QHash<QString, QByteArray> icons);
+// The role for an icon a plugin's manifest names: own:<id> becomes that plugin's own icon, anything else is a role.
+QString pluginIconRole(const QString &plugin, const QString &icon);
+void useSettings(SettingsStore *settings);
+// Bumps when the icon theme or a plugin's icons change.
+int generation();
+void onChanged(QObject *context, std::function<void()> slot);
 
 QString resourcePath(const QString &role);
 QStringList roles();
@@ -44,6 +74,7 @@ class IconTheme : public QObject {
     Q_PROPERTY(QColor normal READ normal NOTIFY changed FINAL)
     Q_PROPERTY(QColor accent READ accent NOTIFY changed FINAL)
     Q_PROPERTY(QColor disabled READ disabled NOTIFY changed FINAL)
+    Q_PROPERTY(QVariantList themes READ themes NOTIFY changed FINAL)
 public:
     explicit IconTheme(QObject *parent);
     static IconTheme *create(QQmlEngine *engine, QJSEngine *js);
@@ -56,6 +87,7 @@ public:
     Q_INVOKABLE bool mirrors(const QString &role) const { return icons::mirrors(role); }
     Q_INVOKABLE QString label(const QString &role) const { return icons::label(role); }
     Q_INVOKABLE QStringList roles() const { return icons::roles(); }
+    QVariantList themes() const;
     Q_INVOKABLE QUrl image(const QString &role, const QColor &colour, const QColor &accent, bool mirrored) const;
     Q_INVOKABLE void setWindowIcon(QObject *window, const QString &role);
 

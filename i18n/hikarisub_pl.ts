@@ -7661,6 +7661,33 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Filter the Grid</source>
         <translation>Filtruj listę napisów</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Pokaż</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Ukryj</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9040,6 +9067,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>Wycinek wektorowy: rysuj odręcznie</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9642,6 +9673,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>Przełącz tryb tagów na liście napisów</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>Pokaż tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>Zastąp tagi na liście napisów symbolem</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
     </message>
 </context>
 <context>
@@ -12843,14 +12902,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Najpierw otwórz plik</translation>
     </message>
     <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>Pokazuje lub ukrywa tagi na liście napisów</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>Ukryj tagi na liście napisów</translation>
-    </message>
-    <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
     </message>
@@ -12917,6 +12968,42 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>Pokazuje, zastępuje symbolem lub ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>Tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>Pokazuje tagi na liście napisów bez zmian</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>Pokazuje każdy blok tagów na liście napisów jako symbol ustawiony w Ustawienia › Lista napisów</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>Ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>Zabarwia linijki na liście napisów widoczne na bieżącej klatce wideo</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
     </message>
 </context>
 <context>
@@ -15022,6 +15109,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
+        <source>Styles for new files</source>
+        <translation>Style nowych plików</translation>
+    </message>
+    <message>
+        <source>File › New starts with this style catalogue’s styles.</source>
+        <translation>Plik › Nowy zaczyna ze stylami z tego katalogu stylów.</translation>
+    </message>
+    <message>
         <source>Activities</source>
         <translation>Aktywności</translation>
     </message>
@@ -15246,6 +15341,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Przeciąganie środkowym przyciskiem przesuwa obraz. Uszczypnięcie na touchpadzie powiększa wokół wskaźnika.</translation>
     </message>
     <message>
+        <source>Built-in Default</source>
+        <translation>Wbudowany Default</translation>
+    </message>
+    <message>
         <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
         <translation>Projekt nie może ustawić “%1”, więc otwiera się na karcie Twoje.</translation>
     </message>
@@ -15336,6 +15435,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>No settings match “%1”.</source>
         <translation>Żadne ustawienie nie pasuje do “%1”.</translation>
+    </message>
+    <message>
+        <source>Backup copies kept</source>
+        <translation>Zachowywane kopie zapasowe</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>Wcześniejsze zapisy każdego pliku zachowywane w folderze odzyskiwania. Zakres od 0 do 100</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -17763,6 +17870,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>Włączone</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>Ikony</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>Zastępuje ikony interfejsu HikariSub. Ikony, których motyw nie obejmuje, pozostają ikonami HikariSub.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18871,6 +18986,99 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A theme can’t be used: %1</source>
         <translation>Nie można użyć motywu: %1</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
+        <translation>Prosi o więcej niż to, na co wyrażono zgodę, więc zmiana czeka, aż ją przejrzysz.</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
+        <translation>Dev</translation>
+    </message>
+    <message>
+        <source>Dev plugin, runs from %1</source>
+        <translation>Wtyczka deweloperska, uruchamiana z %1</translation>
+    </message>
+    <message>
+        <source>Load dev plugin</source>
+        <translation>Wczytaj wtyczkę deweloperską</translation>
+    </message>
+    <message>
+        <source>Reload dev plugin</source>
+        <translation>Wczytaj ponownie wtyczkę deweloperską</translation>
+    </message>
+    <message>
+        <source>Load “%1” %2 from its folder?</source>
+        <translation>Wczytać „%1” %2 z folderu wtyczki?</translation>
+    </message>
+    <message>
+        <source>Reload “%1” %2 from its folder?</source>
+        <translation>Wczytać ponownie „%1” %2 z folderu wtyczki?</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to</source>
+        <translation>Prosi o więcej niż to, na co wyrażono zgodę</translation>
+    </message>
+    <message>
+        <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
+        <translation>Wtyczka deweloperska działa z %1 w obecnej postaci, bez podpisu, i wczytuje się ponownie, gdy zmienią się jej pliki. Ma własne dane, ustawienia i foldery, oddzielne od zainstalowanej kopii.</translation>
+    </message>
+    <message>
+        <source>Unload and remove its data</source>
+        <translation>Wyładuj i usuń dane</translation>
+    </message>
+    <message>
+        <source>Unload dev plugin</source>
+        <translation>Wyładuj wtyczkę deweloperską</translation>
+    </message>
+    <message>
+        <source>Unload “%1”?</source>
+        <translation>Wyładować „%1”?</translation>
+    </message>
+    <message>
+        <source>The installed %1 runs again.</source>
+        <translation>Zainstalowana wtyczka %1 znów będzie działać.</translation>
+    </message>
+    <message>
+        <source>Its folder stays as it is.</source>
+        <translation>Jej folder pozostaje bez zmian.</translation>
+    </message>
+    <message>
+        <source>Unload</source>
+        <translation>Wyładuj</translation>
+    </message>
+    <message>
+        <source>Plugin not unloaded</source>
+        <translation>Nie wyładowano wtyczki</translation>
+    </message>
+    <message>
+        <source>Install dev plugin…</source>
+        <translation>Zainstaluj wtyczkę deweloperską…</translation>
+    </message>
+    <message>
+        <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
+        <translation>Pliki wtyczki się zmieniły, ale HikariSub nadal używa ostatniej działającej wersji: %1</translation>
+    </message>
+    <message>
+        <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
+        <translation>Pliki wtyczki się zmieniły i proszą o więcej niż to, na co wyrażono zgodę, więc zmiana czeka na Ciebie.</translation>
+    </message>
+    <message>
+        <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
+        <translation>Zainstalowana wtyczka %1 jest zastąpiona wtyczką deweloperską, dopóki jej nie wyładujesz.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin folder</source>
+        <translation>Wybierz folder wtyczki</translation>
+    </message>
+    <message>
+        <source>Unload…</source>
+        <translation>Wyładuj…</translation>
+    </message>
+    <message>
+        <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
+        <translation>Manifest podaje teraz identyfikator „%1”. Wyładuj wtyczkę i wczytaj folder ponownie.</translation>
     </message>
 </context>
 <context>
@@ -21429,6 +21637,26 @@ ponieważ została zmieniona.</translation>
         <source>Overlapping lines</source>
         <translation>Nakładające się linijki</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>Częściowe dopasowanie</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>Dokładne dopasowanie</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>Dopasowanie</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>Zawęź zaznaczenie</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>Usunięto z zaznaczenia linijek: %1.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21505,6 +21733,10 @@ ponieważ została zmieniona.</translation>
         <translation>Poprzednia wersja</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>Wcześniejszy zapis</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>Autozapis poprzedniej wersji</translation>
     </message>
@@ -21529,8 +21761,12 @@ ponieważ została zmieniona.</translation>
         <translation>Usuń</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Wcześniejsze zapisy to plik w postaci sprzed zastąpienia go przez zapis. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+        <translation type="vanished">Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21686,7 +21922,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -21719,6 +21955,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (wcześniejszy zapis)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
@@ -27155,7 +27395,7 @@ Usunięte style:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -27172,6 +27412,10 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>Wideo (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -28097,6 +28341,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Środek obrotu</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>Rysuj odręcznie</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>Płaszczyzna</translation>
     </message>
@@ -28951,6 +29199,11 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Tekst na ścieżce</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>Rysuj odręcznie: przytrzymaj i rysuj.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>Wskaż obraz, aby odczytać pozycję. Ctrl+kliknięcie umieszcza tam linijkę.</translation>
     </message>
@@ -29121,16 +29374,20 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Odwróć wycinek przełącza między pokazywaniem tego, co w środku, a tego, co na zewnątrz.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, rysowanie odręczne, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt.</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt. Kliknij segment prawym przyciskiem, aby zamienić go na krzywą lub prostą, podzielić albo usunąć.</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl+kliknięcie zaznacza kilka punktów. Alt podczas przeciągania przyciąga do współrzędnej x lub y innego punktu.</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>W trybie Rysuj odręcznie przytrzymaj przycisk i rysuj. Wygładzanie określa, jak dokładnie krzywe podążają za pociągnięciem.</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -29371,6 +29628,14 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Add B-spline</source>
         <translation>Dodaj krzywą B-sklejaną</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>Wygładzanie</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>Krzywe</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -29996,6 +30261,23 @@ nie działają na komentarzach</translation>
     <message>
         <source>More in the guide</source>
         <translation>Więcej w podręczniku</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>Zamień na krzywą</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>Zamień na linię prostą</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>Wstaw tutaj punkt</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>Usuń segment</translation>
     </message>
 </context>
 <context>

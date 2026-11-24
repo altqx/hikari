@@ -2003,6 +2003,17 @@
    ]
   },
   {
+   "role": "vector-freehand",
+   "file": "vector-freehand.svg",
+   "label": "Freehand",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
    "role": "vector-point",
    "file": "vector-point.svg",
    "label": "Add separate point",

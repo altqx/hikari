@@ -248,7 +248,8 @@ struct OptionReading {
     std::string note;
 };
 
-OptionReading readOption(const SettingDefinition &def, std::string_view raw, bool windows)
+OptionReading readOption(const SettingDefinition &def, std::string_view raw, bool windows,
+                         const std::optional<std::string> &swapCharacter)
 {
     OptionReading r;
     switch (def.type) {
@@ -278,6 +279,12 @@ OptionReading readOption(const SettingDefinition &def, std::string_view raw, boo
     }
     if (def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON") {
         r.value = std::int64_t{raw == "true" ? 1 : 0};
+        r.problem = raw.empty() || raw == "true" || raw == "false"
+                        ? std::string()
+                        : "legacy reads \"" + std::string(raw) + "\" as false (GetBool, config.cpp:165-168)";
+    }
+    if (def.legacyKey == "GRID_HIDE_TAGS") {
+        r.value = std::int64_t(gridTagsModeOfHideTags(raw == "true", swapCharacter));
         r.problem = raw.empty() || raw == "true" || raw == "false"
                         ? std::string()
                         : "legacy reads \"" + std::string(raw) + "\" as false (GetBool, config.cpp:165-168)";
@@ -1013,7 +1020,10 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         row.id = "setting:" + std::string(def->id);
         row.destination = std::string(def->id);
         rowSettings.insert(std::string(def->id));
-        OptionReading reading = readOption(*def, record->value, windows);
+        const auto swap = effective.find("GRID_TAGS_SWAP_CHARACTER");
+        OptionReading reading = readOption(*def, record->value, windows,
+                                           swap == effective.end() ? std::nullopt
+                                                                   : std::optional(swap->second.record->value));
         if (!reading.note.empty())
             because(reading.note);
         const SettingValue current = effectiveValue(*def, destination);

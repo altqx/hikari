@@ -23,7 +23,6 @@ Item {
     readonly property bool changed: tracked && host.isChanged(settings)
     readonly property var elsewhere: tracked ? host.elsewhere(setting) : null
     readonly property bool readOnly: elsewhere !== null && elsewhere.readOnly === true
-    readonly property bool flashing: tracked && host.flashSetting === setting
 
     objectName: setting.length > 0 ? "settingRow_" + setting : ""
     visible: !tracked || host.shows(setting)
@@ -40,10 +39,7 @@ Item {
         width: row.width + 16
         height: row.height + 8
         radius: 2
-        color: row.flashing ? Theme.select : hover.hovered ? Theme.raised : "transparent"
-        border.width: row.flashing && Theme.highContrast ? 1 : 0
-        border.color: Theme.accent
-        Behavior on color { enabled: !row.flashing; ColorAnimation { duration: 2000 } }
+        color: hover.hovered ? Theme.raised : "transparent"
     }
     ColumnLayout {
     id: column

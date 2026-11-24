@@ -83,6 +83,13 @@ The legacy probes' presses replay as HikariSub's (`tests/application/legacy_visu
 
 **The vector clip modes** (FA9, [#566](https://github.com/altqx/hikari/issues/566)). Each button on the vector clip's row has a Video command with no default key: VIDEO_VECTOR_CLIP_DRAG, _LINE, _BEZIER, _BSPLINE, _POINT and _DELETE (2034-2039) choose a mode, and VIDEO_VECTOR_CLIP_INVERT (2040) toggles Invert clip. `vectorClipOptionOfHotkey` maps them to the row's options. When another tool is on, the command switches to the vector clip first.
 
+**Freehand and segments** ([#1208](https://github.com/altqx/hikari/issues/1208), Q622 and Q623). The vector clip and the drawing have a Freehand mode after Spline, chosen by VIDEO_VECTOR_CLIP_FREEHAND (2045, no default key).
+- Holding the left button draws a stroke. On release, `fitStroke` (Schneider's fit) turns it into a new contour of `b` curves, each within `freehandTolerance(smoothing)` view pixels of the stroke, and commits it as one step.
+- **Smoothing** (0–100, default 45) is kept per tool in `video.vectorClipSmoothing` and `video.drawingSmoothing`. Changing it refits the last stroke in place of its step (`VisualHost::undoStep`), until anything else edits the Document.
+- The inspector shows the stroke's points and curves under Smoothing.
+- The wheel steps through legacy's buttons only, so it never chooses Freehand.
+- A right-click on a segment, away from its points, opens a menu: Make curve (controls at a third and two thirds), Make straight, Insert point here (a curve is split where it was clicked and keeps its shape) and Delete segment (the contour opens there; a point left alone is dropped). Each is one step. A right-click anywhere else still adds a point as before.
+
 **Handle size** (FA9). Settings › Video › Handle size (`video.handleSize`, 50-400 %, default 100) scales every tool's handles, and the distances they can be grabbed and snapped from, through `VisualHost::handleScale` and `unitOf`. This is arch1t3cht's shape-handle size setting.
 
 ## What T2 added for the families
