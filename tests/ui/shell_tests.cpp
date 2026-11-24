@@ -3910,7 +3910,7 @@ private slots:
             {"shapesMessages", QStringLiteral("shape-editing"),
              box(QStringLiteral("Vector shape editing"), QStringLiteral("Enter a name for the new shape."), QStringLiteral("error"))},
             {"fontCollectorMessages", QStringLiteral("font-collector"),
-             box(QStringLiteral("Font collector"), QStringLiteral("Select the folder where you want to copy fonts"),
+             box(QStringLiteral("Collect fonts"), QStringLiteral("Select the folder where you want to copy fonts"),
                  QStringLiteral("warning"))},
         };
         for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
@@ -12461,7 +12461,7 @@ private slots:
                  QStringLiteral("Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted."));
         dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", QString());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"),
+        answerMessage("fontCollectorMessages", QStringLiteral("Collect fonts"),
                       QStringLiteral("Select the folder where you want to link fonts"));
 
         const QString folder = QDir::toNativeSeparators(dir.filePath(QStringLiteral("linked")));
@@ -12555,34 +12555,29 @@ private slots:
 
         auto *session = application->files().session(*application->workspace().editingTarget());
         const auto lines = session->document().lines();
-        auto *logView = dialogItem("fontCollectorDialog", "fontCollectorLog");
-        QVERIFY(logView);
-        const auto pointAt = [&](int offset) {
-            QRectF r;
-            QMetaObject::invokeMethod(logView, "positionToRectangle", Q_RETURN_ARG(QRectF, r), Q_ARG(int, offset));
-            const QPointF local(r.x() + 1.5, r.center().y());
-            int hit = -1;
-            QMetaObject::invokeMethod(logView, "positionAt", Q_RETURN_ARG(int, hit), Q_ARG(qreal, local.x()),
-                                      Q_ARG(qreal, local.y()));
-            return std::pair{logView->mapToScene(local).toPoint(), hit};
-        };
-        for (const QString &at : {QStringLiteral("In lines: 2"), QStringLiteral(" - Sign tabs: 1"),
-                                  QStringLiteral("Font not found")}) {
-            const int offset = int(check.indexOf(at));
-            QCOMPARE(pointAt(offset).second, offset);
+        QStringList rows;
+        for (const QVariant &row : collector.rows()) {
+            const QVariantMap r = row.toMap();
+            rows << QStringLiteral("%1 %2 %3 %4 %5").arg(r.value(QStringLiteral("family")).toString(),
+                                                         r.value(QStringLiteral("bold")).toString(),
+                                                         r.value(QStringLiteral("status")).toString(),
+                                                         r.value(QStringLiteral("file")).toString(),
+                                                         r.value(QStringLiteral("lines")).toString());
         }
-        const auto lineNumber = pointAt(int(check.indexOf(QStringLiteral("In lines: 2")) + 10));
-        QTest::mouseDClick(collectorWindow, Qt::LeftButton, Qt::NoModifier, lineNumber.first);
+        QCOMPARE(rows, (QStringList{QStringLiteral("Arial 400 found arial.ttf 1"), QStringLiteral("Times 400 found times.ttf 1"),
+                                    QStringLiteral("Nowhere 400 missing  1")}));
+        QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorLogEmpty")->isVisible());
+        QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorSummary")->property("text").toString(),
+                 QStringLiteral("3 fonts · 1 missing."));
+        QQuickItem *missingRow = nullptr;
+        QTRY_VERIFY((missingRow = dialogItem("fontCollectorDialog", "fontCollectorRow2")));
+        QCOMPARE(missingRow->height(), 22.0);
+        QCOMPARE(findItem(missingRow, QStringLiteral("fontCollectorRowFile"))->property("text").toString(),
+                 QStringLiteral("Not on this computer"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorRow1"), "clicked"));
         QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
-        QSignalSpy styleRequested(&collector, &app::FontCollectorController::styleRequested);
-        const auto styleTab = pointAt(int(check.indexOf(QStringLiteral(" - Sign tabs: 1")) + 14));
-        QTest::mouseDClick(collectorWindow, Qt::LeftButton, Qt::NoModifier, styleTab.first);
+        QVERIFY(QMetaObject::invokeMethod(missingRow, "clicked"));
         QTRY_COMPARE(session->selection().active, std::optional(lines[2]->id));
-        QCOMPARE(styleRequested.size(), 1);
-        QCOMPARE(styleRequested.at(0).at(0).toString(), QStringLiteral("Sign"));
-        QTRY_VERIFY(named("styleManager")->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(named("styleManager"), "closeManager"));
-        // Offscreen gives the keyboard back to no window when the manager's window closes.
         collectorWindow->requestActivate();
         QVERIFY(QTest::qWaitForWindowActive(collectorWindow));
 
@@ -12591,7 +12586,7 @@ private slots:
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorPath")->property("enabled").toBool());
         dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", QString());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"),
+        answerMessage("fontCollectorMessages", QStringLiteral("Collect fonts"),
                       QStringLiteral("Select the folder where you want to copy fonts"));
 
         auto *pathField = dialogItem("fontCollectorDialog", "fontCollectorPath");
@@ -12664,10 +12659,10 @@ private slots:
         };
         const QString exists = QStringLiteral("“collected.zip” already exists.");
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"), exists, QStringLiteral("cancel"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Collect fonts"), exists, QStringLiteral("cancel"));
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"), exists, QStringLiteral("replace"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Collect fonts"), exists, QStringLiteral("replace"));
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
         QCOMPARE(readZip(), QByteArray("previous archive"));
@@ -12675,7 +12670,7 @@ private slots:
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Options));
         QCOMPARE(readZip(), QByteArray("previous archive"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"), exists, QStringLiteral("replace"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Collect fonts"), exists, QStringLiteral("replace"));
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
         collector.apply(false);
@@ -12715,7 +12710,7 @@ private slots:
                 QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
                 QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorAcknowledge"), "click"));
                 QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
-                answerMessage("fontCollectorMessages", QStringLiteral("Font collector"),
+                answerMessage("fontCollectorMessages", QStringLiteral("Collect fonts"),
                               QStringLiteral("2 font files already exist in “%1”.").arg(collector.copyPath()), choice);
                 QVERIFY(collector.waitIdle());
             };
@@ -16376,8 +16371,7 @@ private slots:
             {{"saveLayoutSave", Accept}, {"saveLayoutCancel", Reject}},
             {{"selectRun", Accept}, {"selectClose", Reject}},
             {{"translationShiftClose", Reject}},
-            {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Action}, {"fontCollectorCancel", Reject},
-             {"fontCollectorClose", Reject}},
+            {{"fontCollectorStart", Accept}, {"fontCollectorClose", Reject}},
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}},
             {{"listChooserTake", Accept}, {"listChooserCancel", Reject}},
             {{"fontPickerOk", Accept}, {"fontPickerCancel", Reject}},

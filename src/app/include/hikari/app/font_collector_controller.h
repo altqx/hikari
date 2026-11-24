@@ -39,6 +39,13 @@ class FontCollectorController : public QObject {
     Q_PROPERTY(QString copyPath READ copyPath NOTIFY stageChanged)
     Q_PROPERTY(bool fromMkv READ fromMkv NOTIFY settingsChanged)
     Q_PROPERTY(bool fromMkvEnabled READ fromMkvEnabled NOTIFY settingsChanged)
+    // {family, bold, italic, status ("found", "missing", "simulated", "notLinked"), file,
+    // simulatedBold, simulatedItalic, lines}, one per face the subtitles use.
+    Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
+    Q_PROPERTY(int facesToCheck READ facesToCheck NOTIFY rowsChanged)
+    Q_PROPERTY(int filesToWrite READ filesToWrite NOTIFY rowsChanged)
+    // Linking: the files with nothing on this computer to link to, which are copied.
+    Q_PROPERTY(int filesCopiedInstead READ filesCopiedInstead NOTIFY rowsChanged)
 public:
     enum Stage { Options = 0, Working = 1, Review = 2, Done = 3 };
     Q_ENUM(Stage)
@@ -77,6 +84,10 @@ public:
     QString copyPath() const { return m_copyPath; }
     bool fromMkv() const { return m_fromMkv; }
     bool fromMkvEnabled() const { return m_fromMkvEnabled; }
+    QVariantList rows() const;
+    int facesToCheck() const { return m_facesToCheck; }
+    int filesToWrite() const { return m_filesToWrite; }
+    int filesCopiedInstead() const { return m_filesCopiedInstead; }
 
     Q_INVOKABLE void open();
     Q_INVOKABLE void changeOptions(int action, bool useSubsDirectory);
@@ -103,6 +114,8 @@ public:
     Q_INVOKABLE QString localPath(const QUrl &url) const { return QDir::toNativeSeparators(url.toLocalFile()); }
     // `position` is an offset into logText.
     Q_INVOKABLE void logDoubleClicked(int position);
+    // Shows the first Line that uses the row's face.
+    Q_INVOKABLE void chooseRow(int index);
 
     // "libass" or a CSRI renderer's name; anything but libass is logged as unverified.
     void setDisplayRenderer(const QString &name) { m_displayRenderer = name; }
@@ -116,6 +129,7 @@ public:
 signals:
     void settingsChanged();
     void logChanged();
+    void rowsChanged();
     void stageChanged();
     void styleRequested(const QString &style);
 
@@ -149,6 +163,7 @@ private:
     void mkvApplied(std::vector<application::MatroskaFontsSaved> saved, bool cancelled);
     void logKept();
     void logMkvTab(std::size_t index);
+    void clearRows();
 
     ui::SettingsStore &m_settings;
     Hooks m_hooks;
@@ -183,6 +198,12 @@ private:
     std::vector<QString> m_mkvVideos;
     std::vector<application::MatroskaFontTab> m_mkvTabs;
     std::uint64_t m_mkvRun = 0;
+    std::vector<application::collector::Face> m_faces;
+    QStringList m_notLinked;
+    int m_facesToCheck = 0;
+    int m_filesToWrite = 0;
+    int m_filesCopiedInstead = 0;
+    std::uint64_t m_prepareRun = 0;
 };
 
 }

@@ -25,6 +25,7 @@ ColumnLayout {
     property var luaValues: ({})
     property var colourPicker: null
     property string progress: ""
+    property real progressValue: 0
     property var outcome: []
     readonly property bool failed: outcome.some(s => s.state === "failed")
     readonly property int missingCount: steps.filter(s => isMissing(s)).length
@@ -283,6 +284,7 @@ ColumnLayout {
         }
         function onExportStepStarted(name, step, count) {
             block.progress = qsTr("Before export · %1 · step %2 of %3").arg(name, step, count)
+            block.progressValue = count > 0 ? (step - 1) / count : 0
         }
     }
 
@@ -306,6 +308,7 @@ ColumnLayout {
             visible: block.changed
             text: qsTr("changed")
             color: Theme.muted
+            font: block.host.fontAt(12)
         }
         Item { Layout.fillWidth: true }
         Button {
@@ -325,6 +328,7 @@ ColumnLayout {
         visible: block.steps.length === 0
         text: qsTr("Writes the document as it is.")
         color: Theme.muted
+        font: block.host.fontAt(12)
     }
 
     ShellMenu {
@@ -381,7 +385,7 @@ ColumnLayout {
         visible: block.expanded && block.steps.length > 0
         Layout.fillWidth: true
         implicitHeight: stepsColumn.implicitHeight + 2
-        radius: 6
+        radius: Theme.popupRadius
         color: "transparent"
         border.color: Theme.line
         ColumnLayout {
@@ -391,19 +395,22 @@ ColumnLayout {
             spacing: 0
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: header.implicitHeight + 12
+                implicitHeight: Theme.headerHeight
                 color: Theme.raised
-                radius: 6
+                topLeftRadius: Theme.popupRadius - 1
+                topRightRadius: Theme.popupRadius - 1
                 RowLayout {
                     id: header
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 6
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 4
+                    spacing: 8
                     Label {
                         text: qsTr("Run in this order on a copy; the document doesn’t change.")
                         color: Theme.muted
+                        font: block.host.fontAt(12)
                         Layout.fillWidth: true
-                        wrapMode: Text.Wrap
+                        elide: Text.ElideRight
                     }
                     Button {
                         objectName: "beforeExportSaveRecipeButton"
@@ -428,7 +435,8 @@ ColumnLayout {
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: rowLayout.implicitHeight + 8
-                        color: stepRow.open ? Theme.select : dropArea.containsDrag ? Theme.raised : "transparent"
+                        color: stepRow.open ? Theme.select : dropArea.containsDrag ? Theme.hover : "transparent"
+                        Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: Theme.line }
                         DropArea {
                             id: dropArea
                             anchors.fill: parent
@@ -438,9 +446,9 @@ ColumnLayout {
                         RowLayout {
                             id: rowLayout
                             anchors.fill: parent
-                            anchors.leftMargin: 6
-                            anchors.rightMargin: 6
-                            spacing: 6
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 4
+                            spacing: 8
                             Icon {
                                 id: grip
                                 objectName: "beforeExportGrip"
@@ -487,17 +495,24 @@ ColumnLayout {
                                     text: stepRow.missing ? qsTr("%1 isn’t loaded · Export skips it").arg(block.scriptOf(stepRow.modelData.id))
                                                           : block.summary(stepRow.modelData)
                                     visible: text !== ""
+                                    font: block.host.fontAt(12)
                                     color: stepRow.missing ? Theme.warning : Theme.muted
                                     Layout.fillWidth: true
                                     elide: Text.ElideRight
                                 }
                             }
                             Label {
+                                objectName: "beforeExportChip"
                                 text: block.chipText(stepRow.modelData)
                                 color: Theme.muted
                                 font: block.host.fontAt(11)
+                                leftPadding: 6
+                                rightPadding: 6
+                                topPadding: 1
+                                bottomPadding: 1
+                                background: Rectangle { color: "transparent"; border.color: Theme.line; radius: height / 2 }
                             }
-                            IconButton {
+                            IconToolButton {
                                 objectName: "beforeExportSettings"
                                 iconRole: "settings"
                                 text: qsTr("Settings for %1").arg(block.nameOf(stepRow.modelData))
@@ -507,7 +522,7 @@ ColumnLayout {
                                 checked: stepRow.open
                                 onClicked: block.toggleSettings(stepRow.index)
                             }
-                            IconButton {
+                            IconToolButton {
                                 id: moreButton
                                 objectName: "beforeExportMore"
                                 iconRole: "menu-more"
@@ -564,14 +579,9 @@ ColumnLayout {
         visible: block.missingCount > 0
         text: qsTr("%n step(s) won’t run: its script isn’t loaded.", "", block.missingCount)
         color: Theme.warning
+        font: block.host.fontAt(12)
         wrapMode: Text.Wrap
         Layout.fillWidth: true
-    }
-    Label {
-        objectName: "beforeExportProgress"
-        visible: block.exporting && block.progress !== ""
-        text: block.progress
-        color: Theme.muted
     }
 
     Rectangle {
@@ -579,7 +589,7 @@ ColumnLayout {
         visible: block.failed
         Layout.fillWidth: true
         implicitHeight: failureColumn.implicitHeight + 2
-        radius: 6
+        radius: Theme.popupRadius
         color: "transparent"
         border.color: Theme.line
         ColumnLayout {
@@ -589,21 +599,23 @@ ColumnLayout {
             spacing: 0
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: failureHeader.implicitHeight + 12
+                implicitHeight: Theme.headerHeight
                 color: Theme.raised
-                radius: 6
+                topLeftRadius: Theme.popupRadius - 1
+                topRightRadius: Theme.popupRadius - 1
                 RowLayout {
                     id: failureHeader
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 6
-                    Icon { iconRole: "notice-error"; size: 16; color: Theme.danger }
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 4
+                    spacing: 8
+                    Icon { iconRole: "notice-error"; size: 16; color: Theme.danger; accentColor: Theme.danger }
                     Label {
                         objectName: "beforeExportFailureTitle"
                         text: block.failed ? qsTr("Not saved. “%1” failed.").arg(block.failedRow().name) : ""
-                        font.weight: Font.DemiBold
+                        font: block.host.fontAt(13, Font.DemiBold)
                         Layout.fillWidth: true
-                        wrapMode: Text.Wrap
+                        elide: Text.ElideRight
                     }
                     Button {
                         objectName: "beforeExportTurnOff"
@@ -623,41 +635,65 @@ ColumnLayout {
             Repeater {
                 model: block.outcome
                 delegate: RowLayout {
+                    id: outcomeRow
                     required property var modelData
-                    spacing: 6
+                    spacing: 8
                     Layout.fillWidth: true
-                    Layout.leftMargin: 10
-                    Layout.rightMargin: 10
-                    Layout.topMargin: 4
-                    Icon {
-                        iconRole: block.outcomeIcon(parent.modelData.state)
-                        size: 14
-                        color: parent.modelData.state === "done" ? Theme.success : Theme.danger
-                        visible: iconRole !== ""
+                    Layout.leftMargin: 12
+                    Layout.rightMargin: 12
+                    Layout.minimumHeight: Theme.gridRowHeight
+                    Item {
+                        implicitWidth: 16
+                        implicitHeight: 16
+                        Icon {
+                            anchors.fill: parent
+                            iconRole: block.outcomeIcon(outcomeRow.modelData.state)
+                            size: 16
+                            color: outcomeRow.modelData.state === "done" ? Theme.success : Theme.danger
+                            accentColor: color
+                            visible: iconRole !== ""
+                        }
                     }
-                    Label { text: parent.modelData.name; Layout.preferredWidth: 180; elide: Text.ElideRight }
                     Label {
-                        text: block.stateText(parent.modelData)
-                        color: parent.modelData.state === "failed" ? Theme.danger : Theme.muted
-                        font.family: parent.modelData.state === "failed" && parent.modelData.error !== "" ? "monospace" : font.family
+                        text: outcomeRow.modelData.name
+                        font: block.host.fontAt(12)
+                        Layout.preferredWidth: Math.ceil(Math.max(...block.outcome.map(o => outcomeMetrics.advanceWidth(o.name)), 0))
+                        elide: Text.ElideRight
+                    }
+                    Label {
+                        text: block.stateText(outcomeRow.modelData)
+                        color: outcomeRow.modelData.state === "failed" ? Theme.danger : Theme.muted
+                        font: {
+                            const f = block.host.fontAt(12)
+                            if (outcomeRow.modelData.state === "failed" && outcomeRow.modelData.error !== "")
+                                f.family = "monospace"
+                            return f
+                        }
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                     }
                 }
             }
-            Label {
-                Layout.leftMargin: 10
-                Layout.topMargin: 4
-                text: qsTr("Write the file: didn’t run")
-                color: Theme.muted
+            RowLayout {
+                spacing: 8
+                Layout.leftMargin: 12
+                Layout.minimumHeight: Theme.gridRowHeight
+                Item { implicitWidth: 16 }
+                Label {
+                    text: qsTr("Write the file: didn’t run")
+                    color: Theme.muted
+                    font: block.host.fontAt(12)
+                }
             }
             Label {
-                Layout.leftMargin: 10
-                Layout.topMargin: 6
+                Layout.leftMargin: 12
+                Layout.topMargin: 4
                 Layout.bottomMargin: 8
                 text: qsTr("Nothing was written, and the document is unchanged.")
                 color: Theme.muted
+                font: block.host.fontAt(12)
             }
+            FontMetrics { id: outcomeMetrics; font: block.host.fontAt(12) }
         }
     }
 

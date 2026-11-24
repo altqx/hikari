@@ -39,6 +39,11 @@ DialogWindow {
     property var report: null
     readonly property bool reported: report !== null
     property string problem: ""
+    property bool writeFailed: false
+    property string problemDetails: ""
+    readonly property var shortNames: ({ srt: "SRT", vtt: "WebVTT", sbv: "SBV", text: qsTr("plain text"), microdvd: "MicroDVD",
+                                         mpl2: "MPL2", tmplayer: "TMPlayer", ttml: "TTML", dfxp: "DFXP", srv3: "srv3" })
+    readonly property string reportedFile: reported ? app.localPath(report.file).replace(/^.*[\\/]/, "") : ""
     readonly property bool ttml: format === "ttml" || format === "dfxp"
     readonly property bool usesFrames: format === "microdvd" || (ttml && (ttmlNetflix.checked || ttmlFrames.checked))
     readonly property bool fpsValid: !usesFrames || (fpsNumber() >= 1 && fpsNumber() <= 1000)
@@ -65,7 +70,7 @@ DialogWindow {
         if (!setup.format)
             return
         report = null
-        problem = ""
+        setProblem({})
         exporting = false
         srv3Rows = JSON.parse(JSON.stringify(setup.srv3Styles || []))
         srv3All.checked = false
@@ -143,14 +148,33 @@ DialogWindow {
     }
     function run(replace, writeUnencodable) {
         beforeExport.progress = ""
+        beforeExport.progressValue = 0
         beforeExport.outcome = []
         const result = app.exportTo(app.fileUrl(destination.text.trim()), format, choice(replace, writeUnencodable))
         if (result.pending) {
-            problem = ""
+            setProblem({})
             exporting = true
             return
         }
         finish(result)
+    }
+    function setProblem(result) {
+        problem = result.problem ?? ""
+        writeFailed = result.writeFailed === true
+        problemDetails = result.details ?? ""
+    }
+    function formatName() {
+        return shortNames[format] ?? formats[Math.max(0, formatChoice.currentIndex)].text
+    }
+    function browse() {
+        const path = destination.text
+        const slash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"))
+        if (slash > 0)
+            picker.currentFolder = app.fileUrl(path.slice(0, slash))
+        picker.selectedFile = app.fileUrl(path)
+        picker.nameFilters = [qsTr("%1 files (*.%2)").arg(formats[formatChoice.currentIndex].text, extension(format)),
+                              qsTr("All files (*)")]
+        picker.open()
     }
     function finish(result) {
         if (result.exists) {
@@ -182,42 +206,47 @@ DialogWindow {
             return
         }
         if (result.stepsFailed) {
-            problem = ""
+            setProblem({})
             beforeExport.outcome = result.steps
             return
         }
         if (!result.ok) {
-            problem = result.problem
+            setProblem(result)
             return
         }
-        problem = ""
+        setProblem({})
         report = result
-        noteList.currentIndex = -1
         closeButton.forceActiveFocus()
     }
-    function show(index) {
-        if (report && index >= 0 && index < report.notes.length)
-            app.showKaraokeLine(report.document, report.notes[index].line)
+    function show(row) {
+        if (report && row)
+            app.showKaraokeLine(report.document, row.line)
     }
 
     component Hint: Label {
         Layout.fillWidth: true
-        Layout.preferredWidth: 280
         wrapMode: Text.Wrap
         color: Theme.muted
         font: dialog.fontAt(12)
     }
     component RowLabel: Label {
-        Layout.preferredWidth: 72
         Layout.alignment: Qt.AlignVCenter
+        color: Theme.muted
+        font: dialog.fontAt(12)
+    }
+    component TopRowLabel: RowLabel {
+        Layout.alignment: Qt.AlignTop
+        Layout.preferredHeight: Theme.controlHeight
+        verticalAlignment: Text.AlignVCenter
     }
 
     GridLayout {
-        visible: !dialog.reported
+        enabled: !dialog.reported && !dialog.exporting
         columns: 2
-        columnSpacing: 8
-        rowSpacing: 10
+        columnSpacing: 12
+        rowSpacing: 12
         Layout.fillWidth: true
+        Layout.preferredWidth: 712
 
         RowLabel { text: qsTr("Format") }
         ComboBox {
@@ -225,7 +254,7 @@ DialogWindow {
             objectName: "exportFormat"
             model: dialog.formats
             textRole: "text"
-            Layout.preferredWidth: 214
+            implicitContentWidthPolicy: ComboBox.WidestText
             Accessible.name: qsTr("Format")
             onActivated: destination.text = dialog.withExtension(destination.text)
         }
@@ -237,7 +266,7 @@ DialogWindow {
             visible: (dialog.setup.encodingFormats || []).indexOf(dialog.format) >= 0
             model: dialog.setup.encodings || []
             textRole: "label"
-            Layout.preferredWidth: 214
+            implicitContentWidthPolicy: ComboBox.WidestText
             Accessible.name: qsTr("Encoding")
         }
 
@@ -261,38 +290,32 @@ DialogWindow {
                 id: destination
                 objectName: "exportDestination"
                 selectByMouse: true
+                font: {
+                    const f = dialog.fontAt(12)
+                    f.family = "monospace"
+                    return f
+                }
                 Layout.fillWidth: true
-                Layout.minimumWidth: 300
                 Accessible.name: qsTr("Save to")
             }
-            IconTextButton {
+            Button {
                 objectName: "exportBrowse"
-                iconRole: "folder-open"
+                flat: true
                 text: qsTr("Browse…")
-                onClicked: {
-                    const path = destination.text
-                    const slash = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"))
-                    if (slash > 0)
-                        picker.currentFolder = dialog.app.fileUrl(path.slice(0, slash))
-                    picker.selectedFile = dialog.app.fileUrl(path)
-                    picker.nameFilters = [qsTr("%1 files (*.%2)").arg(dialog.formats[formatChoice.currentIndex].text,
-                                                                         dialog.extension(dialog.format)),
-                                          qsTr("All files (*)")]
-                    picker.open()
-                }
+                onClicked: dialog.browse()
             }
         }
 
-        RowLabel { text: qsTr("Options"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 4 }
+        TopRowLabel { text: qsTr("Options") }
         ColumnLayout {
-            spacing: 6
+            spacing: 8
             Layout.fillWidth: true
             Frame {
                 objectName: "exportSrv3Styles"
                 visible: dialog.format === "srv3" && dialog.srv3Rows.length > 0
                 Layout.fillWidth: true
                 padding: 1
-                background: Rectangle { color: Theme.field; border.color: Theme.line }
+                background: Rectangle { color: "transparent"; border.color: Theme.line; radius: Theme.popupRadius }
                 Accessible.role: Accessible.Table
                 Accessible.name: qsTr("srv3 style options")
                 ColumnLayout {
@@ -301,13 +324,13 @@ DialogWindow {
                     spacing: 0
                     RowLayout {
                         Layout.fillWidth: true
-                        Layout.leftMargin: 10
-                        Layout.rightMargin: 6
-                        Layout.preferredHeight: 28
-                        spacing: 10
-                        Label { text: qsTr("Style"); color: Theme.muted; font: dialog.fontAt(12); Layout.fillWidth: true }
-                        Label { text: qsTr("Shadow"); color: Theme.muted; font: dialog.fontAt(12); Layout.preferredWidth: 220 }
-                        Label { text: qsTr("Karaoke"); color: Theme.muted; font: dialog.fontAt(12); Layout.preferredWidth: 62 }
+                        Layout.leftMargin: 12
+                        Layout.rightMargin: 4
+                        Layout.preferredHeight: Theme.gridHeaderHeight
+                        spacing: 12
+                        Label { text: qsTr("Style"); color: Theme.muted; font: dialog.fontAt(11, Font.Medium); Layout.fillWidth: true }
+                        Label { text: qsTr("Shadow"); color: Theme.muted; font: dialog.fontAt(11, Font.Medium); Layout.preferredWidth: 220 }
+                        Label { text: qsTr("Karaoke"); color: Theme.muted; font: dialog.fontAt(11, Font.Medium); Layout.preferredWidth: 62 }
                         Row {
                             spacing: 6
                             Layout.preferredWidth: 102
@@ -324,7 +347,7 @@ DialogWindow {
                                 }
                             }
                         }
-                        Item { Layout.preferredWidth: 26 }
+                        Item { Layout.preferredWidth: Theme.controlHeight }
                     }
                     Repeater {
                         model: dialog.srv3Rows.length
@@ -346,14 +369,14 @@ DialogWindow {
                             objectName: "exportSrv3Row" + index
                             visible: srv3All.checked || row[dialog.lineChoices[Math.max(0, linesChoice.currentIndex)]] === true
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 34
+                            Layout.preferredHeight: Theme.controlHeight + 8
                             Rectangle { anchors.fill: parent; color: srv3Row.activeFocus ? Theme.select : "transparent" }
                             Rectangle { anchors.top: parent.top; width: parent.width; height: 1; color: Theme.line }
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 6
-                                spacing: 10
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 4
+                                spacing: 12
                                 RowLayout {
                                     spacing: 6
                                     Layout.fillWidth: true
@@ -389,7 +412,7 @@ DialogWindow {
                                             required property int index
                                             objectName: "exportSrv3Shadow" + modelData.bit
                                             width: 52
-                                            height: 24
+                                            height: Theme.controlHeight
                                             checkable: true
                                             enabled: srv3Row.row.hasShadow === true
                                             checked: (srv3Row.value.shadows & modelData.bit) !== 0
@@ -435,7 +458,7 @@ DialogWindow {
                                             readonly property string colour: srv3Row.value[modelData.key] || ""
                                             objectName: "exportSrv3Colour_" + modelData.key
                                             width: 30
-                                            height: 22
+                                            height: Theme.smallControlHeight
                                             enabled: srv3Row.value.karaoke === true
                                             activeFocusOnTab: false
                                             Accessible.name: modelData.name.arg(srv3Row.row.name)
@@ -448,10 +471,8 @@ DialogWindow {
                                             contentItem: Item {}
                                             background: Rectangle {
                                                 color: swatch.colour.length > 0 ? swatch.colour : Theme.field
-                                                border.color: swatch.activeFocus ? Theme.focus : Theme.line
-                                                border.width: swatch.activeFocus ? 2 : 1
-                                                radius: 2
-                                                opacity: swatch.enabled ? 1 : 0.45
+                                                border.color: swatch.activeFocus ? Theme.focus : swatch.enabled ? Theme.control : Theme.disabled
+                                                radius: 3
                                                 clip: true
                                                 Rectangle {
                                                     visible: swatch.colour.length === 0
@@ -468,7 +489,6 @@ DialogWindow {
                                 IconToolButton {
                                     id: reset
                                     objectName: "exportSrv3Reset"
-                                    Layout.preferredWidth: 26
                                     iconRole: "restore-default"
                                     text: qsTr("Reset %1").arg(srv3Row.row.name)
                                     opacity: srv3Row.changed ? 1 : 0
@@ -483,13 +503,13 @@ DialogWindow {
                     }
                     Label {
                         Layout.fillWidth: true
-                        Layout.margins: 6
-                        Layout.leftMargin: 10
+                        Layout.margins: 8
+                        Layout.leftMargin: 12
                         wrapMode: Text.Wrap
                         color: Theme.muted
                         font: dialog.fontAt(12)
                         text: qsTr("Shadow is how YouTube draws the style’s shadow; an outline is always drawn as a glow. Current-word colours apply to karaoke lines.")
-                        Rectangle { anchors.bottom: parent.top; anchors.bottomMargin: 6; width: parent.width + 16; x: -10; height: 1; color: Theme.line }
+                        Rectangle { anchors.bottom: parent.top; anchors.bottomMargin: 8; width: parent.width + 20; x: -12; height: 1; color: Theme.line }
                     }
                 }
             }
@@ -556,9 +576,9 @@ DialogWindow {
             }
             RowLayout {
                 visible: dialog.ttml
-                spacing: 6
+                spacing: 8
                 Layout.leftMargin: merge.leftPadding
-                Label { text: qsTr("Language") }
+                RowLabel { text: qsTr("Language") }
                 TextField {
                     id: language
                     objectName: "exportLanguage"
@@ -577,9 +597,9 @@ DialogWindow {
             }
             RowLayout {
                 visible: dialog.usesFrames
-                spacing: 6
+                spacing: 8
                 Layout.leftMargin: merge.leftPadding
-                Label { text: qsTr("Frame rate") }
+                RowLabel { text: qsTr("Frame rate") }
                 TextField {
                     id: fps
                     objectName: "exportFps"
@@ -589,7 +609,7 @@ DialogWindow {
                     validator: RegularExpressionValidator { regularExpression: /^\d{0,4}([.,]\d{0,6})?$/ }
                     Accessible.name: qsTr("Frame rate")
                 }
-                Label { text: qsTr("fps"); color: Theme.muted }
+                RowLabel { text: qsTr("fps") }
                 IconTextButton {
                     objectName: "exportFpsFromVideo"
                     iconRole: "fps-from-video"
@@ -621,11 +641,9 @@ DialogWindow {
             }
         }
 
-        RowLabel {
+        TopRowLabel {
             text: qsTr("Before export")
             visible: beforeExport.visible
-            Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 6
         }
         BeforeExportSteps {
             id: beforeExport
@@ -637,125 +655,115 @@ DialogWindow {
             visible: !dialog.format.startsWith("plugin:")
             onExportWithout: dialog.run(false)
         }
-        Item { implicitWidth: 1; visible: dialog.problem.length > 0 }
-        FieldError {
-            objectName: "exportProblem"
-            visible: dialog.problem.length > 0
-            text: dialog.problem
-            Layout.fillWidth: true
-        }
     }
 
     ColumnLayout {
-        visible: dialog.reported
-        spacing: 10
+        objectName: "exportRunning"
+        visible: dialog.exporting
+        spacing: 4
         Layout.fillWidth: true
-        Layout.fillHeight: true
-        Label {
-            objectName: "exportSummary"
+        Rectangle {
             Layout.fillWidth: true
-            wrapMode: Text.Wrap
-            text: dialog.reported ? qsTr("Exported %n line(s) to “%1”.", "", dialog.report.written)
-                                        .arg(dialog.app.localPath(dialog.report.file).replace(/^.*[\\/]/, "")) : ""
-        }
-        Hint {
-            objectName: "exportRanBefore"
-            visible: text !== ""
-            text: dialog.reported ? beforeExport.ranText(dialog.report.steps) : ""
-        }
-        Hint {
-            objectName: "exportSkipped"
-            visible: dialog.reported && (dialog.report.comments > 0 || dialog.report.empty > 0)
-            text: !dialog.reported ? "" : [
-                dialog.report.comments > 0 ? qsTr("%n comment line(s) skipped.", "", dialog.report.comments) : "",
-                dialog.report.empty > 0 ? qsTr("%n line(s) with nothing to show skipped.", "", dialog.report.empty) : ""
-            ].filter(s => s.length > 0).join(" ")
-        }
-        Hint {
-            objectName: "exportSrv3Saved"
-            visible: dialog.reported && (dialog.report.srv3Styles ?? 0) > 0
-            text: dialog.reported ? qsTr("Style options for %n style(s) saved in the subtitle file.", "", dialog.report.srv3Styles ?? 0) : ""
+            implicitHeight: 2
+            color: Theme.line
+            Rectangle {
+                height: parent.height
+                width: parent.width * beforeExport.progressValue
+                color: Theme.accent
+            }
         }
         Label {
-            visible: dialog.reported && dialog.report.notes.length > 0
-            text: qsTr("What the format could not keep. Choose a line to show it.")
-            color: Theme.muted
+            objectName: "beforeExportProgress"
             Layout.fillWidth: true
-            wrapMode: Text.Wrap
+            elide: Text.ElideRight
+            font: dialog.fontAt(12)
+            text: beforeExport.progress !== "" ? beforeExport.progress : qsTr("Exporting")
         }
-        Frame {
+    }
+    FieldError {
+        objectName: "exportProblem"
+        visible: dialog.problem.length > 0 && !dialog.writeFailed
+        text: dialog.problem
+        Layout.fillWidth: true
+    }
+    RowLayout {
+        objectName: "exportWriteFailed"
+        visible: dialog.writeFailed
+        spacing: 8
+        Layout.fillWidth: true
+        Icon { iconRole: "notice-warning"; size: 16; color: Theme.danger; accentColor: Theme.danger }
+        Label {
+            objectName: "exportWriteFailedText"
+            text: dialog.problem
+            color: Theme.danger
+            wrapMode: Text.Wrap
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredWidth: 560
-            Layout.preferredHeight: 240
-            padding: 1
-            background: Rectangle { color: Theme.field; border.color: Theme.line }
-            Label {
-                anchors.centerIn: parent
-                objectName: "exportNothingLost"
-                visible: noteList.count === 0
-                color: Theme.muted
-                text: qsTr("Nothing was dropped or approximated")
-            }
-            ListView {
-                id: noteList
-                objectName: "exportNotes"
-                anchors.fill: parent
-                clip: true
-                model: dialog.reported ? dialog.report.notes : []
-                keyNavigationEnabled: true
-                Accessible.role: Accessible.List
-                Accessible.name: qsTr("Export report")
-                // MUST KILL: clicking stops onCurrentIndexChanged showing the row a click shows itself
-                property bool clicking: false
-                onCurrentIndexChanged: if (activeFocus && !clicking) dialog.show(currentIndex)
-                header: RowLayout {
-                    visible: noteList.count > 0
-                    width: ListView.view.width
-                    height: visible ? implicitHeight + 8 : 0
-                    spacing: 12
-                    Label { text: qsTr("Line"); color: Theme.muted; Layout.preferredWidth: 48; Layout.leftMargin: 12 }
-                    Label { text: qsTr("Dropped or approximated"); color: Theme.muted; Layout.fillWidth: true }
-                }
-                delegate: ItemDelegate {
-                    required property var modelData
-                    required property int index
-                    width: ListView.view.width
-                    highlighted: ListView.isCurrentItem
-                    focusPolicy: Qt.NoFocus
-                    Accessible.name: qsTr("Line %1: %2").arg(modelData.number, modelData.losses)
-                    contentItem: RowLayout {
-                        spacing: 12
-                        Label { text: modelData.number; Layout.preferredWidth: 48 }
-                        Label { text: modelData.losses; Layout.fillWidth: true; elide: Text.ElideRight }
-                    }
-                    onClicked: {
-                        noteList.forceActiveFocus()
-                        noteList.clicking = true
-                        noteList.currentIndex = index
-                        noteList.clicking = false
-                        dialog.show(index)
-                    }
-                }
-                Keys.onReturnPressed: dialog.show(currentIndex)
-                Keys.onEnterPressed: dialog.show(currentIndex)
-            }
+            Accessible.role: Accessible.AlertMessage
+            Accessible.name: text
+        }
+        Button {
+            objectName: "exportChooseFolder"
+            flat: true
+            text: qsTr("Choose another folder…")
+            onClicked: dialog.browse()
+        }
+        Button {
+            objectName: "exportProblemDetails"
+            flat: true
+            text: qsTr("Details")
+            onClicked: replaceQuestion.ask({
+                title: qsTr("Export as"),
+                text: dialog.problem,
+                details: dialog.problemDetails,
+                severity: "error",
+                choices: [{ id: "ok", text: qsTr("OK"), role: "accept", isDefault: true }]
+            }, () => {})
         }
     }
 
+    ExportReport {
+        id: exportReport
+        visible: dialog.reported
+        Layout.fillWidth: true
+        host: dialog
+        report: dialog.report
+        formatName: dialog.formatName()
+        fileName: dialog.reportedFile
+        ranText: dialog.reported ? beforeExport.ranText(dialog.report.steps) : ""
+        onLineChosen: row => dialog.show(row)
+        onCopyRequested: text => dialog.app.copyText(text)
+    }
+
+    leadingActions: Label {
+        objectName: "exportChooseHint"
+        visible: dialog.reported && exportReport.lostLines > 0
+        text: qsTr("Choose a line to select it in the Grid.")
+        color: Theme.muted
+        font: dialog.fontAt(12)
+    }
     buttons: [
-        PrimaryButton {
+        Button {
             id: exportButton
             objectName: "exportRun"
             visible: !dialog.reported
+            highlighted: true
             text: qsTr("Export")
             enabled: destination.text.trim().length > 0 && dialog.fpsValid && !dialog.exporting
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
             onClicked: dialog.run(false)
         },
         Button {
+            objectName: "exportShowFile"
+            visible: dialog.reported
+            flat: true
+            text: qsTr("Show the file")
+            DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            onClicked: dialog.app.showInFolder(dialog.app.localPath(dialog.report.file))
+        },
+        Button {
             id: closeButton
             objectName: "exportClose"
+            highlighted: dialog.reported
             text: dialog.reported ? qsTr("Close") : qsTr("Cancel")
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             onClicked: dialog.close()

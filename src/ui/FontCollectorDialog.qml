@@ -9,8 +9,6 @@ DialogWindow {
     id: dialog
     objectName: "fontCollectorDialog"
     required property var collector
-    readonly property color warningColour: Theme.warning
-    readonly property color successColour: Theme.success
     readonly property bool working: collector.stage === 1
     readonly property var segmentActions: [0, 1, 3, 2]
     readonly property bool zip: collector.action === 2
@@ -19,7 +17,7 @@ DialogWindow {
                                   qsTr("Copies each font file the subtitles use into the folder."),
                                   qsTr("Puts each font file the subtitles use into a zip archive."),
                                   qsTr("Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.")]
-    title: qsTr("Font collector")
+    title: qsTr("Collect fonts")
     dialogId: "fontCollector"
     resizable: true
     defaultButton: startButton
@@ -102,13 +100,53 @@ DialogWindow {
         collector.chooseDirectory(value)
         path.text = value
     }
-    function html() {
-        let out = ""
-        for (const s of collector.log) {
-            const colour = s.kind === 1 ? warningColour : s.kind === 2 ? successColour : Theme.text
-            out += "<span style=\"color:" + colour + "\">" + Qt.escapeHtml(s.text) + "</span>"
+    function styleName(row) {
+        if (row.bold >= 700 && row.italic)
+            return qsTr("Bold Italic")
+        if (row.bold >= 700)
+            return qsTr("Bold")
+        if (row.italic)
+            return qsTr("Italic")
+        return row.bold === 400 ? qsTr("Regular") : qsTr("Weight %1").arg(row.bold)
+    }
+    function fileText(row) {
+        switch (row.status) {
+        case "missing":
+            return qsTr("Not on this computer")
+        case "notLinked":
+            return Qt.platform.os === "windows"
+                ? qsTr("Couldn’t link: turn on Developer Mode, or use a folder on the font’s drive")
+                : qsTr("Couldn’t link")
+        case "simulated":
+            return row.file + " · " + (row.simulatedBold && row.simulatedItalic ? qsTr("simulated bold and italic")
+                                       : row.simulatedBold ? qsTr("simulated bold") : qsTr("simulated italic"))
         }
-        return "<div style=\"white-space: pre-wrap\">" + out + "</div>"
+        return row.file
+    }
+    function summary() {
+        const rows = collector.rows
+        if (rows.length === 0)
+            return ""
+        const missing = rows.filter(r => r.status === "missing").length
+        const bold = rows.filter(r => r.status === "simulated" && r.simulatedBold).length
+        const italic = rows.filter(r => r.status === "simulated" && !r.simulatedBold).length
+        const parts = [qsTr("%n font(s)", "", rows.length)]
+        if (missing > 0)
+            parts.push(qsTr("%n missing", "", missing))
+        if (bold > 0)
+            parts.push(qsTr("%n made bold by the renderer", "", bold))
+        if (italic > 0)
+            parts.push(qsTr("%n made italic by the renderer", "", italic))
+        const files = collector.filesToWrite
+        const action = collector.stage === 1 || files === 0 ? ""
+            : zip ? qsTr("Zip archive adds %n file(s).", "", files)
+            : linking ? (collector.filesCopiedInstead > 0
+                         ? qsTr("Link to a folder links %1 and copies %2 that have no file to link to.")
+                               .arg(qsTr("%n file(s)", "", files - collector.filesCopiedInstead))
+                               .arg(collector.filesCopiedInstead)
+                         : qsTr("Link to a folder links %n file(s).", "", files))
+            : collector.action === 1 ? qsTr("Copy to a folder copies %n file(s).", "", files) : ""
+        return parts.join(" · ") + "." + (action.length > 0 ? " " + action : "")
     }
     onClosing: close => {
         if (working)
@@ -116,14 +154,22 @@ DialogWindow {
     }
     onVisibleChanged: if (!visible && !WindowFrame.remaking(dialog)) collector.close()
 
+    component RowLabel: Label {
+        Layout.alignment: Qt.AlignTop
+        Layout.preferredHeight: Theme.controlHeight
+        verticalAlignment: Text.AlignVCenter
+        color: Theme.muted
+        font: dialog.fontAt(12)
+    }
+
     GridLayout {
         columns: 2
         columnSpacing: 12
-        rowSpacing: 10
+        rowSpacing: 12
         Layout.fillWidth: true
-        Label { text: qsTr("Action"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
+        RowLabel { text: qsTr("Action") }
         ColumnLayout {
-            spacing: 6
+            spacing: 4
             enabled: !dialog.working
             Layout.fillWidth: true
             SegmentedButtons {
@@ -145,15 +191,17 @@ DialogWindow {
                       + (dialog.segmentActions[actions.currentIndex] === 3 && fromMkv.enabled && fromMkv.checked
                          ? "\n" + qsTr("Fonts from the MKV file are copied: there’s no file to link to.") : "")
                 color: Theme.muted
+                font: dialog.fontAt(12)
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
             }
         }
-        Label { text: qsTr("Save to"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
+        RowLabel { text: qsTr("Save to") }
         ColumnLayout {
             spacing: 4
             Layout.fillWidth: true
             RowLayout {
+                spacing: 8
                 Layout.fillWidth: true
                 TextField {
                     id: path
@@ -165,14 +213,19 @@ DialogWindow {
                     onAccepted: dialog.start(false)
                     Accessible.name: qsTr("Save to")
                     placeholderText: dialog.zip ? qsTr("Choose an archive") : qsTr("Choose a folder")
+                    font: {
+                        const f = dialog.fontAt(12)
+                        f.family = "monospace"
+                        return f
+                    }
                     validator: RegularExpressionValidator {
                         regularExpression: Qt.platform.os === "windows" ? /[^\/*?"<>|]*/ : /[^*?"<>|]*/
                     }
                 }
-                IconToolButton {
+                Button {
                     objectName: "fontCollectorChoosePath"
-                    iconRole: "folder-open"
-                    text: qsTr("Select a folder")
+                    flat: true
+                    text: qsTr("Browse…")
                     enabled: path.enabled
                     onClicked: dialog.choosePath()
                 }
@@ -195,53 +248,221 @@ DialogWindow {
             }
         }
     }
+
     Rectangle {
+        objectName: "fontCollectorList"
         Layout.fillWidth: true
         Layout.fillHeight: true
-        Layout.topMargin: 6
-        Layout.preferredWidth: 560
-        Layout.preferredHeight: 260
-        Layout.minimumHeight: 120
-        color: Theme.field
+        Layout.preferredWidth: 640
+        Layout.preferredHeight: Theme.gridHeaderHeight + 10 * Theme.gridRowHeight + 2
+        Layout.minimumHeight: Theme.gridHeaderHeight + 4 * Theme.gridRowHeight + 2
+        radius: Theme.popupRadius
+        color: "transparent"
         border.color: Theme.line
-        ScrollView {
+        Accessible.role: Accessible.Table
+        Accessible.name: qsTr("Fonts")
+        ColumnLayout {
             anchors.fill: parent
             anchors.margins: 1
-            TextArea {
-                id: console_
-                objectName: "fontCollectorLog"
-                readOnly: true
-                wrapMode: TextEdit.Wrap
-                textFormat: TextEdit.RichText
-                text: dialog.html()
-                background: null
-                Accessible.name: qsTr("Font collector log")
-                TapHandler {
-                    onDoubleTapped: (point) => dialog.collector.logDoubleClicked(console_.positionAt(point.position.x, point.position.y))
+            spacing: 0
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: Theme.gridHeaderHeight
+                color: Theme.raised
+                topLeftRadius: Theme.popupRadius - 1
+                topRightRadius: Theme.popupRadius - 1
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 12
+                    Label {
+                        text: qsTr("Font and style")
+                        color: Theme.muted
+                        font: dialog.fontAt(11, Font.Medium)
+                        Layout.leftMargin: 16 + 8
+                        Layout.preferredWidth: fontList.familyWidth
+                    }
+                    Label { text: qsTr("File"); color: Theme.muted; font: dialog.fontAt(11, Font.Medium); Layout.fillWidth: true }
+                    Label {
+                        text: qsTr("Lines")
+                        color: Theme.muted
+                        font: dialog.fontAt(11, Font.Medium)
+                        horizontalAlignment: Text.AlignRight
+                        Layout.minimumWidth: fontList.linesWidth
+                    }
+                }
+            }
+            ListView {
+                id: fontList
+                objectName: "fontCollectorRows"
+                readonly property font rowFont: dialog.fontAt(12)
+                readonly property font familyFont: dialog.fontAt(12, Font.DemiBold)
+                readonly property font monoFont: {
+                    const f = dialog.fontAt(12)
+                    f.family = "monospace"
+                    return f
+                }
+                readonly property real familyWidth: Math.min(width * 0.45, Math.ceil(Math.max(120, ...dialog.collector.rows.map(
+                    r => familyMetrics.advanceWidth(r.family) + rowMetrics.advanceWidth(" " + dialog.styleName(r))))))
+                readonly property real linesWidth: Math.ceil(lineMetrics.advanceWidth("00000"))
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                model: dialog.collector.rows
+                currentIndex: -1
+                keyNavigationEnabled: true
+                ScrollBar.vertical: ScrollBar {}
+                Keys.onReturnPressed: dialog.collector.chooseRow(currentIndex)
+                Keys.onEnterPressed: dialog.collector.chooseRow(currentIndex)
+                FontMetrics { id: familyMetrics; font: fontList.familyFont }
+                FontMetrics { id: rowMetrics; font: fontList.rowFont }
+                FontMetrics { id: lineMetrics; font: fontList.monoFont }
+                delegate: ItemDelegate {
+                    id: fontRow
+                    required property var modelData
+                    required property int index
+                    readonly property string status: modelData.status
+                    readonly property color statusColour: status === "found" ? Theme.success
+                                                        : status === "simulated" ? Theme.warning : Theme.danger
+                    objectName: "fontCollectorRow" + index
+                    width: ListView.view.width
+                    height: Theme.gridRowHeight
+                    padding: 0
+                    leftPadding: 12
+                    rightPadding: 12
+                    focusPolicy: Qt.NoFocus
+                    Accessible.name: modelData.family + " " + dialog.styleName(modelData) + ": " + dialog.fileText(modelData)
+                    background: Rectangle {
+                        color: fontRow.ListView.isCurrentItem ? Theme.select : fontRow.hovered ? Theme.hover : "transparent"
+                    }
+                    onClicked: {
+                        fontList.currentIndex = index
+                        dialog.collector.chooseRow(index)
+                    }
+                    contentItem: RowLayout {
+                        spacing: 12
+                        RowLayout {
+                            spacing: 8
+                            Layout.preferredWidth: fontList.familyWidth + 16 + 8
+                            Layout.maximumWidth: Layout.preferredWidth
+                            Icon {
+                                objectName: "fontCollectorRowGlyph"
+                                iconRole: fontRow.status === "found" ? "karaoke-check" : "notice-warning"
+                                size: 16
+                                color: fontRow.statusColour
+                                accentColor: fontRow.statusColour
+                            }
+                            Label {
+                                text: fontRow.modelData.family
+                                font: fontList.familyFont
+                                elide: Text.ElideRight
+                                Layout.maximumWidth: implicitWidth
+                                Layout.fillWidth: true
+                            }
+                            Label {
+                                text: dialog.styleName(fontRow.modelData)
+                                font: fontList.rowFont
+                                color: Theme.muted
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                        }
+                        Label {
+                            objectName: "fontCollectorRowFile"
+                            text: dialog.fileText(fontRow.modelData)
+                            font: fontRow.status === "found" || fontRow.status === "simulated" ? fontList.monoFont : fontList.rowFont
+                            color: fontRow.status === "found" ? Theme.muted : fontRow.statusColour
+                            elide: Text.ElideMiddle
+                            Layout.fillWidth: true
+                        }
+                        Label {
+                            text: fontRow.modelData.lines
+                            font: fontList.monoFont
+                            horizontalAlignment: Text.AlignRight
+                            Layout.minimumWidth: fontList.linesWidth
+                        }
+                    }
+                }
+                Label {
+                    objectName: "fontCollectorLogEmpty"
+                    anchors.fill: parent
+                    anchors.margins: 12
+                    visible: fontList.count === 0
+                    wrapMode: Text.Wrap
+                    color: Theme.muted
+                    font: dialog.fontAt(12)
+                    text: dialog.collector.log.length > 0 ? dialog.collector.logText.trim()
+                        : qsTr("Start lists the fonts the subtitles use, and whether this computer has each one.")
                 }
             }
         }
-        Label {
-            objectName: "fontCollectorLogEmpty"
-            anchors.centerIn: parent
-            visible: dialog.collector.log.length === 0
-            color: Theme.muted
-            text: qsTr("Start lists the fonts the subtitles use.")
+    }
+    Label {
+        objectName: "fontCollectorSummary"
+        visible: text.length > 0
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        color: Theme.muted
+        font: dialog.fontAt(12)
+        text: dialog.summary()
+    }
+    ColumnLayout {
+        objectName: "fontCollectorRunning"
+        visible: dialog.working
+        spacing: 4
+        Layout.fillWidth: true
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 2
+            color: Theme.line
+            Rectangle {
+                objectName: "fontCollectorProgress"
+                height: parent.height
+                width: dialog.collector.facesToCheck > 0
+                       ? parent.width * Math.min(1, dialog.collector.rows.length / dialog.collector.facesToCheck) : 0
+                color: Theme.accent
+            }
+        }
+        RowLayout {
+            spacing: 8
+            Layout.fillWidth: true
+            Label {
+                objectName: "fontCollectorDoing"
+                font: dialog.fontAt(12)
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+                text: dialog.collector.facesToCheck > 0
+                      ? qsTr("Checking · %1 of %n font(s)", "", dialog.collector.facesToCheck).arg(dialog.collector.rows.length)
+                      : qsTr("Checking fonts")
+            }
+            Label {
+                text: qsTr("Closing the window keeps it going.")
+                color: Theme.muted
+                font: dialog.fontAt(12)
+            }
+            Button {
+                objectName: "fontCollectorCancel"
+                flat: true
+                text: qsTr("Stop")
+                onClicked: dialog.collector.cancel()
+            }
         }
     }
     Rectangle {
         objectName: "fontCollectorReview"
         visible: dialog.collector.stage === 2
         color: Theme.raised
-        border.color: Theme.line
+        radius: Theme.radius
         Layout.fillWidth: true
-        implicitHeight: reviewRow.implicitHeight + 12
+        implicitHeight: Theme.headerHeight
         RowLayout {
             id: reviewRow
             anchors.fill: parent
-            anchors.leftMargin: 10
-            anchors.rightMargin: 6
-            spacing: 10
+            anchors.leftMargin: 12
+            anchors.rightMargin: 4
+            spacing: 8
             Icon {
                 iconRole: dialog.collector.reviewIncomplete ? "notice-warning" : "notice-info"
                 color: dialog.collector.reviewIncomplete ? Theme.warning : IconTheme.normal
@@ -250,7 +471,8 @@ DialogWindow {
             Label {
                 objectName: "fontCollectorReviewText"
                 Layout.fillWidth: true
-                wrapMode: Text.Wrap
+                elide: Text.ElideMiddle
+                font: dialog.fontAt(12)
                 text: dialog.collector.reviewIncomplete ? qsTr("Some fonts were not found, so the collection is incomplete.")
                     : dialog.zip ? qsTr("Ready to write %1").arg(dialog.collector.copyPath)
                     : dialog.linking ? qsTr("Ready to link into %1").arg(dialog.collector.copyPath)
@@ -263,8 +485,9 @@ DialogWindow {
                 text: dialog.zip ? qsTr("Write it, labelled incomplete")
                     : dialog.linking ? qsTr("Link it, labelled incomplete") : qsTr("Copy it, labelled incomplete")
             }
-            PrimaryButton {
+            Button {
                 objectName: "fontCollectorApply"
+                highlighted: true
                 text: dialog.zip ? qsTr("Write archive") : dialog.linking ? qsTr("Link fonts") : qsTr("Copy fonts")
                 enabled: !dialog.collector.reviewIncomplete || acknowledge.checked
                 onClicked: dialog.applyFonts()
@@ -272,45 +495,74 @@ DialogWindow {
         }
     }
 
-    leadingActions: IconTextButton {
+    leadingActions: Button {
         objectName: "fontCollectorSaveFolder"
-        iconRole: "show-in-folder"
+        flat: true
         text: qsTr("Show folder")
         visible: dialog.collector.action !== 0
         enabled: dialog.collector.canSaveFolder && !dialog.working
         onClicked: dialog.collector.saveFolder()
     }
     buttons: [
-        Button {
-            objectName: "fontCollectorStartOnTabs"
-            text: qsTr("Start on all tabs")
-            enabled: !dialog.working
-            DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-            onClicked: dialog.start(true)
-        },
-        PrimaryButton {
-            id: startButton
-            objectName: "fontCollectorStart"
-            text: qsTr("Start")
-            enabled: !dialog.working
-            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-            onClicked: dialog.start(false)
-        },
-        FooterButton {
-            objectName: "fontCollectorCancel"
-            text: qsTr("Stop")
-            visible: dialog.working
-            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-            onClicked: dialog.collector.cancel()
-        },
         FooterButton {
             objectName: "fontCollectorClose"
             text: qsTr("Close")
-            visible: !dialog.working
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
             onClicked: dialog.close()
+        },
+        Button {
+            id: startButton
+            objectName: "fontCollectorStart"
+            highlighted: true
+            text: qsTr("Start")
+            enabled: !dialog.working
+            rightPadding: 12 + startChevron.width + 8
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: dialog.start(false)
+            Rectangle {
+                anchors.right: startChevron.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 1
+                height: parent.height - 8
+                color: Theme.onAccent
+                visible: startButton.enabled
+            }
+            ToolButton {
+                id: startChevron
+                objectName: "fontCollectorStartMenu"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: 20
+                height: parent.height
+                enabled: startButton.enabled
+                focusPolicy: Qt.NoFocus
+                Accessible.name: qsTr("More ways to start")
+                contentItem: Icon {
+                    iconRole: "chevron-down"
+                    size: 12
+                    color: startButton.enabled ? Theme.onAccent : Theme.disabled
+                    accentColor: color
+                }
+                background: null
+                onClicked: startMenu.popup(startButton, 0, startButton.height)
+            }
+            Keys.onDownPressed: event => {
+                if (event.modifiers & Qt.AltModifier)
+                    startMenu.popup(startButton, 0, startButton.height)
+                else
+                    event.accepted = false
+            }
         }
     ]
+    ShellMenu {
+        id: startMenu
+        objectName: "fontCollectorStartMenuPopup"
+        ShellMenuItem {
+            objectName: "fontCollectorStartOnTabs"
+            text: qsTr("Start on all tabs")
+            onTriggered: dialog.start(true)
+        }
+    }
 
     MessageHost {
         id: messages

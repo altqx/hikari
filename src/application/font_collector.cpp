@@ -13,6 +13,7 @@
 namespace hikari::application {
 
 using collector::Block;
+using collector::Face;
 using collector::Note;
 using collector::Scan;
 using collector::Tag;
@@ -272,6 +273,8 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
                     if ((lastPlain && j < tagsSize - 1) || ifont.empty())
                         continue;
                     lastPlain = true;
+                    s.uses[variantKey(ifont, bold, italic)].insert({tab, int(i)});
+                    s.familyUses[ifont].insert({tab, int(i)});
                     if (!found(ifont)) {
                         Block &nflc = blockFor(s.notFound, ifont, Block::Header::NotFound);
                         if (newFont)
@@ -469,7 +472,8 @@ bool CollectorReview::rendererComplete() const
 
 std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vector<CollectorDocument> &documents,
                                                                  CollectorAction action, const std::atomic<bool> *cancel,
-                                                                 std::vector<FontAttachment> folderFonts)
+                                                                 std::vector<FontAttachment> folderFonts,
+                                                                 const FaceDone &faceDone)
 {
     const auto cancelled = [&] { return cancel && cancel->load(); };
     const auto started = std::chrono::steady_clock::now();
@@ -556,6 +560,11 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
     std::map<u16, Probe> variantProbe;
     std::set<std::string> fontnames;
     u16 lastfn;
+    const auto used = [&](const u16 &key) {
+        const auto it = s.uses.find(key);
+        return it != s.uses.end() && !it->second.empty();
+    };
+    const auto usedFaces = std::size_t(std::ranges::count_if(s.variants, [&](const auto &entry) { return used(entry.first); }));
     for (const auto &[key, v] : s.variants) {
         if (cancelled())
             return std::unexpected(FontError::Cancelled);
@@ -614,12 +623,31 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
                 }
             }
         }
+        const ResolvedFace *base = probe.result ? baseFace(*probe.result) : nullptr;
+        if (used(key)) {
+            Face face{fn, v.bold, v.italic};
+            face.lines = int(s.uses.at(key).size());
+            face.firstUse = *s.uses.at(key).begin();
+            if (!base) {
+                face.status = Face::Status::Missing;
+            } else {
+                face.file = fileName(toU16(std::u8string(base->path.begin(), base->path.end())));
+                if (face.file.empty())
+                    face.file = toU16(std::u8string(base->postscriptName.begin(), base->postscriptName.end()));
+                face.simulatedBold = fake.bold || fake.boldItalic;
+                face.simulatedItalic = fake.italic || fake.boldItalic;
+                if (face.simulatedBold || face.simulatedItalic)
+                    face.status = Face::Status::Simulated;
+            }
+            review.faces.push_back(face);
+            if (faceDone)
+                faceDone(face, review.faces.size(), usedFaces);
+        }
         if (!copyFonts) {
             if (isNewFont)
                 ++review.foundCount;
             continue;
         }
-        const ResolvedFace *base = probe.result ? baseFace(*probe.result) : nullptr;
         if (!probe.result) {
             flc.warnings.push_back({Note::Kind::CannotGetContents, fn});
             if (isNewFont)
@@ -759,7 +787,15 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         if (it == s.chars.end() || it->second.empty()) {
             block.warnings.push_back({Note::Kind::UnusedStyle, family, {}, {}, false});
             --review.notFoundCount;
+            continue;
         }
+        Face face{family};
+        face.status = Face::Status::Missing;
+        if (const auto uses = s.familyUses.find(family); uses != s.familyUses.end() && !uses->second.empty()) {
+            face.lines = int(uses->second.size());
+            face.firstUse = *uses->second.begin();
+        }
+        review.faces.push_back(face);
     }
     return review;
 }
