@@ -64,8 +64,9 @@ CollectorDocument tab(int index, const std::string &text)
 class MemoryOutput final : public CollectorOutput {
 public:
     bool openOk = true, failFolder = false;
-    std::set<std::u16string> failing;
+    std::set<std::u16string> failing, failingLinks;
     std::vector<std::u16string> written;
+    std::vector<std::pair<std::u16string, std::u16string>> linked;
     std::optional<std::string> labelText;
     bool committed = false, discarded = false, opened = false;
     std::atomic<bool> *cancelAfterPut = nullptr;
@@ -82,6 +83,13 @@ public:
         written.push_back(name);
         if (cancelAfterPut)
             cancelAfterPut->store(true);
+        return true;
+    }
+    bool link(const std::u16string &name, const std::u16string &target) override
+    {
+        if (failingLinks.contains(name))
+            return false;
+        linked.emplace_back(name, target);
         return true;
     }
     bool label(const std::string &text) override
@@ -228,6 +236,7 @@ TEST(FontCollectorApply, CopyCountsFilesAndWritesEachFileOnce)
     MemoryOutput out;
     const auto r = collector.apply(*review, out, false);
     EXPECT_EQ(out.written, names);
+    EXPECT_TRUE(out.linked.empty());
     EXPECT_EQ(r.foundCount, 3);
     EXPECT_EQ(r.notCopiedCount, 0);
     EXPECT_TRUE(r.complete);
@@ -271,6 +280,55 @@ TEST(FontCollectorApply, StreamBytesAreNamedByTheFileHoldingThem)
     ASSERT_EQ(named->files.size(), 1u);
     EXPECT_EQ(named->files[0].shown, u"C:/Windows/Fonts/arial.ttf");
     EXPECT_TRUE(reads.empty());
+}
+
+TEST(FontCollectorApply, LinkLinksTheFilesOnThisComputerAndCopiesTheRest)
+{
+    FakeFonts fonts;
+    fonts.faces = {{"Arial", 400, false, "/fonts/arial.ttf"},
+                   {"Times", 400, false, "C:/Windows/Fonts/times.ttf", U"", "Times-PS", true}};
+    const auto docs = std::vector{tab(0, script({"Default,Arial,0,0", "T,Times,0,0"}, {"Default,a", "T,b"}))};
+    FontCollector unreadable(fonts, [](const std::u16string &) { return nullptr; });
+    const auto review = unreadable.prepare(docs, CollectorAction::LinkToFolder);
+    ASSERT_TRUE(review);
+    MemoryOutput out;
+    const auto r = unreadable.apply(*review, out, false);
+    EXPECT_EQ(out.linked, (std::vector<std::pair<std::u16string, std::u16string>>{{u"arial.ttf", u"/fonts/arial.ttf"}}));
+    EXPECT_EQ(out.written, std::vector<std::u16string>{u"times.ttf"});
+    EXPECT_EQ(r.foundCount, 2);
+    EXPECT_EQ(r.linkedCount, 1);
+    EXPECT_TRUE(r.complete);
+    EXPECT_EQ(r.found.at(u"Arial").infos.back().kind, Note::Kind::Linked);
+    EXPECT_EQ(r.found.at(u"Times").infos.back().kind, Note::Kind::Copied);
+
+    FontCollector readable(fonts, [](const std::u16string &path) {
+        return FakeFonts::fontBytes(std::string(path.begin(), path.end()));
+    });
+    const auto verified = readable.prepare(docs, CollectorAction::LinkToFolder);
+    ASSERT_TRUE(verified);
+    MemoryOutput both;
+    EXPECT_EQ(readable.apply(*verified, both, false).linkedCount, 2);
+    EXPECT_TRUE(both.written.empty());
+    EXPECT_EQ(both.linked.back(), (std::pair<std::u16string, std::u16string>{u"times.ttf", u"C:/Windows/Fonts/times.ttf"}));
+}
+
+TEST(FontCollectorApply, AFailedLinkIsCountedAndLabelled)
+{
+    auto fonts = arialAndTimes();
+    FontCollector collector(fonts);
+    const auto review = collector.prepare({tab(0, script({"Default,Arial,0,0", "T,Times,0,0"}, {"Default,a", "T,b"}))},
+                                          CollectorAction::LinkToFolder);
+    ASSERT_TRUE(review);
+    MemoryOutput out;
+    out.failingLinks = {u"times.ttf"};
+    const auto r = collector.apply(*review, out, false);
+    EXPECT_EQ(r.linkedCount, 1);
+    EXPECT_EQ(r.notCopiedCount, 1);
+    EXPECT_FALSE(r.complete);
+    EXPECT_TRUE(out.written.empty());
+    EXPECT_EQ(r.found.at(u"Times").warnings.back().kind, Note::Kind::CannotLink);
+    ASSERT_TRUE(out.labelText);
+    EXPECT_NE(out.labelText->find("Fonts that could not be written:\n  times.ttf\n"), std::string::npos);
 }
 
 TEST(FontCollectorApply, NoProviderFilesCancelsCopying)

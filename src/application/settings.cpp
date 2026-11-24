@@ -413,6 +413,7 @@ std::vector<SettingDefinition> &definitions()
         {"typesetting.layerOptions", "", String, Profile, Mapped, false, std::string()},
         // JSON: {"gapOn", "gap", "lastLine"}, the Import lyrics end-time choices.
         {"lyrics.importOptions", "", String, Profile, Mapped, false, std::string()},
+        {"textImport.options", "", String, Profile, Mapped, false, std::string()},
         {"tags.removeOptions", "", String, Profile, Mapped, false, std::string()},
         {"grid.splitEvery", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},

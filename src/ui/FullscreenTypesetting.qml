@@ -9,7 +9,6 @@ Item {
     objectName: "fullscreenTypesetting"
     required property var shell
     required property VideoFullscreenController controller
-    property bool dialogs: true
     readonly property bool narrow: width < 1400
     readonly property rect frameRect: Qt.rect(frame.x, frame.y, frame.width, frame.height)
     readonly property alias zoomReadoutSlot: zoomSlot
@@ -17,7 +16,7 @@ Item {
     readonly property bool popupOpen: inspectorBar.popoverOpen || lineBox.stylePicker.visible
     signal pictureFocusRequested()
 
-    readonly property var regions: [topBar, rail, frame, inspector, lineBox, statusRow]
+    readonly property var regions: [topBar, rail, frame, inspectorPane, lineBox, statusRow]
     function regionOf(item) {
         for (let i = item; i; i = i.parent) {
             const at = regions.indexOf(i)
@@ -36,9 +35,11 @@ Item {
             modeChoice.focusCurrent(reason)
         else if (region === statusRow)
             (playPause.enabled ? playPause : statusRow).forceActiveFocus(reason)
-        else if (region === inspector) {
+        else if (region === inspectorPane && toolDialog.shown)
+            toolDialog.focusFirst(reason)
+        else if (region === inspectorPane) {
             const first = inspectorBar.nextItemInFocusChain(true)
-            if (first && ts.regionOf(first) === regions.indexOf(inspector))
+            if (first && ts.regionOf(first) === regions.indexOf(inspectorPane))
                 first.forceActiveFocus(reason)
             else
                 inspector.forceActiveFocus(reason)
@@ -245,6 +246,7 @@ Item {
             id: inspector
             objectName: "fullscreenInspector"
             anchors.fill: parent
+            visible: !toolDialog.shown
             contentWidth: availableWidth
             activeFocusOnTab: false
             VisualToolBar {
@@ -255,9 +257,16 @@ Item {
                 padding: 12
                 tools: ts.shell.visualTools
                 background: null
-                dialogs: ts.dialogs
-                settings: ts.shell.app.settings
+                dialogs: false
+                keyOf: symbol => ts.shell.boundKeys(symbol, 3)
             }
+        }
+        FullscreenToolDialog {
+            id: toolDialog
+            anchors.fill: parent
+            tools: ts.shell.visualTools
+            settings: ts.shell.app.settings
+            onClosed: hadFocus => { if (hadFocus) Qt.callLater(ts.focusRegion, ts.regions.indexOf(inspectorPane), Qt.OtherFocusReason) }
         }
     }
     Split {

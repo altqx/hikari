@@ -75,6 +75,10 @@ There are no tours and no walkthroughs (Q578).
 
 **Tool dialogs (Q625).** Edit shapes, Edit tags and the other tool dialogs open in the inspector's place, with the dialog's name as the header and × back to the inspector. Their content and behaviour are PU5's ([visual-tools.md](../visual-tools.md#edit-shapes-and-edit-tags-pu5)); only where they open changes. The windowed panel still opens them as windows.
 
+- In the inspector's width, a dialog's columns stack into one scrolling column: the list, then the fields, then the preview. Undo and Redo sit at its foot.
+- With both open, the inspector shows the one opened last; × on it shows the other.
+- Esc, like ×, closes the dialog. Leaving full screen with a dialog open moves it back into its window.
+
 ## The line box
 
 Under the frame:

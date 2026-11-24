@@ -419,10 +419,10 @@ FontEnvironment collectingEnvironment(std::vector<FontAttachment> folderFonts)
 // DirectWrite hands over stream bytes: name the installed file whose bytes match, else the
 // first file of that PostScript name.
 void nameFile(CollectedFile &file, const CollectedFont &font, const FontCollection &from,
-              const std::vector<SystemFace> &faces, const FontCollector::FileReader &read)
+              const std::vector<SystemFace> &faces, const FontCollector::FileReader &read, bool needPath)
 {
     if (!font.path.empty()) {
-        file.shown = toU16(std::u8string(font.path.begin(), font.path.end()));
+        file.path = file.shown = toU16(std::u8string(font.path.begin(), font.path.end()));
         file.name = fileName(file.shown);
         return;
     }
@@ -439,16 +439,20 @@ void nameFile(CollectedFile &file, const CollectedFont &font, const FontCollecti
     if (candidates.empty())
         return;
     std::string chosen = candidates.front();
-    if (candidates.size() > 1 && read && font.bytes)
+    bool holdsBytes = false;
+    if ((candidates.size() > 1 || needPath) && read && font.bytes)
         for (const auto &path : candidates) {
             const auto bytes = read(toU16(std::u8string(path.begin(), path.end())));
             if (bytes && *bytes == *font.bytes) {
                 chosen = path;
+                holdsBytes = true;
                 break;
             }
         }
     file.shown = toU16(std::u8string(chosen.begin(), chosen.end()));
     file.name = fileName(file.shown);
+    if (holdsBytes)
+        file.path = file.shown;
 }
 
 }
@@ -643,7 +647,7 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             file.bytes = font->bytes;
             file.sha256 = font->sha256;
             file.faces = font->faces;
-            nameFile(file, *font, *probe.result, faces, m_read);
+            nameFile(file, *font, *probe.result, faces, m_read, action == CollectorAction::LinkToFolder);
             flc.infos.push_back({Note::Kind::FoundFile, fn, file.shown});
             const u16 ext = lower(file.shown.size() > 3 ? file.shown.substr(file.shown.size() - 3) : u16());
             review.files.push_back(file);
@@ -659,6 +663,8 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
                 pair.shown = partner;
                 pair.name = fileName(partner);
                 pair.bytes = m_read ? m_read(partner) : nullptr;
+                if (!file.path.empty() && pair.bytes)
+                    pair.path = partner;
                 pair.sha256 = "type1:" + toUtf8(partner);
                 review.files.push_back(pair);
             }
@@ -687,7 +693,7 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
                       std::find(file.roles.begin(), file.roles.end(), "substitute for " + r.substr(10)) != file.roles.end()))
                     addUnique(file.roles, r);
             CollectedFile named;
-            nameFile(named, font, *unionFrom[i], faces, m_read);
+            nameFile(named, font, *unionFrom[i], faces, m_read, false);
             file.shown = named.shown;
             if (file.family.empty())
                 file.family = named.name;
@@ -798,14 +804,18 @@ CollectorResult FontCollector::apply(const CollectorReview &review, CollectorOut
             r.cancelled = true;
             break;
         }
-        const bool ok = file.bytes && output.put(file.name, *file.bytes);
+        const bool linking = review.action == CollectorAction::LinkToFolder && !file.path.empty();
+        const bool ok = linking ? output.link(file.name, file.path) : file.bytes && output.put(file.name, *file.bytes);
         auto it = r.found.find(file.family);
         Block &b = it != r.found.end() ? it->second : r.notFound[file.family];
         if (ok) {
-            b.infos.push_back({zip ? Note::Kind::AddedToArchive : Note::Kind::Copied, file.family, file.name});
+            b.infos.push_back({linking ? Note::Kind::Linked : zip ? Note::Kind::AddedToArchive : Note::Kind::Copied,
+                               file.family, file.name});
             ++r.foundCount;
+            r.linkedCount += linking;
         } else {
-            b.warnings.push_back({zip ? Note::Kind::CannotZip : Note::Kind::CannotCopy, file.family, file.name});
+            b.warnings.push_back({linking ? Note::Kind::CannotLink : zip ? Note::Kind::CannotZip : Note::Kind::CannotCopy,
+                                  file.family, file.name});
             ++r.notCopiedCount;
         }
     }
@@ -886,7 +896,8 @@ std::string FontCollector::labelText(const CollectorReview &review, const Collec
         for (const auto *map : {&result->found, &result->notFound})
             for (const auto &[family, block] : *map)
                 for (const auto &w : block.warnings)
-                    if (w.kind == Note::Kind::CannotCopy || w.kind == Note::Kind::CannotZip)
+                    if (w.kind == Note::Kind::CannotCopy || w.kind == Note::Kind::CannotZip ||
+                        w.kind == Note::Kind::CannotLink)
                         failed.push_back(toUtf8(w.a));
         list("Fonts that could not be written:\n", failed);
         if (result->cancelled)

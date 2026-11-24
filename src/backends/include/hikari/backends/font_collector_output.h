@@ -18,6 +18,7 @@ public:
     bool open() override;
     bool folderFailed() const override { return m_folderFailed; }
     bool put(const std::u16string &name, const std::vector<std::byte> &bytes) override;
+    bool link(const std::u16string &name, const std::u16string &target) override;
     bool label(const std::string &utf8Text) override;
     bool unlabel() override;
     bool commit() override { return true; }

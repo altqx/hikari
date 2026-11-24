@@ -3547,6 +3547,14 @@ Output device: %2</source>
         <translation>%1(을)를 읽을 수 없습니다.</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation>텍스트 가져오기</translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation>텍스트 파일 (*.txt)</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>자막 열기</translation>
     </message>
@@ -4044,6 +4052,48 @@ Output device: %2</source>
     <message>
         <source>it isn’t running.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>파일이 %nMB보다 큽니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation>파일이 UTF-8 텍스트가 아닙니다. 텍스트 편집기에서 UTF-8로 저장한 다음 가져오십시오.</translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation>타임코드 파일입니다. 대신 영상 › 타임코드 열기…로 여십시오.</translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation>파일에 가져올 줄이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation>배우 구분자</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation>주석 시작 문자</translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation>빈 줄을 주석 줄로 유지</translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation>배우가 없는 줄은 직전 배우 유지</translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
+        <translation>주석: %1</translation>
     </message>
     <message>
         <source>Reopen with encoding</source>
@@ -5095,18 +5145,6 @@ Output device: %2</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>%1 can’t hold every character of this file</source>
-        <translation>%1(으)로는 이 파일의 모든 문자를 담을 수 없습니다</translation>
-    </message>
-    <message>
-        <source>These are written as a substitute character: %1</source>
-        <translation>다음 문자는 대체 문자로 기록됩니다: %1</translation>
-    </message>
-    <message>
-        <source>Write anyway</source>
-        <translation>그래도 쓰기</translation>
-    </message>
-    <message>
         <source>Manage recipes</source>
         <translation>레시피 관리</translation>
     </message>
@@ -5117,6 +5155,18 @@ Output device: %2</source>
     <message>
         <source>Delete %1</source>
         <translation>%1 삭제</translation>
+    </message>
+    <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>%1(으)로는 이 파일의 모든 문자를 담을 수 없습니다</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>다음 문자는 대체 문자로 기록됩니다: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>그래도 쓰기</translation>
     </message>
     <message>
         <source>Format</source>
@@ -5710,6 +5760,10 @@ Output device: %2</source>
         <translation>자막에 사용된 각 글꼴 파일을 zip 압축 파일에 넣습니다.</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>자막에 사용된 각 글꼴 파일을 폴더에 링크합니다. 글꼴을 옮기거나 삭제하면 링크가 끊어집니다.</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>새 압축 파일을 쓰면 기존 파일을 대체합니다.</translation>
     </message>
@@ -5742,8 +5796,16 @@ Output device: %2</source>
         <translation>폴더에 복사</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>폴더에 링크</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>Zip 압축 파일</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>MKV 파일의 글꼴은 링크할 파일이 없어 복사됩니다.</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5782,6 +5844,10 @@ Output device: %2</source>
         <translation>%1에 쓸 준비 완료</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>%1에 링크할 준비 완료</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>%1에 복사할 준비 완료</translation>
     </message>
@@ -5794,12 +5860,20 @@ Output device: %2</source>
         <translation>불완전함으로 표시하고 복사</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>불완전함으로 표시하고 링크</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>압축 파일 쓰기</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>글꼴 복사</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>글꼴 링크</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -6090,6 +6164,22 @@ Output device: %2</source>
         <translation>“%1” 글꼴을 압축할 수 없습니다.</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>“%1” 글꼴을 링크했습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>“%1” 글꼴을 링크할 수 없습니다. 개발자 모드를 켜거나 글꼴과 같은 드라이브의 폴더를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>“%1” 글꼴을 링크할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>글꼴을 링크할 폴더를 선택하십시오</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>불러온 자막이 없습니다. 자막을 불러오거나 이 옵션을 선택 해제하십시오.</translation>
     </message>
@@ -6185,12 +6275,24 @@ Output device: %2</source>
         <translation>복사함</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>링크할 파일이 없는 %1(을)를 복사했습니다.</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>완료, %1 링크함.</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>완료, %1 %2.</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>찾을 수 없음: %1.</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>링크할 수 없음: %1.</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6215,6 +6317,10 @@ Output device: %2</source>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>출력이 불완전함으로 표시되었습니다(“%1”).</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>성공적으로 완료되었습니다. %1 링크함.</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6243,6 +6349,10 @@ Output device: %2</source>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>%1(을)를 압축 파일 “%2”에 추가할 준비가 되었습니다.</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>%1(을)를 “%2”에 링크할 준비가 되었습니다.</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -8999,6 +9109,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Import lyrics…</source>
         <translation>가사 가져오기…</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>텍스트 가져오기…</translation>
     </message>
     <message>
         <source>Keep AI change</source>
@@ -12230,6 +12344,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open a saved file first</source>
         <translation>먼저 저장된 파일을 여세요</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation>일반 텍스트 파일을 열린 파일이나 새 파일의 줄로 바꿉니다</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>텍스트 가져오기…</translation>
     </message>
     <message>
         <source>Saves the document</source>
@@ -27530,6 +27652,10 @@ or codecs or a splitter may be missing</source>
         <translation>활성 줄 변경</translation>
     </message>
     <message>
+        <source>How this tool works</source>
+        <translation>이 도구 사용법</translation>
+    </message>
+    <message>
         <source>On the frame</source>
         <translation>프레임 위</translation>
     </message>
@@ -28344,6 +28470,254 @@ or codecs or a splitter may be missing</source>
         <translation>클릭하여 경로 점을 추가하고, 점을 끌어 경로 모양을 만드십시오. 텍스트가 경로를 따르며, Enter로 적용합니다.</translation>
     </message>
     <message>
+        <source>Ctrl-click writes it.</source>
+        <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
+        <translation>Ctrl+클릭할 때만 씁니다.</translation>
+    </message>
+    <message>
+        <source>Moves the positions, move points, clips, drawings and origins already in the lines.</source>
+        <extracomment>The visual tool guide: what the Position shifter writes</extracomment>
+        <translation>줄에 이미 있는 위치, 이동 점, 클립, 도형, 원점을 옮깁니다.</translation>
+    </message>
+    <message>
+        <source>Any tag from its list.</source>
+        <extracomment>The visual tool guide: what the All tags tool writes</extracomment>
+        <translation>목록에 있는 태그라면 무엇이든 씁니다.</translation>
+    </message>
+    <message>
+        <source>And the border and shadow sizes.</source>
+        <extracomment>The visual tool guide: what Perspective writes besides its tags</extracomment>
+        <translation>테두리와 그림자 크기도 씁니다.</translation>
+    </message>
+    <message>
+        <source>Copies of the line in clip strips, a mask drawing, or tags for each character or line.</source>
+        <extracomment>The visual tool guide: what the Gradient tool writes</extracomment>
+        <translation>클립 띠로 나눈 줄 사본, 마스크 도형, 또는 글자나 줄마다 태그를 씁니다.</translation>
+    </message>
+    <message>
+        <source>A line for each letter, with its own position and rotation, along the path.</source>
+        <extracomment>The visual tool guide: what Text on path writes</extracomment>
+        <translation>경로를 따라 글자마다 줄을 하나씩 쓰며, 각 줄에는 고유한 위치와 회전이 있습니다.</translation>
+    </message>
+    <message>
+        <source>A cross follows the pointer and shows its script coordinates.</source>
+        <translation>십자가 포인터를 따라다니며 스크립트 좌표를 보여 줍니다.</translation>
+    </message>
+    <message>
+        <source>Ctrl-click or middle-click puts the line there.</source>
+        <translation>Ctrl+클릭하거나 가운데 클릭하면 줄을 그곳에 놓습니다.</translation>
+    </message>
+    <message>
+        <source>Drag anywhere on the picture to move the line; you need not grab it.</source>
+        <translation>화면 어디서든 끌면 줄이 이동하며, 줄을 직접 잡을 필요는 없습니다.</translation>
+    </message>
+    <message>
+        <source>Shift locks the drag to one axis.</source>
+        <translation>Shift를 누르면 끌기가 한 축으로 고정됩니다.</translation>
+    </message>
+    <message>
+        <source>A right-click puts the line at the pointer.</source>
+        <translation>오른쪽 클릭하면 줄을 포인터 위치에 놓습니다.</translation>
+    </message>
+    <message>
+        <source>Set position by rectangle places the line by a rectangle you draw.</source>
+        <translation>“사각형으로 위치 설정”은 직접 그린 사각형에 맞춰 줄을 배치합니다.</translation>
+    </message>
+    <message>
+        <source>The left button sets the start point, the right button the end point.</source>
+        <translation>왼쪽 버튼으로 시작점을, 오른쪽 버튼으로 끝점을 정합니다.</translation>
+    </message>
+    <message>
+        <source>Start and End take their times in milliseconds from the line’s start.</source>
+        <translation>“시작”과 “끝”에는 줄 시작부터의 시간을 밀리초 단위로 입력합니다.</translation>
+    </message>
+    <message>
+        <source>Set movement using 2 points and the video position builds the move from a point on two frames.</source>
+        <translation>“두 점과 영상 위치로 이동 설정”은 두 프레임에서 같은 지점을 찍어 이동을 만듭니다.</translation>
+    </message>
+    <message>
+        <source>Left-drag scales the width, right-drag the height.</source>
+        <translation>왼쪽 끌기로 너비를, 오른쪽 끌기로 높이를 조정합니다.</translation>
+    </message>
+    <message>
+        <source>Shift-drag or middle-drag scales both.</source>
+        <translation>가운데 버튼으로 끌거나 Shift+끌기를 하면 둘 다 조정합니다.</translation>
+    </message>
+    <message>
+        <source>Set scale by rectangle scales the line to fit a rectangle you draw.</source>
+        <translation>“사각형으로 크기 설정”은 직접 그린 사각형에 맞게 줄 크기를 조정합니다.</translation>
+    </message>
+    <message>
+        <source>Drag round the origin cross to turn the line.</source>
+        <translation>원점 십자 주위로 끌어 줄을 회전하십시오.</translation>
+    </message>
+    <message>
+        <source>Drag the cross itself to move the origin.</source>
+        <translation>원점을 옮기려면 십자 자체를 끄십시오.</translation>
+    </message>
+    <message>
+        <source>Set angle from 2 points takes the angle from two points you click along something in the picture.</source>
+        <translation>“두 점으로 각도 설정”은 화면 속 대상을 따라 클릭한 두 점에서 각도를 가져옵니다.</translation>
+    </message>
+    <message>
+        <source>Left-drag turns the text round the vertical axis.</source>
+        <translation>왼쪽 끌기로 텍스트를 세로축 중심으로 회전합니다.</translation>
+    </message>
+    <message>
+        <source>Right-drag turns it round the horizontal axis; middle-drag does both.</source>
+        <translation>오른쪽 끌기는 가로축 중심으로 회전하고, 가운데 버튼으로 끌면 두 축 모두 회전합니다.</translation>
+    </message>
+    <message>
+        <source>Drag the origin cross to move the origin.</source>
+        <translation>원점을 옮기려면 원점 십자를 끄십시오.</translation>
+    </message>
+    <message>
+        <source>Drag a rectangle on the picture.</source>
+        <translation>화면에서 끌어 사각형을 그리십시오.</translation>
+    </message>
+    <message>
+        <source>Drag its edges or corners to resize it, or inside it to move it.</source>
+        <translation>가장자리나 모서리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Invert clip switches between showing what is inside and what is outside.</source>
+        <translation>“클립 반전”은 안쪽을 보일지 바깥쪽을 보일지 전환합니다.</translation>
+    </message>
+    <message>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
+        <translation>점 이동, 직선·베지어 곡선·B-스플라인 추가, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
+    </message>
+    <message>
+        <source>Click to add points and drag them to reshape.</source>
+        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오.</translation>
+    </message>
+    <message>
+        <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
+        <translation>Ctrl+클릭으로 여러 점을 선택합니다. 끄는 동안 Alt를 누르면 다른 점의 x 또는 y에 맞춰집니다.</translation>
+    </message>
+    <message>
+        <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
+        <translation>또는 도형을 고른 다음 끌어서 상자를 만들어 그리십시오. “도형 편집…”에서 직접 만든 도형을 추가할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Drag to move everything the Move toggles choose, by the same amount in every picked line.</source>
+        <translation>끌면 “이동” 토글로 고른 항목이 지정한 모든 줄에서 같은 양만큼 이동합니다.</translation>
+    </message>
+    <message>
+        <source>Or type an amount in X and Y: each Enter shifts the lines by that much.</source>
+        <translation>또는 X와 Y에 양을 입력하십시오. Enter를 누를 때마다 줄이 그만큼 이동합니다.</translation>
+    </message>
+    <message>
+        <source>Choose a tag in the inspector.</source>
+        <translation>속성 막대에서 태그를 고르십시오.</translation>
+    </message>
+    <message>
+        <source>Drag sideways on the picture, or turn the wheel, to change its value. Shift for small steps.</source>
+        <translation>화면에서 옆으로 끌거나 휠을 돌려 값을 바꾸십시오. Shift를 누르면 조금씩 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Set, Add, Multiply and Gradient decide how the value goes across characters or lines.</source>
+        <translation>“설정”, “더하기”, “곱하기”, “그라데이션”은 값이 글자나 줄에 걸쳐 바뀌는 방식을 정합니다.</translation>
+    </message>
+    <message>
+        <source>Drag a square corner to lay the text on a surface.</source>
+        <translation>사각형 모서리를 끌어 텍스트를 면에 맞추십시오.</translation>
+    </message>
+    <message>
+        <source>Drag inside the text to move it.</source>
+        <translation>텍스트 안쪽을 끌면 이동합니다.</translation>
+    </message>
+    <message>
+        <source>While dragging a corner, Shift keeps it on an edge, Ctrl snaps it and Alt sizes about the centre.</source>
+        <translation>모서리를 끄는 동안 Shift를 누르면 가장자리 위에 머물고, Ctrl을 누르면 맞춰지며, Alt를 누르면 중앙을 기준으로 크기가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>A double-click brings the nearest corner to the pointer.</source>
+        <translation>두 번 클릭하면 가장 가까운 모서리가 포인터 위치로 옵니다.</translation>
+    </message>
+    <message>
+        <source>Choose a mode, then drag across the sign from where the gradient starts to where it ends.</source>
+        <translation>모드를 고른 다음, 그라데이션이 시작하는 곳에서 끝나는 곳까지 간판을 가로질러 끄십시오.</translation>
+    </message>
+    <message>
+        <source>Drag the ends and the other handles to adjust it; the preview follows.</source>
+        <translation>양 끝과 다른 핸들을 끌어 조정하십시오. 미리 보기가 따라 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Enter applies the gradient as one step.</source>
+        <translation>Enter를 누르면 그라데이션을 한 단계로 적용합니다.</translation>
+    </message>
+    <message>
+        <source>Give the line a vector clip, or click on the picture to draw a path.</source>
+        <translation>줄에 벡터 클립을 지정하거나, 화면을 클릭하여 경로를 그리십시오.</translation>
+    </message>
+    <message>
+        <source>Drag the points to shape the path; the text follows it.</source>
+        <translation>점을 끌어 경로 모양을 만드십시오. 텍스트가 경로를 따릅니다.</translation>
+    </message>
+    <message>
+        <source>Enter applies: each letter becomes its own line, and the original is kept as a comment.</source>
+        <translation>Enter를 누르면 적용합니다. 글자마다 별도의 줄이 되고, 원래 줄은 주석으로 남습니다.</translation>
+    </message>
+    <message>
+        <source>Chooses this tool</source>
+        <extracomment>The visual tool guide&apos;s keys: what the tool&apos;s own key does</extracomment>
+        <translation>이 도구 선택</translation>
+    </message>
+    <message>
+        <source>Arrow keys</source>
+        <extracomment>The visual tool guide&apos;s keys; the arrows work while the pointer is over the picture</extracomment>
+        <translation>화살표 키</translation>
+    </message>
+    <message>
+        <source>Change the scale by 1 %</source>
+        <translation>크기를 1%씩 변경</translation>
+    </message>
+    <message>
+        <source>Move the selected points by one pixel</source>
+        <translation>선택한 점을 1픽셀씩 이동</translation>
+    </message>
+    <message>
+        <source>Nudge by one pixel</source>
+        <translation>1픽셀씩 미세 이동</translation>
+    </message>
+    <message>
+        <source>Shift+Arrow keys</source>
+        <translation>Shift+화살표 키</translation>
+    </message>
+    <message>
+        <source>Nudge by a tenth of a pixel</source>
+        <translation>0.1픽셀씩 미세 이동</translation>
+    </message>
+    <message>
+        <source>Alt+Arrow keys</source>
+        <translation>Alt+화살표 키</translation>
+    </message>
+    <message>
+        <source>Nudge the end point</source>
+        <translation>끝점 미세 이동</translation>
+    </message>
+    <message>
+        <source>Wheel</source>
+        <translation>휠</translation>
+    </message>
+    <message>
+        <source>Steps through the modes</source>
+        <translation>모드를 차례로 전환</translation>
+    </message>
+    <message>
+        <source>Changes the value</source>
+        <translation>값 변경</translation>
+    </message>
+    <message>
+        <source>Applies</source>
+        <translation>적용</translation>
+    </message>
+    <message>
+        <source>Drops the preview</source>
+        <translation>미리 보기 취소</translation>
+    </message>
+    <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
         <translation>사각형</translation>
@@ -29077,6 +29451,14 @@ do not work on comments</source>
     <message>
         <source>Nothing would be left of the drawing</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes</source>
+        <translation>쓰는 내용</translation>
+    </message>
+    <message>
+        <source>More in the guide</source>
+        <translation>가이드에서 더 보기</translation>
     </message>
 </context>
 <context>

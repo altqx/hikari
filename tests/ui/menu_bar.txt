@@ -9,6 +9,7 @@ File > Reopen with encoding… [GLOBAL_REOPEN_WITH_ENCODING]
 File > -
 File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Import lyrics… [GLOBAL_IMPORT_LYRICS]
+File > Import text… [GLOBAL_IMPORT_TEXT]
 File > -
 File > Save [GLOBAL_SAVE_SUBS]
 File > Save as… [GLOBAL_SAVE_SUBS_AS]
