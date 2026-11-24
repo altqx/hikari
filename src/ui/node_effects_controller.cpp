@@ -1121,12 +1121,14 @@ QString NodeEffectsController::previewBlocked() const
 {
     if (!m_shown || !m_previewOnVideo || !m_graph)
         return {};
-    if (!m_source || m_sources.empty())
+    if (!m_source)
         return QStringLiteral("noSource");
     if (!trusted())
         return QStringLiteral("untrusted");
     if (!m_preview && (!m_runProblems.empty() || !application::validateGraph(*m_graph).empty()))
         return QStringLiteral("problems");
+    if (m_sources.empty())
+        return QStringLiteral("noSource");
     return {};
 }
 

@@ -508,6 +508,12 @@ private slots:
         m_session->setSelection({dialogue[0], {dialogue[0]}, {}, {}});
         controller().refresh();
         QCOMPARE(controller().source(), qulonglong(dialogue[0].value));
+        TemplateEditorController editor;
+        editor.setSessionSource([this] { return &*m_session; });
+        controller().shareTrustWith(&editor);
+        controller().addNode(QStringLiteral("lua.code"), 300, 200);
+        controller().commit();
+        QCOMPARE(controller().previewBlocked(), QStringLiteral("untrusted"));
     }
 
     void aValueChangeRunsThePreviewAgain()
