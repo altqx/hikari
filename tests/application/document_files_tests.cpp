@@ -329,6 +329,47 @@ TEST_F(Files, ReloadIsStagedAndRejectedWhenStale)
     EXPECT_FALSE(service.session(doc)->isDirty());
 }
 
+TEST_F(Files, AReloadThroughAnEncodingStartsModifiedAndSavesUtf8)
+{
+    std::string latin = kAss;
+    latin.replace(latin.find(",one"), 4, ",caf\xE9");
+    disk.files["/a.ass"] = bytesOf(latin);
+    const auto doc = open("/a.ass");
+    const ToUtf8 latin1 = [](std::span<const std::byte> in) -> std::optional<std::vector<std::byte>> {
+        std::vector<std::byte> out;
+        for (const std::byte b : in) {
+            if (b == std::byte{0xFF})
+                return std::nullopt;
+            if (b == std::byte{0xE9}) {
+                out.push_back(std::byte{0xC3});
+                out.push_back(std::byte{0xA9});
+            } else {
+                out.push_back(b);
+            }
+        }
+        return out;
+    };
+    const auto generation = service.generation(doc);
+    auto staged = service.stageReload(doc, latin1);
+    ASSERT_TRUE(staged);
+    ASSERT_TRUE(service.activate(std::move(*staged)));
+    EXPECT_EQ(service.generation(doc), generation + 1);
+    EXPECT_EQ(service.session(doc)->document().lines()[0]->text, u8"café");
+    EXPECT_TRUE(service.session(doc)->isDirty());
+    EXPECT_EQ(text(disk.files["/a.ass"]), latin);
+
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    ASSERT_TRUE(service.startSave(*plan));
+    finish(WriteOutcome::Written);
+    EXPECT_NE(text(disk.files["/a.ass"]).find(",café\n"), std::string::npos);
+    EXPECT_FALSE(service.session(doc)->isDirty());
+
+    disk.files["/a.ass"].push_back(std::byte{0xFF});
+    EXPECT_EQ(service.stageReload(doc, latin1).error().reason, OpenError::NotInEncoding);
+    EXPECT_EQ(service.session(doc)->document().lines()[0]->text, u8"café");
+}
+
 TEST_F(Files, StalePlansAreRejected)
 {
     const auto doc = open("/a.ass");

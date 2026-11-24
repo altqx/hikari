@@ -1,6 +1,7 @@
 #include "hikari/app/plugin_content.h"
 
 #include "hikari/app/plugin_nodes.h"
+#include "icon_theme.h"
 
 #include "workspace_layout.h"
 
@@ -39,8 +40,11 @@ std::optional<std::string> layoutProblem(std::span<const std::byte> bytes)
 
 plugins::ContentFileChecks contentFileChecks()
 {
+    std::vector<std::string> roles;
+    for (const QString &role : ui::icons::roles())
+        roles.push_back(role.toStdString());
     return {application::styleCatalogueProblem, application::karaokePresetProblem, application::dictionaryAffProblem,
-            application::dictionaryDicProblem, application::graphProblem, layoutProblem};
+            application::dictionaryDicProblem, application::graphProblem, layoutProblem, std::move(roles)};
 }
 
 bool pluginContentShows(const plugins::InstalledPlugin &entry, const plugins::Manifest &manifest)

@@ -15,7 +15,9 @@ Each line of the file becomes one Line, starting and ending at 0:00:00.00.
 
 The choices are kept in `textImport.options`.
 
-The file must be UTF-8, with or without a byte order mark, and at most 8 MB. An Aegisub timecodes file (`# timecode…`) is refused, with Video › Open timecodes… named instead. The dialog says why when it can't import, and Import stays off.
+**Encoding** starts at the one the file suggests: a UTF-16 byte order mark, a guess for text that isn't UTF-8, else UTF-8. The list is the one Reopen with encoding… offers. When the bytes aren't text in the chosen encoding, the dialog asks for another.
+
+The file must be at most 8 MB. An Aegisub timecodes file (`# timecode…`) is refused, with Video › Open timecodes… named instead. The dialog says why when it can't import, and Import stays off.
 
 ## Where the Lines go
 
@@ -24,7 +26,6 @@ The file must be UTF-8, with or without a byte order mark, and at most 8 MB. An 
 
 ## Not yet
 
-- An **Encoding** choice, once Reopen with encoding… (PF-2) brings the shared encoding list.
 - Aegisub's Tool/Import/Text options are not read by Import settings.
 
 ## Tests

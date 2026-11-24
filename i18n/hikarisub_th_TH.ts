@@ -307,7 +307,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>เปลี่ยนชื่อ</translation>
+        <translation type="vanished">เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -752,10 +752,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1436,7 +1432,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>เปิด</translation>
+        <translation type="vanished">เปิด</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -3483,6 +3479,22 @@ Output device: %2</source>
         <translation>เก็บฉบับของฉัน</translation>
     </message>
     <message>
+        <source>%1 looks like %2, not UTF-8. Reopening drops the changes you made here.</source>
+        <translation>%1 ดูเหมือนเป็น %2 ไม่ใช่ UTF-8 การเปิดใหม่จะทิ้งการเปลี่ยนแปลงที่คุณทำไว้ที่นี่</translation>
+    </message>
+    <message>
+        <source>%1 looks like %2, not UTF-8.</source>
+        <translation>%1 ดูเหมือนเป็น %2 ไม่ใช่ UTF-8</translation>
+    </message>
+    <message>
+        <source>Reopen as %1</source>
+        <translation>เปิดใหม่เป็น %1</translation>
+    </message>
+    <message>
+        <source>Other encoding…</source>
+        <translation>การเข้ารหัสอักขระอื่น…</translation>
+    </message>
+    <message>
         <source>Convert “%1” to ASS before saving it?</source>
         <translation>แปลง “%1” เป็น ASS ก่อนบันทึกหรือไม่</translation>
     </message>
@@ -3557,6 +3569,22 @@ Output device: %2</source>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>วิดีโอที่ฝังคำบรรยาย (*.mkv *.ogm)</translation>
+    </message>
+    <message>
+        <source>Reopening drops the changes you made here. The file then saves as UTF-8.</source>
+        <translation>การเปิดใหม่จะทิ้งการเปลี่ยนแปลงที่คุณทำไว้ที่นี่ จากนั้นไฟล์จะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>The file then saves as UTF-8.</source>
+        <translation>จากนั้นไฟล์จะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>Detected</source>
+        <translation>ตรวจพบ</translation>
+    </message>
+    <message>
+        <source>Reopen</source>
+        <translation>เปิดใหม่</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -3649,6 +3677,10 @@ Output device: %2</source>
     <message>
         <source>Choose where to save the untitled document.</source>
         <translation>เลือกตำแหน่งที่จะบันทึกเอกสารที่ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>The file is not text in that encoding; nothing was changed.</source>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความในการเข้ารหัสอักขระนั้น ไม่มีสิ่งใดถูกเปลี่ยน</translation>
     </message>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
@@ -4025,7 +4057,12 @@ Output device: %2</source>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation>ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
+        <translation type="vanished">ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความ %1 เลือกการเข้ารหัสอักขระอื่น</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
@@ -4058,6 +4095,10 @@ Output device: %2</source>
     <message>
         <source>Comment: %1</source>
         <translation>ความคิดเห็น: %1</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ</translation>
     </message>
 </context>
 <context>
@@ -4731,12 +4772,20 @@ Output device: %2</source>
         <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
     </message>
     <message>
+        <source>Choose an encoding from the list.</source>
+        <translation>เลือกการเข้ารหัสอักขระจากรายการ</translation>
+    </message>
+    <message>
         <source>The style options can’t be saved in this file.</source>
         <translation>บันทึกตัวเลือกสไตล์ในไฟล์นี้ไม่ได้</translation>
     </message>
     <message>
         <source>YouTube timed text couldn’t be made from this file: %1</source>
         <translation>สร้างข้อความกำหนดเวลาของ YouTube จากไฟล์นี้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written in %1.</source>
+        <translation>ไม่สามารถเขียนไฟล์เป็น %1 ได้</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -5109,8 +5158,24 @@ Output device: %2</source>
         <translation>ลบ %1</translation>
     </message>
     <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>%1 ไม่สามารถเก็บอักขระทุกตัวของไฟล์นี้ได้</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>อักขระเหล่านี้จะเขียนเป็นอักขระแทนที่: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>เขียนต่อไป</translation>
+    </message>
+    <message>
         <source>Format</source>
         <translation>รูปแบบ</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>การเข้ารหัสอักขระ</translation>
     </message>
     <message>
         <source>Lines</source>
@@ -9187,6 +9252,10 @@ Failed to copy %2 fonts.</source>
         <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -12242,6 +12311,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
@@ -12264,6 +12337,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>เปิด %1</translation>
+    </message>
+    <message>
+        <source>Reads the file again in the encoding you choose; it then saves as UTF-8</source>
+        <translation>อ่านไฟล์อีกครั้งด้วยการเข้ารหัสอักขระที่คุณเลือก จากนั้นจะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>Open a saved file first</source>
+        <translation>เปิดไฟล์ที่บันทึกไว้ก่อน</translation>
     </message>
     <message>
         <source>Turns a plain text file into lines, in the open file or a new one</source>
@@ -12646,7 +12727,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>เปิด</translation>
+        <translation type="vanished">เปิด</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13183,7 +13264,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">ยกเลิก</translation>
+        <translation type="obsolete">ยกเลิก</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -18506,6 +18587,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin isn’t on.</source>
         <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>ธีมสี: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>ธีมไอคอน: %1</translation>
     </message>
 </context>
 <context>
