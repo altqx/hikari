@@ -2,7 +2,7 @@
 
 How the node effects editor is used: menus, the Node panel, adding nodes, choosing source lines, the canvas and its keys ([#1436](https://github.com/altqx/hikari/issues/1436)). [Node effects mode](effects-mode.md) says how the mode looks in Quiet, and this document builds on it. What the engine does with a graph is [node-effects.md](../node-effects.md)'s.
 
-The owner took every recommendation on the node editor gate board on 2026-11-24 (Q814–Q817; see [Decisions](#decisions)). The design assumes that an undo is never overwritten by a pending edit ([#1437](https://github.com/altqx/hikari/issues/1437)). The app doesn't change until the code lands.
+The owner took every recommendation on the node editor gate board on 2026-11-24 (Q814–Q817; see [Decisions](#decisions)). The design assumes that an undo is never overwritten by a pending edit ([#1437](https://github.com/altqx/hikari/issues/1437)), and that the preview follows every edit ([#1440](https://github.com/altqx/hikari/issues/1440)). The app doesn't change until the code lands.
 
 ## Right-click menus
 
@@ -143,6 +143,16 @@ A frame is a titled box behind nodes: `raised` at 40 % with a 1-unit `line` edge
 ### Reroutes
 
 A reroute point is a 6-unit dot on a wire that the wire bends through. Double-clicking a wire, or Add a reroute point, adds one; it drags like a node and Delete removes it.
+
+## The preview badge
+
+[The preview badge](effects-mode.md#the-preview-badge) always says why the preview shows nothing new, with its dot in `warning` and its text in `muted`:
+
+| Why | Badge |
+| --- | --- |
+| No source Line is chosen, or none is at the playhead | “Preview · no source line here” |
+| A node has a problem | “Preview · line 46 · last run that worked”, as now; with no earlier run, “Preview · fix the problems to see it” |
+| Lua isn't trusted | “Preview off until you trust this file”, as now |
 
 ## Feedback
 
