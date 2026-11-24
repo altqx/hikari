@@ -377,6 +377,8 @@ QString stateText(application::ExportStepOutcome::State state)
         return QStringLiteral("notRun");
     case State::Skipped:
         return QStringLiteral("skipped");
+    case State::Stopped:
+        return QStringLiteral("stopped");
     }
     return {};
 }
@@ -705,9 +707,12 @@ QVariantMap Application::exportAfterSteps(application::DocumentId target, std::s
                            answer](application::ExportStepsResult result) {
         if (!self)
             return;
+        self->m_stopExport = {};
         QVariantMap out;
         if (result.failed) {
             out = {{QStringLiteral("ok"), false}, {QStringLiteral("stepsFailed"), true}};
+        } else if (result.stopped) {
+            out = {{QStringLiteral("ok"), false}, {QStringLiteral("stopped"), true}};
         } else {
             if (write->options.lines)
                 for (const auto *line : result.document.lines())
@@ -728,11 +733,18 @@ QVariantMap Application::exportAfterSteps(application::DocumentId target, std::s
         if (self)
             emit self->exportStepStarted(QString::fromStdString(name), int(step) + 1, int(count));
     };
-    application::runExportSteps(document, recipe, available, context, finished);
+    auto stop = application::runExportSteps(document, recipe, available, context, finished);
     *returned = true;
     if (*answer)
         return **answer;
+    m_stopExport = std::move(stop);
     return {{QStringLiteral("ok"), false}, {QStringLiteral("pending"), true}};
+}
+
+void Application::stopExport()
+{
+    if (m_stopExport)
+        m_stopExport();
 }
 
 QVariantMap Application::exportSteps() const

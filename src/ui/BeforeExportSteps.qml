@@ -242,6 +242,8 @@ ColumnLayout {
             return qsTr("Skipped: its script isn’t loaded")
         case "notRun":
             return qsTr("Didn’t run")
+        case "stopped":
+            return qsTr("Stopped")
         }
         switch (row.problem) {
         case "noTimecodes":

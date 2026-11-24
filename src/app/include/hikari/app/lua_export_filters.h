@@ -2,9 +2,18 @@
 
 #include "hikari/application/export_steps.h"
 
+#include <QPointer>
+
 namespace hikari::app {
 
 class AutomationShell;
+}
+
+namespace hikari::backends {
+class LuaScriptHost;
+}
+
+namespace hikari::app {
 
 // Export as's Lua steps, run by the loaded scripts' helpers while no macro runs.
 class LuaExportFilters : public application::ExportFilterPort {
@@ -16,6 +25,7 @@ public:
              const application::DialogRequest &settings, Done done) override;
     bool configure(const std::string &scriptFile, const std::string &filterName,
                    const application::MacroSnapshot &snapshot, DialogDone done) override;
+    void stop() override;
 
 private:
     template <class Start, class Finish> bool start(const std::string &scriptFile, const std::string &filterName,
@@ -27,6 +37,7 @@ private:
     std::optional<Target> find(const std::string &scriptFile, const std::string &filterName) const;
 
     AutomationShell &m_shell;
+    QPointer<backends::LuaScriptHost> m_running;
 };
 
 }

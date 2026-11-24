@@ -750,8 +750,11 @@ public:
     // options.steps, [{id, on, settings}], run on the copy first for HikariSub's own formats; a failing step
     // writes nothing. {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number,
     // losses}]}, both with steps: [{id, name, state, lines, problem, error}] when steps ran and stepsFailed when
-    // one failed; {pending} while a Lua step runs, the result then coming from pluginExportFinished.
+    // one failed; {pending} while a Lua step runs, the result then coming from pluginExportFinished
+    // ({ok: false, stopped, steps} after stopExport).
     Q_INVOKABLE QVariantMap exportTo(const QUrl &file, const QString &format, const QVariantMap &options);
+    // Stops a pending exportTo's steps; nothing is written.
+    Q_INVOKABLE void stopExport();
     // Before export's lists for the editing target: {available: [{id, name, priority, hasConfig, script}],
     // newList, fromFile (empty without an Export Filters line): [{id, on, settings}], recipes: [{name, tier,
     // hidden}], hasProject}.
@@ -1597,6 +1600,7 @@ private:
     std::unique_ptr<ui::ExportRecipes> m_exportRecipes;
     std::unique_ptr<LuaExportFilters> m_luaExportFilters;
     std::map<std::uint64_t, std::string> m_exportFiltersToSave;
+    application::StopExportSteps m_stopExport;
     std::map<QString, application::DialogRequest> m_exportStepDialogs;
     int m_selectOptions = 0;
     std::optional<core::ConversionOptions> assConversionOptions() const;

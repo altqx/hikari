@@ -2715,7 +2715,7 @@ ApplicationWindow {
         }
         Action {
             id: fontCollectorAction
-            text: qsTr("Collect qsTr("&Font collector")fonts…")
+            text: qsTr("Collect &fonts…")
             enabled: root.shell.hasEditingTarget && root.shell.assColumns
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
         }
@@ -9413,8 +9413,9 @@ ApplicationWindow {
             title: window ? window.runTitle : ""
             doing: window ? window.doingText : ""
             progress: window ? window.runProgress : -1
-            canStop: false
+            canStop: window !== null && window.canStop
             running: window !== null && window.exporting && !window.visible
+            onStopRequested: root.app.stopExport()
             onOpenRequested: root.openExportDialog()
         }
         RunCard {

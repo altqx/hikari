@@ -33,6 +33,8 @@ DialogWindow {
     ]
     readonly property var formats: builtInFormats.concat(setup.pluginFormats ?? [])
     property bool exporting: false
+    readonly property bool canStop: exporting && !format.startsWith("plugin:")
+    property bool stopped: false
     readonly property string format: formats[Math.max(0, formatChoice.currentIndex)].id
     readonly property var lineChoices: ["all", "selected", "shown"]
     property var setup: ({})
@@ -157,6 +159,7 @@ DialogWindow {
         srv3Popover.openFor(swatch, srv3Colour, () => srv3Colour.begin(), { title: name, alpha: false, clear: true, focus: swatch })
     }
     function run(replace, writeUnencodable) {
+        stopped = false
         beforeExport.progress = ""
         beforeExport.progressValue = 0
         beforeExport.outcome = []
@@ -218,6 +221,11 @@ DialogWindow {
         if (result.stepsFailed) {
             setProblem({})
             beforeExport.outcome = result.steps
+            return
+        }
+        if (result.stopped) {
+            setProblem({})
+            stopped = true
             return
         }
         if (!result.ok) {
@@ -680,13 +688,38 @@ DialogWindow {
                 color: Theme.accent
             }
         }
-        Label {
-            objectName: "beforeExportProgress"
+        RowLayout {
+            spacing: 8
             Layout.fillWidth: true
-            elide: Text.ElideRight
-            font: dialog.fontAt(12)
-            text: dialog.doingText
+            Label {
+                objectName: "beforeExportProgress"
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+                font: dialog.fontAt(12)
+                text: dialog.doingText
+            }
+            Label {
+                text: qsTr("Closing the window keeps it going.")
+                color: Theme.muted
+                font: dialog.fontAt(12)
+            }
+            Button {
+                objectName: "exportStop"
+                visible: dialog.canStop
+                flat: true
+                text: qsTr("Stop")
+                onClicked: app.stopExport()
+            }
         }
+    }
+    Label {
+        objectName: "exportStopped"
+        visible: dialog.stopped
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        color: Theme.muted
+        font: dialog.fontAt(12)
+        text: qsTr("Stopped. Nothing was written.")
     }
     FieldError {
         objectName: "exportProblem"

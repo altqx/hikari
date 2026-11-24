@@ -104,11 +104,13 @@ public:
     // The filter's config dialog for the snapshot. False when it can't start.
     virtual bool configure(const std::string &scriptFile, const std::string &filterName, const MacroSnapshot &snapshot,
                            DialogDone done) = 0;
+    // Asks the running filter to end; its `done` still comes.
+    virtual void stop() = 0;
 };
 
 struct ExportStepOutcome {
-    // Skipped: its script isn't loaded or trusted.
-    enum class State { Done, Failed, NotRun, Skipped };
+    // Skipped: its script isn't loaded or trusted. Stopped: the run was stopped while this step ran.
+    enum class State { Done, Failed, NotRun, Skipped, Stopped };
     // Busy: a macro or another step was running, so the script couldn't start.
     enum class Problem { None, ScriptError, NotApplied, NoTimecodes, BadFrameRate, Busy };
     std::string id, name;
@@ -131,11 +133,16 @@ struct ExportStepsResult {
     core::Document document;
     std::vector<ExportStepOutcome> steps; // one per step that is on, in order
     bool failed = false;                 // a step failed: nothing may be written
+    bool stopped = false;                // the run was stopped: nothing may be written
 };
 
+using StopExportSteps = std::function<void()>;
+
 // Runs the recipe's steps that are on, in order, on `document`. A step whose script isn't available is skipped;
-// a failing step stops the run and the rest don't run. `done` may be called before this returns.
-void runExportSteps(core::Document document, const ExportRecipe &recipe, const std::vector<AvailableStep> &available,
-                    const ExportStepsContext &context, std::function<void(ExportStepsResult)> done);
+// a failing step stops the run and the rest don't run. `done` may be called before this returns. The returned
+// function stops the run: the running Lua step is asked to end and no later step runs.
+StopExportSteps runExportSteps(core::Document document, const ExportRecipe &recipe,
+                               const std::vector<AvailableStep> &available, const ExportStepsContext &context,
+                               std::function<void(ExportStepsResult)> done);
 
 }

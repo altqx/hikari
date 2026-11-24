@@ -155,6 +155,22 @@ QString noteText(const Note &n)
     return {};
 }
 
+QString faceNotes(const Block &block)
+{
+    QStringList lines;
+    if (!block.styles.empty()) {
+        QStringList styles;
+        for (const auto &[style, tabs] : block.styles)
+            styles << qs(style);
+        lines << QCoreApplication::translate("HikariSub.Fonts", "Styles: %1").arg(styles.join(QStringLiteral(", ")));
+    }
+    for (const auto *notes : {&block.infos, &block.warnings})
+        for (const auto &note : *notes)
+            if (note.kind != Note::Kind::FoundFile && note.kind != Note::Kind::UnusedStyle)
+                lines << noteText(note);
+    return lines.join(QLatin1Char('\n'));
+}
+
 std::shared_ptr<const std::vector<std::byte>> readFontFile(const std::u16string &path)
 {
     QFile f(QString::fromUtf16(path.data(), qsizetype(path.size())));
@@ -690,12 +706,7 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
     m_familyNotes.clear();
     for (const auto *blocks : {&m_review->found, &m_review->notFound})
         for (const auto &[family, block] : *blocks)
-            for (const auto *list : {&block.infos, &block.warnings})
-                for (const auto &note : *list)
-                    if (note.kind != Note::Kind::FoundFile && note.kind != Note::Kind::UnusedStyle) {
-                        QString &notes = m_familyNotes[qs(family)];
-                        notes += (notes.isEmpty() ? QString() : QStringLiteral("\n")) + noteText(note);
-                    }
+            m_familyNotes[qs(family)] = faceNotes(block);
     m_facesToCheck = int(m_faces.size());
     m_filesToWrite = int(m_review->files.size());
     m_filesCopiedInstead = m_runAction == CollectorAction::LinkToFolder

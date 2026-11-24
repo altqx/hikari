@@ -12566,6 +12566,8 @@ private slots:
         }
         QCOMPARE(rows, (QStringList{QStringLiteral("Arial 400 found arial.ttf 1"), QStringLiteral("Times 400 found times.ttf 1"),
                                     QStringLiteral("Nowhere 400 missing  1")}));
+        QCOMPARE(collector.rows().value(0).toMap().value(QStringLiteral("notes")).toString(), QStringLiteral("Styles: Default"));
+        QVERIFY(collector.rows().value(2).toMap().value(QStringLiteral("notes")).toString().startsWith(QStringLiteral("Styles: Sign")));
         QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorLogEmpty")->isVisible());
         QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorSummary")->property("text").toString(),
                  QStringLiteral("3 fonts · 1 missing."));
