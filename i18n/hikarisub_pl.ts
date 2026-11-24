@@ -13531,6 +13531,21 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">Zmień nazwę</translation>
     </message>
     <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead</extracomment>
+        <translation>&lt;b&gt;Podgląd&lt;/b&gt; · brak tu linijki źródłowej</translation>
+    </message>
+    <message>
+        <source>Preview off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted</extracomment>
+        <translation>Podgląd wyłączony, dopóki nie zaufasz temu plikowi</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked</extracomment>
+        <translation>&lt;b&gt;Podgląd&lt;/b&gt; · popraw problemy, aby go zobaczyć</translation>
+    </message>
+    <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
         <translation type="unfinished">&lt;b&gt;Podgląd&lt;/b&gt; · linijka %1 · %2</translation>

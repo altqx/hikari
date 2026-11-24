@@ -13279,6 +13279,21 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">이름 바꾸기</translation>
     </message>
     <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead</extracomment>
+        <translation>&lt;b&gt;미리 보기&lt;/b&gt; · 여기에 원본 줄 없음</translation>
+    </message>
+    <message>
+        <source>Preview off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted</extracomment>
+        <translation>이 파일을 신뢰할 때까지 미리 보기 꺼짐</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked</extracomment>
+        <translation>&lt;b&gt;미리 보기&lt;/b&gt; · 문제를 고치면 표시됨</translation>
+    </message>
+    <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
         <translation type="unfinished">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>

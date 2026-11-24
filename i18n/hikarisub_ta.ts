@@ -13405,6 +13405,21 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">மறுபெயரிடு</translation>
     </message>
     <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead</extracomment>
+        <translation>&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · இங்கே மூல வரி இல்லை</translation>
+    </message>
+    <message>
+        <source>Preview off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted</extracomment>
+        <translation>இந்தக் கோப்பை நீங்கள் நம்பும் வரை முன்னோட்டம் முடக்கப்பட்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Preview&lt;/b&gt; · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked</extracomment>
+        <translation>&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · அதைப் பார்க்க சிக்கல்களைச் சரிசெய்யவும்</translation>
+    </message>
+    <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
         <translation type="unfinished">&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · வரி %1 · %2</translation>
