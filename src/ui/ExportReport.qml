@@ -162,8 +162,9 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: Theme.headerHeight
         radius: Theme.radius
-        // MUST KILL: success at 14 % is the spec's fill; it has no theme role
-        color: Qt.alpha(Theme.success, 0.14)
+        color: Theme.successFill
+        border.width: Theme.highContrast ? 1 : 0
+        border.color: Theme.success
         Label {
             objectName: "exportNothingLostText"
             anchors.fill: parent
