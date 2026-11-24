@@ -586,7 +586,7 @@ constexpr NameRow kNames[] = {
         {5030, "Shift times…"},
         {5019, "Close audio"},
         {5010, "Replace…"},
-        {5028, "Font collector"},
+        {5028, "Collect fonts…"},
         {5112, "User guide"},
         {5111, "Credits"},
         {5029, "Hide tags in the Grid"},

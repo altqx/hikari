@@ -42,7 +42,7 @@ A legacy translation follows legacy's own use of its id, so a carried translatio
 | Language | Context | Source | Carried translation | Problem |
 | --- | --- | --- | --- | --- |
 | ko_KR, ta | HikariSub.Video, HikariSub.VisualTools | Editing | 갱신 정보, புதுப்பித்தார் | Means "update information" / "updated". Legacy's id is the Script properties field; here it is a video-follow choice and the shape editing group. |
-| ko_KR | HikariSub.Fonts | Start | 시작 시간 | Means "start time", but it labels the Font collector's Start button. |
+| ko_KR | HikariSub.Fonts | Start | 시작 시간 | Means "start time", but it labels Collect fonts' Start button. |
 | ko_KR | HikariSub.Tabs | Modified | 적용 가능 | Means "applicable", but it marks a modified tab. |
 | ko_KR | HikariSub.Fonts | Sample | 예) | Means "e.g.)", but it is the catalog window's sample heading. |
 | ko_KR | HikariSub.VisualTools | Value: | 명도: | Means a colour's "value" (brightness), but it labels a tag's value. |

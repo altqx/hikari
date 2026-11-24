@@ -65,7 +65,17 @@ DialogWindow {
         { key: "shadow", icon: "colour-shadow", tip: qsTr("Current word shadow"), name: qsTr("Current word shadow colour for %1") }
     ]
 
+    property bool runsOn: false
+    readonly property string runTitle: qsTr("Exporting")
+    readonly property string doingText: beforeExport.progress !== "" ? beforeExport.progress : runTitle
+    readonly property real runProgress: beforeExport.progress !== "" ? beforeExport.progressValue : -1
+    onVisibleChanged: if (!visible && exporting) runsOn = true
     function openDialog() {
+        if (runsOn) {
+            runsOn = false
+            open()
+            return
+        }
         setup = app.exportSetup()
         if (!setup.format)
             return
@@ -677,7 +687,7 @@ DialogWindow {
             Layout.fillWidth: true
             elide: Text.ElideRight
             font: dialog.fontAt(12)
-            text: beforeExport.progress !== "" ? beforeExport.progress : qsTr("Exporting")
+            text: dialog.doingText
         }
     }
     FieldError {

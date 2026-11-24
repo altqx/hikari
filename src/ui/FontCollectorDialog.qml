@@ -23,6 +23,11 @@ DialogWindow {
     defaultButton: startButton
 
     function openDialog() {
+        if (runsOn) {
+            runsOn = false
+            open()
+            return
+        }
         collector.open()
         path.text = collector.directory
         actions.currentIndex = segmentActions.indexOf(collector.action)
@@ -148,11 +153,20 @@ DialogWindow {
             : collector.action === 1 ? qsTr("Copy to a folder copies %n file(s).", "", files) : ""
         return parts.join(" · ") + "." + (action.length > 0 ? " " + action : "")
     }
-    onClosing: close => {
+    property bool runsOn: false
+    readonly property string runTitle: qsTr("Collecting fonts")
+    readonly property real runProgress: collector.facesToCheck > 0 ? Math.min(1, collector.rows.length / collector.facesToCheck) : -1
+    readonly property string doingText: collector.facesToCheck > 0
+        ? qsTr("Checking · %1 of %n font(s)", "", collector.facesToCheck).arg(collector.rows.length)
+        : qsTr("Checking fonts")
+    onVisibleChanged: {
+        if (visible || WindowFrame.remaking(dialog))
+            return
         if (working)
-            close.accepted = false
+            runsOn = true
+        else if (!runsOn)
+            collector.close()
     }
-    onVisibleChanged: if (!visible && !WindowFrame.remaking(dialog)) collector.close()
 
     component RowLabel: Label {
         Layout.alignment: Qt.AlignTop
@@ -420,8 +434,7 @@ DialogWindow {
             Rectangle {
                 objectName: "fontCollectorProgress"
                 height: parent.height
-                width: dialog.collector.facesToCheck > 0
-                       ? parent.width * Math.min(1, dialog.collector.rows.length / dialog.collector.facesToCheck) : 0
+                width: parent.width * Math.max(0, dialog.runProgress)
                 color: Theme.accent
             }
         }
@@ -433,9 +446,7 @@ DialogWindow {
                 font: dialog.fontAt(12)
                 elide: Text.ElideRight
                 Layout.fillWidth: true
-                text: dialog.collector.facesToCheck > 0
-                      ? qsTr("Checking · %1 of %n font(s)", "", dialog.collector.facesToCheck).arg(dialog.collector.rows.length)
-                      : qsTr("Checking fonts")
+                text: dialog.doingText
             }
             Label {
                 text: qsTr("Closing the window keeps it going.")
