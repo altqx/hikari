@@ -238,6 +238,11 @@ TEST_F(McpClientsTest, APluginServerStartsInItsSandboxWithOnlyItsOwnEnvironment)
     clients.setPluginStart([&](const McpServerEntry &server) -> std::expected<hikari::backends::ProgramProcess::Options, QString> {
         asked.push_back(server.plugin + "/" + server.pluginServer);
         QProcessEnvironment environment;
+#ifdef _WIN32
+        // An AppContainer doesn't start without LOCALAPPDATA, and Windows programs don't load without SystemRoot.
+        for (const char *name : {"PATH", "SystemRoot", "LOCALAPPDATA"})
+            environment.insert(QString::fromLatin1(name), qEnvironmentVariable(name));
+#endif
         environment.insert(QStringLiteral("HIKARI_TEST_SECRET"), QStringLiteral("from-settings"));
         sandbox::Profile profile;
         profile.name = QStringLiteral("HikariSub.Program.test");
