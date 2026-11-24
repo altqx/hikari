@@ -15631,7 +15631,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>முதலில் பயன்படுத்து அல்லது ரத்துசெய் அழுத்தவும்: இறக்குமதி உடனே சேர்க்கப்படும்</translation>
+        <translation type="vanished">முதலில் பயன்படுத்து அல்லது ரத்துசெய் அழுத்தவும்: இறக்குமதி உடனே சேர்க்கப்படும்</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16673,7 +16673,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>AI ஐ மீண்டும் இயக்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+        <translation type="vanished">AI ஐ மீண்டும் இயக்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -17024,7 +17024,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+        <translation type="vanished">JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17354,10 +17354,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அடைகிறது.</translation>
     </message>
@@ -17491,6 +17487,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>JSON அமைப்புக்கு முகவரி தேவை; HikariSub 127.0.0.1 இல் கேட்கத் தொடங்கியதும் அது கிடைக்கும்.</translation>
     </message>
     <message>
         <source>MCP servers</source>

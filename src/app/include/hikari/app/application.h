@@ -889,9 +889,9 @@ public:
     Q_INVOKABLE QString sampleFrame(int renderer, int width, int height);
     // device: an index into the opening's list.
     Q_INVOKABLE void playTestSound(int device);
-    // The controls' state at the defaults; nothing is stored until OK or Apply.
+    // The controls' state at the defaults; nothing is stored until applySettings.
     Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
-    // page: an OptionsPage id ("general", "appearance", ...); stored only at OK or Apply.
+    // page: an OptionsPage id ("general", "appearance", ...); stored only by applySettings.
     Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
     // The conversion catalog's Styles.
     Q_INVOKABLE QStringList settingsStyles() const;
