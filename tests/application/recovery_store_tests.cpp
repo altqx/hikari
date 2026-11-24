@@ -135,6 +135,19 @@ TEST(RecoveryStore, OnlyEndedOtherSessionsAreLeftovers)
     EXPECT_TRUE(me.leftovers([](const std::string &s) { return s == "crashed"; }).empty());
 }
 
+TEST(RecoveryStore, BundlesListsEverySessionsWorkNewestFirst)
+{
+    TempDir dir;
+    RecoveryStore me(dir.path, "me");
+    ASSERT_TRUE(RecoveryStore(dir.path, "other").write("a", content("a", 1)));
+    ASSERT_TRUE(me.write("b", content("b", 2)));
+    fs::create_directories(dir.path / "sessions");
+    const auto all = me.bundles();
+    ASSERT_EQ(all.size(), 2u);
+    EXPECT_EQ(all[0].key, "b");
+    EXPECT_EQ(all[1].key, "a");
+}
+
 TEST(RecoveryStore, OldGenerationsArePruned)
 {
     TempDir dir;
