@@ -58,6 +58,8 @@ struct ListedVersion {
     std::string url;
     std::string sha256;
     std::int64_t size = 0;
+    // False when the version has per-platform packages and none for this computer; url, sha256 and size are then empty.
+    bool forThisComputer = true;
     std::string published;
     std::string changelog;
     std::string icon;

@@ -1,5 +1,7 @@
 #include "hikari/app/forwarded_launches.h"
 
+#include "hikari/application/setting_link.h"
+
 #include "hikari/app/application.h"
 #include "hikari/app/composition.h"
 #include "hikari/plugins/marketplace.h"
@@ -87,7 +89,7 @@ void ForwardedLaunches::keep(const QStringList &arguments)
     for (const QString &argument : arguments) {
         if (!isAppLink(argument))
             m_files << argument;
-        else if (!installLinkId(argument).isEmpty())
+        else if (!installLinkId(argument).isEmpty() || application::parseSettingLink(argument.toStdString()))
             m_link = argument;
         else
             qCWarning(lcLinks, "Ignored a link HikariSub doesn't take: %s",
@@ -152,7 +154,12 @@ void ForwardedLaunches::open()
         return;
     }
     if (m_files.isEmpty() && !m_link.isEmpty()) {
-        QMetaObject::invokeMethod(target(), "openInstallLink", Q_ARG(QVariant, installLinkId(std::exchange(m_link, QString()))));
+        const QString link = std::exchange(m_link, QString());
+        if (const auto setting = application::parseSettingLink(link.toStdString()))
+            QMetaObject::invokeMethod(target(), "openSettingLink", Q_ARG(QVariant, QString::fromStdString(setting->setting)),
+                                      Q_ARG(QVariant, setting->project));
+        else
+            QMetaObject::invokeMethod(target(), "openInstallLink", Q_ARG(QVariant, installLinkId(link)));
         if (m_pickFolder)
             m_timer.start(kBusyRetryMs);
         return;

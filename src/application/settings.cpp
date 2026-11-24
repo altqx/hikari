@@ -413,6 +413,7 @@ std::vector<SettingDefinition> &definitions()
         {"typesetting.layerOptions", "", String, Profile, Mapped, false, std::string()},
         // JSON: {"gapOn", "gap", "lastLine"}, the Import lyrics end-time choices.
         {"lyrics.importOptions", "", String, Profile, Mapped, false, std::string()},
+        {"textImport.options", "", String, Profile, Mapped, false, std::string()},
         {"tags.removeOptions", "", String, Profile, Mapped, false, std::string()},
         {"grid.splitEvery", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
@@ -426,6 +427,7 @@ std::vector<SettingDefinition> &definitions()
         {"grid.cpsError", "", Int, Profile, Mapped, false, std::int64_t{30}},
         {"grid.lineLength", "", Int, Profile, Mapped, false, std::int64_t{43}},
         {"grid.maxLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
+        {"problems.reading", "", Bool, Profile, Mapped, false, true},
         // Setting ids the Karaoke layout turned on and nobody changed since.
         {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
@@ -461,8 +463,10 @@ std::vector<SettingDefinition> &definitions()
         {"ai.mcp.skills", "", Bool, Profile, Mapped, false, false},
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // pluginServers: the plugin servers the user turned on, one {id, plugin, trusted, approved} object per row.
+        {"ai.mcp.pluginServers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        {"ai.off", "", Bool, Profile, Mapped, false, false},
+        {"ai.off", "", Bool, Profile, Mapped, false, true},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
         {"ai.webSearch", "", Bool, Profile, Mapped, false, true},
@@ -474,6 +478,7 @@ std::vector<SettingDefinition> &definitions()
         {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         {"ai.agent.models", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"ai.models.recent", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
         {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -506,7 +511,7 @@ std::vector<SettingDefinition> &definitions()
         {"export.format", "", String, Profile, Mapped, false, std::string()},
         // Percent of HikariSub legacy's size.
         {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
-        // application::VideoPropertyAction values; video.missingLayoutRes adds 3, set to the PlayRes.
+        // application::VideoPropertyAction values.
         {"video.missingMatrix", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.matrixMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.missingLayoutRes", "", Int, Profile, Mapped, false, std::int64_t{1}},

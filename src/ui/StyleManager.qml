@@ -1311,7 +1311,9 @@ DialogWindow {
         Layout.fillHeight: true
         Rectangle {
             objectName: "styleSidebar"
-            readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24)
+            readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24,
+                                                       Math.ceil(catalogLine.implicitWidth - catalogBox.implicitWidth
+                                                                 + catalogBox.Layout.minimumWidth) + 24)
             color: Theme.background
             Layout.preferredWidth: Math.max(narrowest, Math.min(300, body.width - 1 - editorScroll.narrowest
                                                                          - (editorScroll.width - editorScroll.availableWidth)))
@@ -1342,6 +1344,7 @@ DialogWindow {
                     }
                 }
                 RowLayout {
+                    id: catalogLine
                     spacing: 4
                     Layout.topMargin: 6
                     Label {
@@ -1353,6 +1356,9 @@ DialogWindow {
                         id: catalogBox
                         objectName: "styleCatalog"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: Math.min(implicitWidth, 12 * catalogMetrics.averageCharacterWidth + leftPadding + rightPadding)
+                        implicitContentWidthPolicy: ComboBox.WidestText
+                        popup.width: Math.max(width, implicitWidth + (tiered ? catalogTierChip.implicitWidth + 8 : 0))
                         readonly property bool tiered: manager.styles.hasProject
                         function shownIndex() {
                             return manager.styles.catalogRows.findIndex(r => r.name === manager.styles.catalog
@@ -1368,6 +1374,10 @@ DialogWindow {
                             const row = model[i]
                             currentIndex = Qt.binding(() => catalogBox.shownIndex())
                             manager.chooseCatalogIn(row.name, row.tier)
+                        }
+                        FontMetrics {
+                            id: catalogMetrics
+                            font: catalogBox.font
                         }
                         delegate: ItemDelegate {
                             id: catalogRow
@@ -1388,7 +1398,7 @@ DialogWindow {
                                 x: 10
                                 y: 6
                                 text: catalogRow.modelData.tier === "project" ? qsTr("This project")
-                                    : catalogRow.modelData.tier === "plugin" ? qsTr("From plugins") : qsTr("Mine")
+                                    : catalogRow.modelData.tier === "plugin" ? qsTr("From plugins") : qsTr("Yours")
                                 font.bold: true
                                 font.pixelSize: 11
                                 color: Theme.muted
@@ -1413,6 +1423,7 @@ DialogWindow {
                         }
                     }
                     TierChip {
+                        id: catalogTierChip
                         objectName: "styleCatalogTier"
                         visible: manager.styles.hasProject && manager.styles.catalogTier !== "plugin"
                         tier: manager.styles.catalogTier
@@ -1449,13 +1460,13 @@ DialogWindow {
                         ShellMenuItem {
                             objectName: "copyCatalogToTier"
                             iconRole: "copy-to-tier"
-                            text: catalogTierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+                            text: catalogTierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
                             onTriggered: manager.transferCatalog(false)
                         }
                         ShellMenuItem {
                             objectName: "moveCatalogToTier"
                             iconRole: "move-to-tier"
-                            text: catalogTierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+                            text: catalogTierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
                             enabled: !(catalogTierMenu.fromMine && manager.styles.catalog === "Default")
                             onTriggered: manager.transferCatalog(true)
                         }

@@ -313,6 +313,8 @@ struct StepsRun : std::enable_shared_from_this<StepsRun> {
             return finish(false);
         const ExportStep &step = steps[next];
         ExportStepOutcome outcome{step.id, nameOf(step.id), State::Done};
+        if (context.started)
+            context.started(next, steps.size(), outcome.name);
         if (step.id == kFixStylesStep) {
             outcome.lines = fixUnknownStyles(document);
             return record(std::move(outcome));

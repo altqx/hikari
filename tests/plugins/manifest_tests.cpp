@@ -351,7 +351,8 @@ TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
     Json json = minimal();
     json["contributes"] = *Json::parse(R"({
         "styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}, {"id": "pop", "path": "presets/pop.ass"}]})");
+        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}, {"id": "pop", "path": "presets/pop.ass"}],
+        "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}]})");
     const auto m = parse(json);
     ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
     ASSERT_EQ(m->styles.size(), 1u);
@@ -361,11 +362,16 @@ TEST(PluginManifest, StyleCataloguesAndKaraokePresetsRead)
     ASSERT_EQ(m->karaokePresets.size(), 2u);
     EXPECT_EQ(m->karaokePresets[1].path, "presets/pop.ass");
     EXPECT_TRUE(m->karaokePresets[1].title.empty());
+    ASSERT_EQ(m->graphs.size(), 1u);
+    EXPECT_EQ(m->graphs[0].title, "Sparkle");
+    EXPECT_EQ(m->graphs[0].path, "graphs/sparkle.json");
 
     json["contributes"] = *Json::parse(R"({"karaokePresets": [{"id": "glow", "path": "a.ass"}, {"id": "glow", "path": "b.ass"}]})");
     const ManifestProblem repeated = problem(json);
     EXPECT_EQ(repeated.kind, Kind::DuplicateId);
     EXPECT_EQ(repeated.at, "/contributes/karaokePresets/1/id");
+    json["contributes"] = *Json::parse(R"({"graphs": [{"id": "g", "title": "A", "path": "a.json"}, {"id": "g", "title": "B", "path": "b.json"}]})");
+    EXPECT_EQ(problem(json).at, "/contributes/graphs/1/id");
     json["contributes"] = *Json::parse(R"({"styles": [{"id": "signs", "title": "Signs", "path": "signs.ass"}]})");
     EXPECT_EQ(problem(json).kind, Kind::Schema);
 }
@@ -392,6 +398,125 @@ TEST(PluginManifest, DictionariesReadAndALanguageRepeatsNot)
     EXPECT_EQ(repeated.detail, "pl");
     json["contributes"] = *Json::parse(R"({"dictionaries": [{"language": "pl", "title": "A", "aff": "a.dic", "dic": "a.aff"}]})");
     EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
+TEST(PluginManifest, LayoutsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->layouts.size(), 1u);
+    EXPECT_EQ(m->layouts[0].id, "quiet");
+    EXPECT_EQ(m->layouts[0].title, "Quiet");
+    EXPECT_EQ(m->layouts[0].path, "layouts/quiet.json");
+
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "A", "path": "a.json"},
+                                                       {"id": "quiet", "title": "B", "path": "b.json"}]})");
+    const ManifestProblem repeated = problem(json);
+    EXPECT_EQ(repeated.kind, Kind::DuplicateId);
+    EXPECT_EQ(repeated.at, "/contributes/layouts/1/id");
+    json["contributes"] = *Json::parse(R"({"layouts": [{"id": "quiet", "title": "Quiet", "path": "quiet.ass"}]})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+}
+
+Json dataOnly(std::string_view contributes)
+{
+    Json json = minimal();
+    std::erase_if(json.asObject(), [](const Json::Member &m) { return m.key == "main"; });
+    json["contributes"] = *Json::parse(contributes);
+    return json;
+}
+
+TEST(PluginManifest, ThemesIconThemesAndIconsRead)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({
+        "themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "themes/dusk.json"}],
+        "iconThemes": [{"id": "round", "title": "Round", "path": "icons/round"}],
+        "icons": [{"id": "spark", "path": "icons/spark.svg"}],
+        "commands": [{"id": "glow", "title": "Glow", "icon": "own:spark"}]})");
+    const auto m = parse(json);
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    ASSERT_EQ(m->themes.size(), 1u);
+    EXPECT_EQ(m->themes[0].id, "dusk");
+    EXPECT_EQ(m->themes[0].type, "dark");
+    EXPECT_EQ(m->themes[0].path, "themes/dusk.json");
+    ASSERT_EQ(m->iconThemes.size(), 1u);
+    EXPECT_EQ(m->iconThemes[0].title, "Round");
+    EXPECT_EQ(m->iconThemes[0].folder, "icons/round");
+    ASSERT_EQ(m->icons.size(), 1u);
+    EXPECT_EQ(m->icons[0].path, "icons/spark.svg");
+    EXPECT_FALSE(m->dataOnly());
+}
+
+TEST(PluginManifest, ThemeAndIconIdsDontRepeat)
+{
+    const std::pair<const char *, const char *> cases[] = {
+        {R"({"themes": [{"id": "a", "title": "A", "type": "dark", "path": "a.json"},
+                        {"id": "a", "title": "B", "type": "light", "path": "b.json"}]})", "/contributes/themes/1/id"},
+        {R"({"iconThemes": [{"id": "a", "title": "A", "path": "a"}, {"id": "a", "title": "B", "path": "b"}]})",
+         "/contributes/iconThemes/1/id"},
+        {R"({"icons": [{"id": "a", "path": "a.svg"}, {"id": "a", "path": "b.svg"}]})", "/contributes/icons/1/id"},
+    };
+    for (const auto &[contributes, at] : cases) {
+        Json json = minimal();
+        json["contributes"] = *Json::parse(contributes);
+        const ManifestProblem repeated = problem(json);
+        EXPECT_EQ(repeated.kind, Kind::DuplicateId) << contributes;
+        EXPECT_EQ(repeated.at, at);
+    }
+}
+
+TEST(PluginManifest, AnOwnIconMustBeDeclared)
+{
+    for (const char *list : {"commands", "panels", "statusItems"}) {
+        Json json = minimal();
+        json["contributes"] = *Json::parse(R"({"icons": [{"id": "spark", "path": "spark.svg"}]})");
+        json["contributes"][list] = *Json::parse(R"([{"id": "a", "title": "A", "icon": "own:spark"},
+                                                     {"id": "b", "title": "B", "icon": "own:gone"}])");
+        const ManifestProblem unknown = problem(json);
+        EXPECT_EQ(unknown.kind, Kind::Schema) << list;
+        EXPECT_EQ(unknown.at, "/contributes/" + std::string(list) + "/1/icon");
+        EXPECT_EQ(unknown.detail, "names no icon in contributes.icons");
+    }
+}
+
+TEST(PluginManifest, ADataOnlyPackageHoldsOnlyData)
+{
+    const auto m = parse(dataOnly(R"({"themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "dusk.json"}],
+                                     "styles": [{"id": "signs", "title": "Signs", "path": "signs.sty"}],
+                                     "commands": []})"));
+    ASSERT_TRUE(m) << m.error().at << ": " << m.error().detail;
+    EXPECT_TRUE(m->dataOnly());
+
+    const std::pair<const char *, const char *> code[] = {
+        {R"({"commands": [{"id": "a", "title": "A"}]})", "/contributes/commands"},
+        {R"({"panels": [{"id": "a", "title": "A"}]})", "/contributes/panels"},
+        {R"({"statusItems": [{"id": "a", "title": "A", "text": "A"}]})", "/contributes/statusItems"},
+    };
+    for (const auto &[contributes, at] : code) {
+        const ManifestProblem refused = problem(dataOnly(contributes));
+        EXPECT_EQ(refused.kind, Kind::Schema) << contributes;
+        EXPECT_EQ(refused.at, at);
+        EXPECT_EQ(refused.detail, "needs code, and a data-only package runs none");
+    }
+
+    Json settings = dataOnly(R"({"settings": [{"id": "s", "title": "S", "type": "boolean", "default": true}]})");
+    EXPECT_EQ(problem(settings).at, "/contributes/settings");
+    EXPECT_EQ(problem(settings).detail, "a data-only package has no settings");
+
+    Json permissions = dataOnly("{}");
+    permissions["permissions"] = *Json::parse(R"({"network": {"hosts": ["example.com"], "reason": "Fetches"}})");
+    EXPECT_EQ(problem(permissions).at, "/permissions");
+    EXPECT_EQ(problem(permissions).detail, "a data-only package asks for no permissions");
+    permissions["permissions"] = Json::object();
+    EXPECT_TRUE(parse(permissions));
+
+    Json unrestricted = dataOnly("{}");
+    unrestricted["tier"] = "unrestricted";
+    EXPECT_EQ(problem(unrestricted).at, "/tier");
+    EXPECT_EQ(problem(unrestricted).detail, "only a plugin with a Lua main can be unrestricted");
 }
 
 TEST(PluginManifest, ANodeReadsItsPortsAndDefaults)
@@ -578,6 +703,30 @@ TEST(PluginManifest, ProgramsAreRefusedWithoutThePermissionOrInAShapeTheyCantRun
     EXPECT_TRUE(parse(json));
 }
 
+TEST(PluginManifest, MainIsALuaFileAProgramOrNothing)
+{
+    Json json = minimal();
+    std::erase_if(json.asObject(), [](const Json::Member &m) { return m.key == "main"; });
+    const auto none = parse(json);
+    ASSERT_TRUE(none) << none.error().at << " " << none.error().detail;
+    EXPECT_TRUE(none->main.empty());
+    EXPECT_TRUE(none->mainProgram.empty());
+
+    json["permissions"] = *Json::parse(R"({"programs": "Is the plugin"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "core", "title": "Core", "api": true,
+        "platforms": {"linux-x64": {"path": "bin/core"}}}, {"id": "lsp", "title": "LSP", "platforms": {"linux-x64": {"path": "bin/lsp"}}}]})");
+    json["main"] = *Json::parse(R"({"program": "core"})");
+    const auto program = parse(json);
+    ASSERT_TRUE(program) << program.error().at << " " << program.error().detail;
+    EXPECT_EQ(program->mainProgram, "core");
+    EXPECT_TRUE(program->main.empty());
+
+    json["main"] = *Json::parse(R"({"program": "nope"})");
+    EXPECT_EQ(problem(json).at, "/main/program");
+    json["main"] = *Json::parse(R"({"program": "lsp"})");
+    EXPECT_EQ(problem(json).detail, "the main program needs \"api\": true");
+}
+
 TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
 {
     Manifest current;
@@ -594,6 +743,43 @@ TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
 
     Manifest none;
     EXPECT_TRUE(permissionIncrease(none, current).runPrograms);
+}
+
+TEST(PluginManifest, AnMcpServerNamesADeclaredProgramWithoutTheApi)
+{
+    Json json = minimal();
+    json["permissions"] = *Json::parse(R"({"programs": "Serves tools"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "core", "title": "Core", "api": true,
+        "platforms": {"linux-x64": {"path": "bin/core"}}}, {"id": "srv", "title": "Server", "platforms": {"linux-x64": {"path": "bin/srv"}}}],
+        "mcpServers": [{"id": "tools", "title": "Tools", "description": "Looks things up", "program": "srv"}]})");
+    const auto parsed = parse(json);
+    ASSERT_TRUE(parsed) << parsed.error().at << " " << parsed.error().detail;
+    ASSERT_EQ(parsed->mcpServers.size(), 1u);
+    EXPECT_EQ(parsed->mcpServers[0].id, "tools");
+    EXPECT_EQ(parsed->mcpServers[0].title, "Tools");
+    EXPECT_EQ(parsed->mcpServers[0].description, "Looks things up");
+    EXPECT_EQ(parsed->mcpServers[0].program, "srv");
+
+    Json &server = json["contributes"]["mcpServers"].asArray()[0];
+    server["program"] = Json(std::string("nope"));
+    EXPECT_EQ(problem(json).at, "/contributes/mcpServers/0/program");
+    server["program"] = Json(std::string("core"));
+    EXPECT_EQ(problem(json).detail, "an MCP server's program can't have \"api\": true");
+    server["program"] = Json(std::string("srv"));
+    json["contributes"]["mcpServers"].push(*Json::parse(R"({"id": "tools", "title": "Again", "program": "srv"})"));
+    EXPECT_EQ(problem(json).kind, ManifestProblem::Kind::DuplicateId);
+}
+
+TEST(PluginManifest, AnUpdateAsksAgainForANewMcpServer)
+{
+    Manifest current;
+    current.mcpServers = {McpServer{"a", "A", "", "p"}};
+    EXPECT_FALSE(permissionIncrease(current, current).any());
+    Manifest next = current;
+    next.mcpServers.push_back(McpServer{"b", "B", "", "p"});
+    EXPECT_EQ(permissionIncrease(current, next).mcpServers, std::vector<std::string>{"b"});
+    EXPECT_TRUE(permissionIncrease(current, next).any());
+    EXPECT_FALSE(permissionIncrease(next, current).any());
 }
 
 }

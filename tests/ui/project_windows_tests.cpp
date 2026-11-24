@@ -20,12 +20,14 @@
 #include "shell_controller.h"
 #include "shift_times_controller.h"
 #include "spelling/fake_spelling.h"
+#include "theme.h"
 #include "visual_tools_controller.h"
 #include "workspace_layout.h"
 
 #include "qtest_parts.h"
 
 #include <QDir>
+#include <QFontMetricsF>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -38,6 +40,7 @@
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QtQuickTest/quicktest.h>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
@@ -940,25 +943,31 @@ private slots:
             QQuickItem *found = item(content, QLatin1String(name));
             return found && found->isVisible();
         };
-        const auto text = [&](const char *name) { return item(content, QLatin1String(name))->property("text").toString(); };
+        const auto elsewhere = [&](const char *setting) {
+            QVariant found;
+            QMetaObject::invokeMethod(settings, "elsewhere", Q_RETURN_ARG(QVariant, found),
+                                      Q_ARG(QVariant, QString::fromLatin1(setting)));
+            return found.toMap().value(QStringLiteral("text")).toString();
+        };
+        const auto projectPut = [&](const char *setting, const QVariant &value) {
+            return QMetaObject::invokeMethod(settings, "projectPut", Q_ARG(QVariant, QString::fromLatin1(setting)),
+                                             Q_ARG(QVariant, value));
+        };
         QVERIFY(shown("settingsScope"));
-        QTRY_VERIFY(shown("overridden_editor.spellchecker"));
-        QVERIFY(shown("overridden_grammar.language"));
-        QVERIFY(!shown("overridden_editor.dictionaryLanguage"));
+        QTRY_COMPARE(elsewhere("editor.spellchecker"), QStringLiteral("Set in this project"));
+        QCOMPARE(elsewhere("grammar.language"), QStringLiteral("Set in this project"));
+        QVERIFY(elsewhere("editor.dictionaryLanguage").isEmpty());
 
         settings->setProperty("projectTab", true);
         QTRY_VERIFY(shown("projectSettings"));
-        QCOMPARE(text("projectState_editor.spellchecker"), QStringLiteral("Set in this project"));
-        QCOMPARE(text("projectState_grammar.language"), QStringLiteral("Set in project.local.toml"));
+        QCOMPARE(elsewhere("editor.spellchecker"), QStringLiteral("Set in this project"));
+        QCOMPARE(elsewhere("grammar.language"), QStringLiteral("Set in project.local.toml"));
         QVERIFY(!item(content, QStringLiteral("project_grammar.language"))->isEnabled());
-        QCOMPARE(text("projectState_scriptProperties.title"), QStringLiteral("Uses yours"));
-        QQuickItem *pages = item(content, QStringLiteral("projectSettings"));
-        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("scriptProperties.title")),
-                                          Q_ARG(QVariant, QStringLiteral("Show"))));
-        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("scriptProperties.titleOn")),
-                                          Q_ARG(QVariant, true)));
-        QVERIFY(QMetaObject::invokeMethod(pages, "useYours", Q_ARG(QVariant, QStringLiteral("editor.spellchecker"))));
-        QVERIFY(QMetaObject::invokeMethod(settings, "apply"));
+        QCOMPARE(elsewhere("scriptProperties.title"), QStringLiteral("Uses yours"));
+        QVERIFY(projectPut("scriptProperties.title", QStringLiteral("Show")));
+        QVERIFY(projectPut("scriptProperties.titleOn", true));
+        QVERIFY(QMetaObject::invokeMethod(settings, "resetSetting",
+                                          Q_ARG(QVariant, QStringList{QStringLiteral("editor.spellchecker")})));
 
         QByteArray shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
         QVERIFY2(shared.contains("# Shared by the team."), shared);
@@ -970,17 +979,16 @@ private slots:
         QVERIFY(overrides.contains(QStringLiteral("scriptProperties.title")));
         QVERIFY(overrides.contains(QStringLiteral("grammar.language")));
         QVERIFY(!overrides.contains(QStringLiteral("editor.spellchecker")));
-        QCOMPARE(text("projectState_scriptProperties.title"), QStringLiteral("Set in this project"));
+        QCOMPARE(elsewhere("scriptProperties.title"), QStringLiteral("Set in this project"));
         QVERIFY(QMetaObject::invokeMethod(shell(w), "openSettings", Q_ARG(QVariant, QStringLiteral("subtitleProperties")),
                                           Q_ARG(QVariant, QVariant())));
-        QTRY_VERIFY(shown("overridden_scriptProperties.title"));
-        QVERIFY(!shown("overridden_scriptProperties.script"));
-        QVERIFY(!shown("overridden_scriptProperties.askForChange"));
+        settings->setProperty("projectTab", false);
+        QTRY_COMPARE(elsewhere("scriptProperties.title"), QStringLiteral("Set in this project"));
+        QVERIFY(elsewhere("scriptProperties.script").isEmpty());
+        QVERIFY(elsewhere("scriptProperties.askForChange").isEmpty());
         settings->setProperty("projectTab", true);
 
-        QVERIFY(QMetaObject::invokeMethod(pages, "put", Q_ARG(QVariant, QStringLiteral("editor.spellchecker")),
-                                          Q_ARG(QVariant, false)));
-        QVERIFY(QMetaObject::invokeMethod(settings, "apply"));
+        QVERIFY(projectPut("editor.spellchecker", false));
         shared = readAll(show + QStringLiteral("/.hikari/project.toml"));
         QVERIFY2(shared.contains("spellchecker = false"), shared);
         QVERIFY(application->settingsStore()->value(QStringLiteral("editor.spellchecker")).toBool());
@@ -1295,7 +1303,7 @@ private slots:
         auto *mine = popover->findChild<QObject *>(QStringLiteral("newCatalogSaveMine"));
         QVERIFY(mine);
         QVERIFY(QMetaObject::invokeMethod(mine, "triggered"));
-        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
         QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("styleCatalogs\tmine")));
         item(popoverContent, QStringLiteral("newCatalogName"))->setProperty("text", QStringLiteral("Personal"));
         QVERIFY(QMetaObject::invokeMethod(create, "click"));
@@ -1306,7 +1314,69 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
         QTRY_VERIFY(popover->property("opened").toBool());
-        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
+    }
+
+    void styleCatalogueShowsItsNamesWithAProject()
+    {
+        writeAll(home.filePath(QStringLiteral("Catalog/Default.sty")), catalogLine("Mine default"));
+        writeAll(home.filePath(QStringLiteral("Catalog/Film subtitles.sty")), catalogLine("Mine film"));
+        start();
+        const QString show = folder("named", true);
+        writeAll(show + QStringLiteral("/.hikari/catalogs/Sprite Fright.sty"), catalogLine("Project sign"));
+        auto &styles = application->styleManager();
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep.ass"), "a")));
+        QTRY_VERIFY(styles.hasProject());
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Sprite Fright"), QStringLiteral("project")));
+
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
+        auto *manager = shell(w)->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QTRY_VERIFY(manager && manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        QQuickItem *box = item(manager->contentItem(), QStringLiteral("styleCatalog"));
+        QVERIFY(box);
+        QTRY_VERIFY(item(manager->contentItem(), QStringLiteral("catalogTierMenuButton"))->isVisible());
+
+        application->settingsStore()->setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const char *code : {"light", "dark"}) {
+            application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            QTRY_COMPARE(ui::theme::current().id, QString::fromLatin1(code));
+            QVERIFY(QQuickTest::qWaitForPolish(manager));
+
+            const QFontMetricsF metrics(box->property("font").value<QFont>());
+            const qreal padding = box->property("leftPadding").toReal() + box->property("rightPadding").toReal();
+            QVERIFY2(box->width() >= metrics.horizontalAdvance(QStringLiteral("Sprite Fright")) + padding,
+                     qPrintable(QStringLiteral("%1 px").arg(box->width())));
+
+            const QString shots = qEnvironmentVariable("HIKARI_TEST_ARTIFACT_DIR");
+            const auto shoot = [&](const char *state) {
+                if (!shots.isEmpty())
+                    QVERIFY(QDir().mkpath(shots)
+                            && manager->grabWindow().save(shots + QStringLiteral("/style-catalogue-project-%1-%2.png")
+                                                                      .arg(QLatin1String(state), QLatin1String(code))));
+            };
+            shoot("closed");
+            auto *popup = box->property("popup").value<QObject *>();
+            QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            auto *list = popup->property("contentItem").value<QQuickItem *>();
+            for (const char *row : {"styleCatalogRow_project_Sprite Fright", "styleCatalogRow_mine_Default",
+                                    "styleCatalogRow_mine_Film subtitles"}) {
+                QQuickItem *shown = nullptr;
+                QTRY_VERIFY((shown = item(list, QLatin1String(row))));
+                const QString name = QString::fromLatin1(row).section(QLatin1Char('_'), 2);
+                QQuickItem *label = nullptr;
+                for (QQuickItem *child : shown->property("contentItem").value<QQuickItem *>()->childItems())
+                    if (child->property("text").toString() == name)
+                        label = child;
+                QVERIFY2(label && label->isVisible() && !label->property("truncated").toBool(), row);
+            }
+            shoot("open");
+            QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+        }
     }
 
     void fontCatalogsAndLayoutsHaveAProjectTier()
@@ -1501,7 +1571,7 @@ private slots:
 
         QVERIFY(shift.applyPreset(QStringLiteral("shift"), QStringLiteral("Late"), QStringLiteral("mine")));
         QCOMPARE(shift.settings().timeMs, 100);
-        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Mine"));
+        QCOMPARE(field("shiftPresetTier")->property("text").toString(), QStringLiteral("Yours"));
         QTRY_VERIFY(!named(shell(w), "shiftRenamePreset")->property("enabled").toBool());
         QVERIFY(!named(shell(w), "shiftDeletePreset")->property("enabled").toBool());
         QCOMPARE(named(shell(w), "shiftCopyPresetToTier")->property("text").toString(), QStringLiteral("Copy to project"));
@@ -1535,7 +1605,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(popover, "openFor", Q_ARG(QVariant, QString())));
         QTRY_VERIFY(popover->property("opened").toBool());
         QVERIFY(QMetaObject::invokeMethod(popover->findChild<QObject *>(QStringLiteral("shiftPresetSaveTierMine")), "triggered"));
-        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(save->property("text").toString(), QStringLiteral("Save to yours"));
         QVERIFY(application->settingsStore()->list("workspace.saveTiers").contains(QStringLiteral("shiftPresets\tmine")));
         QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
     }

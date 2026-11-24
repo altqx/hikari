@@ -22,7 +22,7 @@ A write that fails shows, under the form, the `notice-warning` glyph in `danger`
 
 Q767–Q772 ([#1216](https://github.com/altqx/hikari/issues/1216) PM-4). Export as can run steps on a copy of the Document before it writes, as Aegisub's export filters do. The Document never changes.
 
-**The row** (Q767). Under Options, a **Before export** row holds the recipe combo, its **Project** or **Yours** chip, "changed" in `muted` when the steps differ from the saved recipe, and **Add steps** (no recipe) or **Show steps** / **Hide steps** (quiet). The default is **No steps**, and the row then says "Writes the Document as it is." in `muted`.
+**The row** (Q767). Under Options, a **Before export** row holds the recipe combo, its **Project** or **Yours** chip, "changed" in `muted` when the steps differ from the saved recipe, and **Add steps** (no recipe) or **Show steps** / **Hide steps** (quiet). The default is **No steps**, and the row then says "Writes the document as it is." in `muted`.
 
 **The steps** open under the row in a panel with a 1-unit `line` boundary, radius 6. Its header on `raised` says "Run in this order on a copy; the Document doesn't change." in `muted`, with **Save recipe…** as a quiet split button. The steps are:
 
@@ -47,15 +47,17 @@ Q767–Q772 ([#1216](https://github.com/altqx/hikari/issues/1216) PM-4). Export 
 
 **A missing script** (Q772). A step whose Lua script isn't loaded, or whose Project script isn't trusted, stays in the list with its on box off and "sign-fx.lua isn't loaded · Export skips it" in `warning`. The footer says "1 step won't run: its script isn't loaded." Export stays on.
 
-**Running.** The progress line names the step: "Before export · Transform frame rate · step 3 of 3", then the write (Q752). After a clean export, one `muted` line under Q751's success line names the steps that ran: "Ran before export: Apply karaoke template (42 Lines made), Sign blur pass, Transform frame rate."
+**Running.** The progress line names the step: "Before export · Transform frame rate · step 3 of 3", then the write (Q752). After a clean export, one `muted` line under Q751's success line names the steps that ran: "Ran before export: Apply karaoke template (42 lines made), Sign blur pass, Transform frame rate."
 
-**A failing step** (Q771). The export stops and nothing is written. Under the form, a panel with a header on `raised`: the `notice-error` glyph in `danger` and "Not saved. “Sign blur pass” failed on line 58." in semibold, with **Turn it off and export** and **Details** (the traceback), both quiet. Each step is a row: done with `karaoke-check` in `success` and what it did, failed with `notice-warning` in `danger` and the error in `danger` monospace, or "didn't run" in `muted`; the write is the last row. The footer says "Nothing was written. The Document is unchanged." with **Close** and **Export**.
+**A failing step** (Q771). The export stops and nothing is written. Under the form, a panel with a header on `raised`: the `notice-error` glyph in `danger` and "Not saved. “Sign blur pass” failed on line 58." in semibold, with **Turn it off and export** and **Details** (the traceback), both quiet. Each step is a row: done with `karaoke-check` in `success` and what it did, failed with `notice-warning` in `danger` and the error in `danger` monospace, or "didn't run" in `muted`; the write is the last row. The footer says "Nothing was written, and the document is unchanged." with **Close** and **Export**.
 
-**Lua steps** depend on PM-4's `register_filter`, a no-op today (`src/helpers/lua/lua_helper.cpp:340`). Until it lands, the list holds the four built-in steps.
+**Lua steps** are the loaded scripts' `register_filter` filters ([C06-register-filter](../compatibility-decisions.md#c06-register-filter)).
 
 ## Collect fonts
 
-Q754. The window and its command are named **Collect fonts** (today "Font collector"), as [text-style.md](text-style.md) names a window after the command that opens it. Action keeps **Check fonts | Copy to a folder | Zip archive** and Save to with **Browse…**. The footer holds **Close** and **Start ▾** (primary), whose menu has **Start on all tabs**.
+Q754. The window and its command are named **Collect fonts** (today "Font collector"), as [text-style.md](text-style.md) names a window after the command that opens it. Action is **Check fonts | Copy to a folder | Link to a folder | Zip archive** (PS-3, #1215: Link joins Q754's three, next to Copy because both fill a folder) and Save to with **Browse…**. The footer holds **Close** and **Start ▾** (primary), whose menu has **Start on all tabs**.
+
+**Link to a folder** works as Copy to a folder (Save to, Browse…, the Replace / Keep existing / Cancel question, the incomplete label), but links each font file into the folder. Its hint is "Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted."; with the MKV option on, a second line says "Fonts from the MKV file are copied: there's no file to link to." Start is **Link fonts**, the incomplete choice **Link it, labelled incomplete**, and the ready line "Ready to link into %1". A font with no file on this computer (an MKV attachment, a font handed over as bytes) is copied, and the summary says so. On Linux and macOS a link is a symlink to the absolute path. On Windows HikariSub tries a symlink (Developer Mode or an administrator), then a hard link (same drive only); if neither works the font isn't written and the folder gets the incomplete label.
 
 **The list** (Q753) replaces the log. A panel with a 1-unit `line` boundary, radius 6, with a header row on `raised` (Font and style, File, Lines) and one row per font and style:
 
@@ -63,9 +65,10 @@ Q754. The window and its command are named **Collect fonts** (today "Font collec
 | --- | --- | --- |
 | Found | `karaoke-check` in `success` | The file name in `muted` monospace |
 | Missing | `notice-warning` in `danger` | "Not on this computer" in `danger` |
+| Not linked (Windows) | `notice-warning` in `danger` | "Couldn't link: turn on Developer Mode, or use a folder on the font's drive" in `danger` |
 | Made by the renderer | `notice-warning` in `warning` | The file and face, then "simulated bold" or "simulated italic", in `warning` |
 
-The family is in semibold, its style after it in `muted`; Lines is how many Lines use it. Under the rows, in `muted`, a summary: "4 fonts · 1 missing · 1 made bold by the renderer. Copy to a folder copies 3 files." Before Start the list says "Start lists the fonts the subtitles use, and whether this computer has each one."
+The family is in semibold, its style after it in `muted`; Lines is how many Lines use it. Under the rows, in `muted`, a summary: "4 fonts · 1 missing · 1 made bold by the renderer. Copy to a folder copies 3 files." With Link: "4 fonts · 1 missing. Link to a folder links 3 files and copies 2 that have no file to link to." Before Start the list says "Start lists the fonts the subtitles use, and whether this computer has each one."
 
 ## Running
 
@@ -92,6 +95,12 @@ The owner said "Batch 4 lgtm" to the mode gate board on 2026-11-17 ([#1209](http
 | Q753 | Collect fonts lists one row per font with its status, file and Lines, and a summary |
 | Q754 | The window is named Collect fonts after its command; Close and Start ▾ with Start on all tabs inside |
 | Q755 | No muxing is drawn until a muxing run exists; then it uses the run card |
+
+DS decided Link to a folder on 2026-11-24 as part of [#1215](https://github.com/altqx/hikari/issues/1215)'s approved parity row, with no owner question:
+
+| Card | Decision |
+| --- | --- |
+| PS-3 | Link to a folder is the third Action, next to Copy; a font with no file is copied and the summary says so; on Windows a symlink, then a hard link, else the font isn't written |
 
 The owner said "yes to all lgtm" to the Before export board on 2026-11-18 ([#1209](https://github.com/altqx/hikari/issues/1209#issuecomment-6957457130)); the step names Remove tags and Set unknown styles to Default were approved with it:
 

@@ -116,6 +116,7 @@ void AutomationManager::attach(const std::string &path, Entry &entry)
     connect(host, &LuaScriptHost::titleChanged, this, [this, qpath](const QString &t) { emit titleChanged(qpath, t); });
     connect(host, &LuaScriptHost::dialogWithdrawn, this, [this, qpath] { emit dialogWithdrawn(qpath); });
     connect(host, &LuaScriptHost::servicesWithdrawn, this, [this, qpath] { emit servicesWithdrawn(qpath); });
+    connect(host, &LuaScriptHost::checkFinished, this, [this, qpath] { emit checkFinished(qpath); });
     connect(host, &LuaScriptHost::loaded, this, [this, path] {
         m_entries.at(path).sha256 = fileSha256(path);
         rebuildRegistry();
@@ -217,6 +218,15 @@ bool AutomationManager::validate(const std::string &path, int ordinal, const app
     return true;
 }
 
+bool AutomationManager::check(const std::string &path, const application::MacroSnapshot &snapshot,
+                              std::chrono::milliseconds budget)
+{
+    if (m_shuttingDown)
+        return false;
+    LuaScriptHost *h = host(path);
+    return h && h->check(snapshot, budget);
+}
+
 bool AutomationManager::runFilter(const std::string &path, int filterIndex, const application::MacroSnapshot &snapshot,
                                   const application::DialogRequest &settings)
 {
@@ -224,6 +234,18 @@ bool AutomationManager::runFilter(const std::string &path, int filterIndex, cons
         return false;
     LuaScriptHost *h = host(path);
     if (!h || !h->runFilter(filterIndex, snapshot, settings))
+        return false;
+    notify();
+    return true;
+}
+
+bool AutomationManager::filterConfig(const std::string &path, int filterIndex,
+                                     const application::MacroSnapshot &snapshot)
+{
+    if (m_shuttingDown || busy())
+        return false;
+    LuaScriptHost *h = host(path);
+    if (!h || !h->filterConfig(filterIndex, snapshot))
         return false;
     notify();
     return true;

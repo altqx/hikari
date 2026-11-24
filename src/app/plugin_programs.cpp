@@ -114,8 +114,10 @@ QProcessEnvironment baseEnvironment(const QString &temp)
     const QProcessEnvironment system = QProcessEnvironment::systemEnvironment();
     QProcessEnvironment env;
 #ifdef Q_OS_WIN
-    // Windows programs fail to load without SystemRoot.
-    for (const QString &name : {QStringLiteral("PATH"), QStringLiteral("USERPROFILE"), QStringLiteral("LANG"), QStringLiteral("SystemRoot")})
+    // Windows programs fail to load without SystemRoot. An AppContainer doesn't start without LOCALAPPDATA
+    // (ERROR_ENVVAR_NOT_FOUND); Windows then points it, TEMP and TMP at the container's own folders.
+    for (const QString &name : {QStringLiteral("PATH"), QStringLiteral("USERPROFILE"), QStringLiteral("LANG"), QStringLiteral("SystemRoot"),
+                                QStringLiteral("LOCALAPPDATA")})
 #else
     for (const QString &name : {QStringLiteral("PATH"), QStringLiteral("HOME"), QStringLiteral("LANG")})
 #endif
@@ -151,8 +153,8 @@ PluginPrograms::PluginPrograms(QObject *parent) : QObject(parent) {}
 
 PluginPrograms::~PluginPrograms() = default;
 
-std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launch(const std::string &pluginId,
-                                                                                const api::ProgramCall &call) const
+std::expected<ProgramProcess::Options, api::Error> PluginPrograms::launchOptions(const std::string &pluginId,
+                                                                             const api::ProgramCall &call) const
 {
     const std::optional<Plugin> plugin = m_wiring.plugin ? m_wiring.plugin(pluginId) : std::nullopt;
     if (!plugin || !plugin->manifest)
@@ -163,11 +165,22 @@ std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launc
     const auto run = program->platforms.find(std::string(plugins::thisPlatform()));
     if (run == program->platforms.end())
         return refusal(errors::kUnavailable, program->title + " isn't available for this computer.", "platform");
-    if (run->second.download)
-        return refusal(errors::kUnavailable, program->title + " isn't downloaded yet.", "not_downloaded");
-    const QString file = QDir(plugin->package).absoluteFilePath(qs(run->second.path));
-    if (!QFileInfo(file).isFile())
-        return refusal(errors::kUnavailable, program->title + " is missing from the plugin's package.", "missing");
+    QString file;
+    QString folder;
+    if (const auto &download = run->second.download) {
+        file = m_wiring.downloaded ? m_wiring.downloaded(pluginId, run->second) : QString();
+        if (file.isEmpty())
+            return refusal(errors::kUnavailable, program->title + " isn't downloaded yet.", "not_downloaded");
+        QDir kept = QFileInfo(file).dir();
+        for (std::size_t i = 0; i < std::ranges::count(download->entry, '/'); ++i)
+            kept.cdUp();
+        folder = kept.absolutePath();
+    } else {
+        file = QDir(plugin->package).absoluteFilePath(qs(run->second.path));
+        if (!QFileInfo(file).isFile())
+            return refusal(errors::kUnavailable, program->title + " is missing from the plugin's package.", "missing");
+        folder = QFileInfo(file).absolutePath();
+    }
 
     const bool networkAllowed = m_wiring.networkAllowed && m_wiring.networkAllowed();
     backends::sandbox::Profile profile;
@@ -181,7 +194,7 @@ std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launc
         profile.lowRightsHelper = m_wiring.lowRightsHelper;
     }
 #endif
-    profile.readExecute = {QFileInfo(file).absolutePath()};
+    profile.readExecute = {folder};
     profile.readWrite = {plugin->data, plugin->cache};
     for (const api::ProgramFile &granted : call.files)
         (granted.writable ? profile.readWrite : profile.read).push_back(pathOf(granted.path));
@@ -205,8 +218,32 @@ std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launc
     for (const auto &[name, value] : run->second.env)
         environment.insert(qs(name), declared(value).value_or(QString()));
 
-    return std::make_unique<ProgramProcess>(
-        ProgramProcess::Options{file, arguments, environment, plugin->data, std::move(profile)});
+    return ProgramProcess::Options{file, arguments, environment, plugin->data, std::move(profile)};
+}
+
+std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::launch(const std::string &pluginId,
+                                                                                const api::ProgramCall &call) const
+{
+    auto options = launchOptions(pluginId, call);
+    if (!options)
+        return std::unexpected(options.error());
+    return std::make_unique<ProgramProcess>(std::move(*options));
+}
+
+std::expected<ProgramProcess::Options, api::Error> PluginPrograms::options(const std::string &pluginId,
+                                                                         const std::string &programId) const
+{
+    api::ProgramCall call;
+    call.program = programId;
+    return launchOptions(pluginId, call);
+}
+
+std::expected<std::unique_ptr<ProgramProcess>, api::Error> PluginPrograms::prepare(const std::string &pluginId,
+                                                                                 const std::string &programId) const
+{
+    api::ProgramCall call;
+    call.program = programId;
+    return launch(pluginId, call);
 }
 
 void PluginPrograms::run(const api::Caller &caller, api::ProgramCall call, api::Reply reply)

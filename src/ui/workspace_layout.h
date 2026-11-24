@@ -107,6 +107,8 @@ public:
     void retranslate() { emit changed(); }
     void reservePresetNames(const QStringList &names);
     void reloadSavedLayouts();
+    void waitForPluginLayouts() { m_pluginLayoutsPending = true; }
+    void pluginLayoutsRead();
     const QStringList &reservedPresetNames() const { return m_reservedNames; }
     Q_INVOKABLE bool resetCurrentLayout();
     // `tier` "project" or "mine"; empty is Mine.
@@ -214,6 +216,8 @@ private:
         application::TierMark mark;
     };
     void readSavedLayouts();
+    void readPluginLayouts();
+    void layoutsRead();
     std::vector<SavedLayout> readLayoutsFile(const QString &path, bool &locked);
     void lockSavedLayouts(const QString &path, bool &locked);
     bool writeSavedLayouts();
@@ -224,8 +228,18 @@ private:
     QString sendLayout(const QString &name, const QString &from, const QVariantList &choices, bool move);
     void renameLayoutOrigin(const QString &from, const QString &to);
     QString knownLayout(const QString &name) const;
+    const WorkspaceArrangement *arrangementNamed(const QString &name) const;
     QStringList m_reservedNames;
     std::vector<SavedLayout> m_saved;
+    struct PluginLayout {
+        QString name;
+        QString plugin;
+        std::optional<WorkspaceArrangement> arrangement;
+        QString problem;
+    };
+    std::vector<PluginLayout> m_pluginLayouts;
+    bool m_pluginLayoutsPending = false;
+    const PluginLayout *pluginLayoutNamed(const QString &name) const;
     QString m_savedFile;
     bool m_savedLocked = false;
     QString m_projectSavedFile;

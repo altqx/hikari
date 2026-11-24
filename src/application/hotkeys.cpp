@@ -452,7 +452,10 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_GRID_TAGS_HIDE", 5356},
         {"GLOBAL_REMOVE_TEXT_KEEP_TAGS", 5357},
         {"GLOBAL_GRID_MARK_CURRENT_FRAME", 5358},
+        {"GLOBAL_REOPEN_WITH_ENCODING", 5371},
+        {"GLOBAL_QUICK_FIX", 5373},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
+        {"GLOBAL_IMPORT_TEXT", 5375},
 };
 
 struct NameRow {
@@ -874,7 +877,10 @@ constexpr NameRow kNames[] = {
         {5356, "Hide tags in the Grid"},
         {5357, "Delete text, keep tags"},
         {5358, "Mark lines on the current frame"},
+        {5371, "Reopen with encoding…"},
+        {5373, "Quick fix"},
         {5374, "Full screen typesetting"},
+        {5375, "Import text…"},
 };
 
 struct DefaultRow {
@@ -892,6 +898,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {5101, GlobalHotkey, "Open video…", "Ctrl-Shift-O"},
         {5343, GlobalHotkey, "Quick Open…", "Ctrl-P"},
         {5344, GlobalHotkey, "Command palette…", "Ctrl-Shift-P"},
+        {5373, GlobalHotkey, "Quick fix", "Alt-Enter"},
         {5009, GlobalHotkey, "Find…", "Ctrl-F"},
         {5010, GlobalHotkey, "Replace…", "Ctrl-H"},
         {5006, GlobalHotkey, "Undo", "Ctrl-Z"},
@@ -1640,10 +1647,63 @@ void HotkeyList::removeUnchangedRows(const std::function<bool(const Row &)> &gon
         m_sel = int(m_filtered.size()) - 1;
 }
 
+namespace {
+
+bool overlaps(const HotkeyId &a, const HotkeyId &b)
+{
+    return a.type == b.type || a.type == GlobalHotkey || b.type == GlobalHotkey;
+}
+
+bool shownBySource(int source, const HotkeyList::Row &r)
+{
+    if (source == 0)
+        return true;
+    const bool script = r.key.id >= kFirstScriptHotkey;
+    if (source == 3)
+        return script && isPluginCommand(r.name);
+    if (source == 4)
+        return script && !isPluginCommand(r.name);
+    static const HotkeyMap defaults = defaultHotkeys();
+    const auto it = defaults.find(r.key);
+    const bool own = script ? !r.accel.empty() : r.accel != (it == defaults.end() ? std::string() : it->second.accel);
+    return source == 2 ? own : !script && !own;
+}
+
+}
+
+std::vector<int> HotkeyList::clashes(int index) const
+{
+    std::vector<int> out;
+    if (index < 0 || std::size_t(index) >= m_rows.size() || m_rows[std::size_t(index)]->accel.empty())
+        return out;
+    const Row &row = *m_rows[std::size_t(index)];
+    for (std::size_t i = 0; i < m_rows.size(); ++i)
+        if (int(i) != index && m_rows[i]->accel == row.accel && overlaps(m_rows[i]->key, row.key))
+            out.push_back(int(i));
+    return out;
+}
+
+void HotkeyList::filterSource(int source)
+{
+    m_source = source;
+    filter(m_filterMode);
+}
+
+void HotkeyList::filterConflicts(bool on)
+{
+    m_conflicts = on;
+    filter(m_filterMode);
+}
+
 bool HotkeyList::shownNow(const Row &r) const
 {
-    if (!shownByFilter(m_filterMode, r))
+    if (!shownByFilter(m_filterMode, r) || !shownBySource(m_source, r))
         return false;
+    if (m_conflicts) {
+        const auto it = std::ranges::find_if(m_rows, [&r](const RowPtr &p) { return p.get() == &r; });
+        if (it == m_rows.end() || clashes(int(it - m_rows.begin())).empty())
+            return false;
+    }
     if (m_search.empty())
         return true;
     const auto holds = [this](std::string_view text) {

@@ -38,6 +38,8 @@ class ShellController : public QObject {
     Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
     // 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
     Q_PROPERTY(int tagsMode READ tagsMode NOTIFY tagsModeChanged)
+    Q_PROPERTY(QString gridFilterText READ gridFilterText WRITE setGridFilterText NOTIFY gridFilterChanged)
+    Q_PROPERTY(bool gridFilterMatchesNothing READ gridFilterMatchesNothing NOTIFY gridFilterChanged)
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
     Q_PROPERTY(bool referenceLinked READ referenceLinked NOTIFY referenceNavigationChanged)
     Q_PROPERTY(int referenceMatchCount READ referenceMatchCount NOTIFY referenceNavigationChanged)
@@ -70,6 +72,10 @@ public:
     bool hasReference() const { return m_workspace.reference().has_value(); }
     QString referenceTitle() const;
     QAbstractItemModel *lines() { return &m_shown; }
+    QString gridFilterText() const { return m_shown.text(); }
+    void setGridFilterText(const QString &text);
+    bool gridFilterMatchesNothing() const;
+    Q_INVOKABLE QVariant firstShownLine() const;
     QAbstractItemModel *referenceLines() { return &m_referenceLines; }
     QString activeLineText() const { return m_activeText; }
     QString activeLineStyle() const { return m_activeStyle; }
@@ -181,6 +187,7 @@ public:
     void setSelection(const application::Selection &selection);
     std::vector<core::LineId> displayedLines() const;
     std::vector<core::LineId> actionLines() const;
+    std::optional<int> lineNumber(core::LineId id) const;
     void retranslate();
 
     void setReferenceSelection(const application::Selection &selection);
@@ -203,12 +210,14 @@ signals:
     void gridColumnWidthsChanged();
     void foldGeneratedChanged();
     void tagsModeChanged();
+    void gridFilterChanged();
     void referenceNavigationChanged();
     void referenceLineShown(qulonglong id);
 
 private:
     QString titleOf(std::optional<application::DocumentId> id) const;
     QString selectionText() const;
+    void countSelection(const application::Selection &selection);
 
     application::Workspace &m_workspace;
     int m_shellWindow = 0;

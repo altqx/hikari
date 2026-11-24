@@ -130,6 +130,13 @@ def main():
     write("bad-preset.hikariplugin",
           package({"hikari-plugin.json": manifest("1.0.0", contributes={"karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}),
                    "main.lua": "return '1.0.0'\n", "presets/glow.ass": "[Script Info]\nTitle: Glow\n"}))
+    dusk = (HERE.parent.parent.parent / "src/ui/themes/dark.json").read_text()
+    write("looks-1.0.0-data-only.hikariplugin",
+          package({"hikari-plugin.json": json.dumps({"id": "com.example.looks", "name": "Looks", "version": "1.0.0", "api": 1,
+                                                     "authors": ["Ana"], "contributes": {"themes": [
+                                                         {"id": "dusk", "title": "Dusk", "type": "dark", "path": "themes/dusk.json"}]}},
+                                                    indent=2) + "\n",
+                   "themes/dusk.json": dusk}))
     marketplace(v1, hello("1.1.0", "a"), native)
 
 

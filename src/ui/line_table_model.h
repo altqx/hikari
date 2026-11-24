@@ -182,6 +182,8 @@ public:
     std::optional<int> rowOf(core::LineId id) const;
     std::optional<core::LineId> lineAt(int row) const;
     const core::LineRecord *recordAt(int row) const;
+    // Case-insensitive, in Text without tags (and Translation in TLMode), Actor, Effect or Style.
+    bool matchesText(int row, const QString &text) const;
     const application::Selection &selection() const { return m_selection; }
 
     int rowCount(const QModelIndex &parent = {}) const override;
@@ -193,6 +195,7 @@ public:
 
 signals:
     void runFoldChanged(qulonglong first);
+    void activeChanged();
 
 private:
     struct Measures {
@@ -282,6 +285,9 @@ public:
 
     void setLineModel(LineTableModel *model);
     void setPredicate(Predicate predicate);
+    // An active Line that matched stays shown until another Line is active, so an edit never hides it.
+    void setText(const QString &text);
+    const QString &text() const { return m_text; }
     int hiddenSelectedCount() const;
     bool passes(int sourceRow) const;
     int nearestVisibleRow(core::LineId id) const;
@@ -300,8 +306,13 @@ protected:
                                                                   const QList<int> &roles) const;
 
 private:
+    bool matchesText(int sourceRow, const core::LineRecord &record) const;
+    void pinActive();
+
     LineTableModel *m_lines = nullptr;
     Predicate m_predicate;
+    QString m_text;
+    std::optional<core::LineId> m_pinned;
 };
 
 }

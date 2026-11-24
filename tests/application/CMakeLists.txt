@@ -50,6 +50,8 @@ hikari_add_gtest(hikari_application_grid_clipboard_tests SOURCES grid_clipboard_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_lyrics_insert_tests SOURCES lyrics_insert_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_text_import_tests SOURCES text_import_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_filtering_tests SOURCES grid_filtering_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_groups_tests SOURCES grid_groups_tests.cpp
@@ -104,6 +106,8 @@ target_include_directories(hikari_application_spell_checker_tests PRIVATE "${PRO
 hikari_add_gtest(hikari_application_settings_tests SOURCES settings_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_options_dialog_tests SOURCES options_dialog_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_setting_link_tests SOURCES setting_link_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_getting_started_tests SOURCES getting_started_tests.cpp
     LIBRARIES hikari_application LABELS application)
@@ -241,6 +245,8 @@ hikari_add_gtest(hikari_application_qc_notes_tests SOURCES qc_notes_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_qc_notes_tests PRIVATE
     HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
+hikari_add_gtest(hikari_application_problems_tests SOURCES problems_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_perspective_tracking_tests SOURCES perspective_tracking_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp

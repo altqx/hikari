@@ -97,7 +97,7 @@ RowLayout {
                 visible: presetRow.heading
                 x: 10
                 y: 6
-                text: presetRow.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                text: presetRow.modelData.tier === "project" ? qsTr("This project") : qsTr("Yours")
                 font.bold: true
                 font.pixelSize: 11
                 color: Theme.muted
@@ -158,7 +158,7 @@ RowLayout {
             visible: bar.tiered
             height: visible ? implicitHeight : 0
             iconRole: "copy-to-tier"
-            text: bar.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+            text: bar.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
             enabled: bar.current !== ""
             onTriggered: bar.transfer(false)
         }
@@ -167,7 +167,7 @@ RowLayout {
             visible: bar.tiered
             height: visible ? implicitHeight : 0
             iconRole: "move-to-tier"
-            text: bar.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+            text: bar.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
             enabled: bar.current !== ""
             onTriggered: bar.transfer(true)
         }

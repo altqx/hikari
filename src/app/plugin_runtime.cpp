@@ -2,6 +2,8 @@
 
 #include "hikari/app/plugin_content.h"
 #include "hikari/app/plugin_nodes.h"
+#include "hikari/backends/program_plugin_link.h"
+#include "hikari/backends/program_process.h"
 
 #include "log_controller.h"
 
@@ -64,6 +66,11 @@ QString analyticsFeature(std::string_view operation)
     if (operation == "marks.set")
         return QStringLiteral("row_marks");
     return {};
+}
+
+bool hasCode(const plugins::Manifest &manifest)
+{
+    return !manifest.main.empty() || !manifest.mainProgram.empty();
 }
 
 QString stopReason(PluginProcess::StopReason reason)
@@ -153,6 +160,7 @@ struct PluginRuntime::Running {
             status.push_back({item});
     }
     bool held = false;
+    std::int64_t mcpRevision = 0;
 };
 
 namespace {
@@ -175,6 +183,10 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
             return it != m_plugins.end() && it->second->process->deliver(event, json, key);
         },
         this);
+    m_ui->popups()->setUserAsked([this](const std::string &plugin) {
+        const auto it = m_plugins.find(plugin);
+        return it != m_plugins.end() && it->second->process->answersUser();
+    });
     const auto &f = m_wiring.folders;
     if (!f.plugins.isEmpty())
         m_installer.emplace(plugins::PluginFolders{path(f.plugins), path(f.data), path(f.cache), path(f.registry)},
@@ -189,6 +201,18 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
             qCWarning(lcPluginsSandbox) << "Restricted plugins run without a complete sandbox:" << coverage.missing;
     }
     m_network = new PluginNetwork(*m_wiring.network, m_wiring.networkAllowed, this);
+    m_downloads = std::make_unique<PluginProgramDownloads>(
+        PluginProgramDownloads::Wiring{f.programs, m_wiring.network, m_wiring.networkAllowed});
+    connect(m_downloads.get(), &PluginProgramDownloads::changed, this, [this](const QString &pluginId) {
+        ++m_programsRevision;
+        emit programsChanged();
+        const auto it = m_plugins.find(pluginId.toStdString());
+        if (it != m_plugins.end())
+            renewMcpServers(*it->second);
+        if (it != m_plugins.end() && !it->second->manifest.mainProgram.empty() && !it->second->held &&
+            it->second->process->state() == PluginProcess::State::LoadFailed && m_downloads->missing(it->first, it->second->manifest).empty())
+            it->second->process->start();
+    });
     m_files = std::make_unique<PluginFiles>(m_wiring.api, m_installer ? &*m_installer : nullptr, *m_ui, m_wiring.project);
     m_ui->setGrantDrop([this](const std::string &plugin, const QString &file) {
         const auto it = m_plugins.find(plugin);
@@ -221,6 +245,7 @@ void PluginRuntime::wirePrograms()
         },
         m_wiring.api,
         m_wiring.lowRightsHelper,
+        [this](const std::string &id, const plugins::ProgramRun &run) { return m_downloads->file(id, run); },
     });
 }
 
@@ -350,8 +375,11 @@ void PluginRuntime::sync()
     std::map<std::string, std::string> unavailable;
     application::PluginContent content;
     if (m_installer) {
-        if (const auto registry = m_installer->registry())
+        std::set<std::string> installedIds;
+        const auto registry = m_installer->registry();
+        if (registry)
             for (const auto &[id, entry] : *registry) {
+                installedIds.insert(id);
                 auto manifest = m_installer->installedManifest(id);
                 if (!manifest) {
                     if (entry.enabled && m_wiring.log)
@@ -383,11 +411,20 @@ void PluginRuntime::sync()
                         m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "Its nodes can’t run: %1").arg(qs(own.error())),
                                           ui::LogController::Error, qs(manifest->name));
                 }
+                std::set<std::string> kept = PluginProgramDownloads::hashes(*manifest);
+                if (const auto previous = m_installer->previousManifest(id))
+                    kept.merge(PluginProgramDownloads::hashes(*previous));
+                m_downloads->keepOnly(id, kept);
                 if (runs) {
+                    m_downloads->fetch(id, *manifest);
                     order.emplace_back(entry.installed, id);
                     wanted.emplace(id, std::move(*manifest));
                 }
             }
+        if (registry) {
+            m_downloads->keepPlugins(installedIds);
+            m_installed = std::move(installedIds);
+        }
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
         const auto keep = wanted.find(it->first);
@@ -400,12 +437,16 @@ void PluginRuntime::sync()
         endAccess(*it->second);
         PluginProcess *process = it->second->process.get();
         disconnect(process, nullptr, this, nullptr);
-        process->forceStop();
+        process->end();
         it = m_plugins.erase(it);
     }
     for (auto &[id, manifest] : wanted)
-        if (!m_plugins.contains(id))
-            m_plugins.emplace(id, launch(id, std::move(manifest)));
+        if (!m_plugins.contains(id)) {
+            Running &plugin = *m_plugins.emplace(id, launch(id, std::move(manifest))).first->second;
+            plugin.mcpRevision = ++m_mcpRevision;
+            if (hasCode(plugin.manifest))
+                plugin.process->start();
+        }
     std::ranges::sort(order);
     m_installOrder.clear();
     for (auto &[installed, id] : order)
@@ -416,6 +457,50 @@ void PluginRuntime::sync()
     application::setPluginContent(std::move(content));
     m_ui->setPlugins(std::move(installed));
     relist();
+    emit mcpServersChanged();
+}
+
+void PluginRuntime::renewMcpServers(Running &plugin)
+{
+    if (plugin.manifest.mcpServers.empty())
+        return;
+    plugin.mcpRevision = ++m_mcpRevision;
+    emit mcpServersChanged();
+}
+
+std::vector<backends::ai::McpServerEntry> PluginRuntime::mcpServers() const
+{
+    std::vector<backends::ai::McpServerEntry> out;
+    for (const Running *plugin : byName())
+        for (const plugins::McpServer &server : plugin->manifest.mcpServers) {
+            backends::ai::McpServerEntry entry;
+            entry.id = backends::ai::pluginMcpServerId(plugin->id, server.id);
+            entry.name = QCoreApplication::translate("HikariSub.Plugins", "%1 (%2)")
+                             .arg(qs(server.title), qs(plugin->manifest.name))
+                             .toStdString();
+            entry.plugin = plugin->id;
+            entry.pluginServer = server.id;
+            entry.revision = plugin->mcpRevision;
+            out.push_back(std::move(entry));
+        }
+    return out;
+}
+
+std::expected<backends::ProgramProcess::Options, QString>
+PluginRuntime::mcpServerStart(const backends::ai::McpServerEntry &server) const
+{
+    const QString off = QCoreApplication::translate("HikariSub.Plugins", "The plugin isn’t on.");
+    const auto it = m_plugins.find(server.plugin);
+    if (it == m_plugins.end() || !m_wiring.programs)
+        return std::unexpected(off);
+    const std::vector<plugins::McpServer> &declared = it->second->manifest.mcpServers;
+    const auto found = std::ranges::find(declared, server.pluginServer, &plugins::McpServer::id);
+    if (found == declared.end())
+        return std::unexpected(off);
+    auto options = m_wiring.programs->options(server.plugin, found->program);
+    if (!options)
+        return std::unexpected(qs(options.error().message));
+    return std::move(*options);
 }
 
 std::vector<PluginRuntime::Format> PluginRuntime::formats() const
@@ -495,6 +580,21 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
         process->setSandbox(backends::pluginProfile(m_wiring.helperPath, QString::fromStdU16String(root.u16string()), id));
     }
+    if (!raw->manifest.mainProgram.empty())
+        process->setLinkFactory([this, raw]() -> std::expected<std::unique_ptr<backends::PluginLink>, QString> {
+            const plugins::Program *program = raw->manifest.program(raw->manifest.mainProgram);
+            if (!m_wiring.programs)
+                return std::unexpected(QStringLiteral("HikariSub can’t run programs here."));
+            auto prepared = m_wiring.programs->prepare(raw->id, raw->manifest.mainProgram);
+            if (!prepared)
+                return std::unexpected(qs(prepared.error().message));
+            auto link = std::make_unique<backends::ProgramPluginLink>(std::move(*prepared),
+                                                                      raw->manifest.permissions.background.has_value());
+            link->setName(qs(program->title));
+            connect(link.get(), &backends::ProgramPluginLink::logLine, this,
+                    [this, id = raw->id](const QString &line) { m_wiring.programs->logLine(id, line); });
+            return link;
+        });
     process->setServiceHandler([this, raw](const PluginProcess::ServiceRequest &request, PluginProcess::ServiceReply reply) {
         serve(*raw, request, std::move(reply));
     });
@@ -577,7 +677,6 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
             break;
         }
     });
-    process->start();
     return plugin;
 }
 
@@ -772,6 +871,34 @@ QVariantList PluginRuntime::marks(const QString &pluginId) const
     return out;
 }
 
+QVariantList PluginRuntime::programs(const QString &pluginId) const
+{
+    QVariantList out;
+    const std::string id = pluginId.toStdString();
+    const auto manifest = m_installer ? m_installer->installedManifest(id) : std::unexpected(std::string());
+    if (!manifest)
+        return out;
+    const std::vector<const plugins::Program *> missing = m_downloads->missing(id, *manifest);
+    for (const plugins::Program &program : manifest->programs) {
+        QString state = QStringLiteral("ready");
+        if (!program.platforms.contains(std::string(plugins::thisPlatform())))
+            state = QStringLiteral("unavailable");
+        else if (std::ranges::find(missing, &program) != missing.end())
+            state = m_downloads->fetching(id) ? QStringLiteral("downloading") : QStringLiteral("missing");
+        out.push_back(QVariantMap{{QStringLiteral("title"), qs(program.title)},
+                                  {QStringLiteral("state"), state},
+                                  {QStringLiteral("problem"), state == QStringLiteral("missing") ? m_downloads->problem(id) : QString()}});
+    }
+    return out;
+}
+
+void PluginRuntime::downloadPrograms(const QString &pluginId)
+{
+    const std::string id = pluginId.toStdString();
+    if (const auto manifest = m_installer ? m_installer->installedManifest(id) : std::unexpected(std::string()))
+        m_downloads->fetch(id, *manifest);
+}
+
 void PluginRuntime::clearMarks(const QString &pluginId, double document)
 {
     if (m_wiring.marks)
@@ -792,6 +919,8 @@ void PluginRuntime::endAccess(Running &plugin)
         m_wiring.programs->end(plugin.id);
     if (m_wiring.marks)
         m_wiring.marks->clearOwner(plugin.caller.id);
+    if (m_wiring.problems)
+        m_wiring.problems->clearOwner(plugin.caller.id);
     endJob(plugin.id);
 }
 
@@ -1054,7 +1183,8 @@ void PluginRuntime::restart(const QString &pluginId)
 {
     if (const auto it = m_plugins.find(pluginId.toStdString()); it != m_plugins.end()) {
         it->second->held = false;
-        it->second->process->start();
+        if (hasCode(it->second->manifest))
+            it->second->process->start();
     }
 }
 
@@ -1065,6 +1195,7 @@ void PluginRuntime::settingChanged(const QString &pluginId, const QString &setti
     if (it == m_plugins.end() || !value)
         return;
     m_ui->settingsChanged(it->first);
+    renewMcpServers(*it->second);
     const api::Json data = api::Json::object({{"id", setting.toStdString()}, {"value", *value}});
     it->second->process->deliver("settings:changed", data.dump(), "settings:changed#" + setting.toStdString());
 }

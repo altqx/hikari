@@ -2,6 +2,7 @@
 
 #include "hikari/api/api.h"
 #include "hikari/api/json.h"
+#include "hikari/app/plugin_popups.h"
 #include "hikari/plugins/manifest.h"
 
 #include <QObject>
@@ -193,6 +194,7 @@ class PluginUi : public QObject {
     Q_PROPERTY(QVariantList panels READ panels NOTIFY panelsChanged)
     // The oldest picker or folder request still waiting, or null.
     Q_PROPERTY(hikari::app::PluginFileRequest *fileRequest READ fileRequest NOTIFY fileRequestChanged)
+    Q_PROPERTY(hikari::app::PluginPopups *popups READ popups CONSTANT)
 
 public:
     struct Plugin {
@@ -253,6 +255,7 @@ public:
     void keepLoadedPanelsIn(const QString &file);
     void settingsChanged(const std::string &plugin);
     PluginFileRequest *fileRequest() const { return m_fileRequests.empty() ? nullptr : m_fileRequests.front().second; }
+    PluginPopups *popups() const { return m_popups; }
     // Files dropped on a panel whose tree has `drop`: granted for reading and sent as a "drop" event.
     // False when the panel doesn't take drops.
     Q_INVOKABLE bool drop(const QString &dock, const QList<QUrl> &files);
@@ -329,6 +332,7 @@ private:
     bool qmlLoaded(const std::string &plugin) const;
 
     Deliver m_deliver;
+    PluginPopups *m_popups = nullptr;
     std::map<std::string, Known> m_plugins;
     std::map<QString, PluginPanelState *> m_panels;
     std::map<QString, api::Json> m_values;

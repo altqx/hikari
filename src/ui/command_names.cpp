@@ -362,6 +362,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import lyrics…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import text…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Exit"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep AI change"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo AI change"),
@@ -415,6 +416,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save audio of selected lines…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Save keyframes…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close keyframes"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Quick fix"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Show tags in the Grid"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Replace tags in the Grid with a symbol"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Hide tags in the Grid"),
@@ -423,6 +425,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move lines up"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move lines down"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Full screen typesetting"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Reopen with encoding…"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

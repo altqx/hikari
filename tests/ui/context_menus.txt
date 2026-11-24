@@ -41,6 +41,7 @@ Line editor text > AI actions >
 Line editor text > AI actions > Rewrite…
 Line editor text > AI actions > Shorten to 15 CPS
 Line editor text > AI actions > Fix spelling and grammar
+Line editor text > AI actions > Suggest synonyms >
 Line editor text > AI actions > Translate to English
 Line editor text > AI actions > Translate to…
 Line editor text > AI actions > -
@@ -165,6 +166,7 @@ Grid > AI actions >
 Grid > AI actions > Rewrite…
 Grid > AI actions > Shorten to 15 CPS
 Grid > AI actions > Fix spelling and grammar
+Grid > AI actions > Suggest synonyms >
 Grid > AI actions > Translate to English
 Grid > AI actions > Translate to…
 Grid > AI actions > -
@@ -487,22 +489,22 @@ Panel options (Spellchecker) > -
 Panel options (Spellchecker) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 Panel options (Spellchecker) > -
 Panel options (Spellchecker) > Close
-Panel options (QC notes)
-Panel options (QC notes) > Import notes file…
-Panel options (QC notes) > Import notes from the clipboard…
-Panel options (QC notes) > Export notes…
-Panel options (QC notes) > Mark all as not done
-Panel options (QC notes) > -
-Panel options (QC notes) > Delete all notes…
-Panel options (QC notes) > -
-Panel options (QC notes) > Move panel…
-Panel options (QC notes) > Move to the left side bar
-Panel options (QC notes) > Move to the right side bar
-Panel options (QC notes) > Dock
-Panel options (QC notes) > -
-Panel options (QC notes) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
-Panel options (QC notes) > -
-Panel options (QC notes) > Close
+Panel options (Problems)
+Panel options (Problems) > Import notes file…
+Panel options (Problems) > Import notes from the clipboard…
+Panel options (Problems) > Export notes…
+Panel options (Problems) > Mark all as not done
+Panel options (Problems) > -
+Panel options (Problems) > Delete all notes…
+Panel options (Problems) > -
+Panel options (Problems) > Move panel…
+Panel options (Problems) > Move to the left side bar
+Panel options (Problems) > Move to the right side bar
+Panel options (Problems) > Dock
+Panel options (Problems) > -
+Panel options (Problems) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Problems) > -
+Panel options (Problems) > Close
 Panel options (Explorer)
 Panel options (Explorer) > New subtitle file
 Panel options (Explorer) > Refresh

@@ -733,6 +733,12 @@ bool LineEditorController::dirty() const
     return s && s->isDirty();
 }
 
+bool LineEditorController::hasDraft() const
+{
+    auto *s = session();
+    return s && s->draftLine().has_value();
+}
+
 QString LineEditorController::saveStatus() const
 {
     const auto status = m_document ? m_files.lastSave(*m_document) : std::nullopt;

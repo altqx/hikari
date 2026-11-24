@@ -22,6 +22,12 @@ Amended again by [AI15d #931](https://github.com/altqx/hikari/issues/931) on 202
 
 Amended by [ADR 0034](0034-plugins-grow-into-an-extension-system.md) on 2026-11-17. `hikari_sandbox` also runs plugin programs, Full trust plugins' included, each in a profile of its own: `HikariSub.Program.<the first 32 hex digits of the SHA-256 of "<plugin id>/<program id>">`. On Windows a program runs in an AppContainer unless its manifest asks for low integrity, which the install question names. A plugin's MCP server runs sandboxed as a program; servers the user adds stay unsandboxed.
 
+Amended by [#1226](https://github.com/altqx/hikari/issues/1226) on 2026-11-17, which records how plugin programs follow this ADR's Windows findings:
+
+- **AppContainer by default.** A program, a program plugin's included, runs in its own AppContainer with access entries on its folder (read and execute), the plugin's data and cache folders (read and write) and the files a call grants. It gets `internetClient` only when it declares `network` and the plugin network switch is on.
+- **Low integrity when the manifest asks.** Runtimes an AppContainer stops, such as Node and Rust, declare `"confinement": "lowIntegrity"` and run through `hikarisub-confine.exe`, as Codex and ACP agents do. Low integrity always has the network, so the manifest also declares `network`, the plugin network switch must be on, and the install question says the program can read the user's files.
+- **Never unconfined.** Unlike the AI sidecar, a program whose sandbox can't apply doesn't start. A program plugin then fails to start with the reason, and a call answers `unavailable`.
+
 ## The sandbox
 
 - **One shared module.** `hikari_sandbox` in `src/backends` starts a process under a `sandbox::Profile`: the paths it may read and execute, read, or read and write, and whether it gets the network. Plugins ([PL7 #419](https://github.com/altqx/hikari/issues/419)) reuse it.
@@ -96,6 +102,7 @@ Amended by [ADR 0034](0034-plugins-grow-into-an-extension-system.md) on 2026-11-
 - **The sandbox:** a probe child shows that files outside the profile, sockets and new namespaces are refused.
 - **The Windows key folder:** keys round-trip encrypted and go when removed; a folder that can't be made private gets nothing; an entry left in Credential Manager moves once; a low-integrity probe can neither read a key nor list the folder.
 - **Low integrity on Windows:** the probe runs at Low on its own desktop. It reads the user's files, but writes only its own folders, and only while its launcher lives. It is shut out of a folder kept for the user alone. A missing or failing helper starts nothing. After a Lua node runs, a low-integrity agent can still load a program from a per-user install.
+- **Plugin programs** (`plugin_programs_tests`, `program_plugin_tests`): a program reaches only its profile's folders, gets no network unless declared, and a program plugin speaks the plugin protocol over JSON-RPC from its sandbox.
 - **The relay:**
   - the key is substituted and masked, also across chunk boundaries;
   - redirects, URLs outside the base and plain-HTTP keys are refused;

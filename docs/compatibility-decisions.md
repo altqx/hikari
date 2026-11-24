@@ -18,6 +18,10 @@ Transform frame rate, Aegisub's Transform Framerate export filter, changes the s
 
 The `Export Filters` line in `[Aegisub Project Garbage]` is read as Before export's "From this file (Aegisub)" list. It is written back on the next save only after an export that ran steps. Aegisub keeps whatever list its Export dialog last showed. An export without steps leaves it alone, so a file shared with Aegisub keeps its list. The templater's filter keeps its English name, "Karaoke template", in every language, where Aegisub translates it, so the line matches across languages. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q767–Q772.
 
+## C06-menu-checks
+
+Opening the Automation menu calls each macro's validation function and its active-state function (`is_active`, `register_macro`'s fifth argument) on the open Document and selection, in the script's own Lua state, as Aegisub 3.5.1 does. A macro whose validation answers false is greyed out with validation's second return under it, Aegisub's help text, else "Can’t run on this selection"; one whose validation raises shows "Its validation function stopped with an error". An enabled macro's help text shows in the status bar, as in Aegisub. A true `is_active` checks the row. Unlike Aegisub, the calls run in the background with "Checking…" under each row meanwhile, and a macro chosen meanwhile runs once they stop. Each call gets 500 ms; past it the macro stays enabled. The calls can't show dialogs, their edits are dropped and host services answer as unavailable. Answers are kept until the Document, the selection or the active line changes. Running a macro still validates it first. It used to call validation only when a macro started and never call `is_active`. [#1216](https://github.com/altqx/hikari/issues/1216), owner Q586.
+
 ## FA4-getpixel-rgb
 
 `frame:getPixel(x, y)` returns three integers, r, g and b, as arch1t3cht's fork does. It used to return one packed integer (`b * 65536 + g * 256 + r`). Outside the frame it returns nil. [FA4 #561](https://github.com/altqx/hikari/issues/561), owner decision 2026-10-31.
@@ -130,6 +134,8 @@ Vector clips are written with up to two decimal places, as Aegisub 3.5 writes th
 ## FA9-video-property-prompts
 
 When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix and LayoutRes, as Aegisub 3.5 does, and each question has its own row in Settings › Video. "Don't ask again" sets that row. 3.5's extra choice to remember the last answer is left out. [FA9 #566](https://github.com/altqx/hikari/issues/566), coordinator decision 2026-11-03.
+
+A mismatched matrix can also be converted: "Convert colours and set to …" converts every Style colour and each `\c`, `\1c`–`\4c` (inside `\t` too) as Aegisub's Resample does with its matrix option (`ycbcr_converter`), then sets the matrix, in one undo step. Karaoke `template` and `code` comments are left alone. "Set to …" stays the default button, so Enter never rewrites colours. A missing matrix and `None` are only set, never converted. [#1215](https://github.com/altqx/hikari/issues/1215), coordinator decision 2026-11-23.
 
 ## 738-resample-stretch-axis
 

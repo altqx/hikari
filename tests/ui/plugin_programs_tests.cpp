@@ -37,6 +37,7 @@ class PluginProgramsTests : public QObject {
     std::unique_ptr<api::Api> m_api;
     QStringList m_log;
     bool m_network = false;
+    QString m_downloaded;
 
     QString folder(const QString &name) const { return m_root.filePath(name); }
 
@@ -88,6 +89,7 @@ private slots:
             {}, plugins::ProgramDownload{"https://example.com/a.zip", std::string(64, 'a'), 10, "zip", "a"}, {}, {}};
         m_manifest.programs.push_back(std::move(downloaded));
         m_log.clear();
+        m_downloaded.clear();
         m_programs = std::make_unique<PluginPrograms>();
         m_api = std::make_unique<api::Api>(api::Host{.programs = m_programs.get()});
         m_programs->bind({
@@ -101,6 +103,7 @@ private slots:
             [this](const std::string &, const QString &line) { m_log << line; },
             m_api.get(),
             {},
+            [this](const std::string &, const plugins::ProgramRun &) { return m_downloaded; },
         });
     }
 
@@ -144,7 +147,12 @@ private slots:
         QCOMPARE(lines[1], QDir::toNativeSeparators(folder(QStringLiteral("package"))));
         QCOMPARE(lines[2], QDir::toNativeSeparators(folder(QStringLiteral("data"))));
         QCOMPARE(lines[3], QStringLiteral("${nothing}"));
+#ifdef Q_OS_WIN
+        QVERIFY2(lines[4].startsWith(QStringLiteral("TEMP=")) && lines[4].endsWith(QStringLiteral("\\AC\\Temp"), Qt::CaseInsensitive),
+                 qPrintable(lines[4]));
+#else
         QCOMPARE(lines[4], QStringLiteral("TEMP=") + QDir::toNativeSeparators(folder(QStringLiteral("cache/tmp"))));
+#endif
         QCOMPARE(lines[5], QStringLiteral("SECRET=unset"));
     }
 
@@ -211,6 +219,22 @@ private slots:
         const api::Result unknown = call("programs.run", Json::object({{"program", Json("nope")}}));
         QVERIFY(!unknown);
         QCOMPARE(unknown.error().code, std::string(api::errors::kNotFound));
+    }
+
+    void aDownloadedProgramRunsFromWhereItIsKept()
+    {
+        const QString name = QFileInfo(QStringLiteral(HIKARI_TEST_PROGRAM)).fileName();
+        for (plugins::Program &p : m_manifest.programs)
+            if (p.id == "downloaded")
+                p.platforms.begin()->second.download->entry = "bin/" + name.toStdString();
+        const QString kept = folder(QStringLiteral("kept/0123/bin/")) + name;
+        QVERIFY(QDir().mkpath(QFileInfo(kept).absolutePath()));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_TEST_PROGRAM), kept));
+        QFile::setPermissions(kept, QFile::permissions(kept) | QFileDevice::ExeOwner);
+        m_downloaded = kept;
+        const api::Result result = call("programs.run", Json::object({{"program", Json("downloaded")}, {"args", Json::array({Json("args")})}}));
+        QVERIFY2(result, result ? "" : result.error().message.c_str());
+        QCOMPARE(result->find("exitCode")->asInt(), 0);
     }
 
     void onlyPluginsWithThePermissionRunPrograms()

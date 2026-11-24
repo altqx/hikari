@@ -5,6 +5,9 @@
 
 #include <gtest/gtest.h>
 
+#include <fstream>
+#include <sstream>
+
 using namespace hikari::plugins;
 using hikari::plugins::test::bytes;
 using Kind = PackageProblem::Kind;
@@ -148,6 +151,59 @@ TEST(PluginPackage, OversizePackagesAreRefused)
         many.push_back({"f" + std::to_string(i), {}});
     EXPECT_EQ(problem(std::move(many)).kind, Kind::TooLarge);
     EXPECT_EQ(problem(plugin({{"big.bin", std::vector<std::byte>(kMaxPackageBytes)}})).kind, Kind::TooLarge);
+}
+
+std::vector<PackageFile> withPrograms(std::vector<PackageFile> extra)
+{
+    const std::string other = thisPlatform() == "linux-x64" ? "windows-x64" : "linux-x64";
+    const std::string manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1,
+        "main": "lua/main.lua", "authors": ["Ana"], "permissions": {"programs": "Checks"},
+        "contributes": {"programs": [{"id": "tool", "title": "Tool", "platforms": {
+            ")" + std::string(thisPlatform()) + R"(": {"path": "bin/here/tool"}, ")" + other + R"(": {"path": "bin/other/tool"}}}]}})";
+    std::vector<PackageFile> files{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
+    files.insert(files.end(), extra.begin(), extra.end());
+    return files;
+}
+
+TEST(PluginPackage, APackageBuiltForOnePlatformMayHold256Megabytes)
+{
+    const std::vector<std::byte> big(kMaxPackageBytes + 1);
+    EXPECT_TRUE(openPackage(withPrograms({{"bin/here/tool", bytes("x")}, {"big.bin", big}}), 1));
+    EXPECT_EQ(problem(withPrograms({{"bin/here/tool", bytes("x")}, {"bin/other/tool", bytes("y")}, {"big.bin", big}})).kind,
+              Kind::TooLarge);
+    EXPECT_EQ(problem(withPrograms({{"bin/here/tool", bytes("x")}, {"big.bin", std::vector<std::byte>(kMaxPlatformPackageBytes)}}))
+                  .kind,
+              Kind::TooLarge);
+}
+
+TEST(PluginPackage, APackageWithoutMainOpens)
+{
+    const std::string manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "authors": ["Ana"]})";
+    const auto opened = openPackage({{"hikari-plugin.json", bytes(manifest)}}, 1);
+    ASSERT_TRUE(opened);
+    EXPECT_TRUE(opened->manifest.main.empty());
+}
+
+TEST(PluginPackage, AProgramPluginNeedsItsProgramForThisComputer)
+{
+    const std::string other = thisPlatform() == "linux-x64" ? "windows-x64" : "linux-x64";
+    auto manifest = [](const std::string &platform) {
+        return R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0", "api": 1, "authors": ["Ana"],
+            "main": {"program": "core"}, "permissions": {"programs": "Is the plugin"},
+            "contributes": {"programs": [{"id": "core", "title": "Core", "api": true, "platforms": {")" + platform +
+               R"(": {"path": "bin/core"}}}]}})";
+    };
+    EXPECT_TRUE(openPackage({{"hikari-plugin.json", bytes(manifest(std::string(thisPlatform())))}, {"bin/core", bytes("x")}}, 1));
+    const PackageProblem elsewhere = problem({{"hikari-plugin.json", bytes(manifest(other))}, {"bin/core", bytes("x")}});
+    EXPECT_EQ(elsewhere.kind, Kind::MainProgramUnavailable);
+    EXPECT_EQ(elsewhere.path, "Core");
+}
+
+TEST(PluginPackage, ABundledProgramForThisComputerMustBeInThePackage)
+{
+    const PackageProblem missing = problem(withPrograms({{"bin/other/tool", bytes("y")}}));
+    EXPECT_EQ(missing.kind, Kind::MissingProgram);
+    EXPECT_EQ(missing.path, "bin/here/tool");
 }
 
 TEST(PluginPackage, MediaThatFollowsTheRulesOpens)
@@ -312,7 +368,9 @@ TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
     constexpr std::string_view manifest = R"({"id": "com.example.hello", "name": "Hello", "version": "1.0.0",
         "api": 1, "main": "lua/main.lua", "authors": ["Ana"],
         "contributes": {"styles": [{"id": "signs", "title": "Signs", "path": "styles/signs.sty"}],
-                        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}]}})";
+                        "karaokePresets": [{"id": "glow", "path": "presets/glow.ass"}],
+                        "graphs": [{"id": "sparkle", "title": "Sparkle", "path": "graphs/sparkle.json"}],
+                        "layouts": [{"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"}]}})";
     const auto files = [&](std::vector<PackageFile> extra) {
         std::vector<PackageFile> out{{"hikari-plugin.json", bytes(manifest)}, {"lua/main.lua", bytes("return {}")}};
         out.insert(out.end(), extra.begin(), extra.end());
@@ -320,23 +378,41 @@ TEST(PluginPackage, ContentFilesMustBeThereAndPassTheirChecks)
     };
     const PackageFile styles{"styles/signs.sty", bytes("Style: Sign,Arial,20")};
     const PackageFile preset{"presets/glow.ass", bytes("[Script Info]")};
+    const PackageFile graph{"graphs/sparkle.json", bytes("{}")};
+    const PackageFile layout{"layouts/quiet.json", bytes("{}")};
 
-    const PackageProblem missing = problem(files({styles}));
+    const PackageProblem missing = problem(files({styles, graph, layout}));
     EXPECT_EQ(missing.kind, Kind::MissingContent);
     EXPECT_EQ(missing.path, "presets/glow.ass");
-    EXPECT_TRUE(openPackage(files({styles, preset}), 1)) << "with no checks set, a file need only be there";
+    EXPECT_EQ(problem(files({styles, preset, layout})).path, "graphs/sparkle.json");
+    EXPECT_EQ(problem(files({styles, preset, graph})).path, "layouts/quiet.json");
+    EXPECT_TRUE(openPackage(files({styles, preset, graph, layout}), 1)) << "with no checks set, a file need only be there";
 
     ContentFileChecks checks;
     checks.styleCatalogue = [](std::span<const std::byte>) { return std::optional<std::string>(); };
     checks.karaokePreset = [](std::span<const std::byte> data) {
         return data.size() < 20 ? std::optional<std::string>("is too short") : std::nullopt;
     };
-    const auto refused = openPackage(files({styles, preset}), 1, checks);
+    const auto refused = openPackage(files({styles, preset, graph, layout}), 1, checks);
     ASSERT_FALSE(refused);
     EXPECT_EQ(refused.error().kind, Kind::BadContent);
     EXPECT_EQ(refused.error().path, "presets/glow.ass");
     EXPECT_EQ(refused.error().detail, "is too short");
-    EXPECT_TRUE(openPackage(files({styles, {"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")}}), 1, checks));
+    EXPECT_TRUE(openPackage(files({styles, graph, layout, {"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")}}), 1, checks));
+    checks.graph = [](std::span<const std::byte>) { return std::optional<std::string>("is not a graph"); };
+    const auto notAGraph = openPackage(files({styles, graph, layout, {"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")}}), 1, checks);
+    ASSERT_FALSE(notAGraph);
+    EXPECT_EQ(notAGraph.error().path, "graphs/sparkle.json");
+    EXPECT_EQ(notAGraph.error().detail, "is not a graph");
+    checks.graph = nullptr;
+    const PackageFile longPreset{"presets/glow.ass", bytes("[Script Info]\nTitle: Glow\n")};
+    checks.layout = [](std::span<const std::byte> data) {
+        return data.size() < 3 ? std::optional<std::string>("isn't a layout") : std::nullopt;
+    };
+    const auto notALayout = openPackage(files({styles, longPreset, graph, layout}), 1, checks);
+    ASSERT_FALSE(notALayout);
+    EXPECT_EQ(notALayout.error().kind, Kind::BadContent);
+    EXPECT_EQ(notALayout.error().path, "layouts/quiet.json");
 }
 
 TEST(PluginPackage, ADictionaryNeedsBothFilesAndEachPassesItsCheck)
@@ -400,4 +476,121 @@ TEST(PluginPackage, TheImportRuleReadsQmlAndScriptsAsWritten)
     for (const auto &[path, text, import] : refused)
         EXPECT_EQ(qmlImportProblem(path, text), std::optional<std::string>(import)) << text;
     EXPECT_TRUE(isQmlSource("a/B.qml") && isQmlSource("a.js") && isQmlSource("a.mjs") && !isQmlSource("a.lua"));
+}
+
+namespace {
+
+std::string builtinTheme(const std::string &name)
+{
+    std::ifstream file(std::string(HIKARI_BUILTIN_THEMES) + "/" + name + ".json", std::ios::binary);
+    std::stringstream text;
+    text << file.rdbuf();
+    return text.str();
+}
+
+std::vector<PackageFile> dataPackage(std::string_view contributes, std::vector<PackageFile> extra)
+{
+    const std::string manifest = R"({"id": "com.example.looks", "name": "Looks", "version": "1.0.0", "api": 1,
+        "authors": ["Ana"], "contributes": )" + std::string(contributes) + "}";
+    std::vector<PackageFile> files{{"hikari-plugin.json", bytes(manifest)}};
+    files.insert(files.end(), extra.begin(), extra.end());
+    return files;
+}
+
+std::string interfaceIcon(std::string_view body = R"(<path fill="none" stroke="currentColor" d="M2 2h12"/>)")
+{
+    return svg(body, R"(viewBox="0 0 16 16")");
+}
+
+PackageProblem refusal(std::vector<PackageFile> files, const ContentFileChecks &checks = {})
+{
+    const auto result = openPackage(std::move(files), 1, checks);
+    EXPECT_FALSE(result);
+    return result ? PackageProblem{} : result.error();
+}
+
+}
+
+TEST(PluginPackage, ADataOnlyPackageNeedsNoMain)
+{
+    const auto package = openPackage(dataPackage(R"({"themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "dusk.json"}]})",
+                                                 {{"dusk.json", bytes(builtinTheme("dark"))}}),
+                                     1);
+    ASSERT_TRUE(package) << package.error().path << " " << package.error().detail;
+    EXPECT_TRUE(package->manifest.dataOnly());
+}
+
+TEST(PluginPackage, AThemeMustLoadAndMatchItsType)
+{
+    constexpr std::string_view dark = R"({"themes": [{"id": "dusk", "title": "Dusk", "type": "dark", "path": "dusk.json"}]})";
+    const PackageProblem missing = refusal(dataPackage(dark, {}));
+    EXPECT_EQ(missing.kind, Kind::MissingContent);
+    EXPECT_EQ(missing.path, "dusk.json");
+
+    const PackageProblem light = refusal(dataPackage(dark, {{"dusk.json", bytes(builtinTheme("light"))}}));
+    EXPECT_EQ(light.kind, Kind::BadContent);
+    EXPECT_EQ(light.detail, "is a light theme, and hikari-plugin.json lists it as dark");
+
+    std::string dim = builtinTheme("dark");
+    const std::size_t muted = dim.find(R"("muted": ")");
+    ASSERT_NE(muted, std::string::npos);
+    dim.replace(muted + 10, 7, "#505050");
+    const PackageProblem contrast = refusal(dataPackage(dark, {{"dusk.json", bytes(dim)}}));
+    EXPECT_EQ(contrast.kind, Kind::BadContent);
+    EXPECT_TRUE(contrast.detail.starts_with("fails the theme check at /roles/muted: ")) << contrast.detail;
+
+    const PackageProblem broken = refusal(dataPackage(dark, {{"dusk.json", bytes("{")}}));
+    EXPECT_EQ(broken.kind, Kind::BadContent);
+    EXPECT_TRUE(broken.detail.starts_with("fails the theme check at /: ")) << broken.detail;
+}
+
+TEST(PluginPackage, AnIconThemeCoversEveryRole)
+{
+    constexpr std::string_view round = R"({"iconThemes": [{"id": "round", "title": "Round", "path": "icons/round"}]})";
+    ContentFileChecks checks;
+    checks.iconRoles = {"open-subtitles", "save"};
+    const PackageFile open{"icons/round/open-subtitles.svg", bytes(interfaceIcon())};
+    const PackageFile save{"icons/round/save.svg", bytes(interfaceIcon())};
+
+    const PackageProblem missing = refusal(dataPackage(round, {open}), checks);
+    EXPECT_EQ(missing.kind, Kind::MissingContent);
+    EXPECT_EQ(missing.path, "icons/round/save.svg");
+    EXPECT_TRUE(openPackage(dataPackage(round, {open, save}), 1, checks));
+    EXPECT_TRUE(openPackage(dataPackage(round, {open, save, {"icons/round/later.svg", bytes(interfaceIcon())}}), 1, checks))
+        << "a role this HikariSub lacks is left alone";
+
+    const PackageProblem coloured =
+        refusal(dataPackage(round, {open, {"icons/round/save.svg", bytes(interfaceIcon(R"(<path fill="#FF0000" d="M0 0h1"/>)"))}}),
+                checks);
+    EXPECT_EQ(coloured.kind, Kind::BadContent);
+    EXPECT_EQ(coloured.path, "icons/round/save.svg");
+    EXPECT_EQ(coloured.detail, "draws fill in #FF0000; an interface icon draws in currentColor only");
+}
+
+TEST(PluginPackage, OwnIconsMustBeThereAndFollowTheIconRules)
+{
+    constexpr std::string_view spark = R"({"icons": [{"id": "spark", "path": "spark.svg"}]})";
+    const PackageProblem missing = refusal(dataPackage(spark, {}));
+    EXPECT_EQ(missing.kind, Kind::MissingContent);
+    EXPECT_EQ(missing.path, "spark.svg");
+    EXPECT_TRUE(openPackage(dataPackage(spark, {{"spark.svg", bytes(interfaceIcon(R"(<g id="accent"><circle fill="currentColor" r="2"/></g>)"))}}), 1));
+    const PackageProblem wide = refusal(dataPackage(spark, {{"spark.svg", bytes(svg("<path/>"))}}));
+    EXPECT_EQ(wide.kind, Kind::BadContent);
+    EXPECT_EQ(wide.detail, "has no viewBox of 0 0 16 16 on its <svg>");
+}
+
+TEST(PluginPackage, InterfaceIconsDrawInCurrentColorOnly)
+{
+    const auto refusal = [](std::string body) { return interfaceIconProblem({"i.svg", bytes(interfaceIcon(body))}); };
+    EXPECT_EQ(refusal(R"(<path fill="none" stroke="currentColor"/><rect fill="CurrentColor" stroke="inherit"/>)"), std::nullopt);
+    EXPECT_EQ(refusal(R"(<path style="fill: none; stroke:currentColor; stroke-width: 1.5"/>)"), std::nullopt);
+    EXPECT_EQ(refusal(R"(<path stroke="red"/>)"), "draws stroke in red; an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal(R"(<path style="stroke-width: 1; fill: #000"/>)"),
+              "draws fill in #000; an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal(R"(<stop stop-color="white"/>)"), "draws stop-color in white; an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal(R"svg(<path fill="url(#g)"/>)svg"), "draws fill in url(#g); an interface icon draws in currentColor only");
+    EXPECT_EQ(refusal("<style>path { fill: red }</style>"), "holds a <style> element");
+    EXPECT_EQ(refusal("<script/>"), "holds a <script> element");
+    EXPECT_EQ(interfaceIconProblem({"i.svg", bytes(svg("", R"(viewBox="0 0 24 24")"))}), "has no viewBox of 0 0 16 16 on its <svg>");
+    EXPECT_EQ(interfaceIconProblem({"i.svg", bytes(svg("", R"(viewBox="0,0,16,16")"))}), std::nullopt);
 }

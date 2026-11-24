@@ -158,7 +158,7 @@ std::string withCharacterReferences(std::string_view text)
     return out;
 }
 
-bool squareViewBox(std::string_view box)
+std::optional<std::array<double, 4>> viewBoxValues(std::string_view box)
 {
     std::array<double, 4> values{};
     std::size_t count = 0;
@@ -169,19 +169,76 @@ bool squareViewBox(std::string_view box)
             continue;
         }
         if (count == values.size())
-            return false;
+            return std::nullopt;
         const auto [ptr, ec] = std::from_chars(box.data() + i, box.data() + box.size(), values[count]);
         if (ec != std::errc())
-            return false;
+            return std::nullopt;
         i = std::size_t(ptr - box.data());
         ++count;
     }
-    return count == 4 && values[2] > 0 && values[2] == values[3];
+    if (count != values.size())
+        return std::nullopt;
+    return values;
 }
+
+bool squareViewBox(std::string_view box)
+{
+    const auto values = viewBoxValues(box);
+    return values && (*values)[2] > 0 && (*values)[2] == (*values)[3];
+}
+
+bool interfaceIconViewBox(std::string_view box)
+{
+    return viewBoxValues(box) == std::array<double, 4>{0, 0, 16, 16};
+}
+
+std::string_view trimmed(std::string_view text)
+{
+    while (!text.empty() && space(text.front()))
+        text.remove_prefix(1);
+    while (!text.empty() && space(text.back()))
+        text.remove_suffix(1);
+    return text;
+}
+
+bool colourProperty(std::string_view name)
+{
+    for (std::string_view property : {"fill", "stroke", "color", "stop-color", "flood-color", "lighting-color"})
+        if (name == property)
+            return true;
+    return false;
+}
+
+Problem foreignColour(std::string_view property, std::string_view value)
+{
+    const std::string colour = lowered(trimmed(value));
+    if (colour == "none" || colour == "currentcolor" || colour == "inherit")
+        return std::nullopt;
+    return "draws " + std::string(property) + " in " + std::string(trimmed(value)) + "; an interface icon draws in currentColor only";
+}
+
+Problem foreignStyleColour(std::string_view style)
+{
+    while (!style.empty()) {
+        const std::size_t end = std::min(style.find(';'), style.size());
+        const std::string_view declaration = style.substr(0, end);
+        style.remove_prefix(std::min(end + 1, style.size()));
+        const std::size_t colon = declaration.find(':');
+        if (colon == std::string_view::npos)
+            continue;
+        const std::string property = lowered(trimmed(declaration.substr(0, colon)));
+        if (colourProperty(property))
+            if (auto problem = foreignColour(property, declaration.substr(colon + 1)))
+                return problem;
+    }
+    return std::nullopt;
+}
+
+enum class SvgUse { Media, InterfaceIcon };
 
 class SvgReader {
 public:
-    explicit SvgReader(std::string_view text) : m_text(text) {}
+    SvgReader(std::string_view text, SvgUse use) : m_text(text), m_use(use) {}
 
     Problem problem()
     {
@@ -265,6 +322,8 @@ private:
             return "holds a <script> element";
         if (local == "foreignobject")
             return "holds a <foreignObject> element";
+        if (m_use == SvgUse::InterfaceIcon && local == "style")
+            return "holds a <style> element";
         std::optional<std::string> viewBox;
         while (true) {
             skipSpace();
@@ -293,7 +352,17 @@ private:
                 return "has an " + std::string(attribute) + " that points outside the file";
             if (root && attribute == "viewBox")
                 viewBox = value;
+            if (m_use == SvgUse::InterfaceIcon) {
+                if (colourProperty(attributeLocal))
+                    if (auto problem = foreignColour(attributeLocal, value))
+                        return problem;
+                if (attributeLocal == "style")
+                    if (auto problem = foreignStyleColour(value))
+                        return problem;
+            }
         }
+        if (root && m_use == SvgUse::InterfaceIcon && !(viewBox && interfaceIconViewBox(*viewBox)))
+            return "has no viewBox of 0 0 16 16 on its <svg>";
         if (root && !(viewBox && squareViewBox(*viewBox)))
             return "has no square viewBox on its <svg>";
         return std::nullopt;
@@ -313,6 +382,7 @@ private:
     }
 
     std::string_view m_text;
+    SvgUse m_use;
     std::size_t m_at = 0;
     bool m_rootSeen = false;
 };
@@ -332,7 +402,7 @@ Problem iconProblem(const PackageFile &icon)
             return "is larger than 64 KiB";
         if (!api::isUtf8(textOf(icon.data)))
             return "isn't UTF-8";
-        return SvgReader(textOf(icon.data)).problem();
+        return SvgReader(textOf(icon.data), SvgUse::Media).problem();
     }
     if (icon.data.size() > 256 * kKiB)
         return "is larger than 256 KiB";
@@ -342,6 +412,15 @@ Problem iconProblem(const PackageFile &icon)
     if (size->width != 256 || size->height != 256)
         return "is " + pixels(*size) + ", not 256x256 px";
     return std::nullopt;
+}
+
+Problem interfaceIconProblem(const PackageFile &icon)
+{
+    if (icon.data.size() > 64 * kKiB)
+        return "is larger than 64 KiB";
+    if (!api::isUtf8(textOf(icon.data)))
+        return "isn't UTF-8";
+    return SvgReader(textOf(icon.data), SvgUse::InterfaceIcon).problem();
 }
 
 Problem screenshotProblem(const PackageFile &shot)

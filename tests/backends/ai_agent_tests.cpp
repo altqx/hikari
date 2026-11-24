@@ -261,8 +261,8 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
                                              "effects.apply", "effects.save", "files.write",
                                              "karaoke.align", "karaoke.apply_template", "marks.clear", "marks.set",
                                              "panels.close", "panels.focus", "panels.open", "plugins.install", "plugins.run",
-                                             "plugins.scaffold", "presence.set_text", "programs.run", "programs.send",
-                                             "programs.start", "programs.stop", "selection.set", "settings.set", "status_items.set",
+                                             "plugins.scaffold", "presence.set_text", "problems.clear", "problems.fix", "problems.set", "programs.run", "programs.send",
+                                             "programs.start", "programs.stop", "selection.set", "settings.open", "settings.set", "status_items.set",
                                              "translation.project_write", "typeset.apply", "video.set_keyframes"}))
         << "Classify the new write in alwaysAsk and docs/ai-agent.md, then add it here.";
 }
@@ -607,15 +607,16 @@ TEST_F(AgentThreadsTest, AChosenAgentModelReachesItsSessionAndTheAgentsDefaultPa
     EXPECT_EQ(at(receivedAs("session/new").back(), "agent"), "codex");
 }
 
-TEST_F(AgentThreadsTest, AnAgentListsItsModelsInAProbeSessionThatClosesAndAFailureListsNone)
+TEST_F(AgentThreadsTest, AnAgentListsItsModelsInAProbeSessionThatClosesAndAFailureSaysWhy)
 {
     threads = makeThreads(true);
-    using Listed = std::optional<std::vector<AgentThreads::AgentModel>>;
+    using Listed = AgentThreads::AgentModels;
+    using Kind = AgentThreads::AgentModelsFailure::Kind;
     const auto list = [&](const std::string &agent, int timeoutMs = 30'000) {
         std::optional<Listed> out;
         threads->listAgentModels(agent, [&](Listed models) { out = std::move(models); }, timeoutMs);
         EXPECT_TRUE(waitFor([&] { return out.has_value(); }));
-        return out.value_or(Listed());
+        return out.value_or(std::unexpected(AgentThreads::AgentModelsFailure{}));
     };
     const Listed claude = list("claude");
     ASSERT_TRUE(claude);
@@ -628,10 +629,18 @@ TEST_F(AgentThreadsTest, AnAgentListsItsModelsInAProbeSessionThatClosesAndAFailu
     EXPECT_EQ(at(opened[0], "agent"), "claude");
     EXPECT_TRUE(waitFor([&] { return !receivedAs("_hikari/session.close").empty(); }));
 
-    EXPECT_FALSE(list("codex"));
-    EXPECT_FALSE(list("hang", 100));
+    const Listed codex = list("codex");
+    ASSERT_FALSE(codex);
+    EXPECT_EQ(codex.error().kind, Kind::Failed);
+    EXPECT_EQ(codex.error().detail, "signed out");
+    const Listed hang = list("hang", 100);
+    ASSERT_FALSE(hang);
+    EXPECT_EQ(hang.error().kind, Kind::TimedOut);
     refusedAgent = "acp:x";
-    EXPECT_FALSE(list("acp:x"));
+    const Listed refused = list("acp:x");
+    ASSERT_FALSE(refused);
+    EXPECT_EQ(refused.error().kind, Kind::Refused);
+    EXPECT_EQ(refused.error().detail, "sandbox");
     EXPECT_EQ(receivedAs("session/new").size(), 3u);
 }
 

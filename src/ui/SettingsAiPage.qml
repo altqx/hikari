@@ -5,7 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-ScrollView {
+Item {
     id: page
     objectName: "settingsPageAi"
     required property var dialog
@@ -61,8 +61,8 @@ ScrollView {
         {id: "openrouter", name: "OpenRouter", iconRole: "ai-assistant"},
         {id: "custom", name: qsTr("Custom endpoint…"), iconRole: "link"}
     ]
-    contentWidth: availableWidth
-    contentHeight: column.implicitHeight + 44
+    implicitHeight: column.implicitHeight
+    Layout.fillWidth: true
 
     function reload() {
         stagedRoles = ai ? Object.assign({}, ai.roles) : {}
@@ -140,6 +140,7 @@ ScrollView {
         const r = Object.assign({}, stagedRoles)
         r[role] = value
         stagedRoles = r
+        commit()
     }
     function openForm(preset, id) {
         adding = id ? "" : preset
@@ -368,12 +369,14 @@ ScrollView {
 
     Connections {
         target: page.dialog
-        function onReloaded() { page.reload() }
+        function onOpened() { page.reload() }
+        function onReloaded() { page.stagedRoles = page.ai ? Object.assign({}, page.ai.roles) : {} }
     }
     Connections {
         target: page.ai
         function onDraftSaved() { page.adding = ""; page.editing = "" }
         function onSwitched() { page.reload() }
+        function onProvidersChanged() { page.stagedRoles = Object.assign({}, page.ai.roles) }
     }
 
     component AiCheck: CheckBox {
@@ -455,7 +458,7 @@ ScrollView {
     component TierChip: Rectangle {
         id: chipItem
         property string origin
-        readonly property string text: origin === "project" ? qsTr("Project") : origin === "mine" ? qsTr("Mine") : qsTr("Built in")
+        readonly property string text: origin === "project" ? qsTr("Project") : origin === "mine" ? qsTr("Yours") : qsTr("Built in")
         implicitWidth: 86
         implicitHeight: 20
         radius: 10
@@ -1177,16 +1180,15 @@ ScrollView {
 
     ColumnLayout {
         id: column
-        x: 24
-        y: 20
-        width: page.availableWidth - 48
-        spacing: 16
+        width: page.width
+        spacing: 24
 
         SettingsSection {
-            title: qsTr("AI features")
+            host: page.dialog
+            key: "ai.aiFeatures"
             ruled: false
             AiCheck { setting: "ai.off"; text: qsTr("Turn off all AI features"); font.bold: true }
-            Note { text: qsTr("Nothing AI-related shows, downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.") }
+            Note { text: qsTr("Nothing AI-related downloads, starts or reads your keychain. Providers, keys and threads are kept, and turning AI back on brings them back without a restart.") }
         }
 
         ColumnLayout {
@@ -1200,7 +1202,7 @@ ScrollView {
                      items: [qsTr("Your providers, and their keys in the keychain"), qsTr("Your agent threads"),
                              qsTr("Downloaded AI component")]},
                     {title: qsTr("Hidden while AI is off"),
-                     items: [qsTr("The agent panel, inline AI actions and AI rows in every menu"),
+                     items: [qsTr("Inline AI actions and AI rows in every menu. The agent panel shows only a button to turn AI on."),
                              qsTr("AI commands in command search, their shortcuts and toolbar buttons"),
                              qsTr("AI in Getting started and What’s new"),
                              qsTr("MCP server, which stops listening")]}
@@ -1246,7 +1248,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiProviders"
             visible: page.live
-            title: qsTr("Providers")
+            host: page.dialog
+            key: "ai.providers"
             Rectangle {
                 color: "transparent"
                 border.color: Theme.line
@@ -1401,7 +1404,50 @@ ScrollView {
         SettingsSection {
             objectName: "aiModels"
             visible: page.live
-            title: qsTr("Models")
+            host: page.dialog
+            key: "ai.models"
+            SettingsRow {
+                host: page.dialog
+                setting: "translation.translator"
+                TextField {
+                    objectName: "setting_translation.translator"
+                    readOnly: true
+                    selectByMouse: true
+                    text: {
+                        page.dialog.changedIds
+                        const v = page.dialog.settings ? page.dialog.settings.value("translation.translator") : ""
+                        return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+                    }
+                    Layout.fillWidth: true
+                    Accessible.name: SettingsCatalogue.label("translation.translator")
+                }
+                IconTextButton {
+                    iconRole: "folder-open"
+                    text: qsTr("Open settings file")
+                    onClicked: page.dialog.openSettingsFile("translation.translator")
+                }
+            }
+            SettingsRow {
+                host: page.dialog
+                setting: "translation.reviewer"
+                TextField {
+                    objectName: "setting_translation.reviewer"
+                    readOnly: true
+                    selectByMouse: true
+                    text: {
+                        page.dialog.changedIds
+                        const v = page.dialog.settings ? page.dialog.settings.value("translation.reviewer") : ""
+                        return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+                    }
+                    Layout.fillWidth: true
+                    Accessible.name: SettingsCatalogue.label("translation.reviewer")
+                }
+                IconTextButton {
+                    iconRole: "folder-open"
+                    text: qsTr("Open settings file")
+                    onClicked: page.dialog.openSettingsFile("translation.reviewer")
+                }
+            }
             IconTextButton {
                 objectName: "aiRefreshModels"
                 iconRole: "refresh"
@@ -1415,33 +1461,53 @@ ScrollView {
                 delegate: SettingsRow {
                     id: roleRow
                     required property var modelData
-                    readonly property bool chat: modelData.id === "chat"
-                    readonly property var choices: {
-                        const all = page.ai ? page.ai.modelChoices : []
-                        const usable = modelData.id === "vision" ? all.filter(c => c.vision) : all
-                        const listed = usable.map(c => ({ value: c.value, text: c.text + " · " + c.provider }))
-                        return chat ? listed : [{ value: "", text: qsTr("Same as chat") }].concat(listed)
-                    }
+                    readonly property string staged: page.stagedRoles[modelData.id] ?? ""
+                    readonly property var chosen: (page.ai ? page.ai.modelChoices : []).find(c => c.value === staged)
                     text: modelData.name
                     labelWidth: 200
-                    ComboBox {
+                    Button {
                         id: roleChoice
                         objectName: "aiRole_" + roleRow.modelData.id
-                        model: roleRow.choices.length > 0 ? roleRow.choices : [{ value: "", text: qsTr("Add a provider first") }]
-                        textRole: "text"
-                        valueRole: "value"
+                        text: page.providerList.length === 0 ? qsTr("Add a provider first")
+                              : roleRow.chosen ? roleRow.chosen.text + " · " + roleRow.chosen.provider
+                              : roleRow.modelData.id === "chat" ? qsTranslate("HikariSub.Agent", "Choose a model") : qsTr("Same as chat")
                         enabled: page.providerList.length > 0
-                        function sync() {
-                            currentIndex = Math.max(0, roleRow.choices.findIndex(c => c.value === (page.stagedRoles[roleRow.modelData.id] ?? "")))
+                        contentItem: RowLayout {
+                            spacing: 4
+                            Label {
+                                Layout.fillWidth: true
+                                text: roleChoice.text
+                                elide: Text.ElideRight
+                                color: roleChoice.palette.buttonText
+                            }
+                            Icon {
+                                size: 12
+                                iconRole: "chevron-down"
+                            }
                         }
-                        Component.onCompleted: sync()
-                        onModelChanged: sync()
-                        Connections { target: page; function onStagedRolesChanged() { roleChoice.sync() } }
-                        onActivated: index => page.stage(roleRow.modelData.id, valueAt(index))
+                        onClicked: {
+                            rolePicker.role = roleRow.modelData.id
+                            rolePicker.current = roleRow.staged
+                            rolePicker.openAt(this)
+                        }
+                        Accessible.role: Accessible.ComboBox
                         Accessible.name: roleRow.modelData.name
+                        Accessible.description: text
                         Layout.fillWidth: true
                         Layout.maximumWidth: 420
                     }
+                }
+            }
+            ModelPicker {
+                id: rolePicker
+                property string role: ""
+                property string current: ""
+                within: page
+                itemsFor: filter => page.ai ? page.ai.rolePickerItems(role, current, filter) : []
+                onChosen: value => page.stage(role, value)
+                Connections {
+                    target: page.ai
+                    function onProvidersChanged() { rolePicker.refresh() }
                 }
             }
             Note {
@@ -1454,7 +1520,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiWebSearch"
             visible: page.live
-            title: qsTr("Web search")
+            host: page.dialog
+            key: "ai.webSearch"
             AiCheck { setting: "ai.webSearch"; text: qsTr("Let AI search the web") }
             Note { text: qsTr("The agent can look up names, terms, lyrics and references, and says where it found them. The provider or your search service gets each search the agent writes and the pages it opens.") }
             Rectangle {
@@ -1629,7 +1696,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiExternalAgents"
             visible: page.live
-            title: qsTr("External agents")
+            host: page.dialog
+            key: "ai.externalAgents"
             Timer {
                 interval: 2000
                 repeat: true
@@ -2151,10 +2219,11 @@ ScrollView {
                 copiedTimer.restart()
             }
             visible: page.live
-            title: qsTr("MCP")
+            host: page.dialog
+            key: "ai.mcp"
             Connections {
                 target: page.dialog
-                function onReloaded() {
+                function onOpened() {
                     if (mcpSection.offering)
                         page.ai.cancelComponent()
                     mcpSection.offering = false
@@ -2353,25 +2422,40 @@ ScrollView {
                             Layout.fillWidth: true
                             Label { text: serverRow.modelData.name; font.bold: true; elide: Text.ElideRight; Layout.fillWidth: true }
                             Label {
-                                text: serverRow.modelData.transport === "http" ? serverRow.modelData.url : serverRow.modelData.command
-                                font.family: page.codeFontFamily
+                                text: serverRow.modelData.plugin ? qsTr("From a plugin, in its sandbox")
+                                      : serverRow.modelData.transport === "http" ? serverRow.modelData.url : serverRow.modelData.command
+                                font.family: serverRow.modelData.plugin ? Qt.application.font.family : page.codeFontFamily
                                 color: Theme.muted
                                 elide: Text.ElideMiddle
                                 Layout.fillWidth: true
                             }
                         }
                         StatusDot {
+                            visible: serverRow.modelData.on
                             status: serverRow.modelData.state === "ready" ? "ok" : serverRow.modelData.state === "failed" ? "failed" : ""
                         }
                         Label {
                             objectName: "aiMcpServerStatus"
+                            visible: serverRow.modelData.on
                             text: page.mcpStatusText(serverRow.modelData)
                             color: serverRow.modelData.state === "failed" ? Theme.danger : Theme.muted
                             elide: Text.ElideRight
                             Layout.maximumWidth: 260
                         }
+                        Switch {
+                            objectName: "aiMcpServerOn"
+                            visible: serverRow.modelData.plugin
+                            text: checked ? qsTr("On") : qsTr("Off")
+                            Accessible.name: serverRow.modelData.name
+                            checked: serverRow.modelData.on
+                            onToggled: {
+                                page.mcpServers.setOn(serverRow.modelData.id, checked)
+                                checked = Qt.binding(() => serverRow.modelData.on)
+                            }
+                        }
                         IconToolButton {
                             objectName: "aiMcpServerEdit"
+                            visible: !serverRow.modelData.plugin
                             iconRole: "edit"
                             text: qsTr("Edit")
                             enabled: page.mcpEditing === ""
@@ -2379,6 +2463,7 @@ ScrollView {
                         }
                         IconToolButton {
                             objectName: "aiMcpServerDelete"
+                            visible: !serverRow.modelData.plugin
                             iconRole: "delete"
                             text: qsTr("Delete")
                             onClicked: page.askDeleteMcpServer(serverRow.modelData)
@@ -2386,14 +2471,14 @@ ScrollView {
                     }
                     CheckBox {
                         objectName: "aiMcpServerTrust"
-                        visible: page.mcpEditing !== serverRow.modelData.id
+                        visible: page.mcpEditing !== serverRow.modelData.id && serverRow.modelData.on
                         checked: serverRow.modelData.trusted
                         text: qsTr("Trust what it says about its tools")
                         Layout.leftMargin: 12
                         onToggled: page.mcpServers.setTrusted(serverRow.modelData.id, checked)
                     }
                     Repeater {
-                        model: page.mcpEditing !== serverRow.modelData.id ? serverRow.modelData.tools : []
+                        model: page.mcpEditing !== serverRow.modelData.id && serverRow.modelData.on ? serverRow.modelData.tools : []
                         delegate: Loader {
                             id: toolRow
                             required property var modelData
@@ -2436,7 +2521,8 @@ ScrollView {
         SettingsSection {
             objectName: "aiAgent"
             visible: page.live
-            title: qsTr("Agent")
+            host: page.dialog
+            key: "ai.agent"
             SettingsRow {
                 text: qsTr("Mode for new threads")
                 ComboBox {
@@ -2492,7 +2578,8 @@ ScrollView {
             id: skillsSection
             objectName: "aiSkills"
             visible: page.live && !!page.skills
-            title: qsTr("Skills")
+            host: page.dialog
+            key: "ai.skills"
             property var groups: []
             function read() { groups = page.skills ? page.skills.groups(page.dialog.shellWindow) : [] }
             Component.onCompleted: read()
@@ -2537,7 +2624,7 @@ ScrollView {
                                     anchors.rightMargin: 10
                                     Label {
                                         text: group.modelData.group === "project" ? qsTr("This project")
-                                            : group.modelData.group === "mine" ? qsTr("Mine") : qsTr("Built in")
+                                            : group.modelData.group === "mine" ? qsTr("Yours") : qsTr("Built in")
                                         font.bold: true
                                         font.pixelSize: 11
                                         color: Theme.muted
@@ -2615,7 +2702,8 @@ ScrollView {
             id: inlineSection
             objectName: "aiInline"
             visible: page.live && !!page.inlineAi
-            title: qsTr("Inline actions")
+            host: page.dialog
+            key: "ai.inlineActions"
             readonly property var actions: page.inlineAi ? page.inlineAi.actions : []
             readonly property var roles: [{id: "chat", name: qsTr("Chat")}, {id: "translator", name: qsTr("Translator")},
                                           {id: "reviewer", name: qsTr("Reviewer")}]
@@ -2809,7 +2897,8 @@ ScrollView {
             readonly property var status: page.componentStatus(c, installing)
             readonly property var rollback: c.rollback ?? ({})
             visible: page.live && c.present === true
-            title: qsTr("AI components")
+            host: page.dialog
+            key: "ai.aiComponents"
             trailing: LinkButton {
                 objectName: "aiWhatsNew"
                 iconRole: "open-link"
@@ -2944,7 +3033,29 @@ ScrollView {
         SettingsSection {
             objectName: "aiPrivacy"
             visible: page.live
-            title: qsTr("Privacy")
+            host: page.dialog
+            key: "ai.privacy"
+            SettingsRow {
+                host: page.dialog
+                setting: "ai.exclude"
+                TextField {
+                    objectName: "setting_ai.exclude"
+                    readOnly: true
+                    selectByMouse: true
+                    text: {
+                        page.dialog.changedIds
+                        const v = page.dialog.settings ? page.dialog.settings.value("ai.exclude") : ""
+                        return Array.isArray(v) ? v.join(", ") : String(v ?? "")
+                    }
+                    Layout.fillWidth: true
+                    Accessible.name: SettingsCatalogue.label("ai.exclude")
+                }
+                IconTextButton {
+                    iconRole: "folder-open"
+                    text: qsTr("Open settings file")
+                    onClicked: page.dialog.openSettingsFile("ai.exclude")
+                }
+            }
             AiCheck { setting: "ai.promptCaching"; text: qsTr("Use prompt caching") }
             Note { text: qsTr("The provider keeps the start of a conversation for a few minutes, so the next turn costs less. Nothing is stored on this computer.") }
             LinkButton {
