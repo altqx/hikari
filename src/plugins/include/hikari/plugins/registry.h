@@ -18,8 +18,8 @@ struct FileGrant {
     bool writable = false;
 };
 
-// Where the installed copy came from: a package file the user chose, or the marketplace.
-enum class Source { File, Marketplace };
+// Where the installed copy came from: a package file the user chose, the marketplace, or a folder run in place.
+enum class Source { File, Marketplace, Dev };
 
 // The marketplace revoked the installed version or the whole plugin, so it was turned off.
 struct Revoked {
@@ -41,10 +41,16 @@ struct InstalledPlugin {
     std::string held;     // a newer version that asks for more, waiting for the user
     std::optional<Revoked> revoked;
     std::int64_t installed = 0; // 1 for the first plugin installed, then counting up; an update keeps it
+    std::string path;     // Dev: the folder it runs from
+    std::string accepted; // Dev: the manifest text the user last said yes to
 };
 
-// plugins.json in the user folder, by plugin id.
+// plugins.json in the user folder, by plugin id; a dev plugin is under devKey(id).
 using Registry = std::map<std::string, InstalledPlugin>;
+
+// A dev plugin's key in the Registry and under plugin-data and the cache: never a plugin id, so it shares nothing with
+// an installed plugin of the same id.
+std::string devKey(std::string_view id);
 
 // A missing file is an empty registry; an unreadable or malformed one is an error, so
 // pinned keys are never silently forgotten.

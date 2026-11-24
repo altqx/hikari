@@ -1046,16 +1046,21 @@ TEST(ClipOptions, LegacyToolbarItems)
     VectorClipTool tool;
     tool.reset(host);
     const auto options = tool.options(host);
-    ASSERT_EQ(options.size(), 7u);
-    const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point",
-                           "vector-delete", "clip-invert"};
-    const char16_t *tips[] = {u"Move points", u"Add line", u"Add Bézier curve", u"Add B-spline",
-                              u"Add separate point", u"Delete point", u"Invert clip"};
-    for (int i = 0; i < 7; ++i) {
+    ASSERT_EQ(options.size(), 8u);
+    const char *roles[] = {"vector-drag",     "vector-line",  "vector-bezier", "vector-bspline",
+                           "vector-freehand", "vector-point", "vector-delete", "clip-invert"};
+    const char16_t *tips[] = {u"Move points", u"Add line",           u"Add Bézier curve", u"Add B-spline",
+                              u"Freehand",    u"Add separate point", u"Delete point",     u"Invert clip"};
+    for (int i = 0; i < 8; ++i) {
         EXPECT_EQ(options[i].iconRole, roles[i]);
         EXPECT_EQ(options[i].tooltip, tips[i]);
-        EXPECT_EQ(options[i].kind, i < 6 ? ToolOption::Kind::Toggle : ToolOption::Kind::Action);
+        EXPECT_EQ(options[i].kind, i < 7 ? ToolOption::Kind::Toggle : ToolOption::Kind::Action);
     }
+    EXPECT_EQ(options[4].name, "freehand");
+    EXPECT_TRUE(tool.setOption("freehand", 1, host));
+    EXPECT_EQ(tool.editor().mode, VectorEditor::Freehand);
+    EXPECT_TRUE(tool.options(host)[4].checked);
+    EXPECT_TRUE(tool.setOption("mode1", 1, host));
     EXPECT_TRUE(options[1].checked);
     EXPECT_TRUE(tool.setOption("mode3", 1, host));
     EXPECT_EQ(tool.editor().mode, 3);
@@ -1065,7 +1070,7 @@ TEST(ClipOptions, LegacyToolbarItems)
     wheel.wheelSteps = 4;
     tool.pointer(wheel, host);
     EXPECT_EQ(tool.editor().mode, 6);
-    EXPECT_TRUE(tool.options(host)[6].checked);
+    EXPECT_TRUE(tool.options(host)[7].checked);
     wheel.control = true;
     tool.pointer(wheel, host);
     EXPECT_EQ(tool.editor().mode, 6);

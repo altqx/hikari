@@ -145,14 +145,12 @@ The hints and handle names below were checked against each tool's code, modifier
 | Text X / Y rotation | Tilt X / Y | Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it. | Origin · cross, Tilt grid · outline |
 | Perspective | Perspective | Drag the corners to lay the text on a surface. Drag inside to move it. | Corners · square, Plane corners · circle, Origin · cross |
 | Rectangle clipping | Rectangle clip | Drag a box. Only what is inside shows. Drag its edges to resize, inside to move. | Edges and corners · outline |
-| Vector clipping | Vector clip | Click to add points, drag them to reshape. Only what is inside shows. | Point · square, Curve handle · circle |
-| Vector drawing | Drawing | Click to add points, drag them to reshape. Or pick a shape and drag a box. | Point · square, Curve handle · circle |
+| Vector clipping | Vector clip | Click to add points, drag them to reshape. Only what is inside shows. Freehand: hold and draw. | Point · square, Curve handle · circle |
+| Vector drawing | Drawing | Click to add points, drag them to reshape. Or pick a shape and drag a box. Freehand: hold and draw. | Point · square, Curve handle · circle |
 | Position shifter | Shift positions | Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis. | Position and move start · square, Move end · circle, Origin · cross, Clip and drawing · outline |
 | Hydra | All tags | Choose a tag, then drag sideways on the picture to change it. Shift for small steps. | Changed line · outline |
 | Gradient | Gradient | Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies. | Start and end, Skew, P1, P2 and P3 · square |
 | Text on path | Text on path | Click to add path points, drag them to shape the path. The text follows; Enter applies. | Point · square, Curve handle · circle |
-
-The freehand stroke (Q622) adds "Freehand: hold and draw." to Vector clip and Drawing when it lands.
 
 The strings live in `HikariSub.VisualTools`, next to the tools' own.
 

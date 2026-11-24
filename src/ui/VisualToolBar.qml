@@ -24,6 +24,7 @@ Control {
         "Rectangle": qsTr("Rectangle"),
         "Tags": qsTr("Tags"),
         "Points": qsTr("Points"),
+        "Freehand": qsTr("Freehand"),
         "Shape": qsTr("Shape"),
         "Move": qsTr("Move"),
         "Tag": qsTr("Tag"),

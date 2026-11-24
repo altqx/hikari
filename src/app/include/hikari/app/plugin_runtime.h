@@ -154,6 +154,8 @@ public:
     }
     // Starts a stopped plugin, or one that didn't start, again.
     Q_INVOKABLE void restart(const QString &pluginId);
+    // Ends the plugin and starts its files afresh, as after an update.
+    void reload(const QString &pluginId);
     // A setting the plugin manager changed, so that hikari.settings.get sees it at once.
     void settingChanged(const QString &pluginId, const QString &setting, const QString &json);
     PluginUi *ui() const { return m_ui; }
@@ -270,6 +272,7 @@ private:
     void renewMcpServers(Running &plugin);
     std::int64_t m_mcpRevision = 0;
     std::optional<std::set<std::string>> m_installed;
+    std::set<std::string> m_reloading;
     void rework();
     QVariantList m_working;
     int m_windowsRevision = 0;

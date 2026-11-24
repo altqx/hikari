@@ -545,8 +545,10 @@ Item {
         readonly property bool failing: page.agentFailed(row)
         readonly property bool updating: row.state === "updating"
         readonly property bool offersUpdate: row.canUpdate === true && !updating && !failing && page.agentNeedsUpdate(row)
+        readonly property string text: name
         objectName: "aiAgent_" + agent
         spacing: 6
+        Component.onCompleted: page.dialog.registerRow("ai.agent." + agent, program, false)
         Layout.fillWidth: true
         RowLayout {
             spacing: 8
@@ -1270,8 +1272,10 @@ Item {
                             id: row
                             required property var modelData
                             required property int index
+                            readonly property string text: modelData.name
                             objectName: "aiProvider_" + modelData.id
                             spacing: 0
+                            Component.onCompleted: page.dialog.registerRow("ai.provider." + modelData.id, row, false)
                             Layout.fillWidth: true
                             Rectangle { visible: row.index > 0; color: Theme.line; implicitHeight: 1; Layout.fillWidth: true }
                             Loader {
