@@ -1359,9 +1359,13 @@ private slots:
         const auto row = [&](const char *name) { return item(settings->contentItem(), QLatin1String(name)); };
         const QString shots = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
         const auto shot = [&](const char *name) {
-            QVERIFY(QMetaObject::invokeMethod(settings, "land", Q_ARG(QVariant, QStringLiteral("new.styleCatalog"))));
             if (!shots.isEmpty()) {
-                QTest::qWait(300);
+                settings->resize(1366, 768);
+                QTest::qWait(200);
+            }
+            QVERIFY(QMetaObject::invokeMethod(settings, "showNode", Q_ARG(QVariant, QStringLiteral("subtitleProperties.files"))));
+            if (!shots.isEmpty()) {
+                QTest::qWait(500);
                 QVERIFY(QDir().mkpath(shots));
                 QVERIFY(settings->grabWindow().save(shots + u'/' + QLatin1String(name) + QStringLiteral(".png")));
             }
