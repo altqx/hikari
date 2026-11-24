@@ -160,7 +160,7 @@ ne-13. The library has three tiers, as [ADR 0030](../adr/0030-open-a-folder-as-a
 
 1. **This project:** `.hikari/node-effects/<name>.json` in the window's Project, shown only when there is one.
 2. **Yours:** the user folder's `node-effects` folder, as now.
-3. **Plugins:** graphs a plugin ships. The heading shows only once a plugin can contribute graphs; that manifest key is not part of #1436.
+3. **Plugins:** graphs a plugin ships. The heading stays hidden for now: a manifest key for plugin graphs is future work outside #1436.
 
 From the library ▸ and Insert from the library ▸ list the tiers under headings. Save to the library… asks which tier when there is a Project. **Manage library…**, the last row of From the library ▸, opens a dialog listing each tier's graphs with Rename… and Delete, and Move to project or Move to yours.
 
@@ -168,40 +168,46 @@ From the library ▸ and Insert from the library ▸ list the tiers under headin
 
 ne-10. A new hotkey context, **Node graph**, holds the canvas's keys. Settings › Shortcuts lists them under it, and they can be changed there. They act while the Graph panel has focus and claim their keys at ShortcutOverride ahead of Global keys, as the Video panel does with its nudge keys ([visual-tools.md](../visual-tools.md)), so F1, F2, the arrows and Ctrl+arrows act on the graph there. Existing canvas keys become rows with today's defaults.
 
-| Action | Context | Default | Today |
-| --- | --- | --- | --- |
-| Node effects (View) | Global | Ctrl+Shift+E | `GLOBAL_NODE_EFFECTS` 5244, no key |
-| Typesetting graph… | Global | Ctrl+Shift+G | `GLOBAL_TYPESETTING_GRAPH` 5338, no key |
-| Add node… | Node graph | Shift+A | new |
-| Copy | Node graph | Ctrl+C | new |
-| Cut | Node graph | Ctrl+X | new |
-| Paste | Node graph | Ctrl+V | new |
-| Duplicate | Node graph | Ctrl+D | new |
-| Select all | Node graph | Ctrl+A | new |
-| Rename… | Node graph | F2 | new |
-| Delete | Node graph | Delete | fixed key today |
-| Bypass | Node graph | B | new |
-| Collapse | Node graph | H | new |
-| Group | Node graph | Ctrl+G | fixed key today |
-| Put in a frame | Node graph | Ctrl+J | new |
-| Go into the group | Node graph | Enter | fixed key today |
-| Go out of the group | Node graph | Backspace | fixed key today |
-| Fit the graph | Node graph | Home | new |
-| Frame the selection | Node graph | F | new |
-| Zoom to 100 % | Node graph | Ctrl+0 | new |
-| Zoom in | Node graph | Ctrl+= | new |
-| Zoom out | Node graph | Ctrl+− | new |
-| Select the nearest node left, right, up, down | Node graph | ←, →, ↑, ↓ | fixed keys today |
-| Move the selection left, right, up, down | Node graph | Ctrl+←, Ctrl+→, Ctrl+↑, Ctrl+↓ | fixed keys today |
-| About this node | Node graph | F1 | new |
+| Id | Action | Context | Default | Today |
+| --- | --- | --- | --- | --- |
+| 5244 | Node effects (View) | Global | Ctrl+Shift+E | no key |
+| 5338 | Typesetting graph… | Global | Ctrl+Shift+G | no key |
+| 6001 | Add node… | Node graph | Shift+A | new |
+| 6002 | Copy | Node graph | Ctrl+C | new |
+| 6003 | Cut | Node graph | Ctrl+X | new |
+| 6004 | Paste | Node graph | Ctrl+V | new |
+| 6005 | Duplicate | Node graph | Ctrl+D | new |
+| 6006 | Select all | Node graph | Ctrl+A | new |
+| 6007 | Rename… | Node graph | F2 | new |
+| 6008 | Delete | Node graph | Delete | fixed key today |
+| 6009 | Bypass | Node graph | B | new |
+| 6010 | Collapse | Node graph | H | new |
+| 6011 | Group | Node graph | Ctrl+G | fixed key today |
+| 6012 | Put in a frame | Node graph | Ctrl+J | new |
+| 6013 | Go into the group | Node graph | Enter | fixed key today |
+| 6014 | Go out of the group | Node graph | Backspace | fixed key today |
+| 6015 | Fit the graph | Node graph | Home | new |
+| 6016 | Frame the selection | Node graph | F | new |
+| 6017 | Zoom to 100 % | Node graph | Ctrl+0 | new |
+| 6018 | Zoom in | Node graph | Ctrl+= | new |
+| 6019 | Zoom out | Node graph | Ctrl+− | new |
+| 6020 | Select the nearest node left | Node graph | ← | fixed key today |
+| 6021 | Select the nearest node right | Node graph | → | fixed key today |
+| 6022 | Select the nearest node up | Node graph | ↑ | fixed key today |
+| 6023 | Select the nearest node down | Node graph | ↓ | fixed key today |
+| 6024 | Move the selection left | Node graph | Ctrl+← | fixed key today |
+| 6025 | Move the selection right | Node graph | Ctrl+→ | fixed key today |
+| 6026 | Move the selection up | Node graph | Ctrl+↑ | fixed key today |
+| 6027 | Move the selection down | Node graph | Ctrl+↓ | fixed key today |
+| 6028 | About this node | Node graph | F1 | new |
 
 Escape (cancel a drag or close a popup), Space (pan with a drag), and the Add popup's and Source lines' list keys stay fixed. Typing a letter without Ctrl or Alt still opens Add node with that letter; Shift+A opens it empty.
 
-The new context is `NodeGraphHotkey` after `AudioHotkey` in `HotkeyWindow`. Its ids are the coordinator's to assign (Global ids continue from 5376).
+The new context is `NodeGraphHotkey` after `AudioHotkey` in `HotkeyWindow`, with the 6xxx id range; the next free id is 6029. The implementing PR checks that Ctrl+Shift+E and Ctrl+Shift+G are still free at its main merge, and recounts the rows `hotkeys_tests` and `settings_import` expect.
 
 ## The graph format
 
-ne-11. The format stays 1. Every key below is optional and add-only, and is written only when it is used, so a graph that doesn't use them stays exactly as now. A build from before these keys refuses a graph that uses them, as it refuses any unknown key.
+ne-11. The format stays 1. Every key below is optional and add-only, and is written only when it is used, so a graph that doesn't use them stays exactly as now. A build from before these keys refuses a graph that uses them, as it refuses any unknown key; nothing with this format is released yet, and versions stay 1.
 
 | Key | On | Value |
 | --- | --- | --- |
@@ -235,7 +241,7 @@ Five PR-sized parts for two packs. Pack 1 builds parts 1 then 5; pack 2 builds p
 | 4. Source lines | 2 | The picker, filters and keys, Use the Grid's selection, Sources on the mode bar, Apply on the ticked Lines, `sources` and `skip` in the format, the window arrangement, the mode bar, the problems pill and the preview badge | `NodeSourceLines.qml`, `NodeModeBar.qml`, `Main.qml` (`nodeEffectsLayout` and Typesetting graph…), `node_graph.cpp/.h` (the two keys), `node_effects.cpp` (runs on the choice), new `node_effects_controller_sources.cpp`, `node_effects_tests.cpp` |
 | 5. Bypass, collapse, frames and reroutes | 1 | The four features, their menu rows and keys from part 1, `bypass`, `collapsed`, `shown`, `via` and `frames` in the format, the bypass problem, Values on the node | `NodeGraphCanvas.qml`, `NodeCanvasMenus.qml`, `node_graph.cpp/.h` (five keys), `node_effects.cpp` and `node_validation.cpp` (bypass), new `src/app/effects_problems.cpp/.h` (the `effects` problems source), `node_graph_editing.cpp/.h`, `node_effects_controller_canvas.cpp`, `node-effects.md` (the format rows), `node_effects_tests.cpp` |
 
-Parts 4 and 5 both add keys to `node_graph.cpp`'s reader and writer; whichever lands second takes the other's lines.
+Two files are shared. `node_effects_controller.h` takes add-only rows from both packs. `node_graph.cpp`'s reader and writer get part 5's keys first (pack 1), and part 4 (pack 2) merges them before adding `sources` and `skip`.
 
 ## Decisions
 
