@@ -30412,6 +30412,7 @@ private slots:
         auto &tools = application->visualTools();
         auto &effects = application->nodeEffects();
         QCOMPARE(tools.activeFamily(), 1);
+        application->selectLine(setup->sign.value);
         const QString signBefore = textOfLine(*setup->session, setup->sign);
         QVERIFY(signBefore.contains(QStringLiteral("\\pos(100,80)")));
         const QPoint at = videoPoint(tools.videoRect().center() + QPointF(37, 21));
