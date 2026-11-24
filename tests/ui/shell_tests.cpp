@@ -12570,7 +12570,7 @@ private slots:
         QVERIFY(collector.rows().value(2).toMap().value(QStringLiteral("notes")).toString().startsWith(QStringLiteral("Styles: Sign")));
         QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorLogEmpty")->isVisible());
         QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorSummary")->property("text").toString(),
-                 QStringLiteral("3 fonts · 1 missing."));
+                 QStringLiteral("3 font(s) · 1 missing."));
         QQuickItem *missingRow = nullptr;
         QTRY_VERIFY((missingRow = dialogItem("fontCollectorDialog", "fontCollectorRow2")));
         QCOMPARE(missingRow->height(), 22.0);
