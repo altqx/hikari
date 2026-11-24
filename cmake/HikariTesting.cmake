@@ -21,6 +21,7 @@ find_program(HIKARI_XVFB Xvfb)
 set(HIKARI_XVFB_SUITES
     # xcb: a first-frame arrangement upset a tab's cursor, and xcb's Redo key let Ctrl+Y skip the draft.
     hikari_ui_shell_tests.documents
+    hikari_ui_shell_tests.documents2
     # The Timing panel's sections and a floating panel's focus.
     hikari_ui_shell_tests.panels
     hikari_ui_shell_tests.panels2

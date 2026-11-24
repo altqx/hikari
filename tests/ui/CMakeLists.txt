@@ -11,6 +11,7 @@ hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LI
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate Qt6::QuickTest ZLIB::ZLIB Hikari::sodium
     PARTS documents
+          documents2=gridGesturesSelectRanges
           panels=panelsFloatDockHideAndKeepTheirState
           panels2=saveAsOffersAssForADocumentOfAnotherFormat
           panels3=spellCheckerWindowAndEditorMarks
@@ -33,7 +34,7 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           visual2=importLyricsAddsLinesToTheOpenFileInOneStep
           video=videoRecentListsAndDialogFolders
     PART_TIMEOUT 600)
-foreach(part documents visual visual2)
+foreach(part documents documents2 visual visual2)
     foreach(mode offscreen xvfb)
         if(TEST hikari_ui_shell_tests.${part}.${mode})
             set_property(TEST hikari_ui_shell_tests.${part}.${mode} APPEND PROPERTY
