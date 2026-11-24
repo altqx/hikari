@@ -28770,7 +28770,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Klikaj, aby dodać punkty ścieżki, i przeciągaj je, aby nadać ścieżce kształt. Tekst podąża za nią; Enter zatwierdza.</translation>
     </message>
     <message>
-        <source>Only when you Ctrl-click.</source>
+        <source>Ctrl-click writes it.</source>
         <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
         <translation>Tylko po Ctrl+kliknięciu.</translation>
     </message>
@@ -28840,7 +28840,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Przeciąganie lewym przyciskiem skaluje szerokość, a prawym – wysokość.</translation>
     </message>
     <message>
-        <source>Middle-drag or Shift-drag scales both.</source>
+        <source>Shift-drag or middle-drag scales both.</source>
         <translation>Przeciąganie środkowym przyciskiem lub Shift+przeciągnięcie skaluje w obu osiach.</translation>
     </message>
     <message>

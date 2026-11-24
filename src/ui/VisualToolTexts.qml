@@ -75,7 +75,7 @@ QtObject {
     function writesNote(family) {
         switch (family) {
         //: The visual tool guide: what the Position pointer writes
-        case 0: return qsTr("Only when you Ctrl-click.")
+        case 0: return qsTr("Ctrl-click writes it.")
         //: The visual tool guide: what the Position shifter writes
         case 9: return qsTr("Moves the positions, move points, clips, drawings and origins already in the lines.")
         //: The visual tool guide: what the All tags tool writes
@@ -102,7 +102,7 @@ QtObject {
                         qsTr("Start and End take their times in milliseconds from the line’s start."),
                         qsTr("Set movement using 2 points and the video position builds the move from a point on two frames.")]
         case 3: return [qsTr("Left-drag scales the width, right-drag the height."),
-                        qsTr("Middle-drag or Shift-drag scales both."),
+                        qsTr("Shift-drag or middle-drag scales both."),
                         qsTr("Set scale by rectangle scales the line to fit a rectangle you draw.")]
         case 4: return [qsTr("Drag round the origin cross to turn the line."),
                         qsTr("Drag the cross itself to move the origin."),

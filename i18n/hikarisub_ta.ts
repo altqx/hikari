@@ -28519,7 +28519,7 @@ or codecs or a splitter may be missing</source>
         <translation>பாதைப் புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், பாதையை வடிவமைக்க அவற்றை இழுக்கவும். உரை அதைப் பின்தொடரும்; Enter பயன்படுத்தும்.</translation>
     </message>
     <message>
-        <source>Only when you Ctrl-click.</source>
+        <source>Ctrl-click writes it.</source>
         <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
         <translation>Ctrl-சொடுக்கு செய்யும்போது மட்டும்.</translation>
     </message>
@@ -28589,7 +28589,7 @@ or codecs or a splitter may be missing</source>
         <translation>இடது பொத்தானால் இழுத்தால் அகலம் அளவிடப்படும், வலது பொத்தானால் இழுத்தால் உயரம்.</translation>
     </message>
     <message>
-        <source>Middle-drag or Shift-drag scales both.</source>
+        <source>Shift-drag or middle-drag scales both.</source>
         <translation>நடுப் பொத்தானால் அல்லது Shift உடன் இழுத்தால் இரண்டும் அளவிடப்படும்.</translation>
     </message>
     <message>

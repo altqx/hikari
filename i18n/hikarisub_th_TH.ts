@@ -28268,7 +28268,7 @@ or codecs or a splitter may be missing</source>
         <translation>คลิกเพื่อเพิ่มจุดเส้นทาง ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง กด Enter เพื่อนำไปใช้</translation>
     </message>
     <message>
-        <source>Only when you Ctrl-click.</source>
+        <source>Ctrl-click writes it.</source>
         <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
         <translation>เฉพาะเมื่อคุณ Ctrl+คลิก</translation>
     </message>
@@ -28338,7 +28338,7 @@ or codecs or a splitter may be missing</source>
         <translation>ลากด้วยปุ่มซ้ายเพื่อปรับความกว้าง ลากด้วยปุ่มขวาเพื่อปรับความสูง</translation>
     </message>
     <message>
-        <source>Middle-drag or Shift-drag scales both.</source>
+        <source>Shift-drag or middle-drag scales both.</source>
         <translation>ลากด้วยปุ่มกลางหรือ Shift+ลากเพื่อปรับขนาดทั้งสองแนว</translation>
     </message>
     <message>

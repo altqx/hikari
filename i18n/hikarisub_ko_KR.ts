@@ -28268,7 +28268,7 @@ or codecs or a splitter may be missing</source>
         <translation>클릭하여 경로 점을 추가하고, 점을 끌어 경로 모양을 만드십시오. 텍스트가 경로를 따르며, Enter로 적용합니다.</translation>
     </message>
     <message>
-        <source>Only when you Ctrl-click.</source>
+        <source>Ctrl-click writes it.</source>
         <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
         <translation>Ctrl+클릭할 때만 씁니다.</translation>
     </message>
@@ -28338,7 +28338,7 @@ or codecs or a splitter may be missing</source>
         <translation>왼쪽 끌기로 너비를, 오른쪽 끌기로 높이를 조정합니다.</translation>
     </message>
     <message>
-        <source>Middle-drag or Shift-drag scales both.</source>
+        <source>Shift-drag or middle-drag scales both.</source>
         <translation>가운데 버튼으로 끌거나 Shift+끌기를 하면 둘 다 조정합니다.</translation>
     </message>
     <message>
