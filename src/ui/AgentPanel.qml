@@ -11,7 +11,7 @@ FocusScope {
     property AppQuickInput quickInput: null
     signal reviewRequested()
     signal restoreRequested(var turn)
-    signal settingsRequested()
+    signal settingsRequested(string id)
     signal logRequested()
     signal exportRequested(string id)
     signal pluginRequested(string id)
@@ -511,7 +511,7 @@ FocusScope {
                 text: qsTr("Open Settings › AI")
                 highlighted: true
                 Layout.alignment: Qt.AlignHCenter
-                onClicked: panel.settingsRequested()
+                onClicked: panel.settingsRequested("ai")
             }
             Label {
                 text: qsTr("Nothing is sent until you add one.")
@@ -1202,7 +1202,7 @@ FocusScope {
             if (action === "retry")
                 panel.agent.retryAgentModels(key)
             else
-                panel.settingsRequested()
+                panel.settingsRequested(key)
         }
         Connections {
             target: panel.agent
@@ -1240,7 +1240,7 @@ FocusScope {
             iconRole: "settings"
             objectName: "agentModeDefault"
             text: qsTr("Default for new threads")
-            onTriggered: panel.settingsRequested()
+            onTriggered: panel.settingsRequested("ai")
         }
     }
 
@@ -2525,7 +2525,7 @@ FocusScope {
                     visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar"
                              || notice.kind === "notOffered" || notice.searchFailed
                     text: qsTr("Open Settings › AI")
-                    onClicked: panel.settingsRequested()
+                    onClicked: panel.settingsRequested("ai")
                 }
             }
         }

@@ -1628,6 +1628,26 @@ private slots:
 
         QVERIFY(pick(QStringLiteral("blocked\tor")));
         QTRY_VERIFY(shell(QStringLiteral("settingsLoader.item !== null && settingsLoader.item.visible")).toBool());
+        auto *settings = shell(QStringLiteral("settingsLoader.item")).value<QObject *>();
+        auto *rows = settings->findChild<QQuickItem *>(QStringLiteral("settingsRows"));
+        auto *flash = settings->findChild<QQuickItem *>(QStringLiteral("settingsRowFlash"));
+        QVERIFY(rows && flash);
+        QTRY_VERIFY(flash->property("row").value<QQuickItem *>());
+        auto *row = flash->property("row").value<QQuickItem *>();
+        QCOMPARE(row->objectName(), QStringLiteral("aiProvider_or"));
+        const QRectF inView(row->mapToItem(rows, QPointF()), row->size());
+        QVERIFY(inView.top() >= 0);
+        QVERIFY(inView.bottom() <= rows->height());
+        QTRY_COMPARE(flash->mapToItem(rows, QPointF()).y(), row->mapToItem(rows, QPointF()).y() - 4);
+    }
+
+    void settingsAiInThePickerOpensTheAiPage()
+    {
+        openPanel();
+        QVERIFY(openPicker());
+        QVERIFY(pick(QStringLiteral("settings")));
+        QTRY_VERIFY(shell(QStringLiteral("settingsLoader.item !== null && settingsLoader.item.visible")).toBool());
+        QTRY_COMPARE(shell(QStringLiteral("settingsLoader.item.currentPage")).toString(), QStringLiteral("ai"));
     }
 
     void withoutTheAiComponentThePanelGetsItAndTheNextTurnRuns()
