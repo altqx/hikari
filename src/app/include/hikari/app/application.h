@@ -545,6 +545,10 @@ public:
     // Opens a new unsaved copy with its draft pending; the bundle stays until dismissed.
     Q_INVOKABLE bool recoverBundle(const QString &key, qulonglong generation);
     Q_INVOKABLE void dismissBundle(const QString &key);
+    // Files as they were before a save replaced them; the recoveryBundles shape.
+    Q_INVOKABLE QVariantList earlierSaves();
+    Q_INVOKABLE bool openEarlierSave(const QString &key, qulonglong generation);
+    Q_INVOKABLE void deleteEarlierSaves(const QString &key);
     // All when date is invalid; a running session's work is never touched. Returns the
     // count removed.
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
@@ -1681,6 +1685,10 @@ private:
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     std::uint64_t m_seenGroupBreaks = 0;
     std::unique_ptr<application::RecoveryStore> m_recovery;
+    std::unique_ptr<application::RecoveryStore> m_earlierSaves;
+    std::uint64_t m_earlierSaveWrites = 0;
+    void keepEarlierSave(const application::DestinationKey &destination, std::vector<std::byte> previous);
+    bool openRecovered(const application::RecoveryContent &content, const QString &titleFormat);
     std::unique_ptr<QLockFile> m_sessionLock;
     QString m_recoveryDir;
     QString m_sessionId;

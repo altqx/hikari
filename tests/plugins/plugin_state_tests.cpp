@@ -336,6 +336,26 @@ TEST_F(PluginStateTest, AHandlerGetsItsArgsAndHowItWasRun)
     EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"menu Ana", "key nil"}));
 }
 
+TEST_F(PluginStateTest, WhatAHandlerReturnsIsTheCommandsResult)
+{
+    auto state = load("hikari.commands.register('greet', function(args) return {hello = args.name, n = 2} end) "
+                      "hikari.commands.register('count', function() end)");
+    ASSERT_TRUE(state) << state.error();
+    auto greeted = (*state)->run("greet", *Json::parse(R"({"args": {"name": "Ana"}})"), m_host);
+    ASSERT_TRUE(greeted) << greeted.error();
+    EXPECT_EQ(*greeted, *Json::parse(R"({"hello": "Ana", "n": 2})"));
+    auto counted = (*state)->run("count", Json::object(), m_host);
+    ASSERT_TRUE(counted) << counted.error();
+    EXPECT_TRUE(counted->isNull());
+}
+
+TEST_F(PluginStateTest, AResultThatIsNotJsonFailsTheCommand)
+{
+    auto state = load("hikari.commands.register('greet', function() return print end)");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_FALSE((*state)->run("greet", Json::object(), m_host));
+}
+
 TEST_F(PluginStateTest, OnlyDeclaredCommandsTakeHandlersAndOnlyOnce)
 {
     auto undeclared = load("hikari.commands.register('secret', function() end)");
