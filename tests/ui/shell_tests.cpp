@@ -12299,6 +12299,78 @@ private slots:
             QStringLiteral("Videos with embedded subtitles (*.mkv *.ogm)")));
     }
 
+    void exportAndCollectFontsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const QSize screen = QGuiApplication::primaryScreen()->size();
+        window->resize(screen);
+        const QString size = QStringLiteral("%1x%2").arg(screen.width()).arg(screen.height());
+        const QString path = dir.filePath(QStringLiteral("shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n[V4+ Styles]\nFormat: Name, "
+                    "Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+                    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+                    "MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1\n"
+                    "Style: Sign,Nowhere,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1\n"
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Hello{\\i0}\n"
+                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\clip(0,0,10,10)}Clipped\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\fad(100,100)\\frz10\\fnTimes\\b1}Faded\n"
+                    "Dialogue: 0,0:00:04.00,0:00:05.00,Sign,,0,0,0,,{\\pos(10,10)}Sign\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto fonts = std::make_unique<hikari::testing::FakeFonts>();
+        fonts->faces = {{"Arial", 400, false, "/fonts/arial.ttf"}, {"Times", 400, false, "/fonts/times.ttf"}};
+        application->fontCollector().setFontService(std::move(fonts));
+        auto *root = engine->rootObjects().first();
+        const auto grab = [&](QObject *dialog, const QString &name) {
+            auto *w = qobject_cast<QQuickWindow *>(dialog);
+            QVERIFY(w);
+            QVERIFY(QQuickTest::qWaitForPolish(w));
+            QTest::qWait(300);
+            QVERIFY(w->grabWindow().save(out + u'/' + name + u'-' + ui::theme::current().id + u'-' + size + QStringLiteral(".png")));
+        };
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+
+            QVERIFY(QMetaObject::invokeMethod(root, "openExportDialog"));
+            QObject *exportDialog = nullptr;
+            QTRY_VERIFY((exportDialog = root->findChild<QObject *>(QStringLiteral("exportDialog"))) &&
+                        exportDialog->property("visible").toBool());
+            dialogItem("exportDialog", "exportFormat")->setProperty("currentIndex", 0);
+            dialogItem("exportDialog", "exportDestination")->setProperty("text", dir.filePath(QStringLiteral("shots.srt")));
+            QFile::remove(dir.filePath(QStringLiteral("shots.srt")));
+            grab(exportDialog, QStringLiteral("export-form"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("exportDialog", "exportRun"), "click"));
+            QTRY_VERIFY(exportDialog->property("reported").toBool());
+            grab(exportDialog, QStringLiteral("export-report"));
+            QVERIFY(QMetaObject::invokeMethod(exportDialog, "close"));
+            QTRY_VERIFY(!exportDialog->property("visible").toBool());
+
+            QVERIFY(QMetaObject::invokeMethod(root, "openFontCollector"));
+            QObject *fontsDialog = nullptr;
+            QTRY_VERIFY((fontsDialog = root->findChild<QObject *>(QStringLiteral("fontCollectorDialog"))) &&
+                        fontsDialog->property("visible").toBool());
+            grab(fontsDialog, QStringLiteral("fonts-start"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+            QVERIFY(application->fontCollector().waitIdle());
+            grab(fontsDialog, QStringLiteral("fonts-checked"));
+            QVERIFY(QMetaObject::invokeMethod(fontsDialog, "close"));
+            QTRY_VERIFY(!fontsDialog->property("visible").toBool());
+        }
+    }
+
     void fontCollectorDemuxesMkvFonts()
     {
         const QString subs = writeFile(dir, "mkvfonts.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n");
@@ -12576,6 +12648,11 @@ private slots:
         QCOMPARE(missingRow->height(), 22.0);
         QCOMPARE(findItem(missingRow, QStringLiteral("fontCollectorRowFile"))->property("text").toString(),
                  QStringLiteral("Not on this computer"));
+        for (int i = 0; i < 3; ++i) {
+            auto *family = findItem(dialogItem("fontCollectorDialog", qPrintable(QStringLiteral("fontCollectorRow%1").arg(i))),
+                                    QStringLiteral("fontCollectorRowFamily"));
+            QVERIFY2(!family->property("truncated").toBool(), qPrintable(family->property("text").toString()));
+        }
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorRow1"), "clicked"));
         QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
         QVERIFY(QMetaObject::invokeMethod(missingRow, "clicked"));

@@ -318,7 +318,7 @@ DialogWindow {
                     return f
                 }
                 readonly property real familyWidth: Math.min(width * 0.45, Math.ceil(Math.max(120, ...dialog.collector.rows.map(
-                    r => familyMetrics.advanceWidth(r.family) + rowMetrics.advanceWidth(" " + dialog.styleName(r))))))
+                    r => familyMetrics.advanceWidth(r.family) + 8 + rowMetrics.advanceWidth(dialog.styleName(r))))))
                 readonly property real linesWidth: Math.ceil(lineMetrics.advanceWidth("00000"))
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -328,6 +328,10 @@ DialogWindow {
                 currentIndex: -1
                 keyNavigationEnabled: true
                 ScrollBar.vertical: ScrollBar {}
+                // MUST KILL: ListView makes row 0 current on every model change
+                property bool chosen: false
+                onModelChanged: chosen = false
+                onCurrentIndexChanged: if (activeFocus) chosen = true
                 Keys.onReturnPressed: dialog.collector.chooseRow(currentIndex)
                 Keys.onEnterPressed: dialog.collector.chooseRow(currentIndex)
                 FontMetrics { id: familyMetrics; font: fontList.familyFont }
@@ -353,38 +357,44 @@ DialogWindow {
                     ToolTip.visible: hovered && modelData.notes.length > 0
                     ToolTip.text: modelData.notes
                     background: Rectangle {
-                        color: fontRow.ListView.isCurrentItem ? Theme.select : fontRow.hovered ? Theme.hover : "transparent"
+                        color: fontRow.ListView.isCurrentItem && fontList.chosen ? Theme.select : fontRow.hovered ? Theme.hover : "transparent"
                     }
                     onClicked: {
+                        fontList.chosen = true
                         fontList.currentIndex = index
                         dialog.collector.chooseRow(index)
                     }
                     contentItem: RowLayout {
                         spacing: 12
-                        RowLayout {
+                        Row {
+                            id: faceCell
                             spacing: 8
                             Layout.preferredWidth: fontList.familyWidth + 16 + 8
                             Layout.maximumWidth: Layout.preferredWidth
+                            Layout.alignment: Qt.AlignVCenter
                             Icon {
                                 objectName: "fontCollectorRowGlyph"
+                                anchors.verticalCenter: parent.verticalCenter
                                 iconRole: fontRow.found ? "karaoke-check" : "notice-warning"
                                 size: 16
                                 color: fontRow.statusColour
                                 accentColor: fontRow.statusColour
                             }
                             Label {
+                                objectName: "fontCollectorRowFamily"
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, faceCell.width - 16 - 8)
                                 text: fontRow.modelData.family
                                 font: fontList.familyFont
                                 elide: Text.ElideRight
-                                Layout.maximumWidth: implicitWidth
-                                Layout.fillWidth: true
                             }
                             Label {
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.max(0, faceCell.width - x)
                                 text: dialog.styleName(fontRow.modelData)
                                 font: fontList.rowFont
                                 color: Theme.muted
                                 elide: Text.ElideRight
-                                Layout.fillWidth: true
                             }
                         }
                         Label {

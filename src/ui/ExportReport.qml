@@ -98,7 +98,15 @@ ColumnLayout {
                 ScrollBar.vertical: ScrollBar {}
                 // MUST KILL: clicking stops onCurrentIndexChanged choosing the row a click chooses itself
                 property bool clicking: false
-                onCurrentIndexChanged: if (activeFocus && !clicking && currentIndex >= 0) block.lineChosen(block.lost[currentIndex])
+                // MUST KILL: ListView makes row 0 current on every model change
+                property bool chosen: false
+                onModelChanged: chosen = false
+                onCurrentIndexChanged: {
+                    if (activeFocus)
+                        chosen = true
+                    if (activeFocus && !clicking && currentIndex >= 0)
+                        block.lineChosen(block.lost[currentIndex])
+                }
                 section.property: "group"
                 section.delegate: Label {
                     required property string section
@@ -122,7 +130,7 @@ ColumnLayout {
                     focusPolicy: Qt.NoFocus
                     Accessible.name: qsTr("Line %1: %2").arg(modelData.number, modelData.text)
                     background: Rectangle {
-                        color: row.ListView.isCurrentItem ? Theme.select : row.hovered ? Theme.hover : "transparent"
+                        color: row.ListView.isCurrentItem && rows.chosen ? Theme.select : row.hovered ? Theme.hover : "transparent"
                     }
                     contentItem: RowLayout {
                         spacing: 12
@@ -143,6 +151,7 @@ ColumnLayout {
                     onClicked: {
                         rows.forceActiveFocus()
                         rows.clicking = true
+                        rows.chosen = true
                         rows.currentIndex = index
                         rows.clicking = false
                         block.lineChosen(modelData)
