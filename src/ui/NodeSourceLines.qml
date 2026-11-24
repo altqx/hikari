@@ -146,7 +146,7 @@ Pane {
                 text: root.controller.source === 0 && root.controller.typesetting
                       ? qsTr("No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….")
                       : root.controller.source === 0 ? qsTr("No karaoke line of this graph’s style to preview on.")
-                      : root.controller.hasLua && !root.controller.trusted ? qsTr("Nothing runs until you trust the file’s Lua: choose Preview on the mode bar.")
+                      : root.controller.hasLua && !root.controller.trusted ? qsTr("Nothing runs until you trust the file’s Lua: choose Preview in the notice above.")
                       : root.controller.problems.length > 0 ? qsTr("No preview: the graph has problems.")
                       : qsTr("The graph writes no lines for line %1.").arg(root.controller.sourceNumber)
             }

@@ -13424,8 +13424,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until you trust the file’s Lua: choose Preview on the mode bar.</source>
-        <translation>Nic się nie uruchomi, dopóki nie zaufasz kodowi Lua tego pliku: wybierz Podgląd na pasku trybu.</translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>Nic się nie uruchomi, dopóki nie zaufasz kodowi Lua tego pliku: wybierz Podgląd w powiadomieniu powyżej.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>

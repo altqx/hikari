@@ -13180,8 +13180,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until you trust the file’s Lua: choose Preview on the mode bar.</source>
-        <translation>จะไม่มีสิ่งใดทำงานจนกว่าคุณจะเชื่อถือโค้ด Lua ของไฟล์: เลือก ตัวอย่าง บนแถบโหมด</translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>จะไม่มีสิ่งใดทำงานจนกว่าคุณจะเชื่อถือโค้ด Lua ของไฟล์: เลือก ตัวอย่าง ในประกาศด้านบน</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>

@@ -13302,8 +13302,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until you trust the file’s Lua: choose Preview on the mode bar.</source>
-        <translation>கோப்பின் Lua-வை நீங்கள் நம்பும் வரை எதுவும் இயங்காது: பயன்முறைப் பட்டியில் முன்னோட்டம் என்பதைத் தேர்வுசெய்யவும்.</translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>கோப்பின் Lua-வை நீங்கள் நம்பும் வரை எதுவும் இயங்காது: மேலே உள்ள அறிவிப்பில் முன்னோட்டம் என்பதைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
