@@ -195,6 +195,7 @@ foreach(mode offscreen xvfb native)
         set_tests_properties(hikari_ui_grammar_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+hikari_add_qttest(hikari_ui_problems_tests SOURCES problems_ui_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_open_reload_tests PRIVATE
@@ -244,6 +245,9 @@ hikari_add_qttest(hikari_ui_automation_submenus_tests SOURCES automation_submenu
 target_compile_definitions(hikari_ui_automation_submenus_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_submenus_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_automation_menu_checks_tests SOURCES automation_menu_checks_tests.cpp
+    LIBRARIES hikari_composition)
+add_dependencies(hikari_ui_automation_menu_checks_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends
     PARTS listing matching=anUndoneApplyMatchesAgain applying=aFailedMatchIsNotKept)
@@ -435,6 +439,7 @@ if(HIKARI_AI_SIDECAR)
         HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_ui_ai_mcp_review_tests hikari_ai_sidecar)
 endif()
+hikari_add_gtest(hikari_ui_model_picker_tests SOURCES model_picker_tests.cpp LIBRARIES hikari_composition LABELS ui)
 hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
     LIBRARIES hikari_composition Qt6::Test Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
@@ -531,7 +536,7 @@ endforeach()
 add_test(NAME hikari_ui_side_bars_shell_tests.screen2560
     COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> theShippedMiddleKeepsItsAudioAndEditorControls
             swapPutsTheAiSideBarOnTheOtherEdge f6GoesFromTheLeftSideBarThroughTheMiddleToTheRight
-            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle)
+            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle draggingTheInnerEdgeResizesTheSideBar)
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen2560 PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=screen-2560x1440.json" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     LABELS "qttest;offscreen" TIMEOUT 300)

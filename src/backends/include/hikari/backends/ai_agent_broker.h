@@ -60,6 +60,8 @@ struct AgentSpec {
     QStringList arguments;
     /// Unsandboxed when empty.
     std::optional<sandbox::Profile> profile;
+    /// Starts only inside the whole of `profile`'s sandbox, with `environment` as its whole environment.
+    bool confined = false;
     QString workingDirectory;
     /// Added to the clean environment the sidecar gets.
     QProcessEnvironment environment;

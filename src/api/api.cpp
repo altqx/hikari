@@ -104,6 +104,7 @@ const Registry &Api::registry()
         detail::addPresenceOperations(r);
         detail::addKaraokeOperations(r);
         detail::addMarkOperations(r);
+        detail::addProblemOperations(r);
         detail::addProgramOperations(r);
         detail::addEvents(r);
         return r;

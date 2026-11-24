@@ -201,7 +201,7 @@ QString refusalMessage(const InstallRefusal &refusal)
 QStringList permissionLines(const plugins::Manifest &manifest)
 {
     return app::permissionLines(manifest.tier == plugins::Tier::Unrestricted, manifest.permissions, manifest.hasQmlPanels(),
-                                manifest.programs);
+                                manifest.programs, manifest.mcpServers);
 }
 
 QVariantList folderRows(const plugins::Manifest &manifest, const std::map<std::string, plugins::FileGrant> &grants)
@@ -333,6 +333,8 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
         added << asksMore(isLowIntegrity);
     if (next.permissions.presence)
         added << more.presence;
+    if (!next.mcpServers.empty())
+        added << !more.mcpServers.empty();
     for (const plugins::FileGrantRequest &request : next.permissions.files)
         added << (std::ranges::find(more.files, request.id) != more.files.end());
     const QStringList lines = permissionLines(next);
@@ -345,7 +347,7 @@ QVariantList permissionChanges(const plugins::Manifest &current, const plugins::
 }
 
 QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bool qmlPanels,
-                            const std::vector<plugins::Program> &programs)
+                            const std::vector<plugins::Program> &programs, const std::vector<plugins::McpServer> &mcpServers)
 {
     QStringList lines;
     if (unrestricted)
@@ -386,6 +388,13 @@ QStringList permissionLines(bool unrestricted, const plugins::Permissions &p, bo
         lines << QCoreApplication::translate("HikariSub.Plugins", "Can read your files");
     if (p.presence)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Set text in your Discord status: %1").arg(text(*p.presence));
+    if (!mcpServers.empty()) {
+        QStringList titles;
+        for (const plugins::McpServer &server : mcpServers)
+            titles << text(server.title);
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Offers MCP servers in Settings › AI, off until you turn them on: %1")
+                     .arg(titles.join(QStringLiteral(", ")));
+    }
     for (const plugins::FileGrantRequest &f : p.files)
         lines << (f.writable ? QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read and write, %1: %2")
                              : QCoreApplication::translate("HikariSub.Plugins", "Ask you for a folder to read, %1: %2"))

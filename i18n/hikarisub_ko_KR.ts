@@ -258,12 +258,32 @@
         <translation>모드 변경</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>현재 모델</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>에이전트 기본값</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>최근</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>모델을 불러오는 중…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>모델을 불러오지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>설정 › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -730,10 +750,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>설정 › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>새 스레드 기본값</translation>
     </message>
@@ -896,6 +912,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>30초 넘게 걸렸습니다.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>에이전트가 목록을 보내지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>%1로 로그인…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>%1 키 추가…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>제안: %1</translation>
     </message>
@@ -1024,6 +1056,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>AI 켜기</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>모델 검색</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>일치하는 모델 없음</translation>
     </message>
 </context>
 <context>
@@ -2354,6 +2394,18 @@ Output device: %2</source>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>매크로가 실행되는 동안 문서가 변경되어 아무것도 변경되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>확인 중…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>선택한 줄에서 실행할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>유효성 검사 함수가 오류로 중지되었습니다</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -7245,6 +7297,37 @@ Failed to copy %2 fonts.</source>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>오류 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>경고 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>정보 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>힌트 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>문제 %n개: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>자막 목록 필터</translation>
@@ -7504,6 +7587,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>빠른 수정</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14526,6 +14613,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>자막 파일은 스크립트 속성에서 자체 제한을 설정할 수 있습니다.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>읽기 제한 문제 표시</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>분할</translation>
     </message>
@@ -17179,6 +17270,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml의 %1번째 줄에 오류가 있습니다.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>플러그인 제공, 해당 플러그인의 샌드박스에서 실행</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>켬</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18262,6 +18361,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>이 플러그인은 프로그램 %1(이)며, 이 컴퓨터에서는 사용할 수 없습니다.</translation>
     </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>설정 › AI에 MCP 서버를 제공하며, 켜기 전까지는 꺼져 있습니다: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>플러그인이 꺼져 있습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -18648,12 +18759,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>오류</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>경고</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>정보</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>힌트</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>%1번 줄 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>QC 메모</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>더 이상 메모가 없습니다</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>빠른 수정</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>선택한 행에 빠른 수정이 없습니다.</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>커서 위치에 빠른 수정을 적용할 수 있는 문제가 없습니다.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18676,8 +18819,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>모든 메모 삭제…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>QC 메모 추가…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>문제</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>오류</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>경고</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>정보</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>힌트</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>수정을 적용하지 못했습니다. 문제를 찾은 뒤 해당 줄이 변경되었습니다.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18774,6 +18946,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>모두 삭제</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>빠른 수정 없음</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>메모 파일 가져오기</translation>
     </message>
@@ -18809,6 +18985,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>메모 %n개</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>문제 %n개</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>메모 추가</translation>
@@ -18836,6 +19018,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>전체</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>모든 소스</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%1/%2</translation>
     </message>
@@ -18854,6 +19040,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>완료 안 됨</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · 수정 %n개</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -18932,6 +19124,24 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>저장</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>초당 문자 수가 %1입니다. 제한은 %2입니다.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>%1번째 줄은 %2자입니다. 제한은 %3자입니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n줄입니다. 제한은 %1줄입니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>읽기</translation>
     </message>
 </context>
 <context>

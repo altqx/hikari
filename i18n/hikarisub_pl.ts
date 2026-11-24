@@ -260,12 +260,32 @@
         <translation>Zmień tryb</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>bieżący model</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>Domyślny model agenta</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>Ostatnie</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>Wczytywanie modeli…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>Nie udało się wczytać modeli</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>Ustawienia › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -748,10 +768,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>Ustawienia › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>Domyślny dla nowych wątków</translation>
     </message>
@@ -916,6 +932,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>Trwało to dłużej niż 30 sekund.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>Agent nie przysłał listy.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>Zaloguj się przez %1…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>Dodaj klucz dla %1…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>Propozycja: %1</translation>
     </message>
@@ -1050,6 +1082,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>Włącz AI</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>Szukaj modeli</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>Brak pasujących modeli</translation>
     </message>
 </context>
 <context>
@@ -2394,6 +2434,18 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>Dokument zmienił się podczas działania makra; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>Sprawdzanie…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>Nie można uruchomić na tym zaznaczeniu</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>Funkcja walidacji zatrzymała się z błędem</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -7387,6 +7439,47 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n błąd</numerusform>
+            <numerusform>%n błędy</numerusform>
+            <numerusform>%n błędów</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n ostrzeżenie</numerusform>
+            <numerusform>%n ostrzeżenia</numerusform>
+            <numerusform>%n ostrzeżeń</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>%n informacja</numerusform>
+            <numerusform>%n informacje</numerusform>
+            <numerusform>%n informacji</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>%n wskazówka</numerusform>
+            <numerusform>%n wskazówki</numerusform>
+            <numerusform>%n wskazówek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>%n problem: %1</numerusform>
+            <numerusform>%n problemy: %1</numerusform>
+            <numerusform>%n problemów: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>Filtruj listę napisów</translation>
@@ -7648,6 +7741,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>Szybka poprawka</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14768,6 +14865,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Plik napisów może ustawić własne limity we właściwościach skryptu.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>Pokazuj problemy z limitami czytania</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>Dzielenie</translation>
     </message>
@@ -17445,6 +17546,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml ma błąd w wierszu %1.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>Z wtyczki, w jej piaskownicy</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączone</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18530,6 +18639,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>Ta wtyczka to program %1, który jest niedostępny na tym komputerze.</translation>
     </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>Udostępnia serwery MCP w Ustawienia › AI, wyłączone, dopóki ich nie włączysz: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>Wtyczka jest wyłączona.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -18916,12 +19037,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>Błędy</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>Ostrzeżenia</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>Informacje</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>Wskazówki</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>Linijka %1 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>Notatki QC</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>Nie ma więcej notatek</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>Szybka poprawka</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>Wybrany wiersz nie ma szybkich poprawek.</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>Żaden problem w miejscu kursora nie ma szybkiej poprawki.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18944,8 +19097,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Usuń wszystkie notatki…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>Dodaj notatkę QC…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>Problemy</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>błąd</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>ostrzeżenie</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>informacja</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>wskazówka</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>Nie udało się zastosować poprawki. Jej linijka zmieniła się od wykrycia problemu.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -19060,6 +19242,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Usuń wszystkie</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>Brak szybkich poprawek</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>Importuj plik notatek</translation>
     </message>
@@ -19099,6 +19285,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>%n notatek</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>%n problem</numerusform>
+            <numerusform>%n problemy</numerusform>
+            <numerusform>%n problemów</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>Dodaj notatkę</translation>
@@ -19128,6 +19322,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Wszystkie</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>Wszystkie źródła</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%1 z %2</translation>
     </message>
@@ -19146,6 +19344,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>niegotowe</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · %n poprawka</numerusform>
+            <numerusform>%1 · %n poprawki</numerusform>
+            <numerusform>%1 · %n poprawek</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -19224,6 +19430,26 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Save</source>
         <translation>Zapisz</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>Szybkość czytania %1 CPS; limit wynosi %2.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>Liczba znaków w wierszu %1: %2; limit wynosi %3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n wiersz; limit wynosi %1.</numerusform>
+            <numerusform>%n wiersze; limit wynosi %1.</numerusform>
+            <numerusform>%n wierszy; limit wynosi %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>Czytelność</translation>
     </message>
 </context>
 <context>

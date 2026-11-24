@@ -259,12 +259,32 @@
         <translation>பயன்முறையை மாற்று</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>தற்போதைய மாதிரி</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>முகவரின் இயல்புநிலை</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>சமீபத்தியவை</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>மாதிரிகளை ஏற்றுகிறது…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>மாதிரிகளை ஏற்ற முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்க</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>அமைப்புகள் › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -739,10 +759,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>அமைப்புகள் › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>புதிய இழைகளுக்கான இயல்புநிலை</translation>
     </message>
@@ -906,6 +922,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>இதற்கு 30 வினாடிகளுக்கு மேல் ஆனது.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>முகவர் பட்டியலை அனுப்பவில்லை.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>%1 மூலம் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>%1 க்கான விசையைச் சேர்…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>முன்மொழிவு: %1</translation>
     </message>
@@ -1037,6 +1069,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>AI ஐ இயக்கு</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>மாதிரிகளைத் தேடு</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>பொருந்தும் மாதிரிகள் இல்லை</translation>
     </message>
 </context>
 <context>
@@ -2374,6 +2414,18 @@ Output device: %2</source>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>குறுநிரல் இயங்கும்போது ஆவணம் மாறியது; எதுவும் மாற்றப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>சரிபார்க்கிறது…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>இந்தத் தேர்வில் இயங்க முடியாது</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>அதன் சரிபார்ப்புச் செயல்பாடு ஒரு பிழையுடன் நின்றுவிட்டது</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -7316,6 +7368,42 @@ Failed to copy %2 fonts.</source>
         <source>Snap to the scene</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n error(s)</source>
+        <translation>
+            <numerusform>%n பிழை</numerusform>
+            <numerusform>%n பிழைகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n warning(s)</source>
+        <translation>
+            <numerusform>%n எச்சரிக்கை</numerusform>
+            <numerusform>%n எச்சரிக்கைகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n info</source>
+        <translation>
+            <numerusform>%n தகவல்</numerusform>
+            <numerusform>%n தகவல்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n hint(s)</source>
+        <translation>
+            <numerusform>%n குறிப்பு</numerusform>
+            <numerusform>%n குறிப்புகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n problem(s): %1</source>
+        <comment>A Grid row&apos;s problems: how many, then of each severity</comment>
+        <translation>
+            <numerusform>%n சிக்கல்: %1</numerusform>
+            <numerusform>%n சிக்கல்கள்: %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Filter the Grid</source>
         <translation>கட்டத்தை வடிகட்டு</translation>
@@ -7576,6 +7664,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>AI actions</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>விரைவாகச் சரிசெய்</translation>
     </message>
     <message>
         <source>Repeat last AI action</source>
@@ -14647,6 +14739,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ஒரு வசனக் கோப்பு தனது சொந்த வரம்புகளை ஸ்கிரிப்ட் பண்புகளில் அமைக்கலாம்.</translation>
     </message>
     <message>
+        <source>Show reading-limit problems</source>
+        <translation>வாசிப்பு வரம்புச் சிக்கல்களைக் காட்டு</translation>
+    </message>
+    <message>
         <source>Splitting</source>
         <translation>பிரித்தல்</translation>
     </message>
@@ -17312,6 +17408,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml இல் வரி %1 இல் பிழை உள்ளது.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>செருகுநிரலிலிருந்து, அதன் சாண்ட்பாக்ஸில்</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>இயக்கத்தில்</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18396,6 +18500,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>இந்தச் செருகுநிரல் %1 என்ற நிரல்; அது இந்தக் கணினிக்குக் கிடைக்கவில்லை.</translation>
     </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>அமைப்புகள் › AI இல் MCP சேவையகங்களை வழங்குகிறது, நீங்கள் இயக்கும் வரை அவை முடக்கத்தில் இருக்கும்: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>செருகுநிரல் இயக்கத்தில் இல்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -18782,12 +18898,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 %2: %3</translation>
     </message>
     <message>
+        <source>Errors</source>
+        <translation>பிழைகள்</translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation>எச்சரிக்கைகள்</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation>தகவல்</translation>
+    </message>
+    <message>
+        <source>Hints</source>
+        <translation>குறிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Line %1 · %2</source>
+        <translation>வரி %1 · %2</translation>
+    </message>
+    <message>
         <source>QC notes</source>
         <translation>QC குறிப்புகள்</translation>
     </message>
     <message>
         <source>No more notes</source>
         <translation>மேலும் குறிப்புகள் இல்லை</translation>
+    </message>
+    <message>
+        <source>Quick fix</source>
+        <translation>விரைவாகச் சரிசெய்</translation>
+    </message>
+    <message>
+        <source>The chosen row has no quick fixes.</source>
+        <translation>தேர்ந்தெடுத்த வரிசையில் விரைவுத் திருத்தங்கள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>No problem at the caret has a quick fix.</source>
+        <translation>கர்சரில் உள்ள எந்தச் சிக்கலுக்கும் விரைவுத் திருத்தம் இல்லை.</translation>
     </message>
     <message>
         <source>Import notes file…</source>
@@ -18810,8 +18958,37 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>எல்லாக் குறிப்புகளையும் நீக்கு…</translation>
     </message>
     <message>
+        <source>%1 · %2</source>
+        <comment>A problem&apos;s message, then its source</comment>
+        <translation>%1 · %2</translation>
+    </message>
+    <message>
         <source>Add QC note…</source>
         <translation>QC குறிப்பைச் சேர்…</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>சிக்கல்கள்</translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation>பிழை</translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation>எச்சரிக்கை</translation>
+    </message>
+    <message>
+        <source>info</source>
+        <translation>தகவல்</translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation>குறிப்பு</translation>
+    </message>
+    <message>
+        <source>The fix could not be applied. Its line changed since the problem was found.</source>
+        <translation>திருத்தத்தைப் பயன்படுத்த முடியவில்லை. சிக்கல் கண்டறியப்பட்டதிலிருந்து அதன் வரி மாறியுள்ளது.</translation>
     </message>
     <message>
         <source>%1 has no notes. A note is a line that starts with a time, like 3:24 or 0:03:24.</source>
@@ -18917,6 +19094,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தையும் நீக்கு</translation>
     </message>
     <message>
+        <source>No quick fixes</source>
+        <translation>விரைவுத் திருத்தங்கள் இல்லை</translation>
+    </message>
+    <message>
         <source>Import notes file</source>
         <translation>குறிப்புக் கோப்பை இறக்குமதி செய்</translation>
     </message>
@@ -18954,6 +19135,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
             <numerusform>%n குறிப்புகள்</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n problem(s)</source>
+        <translation>
+            <numerusform>%n சிக்கல்</numerusform>
+            <numerusform>%n சிக்கல்கள்</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Add note</source>
         <translation>குறிப்பைச் சேர்</translation>
@@ -18982,6 +19170,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>அனைத்தும்</translation>
     </message>
     <message>
+        <source>All sources</source>
+        <translation>அனைத்து மூலங்களும்</translation>
+    </message>
+    <message>
         <source>%1 of %2</source>
         <translation>%2 இல் %1</translation>
     </message>
@@ -19000,6 +19192,13 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>not done</source>
         <translation>முடியவில்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 · %n fix(es)</source>
+        <translation>
+            <numerusform>%1 · %n திருத்தம்</numerusform>
+            <numerusform>%1 · %n திருத்தங்கள்</numerusform>
+        </translation>
     </message>
     <message>
         <source>Done</source>
@@ -19078,6 +19277,25 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Save</source>
         <translation>சேமி</translation>
+    </message>
+    <message>
+        <source>Reads at %1 CPS; the limit is %2.</source>
+        <translation>%1 CPS இல் வாசிக்கப்படுகிறது; வரம்பு %2.</translation>
+    </message>
+    <message>
+        <source>Line %1 has %2 characters; the limit is %3.</source>
+        <translation>உரை வரி %1 இல் %2 எழுத்துகள் உள்ளன; வரம்பு %3.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s); the limit is %1.</source>
+        <translation>
+            <numerusform>%n உரை வரி; வரம்பு %1.</numerusform>
+            <numerusform>%n உரை வரிகள்; வரம்பு %1.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Reading</source>
+        <translation>வாசிப்பு</translation>
     </message>
 </context>
 <context>

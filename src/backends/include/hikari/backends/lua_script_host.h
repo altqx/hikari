@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <chrono>
 
 #include <functional>
 #include <memory>
@@ -62,6 +63,13 @@ public:
     // an empty dialog when the filter has none.
     bool filterConfig(int filterIndex, const application::MacroSnapshot &snapshot);
     const std::optional<application::DialogRequest> &lastDialog() const { return m_lastDialog; }
+    // Calls each macro's validation and isactive functions on the snapshot, each within `budget`, then
+    // checkFinished() with lastChecks() set when the check completed. The script stays Ready: a run sent meanwhile
+    // stops the check and starts after it. False unless Ready with no check in flight.
+    bool check(const application::MacroSnapshot &snapshot, std::chrono::milliseconds budget);
+    bool checking() const { return m_checkRequest != 0; }
+    void stopCheck();
+    const std::optional<std::vector<application::MacroCheck>> &lastChecks() const { return m_lastChecks; }
     // When the last run() or validate() returned false because its request is over the helper's frame
     // limit: the request's size in bytes.
     std::optional<std::size_t> refusedSize() const { return m_refusedSize; }
@@ -104,6 +112,7 @@ signals:
     void servicesWithdrawn();
     void forceStopOffered();
     void unavailable(const QString &reason);
+    void checkFinished();
 
 private:
     void startHelper();
@@ -111,6 +120,7 @@ private:
               const std::vector<std::byte> &prefix = {});
     void sendLoad();
     void onEvent(std::uint64_t request, std::expected<helper::Event, helper::HostError> event);
+    void onCheckEvent(std::expected<helper::Event, helper::HostError> event);
     void endRun(RunOutcome outcome, const QString &message);
     void handleHostService(std::uint64_t request, const helper::Event &event);
 
@@ -137,6 +147,8 @@ private:
     std::optional<application::MacroResult> m_lastResult;
     std::optional<application::DialogRequest> m_lastDialog;
     std::optional<std::size_t> m_refusedSize;
+    std::uint64_t m_checkRequest = 0;
+    std::optional<std::vector<application::MacroCheck>> m_lastChecks;
 };
 
 }
