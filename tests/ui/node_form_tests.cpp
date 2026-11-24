@@ -62,9 +62,19 @@ class NodeFormTests : public QObject {
 
     NodeEffectsController &controller() { return *m_controller; }
 
+    static QQuickItem *named(QQuickItem *from, const QString &name)
+    {
+        if (!from || from->objectName() == name)
+            return from;
+        for (QQuickItem *child : from->childItems())
+            if (QQuickItem *found = named(child, name))
+                return found;
+        return nullptr;
+    }
+
     QQuickItem *item(const QString &name) const
     {
-        return m_view ? m_view->rootObject()->findChild<QQuickItem *>(name) : nullptr;
+        return m_view ? named(m_view->rootObject(), name) : nullptr;
     }
 
     void showPanel()

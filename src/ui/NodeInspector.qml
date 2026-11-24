@@ -435,12 +435,13 @@ Pane {
                     required property var modelData
                     required property int index
                     readonly property string severity: modelData.severity ?? "warning"
+                    readonly property string glyph: severity === "error" ? "notice-error" : severity === "info" ? "notice-info" : "notice-warning"
                     objectName: "nodeInspectorWarning_" + index
                     Layout.fillWidth: true
                     spacing: 8
                     Icon {
                         Layout.alignment: Qt.AlignTop
-                        iconRole: warning.severity === "error" ? "notice-error" : warning.severity === "info" ? "notice-info" : "notice-warning"
+                        iconRole: warning.glyph
                         color: warning.severity === "error" ? Theme.danger : warning.severity === "info" ? Theme.accent : Theme.warning
                         accentColor: color
                     }
