@@ -1368,7 +1368,7 @@ private slots:
         };
         QTRY_VERIFY(row("setting_new.styleCatalog") && row("setting_new.styleCatalog")->isVisible());
         QCOMPARE(row("setting_new.styleCatalog")->property("currentText").toString(), QStringLiteral("House"));
-        QCOMPARE(row("setting_new.styleCatalog")->property("count").toInt(), 5);
+        QCOMPARE(row("setting_new.styleCatalog")->property("count").toInt(), 4);
         shot("new-style-catalog-yours");
         settings->setProperty("projectTab", true);
         QTRY_VERIFY(row("project_new.styleCatalog") && row("project_new.styleCatalog")->isVisible());
