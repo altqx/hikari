@@ -242,7 +242,8 @@ private slots:
         QQuickItem *input = item(QStringLiteral("nodeFieldValue_stepInput"));
         QTRY_VERIFY(input->hasActiveFocus());
         QTest::keyClick(m_view.get(), Qt::Key_A, Qt::ControlModifier);
-        QTest::keyClicks(m_view.get(), QStringLiteral("-3"));
+        QTest::keyClick(m_view.get(), '-');
+        QTest::keyClick(m_view.get(), '3');
         QTest::keyClick(m_view.get(), Qt::Key_Return);
         QTRY_VERIFY(item(QStringLiteral("nodeField_stepRefusal"))->isVisible());
         QCOMPARE(item(QStringLiteral("nodeField_stepRefusal"))->property("text").toString(), QStringLiteral("At least 0"));
