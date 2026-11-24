@@ -1,6 +1,7 @@
 #include "node_effects_controller.h"
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/node_catalogue.h"
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/core/ass_load.h"
 
@@ -92,6 +93,7 @@ private slots:
 
     void cleanup()
     {
+        application::setPluginNodes({}, {});
         m_view.reset();
         m_controller.reset();
         m_session.reset();
@@ -102,7 +104,7 @@ private slots:
         const QString random = controller().addNode(QStringLiteral("math.random"), 0, 0);
         controller().setSelection({random});
         const QVariantMap step = formField(controller(), QStringLiteral("step"));
-        QCOMPARE(step.value(QStringLiteral("range")).toString(), QStringLiteral("≥ 0"));
+        QCOMPARE(step.value(QStringLiteral("range")).toString(), QStringLiteral("At least 0"));
         QCOMPARE(controller().fieldRefusal(QStringLiteral("step"), -1), QStringLiteral("At least 0"));
         QCOMPARE(controller().fieldRefusal(QStringLiteral("step"), QStringLiteral("many")), QStringLiteral("Enter a number"));
         QVERIFY(!controller().setSelectedField(QStringLiteral("step"), -1));
@@ -122,6 +124,9 @@ private slots:
         const QString fade = controller().addNode(QStringLiteral("tags.fade"), 0, 100);
         controller().setSelection({fade});
         QCOMPARE(formField(controller(), QStringLiteral("fade_in")).value(QStringLiteral("unit")).toString(), QStringLiteral("ms"));
+        const QString strips = controller().addNode(QStringLiteral("units.clip_gradient"), 0, 200);
+        controller().setSelection({strips});
+        QCOMPARE(formField(controller(), QStringLiteral("padding")).value(QStringLiteral("unit")).toString(), QStringLiteral("px"));
     }
 
     void aChangedFieldResetsToItsDefaultInTheSameStep()
@@ -245,6 +250,29 @@ private slots:
         QVERIFY(item(QStringLiteral("nodeSelectionGroup"))->isVisible());
         QVERIFY(item(QStringLiteral("nodeSelectionDelete"))->isVisible());
         QVERIFY(!item(QStringLiteral("nodeInspectorValuesTitle"))->isVisible());
+    }
+
+    void aValueFromZeroToOneIsASliderWithItsNumber()
+    {
+        application::PluginNode plugin{"example.mix", "Mix", "Mix", "return {}", {}};
+        plugin.spec.id = application::pluginNodeType("example.mix", "mix");
+        plugin.spec.category = "example.mix";
+        application::FieldSpec amount{"amount", application::FieldKind::Number, json::Json(0.5), "How much."};
+        amount.minimum = 0;
+        amount.maximum = 1;
+        plugin.spec.fields.push_back(amount);
+        application::setPluginNodes({plugin}, {});
+        const QString mix = controller().addNode(QString::fromStdString(plugin.spec.id), 0, 0);
+        QVERIFY(!mix.isEmpty());
+        controller().setSelection({mix});
+        QCOMPARE(controller().fieldRefusal(QStringLiteral("amount"), 1.5), QStringLiteral("Between 0 and 1"));
+        showPanel();
+        QQuickItem *slider = item(QStringLiteral("nodeFieldSlider_amount"));
+        QVERIFY(slider);
+        QVERIFY(item(QStringLiteral("nodeFieldValue_amount")));
+        QCOMPARE(slider->height(), 24.0);
+        QTest::mouseClick(m_view.get(), Qt::LeftButton, {}, slider->mapToScene(QPointF(slider->width() - 2, slider->height() / 2)).toPoint());
+        QTRY_VERIFY(stored(controller(), mix, QStringLiteral("amount")).toDouble() > 0.9);
     }
 
     void smallChoicesAreSegmented()

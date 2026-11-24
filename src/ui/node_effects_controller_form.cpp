@@ -64,14 +64,26 @@ Range rangeOf(const FieldSpec &f)
     return {f.minimum, f.maximum};
 }
 
+QString atLeast(double minimum)
+{
+    //: A field's range in the Node panel, and the refusal of a smaller value: "At least 1"
+    return QCoreApplication::translate("HikariSub.NodeEffects", "At least %1").arg(minimum);
+}
+
+QString atMost(double maximum)
+{
+    //: A field's range in the Node panel, and the refusal of a larger value: "At most 400"
+    return QCoreApplication::translate("HikariSub.NodeEffects", "At most %1").arg(maximum);
+}
+
 QString rangeText(const Range &r)
 {
     if (r.minimum && r.maximum)
         return QStringLiteral("%1 – %2").arg(*r.minimum).arg(*r.maximum);
     if (r.minimum)
-        return QStringLiteral("≥ %1").arg(*r.minimum);
+        return atLeast(*r.minimum);
     if (r.maximum)
-        return QStringLiteral("≤ %1").arg(*r.maximum);
+        return atMost(*r.maximum);
     return {};
 }
 
@@ -83,14 +95,22 @@ QString outOfRange(const Range &r, double v)
     if (r.minimum && r.maximum)
         //: A refused value in the Node panel: "Between 10 and 400"
         return QCoreApplication::translate("HikariSub.NodeEffects", "Between %1 and %2").arg(*r.minimum).arg(*r.maximum);
-    //: A refused value in the Node panel: "At least 1"
-    return r.minimum ? QCoreApplication::translate("HikariSub.NodeEffects", "At least %1").arg(*r.minimum) : QCoreApplication::translate("HikariSub.NodeEffects", "At most %1").arg(*r.maximum);
+    return r.minimum ? atLeast(*r.minimum) : atMost(*r.maximum);
 }
+
+constexpr const char *kUnits[] = {
+    //: A unit after a number in the Node panel: pixels
+    QT_TRANSLATE_NOOP("HikariSub.NodeEffects", "px"),
+};
 
 QString unitOf(const FieldSpec &f)
 {
-    //: The unit after a time in the Node panel: milliseconds
-    return f.kind == FieldKind::Time ? QCoreApplication::translate("HikariSub.NodeEffects", "ms") : QString();
+    if (f.kind == FieldKind::Time)
+        //: The unit after a time in the Node panel: milliseconds
+        return QCoreApplication::translate("HikariSub.NodeEffects", "ms");
+    if (std::ranges::find(kUnits, f.unit) != std::end(kUnits))
+        return QCoreApplication::translate("HikariSub.NodeEffects", f.unit.c_str());
+    return QString::fromStdString(f.unit);
 }
 
 QVariantMap wireEnd(const std::optional<application::GraphEnd> &from)
