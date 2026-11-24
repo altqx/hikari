@@ -405,7 +405,6 @@ FocusScope {
             spacing: 4
             visible: panel.problems.problemCount > 0
             FilterChip {
-                implicitHeight: Theme.smallControlHeight
                 objectName: "problemsSeverityAll"
                 text: qsTr("All")
                 on: panel.problems.severity.length === 0
@@ -414,7 +413,6 @@ FocusScope {
             Repeater {
                 model: panel.problems.severities
                 FilterChip {
-                    implicitHeight: Theme.smallControlHeight
                     required property var modelData
                     objectName: "problemsSeverity_" + modelData.id
                     text: modelData.name + "  " + modelData.count
@@ -439,7 +437,6 @@ FocusScope {
             spacing: 4
             visible: panel.problems.problemCount > 0
             FilterChip {
-                implicitHeight: Theme.smallControlHeight
                 objectName: "problemsSourceAll"
                 text: qsTr("All sources")
                 on: panel.problems.source.length === 0
@@ -448,7 +445,6 @@ FocusScope {
             Repeater {
                 model: panel.problems.sources
                 FilterChip {
-                    implicitHeight: Theme.smallControlHeight
                     required property var modelData
                     objectName: "problemsSource_" + modelData.id
                     text: modelData.name + "  " + modelData.count
@@ -464,7 +460,6 @@ FocusScope {
             spacing: 4
             visible: panel.qcNotes.total > 0 && (panel.problems.source.length === 0 || panel.problems.source === "qc")
             FilterChip {
-                implicitHeight: Theme.smallControlHeight
                 objectName: "qcNotesSectionAll"
                 text: qsTr("All") + "  " + panel.qcNotes.total
                 on: panel.qcNotes.section.length === 0
@@ -473,7 +468,6 @@ FocusScope {
             Repeater {
                 model: panel.qcNotes.sections
                 FilterChip {
-                    implicitHeight: Theme.smallControlHeight
                     required property var modelData
                     objectName: "qcNotesSection_" + modelData.name
                     text: modelData.name + "  " + (panel.qcNotes.hideDone && modelData.open !== modelData.count
