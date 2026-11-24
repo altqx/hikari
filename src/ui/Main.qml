@@ -6018,6 +6018,8 @@ ApplicationWindow {
                     panelHeight: root.videoFullscreen.active ? videoFullscreenWindow.pinnedPanelHeight : videoControls.height
                     view: root.videoView
                     cursorOverride: root.videoFullscreen.active && videoFullscreenWindow.cursorHidden ? Qt.BlankCursor : -1
+                    pickPoint: root.nodeEffects.pickingPoint !== "" ? point => root.nodeEffects.pointPicked(point.x, point.y) : null
+                    onPickCancelled: root.nodeEffects.cancelPick()
                     onContextMenuRequested: (x, y) => {
                         if (root.videoFullscreen.active)
                             videoFullscreenWindow.openMenuAt(Qt.point(x, y))

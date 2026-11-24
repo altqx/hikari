@@ -11,6 +11,9 @@ Item {
     property VideoViewController view: null
     // MUST KILL: cursorOverride -1 means the tool's cursor
     property int cursorOverride: -1
+    // One-shot Pick on the video: called with the script point of the next left click.
+    property var pickPoint: null
+    signal pickCancelled()
     signal contextMenuRequested(real x, real y)
     signal fullScreenRequested()
     signal pointerMoved(real x, real y)
@@ -78,7 +81,8 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-        cursorShape: overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
+        cursorShape: overlayItem.pickPoint !== null ? Qt.CrossCursor
+                     : overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
                      : overlayItem.view && overlayItem.view.zoomMode
                      ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
                      : overlayItem.tools.hideCursor ? Qt.BlankCursor
@@ -87,15 +91,27 @@ Item {
         onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
         property bool segmentPress: false
+        property bool pickPress: false
         onPressed: mouse => {
             if (overlayItem.focusTarget)
                 overlayItem.focusTarget.forceActiveFocus()
+            pickPress = overlayItem.pickPoint !== null
+            if (pickPress) {
+                const picked = overlayItem.tools.scriptPointAt(mouse.x, mouse.y)
+                if (mouse.button === Qt.LeftButton && picked.x !== undefined)
+                    overlayItem.pickPoint(picked)
+                else
+                    overlayItem.pickCancelled()
+                return
+            }
             segmentPress = mouse.button === Qt.RightButton && overlayItem.openSegmentMenu(mouse.x, mouse.y)
             if (!segmentPress)
                 overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
         onReleased: mouse => {
-            if (mouse.button === Qt.RightButton && segmentPress)
+            if (pickPress)
+                pickPress = false
+            else if (mouse.button === Qt.RightButton && segmentPress)
                 segmentPress = false
             else
                 overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
@@ -111,6 +127,12 @@ Item {
                               Math.round(wheel.angleDelta.y / 120))
             wheel.accepted = overlayItem.view !== null
         }
+    }
+
+    Shortcut {
+        sequence: StandardKey.Cancel
+        enabled: overlayItem.pickPoint !== null
+        onActivated: overlayItem.pickCancelled()
     }
 
     PinchHandler {
