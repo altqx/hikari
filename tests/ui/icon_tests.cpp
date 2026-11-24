@@ -590,6 +590,51 @@ Row {
         QVERIFY(!item("plain")->property("valid").toBool());
     }
 
+    void aPluginIconThemeReplacesTheRolesItCoversUntilItGoes()
+    {
+        QTemporaryDir dir;
+        ui::SettingsStore settings(dir.filePath(QStringLiteral("settings.toml")));
+        ui::icons::useSettings(&settings);
+        const QString round = QStringLiteral("plugin:com.example.looks/round");
+        auto restore = qScopeGuard([&] {
+            ui::icons::uninstallTheme(round);
+            ui::icons::setOwnIcons({});
+            ui::icons::useSettings(nullptr);
+        });
+        const QByteArray dot = R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor"/></svg>)";
+        const QString saveAs = QStringLiteral("save-as"), undo = QStringLiteral("undo");
+        const QByteArray ownSaveAs = ui::icons::source(saveAs), ownUndo = ui::icons::source(undo);
+        QVERIFY(!ownSaveAs.isEmpty());
+
+        int generation = ui::icons::generation();
+        ui::icons::installTheme({round, QStringLiteral("Round"), QStringLiteral("Looks"), {{saveAs, dot}}});
+        QVERIFY(ui::icons::generation() > generation);
+        QCOMPARE(ui::icons::source(saveAs), ownSaveAs);
+        generation = ui::icons::generation();
+        ui::icons::installTheme({round, QStringLiteral("Round"), QStringLiteral("Looks"), {{saveAs, dot}}});
+        QCOMPARE(ui::icons::generation(), generation);
+
+        QVERIFY(settings.setValue(QStringLiteral("appearance.iconTheme"), round));
+        QVERIFY(ui::icons::generation() > generation);
+        QCOMPARE(ui::icons::source(saveAs), dot);
+        QCOMPARE(ui::icons::source(undo), ownUndo);
+        QVERIFY(ui::icons::source(QStringLiteral("no-such-icon")).isEmpty());
+
+        ui::icons::uninstallTheme(round);
+        QCOMPARE(settings.value(QStringLiteral("appearance.iconTheme")).toString(), QStringLiteral("hikarisub"));
+        QCOMPARE(ui::icons::source(saveAs), ownSaveAs);
+
+        const QString spark = ui::icons::pluginIconRole(QStringLiteral("com.example.looks"), QStringLiteral("own:spark"));
+        QCOMPARE(spark, QStringLiteral("plugin:com.example.looks:spark"));
+        QCOMPARE(ui::icons::pluginIconRole(QStringLiteral("com.example.looks"), saveAs), saveAs);
+        QVERIFY(!ui::icons::exists(spark));
+        ui::icons::setOwnIcons({{spark, dot}});
+        QVERIFY(ui::icons::exists(spark));
+        QCOMPARE(ui::icons::source(spark), dot);
+        ui::icons::setOwnIcons({});
+        QVERIFY(!ui::icons::exists(spark));
+    }
+
     void hoverAndPressShadeThePanelOnly()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
@@ -699,7 +744,9 @@ Rectangle {
         // icon is a QML value type: read its source through QML.
         const auto url = [&](QObject *item) {
             QQmlExpression expression(qmlContext(item), item, QStringLiteral("icon.source.toString()"));
-            return expression.evaluate().toString();
+            const QString source = expression.evaluate().toString();
+            const QString generation = QLatin1Char('/') + QString::number(ui::icons::generation());
+            return source.endsWith(generation) ? source.chopped(generation.size()) : source;
         };
         QObject *undo = menu->findChild<QObject *>(QStringLiteral("undoItem"));
         QVERIFY(undo);

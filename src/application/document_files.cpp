@@ -169,14 +169,35 @@ std::string_view defaultScript()
     return kDefault;
 }
 
+namespace {
+
+void startWith(core::Document &document, const NewFileStyles &styles)
+{
+    std::vector<core::Document::StyleSlot> slots;
+    for (const auto &style : styles.styles)
+        slots.push_back({std::nullopt, core::legacy::styleRawFields(style)});
+    document.rearrangeStyles(slots);
+    document.setScriptInfo(u8"Last Style Storage", styles.catalog);
+    if (std::ranges::none_of(styles.styles, [](const core::StyleValues &s) { return s.name == u8"Default"; }))
+        document.editLines([&](core::LineRecord &line) {
+            line.style = styles.styles.front().name;
+            return true;
+        });
+}
+
+}
+
 DocumentId DocumentFiles::createNew()
 {
     const std::string_view script = defaultScript();
     std::vector<std::byte> bytes(script.size());
     std::memcpy(bytes.data(), script.data(), script.size());
     const DocumentId id{m_nextDocument++};
+    core::Document document = core::loadAss(bytes).document;
+    if (auto styles = m_newFileStyles ? m_newFileStyles() : std::nullopt; styles && !styles->styles.empty())
+        startWith(document, *styles);
     Entry entry;
-    entry.session = std::make_unique<EditSession>(core::loadAss(bytes).document);
+    entry.session = std::make_unique<EditSession>(std::move(document));
     entry.session->markSaved(entry.session->contentId());
     entry.session->markNewDocument();
     if (const auto lines = entry.session->document().lines(); !lines.empty())

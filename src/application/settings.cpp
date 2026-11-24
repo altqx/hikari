@@ -39,7 +39,7 @@ constexpr std::string_view kProjectable[] = {
     "translation.translator",        "translation.reviewer",         "ai.exclude",
     "translation.sourceLanguage",    "translation.targetLanguage",   "export.format",
     "explorer.exclude",              "privacy.discordProject",       "privacy.discordShow",
-    "privacy.discordDetails",        "privacy.discordState",
+    "privacy.discordDetails",        "privacy.discordState",         "new.styleCatalog",
 };
 // Projectable ids whose Project value waits for trust.
 constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer", "privacy.discordShow",
@@ -136,6 +136,7 @@ std::vector<SettingDefinition> &definitions()
         {"convert.showSettings", "CONVERT_SHOW_SETTINGS", Bool, Profile, Mapped, false, false},
         {"convert.style", "CONVERT_STYLE", String, Profile, Mapped, false, std::string("Default")},
         {"convert.styleCatalog", "CONVERT_STYLE_CATALOG", String, Profile, Mapped, false, std::string("Default")},
+        {"new.styleCatalog", "", String, Profile, Mapped, false, std::string()},
         {"convert.timePerCharacter", "CONVERT_TIME_PER_CHARACTER", Int, Profile, Mapped, false, std::int64_t{110}},
         {"grid.copyColumns", "COPY_COLLUMS_SELECTIONS", Int, Profile, Mapped, false, std::int64_t{0}},
         {"editor.dictionaryLanguage", "DICTIONARY_LANGUAGE", String, Profile, Mapped, false, std::string("en_US")},
@@ -284,6 +285,8 @@ std::vector<SettingDefinition> &definitions()
         {"appearance.darkTheme", "", String, Profile, Mapped, false, std::string("dark")},
         {"appearance.highContrastLightTheme", "", String, Profile, Mapped, false, std::string("highContrastWhite")},
         {"appearance.highContrastDarkTheme", "", String, Profile, Mapped, false, std::string("highContrastBlack")},
+        // "hikarisub" or "plugin:<plugin id>/<icon theme id>".
+        {"appearance.iconTheme", "", String, Profile, Mapped, false, std::string("hikarisub")},
         // "<theme id>=<accent choice id>" rows.
         {"appearance.accents", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // "<theme id>/<role>=#RRGGBB" rows.
@@ -510,6 +513,9 @@ std::vector<SettingDefinition> &definitions()
         {"export.format", "", String, Profile, Mapped, false, std::string()},
         // Percent of HikariSub legacy's size.
         {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
+        // The Freehand mode's Smoothing, 0 to 100.
+        {"video.vectorClipSmoothing", "", Int, Profile, Mapped, false, std::int64_t{45}},
+        {"video.drawingSmoothing", "", Int, Profile, Mapped, false, std::int64_t{45}},
         // application::VideoPropertyAction values.
         {"video.missingMatrix", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.matrixMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},

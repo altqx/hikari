@@ -1,6 +1,7 @@
 #include "hikari/app/plugin_runtime.h"
 
 #include "hikari/app/plugin_content.h"
+#include "hikari/app/plugin_themes.h"
 #include "hikari/app/plugin_nodes.h"
 #include "hikari/backends/program_plugin_link.h"
 #include "hikari/backends/program_process.h"
@@ -231,10 +232,9 @@ void PluginRuntime::wirePrograms()
             const auto it = m_plugins.find(id);
             if (it == m_plugins.end() || !m_installer)
                 return std::nullopt;
-            const plugins::PluginFolders &f = m_installer->folders();
-            const fs::path own(std::u8string(id.begin(), id.end()));
-            auto folder = [&own](const fs::path &base) { return QString::fromStdU16String((base / own).u16string()); };
-            return PluginPrograms::Plugin{&it->second->manifest, folder(f.plugins), folder(f.data), folder(f.cache),
+            auto folder = [](const fs::path &path) { return QString::fromStdU16String(path.u16string()); };
+            return PluginPrograms::Plugin{&it->second->manifest, folder(m_installer->codeFolder(id)),
+                                          folder(m_installer->dataFolder(id)), folder(m_installer->cacheFolder(id)),
                                           plugins::settingValues(it->second->manifest, storedSettings(id))};
         },
         m_wiring.networkAllowed,
@@ -374,6 +374,8 @@ void PluginRuntime::sync()
     std::vector<application::PluginNode> nodes;
     std::map<std::string, std::string> unavailable;
     application::PluginContent content;
+    std::vector<PluginTheme> pluginThemes;
+    PluginIcons pluginIcons;
     if (m_installer) {
         std::set<std::string> installedIds;
         const auto registry = m_installer->registry();
@@ -387,7 +389,7 @@ void PluginRuntime::sync()
                                           ui::LogController::Error, qs(id));
                     continue;
                 }
-                const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
+                const fs::path root = m_installer->codeFolder(id);
                 const bool runs = plugins::pluginRunsAnywhere(id, entry, windows);
                 if (plugins::pluginOn(id, entry, nullptr))
                     userOn.insert(id);
@@ -397,8 +399,12 @@ void PluginRuntime::sync()
                 installed.push_back({id, manifest->name, runs, manifest->panels,
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
-                if (pluginContentShows(entry, *manifest))
+                const bool shows = pluginContentShows(entry, *manifest);
+                if (shows) {
                     addPluginContent(content, id, *manifest, root);
+                    addPluginIcons(pluginIcons, id, *manifest, root);
+                }
+                std::ranges::move(pluginThemesOf(id, *manifest, root, shows), std::back_inserter(pluginThemes));
                 if (!manifest->nodes.empty()) {
                     std::expected<std::vector<application::PluginNode>, std::string> own = std::unexpected(std::string());
                     if (pluginNodesRun(entry, *manifest))
@@ -428,7 +434,7 @@ void PluginRuntime::sync()
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
         const auto keep = wanted.find(it->first);
-        if (keep != wanted.end() && keep->second.version == it->second->manifest.version) {
+        if (keep != wanted.end() && keep->second.version == it->second->manifest.version && !m_reloading.contains(it->first)) {
             ++it;
             continue;
         }
@@ -455,6 +461,11 @@ void PluginRuntime::sync()
     m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
     application::setPluginContent(std::move(content));
+    syncPluginIcons(std::move(pluginIcons));
+    for (const QString &problem : syncPluginThemes(pluginThemes))
+        if (m_wiring.log)
+            m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "A theme can’t be used: %1").arg(problem),
+                              ui::LogController::Error);
     m_ui->setPlugins(std::move(installed));
     relist();
     emit mcpServersChanged();
@@ -584,7 +595,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     auto load = [this, raw] {
         protocol::LoadRequest request;
         const plugins::Manifest &m = raw->manifest;
-        request.root = utf8(m_installer->folders().plugins / fs::path(std::u8string(raw->id.begin(), raw->id.end())));
+        request.root = utf8(m_installer->codeFolder(raw->id));
         request.main = m.main;
         request.id = raw->id;
         request.version = m.version;
@@ -610,7 +621,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
     PluginProcess *process = raw->process.get();
     process->setBackground(raw->manifest.permissions.background.has_value());
     if (m_wiring.sandbox && m_installer && raw->manifest.tier == plugins::Tier::Restricted) {
-        const fs::path root = m_installer->folders().plugins / fs::path(std::u8string(id.begin(), id.end()));
+        const fs::path root = m_installer->codeFolder(id);
         process->setSandbox(backends::pluginProfile(m_wiring.helperPath, QString::fromStdU16String(root.u16string()), id));
     }
     if (!raw->manifest.mainProgram.empty())
@@ -1026,7 +1037,7 @@ void PluginRuntime::relist()
                                     {QStringLiteral("pluginName"), name},
                                     {QStringLiteral("title"), qs(command.title)},
                                     {QStringLiteral("titles"), QStringList{name, qs(command.title)}},
-                                    {QStringLiteral("icon"), qs(command.icon)},
+                                    {QStringLiteral("icon"), ui::icons::pluginIconRole(qs(plugin->id), qs(command.icon))},
                                     {QStringLiteral("description"), qs(command.description)},
                                     {QStringLiteral("palette"), command.palette}};
         for (const plugins::MenuPlacement &placement : plugin->manifest.menus) {
@@ -1035,7 +1046,7 @@ void PluginRuntime::relist()
                                      {QStringLiteral("plugin"), qs(plugin->id)},
                                      {QStringLiteral("pluginName"), name},
                                      {QStringLiteral("title"), qs(command->title)},
-                                     {QStringLiteral("icon"), qs(command->icon)},
+                                     {QStringLiteral("icon"), ui::icons::pluginIconRole(qs(plugin->id), qs(command->icon))},
                                      {QStringLiteral("location"), menuLocation(placement.location)},
                                      {QStringLiteral("group"), qs(placement.group)},
                                      {QStringLiteral("name"), qs("pluginMenu_" + plugin->id + "_" + placement.command)}};
@@ -1171,7 +1182,7 @@ QVariantList PluginRuntime::statusItems() const
                                    {QStringLiteral("key"), qs(plugin.id + "/" + s.item.id)},
                                    {QStringLiteral("title"), qs(s.item.title)},
                                    {QStringLiteral("text"), qs(s.item.text)},
-                                   {QStringLiteral("icon"), qs(s.item.icon)},
+                                   {QStringLiteral("icon"), ui::icons::pluginIconRole(qs(plugin.id), qs(s.item.icon))},
                                    {QStringLiteral("tooltip"), qs(s.item.tooltip)},
                                    {QStringLiteral("tone"), s.tone},
                                    {QStringLiteral("command"),
@@ -1210,6 +1221,13 @@ QVariantList PluginRuntime::statusItemTitles() const
                                {QStringLiteral("pluginName"), qs(plugin.manifest.name)}};
     }
     return out;
+}
+
+void PluginRuntime::reload(const QString &pluginId)
+{
+    m_reloading.insert(pluginId.toStdString());
+    sync();
+    m_reloading.clear();
 }
 
 void PluginRuntime::restart(const QString &pluginId)

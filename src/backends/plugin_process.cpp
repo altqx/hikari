@@ -1,5 +1,6 @@
 #include "hikari/backends/plugin_process.h"
 
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -255,6 +256,17 @@ void PluginProcess::forceStop()
 
 void PluginProcess::end()
 {
+    std::vector<FormatDone> waiting;
+    for (Unit &unit : m_queue)
+        if (unit.done)
+            waiting.push_back(std::move(unit.done));
+    if (m_running && m_running->done)
+        waiting.push_back(std::move(m_running->done));
+    if (!waiting.empty())
+        QTimer::singleShot(0, QCoreApplication::instance(), [waiting = std::move(waiting)] {
+            for (const FormatDone &done : waiting)
+                done(std::unexpected(QStringLiteral("the plugin was stopped")));
+        });
     m_queue.clear();
     m_running.reset();
     m_watchdog.stop();

@@ -87,6 +87,30 @@ std::expected<void, std::string> swapIn(const fs::path &incoming, const fs::path
     return {};
 }
 
+std::string keyIn(const Registry &registry, std::string_view id)
+{
+    std::string dev = devKey(id);
+    return registry.contains(dev) ? dev : std::string(id);
+}
+
+std::string manifestText(const Package &package)
+{
+    const auto file = std::ranges::find(package.files, std::string(kManifestName), &PackageFile::path);
+    return file == package.files.end() ? std::string()
+                                       : std::string(reinterpret_cast<const char *>(file->data.data()), file->data.size());
+}
+
+void keepChoices(InstalledPlugin &entry, const InstalledPlugin &old, const Manifest &manifest)
+{
+    for (const Setting &setting : manifest.settings)
+        if (const api::Json *value = setting.secret() ? nullptr : old.settings.find(setting.id);
+            value && !settingRefusal(setting, *value))
+            entry.settings[setting.id] = *value;
+    for (const FileGrantRequest &request : manifest.permissions.files)
+        if (const auto grant = old.grants.find(request.id); grant != old.grants.end())
+            entry.grants[request.id] = {grant->second.path, grant->second.writable && request.writable};
+}
+
 }
 
 Installer::Installer(PluginFolders folders, std::int64_t apiVersion)
@@ -96,7 +120,121 @@ Installer::Installer(PluginFolders folders, std::int64_t apiVersion)
 
 std::expected<Registry, std::string> Installer::registry() const
 {
-    return loadRegistry(m_folders.registry);
+    auto stored = loadRegistry(m_folders.registry);
+    if (!stored)
+        return stored;
+    Registry running;
+    for (auto &[key, plugin] : *stored)
+        if (plugin.source == Source::Dev)
+            running[key.substr(devKey("").size())] = std::move(plugin);
+        else if (!stored->contains(devKey(key)))
+            running.emplace(key, std::move(plugin));
+    return running;
+}
+
+std::expected<Registry, std::string> Installer::overridden() const
+{
+    auto stored = loadRegistry(m_folders.registry);
+    if (!stored)
+        return stored;
+    Registry hidden;
+    for (auto &[key, plugin] : *stored)
+        if (plugin.source != Source::Dev && stored->contains(devKey(key)))
+            hidden.emplace(key, std::move(plugin));
+    return hidden;
+}
+
+std::string Installer::keyOf(std::string_view id) const
+{
+    const auto stored = loadRegistry(m_folders.registry);
+    return stored ? keyIn(*stored, id) : std::string(id);
+}
+
+fs::path Installer::codeFolder(std::string_view id) const
+{
+    if (const auto stored = loadRegistry(m_folders.registry))
+        if (const auto dev = stored->find(devKey(id)); dev != stored->end())
+            return fromUtf8(dev->second.path);
+    return m_folders.plugins / fromUtf8(id);
+}
+
+fs::path Installer::dataFolder(std::string_view id) const
+{
+    return m_folders.data / fromUtf8(keyOf(id));
+}
+
+fs::path Installer::cacheFolder(std::string_view id) const
+{
+    return m_folders.cache / fromUtf8(keyOf(id));
+}
+
+std::string Installer::secretPrefix(std::string_view id) const
+{
+    return (keyOf(id).starts_with('.') ? "plugin-dev/" : "plugin/") + std::string(id) + "/";
+}
+
+std::expected<InstallReview, InstallRefusal> Installer::reviewDev(const fs::path &folder) const
+{
+    using Kind = InstallRefusal::Kind;
+    auto files = readPluginFolder(folder);
+    if (!files)
+        return std::unexpected(InstallRefusal{Kind::Package, files.error(), {}, {}});
+    auto package = openPackage(std::move(*files), m_apiVersion);
+    if (!package)
+        return std::unexpected(InstallRefusal{Kind::Package, package.error(), {}, {}});
+    const auto stored = loadRegistry(m_folders.registry);
+    if (!stored)
+        return std::unexpected(InstallRefusal{Kind::Registry, {}, {}, stored.error()});
+    InstallReview review{std::move(*package), Change::Install, {}, std::nullopt, std::nullopt, false, Source::Dev};
+    if (const auto loaded = stored->find(devKey(review.package.manifest.id)); loaded != stored->end()) {
+        review.change = Change::Reinstall;
+        review.installedVersion = loaded->second.version;
+    }
+    return review;
+}
+
+std::expected<void, std::string> Installer::installDev(const InstallReview &review, const fs::path &folder)
+{
+    if (review.source != Source::Dev)
+        return std::unexpected("not a dev plugin review");
+    auto stored = loadRegistry(m_folders.registry);
+    if (!stored)
+        return std::unexpected(stored.error());
+    const Manifest &manifest = review.package.manifest;
+    const std::string key = devKey(manifest.id);
+    InstalledPlugin entry{manifest.version, true, std::nullopt, {}, api::Json::object(), Source::Dev};
+    entry.autoUpdate = false;
+    std::error_code error;
+    entry.path = utf8(fs::absolute(folder, error).lexically_normal());
+    entry.accepted = manifestText(review.package);
+    const auto existing = stored->find(key);
+    if (existing != stored->end()) {
+        entry.enabled = existing->second.enabled;
+        keepChoices(entry, existing->second, manifest);
+    } else {
+        fs::remove_all(m_folders.cache / fromUtf8(key), error);
+    }
+    fs::create_directories(m_folders.data / fromUtf8(key), error);
+    if (error)
+        return failed("cannot create", m_folders.data / fromUtf8(key), error);
+    (*stored)[key] = std::move(entry);
+    if (!saveRegistry(m_folders.registry, *stored))
+        return failed("cannot write", m_folders.registry);
+    return {};
+}
+
+std::expected<Manifest, std::string> Installer::acceptedManifest(std::string_view id) const
+{
+    const auto stored = loadRegistry(m_folders.registry);
+    if (!stored)
+        return std::unexpected(stored.error());
+    const auto dev = stored->find(devKey(id));
+    if (dev == stored->end())
+        return std::unexpected("no dev plugin " + std::string(id));
+    auto manifest = parseManifest(dev->second.accepted, m_apiVersion);
+    if (!manifest)
+        return std::unexpected("the manifest accepted for " + std::string(id) + " no longer reads");
+    return std::move(*manifest);
 }
 
 std::expected<InstallReview, InstallRefusal> Installer::open(std::vector<PackageFile> files) const
@@ -175,6 +313,8 @@ std::expected<InstallReview, InstallRefusal> Installer::reviewListed(std::vector
 
 std::expected<void, std::string> Installer::install(const InstallReview &review, bool retrusted)
 {
+    if (review.source == Source::Dev)
+        return std::unexpected("a dev plugin is loaded, not installed");
     auto registry = loadRegistry(m_folders.registry);
     if (!registry)
         return std::unexpected(registry.error());
@@ -222,13 +362,7 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         entry.skip = old.skip == manifest.version ? std::string() : old.skip;
         entry.previous = otherVersion ? old.version : old.previous;
         entry.held = compareVersions(old.held, manifest.version) > 0 ? old.held : std::string();
-        for (const Setting &setting : manifest.settings)
-            if (const api::Json *value = setting.secret() ? nullptr : existing->second.settings.find(setting.id);
-                value && !settingRefusal(setting, *value))
-                entry.settings[setting.id] = *value;
-        for (const FileGrantRequest &request : manifest.permissions.files)
-            if (const auto grant = existing->second.grants.find(request.id); grant != existing->second.grants.end())
-                entry.grants[request.id] = {grant->second.path, grant->second.writable && request.writable};
+        keepChoices(entry, old, manifest);
     }
     (*registry)[manifest.id] = std::move(entry);
     if (!saveRegistry(m_folders.registry, *registry))
@@ -274,12 +408,12 @@ std::expected<std::string, std::string> Installer::rollBack(std::string_view id,
     return left;
 }
 
-std::expected<void, std::string> Installer::edit(std::string_view id, const std::function<void(InstalledPlugin &)> &change)
+std::expected<void, std::string> Installer::change(std::string_view id, const std::function<void(InstalledPlugin &)> &change)
 {
     auto registry = loadRegistry(m_folders.registry);
     if (!registry)
         return std::unexpected(registry.error());
-    const auto it = registry->find(std::string(id));
+    const auto it = registry->find(keyIn(*registry, id));
     if (it == registry->end())
         return std::unexpected("not installed: " + std::string(id));
     change(it->second);
@@ -288,23 +422,19 @@ std::expected<void, std::string> Installer::edit(std::string_view id, const std:
     return {};
 }
 
+std::expected<void, std::string> Installer::edit(std::string_view id, const std::function<void(InstalledPlugin &)> &change)
+{
+    return this->change(id, change);
+}
+
 std::expected<void, std::string> Installer::setEnabled(std::string_view id, bool enabled)
 {
-    auto registry = loadRegistry(m_folders.registry);
-    if (!registry)
-        return std::unexpected(registry.error());
-    const auto it = registry->find(std::string(id));
-    if (it == registry->end())
-        return std::unexpected("not installed: " + std::string(id));
-    it->second.enabled = enabled;
-    if (!saveRegistry(m_folders.registry, *registry))
-        return failed("cannot write", m_folders.registry);
-    return {};
+    return change(id, [&](InstalledPlugin &plugin) { plugin.enabled = enabled; });
 }
 
 std::expected<Manifest, std::string> Installer::installedManifest(std::string_view id) const
 {
-    return manifestIn(m_folders.plugins / fromUtf8(id), id);
+    return manifestIn(codeFolder(id), id);
 }
 
 std::expected<Manifest, std::string> Installer::previousManifest(std::string_view id) const
@@ -339,16 +469,7 @@ std::expected<void, std::string> Installer::setSetting(std::string_view id, std:
         return std::unexpected("\xE2\x80\x9C" + std::string(setting) + "\xE2\x80\x9D is kept in the system keychain");
     if (auto refused = settingRefusal(*declared, value))
         return std::unexpected(*refused);
-    auto registry = loadRegistry(m_folders.registry);
-    if (!registry)
-        return std::unexpected(registry.error());
-    const auto it = registry->find(std::string(id));
-    if (it == registry->end())
-        return std::unexpected("not installed: " + std::string(id));
-    it->second.settings[setting] = value;
-    if (!saveRegistry(m_folders.registry, *registry))
-        return failed("cannot write", m_folders.registry);
-    return {};
+    return change(id, [&](InstalledPlugin &plugin) { plugin.settings[setting] = value; });
 }
 
 std::expected<void, std::string> Installer::setGrant(std::string_view id, std::string_view request, std::optional<FileGrant> grant)
@@ -360,21 +481,14 @@ std::expected<void, std::string> Installer::setGrant(std::string_view id, std::s
     const auto asked = std::ranges::find(requests, request, &FileGrantRequest::id);
     if (asked == requests.end())
         return std::unexpected("\xE2\x80\x9C" + std::string(request) + "\xE2\x80\x9D isn't a folder " + std::string(id) + " asks for");
-    auto registry = loadRegistry(m_folders.registry);
-    if (!registry)
-        return std::unexpected(registry.error());
-    const auto it = registry->find(std::string(id));
-    if (it == registry->end())
-        return std::unexpected("not installed: " + std::string(id));
-    if (grant) {
-        grant->writable = grant->writable && asked->writable;
-        it->second.grants[std::string(request)] = std::move(*grant);
-    } else {
-        it->second.grants.erase(std::string(request));
-    }
-    if (!saveRegistry(m_folders.registry, *registry))
-        return failed("cannot write", m_folders.registry);
-    return {};
+    return change(id, [&](InstalledPlugin &plugin) {
+        if (grant) {
+            grant->writable = grant->writable && asked->writable;
+            plugin.grants[std::string(request)] = std::move(*grant);
+        } else {
+            plugin.grants.erase(std::string(request));
+        }
+    });
 }
 
 std::expected<void, std::string> Installer::uninstall(std::string_view id, bool removeData)
@@ -382,10 +496,19 @@ std::expected<void, std::string> Installer::uninstall(std::string_view id, bool 
     auto registry = loadRegistry(m_folders.registry);
     if (!registry)
         return std::unexpected(registry.error());
-    const auto it = registry->find(std::string(id));
+    const auto it = registry->find(keyIn(*registry, id));
     if (it == registry->end())
         return std::unexpected("not installed: " + std::string(id));
     std::error_code error;
+    if (it->second.source == Source::Dev) {
+        fs::remove_all(m_folders.cache / fromUtf8(it->first), error);
+        if (removeData)
+            fs::remove_all(m_folders.data / fromUtf8(it->first), error);
+        registry->erase(it);
+        if (!saveRegistry(m_folders.registry, *registry))
+            return failed("cannot write", m_folders.registry);
+        return {};
+    }
     const fs::path folder = m_folders.plugins / fromUtf8(id);
     fs::remove_all(folder, error);
     if (error)

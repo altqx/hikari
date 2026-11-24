@@ -40,6 +40,11 @@ QtObject {
         return ""
     }
 
+    function freehandHint() {
+        //: The hint of the vector clip and drawing tools, after their own; Freehand is a mode button
+        return qsTr("Freehand: hold and draw.")
+    }
+
     function hint(family) {
         switch (family) {
         case 0: return qsTr("Point at the picture to read a position. Ctrl-click puts the line there.")
@@ -49,8 +54,8 @@ QtObject {
         case 4: return qsTr("Drag round the origin to turn the text. Drag the origin to move it.")
         case 5: return qsTr("Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it.")
         case 6: return qsTr("Drag a box. Only what is inside shows. Drag its edges to resize, inside to move.")
-        case 7: return qsTr("Click to add points, drag them to reshape. Only what is inside shows.")
-        case 8: return qsTr("Click to add points, drag them to reshape. Or pick a shape and drag a box.")
+        case 7: return qsTr("Click to add points, drag them to reshape. Only what is inside shows.") + " " + freehandHint()
+        case 8: return qsTr("Click to add points, drag them to reshape. Or pick a shape and drag a box.") + " " + freehandHint()
         case 9: return qsTr("Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis.")
         case 10: return qsTr("Choose a tag, then drag sideways on the picture to change it. Shift for small steps.")
         case 11: return qsTr("Drag the corners to lay the text on a surface. Drag inside to move it.")
@@ -114,9 +119,10 @@ QtObject {
                         qsTr("Drag its edges or corners to resize it, or inside it to move it."),
                         qsTr("Invert clip switches between showing what is inside and what is outside.")]
         case 7:
-        case 8: return [qsTr("Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one."),
-                        qsTr("Click to add points and drag them to reshape."),
+        case 8: return [qsTr("Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one."),
+                        qsTr("Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it."),
                         qsTr("Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y."),
+                        qsTr("In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke."),
                         family === 7 ? qsTr("Invert clip switches between showing what is inside and what is outside.")
                                      : qsTr("Or pick a shape and drag a box to draw it. Edit shapes… adds your own.")]
         case 9: return [qsTr("Drag to move everything the Move toggles choose, by the same amount in every picked line."),

@@ -3,6 +3,8 @@
 #include "hikari/plugins/manifest.h"
 
 #include <cstddef>
+#include <expected>
+#include <filesystem>
 #include <functional>
 #include <optional>
 #include <span>
@@ -59,6 +61,10 @@ struct ContentFileChecks {
 // interface icon that is missing or breaks interfaceIconProblem's rules.
 std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion,
                                                    const ContentFileChecks &checks = {});
+
+// A dev plugin's folder as package files. Entries whose name starts with '.' are left out; a symbolic link is refused
+// as BadPath. Reading stops as TooLarge past kMaxPackageFiles files or kMaxPlatformPackageBytes.
+std::expected<std::vector<PackageFile>, PackageProblem> readPluginFolder(const std::filesystem::path &folder);
 
 // The media rules for one file, by its extension; nullopt when it passes. The detail is English and technical.
 std::optional<std::string> iconProblem(const PackageFile &icon);
