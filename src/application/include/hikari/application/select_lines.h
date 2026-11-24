@@ -17,13 +17,14 @@ struct SelectLinesSettings {
     // Overlaps: Lines that start while an earlier non-comment Line is still on, as select-overlaps.moon
     // finds them; the find text is not used.
     enum class Field { Text, Style, Actor, Effect, Start, End, Overlaps };
-    enum class Mode { Select, AddToSelection, Deselect };
+    enum class Match { Contains, Exact, Regex };
+    enum class Mode { Select, AddToSelection, Deselect, Intersect };
     enum class Action { None, Copy, Cut, MoveToBeginning, MoveToEnd, SetAsComment, Delete };
 
     std::u8string find;
     bool with = true;         // false: "Without"
     bool matchCase = false;
-    bool regex = false;
+    Match match = Match::Contains;
     Field field = Field::Text;
     bool dialogues = true;
     bool comments = false;
@@ -31,7 +32,8 @@ struct SelectLinesSettings {
     Action action = Action::None;
 };
 
-// Option bits as HikariSub legacy stores them.
+// Option bits as HikariSub legacy stores them, plus Exact (1 << 23) and
+// Intersect (1 << 24).
 SelectLinesSettings selectLinesFromOptions(int options);
 int selectLinesOptions(const SelectLinesSettings &settings);
 
@@ -46,7 +48,7 @@ std::u8string stylesPattern(const std::vector<std::u8string> &styles);
 using TextFold = std::function<std::u16string(std::u16string_view)>;
 
 struct SelectLinesResult {
-    int count = 0;                          // the number the message shows
+    int count = 0;                          // the number the message shows; Intersect: Lines it deselected
     std::optional<std::u8string> clipboard; // Copy and Cut: what goes on the clipboard
     // The expression and PCRE2's message.
     std::optional<std::pair<std::u16string, std::u16string>> invalidExpression;

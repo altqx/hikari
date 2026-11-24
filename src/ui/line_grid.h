@@ -31,6 +31,7 @@ struct GridGeometry {
 std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours,
                                            const QColor &selection);
 QColor selectionOver(const QColor &colour, const QColor &selection);
+QColor onFrameTint(const theme::Roles &roles, const QColor &row);
 QColor commentInk(const theme::Roles &roles, const QColor &background);
 
 enum class RunFold { None, Folded, Unfolded };
@@ -56,6 +57,8 @@ class LineGrid : public QQuickPaintedItem {
     // A column title's explanation over the header, or a Line's QC notes over its number.
     Q_PROPERTY(QString hoverToolTip READ hoverToolTip NOTIFY hoverToolTipChanged)
     Q_PROPERTY(QRectF hoverToolTipCell READ hoverToolTipCell NOTIFY hoverToolTipChanged)
+    // Each shown row on the current video frame, as (row + 0.5) / rows.
+    Q_PROPERTY(QList<qreal> onFrameTicks READ onFrameTicks NOTIFY onFrameTicksChanged)
 
 public:
     explicit LineGrid(QQuickItem *parent = nullptr);
@@ -115,6 +118,7 @@ public:
     QString accessibleName() const { return m_accessibleName; }
     QString hoverToolTip() const { return m_hoverToolTip; }
     QRectF hoverToolTipCell() const { return m_hoverToolTipCell; }
+    QList<qreal> onFrameTicks() const { return m_onFrameTicks; }
     int columnAt(qreal x) const;
 
 signals:
@@ -141,6 +145,7 @@ signals:
     void painted();
     void accessibleNameChanged();
     void hoverToolTipChanged();
+    void onFrameTicksChanged();
 
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
@@ -214,6 +219,8 @@ private:
     bool m_qcMarked = false;
     bool m_rowMarked = false;
     void updateColumns();
+    void updateOnFrameTicks();
+    QList<qreal> m_onFrameTicks;
     std::optional<core::LineId> m_dragLine;
     std::optional<core::LineId> m_announcedActive;
     int m_announcedSelected = 0;

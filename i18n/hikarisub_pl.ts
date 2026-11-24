@@ -7661,6 +7661,33 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Filter the Grid</source>
         <translation>Filtruj listę napisów</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Pokaż</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Ukryj</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9646,6 +9673,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>Przełącz tryb tagów na liście napisów</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>Pokaż tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>Zastąp tagi na liście napisów symbolem</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
     </message>
 </context>
 <context>
@@ -12847,14 +12902,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Najpierw otwórz plik</translation>
     </message>
     <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>Pokazuje lub ukrywa tagi na liście napisów</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>Ukryj tagi na liście napisów</translation>
-    </message>
-    <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
     </message>
@@ -12921,6 +12968,42 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>Pokazuje, zastępuje symbolem lub ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>Tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>Pokazuje tagi na liście napisów bez zmian</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>Pokazuje każdy blok tagów na liście napisów jako symbol ustawiony w Ustawienia › Lista napisów</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>Ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>Zabarwia linijki na liście napisów widoczne na bieżącej klatce wideo</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
     </message>
 </context>
 <context>
@@ -15352,6 +15435,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>No settings match “%1”.</source>
         <translation>Żadne ustawienie nie pasuje do “%1”.</translation>
+    </message>
+    <message>
+        <source>Backup copies kept</source>
+        <translation>Zachowywane kopie zapasowe</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>Wcześniejsze zapisy każdego pliku zachowywane w folderze odzyskiwania. Zakres od 0 do 100</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -18989,6 +19080,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>Manifest podaje teraz identyfikator „%1”. Wyładuj wtyczkę i wczytaj folder ponownie.</translation>
     </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 zatrzymał się: %2</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -21546,6 +21641,26 @@ ponieważ została zmieniona.</translation>
         <source>Overlapping lines</source>
         <translation>Nakładające się linijki</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>Częściowe dopasowanie</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>Dokładne dopasowanie</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>Dopasowanie</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>Zawęź zaznaczenie</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>Usunięto z zaznaczenia linijek: %1.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21622,6 +21737,10 @@ ponieważ została zmieniona.</translation>
         <translation>Poprzednia wersja</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>Wcześniejszy zapis</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>Autozapis poprzedniej wersji</translation>
     </message>
@@ -21646,8 +21765,12 @@ ponieważ została zmieniona.</translation>
         <translation>Usuń</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Wcześniejsze zapisy to plik w postaci sprzed zastąpienia go przez zapis. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+        <translation type="vanished">Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21803,7 +21926,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -21836,6 +21959,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (wcześniejszy zapis)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
@@ -27345,7 +27472,7 @@ Usunięte style:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -27362,6 +27489,10 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>Wideo (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

@@ -209,7 +209,7 @@ const QString &LineTableModel::shownTextOf(const Row &row) const
     QString text = qs(!m_showOriginal && m_translationMode && !line.translation.empty() ? line.translation : line.text);
     if (tagsSwapped())
         // MUST KILL: m_tagSwap is a regex replacement, so "&" and "\0".."\9" in the swap text are back-references
-        text = swapTags(text, m_format, m_tagSwap);
+        text = swapTags(text, m_format, tagSwap());
     row.shownText = std::move(text);
     return *row.shownText;
 }
@@ -256,11 +256,11 @@ bool LineTableModel::unplacedRunsOf(const Row &row) const
     return unplaced;
 }
 
-void LineTableModel::setHideTags(bool hide, const QString &swap)
+void LineTableModel::setTagsMode(application::GridTagsMode mode, const QString &swap)
 {
-    if (hide == m_hideTags && swap == m_tagSwap)
+    if (mode == m_tagsMode && swap == m_tagSwap)
         return;
-    m_hideTags = hide;
+    m_tagsMode = mode;
     m_tagSwap = swap;
     for (const Row &row : m_rows) {
         row.shownText.reset();
@@ -344,7 +344,7 @@ const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
         const QString text = qs(line.text);
         const auto result = m_spelling(std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()),
                                                            static_cast<std::size_t>(text.size())),
-                                       m_format, true, tagsSwapped() ? static_cast<int>(m_tagSwap.size()) : -1);
+                                       m_format, true, tagsSwapped() ? static_cast<int>(tagSwap().size()) : -1);
         for (const int offset : result.errors)
             marks << offset;
     }
@@ -530,6 +530,11 @@ void LineTableModel::emitRowChanged(int row)
 
 void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
 {
+    emitLinesChanged(ids, {ActiveRole, SelectedRole, AnchorRole});
+}
+
+void LineTableModel::emitLinesChanged(const std::vector<core::LineId> &ids, const QList<int> &roles)
+{
     boost::dynamic_bitset<> touched(m_rows.size());
     for (const auto &id : ids)
         if (const auto row = rowOf(id))
@@ -538,8 +543,7 @@ void LineTableModel::emitStateChanged(const std::vector<core::LineId> &ids)
         auto last = first;
         while (last + 1 < touched.size() && touched[last + 1])
             ++last;
-        emit dataChanged(index(static_cast<int>(first), 0), index(static_cast<int>(last), ColumnCount - 1),
-                         {ActiveRole, SelectedRole, AnchorRole});
+        emit dataChanged(index(static_cast<int>(first), 0), index(static_cast<int>(last), ColumnCount - 1), roles);
         first = touched.find_next(last);
     }
 }
@@ -699,6 +703,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return QStringList();
     case QcCurrentRole:
         return m_qcCurrent == line.id;
+    case OnFrameRole:
+        return m_onFrame.contains(line.id.value);
     case RowMarkColoursRole:
     case RowMarkNotesRole: {
         const auto it = m_rowMarks.find(line.id.value);
@@ -753,6 +759,24 @@ QVariantList LineTableModel::currentSpellMarkOf(const Row &row) const
         if (marks[m].toInt() <= m_currentMisspell->end && marks[m + 1].toInt() >= m_currentMisspell->start)
             return {marks[m], marks[m + 1]};
     return {};
+}
+
+void LineTableModel::setLinesOnFrame(const std::vector<core::LineId> &lines)
+{
+    absl::flat_hash_set<std::uint64_t> next;
+    for (const auto &id : lines)
+        next.insert(id.value);
+    if (next == m_onFrame)
+        return;
+    std::vector<core::LineId> changed;
+    for (const auto id : m_onFrame)
+        if (!next.contains(id))
+            changed.push_back(core::LineId{id});
+    for (const auto id : next)
+        if (!m_onFrame.contains(id))
+            changed.push_back(core::LineId{id});
+    m_onFrame = std::move(next);
+    emitLinesChanged(changed, {OnFrameRole});
 }
 
 void LineTableModel::setRowMarks(RowMarks marks)
@@ -950,6 +974,7 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {QcCurrentRole, "qcCurrent"},
                   {RowMarkColoursRole, "rowMarkColours"},
                   {RowMarkNotesRole, "rowMarkNotes"},
+                  {OnFrameRole, "onFrame"},
                   {CurrentSpellMarkRole, "currentSpellMark"}});
     return roles;
 }
@@ -1008,7 +1033,8 @@ QSortFilterProxyModel::DataChangeRelevanceFlags LineFilterModel::dataChangeRelev
 {
     static constexpr std::array kMarksOnly{int(LineTableModel::ActiveRole), int(LineTableModel::SelectedRole),
                                            int(LineTableModel::AnchorRole), int(LineTableModel::SpellMarksRole),
-                                           int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole)};
+                                           int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole),
+                                           int(LineTableModel::OnFrameRole), int(LineTableModel::CurrentSpellMarkRole)};
     const bool activeMatters = !m_text.isEmpty() && roles.contains(int(LineTableModel::ActiveRole));
     if (!activeMatters && !roles.isEmpty() &&
         std::ranges::all_of(roles, [](int role) { return std::ranges::contains(kMarksOnly, role); }))

@@ -130,6 +130,7 @@ constexpr Row kRows[] = {
     {"program.tabTextMaxChars", "general.tabs", {QT_TRANSLATE_NOOP("HikariSub.Options", "Tab name length")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "Number of tab name characters. Range from 20 to 150")}},
     {"autosave.maxFiles", "general.saving", {QT_TRANSLATE_NOOP("HikariSub.Options", "Autosave files kept")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "Number of autosaves can be set from 2 to 1000000")}},
     {"autosave.intervalSeconds", "general.saving", {QT_TRANSLATE_NOOP("HikariSub.Options", "Autosave every")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "Seconds from a change to its autosave. Range from 5 to 3600")}},
+    {"autosave.savedCopies", "general.saving", {QT_TRANSLATE_NOOP("HikariSub.Options", "Backup copies kept")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "Earlier saves of each file kept in the Recovery folder. Range from 0 to 100")}},
     {"notices.toasts", "general.notices", {QT_TRANSLATE_NOOP("HikariSub.Options", "Show notices as toasts")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "Off: notices go to the Log only.")}},
     {"fonts.externalDirectory", "general.folders", {QT_TRANSLATE_NOOP("HikariSub.Options", "Fonts folder")}, {}},
     {"appearance.iconTheme", "appearance.icons", {QT_TRANSLATE_NOOP("HikariSub.Options", "Icons")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.")}},

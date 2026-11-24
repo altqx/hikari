@@ -874,6 +874,44 @@ Window {
         QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
     }
 
+    void actionButtonsAndChipsMatchTheButton()
+    {
+        QQmlEngine engine;
+        QQmlComponent component(&engine);
+        component.setData(R"(
+import QtQuick
+import QtQuick.Controls
+import Hikari.Ui
+Window {
+    width: 400; height: 400
+    property var heights: [button.height, primary.height, danger.height, chip.height, segments.height]
+    property var radii: [button.background.radius, primary.background.radius, danger.background.radius, segments.radius]
+    property color chipRest: chip.background.border.color
+    property color chipOn: chipNarrowing.background.border.color
+    property color control: Theme.control
+    property color accent: Theme.accent
+    Column {
+        Button { id: button; text: "Save" }
+        PrimaryButton { id: primary; text: "Save" }
+        DangerButton { id: danger; text: "Delete" }
+        FilterChip { id: chip; text: "Style" }
+        FilterChip { id: chipNarrowing; text: "Style: Default"; on: true }
+        SegmentedButtons { id: segments; choices: [{text: "Rules"}, {text: "Changes"}] }
+    }
+}
+)", QUrl(QStringLiteral("qrc:/action-buttons.qml")));
+        std::unique_ptr<QObject> window(component.create());
+        QVERIFY2(window, qPrintable(component.errorString()));
+        const auto heights = window->property("heights").toList();
+        for (const QVariant &height : heights)
+            QCOMPARE(height.toReal(), heights.front().toReal());
+        const auto radii = window->property("radii").toList();
+        for (const QVariant &radius : radii)
+            QCOMPARE(radius.toReal(), radii.front().toReal());
+        QCOMPARE(window->property("chipRest").value<QColor>(), window->property("control").value<QColor>());
+        QCOMPARE(window->property("chipOn").value<QColor>(), window->property("accent").value<QColor>());
+    }
+
     void comboBoxFieldCarriesTheBoxName()
     {
         QCOMPARE(QQuickStyle::name(), QStringLiteral("HikariStyle"));
