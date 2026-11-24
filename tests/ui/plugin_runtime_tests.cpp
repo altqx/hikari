@@ -2,6 +2,7 @@
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/localisation.h"
+#include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/backends/sandbox.h"
@@ -15,6 +16,7 @@
 #include "hikari/application/settings.h"
 
 #include "settings_store.h"
+#include "theme.h"
 
 #include <QDir>
 #include <QFile>
@@ -1892,6 +1894,45 @@ hikari.providers.hover(function() return {text = "Never asked for text"} end)
         QTRY_VERIFY(items.has_value());
         QCOMPARE(items->size(), std::size_t(1));
         QCOMPARE(items->front().label, QStringLiteral("\\fad"));
+    }
+
+    void aDevPluginsThemesComeAndGoWithItsFolder()
+    {
+        write(folders().registry, QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), QJsonObject{}}}).toJson());
+        const QString work = m_dir.filePath(QStringLiteral("work/looks"));
+        QFile dark(QStringLiteral(QT_TESTCASE_SOURCEDIR "/../../src/ui/themes/dark.json"));
+        QVERIFY(dark.open(QIODevice::ReadOnly));
+        write(work + QStringLiteral("/themes/dusk.json"), dark.readAll());
+        const auto manifest = [&](bool withTheme) {
+            QJsonObject m{{QStringLiteral("id"), QStringLiteral("com.example.looks")},
+                          {QStringLiteral("name"), QStringLiteral("Looks")},
+                          {QStringLiteral("version"), QStringLiteral("1.0.0")},
+                          {QStringLiteral("api"), 1},
+                          {QStringLiteral("authors"), QJsonArray{QStringLiteral("Ana")}}};
+            QJsonArray themes;
+            if (withTheme)
+                themes.append(QJsonObject{{QStringLiteral("id"), QStringLiteral("dusk")},
+                                          {QStringLiteral("title"), QStringLiteral("Dusk")},
+                                          {QStringLiteral("type"), QStringLiteral("dark")},
+                                          {QStringLiteral("path"), QStringLiteral("themes/dusk.json")}});
+            m[QStringLiteral("contributes")] = QJsonObject{{QStringLiteral("themes"), themes}};
+            write(work + QStringLiteral("/hikari-plugin.json"), QJsonDocument(m).toJson());
+        };
+        manifest(true);
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.plugins = folders();
+        app::Application a(o);
+        app::PluginManager &manager = *a.pluginManager();
+        const QVariantMap review = manager.reviewDev(QUrl::fromLocalFile(work));
+        QVERIFY2(review.value(QStringLiteral("ok")).toBool(), qPrintable(review.value(QStringLiteral("message")).toString()));
+        QCOMPARE(manager.install(false), QString());
+        const QString dusk = QStringLiteral("plugin:com.example.looks/dusk");
+        QTRY_VERIFY(ui::theme::find(dusk));
+
+        manifest(false);
+        QTRY_VERIFY(!ui::theme::find(dusk));
     }
 
     void completionItemsAndHoversKeepToTheContract()
