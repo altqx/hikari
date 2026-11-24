@@ -27477,6 +27477,10 @@ or codecs or a splitter may be missing</source>
         <translation>செயலில் உள்ள வரியை மாற்றுகிறது</translation>
     </message>
     <message>
+        <source>How this tool works</source>
+        <translation>இந்தக் கருவி எப்படி வேலை செய்கிறது</translation>
+    </message>
+    <message>
         <source>On the frame</source>
         <translation>சட்டகத்தில்</translation>
     </message>
@@ -28297,6 +28301,254 @@ or codecs or a splitter may be missing</source>
         <translation>பாதைப் புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், பாதையை வடிவமைக்க அவற்றை இழுக்கவும். உரை அதைப் பின்தொடரும்; Enter பயன்படுத்தும்.</translation>
     </message>
     <message>
+        <source>Only when you Ctrl-click.</source>
+        <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
+        <translation>Ctrl-சொடுக்கு செய்யும்போது மட்டும்.</translation>
+    </message>
+    <message>
+        <source>Moves the positions, move points, clips, drawings and origins already in the lines.</source>
+        <extracomment>The visual tool guide: what the Position shifter writes</extracomment>
+        <translation>வரிகளில் ஏற்கெனவே உள்ள நிலைகள், நகர்வுப் புள்ளிகள், கிளிப்புகள், வரைபடங்கள், மூலப்புள்ளிகளை நகர்த்தும்.</translation>
+    </message>
+    <message>
+        <source>Any tag from its list.</source>
+        <extracomment>The visual tool guide: what the All tags tool writes</extracomment>
+        <translation>அதன் பட்டியலில் உள்ள எந்தக் குறிச்சொல்லும்.</translation>
+    </message>
+    <message>
+        <source>And the border and shadow sizes.</source>
+        <extracomment>The visual tool guide: what Perspective writes besides its tags</extracomment>
+        <translation>மேலும் எல்லை, நிழல் அளவுகளும்.</translation>
+    </message>
+    <message>
+        <source>Copies of the line in clip strips, a mask drawing, or tags for each character or line.</source>
+        <extracomment>The visual tool guide: what the Gradient tool writes</extracomment>
+        <translation>கிளிப் பட்டைகளில் வரியின் நகல்கள், ஒரு முகமூடி வரைபடம், அல்லது ஒவ்வொரு எழுத்துக்கும் அல்லது வரிக்கும் குறிச்சொற்கள்.</translation>
+    </message>
+    <message>
+        <source>A line for each letter, with its own position and rotation, along the path.</source>
+        <extracomment>The visual tool guide: what Text on path writes</extracomment>
+        <translation>பாதையின் வழியே ஒவ்வொரு எழுத்துக்கும் ஒரு வரி, அதற்கெனத் தனி நிலையும் சுழற்சியும் கொண்டது.</translation>
+    </message>
+    <message>
+        <source>A cross follows the pointer and shows its script coordinates.</source>
+        <translation>ஒரு குறுக்குக்குறி சுட்டியைப் பின்தொடர்ந்து அதன் ச்கிரிப்ட் ஆயத்தொலைவுகளைக் காட்டும்.</translation>
+    </message>
+    <message>
+        <source>Ctrl-click or middle-click puts the line there.</source>
+        <translation>Ctrl-சொடுக்கு அல்லது நடுச் சொடுக்கு வரியை அங்கே வைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag anywhere on the picture to move the line; you need not grab it.</source>
+        <translation>வரியை நகர்த்தப் படத்தின் மீது எங்கு வேண்டுமானாலும் இழுக்கவும்; அதைப் பிடிக்க வேண்டியதில்லை.</translation>
+    </message>
+    <message>
+        <source>Shift locks the drag to one axis.</source>
+        <translation>Shift இழுப்பை ஒரு அச்சில் பூட்டும்.</translation>
+    </message>
+    <message>
+        <source>A right-click puts the line at the pointer.</source>
+        <translation>வலது சொடுக்கு வரியைச் சுட்டியின் இடத்தில் வைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Set position by rectangle places the line by a rectangle you draw.</source>
+        <translation>“செவ்வகம் மூலம் நிலையை அமைக்கவும்” நீங்கள் வரையும் செவ்வகத்தைக் கொண்டு வரியை வைக்கும்.</translation>
+    </message>
+    <message>
+        <source>The left button sets the start point, the right button the end point.</source>
+        <translation>இடது பொத்தான் தொடக்கப் புள்ளியையும், வலது பொத்தான் முடிவுப் புள்ளியையும் அமைக்கும்.</translation>
+    </message>
+    <message>
+        <source>Start and End take their times in milliseconds from the line’s start.</source>
+        <translation>“தொடக்கம்”, “முடிவு” ஆகியவை தங்கள் நேரங்களை வரியின் தொடக்கத்திலிருந்து மில்லிவினாடிகளில் எடுக்கும்.</translation>
+    </message>
+    <message>
+        <source>Set movement using 2 points and the video position builds the move from a point on two frames.</source>
+        <translation>“2 புள்ளிகளையும் வீடியோ நிலையையும் கொண்டு நகர்வை அமைக்கவும்” இரண்டு சட்டகங்களில் உள்ள ஒரு புள்ளியிலிருந்து நகர்வை உருவாக்கும்.</translation>
+    </message>
+    <message>
+        <source>Left-drag scales the width, right-drag the height.</source>
+        <translation>இடது பொத்தானால் இழுத்தால் அகலம் அளவிடப்படும், வலது பொத்தானால் இழுத்தால் உயரம்.</translation>
+    </message>
+    <message>
+        <source>Middle-drag or Shift-drag scales both.</source>
+        <translation>நடுப் பொத்தானால் அல்லது Shift உடன் இழுத்தால் இரண்டும் அளவிடப்படும்.</translation>
+    </message>
+    <message>
+        <source>Set scale by rectangle scales the line to fit a rectangle you draw.</source>
+        <translation>“செவ்வகம் மூலம் அளவீட்டை அமைக்கவும்” நீங்கள் வரையும் செவ்வகத்துக்குப் பொருந்தும்படி வரியை அளவிடும்.</translation>
+    </message>
+    <message>
+        <source>Drag round the origin cross to turn the line.</source>
+        <translation>வரியைச் சுழற்ற மூலப்புள்ளிக் குறுக்குக்குறியைச் சுற்றி இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag the cross itself to move the origin.</source>
+        <translation>மூலப்புள்ளியை நகர்த்தக் குறுக்குக்குறியையே இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Set angle from 2 points takes the angle from two points you click along something in the picture.</source>
+        <translation>“2 புள்ளிகளிலிருந்து கோணத்தை அமைக்கவும்” படத்தில் உள்ள ஏதேனும் ஒன்றின் வழியே நீங்கள் சொடுக்கும் இரண்டு புள்ளிகளிலிருந்து கோணத்தை எடுக்கும்.</translation>
+    </message>
+    <message>
+        <source>Left-drag turns the text round the vertical axis.</source>
+        <translation>இடது பொத்தானால் இழுத்தால் உரை செங்குத்து அச்சைச் சுற்றிச் சுழலும்.</translation>
+    </message>
+    <message>
+        <source>Right-drag turns it round the horizontal axis; middle-drag does both.</source>
+        <translation>வலது பொத்தானால் இழுத்தால் அது கிடைமட்ட அச்சைச் சுற்றிச் சுழலும்; நடுப் பொத்தானால் இழுத்தால் இரண்டும் நடக்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag the origin cross to move the origin.</source>
+        <translation>மூலப்புள்ளியை நகர்த்த மூலப்புள்ளிக் குறுக்குக்குறியை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag a rectangle on the picture.</source>
+        <translation>படத்தின் மீது ஒரு செவ்வகத்தை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag its edges or corners to resize it, or inside it to move it.</source>
+        <translation>அளவை மாற்ற அதன் ஓரங்களையோ மூலைகளையோ இழுக்கவும், நகர்த்த அதன் உள்ளே இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Invert clip switches between showing what is inside and what is outside.</source>
+        <translation>“கிளிப்பைத் தலைகீழாக்கு” உள்ளே இருப்பதைக் காட்டுவதற்கும் வெளியே இருப்பதைக் காட்டுவதற்கும் இடையே மாற்றும்.</translation>
+    </message>
+    <message>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
+        <translation>ஒரு பயன்முறையைத் தேர்ந்தெடுக்கவும்: புள்ளிகளை நகர்த்துதல்; ஒரு கோடு, பெசியர் வளைவு அல்லது பி-ச்ப்ளைனைச் சேர்த்தல்; ஒரு தனிப் புள்ளியைச் சேர்த்தல் அல்லது ஒன்றை நீக்குதல்.</translation>
+    </message>
+    <message>
+        <source>Click to add points and drag them to reshape.</source>
+        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
+        <translation>Ctrl-சொடுக்கு பல புள்ளிகளைத் தேர்ந்தெடுக்கும். இழுக்கும்போது Alt அழுத்தினால் வேறொரு புள்ளியின் x அல்லது y உடன் ஒட்டிப் பொருந்தும்.</translation>
+    </message>
+    <message>
+        <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
+        <translation>அல்லது ஒரு வடிவத்தைத் தேர்ந்தெடுத்து, அதை வரைய ஒரு பெட்டியை இழுக்கவும். “வடிவங்களைத் திருத்து…” உங்கள் சொந்த வடிவங்களைச் சேர்க்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag to move everything the Move toggles choose, by the same amount in every picked line.</source>
+        <translation>“நகர்வு” நிலைமாற்றிகள் தேர்ந்தெடுக்கும் அனைத்தையும், எடுத்த ஒவ்வொரு வரியிலும் ஒரே அளவு நகர்த்த இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Or type an amount in X and Y: each Enter shifts the lines by that much.</source>
+        <translation>அல்லது X, Y இல் ஒரு அளவைத் தட்டச்சிடவும்: ஒவ்வொரு Enter உம் வரிகளை அந்த அளவு நகர்த்தும்.</translation>
+    </message>
+    <message>
+        <source>Choose a tag in the inspector.</source>
+        <translation>ஆய்வுப் பட்டியில் ஒரு குறிச்சொல்லைத் தேர்ந்தெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag sideways on the picture, or turn the wheel, to change its value. Shift for small steps.</source>
+        <translation>அதன் மதிப்பை மாற்றப் படத்தின் மீது பக்கவாட்டில் இழுக்கவும், அல்லது சக்கரத்தைச் சுழற்றவும். சிறு படிகளுக்கு Shift.</translation>
+    </message>
+    <message>
+        <source>Set, Add, Multiply and Gradient decide how the value goes across characters or lines.</source>
+        <translation>“அமை”, “கூட்டு”, “பெருக்கு”, “சாய்வு” ஆகியவை மதிப்பு எழுத்துகள் அல்லது வரிகள் முழுவதும் எப்படிப் பரவுகிறது என்பதைத் தீர்மானிக்கும்.</translation>
+    </message>
+    <message>
+        <source>Drag a square corner to lay the text on a surface.</source>
+        <translation>உரையை ஒரு பரப்பின் மீது அமைக்க ஒரு சதுர மூலையை இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag inside the text to move it.</source>
+        <translation>உரையை நகர்த்த அதன் உள்ளே இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>While dragging a corner, Shift keeps it on an edge, Ctrl snaps it and Alt sizes about the centre.</source>
+        <translation>ஒரு மூலையை இழுக்கும்போது, Shift அதை ஒரு ஓரத்தின் மீது வைத்திருக்கும், Ctrl அதை ஒட்டிப் பொருத்தும், Alt மையத்தைச் சுற்றி அளவை மாற்றும்.</translation>
+    </message>
+    <message>
+        <source>A double-click brings the nearest corner to the pointer.</source>
+        <translation>இரட்டைச் சொடுக்கு அருகிலுள்ள மூலையைச் சுட்டிக்குக் கொண்டுவரும்.</translation>
+    </message>
+    <message>
+        <source>Choose a mode, then drag across the sign from where the gradient starts to where it ends.</source>
+        <translation>ஒரு பயன்முறையைத் தேர்ந்தெடுத்து, சாய்வு தொடங்கும் இடத்திலிருந்து முடியும் இடம் வரை பலகையின் குறுக்கே இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag the ends and the other handles to adjust it; the preview follows.</source>
+        <translation>அதைச் சரிசெய்ய முனைகளையும் பிற கைப்பிடிகளையும் இழுக்கவும்; முன்னோட்டம் பின்தொடரும்.</translation>
+    </message>
+    <message>
+        <source>Enter applies the gradient as one step.</source>
+        <translation>Enter சாய்வை ஒரே படியாகப் பயன்படுத்தும்.</translation>
+    </message>
+    <message>
+        <source>Give the line a vector clip, or click on the picture to draw a path.</source>
+        <translation>வரிக்குத் திசையன் கிளிப் கொடுக்கவும், அல்லது பாதையை வரையப் படத்தின் மீது சொடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag the points to shape the path; the text follows it.</source>
+        <translation>பாதையை வடிவமைக்கப் புள்ளிகளை இழுக்கவும்; உரை அதைப் பின்தொடரும்.</translation>
+    </message>
+    <message>
+        <source>Enter applies: each letter becomes its own line, and the original is kept as a comment.</source>
+        <translation>Enter பயன்படுத்தும்: ஒவ்வொரு எழுத்தும் தனி வரியாகும், அசல் வரி கருத்தாக வைக்கப்படும்.</translation>
+    </message>
+    <message>
+        <source>Chooses this tool</source>
+        <extracomment>The visual tool guide&apos;s keys: what the tool&apos;s own key does</extracomment>
+        <translation>இந்தக் கருவியைத் தேர்ந்தெடுக்கும்</translation>
+    </message>
+    <message>
+        <source>Arrow keys</source>
+        <extracomment>The visual tool guide&apos;s keys; the arrows work while the pointer is over the picture</extracomment>
+        <translation>அம்பு விசைகள்</translation>
+    </message>
+    <message>
+        <source>Change the scale by 1 %</source>
+        <translation>அளவீட்டை 1% மாற்று</translation>
+    </message>
+    <message>
+        <source>Move the selected points by one pixel</source>
+        <translation>தேர்ந்தெடுத்த புள்ளிகளை ஒரு படப்புள்ளி நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Nudge by one pixel</source>
+        <translation>ஒரு படப்புள்ளி நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Shift+Arrow keys</source>
+        <translation>Shift+அம்பு விசைகள்</translation>
+    </message>
+    <message>
+        <source>Nudge by a tenth of a pixel</source>
+        <translation>படப்புள்ளியின் பத்தில் ஒரு பங்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Alt+Arrow keys</source>
+        <translation>Alt+அம்பு விசைகள்</translation>
+    </message>
+    <message>
+        <source>Nudge the end point</source>
+        <translation>முடிவுப் புள்ளியை நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Wheel</source>
+        <translation>சக்கரம்</translation>
+    </message>
+    <message>
+        <source>Steps through the modes</source>
+        <translation>பயன்முறைகளை ஒவ்வொன்றாக மாற்றும்</translation>
+    </message>
+    <message>
+        <source>Changes the value</source>
+        <translation>மதிப்பை மாற்றும்</translation>
+    </message>
+    <message>
+        <source>Applies</source>
+        <translation>பயன்படுத்தும்</translation>
+    </message>
+    <message>
+        <source>Drops the preview</source>
+        <translation>முன்னோட்டத்தைக் கைவிடும்</translation>
+    </message>
+    <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
         <translation>சதுரம்</translation>
@@ -29030,6 +29282,14 @@ do not work on comments</source>
     <message>
         <source>Nothing would be left of the drawing</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes</source>
+        <translation>எழுதுவது</translation>
+    </message>
+    <message>
+        <source>More in the guide</source>
+        <translation>வழிகாட்டியில் மேலும்</translation>
     </message>
 </context>
 <context>
