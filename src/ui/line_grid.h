@@ -171,6 +171,7 @@ private:
     void drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const;
     void drawQcFlag(QPainter *painter, const QRectF &cell, const QColor &ink, bool current) const;
     void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
+    void drawCurrentSpellMark(QPainter *painter, const QRectF &cell, QString text, const QVariantList &mark) const;
     void drawReviewMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
     void drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
                              const QColor &outline) const;

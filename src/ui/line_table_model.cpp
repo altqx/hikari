@@ -611,6 +611,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case DraftRole:
         case UnplacedRunsRole: return false;
         case SpellMarksRole:
+        case CurrentSpellMarkRole:
         case ComparisonMarksRole: return QVariantList();
         case ComparisonRole:
         case ReviewRole:
@@ -674,6 +675,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return measuresOf(r).badWraps;
     case SpellMarksRole:
         return spellMarksOf(r);
+    case CurrentSpellMarkRole:
+        return currentSpellMarkOf(r);
     case ComparisonRole:
         return r.comparison;
     case ComparisonMarksRole:
@@ -725,6 +728,31 @@ void LineTableModel::setQcMarks(QcMarks marks, std::optional<core::LineId> curre
         emit headerDataChanged(Qt::Horizontal, NumberColumn, NumberColumn);
     if (!m_rows.empty())
         emit dataChanged(index(0, NumberColumn), index(rowCount() - 1, NumberColumn), {QcNotesRole, QcCurrentRole});
+}
+
+void LineTableModel::setCurrentMisspell(std::optional<CurrentMisspell> misspell)
+{
+    if (misspell == m_currentMisspell)
+        return;
+    std::vector<core::LineId> rows;
+    for (const auto &m : {m_currentMisspell, misspell})
+        if (m)
+            rows.push_back(m->line);
+    m_currentMisspell = misspell;
+    for (const core::LineId id : rows)
+        if (const auto row = rowOf(id))
+            emit dataChanged(index(*row, TextColumn), index(*row, TextColumn), {CurrentSpellMarkRole});
+}
+
+QVariantList LineTableModel::currentSpellMarkOf(const Row &row) const
+{
+    if (!m_currentMisspell || row.line.id != m_currentMisspell->line)
+        return {};
+    const QVariantList &marks = spellMarksOf(row);
+    for (qsizetype m = 0; m + 1 < marks.size(); m += 2)
+        if (marks[m].toInt() <= m_currentMisspell->end && marks[m + 1].toInt() >= m_currentMisspell->start)
+            return {marks[m], marks[m + 1]};
+    return {};
 }
 
 void LineTableModel::setRowMarks(RowMarks marks)
@@ -921,7 +949,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {QcNotesRole, "qcNotes"},
                   {QcCurrentRole, "qcCurrent"},
                   {RowMarkColoursRole, "rowMarkColours"},
-                  {RowMarkNotesRole, "rowMarkNotes"}});
+                  {RowMarkNotesRole, "rowMarkNotes"},
+                  {CurrentSpellMarkRole, "currentSpellMark"}});
     return roles;
 }
 

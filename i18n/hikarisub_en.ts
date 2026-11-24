@@ -1427,6 +1427,29 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n word(s) replaced</source>
+        <translation>
+            <numerusform>%n word replaced</numerusform>
+            <numerusform>%n words replaced</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n ignored</source>
+        <extracomment>After &quot;3 words replaced, &quot;: how many misspelled words were ignored.</extracomment>
+        <translation>
+            <numerusform>%n ignored</numerusform>
+            <numerusform>%n ignored</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n added to the dictionary</source>
+        <extracomment>How many words were added to the dictionary.</extracomment>
+        <translation>
+            <numerusform>%n added to the dictionary</numerusform>
+            <numerusform>%n added to the dictionary</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n lines checked</source>
         <translation>
             <numerusform>%n line checked</numerusform>
@@ -1434,10 +1457,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n lines checked.</source>
+        <source>Line %1 of %2 · %n found so far</source>
         <translation>
-            <numerusform>%n line checked.</numerusform>
-            <numerusform>%n lines checked.</numerusform>
+            <numerusform>Line %1 of %2 · %n found so far</numerusform>
+            <numerusform>Line %1 of %2 · %n found so far</numerusform>
         </translation>
     </message>
 </context>

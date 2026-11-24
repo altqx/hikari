@@ -691,9 +691,12 @@ public:
     Q_INVOKABLE bool addEditorWord(const QString &word, bool project = false);
     // options: {ignoreComments, ignoreUpperCase, project (Add to dictionary's tier)}. Each returns {found, available, line,
     // before, after, word, suggestions, replacement, changed, problem, unchanged,
-    // restarted}: found false: no errors; available false: no dictionary; line: the
-    // Grid's number; unchanged: the action did nothing; restarted: the Line changed since
-    // the word was shown, so the walk started again from it.
+    // restarted, lines, checked, tally, language, folder}: found false: no errors; available false: no
+    // dictionary; line: the Grid's number; unchanged: the action did nothing; restarted: the Line changed
+    // since the word was shown, so the walk started again from it; lines: the document's; checked: the
+    // lines walked; tally: {found, replaced, ignored, added}; language: the dictionary's name; folder:
+    // where dictionaries are looked for; from, to: the word in the Line editor's field, -1 when not shown;
+    // off: spelling is turned off in Settings, not missing a dictionary.
     Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options, int shellWindow);
     Q_INVOKABLE QVariantMap spellCheckerActivated(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerReplace(const QString &replacement, const QVariantMap &options);
@@ -703,6 +706,10 @@ public:
     Q_INVOKABLE QVariantMap spellCheckerIgnoreAll(const QString &word, const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerAddWord(const QString &word, const QVariantMap &options);
     Q_INVOKABLE void closeSpellChecker(int shellWindow);
+    // [{symbol, name}]: the installed dictionaries, then the plugins'.
+    Q_INVOKABLE QVariantList dictionaryChoices() const;
+    // Into project.toml when the window's Project sets the language, else the user's settings.
+    Q_INVOKABLE void chooseDictionaryLanguage(const QString &symbol, int shellWindow);
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
     Q_PROPERTY(bool grammarOn READ grammarOn NOTIFY grammarChanged)
@@ -1764,12 +1771,14 @@ private:
     void syncReadingProblems();
     std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
+    bool spellingTurnedOff(int shellWindow) const;
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
     void showSpellCheckWord(int shellWindow);
     struct SpellSlot {
         std::unique_ptr<application::SpellChecker> checker;
         // MUST KILL: set on first use even with spelling off; turning spelling on doesn't reset it.
         bool started = false;
+        bool failed = false;
     };
     // By dictionary language and Project folder; windows on both the same share a checker.
     std::map<QString, SpellSlot> m_spellCheckers;

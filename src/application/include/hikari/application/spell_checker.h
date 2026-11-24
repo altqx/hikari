@@ -14,9 +14,11 @@
 #include <future>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
 #include <absl/container/flat_hash_map.h>
 #include <vector>
 
@@ -176,6 +178,12 @@ public:
         int end = 0;
         std::vector<std::u16string> suggestions;
     };
+    struct Tally {
+        int found = 0;
+        int replaced = 0;
+        int ignored = 0;
+        int added = 0;
+    };
 
     SpellCheckWalk(SpellChecker &checker, SpellingText spelling);
 
@@ -184,6 +192,10 @@ public:
     bool next(EditSession &session, const Options &options);
     const std::optional<Found> &current() const { return m_current; }
     bool refused() const { return m_refused; }
+    // found counts each word once, also when a restart shows it again.
+    const Tally &tally() const { return m_tally; }
+    // From the first Line walked to the document's end.
+    std::size_t linesChecked(const core::Document &document) const;
 
     // Restarts when the active Line or its text changed; returns whether it did. The first activation after
     // nothing was found is ignored.
@@ -219,6 +231,9 @@ private:
     std::vector<core::legacy::Misspell> m_errors;
     std::u16string m_lastText;
     std::optional<Found> m_current;
+    std::optional<std::size_t> m_firstLine;
+    std::set<std::tuple<std::uint64_t, int, std::u16string>> m_seen;
+    Tally m_tally;
 };
 
 }

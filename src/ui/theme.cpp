@@ -420,6 +420,14 @@ double contrastRatio(const QColor &a, const QColor &b)
     return themes::contrastRatio(a.rgba(), b.rgba());
 }
 
+QColor tintFill(const State &state, QColor ink, float alpha)
+{
+    if (themes::isHighContrast(state.type))
+        return state.roles.panel;
+    ink.setAlphaF(alpha);
+    return ink;
+}
+
 QColor composite(const QColor &over, const QColor &under)
 {
     const double a = over.alphaF();

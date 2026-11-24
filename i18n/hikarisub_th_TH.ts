@@ -21994,7 +21994,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>No spelling errors were found</source>
-        <translation>ไม่พบคำสะกดผิด</translation>
+        <translation type="vanished">ไม่พบคำสะกดผิด</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -22022,15 +22022,15 @@ because it was edited.</source>
     </message>
     <message>
         <source>No dictionaries found</source>
-        <translation>ไม่พบพจนานุกรม</translation>
+        <translation type="vanished">ไม่พบพจนานุกรม</translation>
     </message>
     <message>
         <source>No spelling errors in %1</source>
-        <translation>ไม่พบคำสะกดผิดใน %1</translation>
+        <translation type="vanished">ไม่พบคำสะกดผิดใน %1</translation>
     </message>
     <message>
         <source>Spelling settings…</source>
-        <translation>การตั้งค่าการสะกด…</translation>
+        <translation type="vanished">การตั้งค่าการสะกด…</translation>
     </message>
     <message>
         <source>Check again</source>
@@ -22050,17 +22050,22 @@ because it was edited.</source>
     </message>
     <message>
         <source>Checking line %1 of %2…</source>
-        <translation>กำลังตรวจบรรทัด %1 จาก %2…</translation>
+        <translation type="vanished">กำลังตรวจบรรทัด %1 จาก %2…</translation>
     </message>
     <message>
         <source>Finding %1 of %2 · %3</source>
-        <translation>ปัญหา %1 จาก %2 · %3</translation>
+        <translation type="vanished">ปัญหา %1 จาก %2 · %3</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked</source>
         <translation>
             <numerusform>ตรวจแล้ว %n บรรทัด</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <extracomment>Joins two counts, as in &quot;3 words replaced, 2 ignored&quot;.</extracomment>
+        <translation>%1 %2</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -22080,7 +22085,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>No more grammar findings in %1</source>
-        <translation>ไม่พบปัญหาไวยากรณ์เพิ่มเติมใน %1</translation>
+        <translation type="vanished">ไม่พบปัญหาไวยากรณ์เพิ่มเติมใน %1</translation>
     </message>
     <message>
         <source>No more grammar findings</source>
@@ -22088,11 +22093,11 @@ because it was edited.</source>
     </message>
     <message>
         <source>No grammar findings in %1</source>
-        <translation>ไม่พบปัญหาไวยากรณ์ใน %1</translation>
+        <translation type="vanished">ไม่พบปัญหาไวยากรณ์ใน %1</translation>
     </message>
     <message>
         <source>No grammar findings</source>
-        <translation>ไม่พบปัญหาไวยากรณ์</translation>
+        <translation type="vanished">ไม่พบปัญหาไวยากรณ์</translation>
     </message>
     <message>
         <source>Choose an English in Settings to check grammar with Harper.</source>
@@ -22100,7 +22105,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%n lines checked.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>ตรวจแล้ว %n บรรทัด</numerusform>
         </translation>
     </message>
@@ -22119,6 +22124,77 @@ because it was edited.</source>
     <message>
         <source>Misspelled word: %1</source>
         <translation>คำสะกดผิด: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n word(s) replaced</source>
+        <translation>
+            <numerusform>แทนที่แล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n ignored</source>
+        <extracomment>After &quot;3 words replaced, &quot;: how many misspelled words were ignored.</extracomment>
+        <translation>
+            <numerusform>ละเว้นแล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n added to the dictionary</source>
+        <extracomment>How many words were added to the dictionary.</extracomment>
+        <translation>
+            <numerusform>เพิ่มลงในพจนานุกรมแล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>, </source>
+        <extracomment>Joins &quot;3 words replaced&quot;, &quot;2 ignored&quot; and &quot;1 added to the dictionary&quot;.</extracomment>
+        <translation type="vanished"> </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 of %2 · %n found so far</source>
+        <translation>
+            <numerusform>บรรทัด %1 จาก %2 · พบแล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Dictionary language</source>
+        <translation>ภาษาของพจนานุกรม</translation>
+    </message>
+    <message>
+        <source>Checking · line %1 of %2</source>
+        <translation>กำลังตรวจ · บรรทัด %1 จาก %2</translation>
+    </message>
+    <message>
+        <source>Spell checking is turned off.</source>
+        <translation>การตรวจการสะกดปิดอยู่</translation>
+    </message>
+    <message>
+        <source>No dictionary for %1 was found, so nothing can be checked.</source>
+        <translation>ไม่พบพจนานุกรมสำหรับ %1 จึงตรวจการสะกดไม่ได้</translation>
+    </message>
+    <message>
+        <source>No dictionary was found, so nothing can be checked.</source>
+        <translation>ไม่พบพจนานุกรม จึงตรวจการสะกดไม่ได้</translation>
+    </message>
+    <message>
+        <source>No more spelling mistakes</source>
+        <translation>ไม่พบคำสะกดผิดเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Dictionaries are .dic and .aff files in “%1”.</source>
+        <translation>พจนานุกรมคือไฟล์ .dic และ .aff ในโฟลเดอร์ “%1”</translation>
+    </message>
+    <message>
+        <source>Choose a language…</source>
+        <translation>เลือกภาษา…</translation>
+    </message>
+    <message>
+        <source>Open Settings…</source>
+        <translation>เปิดการตั้งค่า…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
     </message>
     <message>
         <source>Line %1</source>
@@ -22181,6 +22257,11 @@ because it was edited.</source>
     <message>
         <source>Failed to initialise the spellchecker.</source>
         <translation>ไม่สามารถเริ่มตัวตรวจการสะกดได้</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A dictionary&apos;s language and region code, as in English (US).</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The edited line cannot be committed.</source>

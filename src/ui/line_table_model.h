@@ -91,6 +91,8 @@ public:
         // application::MarkColour values, one per plugin marking the Line
         RowMarkColoursRole,
         RowMarkNotesRole,
+        // MUST KILL: CurrentSpellMarkRole is one inclusive [start, end] pair from SpellMarksRole, or empty
+        CurrentSpellMarkRole,
     };
     enum class ReviewState { None, Waiting, EditedSince };
     // An AI change waiting on the Line; `before` is absent for an inserted Line.
@@ -157,6 +159,13 @@ public:
     // Per Line id, the QC notes its flag lists.
     using QcMarks = absl::flat_hash_map<std::uint64_t, QStringList>;
     void setQcMarks(QcMarks marks, std::optional<core::LineId> current);
+    struct CurrentMisspell {
+        core::LineId line;
+        int start = 0; // raw offsets in the Line's text, inclusive
+        int end = 0;
+        bool operator==(const CurrentMisspell &) const = default;
+    };
+    void setCurrentMisspell(std::optional<CurrentMisspell> misspell);
     struct RowMark {
         application::MarkColour colour = application::MarkColour::Accent;
         QString note; // "<plugin>: <tooltip>"
@@ -260,6 +269,8 @@ private:
     absl::flat_hash_set<std::uint64_t> m_unfolded;
     QcMarks m_qcMarks;
     std::optional<core::LineId> m_qcCurrent;
+    std::optional<CurrentMisspell> m_currentMisspell;
+    QVariantList currentSpellMarkOf(const Row &row) const;
     RowMarks m_rowMarks;
     int m_headerBlock = 0;
     int m_hidden = 0;

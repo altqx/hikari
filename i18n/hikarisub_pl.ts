@@ -22376,7 +22376,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No spelling errors were found</source>
-        <translation>Nie znaleziono błędów pisowni</translation>
+        <translation type="vanished">Nie znaleziono błędów pisowni</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -22404,15 +22404,15 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No dictionaries found</source>
-        <translation>Nie znaleziono słowników</translation>
+        <translation type="vanished">Nie znaleziono słowników</translation>
     </message>
     <message>
         <source>No spelling errors in %1</source>
-        <translation>Brak błędów pisowni w %1</translation>
+        <translation type="vanished">Brak błędów pisowni w %1</translation>
     </message>
     <message>
         <source>Spelling settings…</source>
-        <translation>Ustawienia pisowni…</translation>
+        <translation type="vanished">Ustawienia pisowni…</translation>
     </message>
     <message>
         <source>Check again</source>
@@ -22432,11 +22432,11 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Checking line %1 of %2…</source>
-        <translation>Sprawdzanie linijki %1 z %2…</translation>
+        <translation type="vanished">Sprawdzanie linijki %1 z %2…</translation>
     </message>
     <message>
         <source>Finding %1 of %2 · %3</source>
-        <translation>Uwaga %1 z %2 · %3</translation>
+        <translation type="vanished">Uwaga %1 z %2 · %3</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked</source>
@@ -22445,6 +22445,11 @@ ponieważ została zmieniona.</translation>
             <numerusform>Sprawdzono %n linijki</numerusform>
             <numerusform>Sprawdzono %n linijek</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <extracomment>Joins two counts, as in &quot;3 words replaced, 2 ignored&quot;.</extracomment>
+        <translation>%1, %2</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -22464,7 +22469,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No more grammar findings in %1</source>
-        <translation>Brak dalszych uwag gramatycznych w %1</translation>
+        <translation type="vanished">Brak dalszych uwag gramatycznych w %1</translation>
     </message>
     <message>
         <source>No more grammar findings</source>
@@ -22472,11 +22477,11 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No grammar findings in %1</source>
-        <translation>Brak uwag gramatycznych w %1</translation>
+        <translation type="vanished">Brak uwag gramatycznych w %1</translation>
     </message>
     <message>
         <source>No grammar findings</source>
-        <translation>Brak uwag gramatycznych</translation>
+        <translation type="vanished">Brak uwag gramatycznych</translation>
     </message>
     <message>
         <source>Choose an English in Settings to check grammar with Harper.</source>
@@ -22484,7 +22489,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>Sprawdzono %n linijkę.</numerusform>
             <numerusform>Sprawdzono %n linijki.</numerusform>
             <numerusform>Sprawdzono %n linijek.</numerusform>
@@ -22505,6 +22510,85 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Misspelled word: %1</source>
         <translation>Błędne słowo: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n word(s) replaced</source>
+        <translation>
+            <numerusform>%n słowo zastąpione</numerusform>
+            <numerusform>%n słowa zastąpione</numerusform>
+            <numerusform>%n słów zastąpionych</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n ignored</source>
+        <extracomment>After &quot;3 words replaced, &quot;: how many misspelled words were ignored.</extracomment>
+        <translation>
+            <numerusform>%n zignorowane</numerusform>
+            <numerusform>%n zignorowane</numerusform>
+            <numerusform>%n zignorowanych</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n added to the dictionary</source>
+        <extracomment>How many words were added to the dictionary.</extracomment>
+        <translation>
+            <numerusform>%n dodane do słownika</numerusform>
+            <numerusform>%n dodane do słownika</numerusform>
+            <numerusform>%n dodanych do słownika</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>, </source>
+        <extracomment>Joins &quot;3 words replaced&quot;, &quot;2 ignored&quot; and &quot;1 added to the dictionary&quot;.</extracomment>
+        <translation type="vanished">, </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 of %2 · %n found so far</source>
+        <translation>
+            <numerusform>Linijka %1 z %2 · dotąd znaleziono %n błąd</numerusform>
+            <numerusform>Linijka %1 z %2 · dotąd znaleziono %n błędy</numerusform>
+            <numerusform>Linijka %1 z %2 · dotąd znaleziono %n błędów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Dictionary language</source>
+        <translation>Język słownika</translation>
+    </message>
+    <message>
+        <source>Checking · line %1 of %2</source>
+        <translation>Sprawdzanie · linijka %1 z %2</translation>
+    </message>
+    <message>
+        <source>Spell checking is turned off.</source>
+        <translation>Sprawdzanie pisowni jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>No dictionary for %1 was found, so nothing can be checked.</source>
+        <translation>Nie znaleziono słownika dla języka %1, więc nie można niczego sprawdzić.</translation>
+    </message>
+    <message>
+        <source>No dictionary was found, so nothing can be checked.</source>
+        <translation>Nie znaleziono słownika, więc nie można niczego sprawdzić.</translation>
+    </message>
+    <message>
+        <source>No more spelling mistakes</source>
+        <translation>Brak dalszych błędów pisowni</translation>
+    </message>
+    <message>
+        <source>Dictionaries are .dic and .aff files in “%1”.</source>
+        <translation>Słowniki to pliki .dic i .aff w folderze “%1”.</translation>
+    </message>
+    <message>
+        <source>Choose a language…</source>
+        <translation>Wybierz język…</translation>
+    </message>
+    <message>
+        <source>Open Settings…</source>
+        <translation>Otwórz Ustawienia…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
     </message>
     <message>
         <source>Line %1</source>
@@ -22569,6 +22653,11 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Failed to initialise the spellchecker.</source>
         <translation>Nie można zainicjalizować sprawdzania pisowni.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A dictionary&apos;s language and region code, as in English (US).</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The edited line cannot be committed.</source>

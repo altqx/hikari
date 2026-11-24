@@ -10,7 +10,6 @@ FocusScope {
     required property var app
     required property int shellWindow
     property ToastStack notices: null
-    property string documentName: ""
     property bool ignoreComments: false
     property bool ignoreUpperCase: false
     property bool checking: false
@@ -22,28 +21,50 @@ FocusScope {
     property var grammar: ({})
     property string grammarShown: ""
     readonly property bool found: checking && (grammarMode ? grammar.found === true : current.found === true)
+    readonly property bool walking: grammarMode && checking && grammar.walking === true
+    readonly property bool spellingOff: !grammarMode && checking && current.available === false && current.off === true
+    readonly property bool noDictionary: !grammarMode && checking && current.available === false && !spellingOff
+    readonly property Item toolbar: tools
+    readonly property font labelFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    readonly property font countFont: {
+        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        f.features = { "tnum": 1 }
+        return f
+    }
+    property bool detailsShown: false
     signal settingsRequested()
+    signal settingRequested(string setting)
 
     implicitWidth: 760
-    implicitHeight: 150
+    implicitHeight: 200
     readonly property real lookupWidth: wordColumn.Layout.minimumWidth + columns.columnSpacing + suggestionFrame.Layout.minimumWidth
-    readonly property real lookupHeight: Math.max(wordColumn.implicitHeight, 96)
+    readonly property real lookupHeight: Math.max(wordColumn.implicitHeight, 4 * Theme.smallControlHeight + 2)
     readonly property real margins: 2 * columns.anchors.margins
+    readonly property real actionsWidth: 260
     readonly property bool stacked: width > 0 && width < wordColumn.Layout.minimumWidth + 2 * columns.columnSpacing + suggestionFrame.sideBySideWidth
-                                    + actions.implicitWidth + margins
+                                    + actionsWidth + margins
     readonly property size minimumSize: Qt.size(Math.ceil(Math.max(lookupWidth, actions.implicitWidth) + margins),
                                                 Math.ceil(stacked ? lookupHeight + columns.rowSpacing + actions.implicitHeight
                                                                   : Math.max(lookupHeight, actions.implicitHeight)) + margins)
 
     // A FocusScope has no font of its own; the hidden fontSource Label gives the body font.
     function fontAt(size, weight) {
-        const base = fontSource.font
-        const f = Qt.font({family: base.family, weight: weight === undefined ? Font.Normal : weight})
-        if (base.pointSize > 0)
-            f.pointSize = base.pointSize * size / 13
-        else
-            f.pixelSize = Math.round(base.pixelSize * size / 13)
-        return f
+        return TypeRoles.sized(fontSource.font, size, weight === undefined ? Font.Normal : weight)
+    }
+    function summary(state) {
+        const t = state.tally ?? {}
+        const done = []
+        if ((t.replaced ?? 0) > 0)
+            done.push(qsTr("%n word(s) replaced", "", t.replaced))
+        if ((t.ignored ?? 0) > 0)
+            //: After "3 words replaced, ": how many misspelled words were ignored.
+            done.push(qsTr("%n ignored", "", t.ignored))
+        if ((t.added ?? 0) > 0)
+            //: How many words were added to the dictionary.
+            done.push(qsTr("%n added to the dictionary", "", t.added))
+        const checked = qsTr("%n lines checked", "", state.checked ?? 0)
+        //: Joins two counts, as in "3 words replaced, 2 ignored".
+        return done.length > 0 ? checked + " · " + done.reduce((a, b) => qsTr("%1, %2").arg(a, b)) : checked
     }
     function options() {
         return {ignoreComments: ignoreComments, ignoreUpperCase: ignoreUpperCase}
@@ -83,11 +104,10 @@ FocusScope {
         suggestions = next.suggestions
         suggestionList.currentIndex = suggestions.length > 0 ? 0 : -1
         replacement.text = next.replacement
-        if (!next.found && next.available !== false && notices)
-            notices.post("info", qsTr("Spellchecker"), qsTr("No spelling errors were found"))
     }
     function start() {
         checking = true
+        detailsShown = false
         if (grammarMode) {
             grammarShown = ""
             showGrammar(app.startGrammarWalk(shellWindow))
@@ -96,7 +116,7 @@ FocusScope {
         }
         if (found)
             replacement.forceActiveFocus()
-        else
+        else if (emptyAction.visible)
             emptyAction.forceActiveFocus()
     }
     function stop() {
@@ -146,6 +166,13 @@ FocusScope {
             showGrammar(app.grammarWalkAddWord(project), qsTr("Add to dictionary"))
         else
             show(app.spellCheckerAddWord(current.word, Object.assign(options(), {project: project})))
+    }
+    function chooseLanguage(symbol) {
+        if (symbol === app.dictionaryLanguage)
+            return
+        app.chooseDictionaryLanguage(symbol, shellWindow)
+        if (checking && !grammarMode)
+            show(app.openSpellChecker(options(), shellWindow))
     }
     function openAddedWords() {
         addedWordsLoader.active = true
@@ -206,97 +233,200 @@ FocusScope {
                 panel.start()
         }
     }
-    component ModeSwitch: SegmentedButtons {
-        choices: [{text: qsTr("Spelling"), name: "spellModeSpelling"}, {text: qsTr("Grammar"), name: "spellModeGrammar"}]
-        currentIndex: panel.grammarMode ? 1 : 0
-        onActivated: index => panel.setMode(index === 1 ? "grammar" : "spelling")
-        Accessible.name: qsTr("Check")
+    component QuietButton: Button {
+        flat: true
+        implicitHeight: Theme.controlHeight
+        topPadding: 0
+        bottomPadding: 0
     }
-    component GrammarProgress: RowLayout {
-        spacing: 8
-        visible: panel.grammarMode && panel.checking && (panel.grammar.total ?? 0) > 0
-        ProgressBar {
-            visible: panel.grammar.walking === true
-            from: 0
-            to: Math.max(1, panel.grammar.total ?? 1)
-            value: panel.grammar.checked ?? 0
-            Layout.preferredWidth: 180
-        }
-        Label {
-            color: Theme.muted
-            font: panel.fontAt(12)
-            text: panel.grammar.walking === true
-                  ? qsTr("Checking line %1 of %2…").arg(panel.grammar.checked ?? 0, panel.grammar.total ?? 0)
-                  : panel.grammar.found === true
-                  ? qsTr("Finding %1 of %2 · %3").arg(panel.grammar.index, panel.grammar.count,
-                                                         qsTr("%n lines checked", "", panel.grammar.checked ?? 0))
-                  : ""
-        }
-        Button {
-            objectName: "grammarCancel"
-            visible: panel.grammar.walking === true
-            text: qsTr("Cancel")
-            onClicked: panel.showGrammar(panel.app.cancelGrammarWalk())
+    component ActionButton: Button {
+        implicitHeight: Theme.controlHeight
+        topPadding: 0
+        bottomPadding: 0
+        Layout.fillWidth: true
+        Layout.minimumWidth: implicitWidth
+    }
+
+    TextMetrics {
+        id: statusMetrics
+        font: panel.countFont
+        text: qsTr("Line %1 of %2 · %n found so far", "", 888).arg(8888, 8888)
+    }
+    Item {
+        id: tools
+        objectName: "spellTools"
+        visible: parent !== null && parent.objectName === "dockToolbarSlot"
+        readonly property Item host: parent ? parent.parent : null
+        // MUST KILL: room copies DockTabBar's toolbar slot sizing (naturalTabsWidth, 4 margin + 8 gap) from outside it
+        readonly property real room: host && host.naturalTabsWidth !== undefined ? host.width - host.naturalTabsWidth - 12 : Infinity
+        readonly property real smallWidth: modeSwitch.implicitWidth + (cancel.visible ? 8 + cancel.implicitWidth : 0)
+        readonly property real languageWidth: panel.grammarMode ? 0 : 8 + language.Layout.preferredWidth
+        readonly property real statusWidth: 8 + Math.ceil(statusMetrics.advanceWidth)
+        readonly property bool showsLanguage: room >= smallWidth + languageWidth
+        readonly property bool showsStatus: room >= smallWidth + languageWidth + statusWidth
+        implicitWidth: smallWidth + (showsLanguage ? languageWidth : 0) + (showsStatus ? statusWidth : 0)
+        implicitHeight: Theme.headerHeight
+        RowLayout {
+            id: toolRow
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 8
+            SegmentedButtons {
+                id: modeSwitch
+                objectName: "spellMode"
+                implicitHeight: Theme.controlHeight
+                choices: [{text: qsTr("Spelling"), name: "spellModeSpelling"}, {text: qsTr("Grammar"), name: "spellModeGrammar"}]
+                currentIndex: panel.grammarMode ? 1 : 0
+                onActivated: index => panel.setMode(index === 1 ? "grammar" : "spelling")
+                Accessible.name: qsTr("Check")
+            }
+            ComboBox {
+                id: language
+                objectName: "spellLanguage"
+                visible: !panel.grammarMode && tools.showsLanguage
+                implicitHeight: Theme.controlHeight
+                font: panel.labelFont
+                Layout.preferredWidth: 140
+                textRole: "name"
+                valueRole: "symbol"
+                model: []
+                displayText: currentIndex >= 0 ? currentText : panel.current.language ?? panel.app.dictionaryLanguage
+                Accessible.name: qsTr("Dictionary language")
+                onActivated: index => panel.chooseLanguage(valueAt(index))
+                function refresh() {
+                    model = panel.app.dictionaryChoices()
+                    follow()
+                }
+                function follow() { currentIndex = indexOfValue(panel.app.dictionaryLanguage) }
+                Component.onCompleted: refresh()
+                popup.onAboutToShow: refresh()
+                Connections {
+                    target: panel.app
+                    function onSpellingChanged() { language.follow() }
+                }
+            }
+            Label {
+                id: status
+                objectName: "spellStatus"
+                visible: tools.showsStatus
+                Layout.fillWidth: true
+                font: panel.countFont
+                color: Theme.muted
+                elide: Text.ElideRight
+                text: panel.walking
+                      ? qsTr("Checking · line %1 of %2").arg(panel.grammar.checked ?? 0, panel.grammar.total ?? 0)
+                      : !panel.found ? ""
+                      : panel.grammarMode
+                      ? qsTr("Line %1 of %2 · %n found so far", "", panel.grammar.count ?? 0)
+                            .arg(panel.grammar.line ?? 0, panel.grammar.total ?? 0)
+                      : qsTr("Line %1 of %2 · %n found so far", "", panel.current.tally?.found ?? 0)
+                            .arg(panel.current.line ?? 0, panel.current.lines ?? 0)
+            }
+            QuietButton {
+                id: cancel
+                objectName: "grammarCancel"
+                visible: panel.walking
+                text: qsTr("Cancel")
+                onClicked: panel.showGrammar(panel.app.cancelGrammarWalk())
+            }
         }
     }
 
+    Rectangle {
+        objectName: "spellProgress"
+        visible: panel.walking
+        height: 2
+        width: parent.width * Math.min(1, (panel.grammar.checked ?? 0) / Math.max(1, panel.grammar.total ?? 1))
+        color: Theme.accent
+    }
+
     ColumnLayout {
+        id: emptyState
         objectName: "spellEmpty"
         anchors.centerIn: parent
-        visible: !panel.found
-        spacing: 10
-        ModeSwitch {
-            objectName: "spellModeEmpty"
-            Layout.alignment: Qt.AlignHCenter
-            Layout.bottomMargin: 4
-        }
+        width: Math.min(implicitWidth, parent.width - 16)
+        visible: !panel.found && !panel.walking
+        spacing: 8
         readonly property bool grammarOff: panel.grammarMode && !panel.app.grammarOn
-        readonly property bool walking: panel.grammarMode && panel.checking && panel.grammar.walking === true
-        GrammarProgress {
+        readonly property bool finished: panel.checking && !panel.noDictionary && !panel.spellingOff && !grammarOff
+        RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            visible: parent.walking
-        }
-        Label {
-            objectName: "spellEmptyText"
-            Layout.alignment: Qt.AlignHCenter
-            visible: !parent.walking
-            color: parent.grammarOff || (panel.checking && panel.grammarMode) ? Theme.text : Theme.muted
-            font.bold: parent.grammarOff || (panel.checking && panel.grammarMode)
-            text: panel.grammarMode
-                ? (parent.grammarOff ? qsTr("Grammar check is off")
-                   : !panel.checking ? qsTr("Checks the grammar of the whole file from the active line")
-                   : panel.grammar.cancelled === true ? qsTr("Grammar check cancelled")
-                   : (panel.grammar.count ?? 0) > 0
-                   ? (panel.documentName.length > 0 ? qsTr("No more grammar findings in %1").arg(panel.documentName)
-                                                    : qsTr("No more grammar findings"))
-                   : panel.documentName.length > 0 ? qsTr("No grammar findings in %1").arg(panel.documentName)
-                   : qsTr("No grammar findings"))
-                : !panel.checking ? qsTr("Checks the spelling from the active line")
-                : panel.current.available === false ? qsTr("No dictionaries found")
-                : panel.documentName.length > 0 ? qsTr("No spelling errors in %1").arg(panel.documentName)
-                : qsTr("No spelling errors were found")
+            Layout.maximumWidth: parent.width
+            spacing: 8
+            Icon {
+                objectName: "spellNoDictionaryMark"
+                visible: panel.noDictionary
+                iconRole: "notice-warning"
+                color: Theme.danger
+                accentColor: Theme.danger
+            }
+            Label {
+                objectName: "spellEmptyText"
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                font: panel.checking || emptyState.grammarOff ? panel.fontAt(13, Font.DemiBold) : fontSource.font
+                color: panel.checking || emptyState.grammarOff ? Theme.text : Theme.muted
+                text: panel.grammarMode
+                    ? (emptyState.grammarOff ? qsTr("Grammar check is off")
+                       : !panel.checking ? qsTr("Checks the grammar of the whole file from the active line")
+                       : panel.grammar.cancelled === true ? qsTr("Grammar check cancelled")
+                       : qsTr("No more grammar findings"))
+                    : !panel.checking ? qsTr("Checks the spelling from the active line")
+                    : panel.spellingOff ? qsTr("Spell checking is turned off.")
+                    : panel.noDictionary
+                    ? ((panel.current.language ?? "").length > 0
+                       ? qsTr("No dictionary for %1 was found, so nothing can be checked.").arg(panel.current.language)
+                       : qsTr("No dictionary was found, so nothing can be checked."))
+                    : qsTr("No more spelling mistakes")
+            }
         }
         Label {
             objectName: "spellEmptyDetail"
             Layout.alignment: Qt.AlignHCenter
-            visible: text.length > 0 && !parent.walking
+            Layout.maximumWidth: parent.width
+            visible: text.length > 0
+            wrapMode: Text.Wrap
+            horizontalAlignment: Text.AlignHCenter
+            font: panel.countFont
             color: Theme.muted
-            text: !panel.grammarMode ? ""
-                : parent.grammarOff ? qsTr("Choose an English in Settings to check grammar with Harper.")
-                : panel.checking && panel.grammar.done === true ? qsTr("%n lines checked.", "", panel.grammar.checked ?? 0)
-                : ""
+            text: emptyState.grammarOff ? qsTr("Choose an English in Settings to check grammar with Harper.")
+                : panel.noDictionary ? (panel.detailsShown
+                                        ? qsTr("Dictionaries are .dic and .aff files in “%1”.").arg(panel.current.folder ?? "")
+                                        : "")
+                : !emptyState.finished ? ""
+                : panel.grammarMode ? (panel.grammar.done === true ? qsTr("%n lines checked", "", panel.grammar.checked ?? 0) : "")
+                : panel.summary(panel.current)
         }
-        Button {
-            id: emptyAction
-            objectName: "spellEmptyAction"
+        RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            visible: !parent.walking
-            readonly property bool settings: panel.grammarMode ? parent.grammarOff
-                                                               : panel.checking && panel.current.available === false
-            text: panel.grammarMode
-                ? (settings ? qsTr("Grammar settings…") : panel.checking ? qsTr("Check again") : qsTr("Check grammar"))
-                : settings ? qsTr("Spelling settings…") : panel.checking ? qsTr("Check again") : qsTr("Check spelling")
-            onClicked: settings ? panel.settingsRequested() : panel.start()
+            spacing: 8
+            Button {
+                id: emptyAction
+                objectName: "spellEmptyAction"
+                implicitHeight: Theme.controlHeight
+                topPadding: 0
+                bottomPadding: 0
+                flat: emptyState.finished
+                readonly property bool settings: emptyState.grammarOff
+                text: panel.noDictionary ? qsTr("Choose a language…")
+                    : panel.spellingOff ? qsTr("Open Settings…")
+                    : settings ? qsTr("Grammar settings…")
+                    : panel.checking ? qsTr("Check again")
+                    : panel.grammarMode ? qsTr("Check grammar") : qsTr("Check spelling")
+                onClicked: panel.noDictionary ? panel.settingRequested("editor.dictionaryLanguage")
+                         : panel.spellingOff ? panel.settingRequested("editor.spellchecker")
+                         : settings ? panel.settingsRequested() : panel.start()
+            }
+            QuietButton {
+                objectName: "spellEmptyDetails"
+                visible: panel.noDictionary
+                text: qsTr("Details")
+                checkable: true
+                checked: panel.detailsShown
+                onToggled: panel.detailsShown = checked
+            }
         }
     }
 
@@ -316,20 +446,39 @@ FocusScope {
             Layout.minimumWidth: 220
             Layout.preferredWidth: 330
             spacing: 4
-            ModeSwitch {
-                objectName: "spellMode"
-                Layout.bottomMargin: 4
-            }
-            GrammarProgress {
-                objectName: "grammarProgress"
+            RowLayout {
+                spacing: 8
                 Layout.fillWidth: true
+                Label {
+                    id: misspell
+                    objectName: "spellMisspell"
+                    text: (panel.grammarMode ? panel.grammar.text : panel.current.word) ?? ""
+                    textFormat: Text.PlainText
+                    font: panel.fontAt(20, Font.DemiBold)
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 0
+                    Layout.maximumWidth: Math.ceil(implicitWidth)
+                    Layout.alignment: Qt.AlignBaseline
+                    Accessible.name: panel.grammarMode ? text : qsTr("Misspelled word: %1").arg(text)
+                }
+                Label {
+                    id: lineLabel
+                    objectName: panel.grammarMode ? "grammarLine" : "spellLine"
+                    visible: ((panel.grammarMode ? panel.grammar.line : panel.current.line) ?? 0) > 0
+                    text: panel.grammarMode ? qsTr("Line %1 · %2").arg(panel.grammar.line ?? 0, panel.grammar.groupName ?? "")
+                                            : qsTr("Line %1").arg(panel.current.line ?? 0)
+                    textFormat: Text.PlainText
+                    color: Theme.muted
+                    font: panel.countFont
+                    Layout.alignment: Qt.AlignBaseline
+                }
             }
             Label {
                 objectName: "grammarMessage"
                 visible: panel.grammarMode
                 text: panel.grammar.message ?? ""
                 textFormat: Text.PlainText
-                font: panel.fontAt(15, Font.DemiBold)
                 elide: Text.ElideRight
                 Layout.fillWidth: true
                 Layout.preferredWidth: 0
@@ -337,38 +486,6 @@ FocusScope {
                 ToolTip.text: text
                 ToolTip.visible: truncated && hover.hovered
                 HoverHandler { id: hover }
-            }
-            Label {
-                objectName: "grammarLine"
-                visible: panel.grammarMode
-                text: qsTr("Line %1 · %2").arg(panel.grammar.line ?? 0, panel.grammar.groupName ?? "")
-                textFormat: Text.PlainText
-                color: Theme.muted
-                font: panel.fontAt(12)
-            }
-            RowLayout {
-                spacing: 10
-                visible: !panel.grammarMode
-                Layout.fillWidth: true
-                Label {
-                    id: misspell
-                    objectName: "spellMisspell"
-                    text: panel.current.word ?? ""
-                    font: panel.fontAt(18, Font.DemiBold)
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 0
-                    Layout.maximumWidth: Math.ceil(implicitWidth)
-                    Accessible.name: qsTr("Misspelled word: %1").arg(text)
-                }
-                Label {
-                    id: lineLabel
-                    objectName: "spellLine"
-                    visible: (panel.current.line ?? 0) > 0
-                    text: qsTr("Line %1").arg(panel.current.line ?? 0)
-                    color: Theme.muted
-                    font: panel.fontAt(12)
-                }
             }
             Label {
                 objectName: "spellContext"
@@ -380,20 +497,25 @@ FocusScope {
                 readonly property var shown: panel.grammarMode
                     ? {before: panel.grammar.before, word: panel.grammar.text, after: panel.grammar.after, colour: Theme.grammar}
                     : {before: panel.current.before, word: panel.current.word, after: panel.current.after, colour: Theme.text}
-                text: Qt.escapeHtml(shown.before ?? "") + "<u><font color=\"" + shown.colour + "\">"
-                      + Qt.escapeHtml(shown.word ?? "") + "</font></u>" + Qt.escapeHtml(shown.after ?? "")
+                text: Qt.escapeHtml(shown.before ?? "") + "<font color=\"" + shown.colour + "\">"
+                      + Qt.escapeHtml(shown.word ?? "") + "</font>" + Qt.escapeHtml(shown.after ?? "")
                 Accessible.name: (shown.before ?? "") + (shown.word ?? "") + (shown.after ?? "")
             }
             RowLayout {
                 spacing: 8
-                Layout.topMargin: 6
                 Layout.fillWidth: true
-                Label { text: qsTr("Replace with") }
+                Label {
+                    text: qsTr("Replace with")
+                    font: panel.labelFont
+                    color: Theme.muted
+                }
                 TextField {
                     id: replacement
                     objectName: "spellReplacement"
+                    implicitHeight: Theme.controlHeight
+                    topPadding: 0
+                    bottomPadding: 0
                     Layout.fillWidth: true
-                    Layout.maximumWidth: 260
                     Accessible.name: qsTr("Replace with")
                     Keys.onReturnPressed: panel.replace()
                     Keys.onEnterPressed: panel.replace()
@@ -408,10 +530,11 @@ FocusScope {
             Layout.preferredWidth: panel.stacked ? Layout.minimumWidth : sideBySideWidth
             readonly property int sideBySideWidth: 220
             padding: 1
-            background: Rectangle { color: Theme.field; border.color: Theme.line }
+            background: Rectangle { color: Theme.field; border.color: Theme.line; radius: Theme.radius }
             Label {
                 anchors.centerIn: parent
                 visible: suggestionList.count === 0
+                font: panel.labelFont
                 color: Theme.muted
                 text: qsTr("No suggestions")
             }
@@ -425,12 +548,26 @@ FocusScope {
                 Accessible.name: qsTr("Suggestions")
                 ScrollBar.vertical: ScrollBar {}
                 delegate: ItemDelegate {
+                    id: suggestion
                     required property string modelData
                     required property int index
                     width: ListView.view.width
+                    implicitHeight: Theme.smallControlHeight
+                    topPadding: 0
+                    bottomPadding: 0
+                    leftPadding: 8
+                    rightPadding: 8
                     text: modelData
                     highlighted: ListView.isCurrentItem
                     focusPolicy: Qt.ClickFocus
+                    background: Rectangle {
+                        color: suggestion.highlighted ? Theme.select : "transparent"
+                        Rectangle {
+                            anchors.fill: parent
+                            visible: suggestion.hovered || suggestion.down
+                            color: suggestion.down ? Theme.pressed : Theme.hover
+                        }
+                    }
                     onClicked: {
                         suggestionList.currentIndex = index
                         replacement.text = modelData
@@ -448,7 +585,8 @@ FocusScope {
             Layout.alignment: Qt.AlignTop
             Layout.columnSpan: panel.stacked ? 2 : 1
             Layout.fillWidth: panel.stacked
-            columns: 3
+            Layout.preferredWidth: panel.stacked ? -1 : panel.actionsWidth
+            columns: panel.stacked ? 3 : 2
             uniformCellWidths: true
             rowSpacing: 8
             columnSpacing: 8
@@ -460,44 +598,37 @@ FocusScope {
                 Layout.minimumWidth: implicitWidth
                 onClicked: panel.replace()
             }
-            Button {
+            ActionButton {
                 id: replaceAllButton
                 objectName: "spellReplaceAll"
                 visible: !panel.grammarMode
                 text: qsTr("Replace all")
-                Layout.fillWidth: true
-                Layout.minimumWidth: implicitWidth
                 onClicked: panel.replaceAll()
             }
-            Button {
+            ActionButton {
                 id: ignoreButton
                 objectName: "spellIgnore"
                 text: qsTr("Ignore")
-                Layout.fillWidth: true
-                Layout.minimumWidth: implicitWidth
                 onClicked: panel.ignore()
             }
-            Button {
+            ActionButton {
                 id: ignoreAllButton
                 objectName: "spellIgnoreAll"
                 visible: !panel.grammarMode
                 text: qsTr("Ignore all")
-                Layout.fillWidth: true
-                Layout.minimumWidth: implicitWidth
                 onClicked: panel.ignoreAll()
             }
-            Button {
+            ActionButton {
                 id: ignoreRuleButton
                 objectName: "grammarIgnoreRule"
                 visible: panel.grammarMode
                 text: qsTr("Ignore this rule")
-                Layout.fillWidth: true
-                Layout.minimumWidth: implicitWidth
+                Layout.columnSpan: panel.stacked ? 1 : 2
                 onClicked: panel.ignoreRule()
             }
             RowLayout {
                 spacing: 1
-                Layout.columnSpan: panel.grammarMode ? 1 : 2
+                Layout.columnSpan: 2
                 Layout.fillWidth: true
                 Layout.minimumWidth: implicitWidth
                 IconTextButton {
@@ -506,6 +637,9 @@ FocusScope {
                     iconRole: "dictionary-add"
                     text: !dictionaryTier.hasProject ? qsTr("Add to dictionary") : dictionaryTier.saveText
                     enabled: !panel.grammarMode || panel.grammar.word === true
+                    implicitHeight: Theme.controlHeight
+                    topPadding: 0
+                    bottomPadding: 0
                     Layout.fillWidth: true
                     onClicked: panel.addWord()
                 }

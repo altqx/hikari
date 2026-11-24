@@ -1105,6 +1105,29 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
     painter->restore();
 }
 
+void LineGrid::drawCurrentSpellMark(QPainter *painter, const QRectF &cell, QString text, const QVariantList &mark) const
+{
+    if (mark.size() < 2)
+        return;
+    text.replace(QLatin1Char('\t'), QLatin1Char(' '));
+    const QFontMetricsF metrics(painter->font());
+    const int start = mark[0].toInt(), end = mark[1].toInt();
+    const double left = cell.x() + (start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0);
+    const double right = std::min(cell.x() + metrics.horizontalAdvance(text.left(end + 1)), cell.right());
+    if (left >= right)
+        return;
+    const auto &state = theme::current();
+    const bool ringed = themes::isHighContrast(state.type);
+    const double top = cell.top() + (cell.height() - metrics.height()) / 2;
+    painter->save();
+    painter->setClipRect(cell, Qt::IntersectClip);
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setPen(ringed ? QPen(state.roles.danger, 1) : QPen(Qt::NoPen));
+    painter->setBrush(theme::tintFill(state, state.roles.danger, 0.18F));
+    painter->drawRoundedRect(QRectF(left - 1, top, right - left + 2, metrics.height()).adjusted(0.5, 0.5, -0.5, -0.5), 2, 2);
+    painter->restore();
+}
+
 void LineGrid::drawReviewMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const
 {
     if (marks.size() < 2)
@@ -1248,6 +1271,8 @@ void LineGrid::paint(QPainter *painter)
                                 idx.data(LineTableModel::ReviewMarksRole).toList());
                 drawSpellMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                idx.data(LineTableModel::SpellMarksRole).toList());
+                drawCurrentSpellMark(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
+                                     idx.data(LineTableModel::CurrentSpellMarkRole).toList());
                 if (comparison == 2 && !comparisonColours.isEmpty())
                     drawComparisonMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                         idx.data(LineTableModel::ComparisonMarksRole).toList(),
