@@ -1063,6 +1063,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1” มีขนาด %2 MB เกิน 10 MB</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>สัญญาอนุญาตของ “%1” จำกัดการฝังลงในไฟล์อื่น</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>ไฟล์แนบจะมีขนาดรวม %1 MB เกิน 50 MB</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>ไฟล์แนบ</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>อ่าน “%1” ไม่ได้ จึงไม่ได้แนบสิ่งใด</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>ไฟล์แนบ…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>แสดงรายการฟอนต์และภาพกราฟิกที่แนบกับคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>แนบฟอนต์</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>แนบภาพกราฟิก</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>แนบต่อไปหรือไม่</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>แนบ</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>แยกออก</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>เขียน %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>มี “%1” อยู่แล้ว ต้องการแทนที่หรือไม่</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>แทนที่</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>ชื่อ</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>ประเภท</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>ขนาด</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>คำบรรยายนี้ไม่มีไฟล์แนบ</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>มีเพียงคำบรรยาย ASS ที่เก็บไฟล์แนบได้</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>ฟอนต์</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>ภาพกราฟิก</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>ฟอนต์ที่แนบไว้ใช้วาดคำบรรยายนี้และติดไปกับไฟล์ การแยกออกจะเขียนสำเนา คำบรรยายไม่เปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>แนบฟอนต์…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>แนบภาพกราฟิก…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>แยกออก…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>เอาออก</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>ไฟล์ฟอนต์ (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ทุกไฟล์ (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>ภาพกราฟิก (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>แยกออกไปยังโฟลเดอร์</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -9262,6 +9397,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reopen with encoding…</source>
         <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>ไฟล์แนบ…</translation>
     </message>
     <message>
         <source>Global</source>

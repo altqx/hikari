@@ -1063,6 +1063,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1”의 크기는 %2MB로 10MB를 넘습니다.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>“%1”의 라이선스는 다른 파일에 포함하는 것을 제한합니다.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>첨부 파일의 합계가 %1MB로 50MB를 넘게 됩니다.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>첨부 파일</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>“%1”을(를) 읽을 수 없어 아무것도 첨부하지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>첨부 파일…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>자막에 첨부된 글꼴과 그림을 보여 줍니다</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>글꼴 첨부</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>그림 첨부</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>그래도 첨부할까요?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>첨부</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>추출</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>%1을(를) 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>“%1”이(가) 이미 있습니다. 바꿀까요?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>바꾸기</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>이름</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>유형</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>크기</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>이 자막에는 첨부 파일이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>첨부 파일은 ASS 자막에만 넣을 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>그림</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>첨부된 글꼴은 이 자막을 그리는 데 쓰이며 파일과 함께 전달됩니다. 추출하면 사본을 쓰며 자막은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>글꼴 첨부…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>그림 첨부…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>추출…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>글꼴 파일 (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>그림 (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>폴더로 추출</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -9262,6 +9397,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reopen with encoding…</source>
         <translation>인코딩을 지정해 다시 열기…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>첨부 파일…</translation>
     </message>
     <message>
         <source>Global</source>
