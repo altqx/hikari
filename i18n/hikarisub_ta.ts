@@ -8518,6 +8518,10 @@ Failed to copy %2 fonts.</source>
         <translation>அடுத்த தொகுதியை வை</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>தானியங்கு நிறைவைத் தொடங்கு</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>கர்சரில் அசையைப் பிரி</translation>
     </message>

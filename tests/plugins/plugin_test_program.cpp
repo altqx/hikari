@@ -67,6 +67,12 @@ int rpc(const std::string &variant)
         } else if (has(line, "\"method\":\"import\"")) {
             std::cerr << "import " << line << std::endl;
             answer(id, has(line, "\"format\":\"bad\"") ? "[]" : R"({"lines":[{"text":"Read"}],"styles":[],"info":{}})");
+        } else if (has(line, "\"method\":\"complete\"")) {
+            std::cerr << "complete " << line << std::endl;
+            answer(id, R"([{"label":"\\fad","insert":"\\fad(","from":1,"to":2}])");
+        } else if (has(line, "\"method\":\"hover\"")) {
+            std::cerr << "hover " << line << std::endl;
+            answer(id, has(line, "\"text\":\"\"") ? "\"no\"" : R"({"text":"Fade","from":0,"to":4})");
         } else if (has(line, "\"command\":\"hello\"")) {
             std::cerr << "hello " << line << std::endl;
             std::cerr << "notify " << callHikari("hikari/notify", R"({"text":"hi","level":"warning"})") << std::endl;

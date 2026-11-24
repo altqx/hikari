@@ -8595,6 +8595,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wstaw następny fragment</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>Wywołaj uzupełnianie</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>Podziel sylabę w miejscu kursora</translation>
     </message>

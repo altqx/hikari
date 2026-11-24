@@ -1819,24 +1819,24 @@ hikari.providers.hover(function() return {text = "Never asked for text"} end)
         QCOMPARE(providers.triggers(QStringLiteral("translation")), QStringList{QStringLiteral("\\")});
 
         std::optional<std::vector<app::CompletionItem>> items;
-        providers.complete({"d1", "l2", QStringLiteral("text"), QStringLiteral("{\\"), 2, QStringLiteral("\\")},
+        providers.complete({1, 2, QStringLiteral("text"), QStringLiteral("{\\"), 2, QStringLiteral("\\")},
                            [&](std::vector<app::CompletionItem> answer) { items = std::move(answer); });
         QTRY_VERIFY(items.has_value());
         QCOMPARE(items->size(), std::size_t(2));
         QCOMPARE(items->at(0), (app::CompletionItem{QStringLiteral("\\fad"), QStringLiteral("\\fad(${1:200},${2:200})"),
-                                                    QStringLiteral("d1 l2"), QStringLiteral("Tags"), 1, 2, true}));
+                                                    QStringLiteral("1 2"), QStringLiteral("Tags"), 1, 2, true}));
         QCOMPARE(items->at(1), (app::CompletionItem{QStringLiteral("text"), QStringLiteral("text"), {}, QStringLiteral("Words"), 2, 2, false}));
 
         std::optional<std::optional<app::HoverText>> hover;
-        providers.hover({"d1", "l2", QStringLiteral("text"), QStringLiteral("{\\fad(1,2)}"), 3, {}},
+        providers.hover({1, 2, QStringLiteral("text"), QStringLiteral("{\\fad(1,2)}"), 3, {}},
                         [&](std::optional<app::HoverText> answer) { hover = std::move(answer); });
         QTRY_VERIFY(hover.has_value());
         QCOMPARE(*hover, (app::HoverText{QStringLiteral("Fade"), QStringLiteral("Tags"), 0, 4}));
 
         bool stale = false;
         std::optional<std::vector<app::CompletionItem>> latest;
-        providers.complete({"d1", "l2", QStringLiteral("text"), QStringLiteral("a"), 1, {}}, [&](auto) { stale = true; });
-        providers.complete({"d1", "l2", QStringLiteral("translation"), QStringLiteral("a"), 1, {}},
+        providers.complete({1, 2, QStringLiteral("text"), QStringLiteral("a"), 1, {}}, [&](auto) { stale = true; });
+        providers.complete({1, 2, QStringLiteral("translation"), QStringLiteral("a"), 1, {}},
                            [&](std::vector<app::CompletionItem> answer) { latest = std::move(answer); });
         QTRY_VERIFY(latest.has_value());
         QCOMPARE(latest->size(), std::size_t(1));

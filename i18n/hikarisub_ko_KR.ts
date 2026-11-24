@@ -8441,6 +8441,10 @@ Failed to copy %2 fonts.</source>
         <translation>다음 서식 구간 배치</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>자동 완성 호출</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>커서 위치에서 음절 분할</translation>
     </message>

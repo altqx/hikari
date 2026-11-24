@@ -44,8 +44,8 @@ class LanguageProviders : public QObject {
     Q_OBJECT
 public:
     struct Request {
-        std::string document;
-        std::string line;
+        std::uint64_t document = 0;
+        std::uint64_t line = 0;
         QString field; // "text" or "translation"
         QString text;
         int offset = 0;

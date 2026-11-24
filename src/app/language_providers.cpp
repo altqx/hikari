@@ -45,8 +45,8 @@ std::optional<Range> rangeOf(const api::Json &object, int length, Range fallback
 
 api::Json requestJson(const LanguageProviders::Request &request)
 {
-    return api::Json::object({{"document", request.document},
-                              {"line", request.line},
+    return api::Json::object({{"document", api::Json(request.document)},
+                              {"line", api::Json(request.line)},
                               {"field", request.field.toStdString()},
                               {"text", request.text.toStdString()},
                               {"offset", request.offset},

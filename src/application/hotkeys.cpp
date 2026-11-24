@@ -281,6 +281,7 @@ constexpr HotkeyAction kActions[] = {
         {"EDITBOX_PLACE_RUN_8", 3027},
         {"EDITBOX_PLACE_RUN_9", 3028},
         {"EDITBOX_PLACE_NEXT_RUN", 3029},
+        {"EDITBOX_TRIGGER_COMPLETION", 3126},
         // MUST KILL: ids 1005-1009 run as id + 10, so new audio ids start past 1027
         {"AUDIO_KARAOKE_SPLIT", 1028},
         {"AUDIO_KARAOKE_KF", 1029},
@@ -518,6 +519,7 @@ constexpr NameRow kNames[] = {
         {3117, "18th tag button"},
         {3118, "19th tag button"},
         {3119, "20th tag button"},
+        {3126, "Trigger completion"},
         {4552, "Make times continuous with the next line"},
         {4551, "Make times continuous with the previous line"},
         {4554, "Copy columns"},
@@ -948,6 +950,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {3014, EditorHotkey, "Add line wrap", "Shift-Enter"},
         {3015, EditorHotkey, "Insert difference from the start", "Ctrl-,"},
         {3016, EditorHotkey, "Insert difference to the end", "Ctrl-."},
+        {3126, EditorHotkey, "Trigger completion", "Ctrl-Space"},
         {3017, EditorHotkey, "Next unconfirmed line", "Ctrl-D"},
         {3018, EditorHotkey, "Next untranslated line", "Ctrl-R"},
         {3019, EditorHotkey, "Mark as unconfirmed and go to the next line", "Alt-Down"},
