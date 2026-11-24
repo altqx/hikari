@@ -6026,7 +6026,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Bold Italic</source>
-        <translation>Pogrubiona kursywa</translation>
+        <translation type="vanished">Pogrubiona kursywa</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -6255,6 +6255,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Start</source>
         <translation>Rozpocznij</translation>
+    </message>
+    <message>
+        <source>Bold italic</source>
+        <translation>Pogrubiona kursywa</translation>
     </message>
     <message>
         <source>Font and style</source>

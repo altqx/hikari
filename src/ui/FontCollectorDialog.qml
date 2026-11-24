@@ -107,7 +107,7 @@ DialogWindow {
     }
     function styleName(row) {
         if (row.bold >= 700 && row.italic)
-            return qsTr("Bold Italic")
+            return qsTr("Bold italic")
         if (row.bold >= 700)
             return qsTr("Bold")
         if (row.italic)
@@ -147,8 +147,8 @@ DialogWindow {
             : zip ? qsTr("Zip archive adds %n file(s).", "", files)
             : linking ? (collector.filesCopiedInstead > 0
                          ? qsTr("Link to a folder links %1 and copies %2 that have no file to link to.")
-                               .arg(qsTr("%n file(s)", "", files - collector.filesCopiedInstead))
-                               .arg(collector.filesCopiedInstead)
+                               .arg(qsTr("%n file(s)", "", files - collector.filesCopiedInstead),
+                                    qsTr("%n file(s)", "", collector.filesCopiedInstead))
                          : qsTr("Link to a folder links %n file(s).", "", files))
             : collector.action === 1 ? qsTr("Copy to a folder copies %n file(s).", "", files) : ""
         return parts.join(" · ") + "." + (action.length > 0 ? " " + action : "")
@@ -338,7 +338,8 @@ DialogWindow {
                     required property var modelData
                     required property int index
                     readonly property string status: modelData.status
-                    readonly property color statusColour: status === "found" ? Theme.success
+                    readonly property bool found: status === "found"
+                    readonly property color statusColour: found ? Theme.success
                                                         : status === "simulated" ? Theme.warning : Theme.danger
                     objectName: "fontCollectorRow" + index
                     width: ListView.view.width
@@ -366,7 +367,7 @@ DialogWindow {
                             Layout.maximumWidth: Layout.preferredWidth
                             Icon {
                                 objectName: "fontCollectorRowGlyph"
-                                iconRole: fontRow.status === "found" ? "karaoke-check" : "notice-warning"
+                                iconRole: fontRow.found ? "karaoke-check" : "notice-warning"
                                 size: 16
                                 color: fontRow.statusColour
                                 accentColor: fontRow.statusColour
@@ -389,8 +390,8 @@ DialogWindow {
                         Label {
                             objectName: "fontCollectorRowFile"
                             text: dialog.fileText(fontRow.modelData)
-                            font: fontRow.status === "found" || fontRow.status === "simulated" ? fontList.monoFont : fontList.rowFont
-                            color: fontRow.status === "found" ? Theme.muted : fontRow.statusColour
+                            font: fontRow.found || fontRow.status === "simulated" ? fontList.monoFont : fontList.rowFont
+                            color: fontRow.found ? Theme.muted : fontRow.statusColour
                             elide: Text.ElideMiddle
                             Layout.fillWidth: true
                         }

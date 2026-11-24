@@ -5906,7 +5906,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Bold Italic</source>
-        <translation>굵은 기울임</translation>
+        <translation type="vanished">굵은 기울임</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -6117,6 +6117,10 @@ Output device: %2</source>
     <message>
         <source>Start</source>
         <translation>시작</translation>
+    </message>
+    <message>
+        <source>Bold italic</source>
+        <translation>굵은 기울임</translation>
     </message>
     <message>
         <source>Font and style</source>

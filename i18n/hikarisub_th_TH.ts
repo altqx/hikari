@@ -5906,7 +5906,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Bold Italic</source>
-        <translation>ตัวหนาเอียง</translation>
+        <translation type="vanished">ตัวหนาเอียง</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -6117,6 +6117,10 @@ Output device: %2</source>
     <message>
         <source>Start</source>
         <translation>เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Bold italic</source>
+        <translation>ตัวหนาเอียง</translation>
     </message>
     <message>
         <source>Font and style</source>

@@ -120,7 +120,7 @@ ColumnLayout {
                     leftPadding: 12
                     rightPadding: 12
                     focusPolicy: Qt.NoFocus
-                    Accessible.name: qsTr("Line %1: %2").arg(modelData.number).arg(modelData.text)
+                    Accessible.name: qsTr("Line %1: %2").arg(modelData.number, modelData.text)
                     background: Rectangle {
                         color: row.ListView.isCurrentItem ? Theme.select : row.hovered ? Theme.hover : "transparent"
                     }
@@ -194,8 +194,17 @@ ColumnLayout {
         font: block.smallFont
         text: !block.report ? "" : [
             block.report.comments > 0 ? qsTr("%n comment line(s) skipped.", "", block.report.comments) : "",
-            block.report.empty > 0 ? qsTr("%n line(s) with nothing to show skipped.", "", block.report.empty) : "",
-            (block.report.srv3Styles ?? 0) > 0 ? qsTr("Style options for %n style(s) saved in the subtitle file.", "", block.report.srv3Styles) : ""
+            block.report.empty > 0 ? qsTr("%n line(s) with nothing to show skipped.", "", block.report.empty) : ""
         ].filter(s => s.length > 0).join(" ")
+    }
+    Label {
+        objectName: "exportSrv3Saved"
+        visible: text !== ""
+        Layout.fillWidth: true
+        wrapMode: Text.Wrap
+        color: Theme.muted
+        font: block.smallFont
+        text: block.report && (block.report.srv3Styles ?? 0) > 0
+              ? qsTr("Style options for %n style(s) saved in the subtitle file.", "", block.report.srv3Styles) : ""
     }
 }

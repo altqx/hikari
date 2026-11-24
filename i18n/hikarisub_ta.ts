@@ -5966,7 +5966,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Bold Italic</source>
-        <translation>தடிமன் சாய்வு</translation>
+        <translation type="vanished">தடிமன் சாய்வு</translation>
     </message>
     <message>
         <source>Regular</source>
@@ -6186,6 +6186,10 @@ Output device: %2</source>
     <message>
         <source>Start</source>
         <translation>தொடங்கு</translation>
+    </message>
+    <message>
+        <source>Bold italic</source>
+        <translation>தடிமன் சாய்வு</translation>
     </message>
     <message>
         <source>Font and style</source>
