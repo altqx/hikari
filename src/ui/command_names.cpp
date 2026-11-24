@@ -251,6 +251,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place run 8"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place run 9"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place the next run"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Trigger completion"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split syllable at the cursor"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Switch long syllables between \\k and \\kf"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Position pointer"),

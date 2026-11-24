@@ -259,6 +259,10 @@ std::expected<std::uint64_t, helper::HostError> ProgramPluginLink::send(std::vec
             params = {{QStringLiteral("format"), format},
                       {QStringLiteral("data"), QString::fromLatin1(QByteArray::fromStdString(data).toBase64())},
                       {QStringLiteral("name"), QString::fromStdString(in.str())}};
+        } else if (command == plugin::Command::Provide) {
+            reply = Pending::Reply::Provide;
+            method = in.str() == "completion" ? QStringLiteral("complete") : QStringLiteral("hover");
+            params = parsed(in.str()).toObject();
         } else {
             deliver(handler, helper::Event{helper::Kind::Terminal, Outcome::Unsupported, {}, 0});
             return request;
@@ -358,6 +362,12 @@ void ProgramPluginLink::onAnswer(std::int64_t id, const QJsonObject &message)
     } else if (pending.reply == Pending::Reply::Load) {
         m_initializeTimer.stop();
         event.payload = plugin::encodeStrings(m_commands);
+    } else if (pending.reply == Pending::Reply::Provide) {
+        const QJsonValue result = message.value(QStringLiteral("result"));
+        const QJsonDocument answer = result.isArray() ? QJsonDocument(result.toArray())
+                                     : result.isObject() ? QJsonDocument(result.toObject())
+                                                         : QJsonDocument();
+        event.payload = bytesOf(answer.isNull() ? QByteArray("null") : answer.toJson(QJsonDocument::Compact));
     } else if (pending.reply != Pending::Reply::Plain) {
         auto made = pending.reply == Pending::Reply::Export ? exported(message.value(QStringLiteral("result")))
                                                             : imported(message.value(QStringLiteral("result")));

@@ -128,6 +128,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_QUICK_FIX"), 5373);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_FULL_SCREEN_TYPESETTING"), 5374);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_IMPORT_TEXT"), 5375);
+    EXPECT_EQ(hotkeyIdOf("EDITBOX_TRIGGER_COMPLETION"), 3126);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SAVE_SELECTED_AUDIO"), 5349);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_JOIN_PREVIOUS_AUDIO_SELECTION"), 5216);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SHIFT_FRAMES_TO_VIDEO_START"), 5217);
@@ -326,7 +327,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"};
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u + 2u + 1u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u + 2u + 1u + 1u);
     EXPECT_EQ(audio.size(), 23u + 3u + 2u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P");
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -603,7 +604,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 118u);
+    EXPECT_EQ(count(1), 119u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 31u);
     list.filter(5);
@@ -613,10 +614,10 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 118u);
+    EXPECT_EQ(list.shown().size(), 119u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 117u);
+    EXPECT_EQ(list.shown().size(), 118u);
     list.filter(0);
     EXPECT_EQ(list.shown().size(), 411u);
 }

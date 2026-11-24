@@ -4057,7 +4057,12 @@ Output device: %2</source>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation>ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
+        <translation type="vanished">ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความ %1 เลือกการเข้ารหัสอักขระอื่น</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
@@ -8661,6 +8666,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Place the next run</source>
         <translation>วางช่วงถัดไป</translation>
+    </message>
+    <message>
+        <source>Trigger completion</source>
+        <translation>เรียกการเติมคำอัตโนมัติ</translation>
     </message>
     <message>
         <source>Split syllable at the cursor</source>
@@ -18582,6 +18591,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Icon theme: %1</source>
         <translation>ธีมไอคอน: %1</translation>
+    </message>
+    <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>ใช้ธีมไม่ได้: %1</translation>
     </message>
 </context>
 <context>

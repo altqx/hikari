@@ -84,7 +84,10 @@ const std::vector<Entry> &entries();
 const Entry *find(const QString &id);
 // A plugin theme, already through themes::load; replaces one with the same id.
 void install(Entry entry);
+// Removes a plugin theme, falling back from it as fallBackFrom does.
 void uninstall(const QString &id);
+// A plugin theme is going: appearance.theme moves to the built-in of its type, and a pair setting naming it resets.
+void fallBackFrom(const QString &id, Type type);
 // Why a built-in theme file could not be used, for the Log; empty when all loaded.
 QStringList loadProblems();
 
@@ -209,6 +212,7 @@ class Theme : public QObject {
     Q_PROPERTY(QColor grammar READ grammar NOTIFY changed FINAL)
     Q_PROPERTY(QVariantList syntax READ syntax NOTIFY changed FINAL)
     Q_PROPERTY(QVariantMap ports READ ports NOTIFY changed FINAL)
+    Q_PROPERTY(QVariantList themeList READ themes NOTIFY changed FINAL)
 public:
     explicit Theme(QObject *parent = nullptr);
     static Theme *create(QQmlEngine *engine, QJSEngine *js);

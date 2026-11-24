@@ -38,6 +38,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     qc_notes_controller.cpp include/hikari/app/qc_notes_controller.h
     problems_controller.cpp include/hikari/app/problems_controller.h
     reading_problems.cpp include/hikari/app/reading_problems.h
+    language_providers.cpp include/hikari/app/language_providers.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_karaoke.cpp include/hikari/app/ai_karaoke.h
@@ -54,7 +55,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     plugin_program_downloads.cpp include/hikari/app/plugin_program_downloads.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_nodes.cpp include/hikari/app/plugin_nodes.h
-    plugin_content.cpp include/hikari/app/plugin_content.h
+    plugin_content.cpp include/hikari/app/plugin_content.h plugin_themes.cpp include/hikari/app/plugin_themes.h
     plugin_ui.cpp include/hikari/app/plugin_ui.h plugin_popups.cpp include/hikari/app/plugin_popups.h plugin_qml_panels.cpp plugin_panel_api.cpp include/hikari/app/plugin_panel_api.h
     plugin_variant.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)

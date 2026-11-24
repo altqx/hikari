@@ -55,7 +55,7 @@ private:
     struct Pending {
         std::uint64_t request = 0;
         helper::HelperHost::Handler handler;
-        enum class Reply { Plain, Load, Export, Import } reply = Reply::Plain;
+        enum class Reply { Plain, Load, Export, Import, Provide } reply = Reply::Plain;
     };
     struct Call {
         QJsonValue id; // undefined for a notification
