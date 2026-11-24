@@ -94,6 +94,25 @@ float VisualToolsController::handleScale() const
     return static_cast<float>(std::clamp(m_settings.integer("video.handleSize"), 50, 400)) / 100.f;
 }
 
+namespace {
+
+const char *smoothingSetting(Family family)
+{
+    return family == Family::Drawing ? "video.drawingSmoothing" : "video.vectorClipSmoothing";
+}
+
+}
+
+std::optional<int> VisualToolsController::freehandSmoothing(Family family) const
+{
+    return std::clamp(m_settings.integer(smoothingSetting(family)), 0, 100);
+}
+
+void VisualToolsController::setFreehandSmoothing(Family family, int smoothing)
+{
+    m_settings.set(smoothingSetting(family), smoothing);
+}
+
 VisualToolsController::~VisualToolsController() = default;
 
 void VisualToolsController::setTool(Family family, std::unique_ptr<VisualTool> tool)
@@ -1005,6 +1024,30 @@ bool VisualToolsController::scrubValue(const QString &name, const QString &text)
         return false;
     const bool done = editValue(*t, name, text, ValueEdit::Sample);
     m_valueScrub = m_valueScrub || (done && m_gesture);
+    emit changed();
+    emit overlayChanged();
+    return done;
+}
+
+QVariantMap VisualToolsController::segmentAt(qreal x, qreal y) const
+{
+    const auto *t = tool();
+    if (!t || !m_view.hasVideo() || m_gesture || (t->warnsOutsideLine() && currentWarning() != LineWarning::None))
+        return {};
+    const PointF at{static_cast<float>(m_view.toDevice(x)), static_cast<float>(m_view.toDevice(y))};
+    const auto segment = t->segmentAt(at, *this);
+    if (!segment)
+        return {};
+    return {{QStringLiteral("index"), segment->index}, {QStringLiteral("curve"), segment->curve}};
+}
+
+bool VisualToolsController::editSegment(int index, bool curve, SegmentEditKind edit, qreal x, qreal y)
+{
+    auto *t = tool();
+    if (!t || !m_view.hasVideo() || m_gesture)
+        return false;
+    const PointF at{static_cast<float>(m_view.toDevice(x)), static_cast<float>(m_view.toDevice(y))};
+    const bool done = t->editSegment({index, curve}, static_cast<SegmentEdit>(edit), at, *this);
     emit changed();
     emit overlayChanged();
     return done;

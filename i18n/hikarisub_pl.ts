@@ -9040,6 +9040,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>Wycinek wektorowy: rysuj odręcznie</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -28194,6 +28198,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Środek obrotu</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>Rysuj odręcznie</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>Płaszczyzna</translation>
     </message>
@@ -29048,6 +29056,11 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Tekst na ścieżce</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>Rysuj odręcznie: przytrzymaj i rysuj.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>Wskaż obraz, aby odczytać pozycję. Ctrl+kliknięcie umieszcza tam linijkę.</translation>
     </message>
@@ -29218,16 +29231,20 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Odwróć wycinek przełącza między pokazywaniem tego, co w środku, a tego, co na zewnątrz.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, rysowanie odręczne, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt.</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt. Kliknij segment prawym przyciskiem, aby zamienić go na krzywą lub prostą, podzielić albo usunąć.</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl+kliknięcie zaznacza kilka punktów. Alt podczas przeciągania przyciąga do współrzędnej x lub y innego punktu.</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>W trybie Rysuj odręcznie przytrzymaj przycisk i rysuj. Wygładzanie określa, jak dokładnie krzywe podążają za pociągnięciem.</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -29468,6 +29485,14 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Add B-spline</source>
         <translation>Dodaj krzywą B-sklejaną</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>Wygładzanie</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>Krzywe</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -30093,6 +30118,23 @@ nie działają na komentarzach</translation>
     <message>
         <source>More in the guide</source>
         <translation>Więcej w podręczniku</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>Zamień na krzywą</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>Zamień na linię prostą</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>Wstaw tutaj punkt</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>Usuń segment</translation>
     </message>
 </context>
 <context>

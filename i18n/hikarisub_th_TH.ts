@@ -8884,6 +8884,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>คลิปเวกเตอร์: วาดมือเปล่า</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -27704,6 +27708,10 @@ or codecs or a splitter may be missing</source>
         <translation>จุดศูนย์กลาง</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>วาดมือเปล่า</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>ระนาบ</translation>
     </message>
@@ -28544,6 +28552,11 @@ or codecs or a splitter may be missing</source>
         <translation>ข้อความตามเส้นทาง</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>วาดมือเปล่า: กดค้างแล้ววาด</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>ชี้ที่ภาพเพื่ออ่านตำแหน่ง Ctrl+คลิกเพื่อวางบรรทัดที่นั่น</translation>
     </message>
@@ -28714,16 +28727,20 @@ or codecs or a splitter may be missing</source>
         <translation>“กลับด้านคลิป” จะสลับระหว่างแสดงส่วนที่อยู่ข้างในและส่วนที่อยู่ข้างนอก</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline เพิ่มจุดแยก หรือลบจุด</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline วาดมือเปล่า เพิ่มจุดแยก หรือลบจุด</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>คลิกเพื่อเพิ่มจุด แล้วลากจุดเพื่อปรับรูปร่าง</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>คลิกเพื่อเพิ่มจุด แล้วลากจุดเพื่อปรับรูปร่าง คลิกขวาที่ส่วนของเส้นเพื่อทำให้โค้ง ทำให้ตรง แบ่ง หรือลบส่วนนั้น</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl+คลิกเพื่อเลือกหลายจุด กด Alt ขณะลากเพื่อจัดให้ตรงกับค่า x หรือ y ของจุดอื่น</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>ในโหมด “วาดมือเปล่า” กดปุ่มค้างไว้แล้ววาด “การปรับให้เรียบ” กำหนดว่าเส้นโค้งจะตามเส้นที่วาดใกล้เคียงเพียงใด</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -28964,6 +28981,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Add B-spline</source>
         <translation>เพิ่มเส้นโค้ง B-spline</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>การปรับให้เรียบ</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>เส้นโค้ง</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -29589,6 +29614,23 @@ do not work on comments</source>
     <message>
         <source>More in the guide</source>
         <translation>ดูเพิ่มเติมในคู่มือ</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>ทำให้เป็นเส้นโค้ง</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>ทำให้เป็นเส้นตรง</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>แทรกจุดที่นี่</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>ลบส่วนของเส้น</translation>
     </message>
 </context>
 <context>

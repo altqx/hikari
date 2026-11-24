@@ -8962,6 +8962,10 @@ Failed to copy %2 fonts.</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>திசையன் கிளிப்: கையால் வரைதல்</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -27949,6 +27953,10 @@ or codecs or a splitter may be missing</source>
         <translation>மூலப்புள்ளி</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>கையால் வரைதல்</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>தளம்</translation>
     </message>
@@ -28796,6 +28804,11 @@ or codecs or a splitter may be missing</source>
         <translation>பாதையில் உரை</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>கையால் வரைதல்: அழுத்திப் பிடித்து வரையவும்.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>நிலையைப் படிக்கப் படத்தின் மீது சுட்டவும். Ctrl-சொடுக்கு வரியை அங்கே வைக்கும்.</translation>
     </message>
@@ -28966,16 +28979,20 @@ or codecs or a splitter may be missing</source>
         <translation>“கிளிப்பைத் தலைகீழாக்கு” உள்ளே இருப்பதைக் காட்டுவதற்கும் வெளியே இருப்பதைக் காட்டுவதற்கும் இடையே மாற்றும்.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>ஒரு பயன்முறையைத் தேர்ந்தெடுக்கவும்: புள்ளிகளை நகர்த்துதல்; ஒரு கோடு, பெசியர் வளைவு அல்லது பி-ச்ப்ளைனைச் சேர்த்தல்; ஒரு தனிப் புள்ளியைச் சேர்த்தல் அல்லது ஒன்றை நீக்குதல்.</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>ஒரு பயன்முறையைத் தேர்ந்தெடுக்கவும்: புள்ளிகளை நகர்த்துதல்; ஒரு கோடு, பெசியர் வளைவு அல்லது பி-ச்ப்ளைனைச் சேர்த்தல்; கையால் வரைதல்; ஒரு தனிப் புள்ளியைச் சேர்த்தல் அல்லது ஒன்றை நீக்குதல்.</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும்.</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>புள்ளிகளைச் சேர்க்கச் சொடுக்கவும், வடிவத்தை மாற்ற அவற்றை இழுக்கவும். ஒரு துண்டை வளைக்க, நேராக்க, பிளக்க அல்லது நீக்க அதை வலது சொடுக்கவும்.</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl-சொடுக்கு பல புள்ளிகளைத் தேர்ந்தெடுக்கும். இழுக்கும்போது Alt அழுத்தினால் வேறொரு புள்ளியின் x அல்லது y உடன் ஒட்டிப் பொருந்தும்.</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>கையால் வரைதலில், பொத்தானை அழுத்திப் பிடித்து வரையவும். வரைந்த கோட்டை வளைவுகள் எவ்வளவு நெருக்கமாகப் பின்பற்றுகின்றன என்பதை மென்மையாக்கல் அமைக்கிறது.</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -29216,6 +29233,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Add B-spline</source>
         <translation>பி-ச்ப்ளைனைச் சேர்</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>மென்மையாக்கல்</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>வளைவுகள்</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -29841,6 +29866,23 @@ do not work on comments</source>
     <message>
         <source>More in the guide</source>
         <translation>வழிகாட்டியில் மேலும்</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>வளைவாக்கு</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>நேராக்கு</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>இங்கே புள்ளியைச் செருகு</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>துண்டை நீக்கு</translation>
     </message>
 </context>
 <context>

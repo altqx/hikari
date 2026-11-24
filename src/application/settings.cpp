@@ -513,6 +513,9 @@ std::vector<SettingDefinition> &definitions()
         {"export.format", "", String, Profile, Mapped, false, std::string()},
         // Percent of HikariSub legacy's size.
         {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
+        // The Freehand mode's Smoothing, 0 to 100.
+        {"video.vectorClipSmoothing", "", Int, Profile, Mapped, false, std::int64_t{45}},
+        {"video.drawingSmoothing", "", Int, Profile, Mapped, false, std::int64_t{45}},
         // application::VideoPropertyAction values.
         {"video.missingMatrix", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.matrixMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
