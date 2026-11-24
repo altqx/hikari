@@ -10,6 +10,7 @@ Frame {
     required property VisualToolsController tools
     property var keyOf: symbol => ""
     property bool named: false
+    property string activeHint: ""
     readonly property alias list: namedList
     padding: named ? 0 : 1
     implicitWidth: named ? 188 : 30 + leftPadding + rightPadding
@@ -78,6 +79,7 @@ Frame {
             text: rail.tools.families[family]?.name ?? ""
             Accessible.role: Accessible.ListItem
             Accessible.name: text
+            Accessible.description: chosen ? rail.activeHint : ""
             Accessible.selectable: true
             Accessible.selected: chosen
             ToolTip.visible: hovered
@@ -161,6 +163,7 @@ Frame {
                 ToolTip.visible: hovered || visualFocus
                 ToolTip.text: rail.tipOf(family)
                 Accessible.name: text
+                Accessible.description: checked ? rail.activeHint : ""
                 Accessible.checkable: true
                 Keys.onUpPressed: rail.focusNext(this, -1)
                 Keys.onDownPressed: rail.focusNext(this, 1)
@@ -220,7 +223,8 @@ Frame {
         const info = tools.families[family] ?? ({})
         const name = info.name ?? ""
         const key = rail.keyOf(info.hotkey ?? "")
-        return !info.available ? qsTr("%1 (not available yet)").arg(name) : key.length ? name + " (" + key + ")" : name
+        const tip = !info.available ? qsTr("%1 (not available yet)").arg(name) : key.length ? name + " (" + key + ")" : name
+        return family === tools.activeFamily && activeHint.length > 0 ? tip + "\n" + activeHint : tip
     }
     function focusNext(from, step) {
         const buttons = []

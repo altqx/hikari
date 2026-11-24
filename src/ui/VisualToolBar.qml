@@ -168,6 +168,7 @@ Control {
     readonly property bool guideInRow: hint.length > 0
                                        && (!groupWidths || widthOf(segments.length) + guideWidth <= rowRoom)
     readonly property real groupsRoom: rowRoom - (guideInRow ? guideWidth : 0)
+    readonly property bool hintInRail: shown && !column && hint.length > 0 && !guideInRow && foldedSegments.length === 0
     readonly property int fitCount: {
         const n = segments.length
         if (!groupWidths || widthOf(n) <= groupsRoom)
@@ -178,6 +179,7 @@ Control {
         return k
     }
     readonly property int groupSpacing: 6
+    readonly property font labelFont: TypeRoles.sized(bar.font, 12, Font.Normal)
     // Repeater.itemAt() is not bindable: bumped as the unseen copies are made.
     property int measuredItems: 0
     readonly property var foldedSegments: segments.slice(fitCount)
@@ -214,7 +216,7 @@ Control {
                 Layout.rightMargin: 3
                 text: bar.groupName(segment.modelData.group)
                 color: Theme.muted
-                font.pixelSize: 12
+                font: bar.labelFont
             }
             Repeater {
                 model: segment.modelData.kind === "options" ? segment.modelData.items : []
@@ -258,7 +260,7 @@ Control {
                 visible: field.modelData.group.length > 0
                 text: bar.groupName(field.modelData.group)
                 color: Theme.muted
-                font.pixelSize: 12
+                font: bar.labelFont
             }
             Flow {
                 Layout.fillWidth: true
@@ -355,7 +357,7 @@ Control {
                 Label {
                     text: qsTr("On the frame")
                     color: Theme.muted
-                    font.pixelSize: 12
+                    font: bar.labelFont
                 }
                 Repeater {
                     id: handleList
@@ -412,7 +414,7 @@ Control {
                 Label {
                     text: qsTr("Apply to")
                     color: Theme.muted
-                    font.pixelSize: 12
+                    font: bar.labelFont
                 }
                 SegmentedButtons {
                     objectName: "visualApplyToChoice"

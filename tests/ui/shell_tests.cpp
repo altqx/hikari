@@ -33194,6 +33194,39 @@ private slots:
         QVERIFY2(took, qPrintable(name));
         tools.selectFamily(3);
         QTRY_VERIFY(!popover->property("visible").toBool());
+        tools.selectFamily(1);
+        settleVisualBar();
+        QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()));
+        QTRY_VERIFY(drawn() && !more->isVisible());
+        QVariant total;
+        QVERIFY(QMetaObject::invokeMethod(bar, "widthOf", Q_RETURN_ARG(QVariant, total),
+                                          Q_ARG(QVariant, lengthOf("segments"))));
+        const qreal band = total.toReal() + bar->property("pickerWidth").toReal()
+                           + bar->property("guideWidth").toReal() / 2;
+        QVERIFY(maximum.write(std::floor(band)));
+        QTRY_VERIFY2(drawn() && bar->width() == std::floor(band), qPrintable(QString::number(bar->width())));
+        QTRY_VERIFY(!bar->property("guideInRow").toBool());
+        QCOMPARE(lengthOf("foldedSegments"), 0);
+        QVERIFY(!more->isVisible());
+        QVERIFY(!visualItem("visualToolGuideButton")->isVisible());
+        QTRY_VERIFY(drawn() && onTheLine());
+        for (const char *name : {"visualValue_x", "visualValue_y"})
+            QVERIFY2(visualItem(name) && visualItem(name)->isVisible(), name);
+        QVERIFY(bar->property("hintInRail").toBool());
+        const QString hint = bar->property("hint").toString();
+        QVERIFY(!hint.isEmpty());
+        QQuickItem *activeButton = visualItem("visualTool1");
+        QVERIFY(activeButton && activeButton->property("checked").toBool());
+        const QString railTip = QQmlProperty(activeButton, QStringLiteral("ToolTip.text"), qmlContext(activeButton)).read().toString();
+        QVERIFY2(railTip.endsWith(QLatin1Char('\n') + hint), qPrintable(railTip));
+        QAccessibleInterface *railButton = QAccessible::queryAccessibleInterface(activeButton);
+        QVERIFY(railButton);
+        QCOMPARE(railButton->text(QAccessible::Description), hint);
+        QQuickItem *otherButton = visualItem("visualTool2");
+        QVERIFY(!QQmlProperty(otherButton, QStringLiteral("ToolTip.text"), qmlContext(otherButton)).read().toString()
+                     .contains(QLatin1Char('\n')));
+        QVERIFY(QAccessible::queryAccessibleInterface(otherButton)->text(QAccessible::Description).isEmpty());
+        tools.selectFamily(3);
         QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()));
         window->resize(2400, 1000);
         tools.selectFamily(11);
