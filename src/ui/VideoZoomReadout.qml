@@ -18,7 +18,7 @@ AbstractButton {
           ? qsTr("Fit")
           //: The video zoom readout: %1 the zoom as a whole percentage, as in "200 %"
           : qsTr("%1 %").arg(shell.videoView.readoutPercent)
-    enabled: shell.video.hasVideo
+    visible: shell.video.hasVideo
     focusPolicy: Qt.TabFocus
     padding: 2
     leftPadding: 6
@@ -54,11 +54,13 @@ AbstractButton {
         ShellMenuItem {
             objectName: readout.itemPrefix + "Fit"
             command: "GLOBAL_VIDEO_ZOOM_FIT"
+            iconRole: "zoom-reset"
             action: readout.actionOf(command)
         }
         ShellMenuItem {
             objectName: readout.itemPrefix + "50"
             command: "GLOBAL_VIDEO_ZOOM_50"
+            iconRole: "zoom"
             action: readout.actionOf(command)
             //: A zoom level in the video zoom readout's menu
             text: qsTr("50 %")
@@ -66,6 +68,7 @@ AbstractButton {
         ShellMenuItem {
             objectName: readout.itemPrefix + "100"
             command: "GLOBAL_VIDEO_ZOOM_100"
+            iconRole: "zoom"
             action: readout.actionOf(command)
             //: A zoom level in the video zoom readout's menu
             text: qsTr("100 %")
@@ -73,6 +76,7 @@ AbstractButton {
         ShellMenuItem {
             objectName: readout.itemPrefix + "200"
             command: "GLOBAL_VIDEO_ZOOM_200"
+            iconRole: "zoom"
             action: readout.actionOf(command)
             //: A zoom level in the video zoom readout's menu
             text: qsTr("200 %")
@@ -80,17 +84,20 @@ AbstractButton {
         ShellMenuItem {
             objectName: readout.itemPrefix + "DevicePixels"
             command: "GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"
+            iconRole: "preview-resolution"
             action: readout.actionOf(command)
         }
         MenuSeparator {}
         ShellMenuItem {
             objectName: readout.itemPrefix + "In"
             command: "GLOBAL_VIDEO_ZOOM_IN"
+            iconRole: "add"
             action: readout.actionOf(command)
         }
         ShellMenuItem {
             objectName: readout.itemPrefix + "Out"
             command: "GLOBAL_VIDEO_ZOOM_OUT"
+            iconRole: "remove"
             action: readout.actionOf(command)
         }
     }

@@ -25242,12 +25242,12 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_QUICK_FIX")), QStringLiteral("Alt+Return"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_KEEP_AI_CHANGE")));
-        QCOMPARE(table().size(), 38);
+        QCOMPARE(table().size(), 43);
         application->settingsStore()->set(app::AiFeatures::kOffSetting, false);
         QCOMPARE(table().value(QStringLiteral("GLOBAL_KEEP_AI_CHANGE")), QStringLiteral("Ctrl+Shift+Return"));
-        QCOMPARE(table().size(), 42);
+        QCOMPARE(table().size(), 47);
         application->settingsStore()->reset(QString::fromLatin1(app::AiFeatures::kOffSetting));
-        QCOMPARE(table().size(), 38);
+        QCOMPARE(table().size(), 43);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));

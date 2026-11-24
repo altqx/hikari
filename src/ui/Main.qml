@@ -4137,6 +4137,7 @@ ApplicationWindow {
                     action: goToEndAction
                 }
                 ShellMenuItem {
+                    iconRole: "video-to-start-time"
                     command: "GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY"
                     objectName: "previousSubtitleBoundaryMenuItem"
                     help: qsTr("Moves the video to the previous start or end of a line")
@@ -4144,12 +4145,14 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "GLOBAL_NEXT_SUBTITLE_BOUNDARY"
+                    iconRole: "video-to-end-time"
                     objectName: "nextSubtitleBoundaryMenuItem"
                     help: qsTr("Moves the video to the next start or end of a line")
                     action: nextSubtitleBoundaryAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_JUMP_TO"
+                    iconRole: "video-seek"
                     objectName: "jumpToMenuItem"
                     help: qsTr("Types a time or a frame to show")
                     action: jumpToAction
@@ -4342,39 +4345,47 @@ ApplicationWindow {
                 }
                 ShellMenu {
                     objectName: "videoZoomLevelMenu"
+                    iconRole: "zoom"
                     title: qsTr("Zoom level")
                     ShellMenuItem {
                         command: "GLOBAL_VIDEO_ZOOM_FIT"
+                        iconRole: "zoom-reset"
                         objectName: "videoZoomFitMenuItem"
                         action: videoZoomFitAction
                     }
                     ShellMenuItem {
                         command: "GLOBAL_VIDEO_ZOOM_50"
+                        iconRole: "zoom"
                         objectName: "videoZoom50MenuItem"
                         action: videoZoom50Action
                     }
                     ShellMenuItem {
                         command: "GLOBAL_VIDEO_ZOOM_100"
+                        iconRole: "zoom"
                         objectName: "videoZoom100MenuItem"
                         action: videoZoom100Action
                     }
                     ShellMenuItem {
                         command: "GLOBAL_VIDEO_ZOOM_200"
+                        iconRole: "zoom"
                         objectName: "videoZoom200MenuItem"
                         action: videoZoom200Action
                     }
                     ShellMenuItem {
                         command: "GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"
+                        iconRole: "preview-resolution"
                         objectName: "videoZoomDevicePixelsMenuItem"
                         action: videoZoomDevicePixelsAction
                     }
                     MenuSeparator {}
                     ShellMenuItem {
                         command: "GLOBAL_VIDEO_ZOOM_IN"
+                        iconRole: "add"
                         objectName: "videoZoomInMenuItem"
                         action: videoZoomInAction
                     }
                     ShellMenuItem {
+                        iconRole: "remove"
                         command: "GLOBAL_VIDEO_ZOOM_OUT"
                         objectName: "videoZoomOutMenuItem"
                         action: videoZoomOutAction
@@ -6268,7 +6279,7 @@ ApplicationWindow {
                     VideoTimeField {
                         id: videoTimeField
                         objectName: "videoTimes"
-                        Layout.leftMargin: 8
+                        Layout.leftMargin: 4
                         video: root.video
                         tip: root.videoTimeTip
                     }
@@ -6286,7 +6297,7 @@ ApplicationWindow {
                             anchors.right: videoPointerReadout.visible ? videoPointerReadout.left : parent.right
                             anchors.rightMargin: 4
                             anchors.verticalCenter: parent.verticalCenter
-                            elide: Text.ElideRight
+                            elide: Text.ElideLeft
                             //: The video's frame readout: %1 the shown frame, %2 how many frames the video has
                             text: root.video.loaded && root.video.frame >= 0
                                   ? qsTranslate("HikariSub.Video", "frame %1 / %2").arg(root.video.frame, root.video.frameCount)
@@ -6301,7 +6312,6 @@ ApplicationWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             tools: root.visualTools
                             visible: pointer && videoReadouts.width >= implicitWidth + 8
-                                     + (root.video.loaded ? videoStatus.implicitWidth + 4 : 0)
                         }
                     }
                     VideoZoomReadout {
