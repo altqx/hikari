@@ -38473,6 +38473,80 @@ private slots:
         QVERIFY(fs.leave());
         QTRY_VERIFY(!fsWindow->isVisible());
     }
+    void videoControlsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        window->resize(1400, 860);
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v4Open(folder));
+        auto &video = application->video();
+        const auto &keyframes = video.session().keyframes();
+        int plain = 1;
+        while (plain + 1 < video.frameCount() && std::ranges::binary_search(keyframes, plain))
+            ++plain;
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        auto *panel = item("videoPanel");
+        auto *time = item("videoTime");
+        auto *readout = item("videoZoomReadout");
+        auto *menu = named("videoZoomReadoutMenu");
+        const auto show = [&](int frame) {
+            QVERIFY(video.showFrameAt(frame));
+            QTRY_COMPARE(video.session().shownFrame().value_or(-1), frame);
+        };
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            const auto shot = [&](const char *state, int below = 0) {
+                QTest::qWait(400);
+                const QRect at(panel->mapToGlobal(QPointF(0, 0)).toPoint(),
+                               QSize(int(panel->width()), int(panel->height()) + below));
+                QVERIFY(window->screen()->grabWindow(0, at.x(), at.y(), at.width(), at.height())
+                            .save(out + QStringLiteral("/video-controls-") + QLatin1String(state) + suffix));
+            };
+            show(plain);
+            QTest::mouseMove(window, QPoint(5, 5));
+            shot("rest");
+            QTest::mouseMove(window, time->mapToScene(QPointF(time->width() / 2, time->height() / 2)).toPoint());
+            shot("time-hover");
+            QTest::mouseMove(window, QPoint(5, 5));
+            show(0);
+            QTRY_VERIFY(video.keyframeShown());
+            shot("keyframe");
+            QVERIFY(runGlobal("GLOBAL_JUMP_TO"));
+            auto *field = item("videoTimeField");
+            QTRY_VERIFY(field->hasActiveFocus());
+            shot("editing");
+            typeText(window, QStringLiteral("3:99"));
+            press(Qt::Key_Return);
+            QTRY_VERIFY(item("videoJumpError")->isVisible());
+            shot("bad-input");
+            press(Qt::Key_Escape);
+            QTRY_VERIFY(!field->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(readout, "click"));
+            QTRY_VERIFY(menu->property("opened").toBool());
+            shot("zoom-menu", 240);
+            triggerAction("videoZoomReadout200");
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+            QTRY_COMPARE(readout->property("text").toString(), QStringLiteral("200 %"));
+            shot("zoom-200");
+            QVERIFY(runGlobal("GLOBAL_VIDEO_ZOOM_FIT"));
+            QTRY_COMPARE(readout->property("text").toString(), QStringLiteral("Fit"));
+            auto *bar = item("videoSlider");
+            bar->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(bar->hasActiveFocus());
+            shot("seek-focus");
+            item("editingGrid")->forceActiveFocus();
+        }
+    }
     void videoViewZoomAspectAndVolume()
     {
         restartWithoutSound();

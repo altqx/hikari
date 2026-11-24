@@ -6145,6 +6145,7 @@ ApplicationWindow {
                             anchors.verticalCenter: parent.verticalCenter
                             tools: root.visualTools
                             visible: pointer && videoReadouts.width >= implicitWidth + 8
+                                     + (root.video.loaded ? videoStatus.implicitWidth + 4 : 0)
                         }
                     }
                     VideoZoomReadout {
