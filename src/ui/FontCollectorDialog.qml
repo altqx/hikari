@@ -348,6 +348,9 @@ DialogWindow {
                     rightPadding: 12
                     focusPolicy: Qt.NoFocus
                     Accessible.name: modelData.family + " " + dialog.styleName(modelData) + ": " + dialog.fileText(modelData)
+                    Accessible.description: modelData.notes
+                    ToolTip.visible: hovered && modelData.notes.length > 0
+                    ToolTip.text: modelData.notes
                     background: Rectangle {
                         color: fontRow.ListView.isCurrentItem ? Theme.select : fontRow.hovered ? Theme.hover : "transparent"
                     }

@@ -6,6 +6,7 @@
 
 #include <QDir>
 #include <QElapsedTimer>
+#include <QHash>
 #include <QObject>
 #include <QString>
 #include <QUrl>
@@ -40,7 +41,7 @@ class FontCollectorController : public QObject {
     Q_PROPERTY(bool fromMkv READ fromMkv NOTIFY settingsChanged)
     Q_PROPERTY(bool fromMkvEnabled READ fromMkvEnabled NOTIFY settingsChanged)
     // {family, bold, italic, status ("found", "missing", "simulated", "notLinked"), file,
-    // simulatedBold, simulatedItalic, lines}, one per face the subtitles use.
+    // simulatedBold, simulatedItalic, lines, notes}, one per face the subtitles use.
     Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
     Q_PROPERTY(int facesToCheck READ facesToCheck NOTIFY rowsChanged)
     Q_PROPERTY(int filesToWrite READ filesToWrite NOTIFY rowsChanged)
@@ -200,6 +201,7 @@ private:
     std::uint64_t m_mkvRun = 0;
     std::vector<application::collector::Face> m_faces;
     QStringList m_notLinked;
+    QHash<QString, QString> m_familyNotes;
     int m_facesToCheck = 0;
     int m_filesToWrite = 0;
     int m_filesCopiedInstead = 0;

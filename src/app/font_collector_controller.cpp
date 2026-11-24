@@ -242,7 +242,8 @@ QVariantList FontCollectorController::rows() const
                            {QStringLiteral("file"), file},
                            {QStringLiteral("simulatedBold"), face.simulatedBold},
                            {QStringLiteral("simulatedItalic"), face.simulatedItalic},
-                           {QStringLiteral("lines"), face.lines}};
+                           {QStringLiteral("lines"), face.lines},
+                           {QStringLiteral("notes"), m_familyNotes.value(qs(face.family))}};
     }
     return out;
 }
@@ -251,6 +252,7 @@ void FontCollectorController::clearRows()
 {
     m_faces.clear();
     m_notLinked.clear();
+    m_familyNotes.clear();
     m_facesToCheck = 0;
     m_filesToWrite = 0;
     m_filesCopiedInstead = 0;
@@ -685,6 +687,15 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
     }
     m_review = std::move(*review);
     m_faces = m_review->faces;
+    m_familyNotes.clear();
+    for (const auto *blocks : {&m_review->found, &m_review->notFound})
+        for (const auto &[family, block] : *blocks)
+            for (const auto *list : {&block.infos, &block.warnings})
+                for (const auto &note : *list)
+                    if (note.kind != Note::Kind::FoundFile && note.kind != Note::Kind::UnusedStyle) {
+                        QString &notes = m_familyNotes[qs(family)];
+                        notes += (notes.isEmpty() ? QString() : QStringLiteral("\n")) + noteText(note);
+                    }
     m_facesToCheck = int(m_faces.size());
     m_filesToWrite = int(m_review->files.size());
     m_filesCopiedInstead = m_runAction == CollectorAction::LinkToFolder
