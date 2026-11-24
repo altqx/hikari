@@ -2502,7 +2502,6 @@ Settings	Options	English (Australia)		src/ui/GettingStartedDialog.qml src/ui/Set
 Settings	Options	English (Canada)		src/ui/GettingStartedDialog.qml src/ui/SettingsDialog.qml
 Settings	Options	English (UK)		src/ui/GettingStartedDialog.qml src/ui/SettingsDialog.qml
 Settings	Options	English (US)		src/ui/GettingStartedDialog.qml src/ui/SettingsDialog.qml
-Settings	Options	Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.		src/ui/SettingsDialog.qml
 Settings	Options	files		Automation/automation/Include/l0/DependencyControl/UpdateFeed.moon Automation/automation/Include/l0/DependencyControl/test/UpdateFeed.moon Automation/automation/Include/moonscript.lua …
 Settings	Options	Files		src/app/settings_import_store.cpp src/ui/SettingsDialog.qml
 Settings	Options	Fill in my last answers		src/ui/SettingsDialog.qml
@@ -2599,7 +2598,6 @@ Settings	Options	Playback		src/ui/SettingsDialog.qml
 Settings	Options	Player		src/ui/SettingsDialog.qml
 Settings	Options	Preferred audio		src/ui/SettingsDialog.qml
 Settings	Options	Presets are kept; delete them from a dialog’s ⋯ menu.		src/ui/SettingsDialog.qml
-Settings	Options	Press Apply or Cancel first: the import is added at once		src/ui/SettingsDialog.qml
 Settings	Options	Preview subtitles at		src/ui/SettingsDialog.qml
 Settings	Options	Preview text		src/ui/AppearancePage.qml src/ui/StyleManager.qml
 Settings	Options	Primary language		src/ui/GettingStartedDialog.qml src/ui/SettingsDialog.qml
