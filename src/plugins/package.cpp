@@ -8,7 +8,10 @@
 #include "hikari/themes/theme.h"
 
 #include <algorithm>
+#include <fstream>
+#include <iterator>
 #include <set>
+#include <system_error>
 
 namespace hikari::plugins {
 
@@ -172,6 +175,48 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
         if (problem)
             return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};
+}
+
+std::expected<std::vector<PackageFile>, PackageProblem> readPluginFolder(const std::filesystem::path &folder)
+{
+    namespace fs = std::filesystem;
+    using Kind = PackageProblem::Kind;
+    std::vector<PackageFile> files;
+    std::size_t total = 0;
+    std::error_code error;
+    fs::recursive_directory_iterator it(folder, fs::directory_options::none, error);
+    if (error)
+        return std::unexpected(PackageProblem{Kind::NoManifest, std::string(kManifestName), {}});
+    for (const fs::recursive_directory_iterator end; it != end; it.increment(error)) {
+        if (error)
+            return std::unexpected(PackageProblem{Kind::BadPath, {}, {}});
+        const fs::path relative = it->path().lexically_relative(folder);
+        const std::u8string generic = relative.generic_u8string();
+        const std::string path(generic.begin(), generic.end());
+        if (it->path().filename().u8string().starts_with(u8".")) {
+            if (it->is_directory(error))
+                it.disable_recursion_pending();
+            continue;
+        }
+        if (it->is_symlink(error))
+            return std::unexpected(PackageProblem{Kind::BadPath, path, {}});
+        if (!it->is_regular_file(error))
+            continue;
+        if (files.size() == kMaxPackageFiles)
+            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
+        total += std::size_t(it->file_size(error));
+        if (total > kMaxPlatformPackageBytes)
+            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}, {}, kMaxPlatformPackageBytes});
+        std::ifstream in(it->path(), std::ios::binary);
+        std::vector<char> data{std::istreambuf_iterator<char>(in), {}};
+        if (in.bad())
+            return std::unexpected(PackageProblem{Kind::BadPath, path, {}});
+        PackageFile file{path, {}};
+        file.data.resize(data.size());
+        std::ranges::transform(data, file.data.begin(), [](char c) { return std::byte(c); });
+        files.push_back(std::move(file));
+    }
+    return files;
 }
 
 }

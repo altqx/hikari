@@ -97,7 +97,11 @@ public:
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
+    std::vector<ToolValue> values(const VisualHost &host) const override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit) override;
     std::vector<core::LineRecord> previewLines(const VisualHost &host) const override;
+    std::optional<Segment> segmentAt(PointF pos, const VisualHost &host) const override;
+    bool editSegment(Segment segment, SegmentEdit edit, PointF pos, VisualHost &host) override;
 
     VectorEditor &editor() { return m_editor; }
     const VectorEditor &editor() const { return m_editor; }
@@ -110,6 +114,7 @@ public:
 
 private:
     void apply(VisualHost &host, bool commit);
+    void commitPoints(VisualHost &host);
     VectorEditor::Callbacks callbacks(VisualHost &host);
 
     VectorEditor m_editor;
@@ -118,6 +123,7 @@ private:
     std::u16string m_maskTag, m_maskBody;
     bool m_began = false;
     bool m_inKey = false, m_keyCommit = false;
+    std::uint64_t m_strokeRevision = 0;
 };
 
 }

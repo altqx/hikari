@@ -8884,6 +8884,10 @@ Failed to copy %2 fonts.</source>
         <translation>가로 세로 비율 변경…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>벡터 클립: 자유 곡선</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -17601,6 +17605,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>켬</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>아이콘</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>HikariSub의 인터페이스 아이콘을 바꿉니다. 테마에 없는 아이콘은 HikariSub의 기본 아이콘으로 표시됩니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18707,6 +18719,99 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A theme can’t be used: %1</source>
         <translation>테마를 사용할 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
+        <translation>허용한 것보다 많은 권한을 요청하므로 변경 사항이 검토를 기다립니다.</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
+        <translation>개발</translation>
+    </message>
+    <message>
+        <source>Dev plugin, runs from %1</source>
+        <translation>개발 플러그인, %1에서 실행</translation>
+    </message>
+    <message>
+        <source>Load dev plugin</source>
+        <translation>개발 플러그인 불러오기</translation>
+    </message>
+    <message>
+        <source>Reload dev plugin</source>
+        <translation>개발 플러그인 다시 불러오기</translation>
+    </message>
+    <message>
+        <source>Load “%1” %2 from its folder?</source>
+        <translation>“%1” %2(을)를 폴더에서 불러오시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Reload “%1” %2 from its folder?</source>
+        <translation>“%1” %2(을)를 폴더에서 다시 불러오시겠습니까?</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to</source>
+        <translation>허용한 것보다 많은 권한을 요청합니다</translation>
+    </message>
+    <message>
+        <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
+        <translation>개발 플러그인은 %1에서 서명 없이 그대로 실행되며, 파일이 바뀌면 다시 불러옵니다. 설치된 사본과 별도로 자체 데이터, 설정, 폴더를 가집니다.</translation>
+    </message>
+    <message>
+        <source>Unload and remove its data</source>
+        <translation>불러오기 해제 및 데이터 삭제</translation>
+    </message>
+    <message>
+        <source>Unload dev plugin</source>
+        <translation>개발 플러그인 불러오기 해제</translation>
+    </message>
+    <message>
+        <source>Unload “%1”?</source>
+        <translation>“%1”의 불러오기를 해제하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The installed %1 runs again.</source>
+        <translation>설치된 %1(이)가 다시 실행됩니다.</translation>
+    </message>
+    <message>
+        <source>Its folder stays as it is.</source>
+        <translation>폴더는 그대로 유지됩니다.</translation>
+    </message>
+    <message>
+        <source>Unload</source>
+        <translation>불러오기 해제</translation>
+    </message>
+    <message>
+        <source>Plugin not unloaded</source>
+        <translation>플러그인 불러오기를 해제하지 못함</translation>
+    </message>
+    <message>
+        <source>Install dev plugin…</source>
+        <translation>개발 플러그인 설치…</translation>
+    </message>
+    <message>
+        <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
+        <translation>파일이 변경되었지만 HikariSub은 마지막으로 정상이던 파일을 계속 실행했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
+        <translation>파일이 변경되었고 허용한 것보다 많은 권한을 요청하므로 변경 사항이 확인을 기다립니다.</translation>
+    </message>
+    <message>
+        <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
+        <translation>설치된 %1(은)는 불러오기를 해제할 때까지 개발 플러그인으로 대체됩니다.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin folder</source>
+        <translation>플러그인 폴더 선택</translation>
+    </message>
+    <message>
+        <source>Unload…</source>
+        <translation>불러오기 해제…</translation>
+    </message>
+    <message>
+        <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
+        <translation>이제 매니페스트에 지정된 ID가 “%1”입니다. 불러오기를 해제하고 폴더를 다시 불러오십시오.</translation>
     </message>
 </context>
 <context>
@@ -27767,6 +27872,10 @@ or codecs or a splitter may be missing</source>
         <translation>원점</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>자유 곡선</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>평면</translation>
     </message>
@@ -28607,6 +28716,11 @@ or codecs or a splitter may be missing</source>
         <translation>경로 따라 텍스트</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>자유 곡선: 누른 채로 그리십시오.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>화면을 가리키면 위치를 읽습니다. Ctrl+클릭하면 줄을 그곳에 놓습니다.</translation>
     </message>
@@ -28777,16 +28891,20 @@ or codecs or a splitter may be missing</source>
         <translation>“클립 반전”은 안쪽을 보일지 바깥쪽을 보일지 전환합니다.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>점 이동, 직선·베지어 곡선·B-스플라인 추가, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>점 이동, 직선·베지어 곡선·B-스플라인 추가, 자유 곡선 그리기, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오.</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오. 세그먼트를 오른쪽 클릭하면 곡선으로 만들거나, 직선으로 만들거나, 나누거나, 삭제할 수 있습니다.</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl+클릭으로 여러 점을 선택합니다. 끄는 동안 Alt를 누르면 다른 점의 x 또는 y에 맞춰집니다.</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>“자유 곡선” 모드에서는 버튼을 누른 채로 그리십시오. “매끄러움”은 곡선이 획을 얼마나 가깝게 따를지 정합니다.</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -29027,6 +29145,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Add B-spline</source>
         <translation>B-스플라인 추가</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>매끄러움</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>곡선</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -29652,6 +29778,23 @@ do not work on comments</source>
     <message>
         <source>More in the guide</source>
         <translation>가이드에서 더 보기</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>곡선으로 만들기</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>직선으로 만들기</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>여기에 점 삽입</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>세그먼트 삭제</translation>
     </message>
 </context>
 <context>

@@ -645,6 +645,26 @@ hikari.providers.completion(function(r) hikari.call("api.version") return {{labe
     EXPECT_EQ(**newest.value, R"([{"label":"c"}])");
 }
 
+TEST_F(PluginProcessTest, EndingTheProcessAnswersWhatWasWaitingEvenOnceItIsGone)
+{
+    m_holdReplies = true;
+    auto p = process(plugin("providers", R"(
+hikari.providers.completion(function(r) hikari.call("api.version") return {{label = r.text}} end)
+)"));
+    QSignalSpy loaded(p.get(), &PluginProcess::loaded);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
+    FormatResult running, queued;
+    ASSERT_TRUE(p->provide("completion", R"({"text": "a"})", running.done()));
+    ASSERT_TRUE(waitFor([&] { return !m_held.empty(); }));
+    ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", queued.done()));
+    p->end();
+    p.reset();
+    ASSERT_TRUE(waitFor([&] { return running.value && queued.value; }));
+    EXPECT_EQ(running.value->error(), QStringLiteral("the plugin was stopped"));
+    EXPECT_EQ(queued.value->error(), QStringLiteral("the plugin was stopped"));
+}
+
 TEST_F(PluginProcessTest, OnlyDeclaredProvidersTakeAHandler)
 {
     auto p = process(plugin("providers", "hikari.providers.hover(function() end)"));

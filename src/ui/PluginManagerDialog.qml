@@ -104,7 +104,11 @@ DialogWindow {
         return row.unrestricted ? qsTr("Full trust") : ""
     }
     readonly property string officialText: qsTr("By HikariSub")
+    //: The badge on a plugin run from a folder while its author works on it
+    readonly property string devText: qsTr("Dev")
     function signedText(row) {
+        if (row.source === "dev")
+            return qsTr("Dev plugin, runs from %1").arg(row.path)
         if (row.source === "marketplace")
             return qsTr("From the marketplace")
         return row.keyId.length > 0 ? qsTr("Unverified, signed by key %1").arg(row.keyId) : qsTr("Unverified, unsigned")
@@ -168,6 +172,7 @@ DialogWindow {
         return qsTr("Unverified: the package isn’t signed, so HikariSub can’t tell who made it.")
     }
     function reviewFile(url) { reviewPackage(url, "") }
+    function reviewDev(folderUrl) { confirm(manager.reviewDev(folderUrl)) }
     function reviewPackage(url, updating) {
         confirm(updating ? manager.reviewUpdate(url, updating) : manager.review(url))
     }
@@ -176,13 +181,19 @@ DialogWindow {
             tell(qsTr("Plugin not installed"), review.message)
             return
         }
-        const titles = {
+        const titles = review.dev ? {
+            install: qsTr("Load dev plugin"),
+            reinstall: qsTr("Reload dev plugin")
+        } : {
             install: qsTr("Install plugin"),
             update: qsTr("Update plugin"),
             reinstall: qsTr("Reinstall plugin"),
             downgrade: qsTr("Downgrade plugin")
         }
-        const questions = {
+        const questions = review.dev ? {
+            install: qsTr("Load “%1” %2 from its folder?").arg(review.name, review.version),
+            reinstall: qsTr("Reload “%1” %2 from its folder?").arg(review.name, review.version)
+        } : {
             install: qsTr("Install “%1” %2?").arg(review.name, review.version),
             update: qsTr("Update “%1” from %2 to %3?").arg(review.name, review.installedVersion, review.version),
             reinstall: qsTr("Reinstall “%1” %2?").arg(review.name, review.version),
@@ -193,6 +204,7 @@ DialogWindow {
                 ? (review.adds.length > 0 ? qsTr("What it adds") + "\n• " + review.adds.join("\n• ") : "")
                 : review.permissions.length === 0
                 ? qsTr("It asks for no permissions beyond the active subtitle file.")
+                : review.asksForMore && review.dev ? qsTr("It asks for more than you said yes to") + "\n" + tagged.join("\n")
                 : review.asksForMore ? qsTr("It asks for more than %1 does").arg(review.installedVersion) + "\n" + tagged.join("\n")
                 : qsTr("It asks for these permissions") + "\n• " + review.permissions.join("\n• ")
         const changelog = (review.changelog || "").length > 0
@@ -203,6 +215,7 @@ DialogWindow {
         const trust = review.marketplace
                 ? (fullAccess ? qsTr("Install it only if you trust %1. It gets full access to your computer.").arg(review.signedBy) + "\n\n" : "")
                   + qsTr("Signed by %1 and checked against the marketplace.").arg(review.signedBy)
+                : review.dev ? qsTr("A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.").arg(review.path)
                 : trustText(review)
         const warn = review.needsRetrust || fullAccess
         messages.ask({
@@ -235,6 +248,10 @@ DialogWindow {
         function onReviewed(review) { dialog.confirm(review) }
     }
     function askUninstall(row) {
+        if (row.source === "dev") {
+            askUnload(row)
+            return
+        }
         const keep = { id: "keep", text: qsTr("Uninstall, keep its data"), role: "accept" }
         const remove = { id: "remove", text: manager.hasData(row.id) ? qsTr("Uninstall and remove its data") : qsTr("Uninstall"),
                          role: "destructive" }
@@ -256,7 +273,27 @@ DialogWindow {
         })
     }
 
-
+    function askUnload(row) {
+        const remove = { id: "remove", text: qsTr("Unload and remove its data"), role: "destructive" }
+        messages.ask({
+            title: qsTr("Unload dev plugin"),
+            text: qsTr("Unload “%1”?").arg(row.name),
+            detail: (row.overrides.length > 0 ? qsTr("The installed %1 runs again.").arg(row.overrides) + " " : "")
+                    + qsTr("Its folder stays as it is."),
+            severity: "question",
+            choices: [{ id: "keep", text: qsTr("Unload"), role: "accept", isDefault: true }]
+                     .concat(manager.hasData(row.id) ? [remove] : [])
+                     .concat([{ id: "cancel", text: qsTr("Cancel"), role: "reject" }])
+        }, answer => {
+            if (answer === "cancel")
+                return
+            const problem = dialog.manager.uninstall(row.id, answer === "remove")
+            if (problem.length > 0)
+                dialog.tell(qsTr("Plugin not unloaded"), problem)
+            if (!dialog.chosen)
+                dialog.choose(dialog.shown.length > 0 ? dialog.shown[0].id : "")
+        })
+    }
 
     MessageHost {
         id: messages
@@ -294,6 +331,13 @@ DialogWindow {
                     installPicker.updating = ""
                     installPicker.open()
                 }
+            }
+            IconToolButton {
+                objectName: "pluginInstallDev"
+                iconRole: "folder-open"
+                text: qsTr("Install dev plugin…")
+                enabled: dialog.manager && dialog.manager.available
+                onClicked: devPicker.open()
             }
             IconToolButton {
                 objectName: "pluginCheckUpdates"
@@ -453,6 +497,13 @@ DialogWindow {
                                         OfficialMark {
                                             objectName: "pluginOfficial_" + row.modelData.id
                                             visible: row.modelData.official
+                                        }
+                                        Badge {
+                                            objectName: "pluginDev_" + row.modelData.id
+                                            visible: row.modelData.source === "dev"
+                                            iconRole: "folder-open"
+                                            text: dialog.devText
+                                            color: Theme.accent
                                         }
                                     }
                                     Label {
@@ -906,6 +957,36 @@ DialogWindow {
             }
         }
         InlineBar {
+            objectName: "pluginDevProblemBar"
+            visible: details.row.devProblem.length > 0
+            severity: "error"
+            closable: false
+            text: qsTr("Its files changed, but HikariSub kept running the last good ones: %1").arg(details.row.devProblem)
+            Layout.fillWidth: true
+        }
+        InlineBar {
+            objectName: "pluginDevAsksBar"
+            visible: details.row.devAsks
+            iconRole: "plugin-update"
+            closable: false
+            text: qsTr("Its files changed and ask for more than you said yes to, so the change waits for you.")
+            Layout.fillWidth: true
+            Button {
+                objectName: "pluginDevReview"
+                text: qsTr("Review…")
+                font.bold: true
+                onClicked: dialog.reviewDev(details.row.folder)
+            }
+        }
+        InlineBar {
+            objectName: "pluginOverriddenBar"
+            visible: details.row.overrides.length > 0
+            iconRole: "folder-open"
+            closable: false
+            text: qsTr("The installed %1 is overridden by a dev plugin until you unload it.").arg(details.row.overrides)
+            Layout.fillWidth: true
+        }
+        InlineBar {
             objectName: "pluginRevokedBar"
             visible: details.row.revoked
             severity: "error"
@@ -966,6 +1047,13 @@ DialogWindow {
                         visible: details.row.official
                         iconRole: "plugin-official"
                         text: dialog.officialText
+                        color: Theme.accent
+                    }
+                    Badge {
+                        objectName: "pluginDetailsDev"
+                        visible: details.row.source === "dev"
+                        iconRole: "folder-open"
+                        text: dialog.devText
                         color: Theme.accent
                     }
                     LinkButton {
@@ -1256,6 +1344,7 @@ DialogWindow {
             }
             IconTextButton {
                 objectName: "pluginUpdateFromFile"
+                visible: details.row.source !== "dev"
                 iconRole: "plugin-update"
                 text: qsTr("Update from file…")
                 onClicked: {
@@ -1272,7 +1361,7 @@ DialogWindow {
             Item { Layout.fillWidth: true }
             DangerButton {
                 objectName: "pluginUninstall_" + details.row.id
-                text: qsTr("Uninstall…")
+                text: details.row.source === "dev" ? qsTr("Unload…") : qsTr("Uninstall…")
                 onClicked: dialog.askUninstall(details.row)
             }
         }
@@ -1346,5 +1435,11 @@ DialogWindow {
         nameFilters: [qsTr("HikariSub plugins (*.hikariplugin)")]
         fileMode: Dialogs.FileDialog.OpenFile
         onAccepted: dialog.reviewPackage(selectedFile, updating)
+    }
+    FolderChooser {
+        id: devPicker
+        objectName: "pluginDevPicker"
+        title: qsTr("Choose a plugin folder")
+        onAccepted: dialog.reviewDev(selectedFolder)
     }
 }
