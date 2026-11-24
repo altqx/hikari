@@ -448,6 +448,7 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
         {"GLOBAL_QUICK_FIX", 5373},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
+        {"GLOBAL_IMPORT_TEXT", 5375},
 };
 
 struct NameRow {
@@ -865,6 +866,7 @@ constexpr NameRow kNames[] = {
         {5351, "Close keyframes"},
         {5373, "Quick fix"},
         {5374, "Full screen typesetting"},
+        {5375, "Import text…"},
 };
 
 struct DefaultRow {
