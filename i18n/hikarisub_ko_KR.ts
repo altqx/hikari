@@ -12940,11 +12940,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not wired</source>
-        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -12955,19 +12950,61 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Choose a colour</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>%n nodes selected.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Select a node to see its fields.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n %1 nodes</source>
+        <translation>
+            <numerusform>%1 노드 %n개</numerusform>
+        </translation>
+    </message>
     <message>
         <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a value to change it · Shift for fine steps</source>
+        <translation>끌어서 값 바꾸기 · Shift로 미세 조정</translation>
+    </message>
+    <message>
+        <source>Wired</source>
+        <translation>연결됨</translation>
+    </message>
+    <message>
+        <source>On line %1</source>
+        <extracomment>The Node panel&apos;s heading for the values from the last preview run on a line</extracomment>
+        <translation>%1번 줄에서</translation>
+    </message>
+    <message>
+        <source>from the last run · %1 a line</source>
+        <translation>마지막 실행 기준 · 줄당 %1</translation>
+    </message>
+    <message>
+        <source>→ %1</source>
+        <extracomment>An output&apos;s wires in the Node panel: &quot;→ fade › tags, emit › tags&quot;</extracomment>
+        <translation>→ %1</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>선택 항목</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>그룹으로 묶기</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Values from the last run show for one node at a time.</source>
+        <translation>마지막 실행의 값은 한 번에 노드 하나씩만 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>문제</translation>
     </message>
     <message>
         <source>Name</source>
@@ -12978,9 +13015,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mixed</source>
+        <translation>혼합</translation>
+    </message>
+    <message>
+        <source>Changed from the default</source>
+        <extracomment>Read out by screen readers for a Node panel field whose value isn&apos;t the node&apos;s default</extracomment>
+        <translation>기본값에서 변경됨</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>기본값으로 재설정</translation>
+    </message>
+    <message>
         <source>+ graph seed %1</source>
         <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to “%1”</source>
+        <extracomment>Selects and centres the node a wired input comes from</extracomment>
+        <translation>“%1”(으)로 이동</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>기본값</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <extracomment>The axis after a point&apos;s coordinate in the Node panel</extracomment>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>y</source>
+        <translation>y</translation>
+    </message>
+    <message>
+        <source>Pick on the video</source>
+        <translation>영상에서 지정</translation>
     </message>
     <message>
         <source>Lua code</source>
@@ -12999,8 +13071,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>At least %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a smaller value: &quot;At least 1&quot;</extracomment>
+        <translation>%1 이상</translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a larger value: &quot;At most 400&quot;</extracomment>
+        <translation>%1 이하</translation>
+    </message>
+    <message>
+        <source>Between %1 and %2</source>
+        <extracomment>A refused value in the Node panel: &quot;Between 10 and 400&quot;</extracomment>
+        <translation>%1에서 %2 사이</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <extracomment>A unit after a number in the Node panel: pixels</extracomment>
+        <translation>px</translation>
+    </message>
+    <message>
         <source>ms</source>
+        <extracomment>The unit after a time in the Node panel: milliseconds</extracomment>
         <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>Enter a number</source>
+        <translation>숫자를 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Enter X and Y as numbers</source>
+        <translation>X와 Y를 숫자로 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Enter a colour as #RRGGBB</source>
+        <translation>색상을 #RRGGBB 형식으로 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Enter a name</source>
+        <translation>이름을 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Use only letters, digits, _ and -</source>
+        <translation>문자, 숫자, _, -만 사용하십시오</translation>
+    </message>
+    <message>
+        <source>Another node is called “%1”.</source>
+        <extracomment>A refused node name: “fade” is the name another node has</extracomment>
+        <translation>이름이 “%1”인 노드가 이미 있습니다.</translation>
     </message>
     <message>
         <source>New seed</source>
@@ -13015,20 +13133,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>to %1</source>
-        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On line %1, from the last run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13045,18 +13150,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished">타이밍</translation>
+        <translation type="obsolete">타이밍</translation>
     </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Last run %1 on line %2</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>1 line</source>
@@ -30130,6 +30231,17 @@ do not work on comments</source>
     <message>
         <source>QT_LAYOUT_DIRECTION</source>
         <translation>LTR</translation>
+    </message>
+</context>
+<context>
+    <name>ScrubField</name>
+    <message>
+        <source>Step down</source>
+        <translation>한 단계 줄이기</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>한 단계 늘리기</translation>
     </message>
 </context>
 </TS>
