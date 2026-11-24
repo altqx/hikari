@@ -464,3 +464,72 @@ TEST(Resample, AdjustedRotationsAreOneUndoStep)
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(saved(session.document()), before);
 }
+
+TEST(Resample, FittingEdgesAreAegisubsAddAndRemoveBorders)
+{
+    EXPECT_EQ(fittingEdges({1440, 1080}, {1920, 1080}, false), (Edges{240, 240, 0, 0}));
+    EXPECT_EQ(fittingEdges({1440, 1080}, {1920, 1080}, true), (Edges{0, 0, -135, -135}));
+    EXPECT_EQ(fittingEdges({1920, 1080}, {1920, 800}, false), (Edges{336, 336, 0, 0}));
+    EXPECT_EQ(fittingEdges({1920, 1080}, {1920, 800}, true), (Edges{0, 0, -140, -140}));
+    EXPECT_EQ(fittingEdges({1920, 1080}, {1440, 1080}, false), (Edges{0, 0, 180, 180}));
+    EXPECT_EQ(fittingEdges({1920, 1080}, {1440, 1080}, true), (Edges{-240, -240, 0, 0}));
+    EXPECT_EQ(fittingEdges({1920, 1080}, {1920, 1088}, false), Edges{});
+    EXPECT_EQ(fittingEdges({0, 1080}, {1920, 1080}, false), Edges{});
+}
+
+TEST(Resample, EdgesMovePositionsClipsAndMarginsButNotDrawings)
+{
+    EditSession boxed{load(kScript)};
+    ASSERT_TRUE(changeResolution(boxed, {1440, 1080}, {1920, 1080}, true,
+                                 {.edges = fittingEdges({1440, 1080}, {1920, 1080}, false)}));
+    const auto &d = boxed.document();
+    const auto style = core::decodeStyles(d).front();
+    EXPECT_EQ(style.marginLeft, u8"250");
+    EXPECT_EQ(style.marginRight, u8"255");
+    EXPECT_EQ(style.marginVertical, u8"10");
+    EXPECT_EQ(style.fontsize, u8"20");
+    EXPECT_EQ(text(d, 0), "{\\pos(340,50)\\bord2\\fs20\\clip(m 240 0 l 250 0 250 10)}a{\\p1}m 0 0 l 4 4{\\p0}");
+    EXPECT_EQ(text(d, 1), "{\\fscx100\\xbord2\\yshad2\\move(250,20,270,40,0,500)\\clip(241,2,243,4)}b");
+    EXPECT_EQ(d.lines()[1]->marginLeft.value, 250);
+    EXPECT_EQ(d.lines()[1]->marginRight.value, 0);
+    EXPECT_EQ(d.lines()[1]->marginVertical.value, 7);
+
+    EditSession cropped{load(kScript)};
+    ASSERT_TRUE(changeResolution(cropped, {1920, 1080}, {1440, 1080}, true,
+                                 {.edges = fittingEdges({1920, 1080}, {1440, 1080}, true)}));
+    EXPECT_EQ(text(cropped.document(), 1), "{\\fscx100\\xbord2\\yshad2\\move(-230,20,-210,40,0,500)\\clip(-239,2,-237,4)}b");
+}
+
+TEST(Resample, TopAndBottomEdgesGrowLayoutResYAsAegisub351Does)
+{
+    EditSession taller{load(withLayout(kScript, "\nLayoutResX: 1920\nLayoutResY: 1080"))};
+    ASSERT_TRUE(changeResolution(taller, {1920, 1080}, {1920, 1440}, true,
+                                 {.edges = fittingEdges({1920, 1080}, {1920, 1440}, false)}));
+    EXPECT_EQ(taller.document().scriptInfo(u8"LayoutResX"), u8"1920");
+    EXPECT_EQ(taller.document().scriptInfo(u8"LayoutResY"), u8"1440");
+    EXPECT_EQ(text(taller.document(), 0).substr(0, 15), "{\\pos(100,230)\\");
+
+    EditSession custom{load(withLayout(kScript, "\nLayoutResX: 640\nLayoutResY: 360"))};
+    ASSERT_TRUE(changeResolution(custom, {640, 360}, {1280, 720}, true, {.edges = {0, 0, 20, 0}}));
+    EXPECT_EQ(custom.document().scriptInfo(u8"LayoutResY"), u8"380");
+    EXPECT_EQ(custom.document().scriptInfo(u8"LayoutResX"), u8"676");
+}
+
+TEST(Resample, TheMatrixConvertsInTheSameStep)
+{
+    EditSession session{load(withLayout(kScript, "\nYCbCr Matrix: TV.601"))};
+    const auto steps = session.historySize();
+    ResampleOptions options;
+    options.matrix = "TV.709";
+    ASSERT_TRUE(changeResolution(session, {640, 360}, {1280, 720}, true, options));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.document().scriptInfo(u8"YCbCr Matrix"), u8"TV.709");
+    EXPECT_EQ(core::decodeStyles(session.document()).front().secondary, (core::Colour{255, 25, 0, 0}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.document().scriptInfo(u8"YCbCr Matrix"), u8"TV.601");
+    EXPECT_EQ(session.document().scriptInfo(u8"PlayResX"), u8"640");
+
+    EditSession unset{load(kScript)};
+    EXPECT_FALSE(changeResolution(unset, {640, 360}, {1280, 720}, true, options));
+    EXPECT_EQ(unset.document().scriptInfo(u8"PlayResX"), u8"640");
+}

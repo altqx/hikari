@@ -15,7 +15,7 @@ DialogWindow {
     defaultButton: resampleButton
     initialFocus: targetWidth
     property var initial: ({})
-    property bool stretch: false
+    property string aspect: "keep"
     property var document: 0
     Connections {
         target: dialog.app
@@ -46,12 +46,77 @@ DialogWindow {
         subsHeight.value = v.subsHeight
         targetWidth.value = v.videoWidth
         targetHeight.value = v.videoHeight
-        stretch = false
+        aspect = "keep"
+        sameOnBothSides.checked = true
+        edgesSection.expanded = false
+        setEdges([0, 0, 0, 0])
+        matrix.currentIndex = 0
         adjustRotations.checked = true
         document = app.editingDocument()
         open()
     }
     readonly property bool aspectChanges: targetWidth.value / subsWidth.value !== targetHeight.value / subsHeight.value
+    readonly property bool shapeDiffers:
+        Math.abs((targetWidth.value / subsWidth.value) / (targetHeight.value / subsHeight.value) - 1) >= 0.01
+    readonly property var edges: shapeDiffers ? [edgeLeft.value, edgeRight.value, edgeTop.value, edgeBottom.value]
+                                              : [0, 0, 0, 0]
+    property bool fillingEdges: false
+    function setEdges(e) {
+        fillingEdges = true
+        edgeLeft.value = e[0]
+        edgeRight.value = e[1]
+        edgeTop.value = e[2]
+        edgeBottom.value = e[3]
+        fillingEdges = false
+    }
+    function fitEdges() {
+        if (aspect === "letterbox" || aspect === "crop")
+            setEdges(app.resampleEdges(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value,
+                                       aspect === "crop"))
+        else if (aspect !== "custom")
+            setEdges([0, 0, 0, 0])
+    }
+    onAspectChanged: fitEdges()
+    function edgeEdited() {
+        if (fillingEdges)
+            return
+        if (sameOnBothSides.checked) {
+            fillingEdges = true
+            edgeRight.value = edgeLeft.value
+            edgeBottom.value = edgeTop.value
+            fillingEdges = false
+        }
+        aspect = "custom"
+    }
+    readonly property var aspectHints: ({
+        keep: qsTr("Text keeps its proportions. Positions follow the new picture."),
+        stretch: qsTr("Text stretches with the picture."),
+        letterbox: qsTr("The video adds bars around the picture the subtitles were made for. Signs stay on what they mark."),
+        crop: qsTr("The video cuts off the edges of the picture the subtitles were made for. Signs stay on what they mark."),
+        custom: qsTr("Custom edges. Text keeps its proportions.")
+    })
+    readonly property string edgesSummary: {
+        const parts = []
+        const add = (value, text) => { if (value !== 0) parts.push(text.arg(value)) }
+        add(edgeLeft.value, qsTr("Left %1"))
+        add(edgeRight.value, qsTr("Right %1"))
+        add(edgeTop.value, qsTr("Top %1"))
+        add(edgeBottom.value, qsTr("Bottom %1"))
+        return parts.join(" · ")
+    }
+    readonly property var matrixChoices: {
+        const keep = initial.matrix ?? ""
+        if (keep === "")
+            return [{ text: qsTr("Keep as is"), value: "" }]
+        const out = [{ text: qsTr("Keep %1").arg(keep), value: "" }]
+        const video = initial.videoMatrix ?? ""
+        if (video !== "" && video !== keep)
+            out.push({ text: qsTr("%1 (video)").arg(video), value: video })
+        for (const m of initial.matrices ?? [])
+            if (m !== keep && m !== video)
+                out.push({ text: m, value: m })
+        return out
+    }
     readonly property bool same: subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value
     function scale(v) { return String(Math.round(v * 1000) / 1000) }
     function ratio(w, h) {
@@ -72,11 +137,17 @@ DialogWindow {
                 return
             }
         }
-        app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value, aspectChanges && stretch,
-                     adjustRotations.checked)
+        app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value,
+                     shapeDiffers && aspect === "stretch", adjustRotations.checked, edges,
+                     matrixChoices[matrix.currentIndex]?.value ?? "")
         close()
     }
 
+    component EdgeBox: SpinBox {
+        from: -10000; to: 10000; editable: true
+        Layout.preferredWidth: 110
+        onValueModified: dialog.edgeEdited()
+    }
     component Hint: Label {
         Layout.fillWidth: true
         Layout.preferredWidth: 200
@@ -192,22 +263,108 @@ DialogWindow {
     FormSection {
         objectName: "resampleAspectSection"
         title: qsTr("Aspect ratio")
-        visible: dialog.aspectChanges
+        visible: dialog.shapeDiffers
         ColumnLayout {
             spacing: 6
             Layout.fillWidth: true
             SegmentedButtons {
                 objectName: "resampleAspect"
-                Layout.preferredWidth: 240
                 choices: [{ text: qsTr("Keep it"), name: "resampleKeep" },
-                          { text: qsTr("Stretch"), name: "resampleStretch" }]
-                currentIndex: dialog.stretch ? 1 : 0
-                onActivated: i => dialog.stretch = i === 1
+                          { text: qsTr("Stretch"), name: "resampleStretch" },
+                          { text: qsTr("Letterbox"), name: "resampleLetterbox" },
+                          { text: qsTr("Crop"), name: "resampleCrop" }]
+                currentIndex: ["keep", "stretch", "letterbox", "crop"].indexOf(dialog.aspect)
+                onActivated: i => dialog.aspect = ["keep", "stretch", "letterbox", "crop"][i]
             }
             Hint {
                 text: qsTr("The aspect ratio changes from %1 to %2.").arg(dialog.ratio(subsWidth.value, subsHeight.value),
                                                                            dialog.ratio(targetWidth.value, targetHeight.value))
             }
+            Hint {
+                objectName: "resampleAspectHint"
+                text: dialog.aspectHints[dialog.aspect]
+            }
+        }
+    }
+    Connections {
+        target: subsWidth
+        function onValueChanged() { dialog.fitEdges() }
+    }
+    Connections {
+        target: subsHeight
+        function onValueChanged() { dialog.fitEdges() }
+    }
+    Connections {
+        target: targetWidth
+        function onValueChanged() { dialog.fitEdges() }
+    }
+    Connections {
+        target: targetHeight
+        function onValueChanged() { dialog.fitEdges() }
+    }
+    FormSection {
+        id: edgesSection
+        objectName: "resampleEdges"
+        title: qsTr("Edges")
+        visible: dialog.shapeDiffers
+        expanded: false
+        summary: expanded ? "" : dialog.edgesSummary
+        onToggled: open => expanded = open
+        GridLayout {
+            columns: 6
+            columnSpacing: 6
+            rowSpacing: 6
+            Label { text: qsTr("Left") }
+            EdgeBox { id: edgeLeft; objectName: "resampleEdgeLeft"; Accessible.name: qsTr("Left edge") }
+            Label { text: qsTr("px"); color: Theme.muted }
+            Label { text: qsTr("Right"); Layout.leftMargin: 12 }
+            EdgeBox {
+                id: edgeRight
+                objectName: "resampleEdgeRight"
+                enabled: !sameOnBothSides.checked
+                Accessible.name: qsTr("Right edge")
+            }
+            Label { text: qsTr("px"); color: Theme.muted }
+            Label { text: qsTr("Top") }
+            EdgeBox { id: edgeTop; objectName: "resampleEdgeTop"; Accessible.name: qsTr("Top edge") }
+            Label { text: qsTr("px"); color: Theme.muted }
+            Label { text: qsTr("Bottom"); Layout.leftMargin: 12 }
+            EdgeBox {
+                id: edgeBottom
+                objectName: "resampleEdgeBottom"
+                enabled: !sameOnBothSides.checked
+                Accessible.name: qsTr("Bottom edge")
+            }
+            Label { text: qsTr("px"); color: Theme.muted }
+        }
+        CheckBox {
+            id: sameOnBothSides
+            objectName: "resampleSameOnBothSides"
+            text: qsTr("Same on both sides")
+            checked: true
+            onToggled: if (checked) dialog.edgeEdited()
+        }
+        Hint { text: qsTr("Added to (+) or cut from (−) each edge of the subtitles’ picture before it is scaled.") }
+    }
+    GridLayout {
+        columns: 2
+        columnSpacing: 12
+        rowSpacing: 6
+        Layout.fillWidth: true
+        Label { text: qsTr("YCbCr matrix") }
+        ComboBox {
+            id: matrix
+            objectName: "resampleMatrix"
+            model: dialog.matrixChoices
+            textRole: "text"
+            enabled: (dialog.initial.matrix ?? "") !== ""
+            Accessible.name: qsTr("YCbCr matrix")
+        }
+        Item { implicitWidth: 1 }
+        Hint {
+            objectName: "resampleMatrixHint"
+            text: matrix.enabled ? qsTr("Colours are converted so that they look the same under the new matrix.")
+                                 : qsTr("The subtitles have no YCbCr matrix to convert from.")
         }
     }
     ColumnLayout {

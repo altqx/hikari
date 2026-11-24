@@ -771,7 +771,8 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
         if (const QString why = spec->second.refuse(arguments); !why.isEmpty())
             return refuse(rpc::kInvalidParams, why.toStdString());
     }
-    QProcessEnvironment environment = sidecarEnvironment(QProcessEnvironment::systemEnvironment());
+    QProcessEnvironment environment =
+        spec->second.confined ? QProcessEnvironment() : sidecarEnvironment(QProcessEnvironment::systemEnvironment());
     environment.insert(spec->second.environment);
     if (const api::Json *env = params.find("env"); env && env->isObject())
         for (const auto &[name, value] : env->asObject())
@@ -779,6 +780,8 @@ void AgentBroker::start(const api::Json &params, const Answer &answer)
                 environment.insert(QString::fromStdString(name), QString::fromStdString(value.asString()));
 
     auto launcher = std::make_unique<sandbox::Launcher>(spec->second.profile);
+    if (spec->second.confined && (!spec->second.profile || !launcher->coverage().complete()))
+        return refuse(rpc::kBusy, "the sandbox can't apply here: " + launcher->coverage().missing.toStdString());
     if (spec->second.profile && !launcher->coverage().missing.isEmpty()) {
         if (spec->second.profile->lowRightsHelper)
             return refuse(rpc::kBusy, "the agent can't start at low rights: " + launcher->coverage().missing.toStdString());

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/problems.h"
 #include "hikari/application/row_marks.h"
 
 #include "hikari/app/ai_karaoke.h"
@@ -22,6 +23,8 @@
 #include "hikari/app/lyrics_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
+#include "hikari/app/problems_controller.h"
+#include "hikari/app/reading_problems.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
@@ -565,11 +568,16 @@ public:
     // The current tab's loaded keyframes file; empty when none.
     QString keyframesFile() const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
-    // video size is the subtitles'); empty for a Document that is not ASS.
+    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo, matrix, videoMatrix, matrices} (without a
+    // video the video size is the subtitles'); matrix is "" unless the subtitles name one that converts, and
+    // videoMatrix "" unless the video's does. Empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
+    // [left, right, top, bottom]: application::fittingEdges.
+    Q_INVOKABLE QVariantList resampleEdges(int subsWidth, int subsHeight, int width, int height, bool crop) const;
+    // `edges` as resampleEdges gives them; `matrix` converts the colours to it ("" keeps the matrix).
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch,
-                              bool adjustRotations = true);
+                              bool adjustRotations = true, const QVariantList &edges = {},
+                              const QString &matrix = {});
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
     // {data (the clipboard's Power-Pin data when it fits the selection), frames, firstFrame, relativeFrame,
@@ -820,6 +828,9 @@ public:
     Q_INVOKABLE QVariantList columnChoices(bool paste);
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
+    // The style step from the active Line: {from, fromNumber, id, number}; no id at either end.
+    // Through the picked Lines when several are picked, else every shown Line, in Grid order.
+    Q_INVOKABLE QVariantMap styleStep(int direction) const;
     // columns: bits OR'ed; the choice is remembered.
     // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
     Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
@@ -984,6 +995,8 @@ public:
     VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
+    ProblemsController &problemsList() { return *m_problemsList; }
+    application::Problems &problems() { return m_problems; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -1293,7 +1306,7 @@ private:
     void refreshVideo();
     void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
-                          bool adjustRotations);
+                          bool adjustRotations, application::Edges edges = {}, const std::string &matrix = {});
     application::visual::perspective::TextMeasure perspectiveMeasure() const;
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
@@ -1478,6 +1491,8 @@ private:
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
     application::RowMarks m_rowMarks;
+    application::Problems m_problems;
+    ReadingProblems m_readingProblems{m_problems};
     std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
@@ -1509,6 +1524,7 @@ private:
     std::unique_ptr<LyricsImportController> m_lyricsImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
+    std::unique_ptr<ProblemsController> m_problemsList;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;
@@ -1726,6 +1742,7 @@ private:
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
+    void syncReadingProblems();
     std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);

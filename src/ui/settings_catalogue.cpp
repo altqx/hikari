@@ -156,6 +156,7 @@ constexpr Row kRows[] = {
     {"grid.cpsError", "grid.counting", {QT_TRANSLATE_NOOP("HikariSub.Options", "CPS error")}, {}},
     {"grid.lineLength", "grid.counting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Characters per line")}, {}},
     {"grid.maxLines", "grid.counting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Lines")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "A subtitle file can set its own limits in Script properties.")}},
+    {"problems.reading", "grid.counting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Show reading-limit problems")}, {}},
     {"grid.splitFramesBakeAnimations", "grid.splitting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Bake animations when splitting into frames")}, {}},
     {"grid.insertStartOffset", "grid.newLines", {QT_TRANSLATE_NOOP("HikariSub.Options", "Start frame offset")}, {}},
     {"grid.insertEndOffset", "grid.newLines", {QT_TRANSLATE_NOOP("HikariSub.Options", "End frame offset")}, {}},

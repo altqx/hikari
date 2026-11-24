@@ -32,6 +32,7 @@
 #include <QObject>
 #include <QString>
 #include <QTimer>
+#include <QVariantMap>
 
 #include <functional>
 #include <map>
@@ -74,6 +75,7 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     // Template Lines with problems in the last run's karaoke report.
     Q_PROPERTY(int problems READ problems NOTIFY progressChanged)
     Q_PROPERTY(QObject *packages READ packages CONSTANT)
+    Q_PROPERTY(int checksRevision READ checksRevision NOTIFY checksChanged)
 public:
     struct Paths {
         QString helper;
@@ -161,8 +163,13 @@ public:
     // Unlisted paths the editing target's Script Info names: each Script Info value only once, then only the
     // scripts declined for this file. Never touches the file system.
     Q_INVOKABLE QStringList documentScriptsToLoad();
-    // Loads the Document's scripts and reloads every script whose file changed.
+    // Loads the Document's scripts, reloads every script whose file changed, and checks which macros can run on
+    // the selection.
     Q_INVOKABLE void menuOpened();
+    // How the Automation menu shows a macro: `reason` when it can't run on the selection, `note` while it's being
+    // checked, `help` from its validation function and `active` from its isactive function. Empty before a check.
+    Q_INVOKABLE QVariantMap macroCheck(const QString &script, int ordinal) const;
+    int checksRevision() const { return m_checksRevision; }
     // The first macro of the last Document script; while another macro runs, it waits for it.
     Q_INVOKABLE void runLastLoadedScript();
     // Emits chooseScriptEditor first when no editor is set or Shift is held.
@@ -240,6 +247,7 @@ public:
 
 signals:
     void progressChanged();
+    void checksChanged();
     void windowScriptsChanged();
     // `message`: why, when the macro changed nothing.
     void runCompleted(bool ok, const QString &message);
@@ -383,6 +391,21 @@ private:
     bool m_cancelling = false;
     bool m_progressKnown = false;
     int m_problems = 0;
+    struct MacroChecks {
+        std::uint64_t serial = 0;
+        std::uint64_t revision = 0;
+        std::uint64_t generation = 0;
+        std::vector<int> selected;
+        int active = -1;
+        bool pending = false;
+        bool done = false;
+        bool rerun = false;
+        std::map<int, application::MacroCheck> byOrdinal;
+    };
+    std::map<std::string, MacroChecks> m_checks;
+    int m_checksRevision = 0;
+    void startChecks();
+    void takeChecks(const QString &path);
 };
 
 }

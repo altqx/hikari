@@ -8,6 +8,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <functional>
 #include <memory>
 #include <vector>
 
@@ -23,9 +24,10 @@ class AiFeatures;
 /// like providers, because a secret goes straight to the keychain.
 class AiMcpServers final : public QObject {
     Q_OBJECT
-    /// Each {id, name, transport ("stdio" or "http"), command, url, trusted, approved, tools, state, error,
-    /// toolCount}. command is the command line as typed; tools are {name, readOnly, alwaysAsks} for those it listed
-    /// the last time it ran, after its trust.
+    /// Each {id, plugin, on, name, transport ("stdio" or "http"), command, url, trusted, approved, tools, state, error,
+    /// toolCount}: the user's servers, then those of the plugins that are on. command is the command line as typed,
+    /// empty for a plugin's; tools are {name, readOnly, alwaysAsks} for those it listed the last time it ran, after its
+    /// trust. A plugin's server is `on` once the user turns it on.
     Q_PROPERTY(QVariantList servers READ servers NOTIFY serversChanged)
 
 public:
@@ -39,6 +41,7 @@ public:
     /// Answers with saved(id, error); error is "" or names the field: "name", "command", "url" or "keychain".
     Q_INVOKABLE void save(const QVariantMap &form);
     Q_INVOKABLE void remove(const QString &id);
+    Q_INVOKABLE void setOn(const QString &id, bool on);
     Q_INVOKABLE void setTrusted(const QString &id, bool trusted);
     Q_INVOKABLE void setApproved(const QString &id, const QString &tool, bool approved);
 
@@ -49,6 +52,10 @@ signals:
 private:
     std::vector<backends::ai::McpServerEntry> entries() const;
     void store(const std::vector<backends::ai::McpServerEntry> &servers);
+    std::vector<backends::ai::McpServerEntry> choices() const;
+    void storeChoices(const std::vector<backends::ai::McpServerEntry> &chosen);
+    // False when `id` is no plugin server.
+    bool changeChoice(const QString &id, const std::function<void(backends::ai::McpServerEntry &)> &change);
     void watch();
 
     ui::SettingsStore &m_settings;

@@ -186,6 +186,7 @@ The helper framing ([`helper_protocol.h`](../src/backends/include/hikari/backend
 | `hikari.timer.after(ms, fn)`, `hikari.timer.every(ms, fn)`, `hikari.timer.cancel(id)` | A background plugin's timers. See [Background plugins and time](#background-plugins-and-time). |
 | `hikari.formats.exporter(id, fn)`, `hikari.formats.importer(id, fn)` | Writes and reads a subtitle format from `contributes.formats`. See [Formats](#formats). |
 | `hikari.marks.set(marks, document)`, `hikari.marks.clear(lines, document)`, `hikari.marks.list(document)` | The plugin's Grid row marks. See [Grid row marks](#grid-row-marks). |
+| `hikari.problems.set(problems, {revision, set, document})`, `hikari.problems.clear{document, set}`, `hikari.problems.list{document, lines, severity, source}`, `hikari.problems.fix(problem, fix, document)` | The plugin's problems: squiggles, Grid marks and rows of the Problems list. See [Language features and problems](#language-features-and-problems). |
 | `hikari.vcs.refs(options)`, `hikari.vcs.show(ref, document)` | The git repository holding a Document, read-only, with `vcs.read`. See [Git](#git). |
 | `hikari.presence.set_text(text)` | The plugin's text for `{plugin}` in the user's Discord status, with `presence`. See [Discord status text](#discord-status-text). |
 | `hikari.dialogs.show(dialog, spec)`, `hikari.dialogs.ask(dialog, spec)`, `hikari.dialogs.close(dialog)`, `hikari.dialogs.on(dialog, fn)` | Opens a dialog, or opens one and waits for its answer `button, values`; closes it; and calls `fn(event)` for its events. |
@@ -633,7 +634,7 @@ Other colours are refused, so the icons follow the theme and high contrast. A ro
 | `graphs` | `{id, title, path}`, a graph `.json` in the [graph format](node-effects.md#the-graph-format) | The node-effect graph library, in a group per plugin. |
 | `snippets` | `{id, title, insert, prefix, description}`. `insert` is ASS text with `$1` to `$9`, `${1:default}` and `$0` tab stops. | The line editor's tag completion, after the built-in tags, when the typed text starts `prefix`, such as `\fad`. Tab moves between stops. |
 | `dictionaries` | `{language, title, aff, dic}`, a Hunspell pair such as `en_US` | The spell checker's languages, after the user's and the bundled ones. A plugin dictionary never replaces a language the user already has. |
-| `layouts` | `{id, title, path}`, a `.json` holding one arrangement envelope as in [docking](docking.md) | Manage layouts, in a group per plugin. Applying it works like applying a saved layout. |
+| `layouts` | `{id, title, path}`, a `.json` holding one arrangement envelope as in [docking](docking.md) | View › Layout, the layout switcher and Manage layouts, as `<title> (<plugin>)`, after the user's own layouts and in a group per plugin. Applying it works like applying a saved layout, and Reset this layout returns to it. A saved layout of the same name wins. Save layout as… makes an editable copy. |
 
 ### Menus, status items and shortcuts
 
@@ -880,9 +881,10 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
 **The problems list.** It is the QC notes panel grown, titled **Problems** with dock id `QcNotes` and panel registry 12 unchanged.
 
 - **What it holds.** The open QC notes as the `QC notes` source, and every plugin's and language server's problems, grouped by Line in Document order.
+- **Reading.** HikariSub's own source `reading` lists the Lines past the [reading limits](ux/grid-operations.md#reading-limits) as whole-Line problems: an error at the CPS error level, a warning at the CPS warning level, and a warning for each line longer than the characters-per-line limit and for more lines than the Lines limit. Comment Lines are skipped and there are no quick fixes. The Grid's CPS and Wraps tint already shows these, so they get no Grid marks. **Show reading-limit problems** (`problems.reading`, on by default) in Settings › Grid › Counting turns the source off (Q799).
 - **QC notes.** A note sits on the Line the QC notes panel already matches it to (the latest start at its time, else the nearest within 15 seconds), or under No line. Its section is its source's `set`. QC notes keep their own Grid flags and get no problem marks.
 - **The toolbar.** It filters by severity and source and keeps QC notes' own Add note and import and export.
-- **Using a row.** Choosing a row selects its Line and seeks the video to its start. A row's quick fixes are in its menu and under Ctrl+. in the line editor.
+- **Using a row.** Choosing a row selects its Line and seeks the video to its start. A row's quick fixes are in its menu and under Quick fix (Alt+Enter, Global 5373) in the line editor.
 - **A quick fix** is one undo step named "<source>: <fix>".
 - **QC notes** keep their editor, times, sections and done state.
 
@@ -938,7 +940,8 @@ end)
 - **In Settings › AI › MCP servers** it shows as `<title> (<plugin>)`, off until the user turns it on. The user can't edit its command; its environment comes from the plugin's settings through `${setting:<id>}`.
 - **Its tools** follow the [MCP rules](ai-mcp-clients.md), with trust off by default.
 - **Sandboxed.** It runs in the sandbox as a program, unlike a server the user adds.
-- **When it goes.** Turning the plugin off or uninstalling it removes the server from every thread.
+- **When it goes.** Turning the plugin off or uninstalling it removes the server from every thread. Uninstalling also forgets that the user turned it on.
+- **How Qt runs it:** [plugin servers](ai-mcp-clients.md#plugin-servers).
 
 ### Formats
 

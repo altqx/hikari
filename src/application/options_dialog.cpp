@@ -200,6 +200,7 @@ constexpr OptionsBinding kBindings[] = {
     {"grid.cpsError", Number, Grid, 1, 100},
     {"grid.lineLength", Number, Grid, 1, 1000},
     {"grid.maxLines", Number, Grid, 1, 20},
+    {"problems.reading", Check, Grid},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

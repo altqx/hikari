@@ -8,6 +8,7 @@ FocusScope {
     id: panel
     required property QtObject agent
     property QtObject aiSettings: null
+    property AppQuickInput quickInput: null
     signal reviewRequested()
     signal restoreRequested(var turn)
     signal settingsRequested()
@@ -22,6 +23,21 @@ FocusScope {
     readonly property bool canCompact: hasThread && thread.external !== true
     readonly property real contextUsed: hasThread && thread.compactWindow > 0 ? thread.contextTokens / thread.compactWindow : 0
     readonly property bool isChild: hasThread && (thread.child?.parent ?? "").length > 0
+
+    function renameThread() {
+        const id = panel.thread.id
+        const title = panel.thread.title
+        panel.quickInput.askFor({
+            title: qsTr("Rename thread"),
+            prompt: qsTr("Thread name"),
+            value: title,
+            from: panel,
+            check: text => text.trim().length > 0 ? "" : qsTranslate("HikariSub.VisualTools", "Type a name.")
+        }, text => {
+            if (text !== null && text.trim() !== title)
+                panel.agent.rename(id, text.trim())
+        })
+    }
     property bool showingThreads: false
     property string componentResult: ""
     readonly property var download: aiSettings ? aiSettings.download : ({})
@@ -87,7 +103,7 @@ FocusScope {
         }
         panel.agent.setMode(m)
     }
-    function modelItemName(value) { return "agentModel_" + value.replace("\t", "/") }
+    readonly property string currentModel: hasThread ? (thread.model ?? "") : agent.defaultModel
     function chooseModel(value) {
         if (!hasThread)
             agent.newThread()
@@ -956,7 +972,7 @@ FocusScope {
                         Accessible.description: modelText
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Model")
-                        onClicked: modelMenu.openAbove(this)
+                        onClicked: modelPicker.openFor(this)
                     }
                     ChooserButton {
                         id: modeButton
@@ -1001,7 +1017,7 @@ FocusScope {
             objectName: "agentRenameThread"
             iconRole: "edit"
             text: qsTr("Rename thread…")
-            onTriggered: renameLoader.active = true
+            onTriggered: panel.renameThread()
         }
         ShellMenuItem {
             objectName: "agentExportThread"
@@ -1143,63 +1159,32 @@ FocusScope {
         }
     }
 
-    PanelMenu {
-        id: modelMenu
-        objectName: "agentModelMenu"
-        Instantiator {
-            model: panel.agent.agents
-            delegate: ShellMenu {
-                id: agentModelMenu
-                required property var modelData
-                readonly property var listed: panel.agent.agentModelsRevision >= 0 ? panel.agent.agentModels(modelData.agent) : ({})
-                objectName: "agentModelMenu_" + modelData.agent
-                iconRole: "ai-assistant"
-                title: modelData.text
-                onAboutToShow: panel.agent.loadAgentModels(modelData.agent)
-                MenuRadioItem {
-                    objectName: panel.modelItemName(agentModelMenu.modelData.value)
-                    text: qsTr("Agent default")
-                    checked: panel.hasThread && panel.thread.model === agentModelMenu.modelData.value
-                    onTriggered: panel.chooseModel(agentModelMenu.modelData.value)
-                }
-                Repeater {
-                    model: agentModelMenu.listed.models ?? []
-                    delegate: MenuRadioItem {
-                        required property var modelData
-                        objectName: panel.modelItemName(modelData.value)
-                        text: modelData.text
-                        checked: panel.hasThread && panel.thread.model === modelData.value
-                        onTriggered: panel.chooseModel(modelData.value)
-                    }
-                }
-                ShellMenuItem {
-                    objectName: "agentModelsLoading_" + agentModelMenu.modelData.agent
-                    text: qsTr("Loading models…")
-                    enabled: false
-                    visible: agentModelMenu.listed.loading === true
-                    height: visible ? implicitHeight : 0
-                }
-            }
-            onObjectAdded: (index, object) => modelMenu.insertMenu(index, object)
-            onObjectRemoved: (index, object) => modelMenu.removeMenu(object)
+    ModelPicker {
+        id: modelPicker
+        objectName: "agentModelPicker"
+        within: panel
+        busy: panel.agent.agentModelsLoading
+        itemsFor: filter => panel.agent.pickerItems(panel.currentModel, filter)
+        function openFor(control) {
+            for (const a of panel.agent.agents)
+                panel.agent.loadAgentModels(a.agent)
+            openAt(control)
         }
-        Repeater {
-            model: panel.agent.models.filter(m => !m.agent)
-            delegate: MenuRadioItem {
-                required property var modelData
-                objectName: panel.modelItemName(modelData.value)
-                text: modelData.text
-                detailText: modelData.provider
-                checked: panel.hasThread && panel.thread.model === modelData.value
-                onTriggered: panel.chooseModel(modelData.value)
-            }
+        onChosen: value => {
+            panel.chooseModel(value)
+            composer.forceActiveFocus()
         }
-        MenuSeparator {}
-        ShellMenuItem {
-            iconRole: "settings"
-            objectName: "agentModelSettings"
-            text: qsTr("Settings › AI")
-            onTriggered: panel.settingsRequested()
+        onActionRequested: (action, key) => {
+            if (action === "retry")
+                panel.agent.retryAgentModels(key)
+            else
+                panel.settingsRequested()
+        }
+        Connections {
+            target: panel.agent
+            function onModelsChanged() { modelPicker.refresh() }
+            function onAgentModelsChanged() { modelPicker.refresh() }
+            function onThreadChanged() { modelPicker.refresh() }
         }
     }
 
@@ -1243,50 +1228,6 @@ FocusScope {
     LazyMessageBox {
         id: deleteQuestion
         name: "agentDeleteQuestion"
-    }
-
-    Loader {
-        id: renameLoader
-        active: false
-        sourceComponent: DialogWindow {
-            id: renameDialog
-            objectName: "agentRenameWindow"
-            title: qsTr("Rename thread")
-            modal: true
-            initialFocus: renameField
-            defaultButton: renameOk
-            onAccepted: if (renameOk.enabled) panel.agent.rename(panel.thread.id, renameField.text.trim())
-            onVisibleChanged: if (!visible) Qt.callLater(() => renameLoader.active = false)
-            Component.onCompleted: {
-                renameField.text = panel.thread.title
-                renameField.selectAll()
-                open()
-            }
-            Label {
-                text: qsTr("Name")
-            }
-            TextField {
-                id: renameField
-                objectName: "agentRenameField"
-                Accessible.name: qsTr("Thread name")
-                Layout.preferredWidth: 360
-            }
-            buttons: [
-                PrimaryButton {
-                    id: renameOk
-                    objectName: "agentRenameOk"
-                    text: qsTr("Rename")
-                    enabled: renameField.text.trim().length > 0 && renameField.text.trim() !== panel.thread.title
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: renameDialog.accept()
-                },
-                Button {
-                    text: qsTr("Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: renameDialog.reject()
-                }
-            ]
-        }
     }
 
     Component {
