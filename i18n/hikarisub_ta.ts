@@ -3565,6 +3565,14 @@ Output device: %2</source>
         <translation>%1 ஐப் படிக்க முடியவில்லை.</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation>உரையை இறக்குமதி செய்</translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation>உரைக் கோப்புகள் (*.txt)</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>வசன வரிகளைத் திற</translation>
     </message>
@@ -4047,6 +4055,49 @@ Output device: %2</source>
     <message>
         <source>it isn’t running.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>கோப்பு %n MB ஐ விடப் பெரியது.</numerusform>
+            <numerusform>கோப்பு %n MB ஐ விடப் பெரியது.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation>கோப்பு UTF-8 உரையாக இல்லை. உரைத் திருத்தியில் அதை UTF-8 ஆகச் சேமித்து, பின் இறக்குமதி செய்யவும்.</translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation>இது ஒரு நேரக்குறியீட்டுக் கோப்பு. அதற்குப் பதிலாக வீடியோ › நேரக்குறியீடுகளைத் திற… மூலம் இதைத் திறக்கவும்.</translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation>கோப்பில் இறக்குமதி செய்ய வரிகள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation>நடிகர் பிரிப்பான்</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>எதுவுமில்லை</translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation>கருத்துத் தொடக்கக் குறி</translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation>வெற்று வரிகளைக் கருத்து வரிகளாக வை</translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation>நடிகர் இல்லாத வரி கடைசி நடிகரையே வைத்திருக்கும்</translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
+        <translation>கருத்து: %1</translation>
     </message>
 </context>
 <context>
@@ -9074,6 +9125,10 @@ Failed to copy %2 fonts.</source>
         <translation>பாடல் வரிகளை இறக்குமதி செய்…</translation>
     </message>
     <message>
+        <source>Import text…</source>
+        <translation>உரையை இறக்குமதி செய்…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -12325,6 +12380,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>%1 ஐத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation>சாதாரண உரைக் கோப்பைத் திறந்த கோப்பிலோ புதிய கோப்பிலோ வரிகளாக மாற்றுகிறது</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>உரையை இறக்குமதி செய்…</translation>
     </message>
     <message>
         <source>Saves the document</source>
