@@ -18612,6 +18612,99 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>A theme can’t be used: %1</source>
         <translation>ใช้ธีมไม่ได้: %1</translation>
     </message>
+    <message>
+        <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
+        <translation>ปลั๊กอินนี้ขอมากกว่าที่คุณตกลงไว้ การเปลี่ยนแปลงจึงรอให้คุณตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
+        <translation>Dev</translation>
+    </message>
+    <message>
+        <source>Dev plugin, runs from %1</source>
+        <translation>ปลั๊กอิน Dev ทำงานจาก %1</translation>
+    </message>
+    <message>
+        <source>Load dev plugin</source>
+        <translation>โหลดปลั๊กอิน Dev</translation>
+    </message>
+    <message>
+        <source>Reload dev plugin</source>
+        <translation>โหลดปลั๊กอิน Dev ใหม่</translation>
+    </message>
+    <message>
+        <source>Load “%1” %2 from its folder?</source>
+        <translation>โหลด “%1” %2 จากโฟลเดอร์ของปลั๊กอินหรือไม่</translation>
+    </message>
+    <message>
+        <source>Reload “%1” %2 from its folder?</source>
+        <translation>โหลด “%1” %2 ใหม่จากโฟลเดอร์ของปลั๊กอินหรือไม่</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to</source>
+        <translation>ปลั๊กอินนี้ขอมากกว่าที่คุณตกลงไว้</translation>
+    </message>
+    <message>
+        <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
+        <translation>ปลั๊กอิน Dev ทำงานจาก %1 ตามที่เป็นอยู่โดยไม่ได้ลงนาม และโหลดใหม่เมื่อไฟล์เปลี่ยนแปลง ปลั๊กอินนี้มีข้อมูล การตั้งค่า และโฟลเดอร์ของตัวเอง แยกจากสำเนาที่ติดตั้งไว้</translation>
+    </message>
+    <message>
+        <source>Unload and remove its data</source>
+        <translation>เลิกโหลดและลบข้อมูล</translation>
+    </message>
+    <message>
+        <source>Unload dev plugin</source>
+        <translation>เลิกโหลดปลั๊กอิน Dev</translation>
+    </message>
+    <message>
+        <source>Unload “%1”?</source>
+        <translation>เลิกโหลด “%1” หรือไม่</translation>
+    </message>
+    <message>
+        <source>The installed %1 runs again.</source>
+        <translation>%1 ที่ติดตั้งไว้จะกลับมาทำงานอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Its folder stays as it is.</source>
+        <translation>โฟลเดอร์ของปลั๊กอินยังคงอยู่ตามเดิม</translation>
+    </message>
+    <message>
+        <source>Unload</source>
+        <translation>เลิกโหลด</translation>
+    </message>
+    <message>
+        <source>Plugin not unloaded</source>
+        <translation>ไม่ได้เลิกโหลดปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install dev plugin…</source>
+        <translation>ติดตั้งปลั๊กอิน Dev…</translation>
+    </message>
+    <message>
+        <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
+        <translation>ไฟล์เปลี่ยนแปลง แต่ HikariSub ยังใช้ไฟล์ชุดล่าสุดที่ทำงานได้: %1</translation>
+    </message>
+    <message>
+        <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
+        <translation>ไฟล์เปลี่ยนแปลงและขอมากกว่าที่คุณตกลงไว้ การเปลี่ยนแปลงจึงรอคุณ</translation>
+    </message>
+    <message>
+        <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
+        <translation>ปลั๊กอิน Dev ใช้แทน %1 ที่ติดตั้งไว้จนกว่าคุณจะเลิกโหลด</translation>
+    </message>
+    <message>
+        <source>Choose a plugin folder</source>
+        <translation>เลือกโฟลเดอร์ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Unload…</source>
+        <translation>เลิกโหลด…</translation>
+    </message>
+    <message>
+        <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
+        <translation>ตอนนี้แมนิเฟสต์ระบุรหัสเป็น “%1” เลิกโหลดปลั๊กอินแล้วโหลดโฟลเดอร์อีกครั้ง</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

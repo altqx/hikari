@@ -31,6 +31,13 @@ constexpr qint64 kMaxScreenshotBytes = 2 * 1024 * 1024;
 constexpr qint64 kMaxMediaCacheBytes = 32 * 1024 * 1024;
 const QSize kMaxMediaSize(1920, 1080);
 
+plugins::Registry installedPlugins(const PluginManager &manager)
+{
+    plugins::Registry registry = manager.registry().value_or(plugins::Registry{});
+    std::erase_if(registry, [](const auto &entry) { return entry.second.source == plugins::Source::Dev; });
+    return registry;
+}
+
 QString text(std::string_view s)
 {
     return QString::fromUtf8(s.data(), qsizetype(s.size()));
@@ -367,7 +374,7 @@ void PluginMarketplace::indexFinished()
 
 void PluginMarketplace::revoke()
 {
-    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    const plugins::Registry registry = installedPlugins(m_manager);
     for (const auto &[id, entry] : registry) {
         const plugins::Listing *listing = m_index->find(id);
         if (!listing || entry.key != listing->publicKey)
@@ -390,7 +397,7 @@ void PluginMarketplace::queueUpdates()
 {
     if (!m_index || !automaticUpdates())
         return;
-    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    const plugins::Registry registry = installedPlugins(m_manager);
     for (const auto &[id, entry] : registry) {
         const plugins::Listing *listing = m_index->find(id);
         const plugins::ListedVersion *runnable = listing ? listing->newest(api::kApiVersion) : nullptr;
@@ -473,7 +480,7 @@ void PluginMarketplace::followLink()
         return;
     const plugins::Listing *listing = m_index->find(id.toStdString());
     const plugins::ListedVersion *runnable = listing ? listing->newest(api::kApiVersion) : nullptr;
-    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    const plugins::Registry registry = installedPlugins(m_manager);
     const auto installed = registry.find(id.toStdString());
     if (runnable && installed != registry.end() && plugins::compareVersions(runnable->version, installed->second.version) <= 0)
         return;
@@ -491,7 +498,7 @@ void PluginMarketplace::rebuild()
         emit changed();
         return;
     }
-    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    const plugins::Registry registry = installedPlugins(m_manager);
     QSet<QString> categories;
     for (const plugins::Listing &listing : m_index->plugins) {
         if (listing.revoked)
@@ -590,7 +597,7 @@ void PluginMarketplace::keepCurrent(const QString &id)
 
 void PluginMarketplace::installLastGood(const QString &id)
 {
-    const plugins::Registry registry = m_manager.registry().value_or(plugins::Registry{});
+    const plugins::Registry registry = installedPlugins(m_manager);
     const auto entry = registry.find(id.toStdString());
     offer(id, entry != registry.end() && entry->second.revoked ? text(entry->second.revoked->lastGood) : QString(), true);
 }

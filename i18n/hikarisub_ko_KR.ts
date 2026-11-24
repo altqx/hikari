@@ -18612,6 +18612,99 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>A theme can’t be used: %1</source>
         <translation>테마를 사용할 수 없습니다: %1</translation>
     </message>
+    <message>
+        <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
+        <translation>허용한 것보다 많은 권한을 요청하므로 변경 사항이 검토를 기다립니다.</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
+        <translation>개발</translation>
+    </message>
+    <message>
+        <source>Dev plugin, runs from %1</source>
+        <translation>개발 플러그인, %1에서 실행</translation>
+    </message>
+    <message>
+        <source>Load dev plugin</source>
+        <translation>개발 플러그인 불러오기</translation>
+    </message>
+    <message>
+        <source>Reload dev plugin</source>
+        <translation>개발 플러그인 다시 불러오기</translation>
+    </message>
+    <message>
+        <source>Load “%1” %2 from its folder?</source>
+        <translation>“%1” %2(을)를 폴더에서 불러오시겠습니까?</translation>
+    </message>
+    <message>
+        <source>Reload “%1” %2 from its folder?</source>
+        <translation>“%1” %2(을)를 폴더에서 다시 불러오시겠습니까?</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to</source>
+        <translation>허용한 것보다 많은 권한을 요청합니다</translation>
+    </message>
+    <message>
+        <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
+        <translation>개발 플러그인은 %1에서 서명 없이 그대로 실행되며, 파일이 바뀌면 다시 불러옵니다. 설치된 사본과 별도로 자체 데이터, 설정, 폴더를 가집니다.</translation>
+    </message>
+    <message>
+        <source>Unload and remove its data</source>
+        <translation>불러오기 해제 및 데이터 삭제</translation>
+    </message>
+    <message>
+        <source>Unload dev plugin</source>
+        <translation>개발 플러그인 불러오기 해제</translation>
+    </message>
+    <message>
+        <source>Unload “%1”?</source>
+        <translation>“%1”의 불러오기를 해제하시겠습니까?</translation>
+    </message>
+    <message>
+        <source>The installed %1 runs again.</source>
+        <translation>설치된 %1(이)가 다시 실행됩니다.</translation>
+    </message>
+    <message>
+        <source>Its folder stays as it is.</source>
+        <translation>폴더는 그대로 유지됩니다.</translation>
+    </message>
+    <message>
+        <source>Unload</source>
+        <translation>불러오기 해제</translation>
+    </message>
+    <message>
+        <source>Plugin not unloaded</source>
+        <translation>플러그인 불러오기를 해제하지 못함</translation>
+    </message>
+    <message>
+        <source>Install dev plugin…</source>
+        <translation>개발 플러그인 설치…</translation>
+    </message>
+    <message>
+        <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
+        <translation>파일이 변경되었지만 HikariSub은 마지막으로 정상이던 파일을 계속 실행했습니다: %1</translation>
+    </message>
+    <message>
+        <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
+        <translation>파일이 변경되었고 허용한 것보다 많은 권한을 요청하므로 변경 사항이 확인을 기다립니다.</translation>
+    </message>
+    <message>
+        <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
+        <translation>설치된 %1(은)는 불러오기를 해제할 때까지 개발 플러그인으로 대체됩니다.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin folder</source>
+        <translation>플러그인 폴더 선택</translation>
+    </message>
+    <message>
+        <source>Unload…</source>
+        <translation>불러오기 해제…</translation>
+    </message>
+    <message>
+        <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
+        <translation>이제 매니페스트에 지정된 ID가 “%1”입니다. 불러오기를 해제하고 폴더를 다시 불러오십시오.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
