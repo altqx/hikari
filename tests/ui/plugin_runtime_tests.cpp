@@ -1845,6 +1845,55 @@ hikari.providers.hover(function() return {text = "Never asked for text"} end)
         QVERIFY(!stale);
     }
 
+    void aReloadAnswersWhatWasWaitingAndTakesTheNewManifestsProviders()
+    {
+        const QString id = QStringLiteral("com.example.tags");
+        const QString folder = folders().plugins + QStringLiteral("/") + id;
+        const auto manifest = [&](bool completes) {
+            QJsonObject m{{QStringLiteral("id"), id},
+                          {QStringLiteral("name"), QStringLiteral("Tags")},
+                          {QStringLiteral("version"), QStringLiteral("1.0.0")},
+                          {QStringLiteral("api"), 1},
+                          {QStringLiteral("main"), QStringLiteral("main.lua")},
+                          {QStringLiteral("authors"), QJsonArray{QStringLiteral("Ana")}}};
+            if (completes)
+                m[QStringLiteral("contributes")] = QJsonObject{
+                    {QStringLiteral("providers"),
+                     QJsonObject{{QStringLiteral("completion"), QJsonObject{{QStringLiteral("triggers"), QJsonArray{QStringLiteral("\\")}}}}}}};
+            write(folder + QStringLiteral("/hikari-plugin.json"), QJsonDocument(m).toJson());
+            write(folder + QStringLiteral("/main.lua"),
+                  completes ? R"(hikari.providers.completion(function(r) return {{label = "\\fad"}} end))" : "");
+        };
+        manifest(true);
+        m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), true}};
+        write(folders().registry, QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.plugins = folders();
+        app::Application a(o);
+        app::LanguageProviders &providers = *a.languageProviders();
+        const app::LanguageProviders::Request request{1, 2, QStringLiteral("text"), QStringLiteral("\\"), 1, QStringLiteral("\\")};
+        QTRY_COMPARE(providers.triggers(QStringLiteral("text")), QStringList{QStringLiteral("\\")});
+
+        std::optional<std::vector<app::CompletionItem>> waiting;
+        providers.complete(request, [&](std::vector<app::CompletionItem> answer) { waiting = std::move(answer); });
+        manifest(false);
+        a.pluginRuntime()->reload(id);
+        QTRY_VERIFY(waiting.has_value());
+        QVERIFY(waiting->empty());
+        QVERIFY(providers.triggers(QStringLiteral("text")).isEmpty());
+
+        manifest(true);
+        a.pluginRuntime()->reload(id);
+        QTRY_COMPARE(providers.triggers(QStringLiteral("text")), QStringList{QStringLiteral("\\")});
+        std::optional<std::vector<app::CompletionItem>> items;
+        providers.complete(request, [&](std::vector<app::CompletionItem> answer) { items = std::move(answer); });
+        QTRY_VERIFY(items.has_value());
+        QCOMPARE(items->size(), std::size_t(1));
+        QCOMPARE(items->front().label, QStringLiteral("\\fad"));
+    }
+
     void completionItemsAndHoversKeepToTheContract()
     {
         const auto items = [](const char *json, int length, int offset) {
