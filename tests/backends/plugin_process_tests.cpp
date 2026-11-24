@@ -517,6 +517,24 @@ struct FormatResult {
 
 }
 
+TEST_F(PluginProcessTest, ACommandGivesBackWhatItsHandlerReturns)
+{
+    auto p = process(plugin("result", "hikari.commands.register('greet', function(args) return {hi = args.name} end) "
+                                      "hikari.commands.register('scan', function() end) "
+                                      "hikari.commands.register('crash', function() error('no') end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    FormatResult greeted, scanned, crashed;
+    ASSERT_TRUE(p->run("greet", R"({"args": {"name": "Ana"}})", greeted.done()));
+    ASSERT_TRUE(p->run("scan", "{}", scanned.done()));
+    ASSERT_TRUE(p->run("crash", "{}", crashed.done()));
+    ASSERT_TRUE(waitFor([&] { return greeted.value && scanned.value && crashed.value; }));
+    EXPECT_EQ(greeted.value->value_or(std::string()), R"({"hi":"Ana"})");
+    EXPECT_EQ(scanned.value->value_or(std::string()), "null");
+    ASSERT_FALSE(crashed.value->has_value());
+    EXPECT_TRUE(crashed.value->error().contains(QStringLiteral("no")));
+    EXPECT_EQ(finished.count(), 2);
+}
+
 TEST_F(PluginProcessTest, AnExporterTurnsTheSnapshotIntoTheFilesBytes)
 {
     auto p = process(plugin("formats", R"(
@@ -643,6 +661,26 @@ hikari.providers.completion(function(r) hikari.call("api.version") return {{labe
     ASSERT_TRUE(running.value->has_value());
     ASSERT_TRUE(newest.value->has_value()) << newest.value->error().toStdString();
     EXPECT_EQ(**newest.value, R"([{"label":"c"}])");
+}
+
+TEST_F(PluginProcessTest, EndingTheProcessAnswersWhatWasWaitingEvenOnceItIsGone)
+{
+    m_holdReplies = true;
+    auto p = process(plugin("providers", R"(
+hikari.providers.completion(function(r) hikari.call("api.version") return {{label = r.text}} end)
+)"));
+    QSignalSpy loaded(p.get(), &PluginProcess::loaded);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
+    FormatResult running, queued;
+    ASSERT_TRUE(p->provide("completion", R"({"text": "a"})", running.done()));
+    ASSERT_TRUE(waitFor([&] { return !m_held.empty(); }));
+    ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", queued.done()));
+    p->end();
+    p.reset();
+    ASSERT_TRUE(waitFor([&] { return running.value && queued.value; }));
+    EXPECT_EQ(running.value->error(), QStringLiteral("the plugin was stopped"));
+    EXPECT_EQ(queued.value->error(), QStringLiteral("the plugin was stopped"));
 }
 
 TEST_F(PluginProcessTest, OnlyDeclaredProvidersTakeAHandler)

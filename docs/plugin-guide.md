@@ -1,6 +1,6 @@
 # Write your first plugin
 
-This guide makes a small plugin in three steps: a command, then a panel, then an edit to the subtitles. Then it explains the manifest, permissions and tiers, and how to sign and publish a plugin.
+This guide makes a small plugin in three steps: a command, then a panel, then an edit to the subtitles. Then it shows how to run it from its folder while you work, and explains the manifest, permissions and tiers, and how to sign and publish a plugin.
 
 [Plugins](plugins.md) is the full contract, and the [Hikari API reference](api-reference.md) lists every operation and event. Each step below is a complete plugin in [`examples/first-plugin`](examples/first-plugin/), and a test runs all three.
 
@@ -165,6 +165,16 @@ end)
 ```
 
 Every widget that sends events needs an `id`. Each event says which widget sent it, in `event.widget`.
+
+## Work on it in place
+
+Packing a zip after every change is slow. Instead, load the folder as a dev plugin:
+
+1. In the plugin manager, choose **Install dev plugin…** and pick the `first-plugin` folder.
+2. Answer the install question. The plugin runs from the folder, with a **Dev** badge.
+3. Edit a file and save. HikariSub reloads the plugin within a second. If the new files break a rule, it keeps the last good ones running and shows why in the plugin's details and the Log panel. If they ask for more permissions, the change waits until you choose **Review…**.
+
+A dev plugin has its own data, settings and folders, so it never touches an installed copy of the same plugin. While it's loaded, it stands in for that copy. **Unload…** in its details returns to the installed copy and leaves your folder alone. See [Developer tools](plugins.md#developer-tools).
 
 ## The manifest
 

@@ -8884,6 +8884,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>คลิปเวกเตอร์: วาดมือเปล่า</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15094,6 +15098,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไม่มีการตั้งค่าที่ตรงกับ “%1”</translation>
     </message>
     <message>
+        <source>Backup copies kept</source>
+        <translation>จำนวนสำเนาสำรองที่เก็บไว้</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>จำนวนการบันทึกก่อนหน้าของแต่ละไฟล์ที่เก็บไว้ในโฟลเดอร์กู้คืน ช่วง 0 ถึง 100</translation>
+    </message>
+    <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
         <translation>ล้อเมาส์ซูมรอบตัวชี้ ซูมวิดีโอจะแสดงกรอบให้ลาก</translation>
     </message>
@@ -17497,6 +17509,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>เปิด</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>ไอคอน</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>แทนที่ไอคอนในอินเทอร์เฟซของ HikariSub ไอคอนที่ธีมไม่มีจะแสดงเป็นไอคอนของ HikariSub เอง</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18603,6 +18623,99 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A theme can’t be used: %1</source>
         <translation>ใช้ธีมไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
+        <translation>ปลั๊กอินนี้ขอมากกว่าที่คุณตกลงไว้ การเปลี่ยนแปลงจึงรอให้คุณตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
+        <translation>Dev</translation>
+    </message>
+    <message>
+        <source>Dev plugin, runs from %1</source>
+        <translation>ปลั๊กอิน Dev ทำงานจาก %1</translation>
+    </message>
+    <message>
+        <source>Load dev plugin</source>
+        <translation>โหลดปลั๊กอิน Dev</translation>
+    </message>
+    <message>
+        <source>Reload dev plugin</source>
+        <translation>โหลดปลั๊กอิน Dev ใหม่</translation>
+    </message>
+    <message>
+        <source>Load “%1” %2 from its folder?</source>
+        <translation>โหลด “%1” %2 จากโฟลเดอร์ของปลั๊กอินหรือไม่</translation>
+    </message>
+    <message>
+        <source>Reload “%1” %2 from its folder?</source>
+        <translation>โหลด “%1” %2 ใหม่จากโฟลเดอร์ของปลั๊กอินหรือไม่</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to</source>
+        <translation>ปลั๊กอินนี้ขอมากกว่าที่คุณตกลงไว้</translation>
+    </message>
+    <message>
+        <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
+        <translation>ปลั๊กอิน Dev ทำงานจาก %1 ตามที่เป็นอยู่โดยไม่ได้ลงนาม และโหลดใหม่เมื่อไฟล์เปลี่ยนแปลง ปลั๊กอินนี้มีข้อมูล การตั้งค่า และโฟลเดอร์ของตัวเอง แยกจากสำเนาที่ติดตั้งไว้</translation>
+    </message>
+    <message>
+        <source>Unload and remove its data</source>
+        <translation>เลิกโหลดและลบข้อมูล</translation>
+    </message>
+    <message>
+        <source>Unload dev plugin</source>
+        <translation>เลิกโหลดปลั๊กอิน Dev</translation>
+    </message>
+    <message>
+        <source>Unload “%1”?</source>
+        <translation>เลิกโหลด “%1” หรือไม่</translation>
+    </message>
+    <message>
+        <source>The installed %1 runs again.</source>
+        <translation>%1 ที่ติดตั้งไว้จะกลับมาทำงานอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Its folder stays as it is.</source>
+        <translation>โฟลเดอร์ของปลั๊กอินยังคงอยู่ตามเดิม</translation>
+    </message>
+    <message>
+        <source>Unload</source>
+        <translation>เลิกโหลด</translation>
+    </message>
+    <message>
+        <source>Plugin not unloaded</source>
+        <translation>ไม่ได้เลิกโหลดปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Install dev plugin…</source>
+        <translation>ติดตั้งปลั๊กอิน Dev…</translation>
+    </message>
+    <message>
+        <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
+        <translation>ไฟล์เปลี่ยนแปลง แต่ HikariSub ยังใช้ไฟล์ชุดล่าสุดที่ทำงานได้: %1</translation>
+    </message>
+    <message>
+        <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
+        <translation>ไฟล์เปลี่ยนแปลงและขอมากกว่าที่คุณตกลงไว้ การเปลี่ยนแปลงจึงรอคุณ</translation>
+    </message>
+    <message>
+        <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
+        <translation>ปลั๊กอิน Dev ใช้แทน %1 ที่ติดตั้งไว้จนกว่าคุณจะเลิกโหลด</translation>
+    </message>
+    <message>
+        <source>Choose a plugin folder</source>
+        <translation>เลือกโฟลเดอร์ปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>Unload…</source>
+        <translation>เลิกโหลด…</translation>
+    </message>
+    <message>
+        <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
+        <translation>ตอนนี้แมนิเฟสต์ระบุรหัสเป็น “%1” เลิกโหลดปลั๊กอินแล้วโหลดโฟลเดอร์อีกครั้ง</translation>
     </message>
 </context>
 <context>
@@ -21151,6 +21264,10 @@ because it was edited.</source>
         <translation>เวอร์ชันก่อนหน้า</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>การบันทึกก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้า</translation>
     </message>
@@ -21175,8 +21292,12 @@ because it was edited.</source>
         <translation>ลบ</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ การบันทึกก่อนหน้าคือไฟล์ในสภาพก่อนที่การบันทึกจะเขียนทับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
+        <translation type="vanished">แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21363,6 +21484,10 @@ because it was edited.</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>ไม่สามารถเปิด %1 ได้ ไม่มีสิ่งใดเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (การบันทึกก่อนหน้า)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
@@ -27657,6 +27782,10 @@ or codecs or a splitter may be missing</source>
         <translation>จุดศูนย์กลาง</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>วาดมือเปล่า</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>ระนาบ</translation>
     </message>
@@ -28497,6 +28626,11 @@ or codecs or a splitter may be missing</source>
         <translation>ข้อความตามเส้นทาง</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>วาดมือเปล่า: กดค้างแล้ววาด</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>ชี้ที่ภาพเพื่ออ่านตำแหน่ง Ctrl+คลิกเพื่อวางบรรทัดที่นั่น</translation>
     </message>
@@ -28667,16 +28801,20 @@ or codecs or a splitter may be missing</source>
         <translation>“กลับด้านคลิป” จะสลับระหว่างแสดงส่วนที่อยู่ข้างในและส่วนที่อยู่ข้างนอก</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline เพิ่มจุดแยก หรือลบจุด</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline วาดมือเปล่า เพิ่มจุดแยก หรือลบจุด</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>คลิกเพื่อเพิ่มจุด แล้วลากจุดเพื่อปรับรูปร่าง</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>คลิกเพื่อเพิ่มจุด แล้วลากจุดเพื่อปรับรูปร่าง คลิกขวาที่ส่วนของเส้นเพื่อทำให้โค้ง ทำให้ตรง แบ่ง หรือลบส่วนนั้น</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl+คลิกเพื่อเลือกหลายจุด กด Alt ขณะลากเพื่อจัดให้ตรงกับค่า x หรือ y ของจุดอื่น</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>ในโหมด “วาดมือเปล่า” กดปุ่มค้างไว้แล้ววาด “การปรับให้เรียบ” กำหนดว่าเส้นโค้งจะตามเส้นที่วาดใกล้เคียงเพียงใด</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -28917,6 +29055,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Add B-spline</source>
         <translation>เพิ่มเส้นโค้ง B-spline</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>การปรับให้เรียบ</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>เส้นโค้ง</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -29542,6 +29688,23 @@ do not work on comments</source>
     <message>
         <source>More in the guide</source>
         <translation>ดูเพิ่มเติมในคู่มือ</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>ทำให้เป็นเส้นโค้ง</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>ทำให้เป็นเส้นตรง</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>แทรกจุดที่นี่</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>ลบส่วนของเส้น</translation>
     </message>
 </context>
 <context>

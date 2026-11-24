@@ -418,9 +418,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(reading.control, OptionsControl::Check);
     EXPECT_EQ(reading.page, OptionsPage::Grid);
     EXPECT_TRUE(std::get<bool>(findSetting("problems.reading")->defaultValue));
+    EXPECT_EQ(all[std::size(kLegacy) + 104].setting, "autosave.savedCopies");
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 106);
-    const auto &hostApi = all[std::size(kLegacy) + 104];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 107);
+    const auto &hostApi = all[std::size(kLegacy) + 105];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -431,7 +432,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 104);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 105);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));
@@ -448,6 +449,9 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->min, 5);
     EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->max, 3600);
     EXPECT_EQ(findOptionsBinding("autosave.intervalSeconds")->page, OptionsPage::General);
+    EXPECT_EQ(findOptionsBinding("autosave.savedCopies")->min, 0);
+    EXPECT_EQ(findOptionsBinding("autosave.savedCopies")->max, 100);
+    EXPECT_EQ(findOptionsBinding("autosave.savedCopies")->page, OptionsPage::General);
     EXPECT_EQ(findOptionsBinding("audio.delay")->min, -50000000);
     EXPECT_EQ(findOptionsBinding("program.tabTextMaxChars")->min, 20);
     EXPECT_EQ(findOptionsBinding("automation.loadingMethod")->entries, 4);

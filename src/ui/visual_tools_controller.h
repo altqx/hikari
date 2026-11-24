@@ -57,6 +57,14 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(hikari::ui::ShapeEditor *shapeEditor READ shapeEditor NOTIFY shapeEditorChanged)
     Q_PROPERTY(hikari::ui::AllTagsEditor *tagsEditor READ tagsEditor NOTIFY tagsEditorChanged)
 public:
+    enum SegmentEditKind {
+        MakeCurve = static_cast<int>(application::visual::SegmentEdit::MakeCurve),
+        MakeStraight = static_cast<int>(application::visual::SegmentEdit::MakeStraight),
+        InsertPoint = static_cast<int>(application::visual::SegmentEdit::InsertPoint),
+        DeleteSegment = static_cast<int>(application::visual::SegmentEdit::Delete),
+    };
+    Q_ENUM(SegmentEditKind)
+
     using SessionProvider = std::function<application::EditSession *()>;
     VisualToolsController(VideoController &video, SettingsStore &settings, SessionProvider session,
                           QObject *parent = nullptr);
@@ -133,6 +141,9 @@ public:
     Q_INVOKABLE void dismissLastChange();
     // MUST KILL: value is a toggle's 0/1, a choice's index, or 1 for an action
     Q_INVOKABLE bool setOption(const QString &name, int value);
+    // The segment under a right-click at (x, y): {index, curve}, or an empty map.
+    Q_INVOKABLE QVariantMap segmentAt(qreal x, qreal y) const;
+    Q_INVOKABLE bool editSegment(int index, bool curve, SegmentEditKind edit, qreal x, qreal y);
     Q_INVOKABLE void previewOption(const QString &name, int index);
 
     using Encoder = std::function<std::vector<std::byte>(const core::Document &)>;
@@ -150,6 +161,8 @@ public:
     std::pair<int, int> measureLabel(std::u16string_view text) const override;
     void toolChanged() override;
     float handleScale() const override;
+    std::optional<int> freehandSmoothing(application::visual::Family family) const override;
+    void setFreehandSmoothing(application::visual::Family family, int smoothing) override;
     std::int64_t videoTimeMs() const override;
     application::LegacyTimebase timebase() const override;
     application::TextMeasurePort *textMeasure() const override { return &m_measure; }

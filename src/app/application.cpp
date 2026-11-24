@@ -55,6 +55,7 @@
 #include "dialog_placement.h"
 #include "list_files.h"
 #include "project_file.h"
+#include "icon_theme.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -77,6 +78,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QLocale>
+#include <QCryptographicHash>
 #include <QDir>
 #include <QUuid>
 #include <QCoreApplication>
@@ -631,6 +633,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_files->setLyricsDecoder([](std::span<const std::byte> bytes) {
         return backends::lyricsUtf8(bytes, backends::detectLyricsEncoding(bytes));
     });
+    m_files->setSavedOver([this](const application::DestinationKey &destination, std::vector<std::byte> previous) {
+        keepEarlierSave(destination, std::move(previous));
+    });
     m_log = std::make_unique<ui::LogController>();
     m_log->setActiveWindow([this] { return m_workspace.activeWindow(); });
     m_mediaHelper = mediaHelperPath(options.mediaHelper);
@@ -730,6 +735,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
     m_renderer.countCost(m_settings->boolean("video.renderCost"));
     ui::theme::useSettings(m_settings.get());
+    ui::icons::useSettings(m_settings.get());
     for (const QString &problem : ui::theme::loadProblems())
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Options", "Themes"),
                       QCoreApplication::translate("HikariSub.Options", "A built-in theme could not be read, so Dark is shown."),
@@ -964,6 +970,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
+    connect(m_pluginManager.get(), &PluginManager::devReloaded, m_pluginRuntime.get(), &PluginRuntime::reload);
+    connect(m_pluginManager.get(), &PluginManager::devProblem, this,
+            [this](const QString &, const QString &name, const QString &problem) { m_log->log(problem, ui::LogController::Error, name); });
     m_automationHotkeys->setPluginRunner(
         [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
@@ -1344,6 +1353,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
+    m_earlierSaves = std::make_unique<application::RecoveryStore>(
+        m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path((m_recoveryDir + QStringLiteral("/saves")).toStdU16String()),
+        "saves", m_recoveryDir.isEmpty() ? 0 : m_settings->integer("autosave.savedCopies"));
     m_autosaveIntervalOverrideMs = options.autosaveIntervalMs;
     m_spellingText = backends::legacySpellingText(true);
     m_bundledDictionaryDir = options.bundledDictionaryDir;
@@ -4442,16 +4454,15 @@ bool sessionEnded(const QString &dir, const std::string &session)
 
 }
 
-QVariantList Application::recoveryBundles() const
+namespace {
+
+QVariantList bundleRows(const application::RecoveryStore &store, const std::vector<application::RecoveryBundle> &bundles)
 {
     QVariantList out;
-    if (!m_recovery)
-        return out;
-    const QString dir = m_recoveryDir;
-    for (const auto &bundle : m_recovery->leftovers([&](const std::string &s) { return sessionEnded(dir, s); })) {
+    for (const auto &bundle : bundles) {
         QVariantList generations;
         for (auto it = bundle.generations.rbegin(); it != bundle.generations.rend(); ++it)
-            if (const auto content = m_recovery->read(bundle.key, *it))
+            if (const auto content = store.read(bundle.key, *it))
                 generations << QVariantMap{{QStringLiteral("generation"), QVariant::fromValue<qulonglong>(*it)},
                                            {QStringLiteral("written"), QDateTime::fromMSecsSinceEpoch(content->writtenMs).toString(Qt::ISODate)}};
         out << QVariantMap{{QStringLiteral("key"), QString::fromStdString(bundle.key)},
@@ -4461,6 +4472,54 @@ QVariantList Application::recoveryBundles() const
                            {QStringLiteral("generations"), generations}};
     }
     return out;
+}
+
+}
+
+QVariantList Application::recoveryBundles() const
+{
+    if (!m_recovery)
+        return {};
+    const QString dir = m_recoveryDir;
+    return bundleRows(*m_recovery, m_recovery->leftovers([&](const std::string &s) { return sessionEnded(dir, s); }));
+}
+
+void Application::keepEarlierSave(const application::DestinationKey &destination, std::vector<std::byte> previous)
+{
+    if (!m_earlierSaves || !m_earlierSaves->enabled())
+        return;
+    const QFileInfo file(QString::fromStdString(destination.value));
+    application::RecoveryContent content;
+    content.bytes = std::move(previous);
+    content.extension = file.suffix().toLower().toStdString();
+    content.title = file.fileName().toStdString();
+    content.originalPath = destination.value;
+    content.writtenMs = QDateTime::currentMSecsSinceEpoch();
+    const std::string key =
+        QCryptographicHash::hash(QByteArray::fromStdString(destination.value), QCryptographicHash::Sha1).toHex().left(16).toStdString();
+    m_recoveryWrites.put(QStringLiteral("saves-%1").arg(++m_earlierSaveWrites),
+                         [store = *m_earlierSaves, key, content = std::move(content)]() mutable { return store.write(key, content); });
+}
+
+QVariantList Application::earlierSaves()
+{
+    if (!m_earlierSaves)
+        return {};
+    m_recoveryWrites.finishWrites();
+    return bundleRows(*m_earlierSaves, m_earlierSaves->bundles());
+}
+
+bool Application::openEarlierSave(const QString &key, qulonglong generation)
+{
+    const auto content = m_earlierSaves ? m_earlierSaves->read(key.toStdString(), generation) : std::nullopt;
+    return content && openRecovered(*content, QCoreApplication::translate("HikariSub.Session", "%1 (earlier save)"));
+}
+
+void Application::deleteEarlierSaves(const QString &key)
+{
+    m_recoveryWrites.finishWrites();
+    if (m_earlierSaves)
+        m_earlierSaves->discard(key.toStdString());
 }
 
 QString Application::targetVideoPath() const
@@ -4532,29 +4591,31 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 bool Application::recoverBundle(const QString &key, qulonglong generation)
 {
     const auto content = m_recovery ? m_recovery->read(key.toStdString(), generation) : std::nullopt;
-    if (!content)
-        return false;
-    const std::u8string extension(content->extension.begin(), content->extension.end());
-    auto loaded = core::loadSubtitle(content->bytes, extension);
+    return content && openRecovered(*content, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)"));
+}
+
+bool Application::openRecovered(const application::RecoveryContent &content, const QString &titleFormat)
+{
+    const std::u8string extension(content.extension.begin(), content.extension.end());
+    auto loaded = core::loadSubtitle(content.bytes, extension);
     if (!loaded)
         return false;
     core::Document document = std::move(loaded->document);
-    if (content->frameRate)
-        if (const auto rate = core::FrameRate::make(content->frameRate->first, content->frameRate->second))
+    if (content.frameRate)
+        if (const auto rate = core::FrameRate::make(content.frameRate->first, content.frameRate->second))
             document.setFrameRate(*rate);
     const auto id = m_files->createUnsaved(std::move(document));
     auto *session = m_files->session(id);
     selectLegacyActiveLine(*session);
-    if (content->draftRow) {
+    if (content.draftRow) {
         const auto lines = session->document().lines();
-        if (*content->draftRow < lines.size()) {
-            const auto line = lines[*content->draftRow]->id;
+        if (*content.draftRow < lines.size()) {
+            const auto line = lines[*content.draftRow]->id;
             session->setSelection(application::Selection{line, {line}, line, {}});
-            session->editDraft(line, content->draft);
+            session->editDraft(line, content.draft);
         }
     }
-    m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)")
-                            .arg(QString::fromStdString(content->title)).toStdString());
+    m_workspace.add(id, titleFormat.arg(QString::fromStdString(content.title)).toStdString());
     takeFileArrangement(id);
     m_workspace.setEditingTarget(id);
     refreshViews();
@@ -7496,6 +7557,8 @@ void Application::settingChanged(const QString &id)
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
+    else if (id == QLatin1String("autosave.savedCopies") && !m_recoveryDir.isEmpty() && m_earlierSaves)
+        m_earlierSaves->setCapacity(m_settings->integer("autosave.savedCopies"));
     else if (id == QLatin1String("autosave.intervalSeconds")) {
         for (auto &[document, timer] : m_autosaveTimers)
             if (timer)
@@ -7843,6 +7906,9 @@ bool validAppearance(std::string_view id, const QVariant &value)
             return ui::theme::find(value.toString()) && ui::theme::typeOf(value.toString()) == ui::theme::Type(i);
     if (id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting)
         return value.canConvert<QStringList>();
+    if (id == ui::icons::kThemeSetting)
+        return value.toString() == QLatin1String(ui::icons::kBuiltinTheme)
+            || std::ranges::contains(ui::icons::themes(), value.toString(), &ui::icons::PluginIconTheme::id);
     return false;
 }
 }

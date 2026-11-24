@@ -126,6 +126,7 @@
 #endif
 
 #include <cmath>
+#include <numbers>
 #include <cstring>
 #include <algorithm>
 #include <string>
@@ -19908,6 +19909,7 @@ private slots:
               {"program.tabTextMaxChars", nullptr},
               {"autosave.maxFiles", nullptr},
               {"autosave.intervalSeconds", nullptr},
+              {"autosave.savedCopies", nullptr},
               {"notices.toasts", "Show notices as toasts"},
               {"fonts.externalDirectory", nullptr}}},
             {"settingsPageAppearance",
@@ -28894,6 +28896,34 @@ private slots:
         QCOMPARE(code(), QStringLiteral("dark"));
     }
 
+    void anIconsSectionShowsOnlyWithPluginIconThemes()
+    {
+        auto &settings = *application->settingsStore();
+        const QString round = QStringLiteral("plugin:com.example.looks/round");
+        auto restore = qScopeGuard([&] { ui::icons::uninstallTheme(round); });
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("appearance");
+        QVERIFY(!dialogItem("settingsDialog", "appearanceIcons")->property("visible").toBool());
+
+        ui::icons::installTheme({round, QStringLiteral("Round"), QStringLiteral("Looks"), {}});
+        QTRY_VERIFY(dialogItem("settingsDialog", "appearanceIcons")->property("visible").toBool());
+        auto *box = dialogItem("settingsDialog", "setting_appearance.iconTheme");
+        QVERIFY(box);
+        QCOMPARE(box->property("count").toInt(), 2);
+        QCOMPARE(box->property("currentText").toString(), QStringLiteral("HikariSub"));
+        QVERIFY(QMetaObject::invokeMethod(box, "activated", Q_ARG(int, 1)));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.iconTheme")).toString(), round);
+        QTRY_COMPARE(box->property("currentText").toString(), QStringLiteral("Round — Looks"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("appearance.iconTheme"), round);
+
+        ui::icons::uninstallTheme(round);
+        QCOMPARE(settings.text("appearance.iconTheme"), QStringLiteral("hikarisub"));
+    }
+
     void themeSwitchRetintsEverySurface()
     {
         auto &settings = *application->settingsStore();
@@ -30360,7 +30390,8 @@ private slots:
         const std::initializer_list<std::pair<const char *, const char *>> modes = {
             {"VIDEO_VECTOR_CLIP_BEZIER", "mode2"}, {"VIDEO_VECTOR_CLIP_DRAG", "mode0"},
             {"VIDEO_VECTOR_CLIP_LINE", "mode1"},   {"VIDEO_VECTOR_CLIP_BSPLINE", "mode3"},
-            {"VIDEO_VECTOR_CLIP_POINT", "mode4"},  {"VIDEO_VECTOR_CLIP_DELETE", "mode5"}};
+            {"VIDEO_VECTOR_CLIP_POINT", "mode4"},  {"VIDEO_VECTOR_CLIP_DELETE", "mode5"},
+            {"VIDEO_VECTOR_CLIP_FREEHAND", "freehand"}};
         for (const auto &[symbol, option] : modes) {
             QVERIFY2(run(symbol), symbol);
             QCOMPARE(tools.activeFamily(), vectorClip);
@@ -31252,6 +31283,119 @@ private slots:
         Q_UNUSED(first);
     }
 
+    void visualClipFreehandAndTheSegmentMenu()
+    {
+        QVERIFY(application->openFile(visualDocument("freehand.ass")));
+        auto &tools = application->visualTools();
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->settingsStore()->set("video.vectorClipSmoothing", 45);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lineText = [&] { return text(session->document().lines()[0]); };
+        const auto valueOf = [&](const QString &name) {
+            for (const QVariant &v : tools.values())
+                if (v.toMap().value(QStringLiteral("name")).toString() == name)
+                    return v.toMap().value(QStringLiteral("text")).toString();
+            return QString();
+        };
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool7"), "click"));
+        QCOMPARE(tools.activeFamily(), 7);
+        QTRY_VERIFY(visualItem("visualOption_freehand"));
+        QVERIFY(QTest::qWaitFor([&] { return !tools.videoRect().isEmpty(); }, 5000));
+        QTest::qWait(200);
+        QQuickItem *freehand = visualItem("visualOption_freehand");
+        QCOMPARE(freehand->property("iconRole").toString(), QStringLiteral("vector-freehand"));
+        QCOMPARE(freehand->property("tip").toString(), QStringLiteral("Freehand"));
+        QVERIFY(QMetaObject::invokeMethod(freehand, "click"));
+        QTRY_VERIFY(freehand->property("checked").toBool());
+        QCOMPARE(valueOf(QStringLiteral("smoothing")), QStringLiteral("45"));
+        QVERIFY(valueOf(QStringLiteral("strokeCurves")).isEmpty());
+
+        const QRectF v = tools.videoRect();
+        const auto at = [&](double fx, double fy) {
+            return videoPoint(v.topLeft() + QPointF(v.width() * fx, v.height() * fy));
+        };
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, at(0.2, 0.5));
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at(0.2, 0.5));
+        for (int i = 1; i <= 60; ++i)
+            QTest::mouseMove(window, at(0.2 + 0.01 * i, 0.5 + 0.2 * std::sin(i * std::numbers::pi / 15)));
+        QCOMPARE(session->historySize(), steps);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at(0.8, 0.5));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QVERIFY2(lineText().startsWith(QStringLiteral("{\\clip(m ")) && lineText().contains(QStringLiteral(" b ")),
+                 qPrintable(lineText()));
+        const int curves = valueOf(QStringLiteral("strokeCurves")).toInt();
+        QVERIFY(curves > 0);
+        QCOMPARE(valueOf(QStringLiteral("strokePoints")).toInt(), curves + 1);
+
+        QVERIFY(tools.setValue(QStringLiteral("smoothing"), QStringLiteral("0")));
+        QCOMPARE(session->historySize(), steps + 1);
+        QVERIFY(valueOf(QStringLiteral("strokeCurves")).toInt() > curves);
+        QCOMPARE(application->settingsStore()->integer("video.vectorClipSmoothing"), 0);
+        QVERIFY(tools.setValue(QStringLiteral("smoothing"), QStringLiteral("100")));
+        QCOMPARE(session->historySize(), steps + 1);
+        QVERIFY(valueOf(QStringLiteral("strokeCurves")).toInt() <= curves);
+        QVariant undone;
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "runGlobalHotkey", Q_RETURN_ARG(QVariant, undone),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_UNDO"))));
+        QVERIFY(undone.toBool());
+        QTRY_COMPARE(lineText(), QStringLiteral("first"));
+        QTRY_VERIFY(valueOf(QStringLiteral("strokeCurves")).isEmpty());
+        QCOMPARE(valueOf(QStringLiteral("smoothing")), QStringLiteral("100"));
+        application->settingsStore()->set("video.vectorClipSmoothing", 45);
+
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_mode1"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_mode1")->property("checked").toBool());
+        QVERIFY(valueOf(QStringLiteral("smoothing")).isEmpty());
+        const QPoint a = at(0.25, 0.3), b = at(0.75, 0.3);
+        QTest::mouseMove(window, a);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
+        QTest::mouseMove(window, b);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QVERIFY2(lineText().contains(QStringLiteral(" l ")), qPrintable(lineText()));
+        QObject *menu = named("vectorSegmentMenu");
+        QVERIFY(menu);
+        const QPoint middle = (a + b) / 2;
+        const auto edit = [&](const char *row, const QString &expected, bool onCurve) {
+            const std::size_t before = session->historySize();
+            QTest::mouseMove(window, middle);
+            QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, middle);
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QCOMPARE(menu->findChild<QObject *>(QStringLiteral("segmentMakeCurve"))->property("enabled").toBool(), !onCurve);
+            QCOMPARE(menu->findChild<QObject *>(QStringLiteral("segmentMakeStraight"))->property("enabled").toBool(), onCurve);
+            QObject *item = menu->findChild<QObject *>(QLatin1String(row));
+            QVERIFY(item);
+            QVERIFY(item->property("enabled").toBool());
+            QVERIFY(QMetaObject::invokeMethod(item, "click"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+            QTRY_COMPARE(session->historySize(), before + 1);
+            QVERIFY2(lineText().contains(expected), qPrintable(lineText()));
+        };
+        edit("segmentMakeCurve", QStringLiteral(" b "), false);
+        edit("segmentMakeStraight", QStringLiteral(" l "), true);
+        QVERIFY(!lineText().contains(QStringLiteral(" b ")));
+        const qsizetype numbers = lineText().split(QLatin1Char(' ')).size();
+        edit("segmentInsertPoint", QStringLiteral(" l "), false);
+        QCOMPARE(lineText().split(QLatin1Char(' ')).size(), numbers + 2);
+        QTest::mouseMove(window, at(0.6, 0.3));
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, at(0.6, 0.3));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu->findChild<QObject *>(QStringLiteral("segmentDelete")), "click"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QTRY_COMPARE(lineText().split(QLatin1Char(' ')).size(), numbers);
+        const std::size_t outside = session->historySize();
+        QTest::mouseMove(window, at(0.5, 0.8));
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, at(0.5, 0.8));
+        QTRY_COMPARE(session->historySize(), outside + 1);
+        QVERIFY(!menu->property("visible").toBool());
+        application->video().unloadVideo();
+        application->editor().discard();
+    }
+
     void visualClipPreviewReachesTheVideo()
     {
         QVERIFY(application->openFile(visualDocument(
@@ -31430,7 +31574,7 @@ private slots:
             QVERIFY(!QAccessible::queryAccessibleInterface(option)->text(QAccessible::Name).isEmpty());
             ++modes;
         }
-        QCOMPARE(modes, 6);
+        QCOMPARE(modes, 7);
         const auto menu = [&] { return list()->findChild<QObject *>(QStringLiteral("visualOption_shape_menu")); };
         const auto menuItem = [&](int i) {
             QQuickItem *item = nullptr;
@@ -33500,7 +33644,9 @@ private slots:
         };
         const auto url = [](QObject *item) {
             QQmlExpression expression(qmlContext(item), item, QStringLiteral("icon.source.toString()"));
-            return expression.evaluate().toString();
+            const QString source = expression.evaluate().toString();
+            const QString generation = QLatin1Char('/') + QString::number(ui::icons::generation());
+            return source.endsWith(generation) ? source.chopped(generation.size()) : source;
         };
         struct Expected {
             const char *object, *role, *name;

@@ -25,6 +25,51 @@ std::vector<PluginTheme> pluginThemesOf(const std::string &id, const plugins::Ma
     return out;
 }
 
+namespace {
+
+QByteArray readFile(const std::filesystem::path &path)
+{
+    QFile file(QString::fromStdU16String(path.u16string()));
+    return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
+}
+
+std::filesystem::path under(const std::filesystem::path &root, const std::string &path)
+{
+    return (root / std::filesystem::path(std::u8string(path.begin(), path.end()))).make_preferred();
+}
+
+}
+
+void addPluginIcons(PluginIcons &into, const std::string &id, const plugins::Manifest &manifest,
+                    const std::filesystem::path &root)
+{
+    for (const plugins::IconTheme &theme : manifest.iconThemes) {
+        ui::icons::PluginIconTheme loaded{pluginThemeId(id, theme.id), QString::fromStdString(theme.title),
+                                          QString::fromStdString(manifest.name), {}};
+        for (const QString &role : ui::icons::roles())
+            if (QByteArray svg = readFile(under(root, theme.folder + "/" + role.toStdString() + ".svg")); !svg.isEmpty())
+                loaded.icons.insert(role, std::move(svg));
+        into.themes.push_back(std::move(loaded));
+    }
+    for (const plugins::OwnIcon &icon : manifest.icons)
+        if (QByteArray svg = readFile(under(root, icon.path)); !svg.isEmpty())
+            into.own.insert(ui::icons::pluginIconRole(QString::fromStdString(id), QStringLiteral("own:") + QString::fromStdString(icon.id)),
+                            std::move(svg));
+}
+
+void syncPluginIcons(PluginIcons icons)
+{
+    std::vector<QString> going;
+    for (const ui::icons::PluginIconTheme &installed : ui::icons::themes())
+        if (std::ranges::find(icons.themes, installed.id, &ui::icons::PluginIconTheme::id) == icons.themes.end())
+            going.push_back(installed.id);
+    for (const QString &id : going)
+        ui::icons::uninstallTheme(id);
+    for (ui::icons::PluginIconTheme &theme : icons.themes)
+        ui::icons::installTheme(std::move(theme));
+    ui::icons::setOwnIcons(std::move(icons.own));
+}
+
 QStringList syncPluginThemes(const std::vector<PluginTheme> &themes)
 {
     QStringList problems;

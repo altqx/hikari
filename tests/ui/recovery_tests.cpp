@@ -5,6 +5,7 @@
 #include <QDirIterator>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QProcess>
 #include <QQmlApplicationEngine>
@@ -397,6 +398,64 @@ private slots:
         QTest::qWait(4'000);
         QVERIFY(a.autosavePending(document));
         QTRY_VERIFY_WITH_TIMEOUT(!a.autosavePending(document), 4'000);
+    }
+
+    void savesKeepEarlierCopiesThatOpenFromAutosaves()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("backup.ass")), "v0");
+        app::Application a(uiOptions());
+        QCOMPARE(a.settingsStore()->integer("autosave.savedCopies"), std::int64_t{3});
+        a.settingsStore()->set("autosave.savedCopies", 2);
+        QVERIFY(a.openFile(path));
+        for (const char8_t *version : {u8"v1", u8"v2", u8"v3"}) {
+            edit(a, version);
+            QVERIFY(a.saveDocument(0));
+            a.waitForWrites();
+        }
+        QVERIFY(a.saveDocument(0));
+        a.waitForWrites();
+        const auto saves = a.earlierSaves();
+        QCOMPARE(saves.size(), qsizetype(1));
+        const auto bundle = saves.first().toMap();
+        const QString key = bundle.value(QStringLiteral("key")).toString();
+        QCOMPARE(bundle.value(QStringLiteral("title")).toString(), QStringLiteral("backup.ass"));
+        QCOMPARE(QFileInfo(bundle.value(QStringLiteral("original")).toString()).canonicalFilePath(), QFileInfo(path).canonicalFilePath());
+        const auto generations = bundle.value(QStringLiteral("generations")).toList();
+        QCOMPARE(generations.size(), qsizetype(2));
+        QVERIFY(a.recoveryBundles().isEmpty());
+
+        a.settingsStore()->set("autosave.savedCopies", 0);
+        edit(a, u8"v4");
+        QVERIFY(a.saveDocument(0));
+        a.waitForWrites();
+        QCOMPARE(a.earlierSaves().first().toMap().value(QStringLiteral("generations")).toList(), generations);
+
+        QQmlApplicationEngine engine;
+        QQuickWindow *window = load(a, engine);
+        QVERIFY(window);
+        const auto named = [window](const char *name) { return find(window, name); };
+        QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "show", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(named("autosavesWindow"));
+        auto *autosaves = qobject_cast<QQuickWindow *>(named("autosavesWindow"));
+        QTRY_VERIFY(autosaves->isVisible());
+        QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 1);
+        QTRY_VERIFY(named("autosaveTag0"));
+        QVERIFY(named("autosaveTag0")->property("visible").toBool());
+        QCOMPARE(named("autosaveTag0")->property("text").toString(), QStringLiteral("Earlier save"));
+        QVERIFY(named("autosaveDelete0")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("autosaveOpen0"), "clicked"));
+        QTRY_VERIFY(!autosaves->isVisible());
+        QCOMPARE(QString::fromStdString(*a.workspace().title(*a.workspace().editingTarget())),
+                 QStringLiteral("backup.ass (earlier save)"));
+        auto *s = a.files().session(*a.workspace().editingTarget());
+        QVERIFY(a.targetUntitled());
+        QCOMPARE(text(s, 0), std::string("v2"));
+        QVERIFY(readAll(path).contains("v4"));
+
+        QVERIFY(a.openEarlierSave(key, generations.last().toMap().value(QStringLiteral("generation")).toULongLong()));
+        QCOMPARE(text(a.files().session(*a.workspace().editingTarget()), 0), std::string("v1"));
+        a.deleteEarlierSaves(key);
+        QVERIFY(a.earlierSaves().isEmpty());
     }
 
     void aSlowDiskLeavesTheWindowResponsiveWhileAutosaving()
