@@ -16,7 +16,8 @@ namespace hikari::app {
 
 // The plugin manager's permission lines, as the install question lists them.
 QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions, bool qmlPanels = false,
-                            const std::vector<plugins::Program> &programs = {});
+                            const std::vector<plugins::Program> &programs = {},
+                            const std::vector<plugins::McpServer> &mcpServers = {});
 
 class PluginManager : public QObject {
     Q_OBJECT

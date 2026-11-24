@@ -8,6 +8,7 @@ Item {
     // MUST KILL: save returns whether the Save dialog opened; the shell then reports its end through saveDone()
     required property var save
     property SettingsStore settings: null
+    property AppQuickInput quickInput: null
     property bool waitingForSave: false
     property var writes: []
     property var writeTab: undefined
@@ -103,30 +104,23 @@ Item {
         }
     }
 
-    ListChooser {
-        id: trackChooser
-        objectName: "mkvTrackChooser"
-        settings: flow.settings
-        function ask(labels) {
-            choose({
-                title: qsTr("Choose the subtitle track"),
-                rows: labels,
-                acceptText: qsTr("Open")
-            }, row => {
-                if (row >= 0)
-                    flow.matroska.choose(row)
-                else
-                    flow.matroska.cancel()
-            })
-        }
-    }
-
     Connections {
         target: flow.matroska
         function onNoTracks() {
             flow.notify("info", qsTr("Load subtitles from an MKV/OGM file"),
                         qsTr("The file does not contain any subtitle tracks."))
         }
-        function onChooseTrack(labels) { trackChooser.ask(labels) }
+        function onChooseTrack(labels) {
+            flow.quickInput.pickFrom({
+                title: qsTr("Choose the subtitle track"),
+                items: labels.map((label, row) => ({ id: String(row), label: label })),
+                from: flow
+            }, id => {
+                if (id === null)
+                    flow.matroska.cancel()
+                else
+                    flow.matroska.choose(Number(id))
+            })
+        }
     }
 }

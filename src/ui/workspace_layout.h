@@ -217,6 +217,7 @@ private:
     };
     void readSavedLayouts();
     void readPluginLayouts();
+    void layoutsRead();
     std::vector<SavedLayout> readLayoutsFile(const QString &path, bool &locked);
     void lockSavedLayouts(const QString &path, bool &locked);
     bool writeSavedLayouts();

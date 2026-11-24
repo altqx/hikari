@@ -26,7 +26,7 @@ list(APPEND hikari_ui_qml_files ShiftTimesPanel.qml TimingPostprocessorPanel.qml
 list(APPEND hikari_ui_qml_files HomePage.qml RecentList.qml)
 list(APPEND hikari_ui_qml_files GridFilterField.qml)
 list(APPEND hikari_ui_qml_files StylesPanel.qml StyleStepper.qml StylePickerPopover.qml)
-list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml InputBox.qml PluginQuickInput.qml)
+list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml InputBox.qml PluginQuickInput.qml AppQuickInput.qml)
 list(APPEND hikari_ui_qml_files ChangeAlignmentMenu.qml AlignDistributeMenu.qml PhantomMenu.qml CycleValuesPage.qml)
 list(APPEND hikari_ui_qml_files TagListPopup.qml EditorTagList.qml)
 list(APPEND hikari_ui_qml_files TagButton.qml TagButtonEditor.qml)
@@ -72,7 +72,7 @@ list(APPEND hikari_ui_qml_files FontCatalogBar.qml FontCatalogWindow.qml FontsFr
 set_source_files_properties(FontWindows.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 list(APPEND hikari_ui_qml_files FilterChip.qml FontResolutionNote.qml FontWindows.qml)
 list(APPEND hikari_ui_qml_files MatroskaSubtitles.qml)
-list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AgentPanelOff.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
+list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AgentPanelOff.qml ModelPicker.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 list(APPEND hikari_ui_qml_files VisualToolOption.qml VisualToolDialogs.qml)

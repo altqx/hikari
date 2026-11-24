@@ -1,9 +1,11 @@
 #include "hikari/application/ai_providers.h"
 #include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_sidecar_host.h"
+#include "hikari/backends/sandbox.h"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QFileInfo>
 #include <gtest/gtest.h>
 
 #include <map>
@@ -221,6 +223,53 @@ TEST_F(McpClientsTest, QtStartsAStdioServerUnsandboxedWithItsSecretsAndOnlyItsOw
     const Json started = *lines(2)[0].find("started");
     EXPECT_EQ(*started.find("args"), Json::array({"--from-settings"}));
     EXPECT_EQ(*started.find("secret"), Json("s3"));
+}
+
+TEST_F(McpClientsTest, APluginServerStartsInItsSandboxWithOnlyItsOwnEnvironment)
+{
+    namespace sandbox = hikari::backends::sandbox;
+    if (!sandbox::systemCoverage(sandbox::Network::None).complete())
+        GTEST_SKIP() << "This machine can't confine programs.";
+    qputenv("CLAUDE_CODE_ENTRYPOINT", "from-hikari");
+    McpServerEntry plugin{.id = pluginMcpServerId("dict", "lookup"), .name = "Lookup (Dictionary)"};
+    plugin.plugin = "dict";
+    plugin.pluginServer = "lookup";
+    std::vector<std::string> asked;
+    clients.setPluginStart([&](const McpServerEntry &server) -> std::expected<hikari::backends::ProgramProcess::Options, QString> {
+        asked.push_back(server.plugin + "/" + server.pluginServer);
+        QProcessEnvironment environment;
+        environment.insert(QStringLiteral("HIKARI_TEST_SECRET"), QStringLiteral("from-settings"));
+        sandbox::Profile profile;
+        profile.name = QStringLiteral("HikariSub.Program.test");
+        profile.readExecute = {QFileInfo(QStringLiteral(HIKARI_FAKE_AGENT)).absolutePath()};
+        return hikari::backends::ProgramProcess::Options{QStringLiteral(HIKARI_FAKE_AGENT), {QStringLiteral("--declared")},
+                                                         environment, QCoreApplication::applicationDirPath(), profile};
+    });
+    clients.setServers({plugin});
+    const std::string agent = "mcp:" + plugin.id;
+    EXPECT_FALSE(*call(kAgentStart, Json::object({{"process", 1}, {"agent", agent}, {"args", Json::array({"--x"})}})));
+    ASSERT_TRUE(*call(kAgentStart, Json::object({{"process", 2}, {"agent", agent}})));
+    ASSERT_TRUE(waitFor([&] { return !lines(2).empty(); }));
+    qunsetenv("CLAUDE_CODE_ENTRYPOINT");
+    const Json started = *lines(2)[0].find("started");
+    EXPECT_EQ(*started.find("args"), Json::array({"--declared"}));
+    EXPECT_EQ(*started.find("secret"), Json("from-settings"));
+    EXPECT_EQ(*started.find("entry"), Json(""));
+    EXPECT_EQ(asked, std::vector<std::string>{"dict/lookup"});
+}
+
+TEST_F(McpClientsTest, APluginServerThatCantStartSaysWhy)
+{
+    McpServerEntry plugin{.id = pluginMcpServerId("dict", "lookup"), .name = "Lookup (Dictionary)"};
+    plugin.plugin = "dict";
+    plugin.pluginServer = "lookup";
+    clients.setPluginStart([](const McpServerEntry &) -> std::expected<hikari::backends::ProgramProcess::Options, QString> {
+        return std::unexpected(QStringLiteral("Lookup isn't downloaded yet."));
+    });
+    clients.setServers({plugin});
+    const auto refused = *call(kAgentStart, Json::object({{"process", 1}, {"agent", "mcp:" + plugin.id}}));
+    ASSERT_FALSE(refused);
+    EXPECT_EQ(refused.error().second, "Lookup isn't downloaded yet.");
 }
 
 TEST_F(McpClientsTest, ACallQtDidntAdmitIsAnsweredWithAnErrorAndNeverReachesTheServer)

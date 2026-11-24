@@ -1640,6 +1640,7 @@ DialogWindow {
                             setting: "grid.maxLines"
                             SettingNumber { setting: "grid.maxLines"; from: 1; to: 20 }
                         }
+                        SettingCheck { setting: "problems.reading" }
                     }
                     Section {
                         key: "grid.splitting"
