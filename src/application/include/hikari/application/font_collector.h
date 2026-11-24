@@ -19,7 +19,7 @@
 namespace hikari::application {
 
 // FONT_COLLECTOR_ACTION's values.
-enum class CollectorAction { Check = 0, CopyToFolder = 1, Zip = 2 };
+enum class CollectorAction { Check = 0, CopyToFolder = 1, Zip = 2, LinkToFolder = 3 };
 
 // A copy, so a run never races later edits.
 struct CollectorDocument {
@@ -50,6 +50,8 @@ struct Note {
         CannotFindInFolder,
         CannotCopy, // a = file name
         CannotZip,  // a = file name
+        Linked,     // a = font
+        CannotLink, // a = file name
     };
     Kind kind = Kind::FoundFile;
     std::u16string family;
@@ -102,6 +104,7 @@ struct CollectedFile {
     std::u16string family; // the block it is logged in
     std::u16string shown;  // path or name, as logged
     std::u16string name;
+    std::u16string path; // the file on this computer holding `bytes`; empty: LinkToFolder copies the bytes
     std::shared_ptr<const std::vector<std::byte>> bytes; // null: nothing to read
     std::string sha256;
     std::vector<long> faces; // collection faces the renderer opened
@@ -161,6 +164,8 @@ public:
     virtual bool open() = 0;
     virtual bool folderFailed() const = 0;
     virtual bool put(const std::u16string &name, const std::vector<std::byte> &bytes) = 0;
+    // A link named `name` to the file `target`; false when the output cannot link.
+    virtual bool link(const std::u16string &, const std::u16string &) { return false; }
     // A text file in a folder, an entry in an archive.
     virtual bool label(const std::string &utf8Text) = 0;
     virtual bool unlabel() = 0;
@@ -176,6 +181,7 @@ struct CollectorResult {
     int foundCount = 0;
     int notFoundCount = 0;
     int notCopiedCount = 0;
+    int linkedCount = 0; // of foundCount; the rest were copied
     bool allGlyphs = true;
     bool pathNotAvailable = false;
     bool cannotCreateFolder = false;

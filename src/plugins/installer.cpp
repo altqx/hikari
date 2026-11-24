@@ -103,7 +103,8 @@ std::string manifestText(const Package &package)
 void keepChoices(InstalledPlugin &entry, const InstalledPlugin &old, const Manifest &manifest)
 {
     for (const Setting &setting : manifest.settings)
-        if (const api::Json *value = old.settings.find(setting.id); value && !settingRefusal(setting, *value))
+        if (const api::Json *value = setting.secret() ? nullptr : old.settings.find(setting.id);
+            value && !settingRefusal(setting, *value))
             entry.settings[setting.id] = *value;
     for (const FileGrantRequest &request : manifest.permissions.files)
         if (const auto grant = old.grants.find(request.id); grant != old.grants.end())
@@ -239,7 +240,7 @@ std::expected<Manifest, std::string> Installer::acceptedManifest(std::string_vie
 std::expected<InstallReview, InstallRefusal> Installer::open(std::vector<PackageFile> files) const
 {
     using Kind = InstallRefusal::Kind;
-    auto package = openPackage(std::move(files), m_apiVersion);
+    auto package = openPackage(std::move(files), m_apiVersion, m_contentChecks);
     if (!package)
         return std::unexpected(InstallRefusal{Kind::Package, package.error(), {}, {}});
     auto registry = loadRegistry(m_folders.registry);
@@ -350,8 +351,12 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         return failed("cannot create", m_folders.data / manifest.id, error);
 
     InstalledPlugin entry{manifest.version, true, review.signer, {}, api::Json::object(), review.source};
+    for (const auto &[id, plugin] : *registry)
+        entry.installed = std::max(entry.installed, plugin.installed);
+    ++entry.installed;
     if (existing != registry->end()) {
         const InstalledPlugin &old = existing->second;
+        entry.installed = old.installed;
         entry.enabled = old.enabled || old.revoked.has_value();
         entry.autoUpdate = old.autoUpdate;
         entry.skip = old.skip == manifest.version ? std::string() : old.skip;
@@ -460,6 +465,8 @@ std::expected<void, std::string> Installer::setSetting(std::string_view id, std:
     const auto declared = std::ranges::find(manifest->settings, setting, &Setting::id);
     if (declared == manifest->settings.end())
         return std::unexpected("\xE2\x80\x9C" + std::string(setting) + "\xE2\x80\x9D isn't a setting of " + std::string(id));
+    if (declared->secret())
+        return std::unexpected("\xE2\x80\x9C" + std::string(setting) + "\xE2\x80\x9D is kept in the system keychain");
     if (auto refused = settingRefusal(*declared, value))
         return std::unexpected(*refused);
     return change(id, [&](InstalledPlugin &plugin) { plugin.settings[setting] = value; });

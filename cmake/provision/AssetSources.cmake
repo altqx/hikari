@@ -1,0 +1,55 @@
+# vcpkg asset-source script: the download's own URL (a GNU one briefly, then mirrors of the same tree, since vcpkg
+# waits minutes on each port URL while gnu.org is down), then our copy on the vcpkg-assets release, all checked
+# against vcpkg's SHA512. fill-asset-mirror.sh adds copies to that release.
+#
+#   cmake -DHIKARI_ASSET_URL=<url> -DHIKARI_ASSET_SHA512=<sha512>
+#         -DHIKARI_ASSET_DST=<file> -P AssetSources.cmake
+cmake_minimum_required(VERSION 3.25)
+
+foreach(var HIKARI_ASSET_URL HIKARI_ASSET_SHA512 HIKARI_ASSET_DST)
+    if(NOT DEFINED ${var} OR "${${var}}" STREQUAL "")
+        message(FATAL_ERROR "AssetSources.cmake needs -D${var}")
+    endif()
+endforeach()
+
+set(urls "${HIKARI_ASSET_URL}")
+set(first_timeout 600)
+if(HIKARI_ASSET_URL MATCHES "^https?://(ftp\\.gnu\\.org/(pub/)?gnu|ftpmirror\\.gnu\\.org(/gnu)?|www\\.mirrorservice\\.org/sites/ftp\\.gnu\\.org/gnu)/(.+)$")
+    set(path "${CMAKE_MATCH_4}")
+    get_filename_component(file "${path}" NAME)
+    # gnu.org gets a short time: the mirrors serve the same bytes.
+    set(first_timeout 30)
+    list(APPEND urls
+        "https://mirrors.kernel.org/gnu/${path}"
+        "https://www.mirrorservice.org/sites/ftp.gnu.org/gnu/${path}"
+        "https://mirrors.ocf.berkeley.edu/gnu/${path}"
+        "https://mirror.csclub.uwaterloo.ca/gnu/${path}"
+        "https://fossies.org/linux/privat/${file}") # some packages only
+    list(REMOVE_DUPLICATES urls)
+endif()
+
+string(TOLOWER "${HIKARI_ASSET_SHA512}" expected)
+list(APPEND urls "https://github.com/altqx/hikari/releases/download/vcpkg-assets/${expected}")
+set(part "${HIKARI_ASSET_DST}.part")
+set(timeout ${first_timeout})
+foreach(url IN LISTS urls)
+    file(REMOVE "${part}")
+    file(DOWNLOAD "${url}" "${part}" STATUS status TIMEOUT ${timeout} INACTIVITY_TIMEOUT 30 TLS_VERIFY ON)
+    set(timeout 600)
+    list(GET status 0 code)
+    if(NOT code EQUAL 0)
+        list(GET status 1 reason)
+        message(STATUS "${url}: ${reason}")
+        continue()
+    endif()
+    file(SHA512 "${part}" actual)
+    if(NOT actual STREQUAL expected)
+        message(STATUS "${url}: SHA512 ${actual} is not the expected ${expected}")
+        continue()
+    endif()
+    file(RENAME "${part}" "${HIKARI_ASSET_DST}")
+    message(STATUS "Downloaded ${url}")
+    return()
+endforeach()
+file(REMOVE "${part}")
+message(FATAL_ERROR "No source served ${HIKARI_ASSET_URL}")

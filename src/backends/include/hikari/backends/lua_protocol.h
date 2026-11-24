@@ -38,7 +38,20 @@ namespace hikari::backends::lua {
 inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
-enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4, RunNodes = 5 };
+// RunFilter: a filter index, its settings as an encoded DialogRequest, then the snapshot; answers a MacroResult.
+// FilterConfig: a filter index, then the snapshot; answers the config dialog as an encoded DialogRequest.
+// Check: a time budget in milliseconds per function, then the snapshot; answers encoded MacroChecks, one per macro
+// with a validation or isactive function. Their edits are dropped and they can't show dialogs.
+enum class Command : std::int32_t {
+    Load = 1,
+    Run = 2,
+    RunValidated = 3,
+    Validate = 4,
+    RunNodes = 5,
+    RunFilter = 6,
+    FilterConfig = 7,
+    Check = 8
+};
 // Started: the macro itself begins, after its validation function.
 enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4, Started = 5 };
 enum class Service : std::int32_t { Dialog = 1, Host = 2 };
@@ -54,6 +67,8 @@ std::vector<std::byte> encodeSnapshot(const application::MacroSnapshot &snapshot
 std::optional<application::MacroSnapshot> decodeSnapshot(helper::Reader &in, std::size_t payloadSize);
 std::vector<std::byte> encodeMacroResult(const application::MacroResult &result);
 std::optional<application::MacroResult> decodeMacroResult(const std::vector<std::byte> &payload);
+std::vector<std::byte> encodeMacroChecks(const std::vector<application::MacroCheck> &checks);
+std::optional<std::vector<application::MacroCheck>> decodeMacroChecks(const std::vector<std::byte> &payload);
 
 // Without the leading Service field.
 std::vector<std::byte> encodeHostRequest(const application::HostServiceRequest &request);

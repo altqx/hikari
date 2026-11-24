@@ -3,6 +3,7 @@
 #include "preludes.h"
 
 #include "hikari/api/api.h"
+#include "hikari/api/base64.h"
 
 extern "C" {
 #include <lauxlib.h>
@@ -32,6 +33,9 @@ const char kCommandsKey[] = "hikari.commands";
 const char kEventsKey[] = "hikari.events";
 const char kTimersKey[] = "hikari.timers";
 const char kLoadedKey[] = "hikari.loaded";
+const char kExportersKey[] = "hikari.exporters";
+const char kImportersKey[] = "hikari.importers";
+constexpr std::size_t kMaxFormatBytes = 48u << 20;
 const char kArrayKey[] = "hikari.array";
 const char kNull = 0;
 const char kLoading = 0;
@@ -549,6 +553,32 @@ int registerCommand(lua_State *L)
     return 0;
 }
 
+int registerFormat(lua_State *L, const char *key, const std::vector<std::string> &declared, const char *what)
+{
+    const std::string id = luaL_checkstring(L, 1);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+    if (std::ranges::find(declared, id) == declared.end())
+        raise(L, inQuotes(id) + " isn't a format with " + what + " in hikari-plugin.json");
+    lua_getfield(L, LUA_REGISTRYINDEX, key);
+    lua_getfield(L, -1, id.c_str());
+    if (!lua_isnil(L, -1))
+        raise(L, "format " + inQuotes(id) + " already has an " + what + "er");
+    lua_pop(L, 1);
+    lua_pushvalue(L, 2);
+    lua_setfield(L, -2, id.c_str());
+    return 0;
+}
+
+int registerExporter(lua_State *L)
+{
+    return registerFormat(L, kExportersKey, Access::options(L).exporters, "export");
+}
+
+int registerImporter(lua_State *L)
+{
+    return registerFormat(L, kImportersKey, Access::options(L).importers, "import");
+}
+
 int onEvent(lua_State *L)
 {
     const std::string name = luaL_checkstring(L, 1);
@@ -729,7 +759,7 @@ std::expected<void, std::string> PluginState::open()
 
     luaL_newmetatable(L, kArrayKey);
     lua_pop(L, 1);
-    for (const char *key : {kCommandsKey, kEventsKey, kTimersKey, kLoadedKey}) {
+    for (const char *key : {kCommandsKey, kEventsKey, kTimersKey, kLoadedKey, kExportersKey, kImportersKey}) {
         lua_newtable(L);
         lua_setfield(L, LUA_REGISTRYINDEX, key);
     }
@@ -764,6 +794,11 @@ std::expected<void, std::string> PluginState::open()
     setFunction(L, this, "every", timerEvery);
     setFunction(L, this, "cancel", timerCancel);
     lua_setfield(L, -2, "timer");
+
+    lua_newtable(L);
+    setFunction(L, this, "exporter", registerExporter);
+    setFunction(L, this, "importer", registerImporter);
+    lua_setfield(L, -2, "formats");
 
     lua_newtable(L);
     setFunction(L, this, "get", getSetting);
@@ -820,26 +855,97 @@ std::expected<void, std::string> PluginState::runPrelude()
     return {};
 }
 
-std::expected<void, std::string> PluginState::protectedCall(int arguments, Host &host)
+std::expected<void, std::string> PluginState::protectedCall(int arguments, Host &host, int results)
 {
     lua_State *L = m_lua;
     const int base = lua_gettop(L) - arguments;
     lua_pushcfunction(L, traceback);
     lua_insert(L, base);
     m_host = &host;
-    const int status = lua_pcall(L, arguments, 0, base);
+    const int status = lua_pcall(L, arguments, results, base);
     m_host = nullptr;
     std::string message;
     if (status == LUA_ERRMEM)
         message = "the plugin ran out of memory: it may hold " + sizeText(m_budget.limit);
     else if (status != 0)
         message = text(L, -1);
-    lua_settop(L, base - 1);
     if (status != 0) {
+        lua_settop(L, base - 1);
         lua_gc(L, LUA_GCCOLLECT, 0);
         return std::unexpected(message);
     }
+    lua_remove(L, base);
     return {};
+}
+
+bool PluginState::pushFormatHandler(const char *key, const std::string &format)
+{
+    lua_State *L = m_lua;
+    lua_getfield(L, LUA_REGISTRYINDEX, key);
+    lua_getfield(L, -1, format.c_str());
+    lua_remove(L, -2);
+    if (lua_isfunction(L, -1))
+        return true;
+    lua_pop(L, 1);
+    return false;
+}
+
+std::expected<std::string, std::string> PluginState::exportDocument(const std::string &format, const Json &snapshot,
+                                                                     const Json &options, Host &host)
+{
+    lua_State *L = m_lua;
+    if (!pushFormatHandler(kExportersKey, format))
+        return std::unexpected("format " + inQuotes(format) + " has no exporter: the plugin must call "
+                               "hikari.formats.exporter for it");
+    pushJson(L, snapshot);
+    pushJson(L, options);
+    if (auto ran = protectedCall(2, host, 2); !ran)
+        return std::unexpected(ran.error());
+    const int data = lua_gettop(L) - 1;
+    std::expected<std::string, std::string> out;
+    const std::string encoding = lua_isnil(L, data + 1) ? std::string("utf8") : text(L, data + 1);
+    if (lua_type(L, data) != LUA_TSTRING)
+        out = std::unexpected(std::string("an exporter must return the file as a string, not a ") + luaL_typename(L, data));
+    else if (lua_type(L, data + 1) != LUA_TNIL && lua_type(L, data + 1) != LUA_TSTRING)
+        out = std::unexpected("an exporter's second result must be \"utf8\" or \"base64\"");
+    else if (encoding == "base64") {
+        auto bytes = api::fromBase64(text(L, data));
+        if (bytes)
+            out = std::move(*bytes);
+        else
+            out = std::unexpected("the exporter's file isn't base64");
+    } else if (encoding == "utf8") {
+        out = text(L, data);
+        if (!api::isUtf8(*out))
+            out = std::unexpected("the exporter's file isn't UTF-8 text; return it with \"base64\"");
+    } else {
+        out = std::unexpected("an exporter's second result must be \"utf8\" or \"base64\"");
+    }
+    lua_settop(L, data - 1);
+    if (out && out->size() > kMaxFormatBytes)
+        out = std::unexpected("the exported file is larger than 48 MiB");
+    return out;
+}
+
+std::expected<Json, std::string> PluginState::importFile(const std::string &format, std::string_view bytes,
+                                                         const std::string &name, Host &host)
+{
+    lua_State *L = m_lua;
+    if (!pushFormatHandler(kImportersKey, format))
+        return std::unexpected("format " + inQuotes(format) + " has no importer: the plugin must call "
+                               "hikari.formats.importer for it");
+    const std::string data = api::base64(bytes);
+    lua_pushlstring(L, data.data(), data.size());
+    lua_pushlstring(L, name.data(), name.size());
+    if (auto ran = protectedCall(2, host, 1); !ran)
+        return std::unexpected(ran.error());
+    std::expected<Json, std::string> out;
+    if (!lua_istable(L, -1))
+        out = std::unexpected(std::string("an importer must return {lines, styles, info}, not a ") + luaL_typename(L, -1));
+    else
+        out = toJson(L, lua_gettop(L), 0);
+    lua_pop(L, 1);
+    return out;
 }
 
 std::expected<std::unique_ptr<PluginState>, std::string> PluginState::load(Options options, Host &host)
@@ -876,7 +982,7 @@ std::vector<std::string> PluginState::handledCommands() const
     return out;
 }
 
-std::expected<void, std::string> PluginState::run(const std::string &command, Host &host)
+std::expected<void, std::string> PluginState::run(const std::string &command, const Json &call, Host &host)
 {
     lua_State *L = m_lua;
     lua_getfield(L, LUA_REGISTRYINDEX, kCommandsKey);
@@ -887,7 +993,11 @@ std::expected<void, std::string> PluginState::run(const std::string &command, Ho
         return std::unexpected("command " + inQuotes(command) + " has no handler: the plugin must call "
                                "hikari.commands.register for it");
     }
-    return protectedCall(0, host);
+    for (const char *key : {"args", "context"}) {
+        const Json *value = call.isObject() ? call.find(key) : nullptr;
+        pushJson(L, value && value->isObject() ? *value : Json::object());
+    }
+    return protectedCall(2, host);
 }
 
 std::expected<void, std::string> PluginState::dispatch(const std::string &event, const Json &data, Host &host)

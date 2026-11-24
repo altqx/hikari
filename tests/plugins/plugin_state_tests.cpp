@@ -16,6 +16,8 @@ extern "C" {
 #include <functional>
 #include <map>
 #include <random>
+#include <set>
+#include <sstream>
 
 using hikari::api::Json;
 using namespace hikari::plugin_helper;
@@ -296,8 +298,8 @@ TEST_F(PluginStateTest, AMemoryErrorInACommandLeavesThePluginUsable)
                       "for i = 1, 1e7 do t[i] = string.rep('x', 100) .. i end end) "
                       "hikari.commands.register('count', function() hikari.notify('still here') end)", o);
     ASSERT_TRUE(state) << state.error();
-    EXPECT_FALSE((*state)->run("greet", m_host));
-    EXPECT_TRUE((*state)->run("count", m_host));
+    EXPECT_FALSE((*state)->run("greet", Json::object(), m_host));
+    EXPECT_TRUE((*state)->run("count", Json::object(), m_host));
     EXPECT_EQ(m_host.texts(), std::vector<std::string>{"still here"});
     EXPECT_LT((*state)->memoryInUse(), o.memoryLimit);
 }
@@ -316,12 +318,22 @@ TEST_F(PluginStateTest, CommandsRunTheirRegisteredHandlers)
     auto state = load("hikari.commands.register('greet', function() hikari.notify(hikari.settings.get('greeting')) end)");
     ASSERT_TRUE(state) << state.error();
     EXPECT_EQ((*state)->handledCommands(), std::vector<std::string>{"greet"});
-    ASSERT_TRUE((*state)->run("greet", m_host));
+    ASSERT_TRUE((*state)->run("greet", Json::object(), m_host));
     EXPECT_EQ(m_host.texts(), std::vector<std::string>{"hello"});
     EXPECT_TRUE(m_host.notices.back().toast);
-    auto unhandled = (*state)->run("count", m_host);
+    auto unhandled = (*state)->run("count", Json::object(), m_host);
     ASSERT_FALSE(unhandled);
     EXPECT_NE(unhandled.error().find("hikari.commands.register"), std::string::npos);
+}
+
+TEST_F(PluginStateTest, AHandlerGetsItsArgsAndHowItWasRun)
+{
+    auto state = load("hikari.commands.register('greet', function(args, context) "
+                      "hikari.notify(context.via .. ' ' .. tostring(args.name)) end)");
+    ASSERT_TRUE(state) << state.error();
+    ASSERT_TRUE((*state)->run("greet", *Json::parse(R"({"args": {"name": "Ana"}, "context": {"via": "menu"}})"), m_host));
+    ASSERT_TRUE((*state)->run("greet", *Json::parse(R"({"context": {"via": "key"}})"), m_host));
+    EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"menu Ana", "key nil"}));
 }
 
 TEST_F(PluginStateTest, OnlyDeclaredCommandsTakeHandlersAndOnlyOnce)
@@ -339,7 +351,7 @@ TEST_F(PluginStateTest, AnErrorCarriesItsPlaceAndTraceback)
     write("lua/broken.lua", "return {go = function() error('broke here') end}");
     auto state = load("hikari.commands.register('greet', function() require('broken').go() end)");
     ASSERT_TRUE(state) << state.error();
-    auto ran = (*state)->run("greet", m_host);
+    auto ran = (*state)->run("greet", Json::object(), m_host);
     ASSERT_FALSE(ran);
     EXPECT_NE(ran.error().find("lua/broken.lua:1: broke here"), std::string::npos) << ran.error();
     EXPECT_NE(ran.error().find("stack traceback"), std::string::npos) << ran.error();
@@ -352,7 +364,7 @@ TEST_F(PluginStateTest, SettingsReadAndWriteThroughHikariSub)
                       "hikari.settings.set('count', hikari.settings.get('count') + 1) "
                       "hikari.notify(tostring(hikari.settings.get('count'))) end)");
     ASSERT_TRUE(state) << state.error();
-    ASSERT_TRUE((*state)->run("count", m_host));
+    ASSERT_TRUE((*state)->run("count", Json::object(), m_host));
     ASSERT_EQ(m_host.settings.size(), 1u);
     EXPECT_EQ(m_host.settings[0].first, "count");
     EXPECT_EQ(m_host.settings[0].second, Json(4));
@@ -360,7 +372,7 @@ TEST_F(PluginStateTest, SettingsReadAndWriteThroughHikariSub)
 
     m_host.settingRefusal = "“count” must be at most 5";
     m_host.notices.clear();
-    auto refused = (*state)->run("count", m_host);
+    auto refused = (*state)->run("count", Json::object(), m_host);
     ASSERT_FALSE(refused);
     EXPECT_NE(refused.error().find("“count” must be at most 5"), std::string::npos);
     EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
@@ -372,7 +384,7 @@ TEST_F(PluginStateTest, ASettingChangedInThePluginManagerReadsAtOnce)
     ASSERT_TRUE(state) << state.error();
     ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "count"}, {"value", 2}}), m_host));
     ASSERT_TRUE((*state)->dispatch("settings:changed", Json::object({{"id", "other"}, {"value", 9}}), m_host));
-    ASSERT_TRUE((*state)->run("greet", m_host));
+    ASSERT_TRUE((*state)->run("greet", Json::object(), m_host));
     EXPECT_EQ(m_host.texts(), std::vector<std::string>{"2"});
     EXPECT_EQ(evaluate("pcall(hikari.settings.get, 'other')"), "false");
 }
@@ -711,4 +723,51 @@ TEST_F(PluginStateTest, PanelAndDialogHandlersRunWithoutAnApiSubscription)
     ASSERT_TRUE((*state)->dispatch("panel:board", Json::object({{"kind", "click"}, {"widget", "refresh"}}), m_host));
     ASSERT_TRUE((*state)->dispatch("dialog:join", Json::object({{"kind", "button"}, {"button", "cancel"}}), m_host));
     EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"panel refresh", "dialog cancel"}));
+}
+
+TEST_F(PluginStateTest, TheLuaTypeHintsDeclareEveryMemberOfTheHikariGlobal)
+{
+    const std::string walk = R"(
+        local seen, out = {}, {}
+        local function visit(t, path)
+            seen[t] = true
+            for k, v in pairs(t) do
+                local name = path .. "." .. tostring(k)
+                if type(v) == "table" and getmetatable(v) == nil and not seen[v] then
+                    visit(v, name)
+                else
+                    out[#out + 1] = name
+                end
+            end
+        end
+        visit(hikari, "hikari")
+        table.sort(out)
+        hikari.notify(table.concat(out, "\n"))
+    )";
+    ASSERT_TRUE(load(walk));
+    std::set<std::string> live;
+    std::istringstream lines(m_host.notices.back().text);
+    for (std::string line; std::getline(lines, line);)
+        live.insert(line);
+
+    std::ifstream file(HIKARI_LUA_TYPES, std::ios::binary);
+    ASSERT_TRUE(file) << HIKARI_LUA_TYPES;
+    std::set<std::string> typed;
+    for (std::string line; std::getline(file, line);) {
+        if (line.starts_with("function hikari."))
+            typed.insert(line.substr(9, line.find('(') - 9));
+        else if (const std::size_t equals = line.find(" = "); line.starts_with("hikari.") && equals != std::string::npos &&
+                                                               line.substr(equals + 3) != "{}")
+            typed.insert(line.substr(0, equals));
+    }
+
+    std::string missing, extra;
+    for (const std::string &name : live)
+        if (!typed.contains(name))
+            missing += name + "\n";
+    for (const std::string &name : typed)
+        if (!live.contains(name))
+            extra += name + "\n";
+    EXPECT_TRUE(missing.empty()) << "docs/types/hikari.lua lacks:\n" << missing;
+    EXPECT_TRUE(extra.empty()) << "docs/types/hikari.lua declares what the helper doesn't have:\n" << extra;
 }

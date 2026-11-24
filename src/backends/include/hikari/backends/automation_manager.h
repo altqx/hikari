@@ -7,6 +7,7 @@
 #include <QDateTime>
 #include <QObject>
 
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -31,6 +32,13 @@ public:
              bool validateFirst = false);
     // Runs only the macro's validation; busy until runFinished reports Ok (valid) or NotValid.
     bool validate(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot);
+    // Runs the script's export filter; the result lands in host(path)->lastResult().
+    bool runFilter(const std::string &path, int filterIndex, const application::MacroSnapshot &snapshot,
+                   const application::DialogRequest &settings);
+    // The script's filter config dialog lands in host(path)->lastDialog().
+    bool filterConfig(const std::string &path, int filterIndex, const application::MacroSnapshot &snapshot);
+    // LuaScriptHost::check: the script isn't busy meanwhile and nothing is notified; checkFinished follows.
+    bool check(const std::string &path, const application::MacroSnapshot &snapshot, std::chrono::milliseconds budget);
     // Whether the file's mtime differs from the one at last load; false when it cannot be read.
     bool modifiedSinceLoad(const std::string &path) const;
     void cancel() override;
@@ -62,6 +70,7 @@ signals:
     void titleChanged(const QString &path, const QString &title);
     void dialogWithdrawn(const QString &path);
     void servicesWithdrawn(const QString &path);
+    void checkFinished(const QString &path);
 
 private:
     struct Entry {

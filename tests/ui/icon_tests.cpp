@@ -1,5 +1,6 @@
 #include "controls_style.h"
 #include "icon_theme.h"
+#include "settings_catalogue.h"
 #include "settings_store.h"
 #include "theme.h"
 
@@ -216,6 +217,11 @@ private slots:
                     }
                 }
         }
+        for (const QVariant &page : ui::SettingsCatalogue::pages()) {
+            const QString role = page.toMap().value(QStringLiteral("icon")).toString();
+            referenced.insert(role);
+            QVERIFY2(ui::icons::exists(role), qPrintable(QStringLiteral("settings_catalogue.cpp: ") + role));
+        }
         for (const char *role : {"media-play", "media-pause", "play-line", "media-stop", "frame-previous", "frame-next",
                                  "open-subtitles", "undo", "recent-subtitles", "convert", "audio-previous-line", "link",
                                  "commit", "tag-bold", "colour-shadow", "tag-font", "tab-close", "tab-new",
@@ -231,7 +237,7 @@ private slots:
                                  "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass",
                                  "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit",
                                  "window-minimize", "window-maximize", "window-restore", "window-close",
-                                 "settings-grid", "notices", "language", "audio-device", "restore-default"})
+                                 "settings-grid", "notices", "language", "restore-default"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]+\d+[a-z]? #\d+(, [A-Z]+\d+[a-z]? #\d+)*$)"));
         int pending = 0;
@@ -500,9 +506,8 @@ private slots:
                 variants.clear();
                 const bool dark = ui::theme::isDark(code);
                 for (const auto &a : ui::theme::accents(dark))
-                    variants << QVariantMap{{QString::fromLatin1(dark ? ui::theme::kDarkAccentSetting
-                                                                      : ui::theme::kLightAccentSetting),
-                                             QString::fromLatin1(a.key)}};
+                    variants << QVariantMap{{QString::fromLatin1(ui::theme::kAccentsSetting),
+                                             QStringList{ui::theme::codeName(code) + QLatin1Char('=') + a.key}}};
             }
             for (const auto &extra : variants) {
                 useTheme(code, extra);
@@ -544,10 +549,10 @@ Row {
         const auto colour = [&](const char *name, const char *property = "color") {
             return item(name)->property(property).value<QColor>().name();
         };
-        QCOMPARE(colour("plain"), QStringLiteral("#202832"));
+        QCOMPARE(colour("plain"), QStringLiteral("#1e2329"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#145c4c"));
-        QCOMPARE(colour("off"), QStringLiteral("#74808b"));
-        QCOMPARE(colour("off", "accentColor"), QStringLiteral("#74808b"));
+        QCOMPARE(colour("off"), QStringLiteral("#7a838d"));
+        QCOMPARE(colour("off", "accentColor"), QStringLiteral("#7a838d"));
         QVERIFY(item("mirrored")->property("mirrored").toBool());
         QVERIFY(!item("media")->property("mirrored").toBool());
         auto *button = item("button");
@@ -556,20 +561,21 @@ Row {
         QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QStringLiteral("Stop"));
         auto *buttonIcon = button->property("contentItem").value<QQuickItem *>();
         QCOMPARE(buttonIcon->property("iconRole").toString(), QStringLiteral("media-stop"));
-        useTheme(Code::Light, {{QStringLiteral("appearance.lightAccent"), QStringLiteral("blue")}});
-        QCOMPARE(colour("plain"), QStringLiteral("#202832"));
+        useTheme(Code::Light, {{QStringLiteral("appearance.accents"), QStringList{QStringLiteral("light=blue")}}});
+        QCOMPARE(colour("plain"), QStringLiteral("#1e2329"));
         QCOMPARE(colour("plain", "accentColor"), ui::theme::accent(false, QStringLiteral("blue")).accent.name());
         useTheme(Code::Dark);
-        QCOMPARE(colour("plain"), QStringLiteral("#e8edf2"));
+        QCOMPARE(colour("plain"), QStringLiteral("#e4e7eb"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#9cdbc9"));
-        QCOMPARE(colour("off"), QStringLiteral("#75818d"));
-        QCOMPARE(buttonIcon->property("color").value<QColor>().name(), QStringLiteral("#e8edf2"));
+        QCOMPARE(colour("off"), QStringLiteral("#737b85"));
+        QCOMPARE(buttonIcon->property("color").value<QColor>().name(), QStringLiteral("#e4e7eb"));
         useTheme(Code::HighContrastBlack);
         QCOMPARE(colour("plain"), QStringLiteral("#ffffff"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ffff00"));
         QCOMPARE(colour("off"), QStringLiteral("#8c8c8c"));
-        useTheme(Code::HighContrastBlack, {{QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FFD000")},
-                                           {QStringLiteral("appearance.highContrastBlack.accent"), QStringLiteral("#FF00FF")}});
+        useTheme(Code::HighContrastBlack, {{QStringLiteral("appearance.colours"),
+                                            QStringList{QStringLiteral("highContrastBlack/text=#FFD000"),
+                                                        QStringLiteral("highContrastBlack/accent=#FF00FF")}}});
         QCOMPARE(colour("plain"), QStringLiteral("#ffd000"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ff00ff"));
         QTRY_VERIFY([&] {
@@ -609,7 +615,7 @@ Row {
             const auto colours = [&] {
                 return std::pair{icon->property("color").value<QColor>(), icon->property("accentColor").value<QColor>()};
             };
-            const std::pair normal{QColor(QStringLiteral("#202832")), QColor(QStringLiteral("#145c4c"))};
+            const std::pair normal{QColor(QStringLiteral("#1e2329")), QColor(QStringLiteral("#145c4c"))};
             QCOMPARE(colours(), normal);
             const QRectF area = button->mapRectToScene(QRectF(0, 0, button->width(), button->height()));
             const auto drawn = [&] {
@@ -697,21 +703,21 @@ Rectangle {
         };
         QObject *undo = menu->findChild<QObject *>(QStringLiteral("undoItem"));
         QVERIFY(undo);
-        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/202832/145c4c/0"));
-        QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("offItem"))), QStringLiteral("image://hikari-icon/save/74808b/74808b/0"));
-        QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("rtlItem"))), QStringLiteral("image://hikari-icon/undo/202832/145c4c/1"));
+        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/1e2329/145c4c/0"));
+        QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("offItem"))), QStringLiteral("image://hikari-icon/save/7a838d/7a838d/0"));
+        QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("rtlItem"))), QStringLiteral("image://hikari-icon/undo/1e2329/145c4c/1"));
         QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("mediaRtlItem"))),
-                 QStringLiteral("image://hikari-icon/media-play/202832/145c4c/0"));
+                 QStringLiteral("image://hikari-icon/media-play/1e2329/145c4c/0"));
         undo->setProperty("highlighted", true);
         const QString highlighted = QGuiApplication::palette().color(QPalette::HighlightedText).name().mid(1);
         if (ui::ControlsStyle::name() == QLatin1String("Windows"))
-            QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/202832/145c4c/0"));
+            QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/1e2329/145c4c/0"));
         else
             QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/%1/%1/0").arg(highlighted));
         undo->setProperty("highlighted", false);
         auto *recent = menu->findChild<QObject *>(QStringLiteral("recent"));
         QVERIFY(recent);
-        QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/202832/145c4c/0"));
+        QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/1e2329/145c4c/0"));
         QQuickItem *recentItem = nullptr;
         QTRY_VERIFY(recentItem = [&]() -> QQuickItem * {
             const auto count = menu->property("count").toInt();
@@ -740,7 +746,7 @@ Rectangle {
         QTRY_VERIFY((screen = window->grabWindow(), !screen.isNull() && screen.width() > 0));
         const QPointF at = image->mapToScene(QPointF((image->width() - 16) / 2, (image->height() - 16) / 2));
         const QColor background(screen.pixel(qRound(at.x() * dpr) - 1, qRound(at.y() * dpr) - 1));
-        const QImage expected = drawnFromSource(QStringLiteral("undo"), side, QColor(0x20, 0x28, 0x32), QColor(0x14, 0x5C, 0x4C));
+        const QImage expected = drawnFromSource(QStringLiteral("undo"), side, QColor(0x1E, 0x23, 0x29), QColor(0x14, 0x5C, 0x4C));
         int worst = 0;
         for (int y = 0; y < side; ++y)
             for (int x = 0; x < side; ++x) {
@@ -751,13 +757,13 @@ Rectangle {
             }
         QVERIFY2(worst <= 8, qPrintable(QString::number(worst)));
         useTheme(Code::Dark);
-        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/e8edf2/9cdbc9/0"));
-        QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/e8edf2/9cdbc9/0"));
+        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/e4e7eb/9cdbc9/0"));
+        QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/e4e7eb/9cdbc9/0"));
         useTheme(Code::Light);
         QMetaObject::invokeMethod(menu, "close");
         auto *tab = shown.root->property("tab").value<QQuickItem *>();
         QVERIFY(tab);
-        QCOMPARE(url(tab), QStringLiteral("image://hikari-icon/search/202832/145c4c/0"));
+        QCOMPARE(url(tab), QStringLiteral("image://hikari-icon/search/1e2329/145c4c/0"));
         QCOMPARE(tab->property("text").toString(), QStringLiteral("Find"));
         auto *dialog = shown.root->property("dialog").value<QObject *>();
         QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
@@ -782,9 +788,9 @@ Rectangle {
         };
         QVERIFY(!history->icon().isNull());
         const QString light = iconPixel();
-        QVERIFY(light == QLatin1String("#202832") || light == QLatin1String("#145c4c"));
+        QVERIFY(light == QLatin1String("#1e2329") || light == QLatin1String("#145c4c"));
         useTheme(Code::Dark);
-        QTRY_VERIFY(iconPixel() == QLatin1String("#e8edf2") || iconPixel() == QLatin1String("#9cdbc9"));
+        QTRY_VERIFY(iconPixel() == QLatin1String("#e4e7eb") || iconPixel() == QLatin1String("#9cdbc9"));
     }
 
     void mirrorFlagsFollowTheRule()
@@ -805,7 +811,7 @@ Rectangle {
             QStringLiteral("style-apply"),
             QStringLiteral("chevron-left"), QStringLiteral("chevron-right"),
             QStringLiteral("settings-grid"), QStringLiteral("notices"),
-            QStringLiteral("select-all"), QStringLiteral("tags-insert"), QStringLiteral("preview-text"),
+            QStringLiteral("select-all"), QStringLiteral("preview-text"),
             QStringLiteral("dialog-memory"), QStringLiteral("getting-started"), QStringLiteral("ai-send"),
             QStringLiteral("review-keep"), QStringLiteral("tab-close-right"), QStringLiteral("convert-folds"),
             QStringLiteral("explorer"), QStringLiteral("group-by-name"), QStringLiteral("gradient-by-line"),
@@ -815,7 +821,7 @@ Rectangle {
             QStringLiteral("line-break-remove"), QStringLiteral("case-title"), QStringLiteral("case-sentence"),
             QStringLiteral("dialogue-swap"), QStringLiteral("phantom"), QStringLiteral("phantom-keep-start"),
             QStringLiteral("phantom-keep-end"), QStringLiteral("cycle-values"),
-            QStringLiteral("interpolate-lines"), QStringLiteral("citations")};
+            QStringLiteral("interpolate-lines"), QStringLiteral("citations"), QStringLiteral("command-palette")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();

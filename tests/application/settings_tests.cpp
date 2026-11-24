@@ -178,6 +178,7 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
         EXPECT_EQ(s.defaultValue, expected) << s.legacyKey;
     }
     EXPECT_EQ(findSetting("autosave.maxFiles")->legacyKey, "AUTOSAVE_MAX_FILES");
+    EXPECT_EQ(findSetting("autosave.intervalSeconds")->defaultValue, SettingValue(std::int64_t{20}));
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
 }
 
@@ -246,12 +247,9 @@ TEST(Settings, AnExplicitStableOnlyChoiceOutlivesTheBuild)
     setInstalledVersion("0.1.0");
 }
 
-TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
+TEST(SettingsRegistry, NoColourSettingOutsideThemeColours)
 {
-    const std::set<std::string_view> pickers{
-        "appearance.highContrastWhite.accent", "appearance.highContrastWhite.text",
-        "appearance.highContrastWhite.border", "appearance.highContrastBlack.accent",
-        "appearance.highContrastBlack.text",   "appearance.highContrastBlack.border"};
+    const std::set<std::string_view> pickers{"appearance.colours"};
     const std::set<std::string_view> documentColours{"colourPicker.recentColours"};
     std::set<std::string_view> colourSettings;
     for (const auto &s : settingDefinitions()) {
@@ -274,7 +272,6 @@ TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
         ASSERT_NE(s, nullptr) << id;
         EXPECT_TRUE(s->legacyKey.empty());
         EXPECT_EQ(s->scope, SettingScope::Profile);
-        EXPECT_NE(id.find("highContrast"), std::string_view::npos);
     }
     MemorySettingsStorage storage;
     Settings settings(storage);
@@ -292,11 +289,16 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
     Settings settings(storage);
     EXPECT_EQ(settings.text("appearance.theme"), "dark");
     EXPECT_TRUE(settings.boolean("appearance.followSystem"));
-    EXPECT_EQ(settings.text("appearance.lightAccent"), "green");
-    EXPECT_EQ(settings.text("appearance.darkAccent"), "green");
-    EXPECT_EQ(settings.text("appearance.highContrastWhite.accent"), "#0037B3");
-    EXPECT_EQ(settings.text("appearance.highContrastBlack.accent"), "#FFFF00");
-    EXPECT_EQ(settings.text("appearance.highContrastBlack.text"), "#FFFFFF");
+    EXPECT_EQ(settings.text("appearance.lightTheme"), "light");
+    EXPECT_EQ(settings.text("appearance.darkTheme"), "dark");
+    EXPECT_EQ(settings.text("appearance.highContrastLightTheme"), "highContrastWhite");
+    EXPECT_EQ(settings.text("appearance.highContrastDarkTheme"), "highContrastBlack");
+    EXPECT_TRUE(settings.list("appearance.accents").empty());
+    EXPECT_TRUE(settings.list("appearance.colours").empty());
+    for (const auto &folded : foldedSettings()) {
+        EXPECT_EQ(findSetting(folded.from), nullptr) << folded.from;
+        EXPECT_NE(findSetting(folded.to), nullptr) << folded.to;
+    }
     EXPECT_EQ(settings.text("appearance.titleBar"), "auto");
     EXPECT_EQ(settings.text("appearance.aiSideBar"), "start");
     std::size_t count = 0;
@@ -306,7 +308,16 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
             EXPECT_TRUE(s.legacyKey.empty()) << s.id;
             EXPECT_EQ(s.scope, SettingScope::Profile) << s.id;
         }
-    EXPECT_EQ(count, 12u);
+    EXPECT_EQ(count, 10u);
+}
+
+TEST(SettingsRegistry, FoldingKeepsAnEntryAlreadyInTheList)
+{
+    const auto &dark = foldedSettings()[1];
+    EXPECT_EQ(foldInto({}, dark, "purple"), (std::vector<std::string>{"dark=purple"}));
+    EXPECT_EQ(foldInto({"light=blue"}, dark, "purple"), (std::vector<std::string>{"light=blue", "dark=purple"}));
+    EXPECT_EQ(foldInto({"dark=red"}, dark, "purple"), (std::vector<std::string>{"dark=red"}));
+    EXPECT_EQ(foldInto({"dark=red"}, dark, ""), (std::vector<std::string>{"dark=red"}));
 }
 
 TEST(SettingsRegistry, ThemesAreExcludedAndUnresolvedOnesKept)
@@ -424,7 +435,8 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
     for (const auto &setting : settingDefinitions())
         if (setting.widens)
             widening.emplace_back(setting.id);
-    EXPECT_EQ(widening, (std::vector<std::string>{"translation.translator", "translation.reviewer"}));
+    EXPECT_EQ(widening, (std::vector<std::string>{"privacy.discordDetails", "privacy.discordState", "privacy.discordShow",
+                                                  "translation.translator", "translation.reviewer"}));
 }
 
 TEST(ProjectSettings, NoProjectValueWidensWhatTheAiMayDo)
@@ -432,9 +444,11 @@ TEST(ProjectSettings, NoProjectValueWidensWhatTheAiMayDo)
     for (const auto &setting : settingDefinitions()) {
         if (!setting.id.starts_with("ai.") && !setting.id.starts_with("trust.") && !setting.id.starts_with("privacy."))
             continue;
-        const bool exclude = setting.id == "ai.exclude";
-        EXPECT_EQ(projectMaySet(setting, false), exclude) << setting.id;
-        EXPECT_EQ(projectMaySet(setting, true), exclude) << setting.id;
+        const bool narrows = setting.id == "ai.exclude" || setting.id == "privacy.discordProject";
+        const bool presenceText = setting.id == "privacy.discordShow" || setting.id == "privacy.discordDetails" ||
+                                  setting.id == "privacy.discordState";
+        EXPECT_EQ(projectMaySet(setting, false), narrows) << setting.id;
+        EXPECT_EQ(projectMaySet(setting, true), narrows || presenceText) << setting.id;
     }
 }
 

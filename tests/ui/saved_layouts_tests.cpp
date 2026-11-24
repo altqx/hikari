@@ -1,10 +1,13 @@
 #include "hikari/app/application.h"
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/plugin_content.h"
 #include "hikari/application/session_file.h"
 
 #include "docking.h"
 #include "legacy_session.h"
 #include "hikari/app/hotkeys_controller.h"
+#include "hikari/app/plugin_content.h"
+#include "hikari/app/plugin_manager.h"
 #include "log_controller.h"
 #include "qtest_parts.h"
 #include "settings_store.h"
@@ -25,6 +28,7 @@
 
 #include <functional>
 #include <memory>
+#include <span>
 
 using namespace hikari;
 
@@ -68,11 +72,14 @@ class SavedLayoutsTest : public QObject {
     QTemporaryDir dir;
     std::unique_ptr<app::Application> application;
     std::unique_ptr<QQmlApplicationEngine> engine;
+    bool withPlugins = false;
 
     QString settingsFile() const { return dir.filePath(QStringLiteral("settings.toml")); }
     QString layoutsFile() const { return dir.filePath(QStringLiteral("layouts.json")); }
-    QJsonObject layoutEnvelope() const
+    QJsonObject layoutEnvelope()
     {
+        if (application)
+            application->workspaceLayout().fileWrites().finishWrites();
         return QJsonDocument::fromJson(readAll(dir.filePath(QStringLiteral("layout.json")))).object();
     }
     void start()
@@ -80,6 +87,9 @@ class SavedLayoutsTest : public QObject {
         app::Application::Options options;
         options.settingsFile = settingsFile();
         options.playbackAudio = false;
+        if (withPlugins)
+            options.plugins = {dir.filePath(QStringLiteral("plugins")), dir.filePath(QStringLiteral("plugin-data")),
+                               dir.filePath(QStringLiteral("plugin-cache")), dir.filePath(QStringLiteral("plugins.json"))};
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -161,6 +171,25 @@ class SavedLayoutsTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
+    void installKit(const QByteArray &quiet, bool on)
+    {
+        const QString folder = dir.filePath(QStringLiteral("plugins/com.example.kit"));
+        QVERIFY(QDir().mkpath(folder + QStringLiteral("/layouts")));
+        QVERIFY(writeAll(folder + QStringLiteral("/hikari-plugin.json"),
+                         R"({"id": "com.example.kit", "name": "Kit", "version": "1.0.0", "api": 1, "main": "main.lua",)"
+                         R"( "authors": ["Ana"], "contributes": {"layouts": [)"
+                         R"({"id": "quiet", "title": "Quiet", "path": "layouts/quiet.json"},)"
+                         R"( {"id": "broken", "title": "Broken", "path": "layouts/broken.json"}]}})"));
+        QVERIFY(writeAll(folder + QStringLiteral("/main.lua"), {}));
+        QVERIFY(writeAll(folder + QStringLiteral("/layouts/quiet.json"), quiet));
+        QVERIFY(writeAll(folder + QStringLiteral("/layouts/broken.json"), "{not json"));
+        const QJsonObject entry{{QStringLiteral("version"), QStringLiteral("1.0.0")}, {QStringLiteral("enabled"), on}};
+        QVERIFY(writeAll(dir.filePath(QStringLiteral("plugins.json")),
+                         QJsonDocument(QJsonObject{{QStringLiteral("format"), 1},
+                                                   {QStringLiteral("plugins"), QJsonObject{{QStringLiteral("com.example.kit"), entry}}}})
+                             .toJson()));
+    }
+    QVariantMap row(int at) { return layouts().savedLayouts().value(at).toMap(); }
     QObject *savedItem(const char *prefix, const QString &name) const
     {
         for (int i = 0; QObject *item = named(QLatin1String(prefix) + QStringLiteral("Saved") + QString::number(i)); ++i)
@@ -175,6 +204,11 @@ private slots:
     {
         engine.reset();
         application.reset();
+        withPlugins = false;
+        application::setPluginContent({});
+        for (const char *name : {"plugins", "plugin-data", "plugin-cache"})
+            QDir(dir.filePath(QLatin1String(name))).removeRecursively();
+        QFile::remove(dir.filePath(QStringLiteral("plugins.json")));
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
                                  "layouts.json", "layouts.json.unrestored", "last-session.json", "settings.toml", "hotkeys.toml", "state.json"}) {
             QFile::remove(dir.filePath(QLatin1String(name)));
@@ -533,11 +567,11 @@ private slots:
         QVERIFY(QDir().mkdir(layoutFile));
         close("audioDock");
         saveAs(QStringLiteral("Quiet"));
-        QVERIFY2(l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QTRY_VERIFY2(l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
         QCOMPARE(namesInFile(layoutsFile()), QStringList{QStringLiteral("Quiet")});
         QVERIFY(QDir().rmdir(layoutFile));
         QVERIFY(l.save());
-        QVERIFY2(!l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QTRY_VERIFY2(!l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
         QCOMPARE(layoutEnvelope().value(QStringLiteral("layout")).toString(), QStringLiteral("Quiet"));
         stop();
     }
@@ -758,6 +792,91 @@ private slots:
             QCOMPARE(readAll(layoutsFile() + QStringLiteral(".unrestored")), broken);
             stop();
         }
+    }
+
+    void aPluginsLayoutsAreReadOnlyAndYoursWin()
+    {
+        start();
+        close("audioDock");
+        saveAs(QStringLiteral("Quiet"));
+        stop();
+        const QJsonArray saved = QJsonDocument::fromJson(readAll(layoutsFile())).object().value(QStringLiteral("layouts")).toArray();
+        const QByteArray quiet = QJsonDocument(saved.first().toObject().value(QStringLiteral("arrangement")).toObject()).toJson();
+        QVERIFY(QFile::remove(layoutsFile()));
+        QVERIFY(QFile::remove(dir.filePath(QStringLiteral("layout.json"))));
+        const auto layoutProblem = app::contentFileChecks().layout;
+        QCOMPARE(layoutProblem(std::as_bytes(std::span(quiet.constData(), quiet.size()))), std::nullopt);
+        const std::string_view notALayout = "{not json";
+        QVERIFY(layoutProblem(std::as_bytes(std::span(notALayout))).value_or("").starts_with("isn\xE2\x80\x99t a layout"));
+        installKit(quiet, true);
+        withPlugins = true;
+
+        start();
+        QTRY_COMPARE(layouts().savedLayouts().size(), 2);
+        QCOMPARE(row(0).value(QStringLiteral("name")).toString(), QStringLiteral("Quiet (Kit)"));
+        QCOMPARE(row(0).value(QStringLiteral("tier")).toString(), QStringLiteral("plugin"));
+        QCOMPARE(row(0).value(QStringLiteral("plugin")).toString(), QStringLiteral("Kit"));
+        QVERIFY(row(0).value(QStringLiteral("usable")).toBool());
+        QCOMPARE(row(1).value(QStringLiteral("name")).toString(), QStringLiteral("Broken (Kit)"));
+        QVERIFY(!row(1).value(QStringLiteral("usable")).toBool());
+        QVERIFY(!row(1).value(QStringLiteral("problem")).toString().isEmpty());
+        QTRY_VERIFY(savedItem("viewLayout", QStringLiteral("Quiet (Kit)")));
+        QCOMPARE(savedItem("viewLayout", QStringLiteral("Quiet (Kit)"))->property("iconRole").toString(), QStringLiteral("plugins"));
+        QVERIFY(!savedItem("switcher", QStringLiteral("Broken (Kit)"))->property("enabled").toBool());
+
+        QVERIFY(isOpen("audioDock"));
+        QVERIFY(QMetaObject::invokeMethod(savedItem("viewLayout", QStringLiteral("Quiet (Kit)")), "triggered"));
+        QTRY_VERIFY(!isOpen("audioDock"));
+        QCOMPARE(switcherText(), QStringLiteral("Quiet (Kit)"));
+        openDock("audioDock");
+        trigger(QStringLiteral("viewLayoutReset"));
+        QTRY_VERIFY(!isOpen("audioDock"));
+        QVERIFY(!layouts().renameSavedLayout(QStringLiteral("Quiet (Kit)"), QStringLiteral("Renamed")));
+        QVERIFY(!layouts().deleteSavedLayout(QStringLiteral("Quiet (Kit)")));
+        QCOMPARE(layouts().savedLayouts().size(), 2);
+
+        trigger(QStringLiteral("viewLayoutManage"));
+        auto *dialog = qobject_cast<QQuickWindow *>(named("manageLayoutsDialog"));
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        QCOMPARE(named("manageLayoutsList")->property("currentIndex").toInt(), 0);
+        QTRY_VERIFY(inManage("manageLayoutsNote"));
+        QVERIFY(inManage("manageLayoutsNote")->isVisible());
+        QVERIFY(inManage("manageLayoutsNote")->property("text").toString().contains(QStringLiteral("plugin")));
+        for (const char *hidden : {"manageLayoutsRename", "manageLayoutsDelete", "manageLayoutsTiers"})
+            QVERIFY2(!inManage(hidden) || !inManage(hidden)->isVisible(), hidden);
+        QTest::keyClick(dialog, Qt::Key_F2);
+        QVERIFY(!inManage("manageLayoutsName"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!QFileInfo::exists(layoutsFile()));
+        stop();
+
+        start();
+        QCOMPARE(switcherText(), QStringLiteral("Quiet (Kit)"));
+        QCOMPARE(layouts().layout(), QStringLiteral("Quiet (Kit)"));
+        saveAs(QStringLiteral("Quiet (Kit)"));
+        QCOMPARE(namesInFile(layoutsFile()), QStringList{QStringLiteral("Quiet (Kit)")});
+        QCOMPARE(layouts().savedLayouts().size(), 2);
+        QCOMPARE(row(0).value(QStringLiteral("tier")).toString(), QStringLiteral("mine"));
+        QVERIFY(layouts().deleteSavedLayout(QStringLiteral("Quiet (Kit)")));
+        QCOMPARE(layouts().savedLayouts().size(), 2);
+        QCOMPARE(row(0).value(QStringLiteral("tier")).toString(), QStringLiteral("plugin"));
+
+        QVERIFY(layouts().applySavedLayout(QStringLiteral("Quiet (Kit)")));
+        installKit(quiet, false);
+        emit application->pluginManager()->pluginsChanged();
+        QTRY_VERIFY(layouts().savedLayouts().isEmpty());
+        QCOMPARE(layouts().layout(), QString());
+        QTRY_VERIFY(!savedItem("viewLayout", QStringLiteral("Quiet (Kit)")));
+
+        saveAs(QStringLiteral("Kept"));
+        QVERIFY(QFile::remove(layoutsFile()));
+        emit application->pluginManager()->pluginsChanged();
+        QCoreApplication::processEvents();
+        QCOMPARE(layouts().savedLayouts().size(), 1);
+        QCOMPARE(row(0).value(QStringLiteral("name")).toString(), QStringLiteral("Kept"));
+        QVERIFY(layouts().applySavedLayout(QStringLiteral("Kept")));
+        stop();
     }
 
     void unreadableFilesAreNotWrittenOver()

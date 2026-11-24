@@ -19,18 +19,20 @@ DialogWindow {
     initialFocus: formatChoice
     Component.onCompleted: IconTheme.setWindowIcon(dialog, "export")
 
-    readonly property var formats: [
+    readonly property var builtInFormats: [
         { id: "srt", text: "SubRip (SRT)" },
         { id: "vtt", text: "WebVTT" },
         { id: "sbv", text: "YouTube SBV" },
-        { id: "txt", text: qsTr("Plain text") },
-        { id: "mdvd", text: "MicroDVD" },
+        { id: "text", text: qsTr("Plain text") },
+        { id: "microdvd", text: "MicroDVD" },
         { id: "mpl2", text: "MPL2" },
-        { id: "tmp", text: "TMPlayer" },
+        { id: "tmplayer", text: "TMPlayer" },
         { id: "ttml", text: "TTML (IMSC1)" },
         { id: "dfxp", text: "DFXP" },
         { id: "srv3", text: qsTr("YouTube timed text (srv3)") }
     ]
+    readonly property var formats: builtInFormats.concat(setup.pluginFormats ?? [])
+    property bool exporting: false
     readonly property string format: formats[Math.max(0, formatChoice.currentIndex)].id
     readonly property var lineChoices: ["all", "selected", "shown"]
     property var setup: ({})
@@ -38,7 +40,7 @@ DialogWindow {
     readonly property bool reported: report !== null
     property string problem: ""
     readonly property bool ttml: format === "ttml" || format === "dfxp"
-    readonly property bool usesFrames: format === "mdvd" || (ttml && (ttmlNetflix.checked || ttmlFrames.checked))
+    readonly property bool usesFrames: format === "microdvd" || (ttml && (ttmlNetflix.checked || ttmlFrames.checked))
     readonly property bool fpsValid: !usesFrames || (fpsNumber() >= 1 && fpsNumber() <= 1000)
     property var srv3Rows: []
     property int srv3Revision: 0
@@ -64,6 +66,7 @@ DialogWindow {
             return
         report = null
         problem = ""
+        exporting = false
         srv3Rows = JSON.parse(JSON.stringify(setup.srv3Styles || []))
         srv3All.checked = false
         ++srv3Revision
@@ -83,6 +86,7 @@ DialogWindow {
         language.text = o.language
         fps.text = Number(o.fps).toFixed(3).replace(/\.?0+$/, "")
         destination.text = suggestedPath()
+        beforeExport.load()
         open()
     }
     function extension(id) {
@@ -108,7 +112,8 @@ DialogWindow {
             srtAlignmentTags: srtAlignment.checked, vttPositions: vttPositions.checked, vttStyles: vttStyles.checked,
             vttKaraoke: vttKaraoke.checked, textTimes: textTimes.checked, textActors: textActors.checked,
             ttmlNetflix: ttmlNetflix.checked, ttmlFrames: ttmlFrames.checked, language: language.text.trim(),
-            fps: fpsNumber(), replace: replace, srv3Styles: srv3Rows
+            fps: fpsNumber(), replace: replace, srv3Styles: srv3Rows,
+            steps: beforeExport.visible ? beforeExport.choice() : []
         }
     }
     function srv3Set(index, key, value) {
@@ -131,7 +136,17 @@ DialogWindow {
         srv3Popover.openFor(swatch, srv3Colour, () => srv3Colour.begin(), { title: name, alpha: false, clear: true, focus: swatch })
     }
     function run(replace) {
+        beforeExport.progress = ""
+        beforeExport.outcome = []
         const result = app.exportTo(app.fileUrl(destination.text.trim()), format, choice(replace))
+        if (result.pending) {
+            problem = ""
+            exporting = true
+            return
+        }
+        finish(result)
+    }
+    function finish(result) {
         if (result.exists) {
             replaceQuestion.ask({
                 title: qsTr("Export as"),
@@ -143,6 +158,11 @@ DialogWindow {
                     { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }
                 ]
             }, id => { if (id === "replace") dialog.run(true) })
+            return
+        }
+        if (result.stepsFailed) {
+            problem = ""
+            beforeExport.outcome = result.steps
             return
         }
         if (!result.ok) {
@@ -481,13 +501,13 @@ DialogWindow {
             CheckBox {
                 id: textTimes
                 objectName: "exportTextTimes"
-                visible: dialog.format === "txt"
+                visible: dialog.format === "text"
                 text: qsTr("Start and end times")
             }
             CheckBox {
                 id: textActors
                 objectName: "exportTextActors"
-                visible: dialog.format === "txt"
+                visible: dialog.format === "text"
                 text: qsTr("Actor names")
             }
             CheckBox {
@@ -520,7 +540,7 @@ DialogWindow {
             CheckBox {
                 id: merge
                 objectName: "exportMerge"
-                visible: ["srt", "sbv", "mdvd", "mpl2"].indexOf(dialog.format) >= 0
+                visible: ["srt", "sbv", "microdvd", "mpl2"].indexOf(dialog.format) >= 0
                 text: qsTr("Merge overlapping lines into one subtitle")
             }
             RowLayout {
@@ -551,7 +571,7 @@ DialogWindow {
                 text: qsTr("Text stays white and centred at the top or bottom, only italics are kept, and times are in frames.")
             }
             Hint {
-                visible: dialog.format === "tmp"
+                visible: dialog.format === "tmplayer"
                 text: qsTr("TMPlayer has no end times: overlapping lines are merged, and an empty subtitle clears the screen.")
             }
             Hint {
@@ -564,11 +584,27 @@ DialogWindow {
                 text: qsTr("Changed options are saved in the subtitle file when you export.")
             }
             Hint {
-                visible: dialog.format === "sbv" || dialog.format === "txt"
+                visible: dialog.format === "sbv" || dialog.format === "text"
                 text: qsTr("Formatting, colours and positions are not kept.")
             }
         }
 
+        RowLabel {
+            text: qsTr("Before export")
+            visible: beforeExport.visible
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 6
+        }
+        BeforeExportSteps {
+            id: beforeExport
+            app: dialog.app
+            host: dialog
+            colourPicker: dialog.colourPicker
+            videoFps: dialog.setup.videoFps ?? 0
+            exporting: dialog.exporting
+            visible: !dialog.format.startsWith("plugin:")
+            onExportWithout: dialog.run(false)
+        }
         Item { implicitWidth: 1; visible: dialog.problem.length > 0 }
         FieldError {
             objectName: "exportProblem"
@@ -589,6 +625,11 @@ DialogWindow {
             wrapMode: Text.Wrap
             text: dialog.reported ? qsTr("Exported %n line(s) to “%1”.", "", dialog.report.written)
                                         .arg(dialog.app.localPath(dialog.report.file).replace(/^.*[\\/]/, "")) : ""
+        }
+        Hint {
+            objectName: "exportRanBefore"
+            visible: text !== ""
+            text: dialog.reported ? beforeExport.ranText(dialog.report.steps) : ""
         }
         Hint {
             objectName: "exportSkipped"
@@ -676,7 +717,7 @@ DialogWindow {
             objectName: "exportRun"
             visible: !dialog.reported
             text: qsTr("Export")
-            enabled: destination.text.trim().length > 0 && dialog.fpsValid
+            enabled: destination.text.trim().length > 0 && dialog.fpsValid && !dialog.exporting
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
             onClicked: dialog.run(false)
         },
@@ -689,6 +730,14 @@ DialogWindow {
         }
     ]
 
+    Connections {
+        target: dialog.app
+        enabled: dialog.exporting
+        function onPluginExportFinished(result) {
+            dialog.exporting = false
+            dialog.finish(result)
+        }
+    }
     ColourPopover {
         id: srv3Popover
         objectName: "exportSrv3ColourPopover"

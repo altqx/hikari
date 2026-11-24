@@ -4,6 +4,7 @@
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_mcp_servers.h"
+#include "hikari/app/model_picker.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_requests.h"
@@ -222,8 +223,11 @@ AiSettings::AiSettings(AiFeatures &features, AiMcp *mcp, AiMcpServers *mcpServer
         emit switched();
         emit providersChanged();
         emit componentsChanged();
+        if (m_features.on() && m_features.updater() && !m_features.installed())
+            installComponent();
     });
     connect(&m_features, &AiFeatures::componentsChanged, this, &AiSettings::componentsChanged);
+    connect(&m_features, &AiFeatures::providersChanged, this, &AiSettings::providersChanged);
     watchUpdater();
 }
 
@@ -298,6 +302,29 @@ QVariantList AiSettings::modelChoices() const
     return out;
 }
 
+bool AiSettings::lacksKey(const QString &providerId) const
+{
+    const auto it = m_status.find(providerId.toStdString());
+    return it != m_status.end() && it->second.state == QLatin1String("failed") && it->second.error == QLatin1String("key");
+}
+
+QVariantList AiSettings::rolePickerItems(const QString &role, const QString &current, const QString &filter) const
+{
+    const auto which = ai::roleFromId(role.toStdString());
+    ModelPickerRequest request{.current = current, .filter = filter};
+    if (which != ai::Role::Chat)
+        request.emptyChoice = QCoreApplication::translate("HikariSub.Options", "Same as chat");
+    if (const ai::Providers *providers = m_features.providers())
+        for (const ai::Provider &p : providers->config().providers) {
+            ModelPickerGroup group{.name = qs(p.name), .key = qs(p.id)};
+            for (const ai::Model &m : p.models)
+                if (which != ai::Role::Vision || ai::capabilitiesOf(p, m.id).vision)
+                    group.models.push_back({modelValue(p.id, m.id), qs(m.name.empty() ? m.id : m.name), qs(m.id), qs(p.name)});
+            request.groups.push_back(std::move(group));
+        }
+    return modelPickerItems(request);
+}
+
 QVariantMap AiSettings::roles() const
 {
     QVariantMap out;
@@ -317,7 +344,7 @@ QVariantMap AiSettings::download() const
     return {{QStringLiteral("needed"), m_download != nullptr},
             {QStringLiteral("size"), m_downloadSize},
             {QStringLiteral("received"), m_downloadReceived},
-            {QStringLiteral("active"), m_installing},
+            {QStringLiteral("active"), m_installing || m_installWanted},
             {QStringLiteral("error"), m_downloadError}};
 }
 
@@ -670,7 +697,7 @@ QVariantMap AiSettings::codex() const
             {QStringLiteral("path"), m_codex.path},
             {QStringLiteral("version"), m_codex.version},
             {QStringLiteral("canImport"), m_codex.canImport},
-            {QStringLiteral("signedIn"), m_codex.signedIn},
+            {QStringLiteral("signedIn"), m_codex.signedIn.value_or(false)},
             {QStringLiteral("email"), m_codex.email},
             {QStringLiteral("state"), m_codex.state},
             {QStringLiteral("userCode"), m_codex.userCode},
@@ -1118,6 +1145,7 @@ QVariantMap AiSettings::components() const
                     {QStringLiteral("reportSent"), r->reportSent}};
     const QString state = m_componentState == QLatin1String("cancelled") ? QString() : m_componentState;
     return {{QStringLiteral("present"), true},
+            {QStringLiteral("installed"), m_features.installed()},
             {QStringLiteral("version"), versions.value(QLatin1String("ai_component_version")).toString()},
             {QStringLiteral("runtime"), versions.value(QLatin1String("ai_runtime_version")).toString()},
             {QStringLiteral("anthropic"), versions.value(QLatin1String("ai_anthropic_version")).toString()},

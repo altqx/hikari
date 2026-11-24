@@ -12,6 +12,7 @@
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/settings.h"
+#include "settings_catalogue.h"
 #include "settings_store.h"
 
 #include <QDir>
@@ -22,7 +23,9 @@
 #include <QJsonObject>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
+#include <QQuickWindow>
 #include <QSaveFile>
+#include <QSet>
 #include <QTemporaryDir>
 
 #include <map>
@@ -96,49 +99,29 @@ QJsonObject commands(const QVariantMap &menus)
     return {{QStringLiteral("commands"), list}};
 }
 
-QQuickItem *ancestorWith(QQuickItem *item, const char *property)
+QString controlOf(const QQuickItem *item, const application::SettingDefinition &definition,
+                  const application::OptionsBinding *binding)
 {
-    for (QQuickItem *p = item ? item->parentItem() : nullptr; p; p = p->parentItem())
-        if (has(p, property))
-            return p;
-    return nullptr;
-}
-
-// Qt makes the Accessible attached object the item's child.
-QString accessibleName(const QQuickItem *item)
-{
-    for (QObject *child : item->children())
-        if (child->inherits("QQuickAccessibleAttached"))
-            return text(child, "name");
-    return {};
-}
-
-QString noteAfter(QQuickItem *item)
-{
-    QQuickItem *parent = item->parentItem();
-    if (!parent || !parent->inherits("QQuickColumnLayout"))
-        return {};
-    const QList<QQuickItem *> siblings = parent->childItems();
-    const qsizetype at = siblings.indexOf(item);
-    if (at < 0 || at + 1 >= siblings.size())
-        return {};
-    QQuickItem *next = siblings.at(at + 1);
-    return next->inherits("QQuickText") && !has(next, "setting") ? text(next, "text") : QString();
-}
-
-QString controlOf(QQuickItem *item, const application::OptionsBinding *binding)
-{
-    if (has(item, "docsControl"))
+    using application::OptionsControl;
+    if (item && has(item, "docsControl"))
         return text(item, "docsControl");
-    if (has(item, "sizeSetting") || (binding && binding->control == application::OptionsControl::Font))
-        return QStringLiteral("font");
-    if (has(item, "checked"))
-        return QStringLiteral("check");
-    if (has(item, "from") && has(item, "to"))
-        return QStringLiteral("number");
-    if (has(item, "count") || (binding && binding->control == application::OptionsControl::IndexChoice))
+    if (binding) {
+        switch (binding->control) {
+        case OptionsControl::Check: return QStringLiteral("check");
+        case OptionsControl::Number: return QStringLiteral("number");
+        case OptionsControl::Text:
+        case OptionsControl::ZoomText: return QStringLiteral("text");
+        case OptionsControl::Font: return QStringLiteral("font");
+        default: return QStringLiteral("choice");
+        }
+    }
+    if (item && has(item, "count"))
         return QStringLiteral("choice");
-    return QStringLiteral("text");
+    switch (definition.type) {
+    case application::SettingType::Bool: return QStringLiteral("check");
+    case application::SettingType::Int: return QStringLiteral("number");
+    default: return QStringLiteral("text");
+    }
 }
 
 QString typeName(application::SettingType type)
@@ -159,7 +142,7 @@ struct Languages {
 QJsonArray entriesOf(QQuickItem *item, const application::OptionsBinding *binding, const Languages &languages)
 {
     QJsonArray out;
-    if (has(item, "docsValues")) {
+    if (item && has(item, "docsValues")) {
         for (const QVariant &v : plain(item->property("docsValues")).toList())
             out.append(QJsonObject::fromVariantMap(v.toMap()));
         return out;
@@ -170,7 +153,7 @@ QJsonArray entriesOf(QQuickItem *item, const application::OptionsBinding *bindin
         for (qsizetype i = 0; i < languages.names.size() && i < languages.tags.size(); ++i)
             out.append(QJsonObject{{QStringLiteral("value"), languages.tags.at(i)},
                                    {QStringLiteral("label"), languages.names.at(i)}});
-    } else if (binding->control == application::OptionsControl::IndexChoice) {
+    } else if (binding->control == application::OptionsControl::IndexChoice && item) {
         const int count = item->property("count").toInt();
         for (int i = 0; i < count; ++i) {
             QString label;
@@ -184,95 +167,116 @@ QJsonArray entriesOf(QQuickItem *item, const application::OptionsBinding *bindin
     return out;
 }
 
-struct SettingsWalk {
+// Qt makes the Accessible attached object the item's child.
+QQuickItem *itemNamed(QQuickItem *item, const QString &name)
+{
+    if (item->objectName() == name)
+        return item;
+    for (QQuickItem *child : item->childItems())
+        if (QQuickItem *found = itemNamed(child, name))
+            return found;
+    return nullptr;
+}
+
+QString shownName(const QQuickItem *item)
+{
+    for (QObject *child : item->children())
+        if (child->inherits("QQuickAccessibleAttached"))
+            if (QString name = text(child, "name"); !name.isEmpty())
+                return name;
+    if (has(item, "text") && !text(item, "text").isEmpty())
+        return text(item, "text");
+    for (const QQuickItem *p = item->parentItem(); p; p = p->parentItem())
+        if (has(p, "labelWidth") && has(p, "text"))
+            return text(p, "text");
+    return {};
+}
+
+QString sectionKeyAbove(QQuickItem *item)
+{
+    for (QQuickItem *p = item->parentItem(); p; p = p->parentItem())
+        if (has(p, "key") && has(p, "ruled"))
+            return text(p, "key");
+    return {};
+}
+
+struct SettingsExport {
+    QObject *dialog;
     ui::SettingsStore *store;
     Languages languages;
     QVariantMap shown;
-    QString page;
     QJsonArray settings;
+    QSet<QString> seen;
 
-    void add(QQuickItem *item, const QString &key, const QString &control, QJsonObject extra = {})
+    QQuickItem *control(const QString &key) const
+    {
+        auto *window = qobject_cast<QQuickWindow *>(dialog);
+        return window ? itemNamed(window->contentItem(), QStringLiteral("setting_") + key) : nullptr;
+    }
+
+    void add(const QString &key, const QString &section, QQuickItem *item, const QJsonObject &extra = {})
     {
         const application::SettingDefinition *definition = application::findSetting(key.toStdString());
-        if (!definition)
+        if (!definition || seen.contains(key))
             return;
+        seen.insert(key);
         const application::OptionsBinding *binding = application::findOptionsBinding(definition->id);
-        // MUST KILL: SettingsRow/SettingsSection are found by their labelWidth/ruled properties.
-        QQuickItem *row = ancestorWith(item, "labelWidth");
-        QQuickItem *section = ancestorWith(item, "ruled");
-        QString label = has(item, "docsLabel") ? text(item, "docsLabel") : QString();
-        if (label.isEmpty() && has(item, "checked"))
-            label = text(item, "text");
-        if (label.isEmpty())
-            label = accessibleName(item);
-        if (label.isEmpty() && has(item, "name"))
-            label = text(item, "name");
-        if (label.isEmpty() && row)
-            label = text(row, "text");
-        QStringList hints;
-        for (const QString &hint : {row ? text(row, "note") : QString(), has(item, "tip") ? text(item, "tip") : QString(),
-                                    noteAfter(item)})
-            if (!hint.isEmpty())
-                hints << hint;
+        const QString kind = extra.contains(QStringLiteral("control")) ? extra.value(QStringLiteral("control")).toString()
+                                                                       : controlOf(item, *definition, binding);
         QJsonObject o{
             {QStringLiteral("key"), key},
-            {QStringLiteral("page"), page},
-            {QStringLiteral("section"), section ? text(section, "title") : QString()},
-            {QStringLiteral("label"), label},
-            {QStringLiteral("hint"), hints.join(QLatin1Char(' '))},
-            {QStringLiteral("control"), control},
+            {QStringLiteral("page"), section.left(section.indexOf(QLatin1Char('.')))},
+            {QStringLiteral("section"), ui::SettingsCatalogue::sectionTitle(section)},
+            {QStringLiteral("label"), ui::SettingsCatalogue::label(key)},
+            {QStringLiteral("hint"), ui::SettingsCatalogue::description(key)},
+            {QStringLiteral("control"), kind},
             {QStringLiteral("type"), typeName(definition->type)},
             {QStringLiteral("default"), QJsonValue::fromVariant(store->value(key))},
         };
-        if (control == QLatin1String("number") && shown.contains(key) &&
-            shown.value(key).toString() != store->value(key).toString())
-            o.insert(QStringLiteral("default"), QJsonValue::fromVariant(shown.value(key)));
-        if (control == QLatin1String("number")) {
-            o.insert(QStringLiteral("min"), item->property("from").toInt());
-            o.insert(QStringLiteral("max"), item->property("to").toInt());
-            if (const QString unit = text(item, "unit"); !unit.isEmpty())
+        if (kind == QLatin1String("number")) {
+            if (shown.contains(key) && shown.value(key).toString() != store->value(key).toString())
+                o.insert(QStringLiteral("default"), QJsonValue::fromVariant(shown.value(key)));
+            const bool bound = binding && binding->control == application::OptionsControl::Number;
+            o.insert(QStringLiteral("min"), bound ? qint64(binding->min) : (item ? item->property("from").toInt() : 0));
+            o.insert(QStringLiteral("max"), bound ? qint64(binding->max) : (item ? item->property("to").toInt() : 0));
+            if (const QString unit = item && has(item, "unit") ? text(item, "unit") : QString(); !unit.isEmpty())
                 o.insert(QStringLiteral("unit"), unit);
         }
-        if (control == QLatin1String("choice"))
+        if (kind == QLatin1String("choice"))
             o.insert(QStringLiteral("values"), entriesOf(item, binding, languages));
+        if (o.value(QStringLiteral("label")).toString().isEmpty() && item)
+            o.insert(QStringLiteral("label"), shownName(item));
         for (auto it = extra.begin(); it != extra.end(); ++it)
-            o.insert(it.key(), it.value());
+            if (!it.value().toString().isEmpty() || !it.value().isString())
+                o.insert(it.key(), it.value());
         settings.append(o);
+        if (kind == QLatin1String("font") && binding && !binding->sizeSetting.empty())
+            add(qs(binding->sizeSetting), section, control(qs(binding->sizeSetting)), {{QStringLiteral("control"), QStringLiteral("number")}});
     }
 
-    void walk(QQuickItem *item)
+    // MUST KILL: values the catalogue doesn't hold yet (theme lists, Windows-only rows) come from docs* properties.
+    void addHooks(QQuickItem *item)
     {
         if (has(item, "docsEntries")) {
+            const QString section = sectionKeyAbove(item);
             for (const QVariant &v : plain(item->property("docsEntries")).toList()) {
                 const QVariantMap entry = v.toMap();
-                QJsonObject extra{{QStringLiteral("label"), entry.value(QStringLiteral("label")).toString()}};
-                if (entry.contains(QStringLiteral("values")))
-                    extra.insert(QStringLiteral("values"), QJsonArray::fromVariantList(entry.value(QStringLiteral("values")).toList()));
-                for (const QString &field : {QStringLiteral("hint"), QStringLiteral("platform")})
-                    if (entry.contains(field))
-                        extra.insert(field, entry.value(field).toString());
-                add(item, entry.value(QStringLiteral("setting")).toString(), entry.value(QStringLiteral("control")).toString(), extra);
+                QJsonObject extra = QJsonObject::fromVariantMap(entry);
+                extra.remove(QStringLiteral("setting"));
+                add(entry.value(QStringLiteral("setting")).toString(), section, item, extra);
             }
             return;
         }
-        QString key = has(item, "docsSetting") ? text(item, "docsSetting") : QString();
-        if (key.isEmpty() && has(item, "setting") && item->property("setting").userType() == QMetaType::QString)
-            key = text(item, "setting");
-        if (key.isEmpty() && item->objectName().startsWith(QLatin1String("setting_")))
-            key = item->objectName().mid(8);
-        if (!key.isEmpty()) {
-            const application::OptionsBinding *binding = application::findOptionsBinding(key.toStdString());
-            const QString control = controlOf(item, binding);
-            add(item, key, control);
-            if (control == QLatin1String("font") && has(item, "sizeSetting"))
-                add(item, text(item, "sizeSetting"), QStringLiteral("number"),
-                    {{QStringLiteral("label"), text(item, "name") + QStringLiteral(" size")},
-                     {QStringLiteral("min"), 1},
-                     {QStringLiteral("max"), 200}});
+        if (has(item, "docsSetting")) {
+            const QString key = text(item, "docsSetting");
+            QJsonObject extra;
+            if (has(item, "docsLabel"))
+                extra.insert(QStringLiteral("label"), text(item, "docsLabel"));
+            add(key, sectionKeyAbove(item), item, extra);
             return;
         }
         for (QQuickItem *child : item->childItems())
-            walk(child);
+            addHooks(child);
     }
 };
 
@@ -284,25 +288,31 @@ QJsonObject settings(Application &application, QObject *dialog)
         dialog->setProperty(list, opened.value(QLatin1String(list)));
     QMetaObject::invokeMethod(dialog, "reloaded");
 
-    SettingsWalk walk{application.settingsStore(),
-                      {opened.value(QStringLiteral("languageTags")).toStringList(),
-                       opened.value(QStringLiteral("languages")).toStringList()},
-                      opened.value(QStringLiteral("values")).toMap(),
-                      {},
-                      {}};
-    QJsonArray pages;
-    auto *stack = dialog->findChild<QQuickItem *>(QStringLiteral("settingsPageStack"));
-    const QVariantList pageList = plain(dialog->property("pages")).toList();
-    const QList<QQuickItem *> pageItems = stack ? stack->childItems() : QList<QQuickItem *>();
-    for (qsizetype i = 0; i < pageList.size(); ++i) {
-        const QVariantMap page = pageList.at(i).toMap();
-        walk.page = page.value(QStringLiteral("id")).toString();
-        pages.append(QJsonObject{{QStringLiteral("id"), walk.page},
-                                 {QStringLiteral("name"), page.value(QStringLiteral("name")).toString()}});
-        if (i < pageItems.size())
-            walk.walk(pageItems.at(i));
+    SettingsExport out{dialog,
+                       application.settingsStore(),
+                       {opened.value(QStringLiteral("languageTags")).toStringList(),
+                        opened.value(QStringLiteral("languages")).toStringList()},
+                       opened.value(QStringLiteral("values")).toMap(),
+                       {},
+                       {}};
+    if (auto *window = qobject_cast<QQuickWindow *>(dialog))
+        out.addHooks(window->contentItem());
+    for (const QString &key : ui::SettingsCatalogue::settings())
+        if (application::optionsBindingShown(key.toStdString()))
+            out.add(key, ui::SettingsCatalogue::sectionOf(key), out.control(key));
+    for (const application::OptionsBinding &binding : application::optionsBindings()) {
+        const QString key = qs(binding.setting);
+        if (QQuickItem *item = out.control(key); item && application::optionsBindingShown(binding.setting))
+            out.add(key, sectionKeyAbove(item), item);
     }
-    return {{QStringLiteral("pages"), pages}, {QStringLiteral("settings"), walk.settings}};
+
+    QJsonArray pages;
+    for (const QVariant &v : ui::SettingsCatalogue::pages()) {
+        const QVariantMap page = v.toMap();
+        pages.append(QJsonObject{{QStringLiteral("id"), page.value(QStringLiteral("id")).toString()},
+                                 {QStringLiteral("name"), page.value(QStringLiteral("name")).toString()}});
+    }
+    return {{QStringLiteral("pages"), pages}, {QStringLiteral("settings"), out.settings}};
 }
 
 QJsonObject guideLinks()
@@ -327,7 +337,8 @@ QJsonObject meta()
             {QStringLiteral("api"), api::kApiVersion},
             {QStringLiteral("files"), QJsonArray{QStringLiteral("commands.json"), QStringLiteral("settings.json"),
                                                  QStringLiteral("guide-links.json"), QStringLiteral("api.json"),
-                                                 QStringLiteral("api.md")}}};
+                                                 QStringLiteral("api.md"), QStringLiteral("hikari.lua"),
+                                                 QStringLiteral("hikari.d.ts")}}};
 }
 
 }
@@ -384,6 +395,8 @@ bool exportDocs(const QString &dir, QString *error)
            write(dir, QStringLiteral("guide-links.json"), guideLinks(), error) &&
            write(dir, QStringLiteral("api.json"), QByteArray::fromStdString(api::apiReference().dump(2) + "\n"), error) &&
            write(dir, QStringLiteral("api.md"), QByteArray::fromStdString(api::referenceMarkdown(api::apiReference())), error) &&
+           write(dir, QStringLiteral("hikari.lua"), QByteArray::fromStdString(api::luaAnnotations(api::apiReference())), error) &&
+           write(dir, QStringLiteral("hikari.d.ts"), QByteArray::fromStdString(api::typeScriptTypes(api::apiReference())), error) &&
            write(dir, QStringLiteral("meta.json"), meta(), error);
 }
 

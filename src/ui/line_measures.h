@@ -18,6 +18,8 @@ struct LineMeasures {
 struct MeasureOptions {
     bool allCharsForCps = false;
     bool allCharsForWraps = false;
+    int lineLength = 43;
+    int maxLines = 2;
 };
 
 LineMeasures measureLine(const QString &text, core::SubtitleFormat format, MeasureOptions options = {});

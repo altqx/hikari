@@ -264,6 +264,13 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
         setAccels();
     });
     connect(&m_scripts, &AutomationHotkeysController::bindingsChanged, this, &HotkeysController::relistMacros);
+    m_scripts.setBuiltInOwner([this](const std::string &keys) {
+        const std::string accel = application::accelOfQtKeys(keys);
+        for (const auto &[key, hotkey] : m_installed)
+            if (key.id < application::kFirstScriptHotkey && sameChord(hotkey.accel, accel))
+                return commandName(key.id);
+        return QString();
+    });
     QCoreApplication::instance()->installEventFilter(this);
 }
 
@@ -580,6 +587,17 @@ QVariantList HotkeysController::rows() const
                         {QStringLiteral("keyModified"), r.keyModified},
                         {QStringLiteral("block"), filtered ? m_list->hiddenBlock(position) : 0},
                         {QStringLiteral("inBlock"), filtered && r.visible == 2}};
+        if (m_list->conflictsOnly()) {
+            QStringList names;
+            QVariantList rows;
+            for (const int other : m_list->clashes(i)) {
+                names << shownName(m_list->row(other));
+                rows << other;
+            }
+            row.insert(QStringLiteral("clash"),
+                       QCoreApplication::translate("HikariSub.Hotkeys", "Also on %1").arg(names.join(QStringLiteral(", "))));
+            row.insert(QStringLiteral("clashRows"), rows);
+        }
         if (r.key.id >= application::kFirstScriptHotkey) {
             const QVariantMap macro = m_scripts.describe(r.name);
             row.insert(QStringLiteral("script"), macro.value(QStringLiteral("script")));
@@ -659,6 +677,22 @@ void HotkeysController::filter(int mode)
     emit rowsChanged();
 }
 
+void HotkeysController::filterSource(int source)
+{
+    if (!m_list)
+        return;
+    m_list->filterSource(source);
+    emit rowsChanged();
+}
+
+void HotkeysController::filterConflicts(bool on)
+{
+    if (!m_list)
+        return;
+    m_list->filterConflicts(on);
+    emit rowsChanged();
+}
+
 void HotkeysController::search(const QString &text)
 {
     if (!m_list)
@@ -673,6 +707,23 @@ void HotkeysController::search(const QString &text)
             .toStdString();
     });
     emit rowsChanged();
+}
+
+QVariantList HotkeysController::matching(const QString &text) const
+{
+    QVariantList out;
+    const QStringList words = text.toLower().split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    if (!m_list || words.isEmpty())
+        return out;
+    for (std::size_t i = 0; i < m_list->rowCount(); ++i) {
+        const auto &r = m_list->row(int(i));
+        const QString shown = shownText(r);
+        const QString lower = shown.toLower();
+        if (std::ranges::all_of(words, [&](const QString &word) { return lower.contains(word); }))
+            out.append(QVariantMap{{QStringLiteral("name"), shown},
+                                   {QStringLiteral("keys"), r.accel.empty() ? QStringList() : QStringList{qs(r.accel)}}});
+    }
+    return out;
 }
 
 void HotkeysController::select(int position)

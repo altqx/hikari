@@ -1,5 +1,6 @@
 #pragma once
 
+#include "file_write_queue.h"
 #include "hikari/app/crash_report.h"
 
 #include <QObject>
@@ -144,6 +145,7 @@ private:
     QString m_sendingSource;
     std::optional<report::Report> m_inFlight;
     bool m_sendingAuto = false;
+    ui::FileWriteQueue m_writes;
 };
 
 }

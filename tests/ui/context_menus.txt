@@ -41,6 +41,7 @@ Line editor text > AI actions >
 Line editor text > AI actions > Rewrite…
 Line editor text > AI actions > Shorten to 15 CPS
 Line editor text > AI actions > Fix spelling and grammar
+Line editor text > AI actions > Suggest synonyms >
 Line editor text > AI actions > Translate to English
 Line editor text > AI actions > Translate to…
 Line editor text > AI actions > -
@@ -102,6 +103,8 @@ Grid > Swap lines [GRID_SWAP_LINES]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
 Grid > Make times continuous > With the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
+Grid > Snap to the scene [GLOBAL_SNAP_TO_SCENE]
+Grid > Save audio of selected lines… [GLOBAL_SAVE_SELECTED_AUDIO]
 Grid > Make line group [GRID_TREE_MAKE]
 Grid > Convert Aegisub folds to line groups [GLOBAL_CONVERT_FOLDS_TO_GROUPS]
 Grid > -
@@ -161,6 +164,7 @@ Grid > AI actions >
 Grid > AI actions > Rewrite…
 Grid > AI actions > Shorten to 15 CPS
 Grid > AI actions > Fix spelling and grammar
+Grid > AI actions > Suggest synonyms >
 Grid > AI actions > Translate to English
 Grid > AI actions > Translate to…
 Grid > AI actions > -
@@ -226,9 +230,9 @@ Video > -
 Video > Progress bar [VIDEO_HIDE_PROGRESS_BAR]
 Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
 Video > Full screen bar >
-Video > Full screen bar > Show when the pointer moves
-Video > Full screen bar > Always show
-Video > Full screen bar > Never show
+Video > Full screen bar > Bar position >
+Video > Full screen bar > Show bar >
+Video > Full screen bar > Full-screen settings…
 Video > Change aspect ratio… [VIDEO_ASPECT_RATIO]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > Filters >
@@ -262,9 +266,9 @@ Full-screen video > -
 Full-screen video > Progress bar [VIDEO_HIDE_PROGRESS_BAR]
 Full-screen video > Render cost [GLOBAL_VIDEO_RENDER_COST]
 Full-screen video > Full screen bar >
-Full-screen video > Full screen bar > Show when the pointer moves
-Full-screen video > Full screen bar > Always show
-Full-screen video > Full screen bar > Never show
+Full-screen video > Full screen bar > Bar position >
+Full-screen video > Full screen bar > Show bar >
+Full-screen video > Full screen bar > Full-screen settings…
 Full-screen video > Change aspect ratio… [VIDEO_ASPECT_RATIO]
 Full-screen video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Full-screen video > Filters >
@@ -410,6 +414,7 @@ Explorer row > New subtitle file here
 Explorer row > Rename
 Explorer row > -
 Explorer row > Move to the trash…
+Status bar
 Panel options (Line editor)
 Panel options (Line editor) > Show times
 Panel options (Line editor) > Show frames
@@ -481,22 +486,22 @@ Panel options (Spellchecker) > -
 Panel options (Spellchecker) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 Panel options (Spellchecker) > -
 Panel options (Spellchecker) > Close
-Panel options (QC notes)
-Panel options (QC notes) > Import notes file…
-Panel options (QC notes) > Import notes from the clipboard…
-Panel options (QC notes) > Export notes…
-Panel options (QC notes) > Mark all as not done
-Panel options (QC notes) > -
-Panel options (QC notes) > Delete all notes…
-Panel options (QC notes) > -
-Panel options (QC notes) > Move panel…
-Panel options (QC notes) > Move to the left side bar
-Panel options (QC notes) > Move to the right side bar
-Panel options (QC notes) > Dock
-Panel options (QC notes) > -
-Panel options (QC notes) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
-Panel options (QC notes) > -
-Panel options (QC notes) > Close
+Panel options (Problems)
+Panel options (Problems) > Import notes file…
+Panel options (Problems) > Import notes from the clipboard…
+Panel options (Problems) > Export notes…
+Panel options (Problems) > Mark all as not done
+Panel options (Problems) > -
+Panel options (Problems) > Delete all notes…
+Panel options (Problems) > -
+Panel options (Problems) > Move panel…
+Panel options (Problems) > Move to the left side bar
+Panel options (Problems) > Move to the right side bar
+Panel options (Problems) > Dock
+Panel options (Problems) > -
+Panel options (Problems) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Problems) > -
+Panel options (Problems) > Close
 Panel options (Explorer)
 Panel options (Explorer) > New subtitle file
 Panel options (Explorer) > Refresh

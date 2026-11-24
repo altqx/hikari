@@ -283,6 +283,11 @@ void Application::loadAssociations(application::DocumentId document, const appli
     if (!load.video.empty()) {
         media.video = QDir::toNativeSeparators(qs(load.video));
         media.position = 0;
+        if (auto *session = m_files->session(document)) {
+            const auto view = application::savedView(session->document());
+            media.fileFrame = view.videoFrame;
+            media.fileAspect = view.aspect;
+        }
         if (shown) {
             if (!load.videoAudio)
                 activeMedia().keepTabAudio = media.video;
@@ -294,6 +299,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         const QString path = audio.startsWith(QLatin1String("dummy")) ? audio : QDir::toNativeSeparators(audio);
         media.audio = path;
         media.audioFromVideo = false;
+        media.openedAudio = path;
         if (shown)
             activeMedia().audio->openAudio(path);
     }
@@ -374,9 +380,14 @@ bool Application::openInTab(const QString &path)
 {
     if (!m_workspace.editingTarget() || targetUntouchedUntitled())
         return openFile(path);
+    if (!importCandidates(path, {}).empty() && !builtInExtension(path)) {
+        openInTabThroughPlugins(path);
+        return true;
+    }
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged)
         return reviewOpen(path, true).value(QStringLiteral("ok")).toBool();
+    m_fileFormats.erase(staged->destination.value);
     return openInNewTab(std::move(*staged), path);
 }
 
@@ -439,7 +450,7 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
     }
     if (files.size() == 1) {
         const QString &file = files.front();
-        switch (application::openKindOf(file.toStdString(), true)) {
+        switch (application::openKindOf(file.toStdString(), true, pluginImportExtensions())) {
         case application::OpenKind::Subtitles: return openResult(QStringLiteral("subtitles"), file);
         case application::OpenKind::Video: return openResult(QStringLiteral("video"), file);
         case application::OpenKind::Session: return openResult(QStringLiteral("session"), file);
@@ -469,9 +480,15 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
 Application::PendingFiles Application::stageFiles(const QStringList &files)
 {
     PendingFiles pending;
+    const auto pluginExtensions = pluginImportExtensions();
     for (const QString &file : files) {
-        switch (application::openKindOf(file.toStdString(), false)) {
-        case application::OpenKind::Subtitles: pending.subtitlePaths << file; break;
+        switch (application::openKindOf(file.toStdString(), false, pluginExtensions)) {
+        case application::OpenKind::Subtitles:
+            if (!builtInExtension(file))
+                openInTabThroughPlugins(file);
+            else
+                pending.subtitlePaths << file;
+            break;
         case application::OpenKind::Script: m_automation->loadScript(QUrl::fromLocalFile(file)); break;
         case application::OpenKind::Video:
         case application::OpenKind::Keyframes: pending.videos << QDir::toNativeSeparators(file); break;
@@ -536,7 +553,7 @@ QVariantMap Application::openForwarded(const QStringList &paths, int request)
     const bool untouched = targetUntouched();
     if (files.size() == 1) {
         const QString &file = files.front();
-        switch (application::openKindOf(file.toStdString(), true)) {
+        switch (application::openKindOf(file.toStdString(), true, pluginImportExtensions())) {
         case application::OpenKind::Subtitles:
             if (untouched) {
                 openFile(file);

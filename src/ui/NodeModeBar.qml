@@ -9,6 +9,7 @@ Rectangle {
     id: root
     objectName: "nodeModeBar"
     required property NodeEffectsController controller
+    property AppQuickInput quickInput: null
     signal leave()
     signal problemChosen(string node)
     implicitHeight: column.implicitHeight
@@ -19,6 +20,19 @@ Rectangle {
         const blockers = root.controller.exportAsTemplate(karaOK)
         if (blockers.length > 0)
             exportPopup.openWith(blockers)
+    }
+    function renameGraph() {
+        const name = root.controller.name
+        root.quickInput.askFor({
+            title: qsTr("Rename"),
+            prompt: qsTr("Graph name"),
+            value: name,
+            from: root,
+            check: text => text === name ? "" : root.controller.graphNameProblem(text)
+        }, text => {
+            if (text !== null && text !== name)
+                root.controller.renameGraph(text)
+        })
     }
     function milliseconds(ms) {
         return qsTr("%1 ms").arg(ms < 10 ? ms.toFixed(1) : Math.round(ms))
@@ -274,7 +288,7 @@ Rectangle {
         }
         NodeLibraryMenu {
             controller: root.controller
-            enabled: root.controller.editable && root.controller.library.length > 0
+            enabled: root.controller.editable && (root.controller.library.length > 0 || root.controller.pluginLibrary.length > 0)
         }
         MenuSeparator {}
         ShellMenuItem {
@@ -282,7 +296,7 @@ Rectangle {
             iconRole: "edit"
             text: qsTr("Rename…")
             enabled: root.controller.current !== 0 && root.editable
-            onTriggered: renamePopup.openFor(root.controller.name)
+            onTriggered: root.renameGraph()
         }
         ShellMenuItem {
             objectName: "nodeMenuDuplicate"
@@ -440,65 +454,6 @@ Rectangle {
                         if (problem.modelData.viewNode !== "")
                             root.problemChosen(problem.modelData.viewNode)
                     }
-                }
-            }
-        }
-    }
-
-    Popup {
-        id: renamePopup
-        objectName: "nodeRenamePopup"
-        parent: graphMenuButton
-        y: graphMenuButton.height
-        width: 280
-        padding: 10
-        modal: true
-        function openFor(name) {
-            renameField.text = name
-            open()
-            renameField.forceActiveFocus()
-            renameField.selectAll()
-        }
-        readonly property string problem: renameField.text === root.controller.name ? "" : root.controller.graphNameProblem(renameField.text)
-        function accept() {
-            if (problem !== "")
-                return
-            if (renameField.text !== root.controller.name)
-                root.controller.renameGraph(renameField.text)
-            close()
-        }
-        contentItem: ColumnLayout {
-            spacing: 6
-            Label {
-                text: qsTr("Graph name")
-                font.bold: true
-            }
-            TextField {
-                id: renameField
-                objectName: "nodeRenameField"
-                Layout.fillWidth: true
-                Accessible.name: qsTr("Graph name")
-                onAccepted: renamePopup.accept()
-            }
-            Label {
-                objectName: "nodeRenameProblem"
-                visible: renamePopup.problem !== ""
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                color: Theme.danger
-                text: renamePopup.problem
-            }
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
-                Button {
-                    text: qsTr("Cancel")
-                    onClicked: renamePopup.close()
-                }
-                PrimaryButton {
-                    objectName: "nodeRenameOk"
-                    text: qsTr("Rename")
-                    enabled: renamePopup.problem === ""
-                    onClicked: renamePopup.accept()
                 }
             }
         }

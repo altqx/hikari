@@ -9,6 +9,7 @@
 #include <QFileInfo>
 
 #include <algorithm>
+#include <functional>
 
 namespace hikari::ui {
 
@@ -524,6 +525,76 @@ void ExplorerModel::apply(std::vector<Row> rows)
     } else if (currentRow() != previousCurrent) {
         emit currentChanged();
     }
+}
+
+void ExplorerModel::scanFiles()
+{
+    const int generation = ++*m_scanGeneration;
+    if (!m_scanning) {
+        m_scanning = true;
+        emit scanningChanged();
+    }
+    if (m_scan.joinable())
+        m_scan.request_stop();
+    m_scan = std::jthread([this, generation, latest = m_scanGeneration, root = m_root,
+                           filter = m_filter](std::stop_token stop) {
+        constexpr int kBatch = 1000;
+        std::vector<QVariantMap> found;
+        QVariantList batch;
+        const QDir base(root);
+        const auto deliver = [&](QVariantList files, bool done) {
+            QMetaObject::invokeMethod(this, [this, generation, latest, files = std::move(files), done] {
+                if (*latest != generation)
+                    return;
+                if (done) {
+                    m_scanning = false;
+                    emit scanningChanged();
+                }
+                emit filesFound(files, done);
+            }, Qt::QueuedConnection);
+        };
+        const std::function<void(const QString &)> walk = [&](const QString &folder) {
+            const auto entries = QDir(folder).entryInfoList(
+                QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System, QDir::NoSort);
+            for (const QFileInfo &entry : entries) {
+                if (stop.stop_requested() || *latest != generation)
+                    return;
+                const QString rel = base.relativeFilePath(entry.absoluteFilePath());
+                const std::string relUtf8 = utf8(rel);
+                const std::string name = utf8(entry.fileName());
+                if (entry.isDir()) {
+                    if (folder == root && entry.fileName() == projectFolderName())
+                        continue;
+                    if (!entry.isSymLink() && explorer::folderShown(filter, relUtf8, name, entry.isHidden()))
+                        walk(entry.absoluteFilePath());
+                    continue;
+                }
+                if (!explorer::fileShown(filter, relUtf8, name, entry.isHidden()))
+                    continue;
+                QVariantMap file{{QStringLiteral("path"), QDir::cleanPath(entry.absoluteFilePath())},
+                                 {QStringLiteral("relative"), rel},
+                                 {QStringLiteral("name"), entry.fileName()},
+                                 {QStringLiteral("kind"), kindName(explorer::classify(name))}};
+                found.push_back(file);
+                batch.append(file);
+                if (batch.size() == kBatch)
+                    deliver(std::exchange(batch, {}), false);
+            }
+        };
+        if (!root.isEmpty())
+            walk(root);
+        if (stop.stop_requested() || *latest != generation)
+            return;
+        std::ranges::sort(found, [](const QVariantMap &a, const QVariantMap &b) {
+            return explorer::naturalLess(utf8(a.value(QStringLiteral("relative")).toString()),
+                                         utf8(b.value(QStringLiteral("relative")).toString()));
+        });
+        QVariantList all;
+        all.reserve(qsizetype(found.size()));
+        for (QVariantMap &file : found)
+            all.append(std::move(file));
+        deliver(std::move(all), true);
+    });
 }
 
 QString ExplorerModel::relative(const QString &path) const

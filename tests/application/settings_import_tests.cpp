@@ -145,6 +145,8 @@ std::vector<const PlanRow *> rowsKeyed(const Plan &plan, std::string_view key)
 
 std::string sampleRaw(const SettingDefinition &def)
 {
+    if (def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON")
+        return "true";
     switch (def.type) {
     case SettingType::Bool:
         return std::get<bool>(def.defaultValue) ? "false" : "true";
@@ -176,7 +178,196 @@ TEST(SettingsImport, KnownSourcesAreLegacysFiles)
         paths.emplace_back(s.path);
     EXPECT_EQ(paths, (std::vector<std::string>{"Config/Config.txt", "Config/AudioConfig.txt", "Config/Hotkeys.txt",
                                                "Config/AudioHotkeys.txt", "Config/Rules.txt",
-                                               "Dictionary/UserDic.udic"}));
+                                               "Dictionary/UserDic.udic", "hotkey.json"}));
+}
+
+namespace {
+
+SourceFile aegisub(std::string_view json)
+{
+    return source(SourceKind::AegisubHotkeys, "hotkey.json", std::string(json));
+}
+
+std::string aegisubFixture(std::string_view name)
+{
+    return readFile(std::string(HIKARI_AEGISUB_HOTKEY_FIXTURES) + "/" + std::string(name) + ".json");
+}
+
+constexpr std::string_view kAegisubFlavours[] = {"3.1.3", "3.2.2", "arch1t3cht-3.4.2", "3.5"};
+
+}
+
+TEST(SettingsImport, AegisubKeysBecomeHikariSubAccelerators)
+{
+    EXPECT_EQ(accelOfAegisubKeys("Ctrl-Shift-S"), "Ctrl-Shift-S");
+    EXPECT_EQ(accelOfAegisubKeys("Ctrl-Alt-Up"), "Alt-Ctrl-Up");
+    EXPECT_EQ(accelOfAegisubKeys("KP_5"), "Num 5");
+    EXPECT_EQ(accelOfAegisubKeys("Shift-KP_Add"), "Shift-Num +");
+    EXPECT_EQ(accelOfAegisubKeys("KP_Enter"), "Num Enter");
+    EXPECT_EQ(accelOfAegisubKeys("PageDown"), "PgDn");
+    EXPECT_EQ(accelOfAegisubKeys("Ctrl-Hyphen"), "Ctrl--");
+    EXPECT_EQ(accelOfAegisubKeys("Ctrl--"), "Ctrl--");
+    EXPECT_EQ(accelOfAegisubKeys("Return"), "Enter");
+    EXPECT_EQ(accelOfAegisubKeys("F12"), "F12");
+    for (const char *none : {"Escape", "F13", "KP_Home", "Num_Lock", "Print", "Ctrl-", ""})
+        EXPECT_EQ(accelOfAegisubKeys(none), "") << none;
+}
+
+TEST(SettingsImport, EveryAegisubCommandHasASymbolOrAReason)
+{
+    std::set<std::string_view> seen;
+    for (const auto &c : aegisubCommands()) {
+        EXPECT_TRUE(seen.insert(c.command).second) << c.command;
+        if (c.symbol.empty())
+            EXPECT_FALSE(c.reason.empty()) << c.command;
+        else
+            EXPECT_GE(hotkeyIdOf(c.symbol), 100) << c.command;
+    }
+    EXPECT_EQ(seen.size(), 237u);
+    for (const auto flavour : kAegisubFlavours) {
+        const auto file = readAegisubHotkeyFile(aegisubFixture(flavour));
+        ASSERT_EQ(file.error, "") << flavour;
+        EXPECT_EQ(file.oldForm, flavour == "3.1.3") << flavour;
+        for (const auto &h : file.hotkeys)
+            EXPECT_TRUE(seen.contains(h.command)) << flavour << " " << h.command;
+    }
+}
+
+TEST(SettingsImport, EachAegisubFlavourImportsTheSameWay)
+{
+    for (const auto flavour : kAegisubFlavours) {
+        SCOPED_TRACE(std::string(flavour));
+        const Plan plan = buildPlan({aegisub(aegisubFixture(flavour))}, linuxHost());
+        EXPECT_EQ(rowOf(plan, "file:hotkey.json").disposition, Disposition::Read);
+        EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_SAVE_SUBS:G").disposition, Disposition::Unchanged);
+        const PlanRow &keyframes = rowOf(plan, "shortcut:GLOBAL_SAVE_KEYFRAMES:G");
+        EXPECT_EQ(keyframes.disposition, Disposition::Change);
+        EXPECT_EQ(keyframes.value, SettingValue(std::string("Ctrl-Shift-K")));
+        EXPECT_TRUE(keyframes.proposedImport);
+        EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_NEXT_FRAME:V").value, SettingValue(std::string("Right")));
+        EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_STOP:A").value, SettingValue(std::string("H")));
+        EXPECT_EQ(rowOf(plan, "aegisub:Translation Assistant:tool/translation_assistant/preview:F8").reason,
+                  "HikariSub has no Translation Assistant");
+    }
+}
+
+TEST(SettingsImport, AegisubContextsPickThePanel)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Default": {"video/frame/next": ["Ctrl-KP_6"], "edit/line/copy": ["Ctrl-C"]},
+        "Video": {"video/frame/next": ["Right"]},
+        "Subtitle Grid": {"video/frame/next/keyframe": ["Shift-Right"]},
+        "Subtitle Edit Box": {"edit/color/primary": ["Alt-1"]},
+        "Audio": {"time/length/increase": ["KP_Add"]},
+        "Always": {"time/next": ["KP_2"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_NEXT_FRAME:G").value, SettingValue(std::string("Ctrl-Num 6")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_NEXT_FRAME:V").value, SettingValue(std::string("Right")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GRID_COPY:S").value, SettingValue(std::string("Ctrl-C")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_GO_TO_NEXT_KEYFRAME:S").value, SettingValue(std::string("Shift-Right")));
+    EXPECT_EQ(rowOf(plan, "shortcut:EDITBOX_CHANGE_COLOR_PRIMARY:E").value, SettingValue(std::string("Alt-1")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_END_FRAME_LATER:A").value, SettingValue(std::string("Num +")));
+    EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_NEXT:A").value, SettingValue(std::string("Num 2")));
+}
+
+TEST(SettingsImport, AegisubCommandsAndKeysHikariSubLacksAreListed)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Default": {"help/website": ["F11"], "made/up": ["F10"], "subtitle/open": ["Escape"],
+                    "app/display/full": ["Ctrl-F11"]},
+        "Translation Assistant": {"audio/play/selection": ["End"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "aegisub:Default:help/website:F11").disposition, Disposition::Unresolved);
+    EXPECT_EQ(rowOf(plan, "aegisub:Default:help/website:F11").reason, "HikariSub has no such command");
+    EXPECT_EQ(rowOf(plan, "aegisub:Default:made/up:F10").reason, "not an Aegisub command HikariSub knows");
+    EXPECT_EQ(rowOf(plan, "aegisub:Default:subtitle/open:Escape").reason, "HikariSub has no such key");
+    EXPECT_NE(rowOf(plan, "aegisub:Default:app/display/full:Ctrl-F11").reason.find("retired"), std::string::npos);
+    EXPECT_EQ(rowOf(plan, "aegisub:Translation Assistant:audio/play/selection:End").reason,
+              "HikariSub has no Translation Assistant");
+}
+
+TEST(SettingsImport, ASecondAegisubKeyTakesTheAltCommandAndAThirdIsListed)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Audio": {"audio/commit": ["Ctrl-Enter", "Ctrl-G"], "audio/play/selection": ["S", "Space"],
+                  "audio/play/toggle": ["B"]},
+        "Always": {"audio/commit": ["KP_Enter"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_COMMIT:A").value, SettingValue(std::string("Ctrl-Enter")));
+    EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_COMMIT_ALT:A").value, SettingValue(std::string("Ctrl-G")));
+    const PlanRow &third = rowOf(plan, "aegisub:Always:audio/commit:KP_Enter");
+    EXPECT_EQ(third.disposition, Disposition::Superseded);
+    EXPECT_NE(third.reason.find("one key per command"), std::string::npos);
+    EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_PLAY:A").value, SettingValue(std::string("S")));
+    EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_PLAY_ALT:A").value, SettingValue(std::string("Space")));
+    EXPECT_EQ(rowOf(plan, "aegisub:Audio:audio/play/toggle:B").disposition, Disposition::Superseded);
+}
+
+TEST(SettingsImport, AegisubKeysThatClashAreShown)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Default": {"video/play": ["Ctrl-P"], "subtitle/open": ["Ctrl-O"]},
+        "Subtitle Grid": {"subtitle/save/as": ["Ctrl-O"]}
+    })")},
+                                linuxHost());
+    const PlanRow &play = rowOf(plan, "shortcut:GLOBAL_PLAY_PAUSE:G");
+    EXPECT_TRUE(play.proposedImport);
+    EXPECT_NE(play.reason.find("the default binding of GLOBAL_QUICK_OPEN has these keys"), std::string::npos);
+    const PlanRow &quickOpen = rowOf(plan, "shortcut:GLOBAL_QUICK_OPEN:G");
+    EXPECT_EQ(quickOpen.disposition, Disposition::Change);
+    EXPECT_EQ(quickOpen.value, SettingValue(std::string()));
+    EXPECT_TRUE(quickOpen.proposedImport);
+    EXPECT_NE(quickOpen.reason.find("video/play (Default, Ctrl-P)"), std::string::npos);
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_SAVE_SUBS_AS:S").value, SettingValue(std::string("Ctrl-O")));
+
+    const Plan grid = buildPlan({aegisub(R"({
+        "Default": {"edit/line/copy": ["Ctrl-K"]},
+        "Subtitle Grid": {"edit/line/cut": ["Ctrl-K"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(grid, "shortcut:GRID_CUT:S").value, SettingValue(std::string("Ctrl-K")));
+    EXPECT_EQ(rowOf(grid, "aegisub:Default:edit/line/copy:Ctrl-K").disposition, Disposition::Superseded);
+
+    Destination users = linuxHost();
+    HotkeyMap mine;
+    loadDefaultHotkeys(mine, false);
+    mine[HotkeyId{hotkeyIdOf("GLOBAL_HISTORY"), GlobalHotkey}].accel = "Ctrl-Alt-H";
+    users.values[std::string(kHotkeysSetting)] = hotkeyLines(mine, false);
+    const Plan conflict = buildPlan({aegisub(R"({"Default": {"edit/redo": ["Ctrl-Alt-H"]}})")}, users);
+    const PlanRow &redo = rowOf(conflict, "shortcut:GLOBAL_REDO:G");
+    EXPECT_FALSE(redo.proposedImport);
+    EXPECT_NE(redo.reason.find("your binding of GLOBAL_HISTORY has these keys"), std::string::npos);
+}
+
+TEST(SettingsImport, DefaultsAegisubLeavesUnboundCanBeUnbound)
+{
+    const Plan plan = buildPlan({aegisub(R"({"Default": {"subtitle/open": ["Ctrl-O"]}})")}, linuxHost());
+    const PlanRow &save = rowOf(plan, "shortcut:GLOBAL_SAVE_SUBS:G");
+    EXPECT_EQ(save.disposition, Disposition::Missing);
+    EXPECT_TRUE(save.selectable);
+    EXPECT_FALSE(save.proposedImport);
+    EXPECT_EQ(plan.row("shortcut:GLOBAL_QUICK_OPEN:G"), nullptr);
+}
+
+TEST(SettingsImport, AnAegisubImportWritesItsChosenRows)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Video": {"video/frame/next": ["Ctrl-Right"]},
+        "Audio": {"audio/commit": ["Ctrl-Enter"]}
+    })")},
+                                linuxHost());
+    const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
+    HotkeyMap map;
+    readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kHotkeysSetting))));
+    readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kAudioHotkeysSetting))));
+    EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("GLOBAL_NEXT_FRAME"), VideoHotkey}).accel, "Ctrl-Right");
+    EXPECT_EQ(map.at(HotkeyId{kAudioCommit, AudioHotkey}).accel, "Ctrl-Enter");
+
+    const auto broken = buildPlan({aegisub("{\"Default\": ")}, linuxHost());
+    EXPECT_EQ(rowOf(broken, "file:hotkey.json").disposition, Disposition::Unresolved);
 }
 
 TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
@@ -243,7 +434,10 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
             EXPECT_EQ(it->second, SettingValue(!std::get<bool>(def.defaultValue))) << def.id;
             break;
         case SettingType::Int:
-            EXPECT_EQ(it->second, SettingValue(std::get<std::int64_t>(def.defaultValue) + 7)) << def.id;
+            EXPECT_EQ(it->second, SettingValue(def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON"
+                                                   ? std::int64_t{1}
+                                                   : std::get<std::int64_t>(def.defaultValue) + 7))
+                << def.id;
             break;
         case SettingType::String:
             EXPECT_EQ(it->second, SettingValue(std::get<std::string>(def.defaultValue) + "x")) << def.id;
@@ -345,7 +539,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 406);
+    EXPECT_EQ(bound, 419);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
@@ -448,6 +642,18 @@ TEST(SettingsImport, LaterRecordsAndTheAudioResetSupersede)
                                  linuxHost(), readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(reset, "superseded:Config/Config.txt:13").disposition, Disposition::Superseded);
     EXPECT_EQ(rowOf(reset, "setting:audio.volume").value, SettingValue(std::int64_t{20}));
+}
+
+TEST(SettingsImport, TheNonLinearSpectrumSwitchBecomesTheSpeechCurve)
+{
+    const Plan plan =
+        buildPlan({config(padding() + "AUDIO_SPECTRUM_NON_LINEAR_ON=true\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    const PlanRow &curve = rowOf(plan, "setting:audio.spectrumCurve");
+    EXPECT_EQ(curve.disposition, Disposition::Change);
+    EXPECT_EQ(curve.value, SettingValue(std::int64_t{1}));
+    const Plan off =
+        buildPlan({config(padding() + "AUDIO_SPECTRUM_NON_LINEAR_ON=false\r\n")}, linuxHost(), readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(off, "setting:audio.spectrumCurve").value, SettingValue(std::int64_t{0}));
 }
 
 TEST(SettingsImport, MalformedValuesStayUnresolvedWithLegacysReading)

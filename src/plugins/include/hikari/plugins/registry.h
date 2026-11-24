@@ -3,7 +3,9 @@
 #include "hikari/api/json.h"
 #include "hikari/minisign/minisign.h"
 
+#include <cstdint>
 #include <expected>
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <optional>
@@ -38,6 +40,7 @@ struct InstalledPlugin {
     std::string previous; // the version kept in plugins/.previous/<id> for roll back
     std::string held;     // a newer version that asks for more, waiting for the user
     std::optional<Revoked> revoked;
+    std::int64_t installed = 0; // 1 for the first plugin installed, then counting up; an update keeps it
     std::string path;     // Dev: the folder it runs from
     std::string accepted; // Dev: the manifest text the user last said yes to
 };

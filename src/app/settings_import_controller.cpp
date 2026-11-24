@@ -57,8 +57,8 @@ QString kindName(si::RowKind kind)
 
 }
 
-SettingsImportController::SettingsImportController(SettingsImportStore *store, QObject *parent)
-    : QObject(parent), m_store(store)
+SettingsImportController::SettingsImportController(SettingsImportStore *store, QStringList defaultFolders, QObject *parent)
+    : QObject(parent), m_store(store), m_defaultFolders(std::move(defaultFolders))
 {
 }
 
@@ -131,11 +131,10 @@ void SettingsImportController::setStatus(const QString &status)
 
 void SettingsImportController::discover(const QStringList &candidates)
 {
-    m_roots = SettingsImportStore::discoverRoots(candidates.isEmpty() ? SettingsImportStore::defaultCandidates()
-                                                                      : candidates);
+    m_roots = SettingsImportStore::discoverRoots(candidates.isEmpty() ? m_defaultFolders : candidates);
     emit rootsChanged();
     setStatus(m_roots.isEmpty() ? QCoreApplication::translate("HikariSub.SettingsImport",
-                                                              "No legacy settings were found beside the program. Choose the folder of a legacy installation.")
+                                                              "Nothing to import was found. Choose a folder.")
                                 : QString());
 }
 

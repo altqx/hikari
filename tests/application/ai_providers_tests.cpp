@@ -345,6 +345,27 @@ TEST_F(AiProvidersTest, AConfigThatCannotBeSavedChangesNothing)
     EXPECT_FALSE(providers.enabled());
 }
 
+TEST_F(AiProvidersTest, EverySavedChangeIsObservedAndAFailedOneIsNot)
+{
+    Providers providers(configs, keys);
+    int changes = 0;
+    providers.observe([&] { ++changes; });
+    ASSERT_EQ(add(providers, openRouter(), "sk"), std::nullopt);
+    EXPECT_EQ(changes, 1);
+    ASSERT_TRUE(providers.setModels("or", {{.id = "b/model", .name = "B"}}));
+    ASSERT_TRUE(providers.assign(Role::Vision, {"or", "b/model"}));
+    ASSERT_TRUE(providers.unassign(Role::Vision));
+    ASSERT_TRUE(providers.setCapabilities("or", "b/model", Capabilities{.tools = true, .vision = true}));
+    EXPECT_EQ(changes, 5);
+    providers.signOut("or", [](std::optional<SaveError>) {});
+    providers.remove("or", [](std::optional<SaveError>) {});
+    EXPECT_EQ(changes, 7);
+
+    configs.failSave = true;
+    EXPECT_EQ(add(providers, openRouter(), "sk"), SaveError::Config);
+    EXPECT_EQ(changes, 7);
+}
+
 TEST(SearchServices, IdsRoundTripAndKeysLiveApartFromProviders)
 {
     for (const SearchService service :

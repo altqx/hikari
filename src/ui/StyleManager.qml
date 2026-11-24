@@ -141,6 +141,7 @@ DialogWindow {
     // On Wayland the window hides while its frame is remade; that is no closing.
     function shown() { return visible || WindowFrame.remaking(manager) }
     onVisibleChanged: {
+        app.presenceActivity(shellWindow, "styling", shown())
         if (shown())
             return
         styles.saveCatalog()
@@ -546,6 +547,12 @@ DialogWindow {
         }, results => {
             if (results)
                 run(results)
+        })
+    }
+    function copyPluginCatalog() {
+        guard(() => {
+            if (manager.own(() => styles.copyPluginCatalog()) !== "")
+                manager.catalogShown()
         })
     }
     function catalogShown() {
@@ -1304,7 +1311,9 @@ DialogWindow {
         Layout.fillHeight: true
         Rectangle {
             objectName: "styleSidebar"
-            readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24)
+            readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24,
+                                                       Math.ceil(catalogLine.implicitWidth - catalogBox.implicitWidth
+                                                                 + catalogBox.Layout.minimumWidth) + 24)
             color: Theme.background
             Layout.preferredWidth: Math.max(narrowest, Math.min(300, body.width - 1 - editorScroll.narrowest
                                                                          - (editorScroll.width - editorScroll.availableWidth)))
@@ -1335,6 +1344,7 @@ DialogWindow {
                     }
                 }
                 RowLayout {
+                    id: catalogLine
                     spacing: 4
                     Layout.topMargin: 6
                     Label {
@@ -1346,6 +1356,9 @@ DialogWindow {
                         id: catalogBox
                         objectName: "styleCatalog"
                         Layout.fillWidth: true
+                        Layout.minimumWidth: Math.min(implicitWidth, 12 * catalogMetrics.averageCharacterWidth + leftPadding + rightPadding)
+                        implicitContentWidthPolicy: ComboBox.WidestText
+                        popup.width: Math.max(width, implicitWidth + (tiered ? catalogTierChip.implicitWidth + 8 : 0))
                         readonly property bool tiered: manager.styles.hasProject
                         function shownIndex() {
                             return manager.styles.catalogRows.findIndex(r => r.name === manager.styles.catalog
@@ -1362,11 +1375,15 @@ DialogWindow {
                             currentIndex = Qt.binding(() => catalogBox.shownIndex())
                             manager.chooseCatalogIn(row.name, row.tier)
                         }
+                        FontMetrics {
+                            id: catalogMetrics
+                            font: catalogBox.font
+                        }
                         delegate: ItemDelegate {
                             id: catalogRow
                             required property var modelData
                             required property int index
-                            readonly property bool heading: catalogBox.tiered
+                            readonly property bool heading: (catalogBox.tiered || modelData.tier === "plugin")
                                 && (index === 0 || catalogBox.model[index - 1].tier !== modelData.tier)
                             objectName: "styleCatalogRow_" + modelData.tier + "_" + modelData.name
                             width: ListView.view ? ListView.view.width : catalogBox.width
@@ -1380,7 +1397,8 @@ DialogWindow {
                                 visible: catalogRow.heading
                                 x: 10
                                 y: 6
-                                text: catalogRow.modelData.tier === "project" ? qsTr("This project") : qsTr("Mine")
+                                text: catalogRow.modelData.tier === "project" ? qsTr("This project")
+                                    : catalogRow.modelData.tier === "plugin" ? qsTr("From plugins") : qsTr("Yours")
                                 font.bold: true
                                 font.pixelSize: 11
                                 color: Theme.muted
@@ -1396,7 +1414,7 @@ DialogWindow {
                                     Layout.fillWidth: true
                                 }
                                 TierChip {
-                                    visible: catalogBox.tiered
+                                    visible: catalogBox.tiered && catalogRow.modelData.tier !== "plugin"
                                     tier: catalogRow.modelData.tier
                                     enabled: !catalogRow.modelData.hidden
                                     onAccent: catalogRow.highlighted
@@ -1405,8 +1423,9 @@ DialogWindow {
                         }
                     }
                     TierChip {
+                        id: catalogTierChip
                         objectName: "styleCatalogTier"
-                        visible: manager.styles.hasProject
+                        visible: manager.styles.hasProject && manager.styles.catalogTier !== "plugin"
                         tier: manager.styles.catalogTier
                         enabled: !manager.styles.catalogReadOnly
                     }
@@ -1421,13 +1440,14 @@ DialogWindow {
                         objectName: "deleteCatalog"
                         iconRole: "delete"
                         text: qsTr("Delete catalogue")
-                        enabled: manager.styles.catalog !== "Default" || manager.styles.catalogTier === "project"
+                        enabled: manager.styles.catalogTier === "project"
+                                 || (manager.styles.catalogTier === "mine" && manager.styles.catalog !== "Default")
                         onClicked: manager.askDeleteCatalog()
                     }
                     IconToolButton {
                         id: catalogTierButton
                         objectName: "catalogTierMenuButton"
-                        visible: manager.styles.hasProject
+                        visible: manager.styles.hasProject && manager.styles.catalogTier !== "plugin"
                         iconRole: "panel-menu"
                         text: qsTr("More options")
                         onClicked: catalogTierMenu.popup(catalogTierButton, catalogTierButton.width - catalogTierMenu.implicitWidth,
@@ -1440,13 +1460,13 @@ DialogWindow {
                         ShellMenuItem {
                             objectName: "copyCatalogToTier"
                             iconRole: "copy-to-tier"
-                            text: catalogTierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to mine")
+                            text: catalogTierMenu.fromMine ? qsTr("Copy to project") : qsTr("Copy to yours")
                             onTriggered: manager.transferCatalog(false)
                         }
                         ShellMenuItem {
                             objectName: "moveCatalogToTier"
                             iconRole: "move-to-tier"
-                            text: catalogTierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to mine")
+                            text: catalogTierMenu.fromMine ? qsTr("Move to project") : qsTr("Move to yours")
                             enabled: !(catalogTierMenu.fromMine && manager.styles.catalog === "Default")
                             onTriggered: manager.transferCatalog(true)
                         }
@@ -1454,11 +1474,28 @@ DialogWindow {
                 }
                 Label {
                     objectName: "styleCatalogHidden"
-                    visible: manager.styles.catalogReadOnly
+                    visible: manager.styles.catalogReadOnly && manager.styles.catalogTier !== "plugin"
                     text: qsTr("Hidden by the project’s copy. Copy it to the project to use it there.")
                     color: Theme.muted
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
+                }
+                RowLayout {
+                    objectName: "styleCatalogFromPlugin"
+                    visible: manager.styles.catalogTier === "plugin"
+                    spacing: 8
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("This catalogue comes with a plugin, so it can’t be changed here.")
+                        color: Theme.muted
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                    Button {
+                        objectName: "copyPluginCatalog"
+                        text: qsTr("Copy to my catalogues")
+                        onClicked: manager.copyPluginCatalog()
+                    }
                 }
                 ListTools { id: storeTools; objectName: "storeCommands"; store: true; enabled: !manager.styles.catalogReadOnly; Layout.fillWidth: true }
                 Frame {

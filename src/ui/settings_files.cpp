@@ -50,7 +50,7 @@ bool rememberedByTheApp(std::string_view id)
         "selectLines.recentSelections", "colourPicker.recentColours", "automation.dialogAnswers",
         "automation.lastScript",  "styles.lastCatalog",      "privacy.usageDataId",      "updater.skippedVersion",
         "qcNotes.lastSection",    "tracking.motionOptions",  "tracking.extendOptions", "lyrics.importOptions",
-        "typesetting.layerOptions",
+        "textImport.options",     "typesetting.layerOptions",
         "tags.removeOptions",     "grid.splitEvery"};
     return id.starts_with("recent.") || ids.contains(id);
 }
@@ -548,6 +548,20 @@ void migrateIni(QVariantMap &ini)
             ini.insert(targetKey(renamed.to), ini.value(from));
         ini.remove(from);
     }
+    for (const auto &folded : application::foldedSettings()) {
+        const QString from = QStringLiteral("profile/") + qs(folded.from);
+        if (!ini.contains(from))
+            continue;
+        const QString to = targetKey(folded.to);
+        std::vector<std::string> list;
+        for (const QString &entry : ini.value(to).toStringList())
+            list.push_back(entry.toStdString());
+        QStringList out;
+        for (const auto &entry : application::foldInto(std::move(list), folded, ini.value(from).toString().toStdString()))
+            out << QString::fromStdString(entry);
+        ini.insert(to, out);
+        ini.remove(from);
+    }
     if (ini.value(QStringLiteral("registry/schema"), 0).toInt() >= 1)
         return;
     for (const auto &interim : application::interimKeys()) {
@@ -750,6 +764,19 @@ void SettingsFiles::load()
         if (!tomlNode(m_settings, renamed.to))
             tomlParent(m_settings, renamed.to, true)->insert(idSegments(renamed.to).back(), *old);
         eraseToml(m_settings, renamed.from);
+        changed(Settings);
+    }
+    for (const auto &folded : application::foldedSettings()) {
+        const auto *old = tomlNode(m_settings, folded.from);
+        if (!old)
+            continue;
+        std::vector<std::string> list;
+        if (const auto *now = tomlNode(m_settings, folded.to))
+            if (auto value = fromToml(*now); value && std::holds_alternative<std::vector<std::string>>(*value))
+                list = std::get<std::vector<std::string>>(*value);
+        list = application::foldInto(std::move(list), folded, old->value<std::string>().value_or(""));
+        putToml(*tomlParent(m_settings, folded.to, true), idSegments(folded.to).back(), list);
+        eraseToml(m_settings, folded.from);
         changed(Settings);
     }
     // MUST KILL: settings.toml is written at a first start only so that its existence marks later starts
@@ -1027,9 +1054,40 @@ void SettingsFiles::flush()
             writeFile(file);
 }
 
+SettingsFiles::Reloaded SettingsFiles::reloadSettings()
+{
+    const auto bytes = application::readOwnedFile(pathOf(path(Settings)));
+    if (!bytes)
+        return {};
+    auto parsed = parseTomlFile(*bytes, kVersion);
+    if (auto *failure = std::get_if<application::ParseFailure>(&parsed)) {
+        m_settingsUnreadable = true;
+        return {{}, *failure};
+    }
+    std::vector<std::pair<const SettingDefinition *, std::optional<SettingValue>>> before, pending;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.disposition != application::SettingDisposition::Excluded && fileOf(setting) == Settings)
+            before.emplace_back(&setting, read(setting));
+    for (const auto &id : m_changed[Settings])
+        if (const auto *setting = application::findSetting(id))
+            pending.emplace_back(setting, read(*setting));
+    m_settings = std::move(std::get<toml::table>(parsed));
+    for (const auto &[setting, value] : pending)
+        value ? put(*setting, *value) : erase(*setting);
+    const bool waited = m_settingsUnreadable && m_dirty[Settings];
+    m_settingsUnreadable = false;
+    if (waited)
+        queueFlush(0);
+    Reloaded out;
+    for (const auto &[setting, value] : before)
+        if (read(*setting) != value)
+            out.changed.emplace_back(setting->id);
+    return out;
+}
+
 bool SettingsFiles::writeFile(File file)
 {
-    if (!m_writable[file])
+    if (!m_writable[file] || (file == Settings && m_settingsUnreadable))
         return false;
     QDir().mkpath(m_folder);
     QLockFile lock(m_folder + QStringLiteral("/.settings.lock"));

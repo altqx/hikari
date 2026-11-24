@@ -9,7 +9,7 @@ hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cp
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
-    LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium
+    LIBRARIES hikari_composition Qt6::CorePrivate Qt6::QuickTest ZLIB::ZLIB Hikari::sodium
     PARTS documents
           panels=panelsFloatDockHideAndKeepTheirState
           panels2=saveAsOffersAssForADocumentOfAnotherFormat
@@ -32,6 +32,7 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           visual=visualToolRailCrosshairAndCopyCoordinates
           visual2=importLyricsAddsLinesToTheOpenFileInOneStep
           video=videoRecentListsAndDialogFolders
+          video2=videoFullscreenLineBoxEditsStepsAndChoosesStyles
     PART_TIMEOUT 600)
 foreach(part documents visual visual2)
     foreach(mode offscreen xvfb)
@@ -194,6 +195,7 @@ foreach(mode offscreen xvfb native)
         set_tests_properties(hikari_ui_grammar_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+hikari_add_qttest(hikari_ui_problems_tests SOURCES problems_ui_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_open_reload_tests PRIVATE
@@ -243,6 +245,9 @@ hikari_add_qttest(hikari_ui_automation_submenus_tests SOURCES automation_submenu
 target_compile_definitions(hikari_ui_automation_submenus_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_submenus_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_automation_menu_checks_tests SOURCES automation_menu_checks_tests.cpp
+    LIBRARIES hikari_composition)
+add_dependencies(hikari_ui_automation_menu_checks_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends
     PARTS listing matching=anUndoneApplyMatchesAgain applying=aFailedMatchIsNotKept)
@@ -304,6 +309,7 @@ if(Python3_Interpreter_FOUND)
             "${PROJECT_SOURCE_DIR}")
     set_tests_properties(hikari_native_gate_windows_declared_skips PROPERTIES LABELS "native-gate" TIMEOUT 60)
 endif()
+hikari_add_qttest(hikari_ui_file_write_queue_tests SOURCES file_write_queue_tests.cpp LIBRARIES hikari_ui OFFSCREEN_ONLY)
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets
     PARTS envelope saving=aSaveBeforeTheSavedLayoutIsRestoredKeepsIt)
@@ -415,8 +421,8 @@ hikari_add_qttest(hikari_ui_inline_ai_tests SOURCES inline_ai_tests.cpp
 target_compile_definitions(hikari_ui_inline_ai_tests PRIVATE
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>")
 add_dependencies(hikari_ui_inline_ai_tests hikari_fake_ai_sidecar)
-hikari_add_gtest(hikari_ui_setting_labels_tests SOURCES setting_labels_tests.cpp LIBRARIES hikari_ui LABELS ui)
-target_compile_definitions(hikari_ui_setting_labels_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+hikari_add_gtest(hikari_ui_settings_catalogue_tests SOURCES settings_catalogue_tests.cpp LIBRARIES hikari_ui LABELS ui)
+target_compile_definitions(hikari_ui_settings_catalogue_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 hikari_add_gtest(hikari_ui_ai_features_tests SOURCES ai_features_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_features_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
@@ -433,6 +439,7 @@ if(HIKARI_AI_SIDECAR)
         HIKARI_AI_BUILD_ID="${HIKARI_AI_BUILD_ID}")
     add_dependencies(hikari_ui_ai_mcp_review_tests hikari_ai_sidecar)
 endif()
+hikari_add_gtest(hikari_ui_model_picker_tests SOURCES model_picker_tests.cpp LIBRARIES hikari_composition LABELS ui)
 hikari_add_gtest(hikari_ui_ai_settings_tests SOURCES ai_settings_tests.cpp
     LIBRARIES hikari_composition Qt6::Test Qt6::CorePrivate ZLIB::ZLIB Hikari::sodium LABELS ui)
 target_include_directories(hikari_ui_ai_settings_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/backends"
@@ -456,13 +463,32 @@ target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper hikari_plugin_test_program)
 target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
-add_executable(hikari_plugin_test_program plugin_test_program.cpp)
 hikari_add_qttest(hikari_ui_plugin_programs_tests SOURCES plugin_programs_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_programs_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)
 hikari_add_qttest(hikari_ui_program_plugin_tests SOURCES program_plugin_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_program_plugin_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_program_plugin_tests hikari_plugin_test_program)
+if(HIKARI_BUN)
+    set(_hikari_word_count_dir "${PROJECT_SOURCE_DIR}/docs/examples/word-count")
+    set(_hikari_sidecar_modules "${PROJECT_SOURCE_DIR}/src/ai-sidecar/node_modules")
+    add_test(NAME hikari_word_count_sample_types
+        COMMAND "${HIKARI_BUN}" "${CMAKE_CURRENT_SOURCE_DIR}/word_count_types.ts" "${_hikari_sidecar_modules}/typescript/bin/tsc"
+            "${_hikari_word_count_dir}/tsconfig.json" "${_hikari_sidecar_modules}/@types")
+    set_tests_properties(hikari_word_count_sample_types PROPERTIES LABELS ai-sidecar TIMEOUT 120 SKIP_RETURN_CODE 77)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        set(_hikari_word_count "${CMAKE_CURRENT_BINARY_DIR}/word-count/word-count")
+        add_test(NAME hikari_word_count_sample_build
+            COMMAND "${HIKARI_BUN}" build --compile "${_hikari_word_count_dir}/src/main.ts" --outfile "${_hikari_word_count}")
+        set_tests_properties(hikari_word_count_sample_build PROPERTIES LABELS ai-sidecar TIMEOUT 120)
+        target_compile_definitions(hikari_ui_program_plugin_tests PRIVATE HIKARI_WORD_COUNT="${_hikari_word_count}")
+        foreach(_hikari_variant IN ITEMS hikari_ui_program_plugin_tests.offscreen hikari_ui_program_plugin_tests.xvfb)
+            if(TEST ${_hikari_variant})
+                set_tests_properties(${_hikari_variant} PROPERTIES DEPENDS hikari_word_count_sample_build)
+            endif()
+        endforeach()
+    endif()
+endif()
 hikari_add_qttest(hikari_ui_plugin_program_downloads_tests SOURCES plugin_program_downloads_tests.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate ZLIB::ZLIB)
 hikari_add_qttest(hikari_ui_plugin_qml_panels_tests OFFSCREEN_ONLY SOURCES plugin_qml_panels_tests.cpp LIBRARIES hikari_composition)
@@ -487,6 +513,7 @@ hikari_add_qttest(hikari_ui_preset_tiers_tests SOURCES preset_tiers_tests.cpp LI
 hikari_add_qttest(hikari_ui_shell_menu_placement_tests SOURCES shell_menu_placement_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_project_file_tests SOURCES project_file_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_explorer_model_tests SOURCES explorer_model_tests.cpp LIBRARIES hikari_ui)
+hikari_add_qttest(hikari_ui_quick_pick_model_tests SOURCES quick_pick_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_list_files_tests SOURCES list_files_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_list_files_tests PRIVATE
     HIKARI_LIST_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/list-files"
@@ -529,7 +556,7 @@ endforeach()
 add_test(NAME hikari_ui_side_bars_shell_tests.screen2560
     COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> theShippedMiddleKeepsItsAudioAndEditorControls
             swapPutsTheAiSideBarOnTheOtherEdge f6GoesFromTheLeftSideBarThroughTheMiddleToTheRight
-            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle)
+            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle draggingTheInnerEdgeResizesTheSideBar)
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen2560 PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=screen-2560x1440.json" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     LABELS "qttest;offscreen" TIMEOUT 300)
@@ -550,16 +577,27 @@ add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari
 hikari_add_qttest(hikari_ui_release_screenshots_tests SOURCES release_screenshots_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_release_screenshots_tests PRIVATE HIKARI_HARPER_LS="${HIKARI_HARPER_LS}"
     HIKARI_FAKE_AI_SIDECAR="$<TARGET_FILE:hikari_fake_ai_sidecar>"
-    HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm")
-add_dependencies(hikari_ui_release_screenshots_tests hikari_fake_ai_sidecar hikari_lrelease)
+    HIKARI_EN_CATALOG="${CMAKE_BINARY_DIR}/i18n/qm/hikarisub_en.qm"
+    HIKARI_PLUGIN_HELPER="$<TARGET_FILE:hikari_plugin_helper>" HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
+add_dependencies(hikari_ui_release_screenshots_tests hikari_fake_ai_sidecar hikari_lrelease hikari_plugin_helper)
 hikari_add_qttest(hikari_ui_explorer_panel_tests SOURCES explorer_panel_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 target_compile_definitions(hikari_ui_explorer_panel_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_explorer_panel_tests hikari_media_helper hikari_media_fixtures)
 set_tests_properties(hikari_ui_explorer_panel_tests.offscreen PROPERTIES TIMEOUT 300)
-hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition
+hikari_add_qttest(hikari_ui_quick_open_tests SOURCES quick_open_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
+hikari_add_qttest(hikari_ui_plugin_popups_tests OFFSCREEN_ONLY SOURCES plugin_popups_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition Qt6::QuickTest
     PARTS skills spelling=eachWindowSpellsWithItsProjectsDictionary trust=aNamedKeyNobodyHasAsksNoTrust)
+if(TARGET hikari_ui_project_windows_tests AND NOT WIN32)
+    add_test(NAME hikari_ui_project_windows_tests.screen1366
+        COMMAND $<TARGET_FILE:hikari_ui_project_windows_tests> styleCatalogueShowsItsNamesWithAProject)
+    set_tests_properties(hikari_ui_project_windows_tests.screen1366 PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/screen-1366x768.json;HIKARI_TEST_ARTIFACT_DIR=${CMAKE_CURRENT_BINARY_DIR}/artifacts/style-catalogue"
+        LABELS "qttest;offscreen" TIMEOUT 120)
+endif()
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_project_windows_tests PRIVATE
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
@@ -614,6 +652,8 @@ endif()
 hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_dialog_frame_tests SOURCES dialog_frame_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
+hikari_add_qttest(hikari_ui_association_offer_tests SOURCES association_offer_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 Qt6::QuickTest)
 hikari_add_qttest(hikari_ui_popup_kit_tests SOURCES popup_kit_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 Qt6::QuickTest)
 hikari_add_qttest(hikari_ui_qml_engine_tests SOURCES qml_engine_tests.cpp LIBRARIES hikari_composition)

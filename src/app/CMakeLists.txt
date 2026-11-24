@@ -13,7 +13,9 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_window_media.cpp
     application_karaoke.cpp
     application_export.cpp
+    application_formats.cpp
     automation_shell.cpp include/hikari/app/automation_shell.h
+    lua_export_filters.cpp include/hikari/app/lua_export_filters.h
     script_packages.cpp include/hikari/app/script_packages.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
@@ -21,6 +23,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     update_installer.cpp include/hikari/app/update_installer.h
     update_apply.cpp include/hikari/app/update_apply.h
     whats_new.cpp include/hikari/app/whats_new.h
+    qt_workarounds.cpp include/hikari/app/qt_workarounds.h
     package_kind.cpp include/hikari/app/package_kind.h
     user_folder.cpp include/hikari/app/user_folder.h
     automation_reset.cpp include/hikari/app/automation_reset.h
@@ -30,7 +33,10 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     align_to_video_controller.cpp include/hikari/app/align_to_video_controller.h
     video_analysis_controller.cpp include/hikari/app/video_analysis_controller.h
     lyrics_import_controller.cpp include/hikari/app/lyrics_import_controller.h
+    text_import_controller.cpp include/hikari/app/text_import_controller.h
     qc_notes_controller.cpp include/hikari/app/qc_notes_controller.h
+    problems_controller.cpp include/hikari/app/problems_controller.h
+    reading_problems.cpp include/hikari/app/reading_problems.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_karaoke.cpp include/hikari/app/ai_karaoke.h
@@ -39,7 +45,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     ai_features.cpp include/hikari/app/ai_features.h ai_mcp.cpp include/hikari/app/ai_mcp.h ai_mcp_servers.cpp include/hikari/app/ai_mcp_servers.h
     ai_settings.cpp include/hikari/app/ai_settings.h ai_acp_settings.cpp include/hikari/app/ai_acp_settings.h
     skills_settings.cpp include/hikari/app/skills_settings.h
-    review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h
+    review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h model_picker.cpp include/hikari/app/model_picker.h
     inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h
     plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
@@ -47,7 +53,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     plugin_program_downloads.cpp include/hikari/app/plugin_program_downloads.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h
     plugin_nodes.cpp include/hikari/app/plugin_nodes.h
-    plugin_ui.cpp include/hikari/app/plugin_ui.h plugin_qml_panels.cpp plugin_panel_api.cpp include/hikari/app/plugin_panel_api.h
+    plugin_content.cpp include/hikari/app/plugin_content.h
+    plugin_ui.cpp include/hikari/app/plugin_ui.h plugin_popups.cpp include/hikari/app/plugin_popups.h plugin_qml_panels.cpp plugin_panel_api.cpp include/hikari/app/plugin_panel_api.h
     plugin_variant.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
@@ -137,7 +144,7 @@ if(NOT WIN32)
 endif()
 set(HIKARI_DISCORD_CLIENT_ID "1566681222510411967" CACHE STRING "Discord application id for Rich Presence; empty turns it off")
 target_sources(hikari_composition PRIVATE discord_ipc.cpp include/hikari/app/discord_ipc.h
-    discord_presence.cpp include/hikari/app/discord_presence.h)
+    discord_activity.cpp include/hikari/app/discord_activity.h discord_presence.cpp include/hikari/app/discord_presence.h)
 target_sources(hikari_composition PRIVATE star_prompt.cpp include/hikari/app/star_prompt.h)
 set_source_files_properties(discord_presence.cpp PROPERTIES COMPILE_DEFINITIONS "HIKARI_DISCORD_CLIENT_ID=\"${HIKARI_DISCORD_CLIENT_ID}\"")
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
@@ -151,7 +158,7 @@ target_sources(hikari_composition PRIVATE application_video_timing.cpp applicati
 target_sources(hikari_composition PRIVATE application_tracking.cpp application_motion.cpp application_layers.cpp application_tag_removal.cpp application_interpolate.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
-target_sources(hikari_composition PRIVATE application_grammar.cpp)
+target_sources(hikari_composition PRIVATE application_grammar.cpp application_presence.cpp)
 target_sources(hikari_composition PRIVATE application_audio.cpp)
 target_sources(hikari_composition PRIVATE application_directshow.cpp)
 if(WIN32)

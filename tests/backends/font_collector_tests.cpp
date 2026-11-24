@@ -294,6 +294,78 @@ TEST(FontCollectorRenderer, BothMeaningsOfTheFontCount)
         EXPECT_EQ(sha256(readAll(dir.filePath(QStringLiteral("Czcionki/") + name))), fixtureSha(name.toUtf8().constData()));
 }
 
+TEST(FontCollectorRenderer, LinkPutsALinkToEachInstalledFile)
+{
+    const auto doc = document(0, {"W,HikariProbeWeighted,0,0", "A,HikariProbeBase,0,0"},
+                              {"W,Regular", "W,{\\b1}Bold", "A,Base"});
+    LibassFontService service;
+    FontCollector collector(service, [](const std::u16string &path) {
+        const QByteArray data = readAll(QString::fromStdU16String(path));
+        auto out = std::make_shared<std::vector<std::byte>>(std::size_t(data.size()));
+        std::memcpy(out->data(), data.constData(), std::size_t(data.size()));
+        return std::shared_ptr<const std::vector<std::byte>>(std::move(out));
+    });
+    const auto link = collector.prepare({doc}, CollectorAction::LinkToFolder);
+    ASSERT_TRUE(link);
+    QTemporaryDir dir;
+    const QString folder = dir.filePath(QStringLiteral("Fonts"));
+    FolderCollectorOutput out(folder);
+    const auto result = collector.apply(*link, out, false);
+    EXPECT_EQ(result.foundCount, 3);
+    EXPECT_EQ(result.linkedCount, 3);
+    EXPECT_TRUE(result.complete);
+    const QStringList written = QDir(folder).entryList(QDir::Files, QDir::Name);
+    EXPECT_EQ(written, (QStringList{QStringLiteral("base-bold.ttf"), QStringLiteral("base.ttf"), QStringLiteral("weighted.ttf")}));
+    for (const QString &name : written) {
+        const std::filesystem::path at(QDir(folder).filePath(name).toStdU16String());
+        EXPECT_EQ(sha256(readAll(QDir(folder).filePath(name))), fixtureSha(name.toUtf8().constData()));
+#ifndef _WIN32
+        EXPECT_TRUE(std::filesystem::is_symlink(at));
+        EXPECT_TRUE(std::filesystem::equivalent(at, std::filesystem::path(installed(name.toUtf8().constData()))));
+#endif
+    }
+}
+
+TEST(FolderCollectorOutputTest, ALinkIsReplacedWithoutWritingThroughIt)
+{
+    QTemporaryDir dir;
+    const QString source = dir.filePath(QStringLiteral("source.ttf"));
+    {
+        QFile f(source);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("font");
+    }
+    const QString copy = dir.filePath(QStringLiteral("Fonts/a.ttf"));
+    FolderCollectorOutput out(dir.filePath(QStringLiteral("Fonts")));
+    ASSERT_TRUE(out.open());
+    ASSERT_TRUE(out.link(u"a.ttf", source.toStdU16String()));
+    EXPECT_EQ(readAll(copy), QByteArray("font"));
+
+    ASSERT_TRUE(out.put(u"a.ttf", bytesOf("copy")));
+    EXPECT_EQ(readAll(copy), QByteArray("copy"));
+    EXPECT_EQ(readAll(source), QByteArray("font"));
+    EXPECT_FALSE(std::filesystem::is_symlink(std::filesystem::path(copy.toStdU16String())));
+
+    ASSERT_TRUE(out.link(u"a.ttf", source.toStdU16String()));
+    EXPECT_EQ(readAll(copy), QByteArray("font"));
+}
+
+TEST(FolderCollectorOutputTest, LinkingAFileToItselfKeepsIt)
+{
+    QTemporaryDir dir;
+    const QString source = dir.filePath(QStringLiteral("a.ttf"));
+    {
+        QFile f(source);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        f.write("font");
+    }
+    FolderCollectorOutput out(dir.path());
+    ASSERT_TRUE(out.open());
+    EXPECT_TRUE(out.link(u"a.ttf", source.toStdU16String()));
+    EXPECT_EQ(readAll(source), QByteArray("font"));
+    EXPECT_FALSE(std::filesystem::is_symlink(std::filesystem::path(source.toStdU16String())));
+}
+
 TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
 {
     const auto doc = document(0, {"A,HikariProbeBase,0,0", "N,NoSuchFamily,0,0"},

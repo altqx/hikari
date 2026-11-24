@@ -105,6 +105,7 @@ Rectangle {
                             elide: Text.ElideRight
                             Layout.preferredWidth: Math.ceil(Math.max(implicitWidth, boldText.implicitWidth))
                             Layout.minimumWidth: 0
+                            Layout.fillWidth: true
                         }
                     }
                 }

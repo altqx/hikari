@@ -12,9 +12,13 @@
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QThread>
+#include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
+#include <algorithm>
+#include <atomic>
 #include <cstdlib>
 
 #ifdef _WIN32
@@ -268,9 +272,11 @@ private slots:
         const auto steps = s->historySize();
         QVERIFY(a.saveAs(path));
         a.waitForWrites();
-        QVERIFY(readAll(path).startsWith("[Script Info]\r\nActive Line: 1\r\n") ||
-                readAll(path).startsWith("[Script Info]\nActive Line: 1\n"));
+        const QByteArray saved = readAll(path).replace("\r\n", "\n");
+        QVERIFY2(saved.contains("; https://hikarisub.org/\nActive Line: 1\n"), saved.constData());
+        QVERIFY2(saved.contains("\n[Aegisub Project Garbage]\nActive Line: 1\n"), saved.constData());
         QVERIFY(s->document().scriptInfo(application::kActiveLineKey) == std::u8string(u8"1"));
+        QVERIFY(s->document().projectGarbage(application::kActiveLineKey) == std::u8string(u8"1"));
         QCOMPARE(s->historySize(), steps);
         QVERIFY(!s->isDirty());
     }
@@ -372,6 +378,59 @@ private slots:
         a.shell().setStatusText(QStringLiteral("set_status_text"));
         QTRY_COMPARE_WITH_TIMEOUT(a.shell().statusText(), QString(), 10000);
         QVERIFY2(clock.elapsed() >= 4900, qPrintable(QString::number(clock.elapsed())));
+    }
+
+    void theAutosaveIntervalSettingSetsTheTimer()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("interval.ass")), "x");
+        app::Application a(options());
+        QCOMPARE(a.autosaveIntervalMs(), 20'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 1);
+        QCOMPARE(a.autosaveIntervalMs(), 5'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 100'000);
+        QCOMPARE(a.autosaveIntervalMs(), 3'600'000);
+        a.settingsStore()->set("autosave.intervalSeconds", 5);
+        QVERIFY(a.openFile(path));
+        a.editor().textEdited(QStringLiteral("y"), 1);
+        QVERIFY(a.editor().commit());
+        const auto document = *a.workspace().editingTarget();
+        QTest::qWait(4'000);
+        QVERIFY(a.autosavePending(document));
+        QTRY_VERIFY_WITH_TIMEOUT(!a.autosavePending(document), 4'000);
+    }
+
+    void aSlowDiskLeavesTheWindowResponsiveWhileAutosaving()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("slow.ass")), "x");
+        app::Application::Options o = options();
+        o.autosaveIntervalMs = 50;
+        app::Application a(o);
+        QVERIFY(a.openFile(path));
+        std::atomic<int> started = 0;
+        a.recoveryWrites().setBeforeEachWrite([&started] {
+            ++started;
+            QThread::msleep(1500);
+        });
+        auto manifestWritten = [&o] {
+            for (QDirIterator it(o.recoveryDir, QDir::Files, QDirIterator::Subdirectories); it.hasNext();)
+                if (it.nextFileInfo().fileName() == QLatin1String("manifest"))
+                    return true;
+            return false;
+        };
+        qint64 longest = 0;
+        QElapsedTimer gap;
+        QTimer tick;
+        tick.setInterval(20);
+        connect(&tick, &QTimer::timeout, this, [&] { longest = std::max(longest, gap.restart()); });
+        gap.start();
+        tick.start();
+        a.editor().textEdited(QStringLiteral("changed on a busy disk"), 22);
+        QVERIFY(a.editor().commit());
+        QTRY_VERIFY_WITH_TIMEOUT(started > 0, 5000);
+        QVERIFY(!manifestWritten());
+        QTRY_VERIFY_WITH_TIMEOUT(manifestWritten(), 10000);
+        QVERIFY2(longest < 500, qPrintable(QString::number(longest)));
+        a.recoveryWrites().setBeforeEachWrite({});
     }
 };
 

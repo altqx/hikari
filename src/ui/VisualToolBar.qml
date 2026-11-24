@@ -11,6 +11,9 @@ Control {
     readonly property int family: tools.activeFamily
     readonly property var familyInfo: tools.families[family] ?? ({})
     readonly property bool batchTool: family > 0 && (familyInfo.available ?? false)
+    property bool column: false
+    property var keyOf: symbol => ""
+    readonly property string hint: texts.hint(family)
     padding: 0
     topPadding: 3
     bottomPadding: 3
@@ -144,9 +147,10 @@ Control {
                                          swatch: v.swatch ? "#000000" : "", marked: v.marked === undefined ? undefined : false }))
     })
     readonly property real groupsRoom: availableWidth - (batchTool ? pickerWidth : 0)
+                                       - (rowGuide.visible ? rowGuide.implicitWidth + 4 : 0)
     readonly property int fitCount: {
         const n = segments.length
-        if (!(availableWidth > 0))
+        if (column || !(availableWidth > 0))
             return n
         const widths = []
         void measuredItems
@@ -168,10 +172,10 @@ Control {
     // Repeater.itemAt() is not bindable: bumped as the unseen copies are made.
     property int measuredItems: 0
     readonly property var foldedSegments: segments.slice(fitCount)
-    readonly property bool popoverOpen: morePopover.opened
+    readonly property bool popoverOpen: morePopover.opened || guide.opened
     readonly property real lineHeight: topPadding + 26 + bottomPadding
-    readonly property bool shown: !pointer && (segments.length > 0 || batchTool)
-    implicitHeight: shown ? lineHeight : 0
+    readonly property bool shown: column || !pointer && (segments.length > 0 || batchTool)
+    implicitHeight: column ? inspector.implicitHeight + topPadding + bottomPadding : shown ? lineHeight : 0
     visible: shown
 
     Component {
@@ -228,86 +232,295 @@ Control {
         }
     }
 
-    contentItem: RowLayout {
-        spacing: 4
-        Row {
-            id: groupsRow
-            objectName: "visualToolGroups"
+    VisualToolTexts {
+        id: texts
+    }
+
+    Component {
+        id: segmentColumnDelegate
+        ColumnLayout {
+            id: field
+            required property var modelData
+            objectName: modelData.kind === "options" ? "visualOptionGroup" + modelData.at : "visualValueGroup" + modelData.at
             Layout.fillWidth: true
-            Layout.minimumWidth: 0
-            Layout.preferredWidth: 0
-            Layout.alignment: Qt.AlignTop
-            clip: true
-            spacing: bar.groupSpacing
-            Repeater {
-                id: groups
-                model: bar.segments
-                delegate: segmentDelegate
+            spacing: 4
+            Label {
+                visible: field.modelData.group.length > 0
+                text: bar.groupName(field.modelData.group)
+                color: Theme.muted
+                font.pixelSize: 12
+            }
+            Flow {
+                Layout.fillWidth: true
+                spacing: 4
+                Repeater {
+                    model: field.modelData.kind === "options" ? field.modelData.items : []
+                    delegate: VisualToolOption {
+                        tools: bar.tools
+                        live: bar.optionNamed(modelData.name, modelData)
+                    }
+                }
+                Repeater {
+                    model: field.modelData.kind === "values" ? field.modelData.items : (field.modelData.values ?? [])
+                    delegate: VisualValueField {
+                        required property var modelData
+                        tools: bar.tools
+                        name: modelData.name
+                        value: bar.valueNamed(modelData.name)
+                        accessibleName: [bar.groupName(field.modelData.group), value.label].filter(s => s.length > 0).join(" ")
+                    }
+                }
             }
         }
-        IconToolButton {
-            id: more
-            objectName: "visualToolMore"
-            Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 1
-            visible: bar.foldedSegments.length > 0
-            iconRole: "menu-more"
-            text: qsTr("More options")
-            checked: morePopover.visible
-            focusPolicy: Qt.TabFocus
-            onClicked: morePopover.openAt(more)
+    }
+
+    contentItem: Item {
+        implicitHeight: bar.column ? inspector.implicitHeight : row.implicitHeight
+        implicitWidth: bar.column ? inspector.implicitWidth : row.implicitWidth
+        ColumnLayout {
+            id: inspector
+            objectName: "visualInspector"
+            visible: bar.column
+            width: parent.width
+            spacing: 12
+            Accessible.role: Accessible.Pane
+            Accessible.name: texts.shortName(bar.family)
+            Accessible.description: bar.hint
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: 4
+                Label {
+                    objectName: "visualInspectorName"
+                    Layout.fillWidth: true
+                    text: texts.shortName(bar.family)
+                    font.weight: Font.DemiBold
+                    elide: Text.ElideRight
+                }
+                IconToolButton {
+                    id: inspectorGuide
+                    objectName: "visualInspectorGuide"
+                    iconRole: "help"
+                    text: qsTr("How this tool works")
+                    checked: guide.visible
+                    focusPolicy: Qt.TabFocus
+                    onClicked: guide.openBeside(inspectorGuide, bar)
+                }
+            }
+            Rectangle {
+                objectName: "visualInspectorHint"
+                Layout.fillWidth: true
+                visible: bar.hint.length > 0
+                implicitHeight: hintRow.implicitHeight + 12
+                color: Theme.highContrast ? "transparent" : Color.transparent(Theme.select, 0.6)
+                border.width: Theme.highContrast ? 1 : 0
+                border.color: Theme.line
+                radius: Theme.radius
+                RowLayout {
+                    id: hintRow
+                    anchors { fill: parent; margins: 6 }
+                    spacing: 6
+                    Icon {
+                        Layout.alignment: Qt.AlignTop
+                        iconRole: "notice-info"
+                    }
+                    Label {
+                        objectName: "visualInspectorHintText"
+                        Layout.fillWidth: true
+                        text: bar.hint
+                        wrapMode: Text.Wrap
+                    }
+                }
+            }
+            Repeater {
+                model: bar.column ? bar.segments : []
+                delegate: segmentColumnDelegate
+            }
+            ColumnLayout {
+                objectName: "visualInspectorHandles"
+                Layout.fillWidth: true
+                visible: handleList.count > 0
+                spacing: 4
+                Label {
+                    text: qsTr("On the frame")
+                    color: Theme.muted
+                    font.pixelSize: 12
+                }
+                Repeater {
+                    id: handleList
+                    model: bar.column ? texts.handles(bar.family) : []
+                    delegate: RowLayout {
+                        id: handle
+                        required property var modelData
+                        required property int index
+                        objectName: "visualInspectorHandle" + index
+                        spacing: 8
+                        Item {
+                            implicitWidth: 12
+                            implicitHeight: 12
+                            Rectangle {
+                                anchors.centerIn: parent
+                                visible: handle.modelData.mark === "square" || handle.modelData.mark === "circle"
+                                         || handle.modelData.mark === "outline"
+                                width: handle.modelData.mark === "outline" ? 12 : 9
+                                height: width
+                                radius: handle.modelData.mark === "circle" ? width / 2 : 0
+                                color: handle.modelData.mark === "outline" ? "transparent" : Theme.field
+                                border.color: Theme.danger
+                            }
+                            Rectangle {
+                                anchors.centerIn: parent
+                                visible: handle.modelData.mark !== "square" && handle.modelData.mark !== "circle"
+                                         && handle.modelData.mark !== "outline"
+                                width: 12
+                                height: 2
+                                color: Theme.danger
+                            }
+                            Rectangle {
+                                anchors.centerIn: parent
+                                visible: handle.modelData.mark === "cross"
+                                width: 2
+                                height: 12
+                                color: Theme.danger
+                            }
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            //: A handle a visual tool draws on the frame: %1 its name, %2 its shape
+                            text: qsTr("%1 · %2").arg(handle.modelData.name, texts.markName(handle.modelData.mark))
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+            }
+            ColumnLayout {
+                objectName: "visualApplyTo"
+                Layout.fillWidth: true
+                visible: bar.batchTool
+                spacing: 4
+                Label {
+                    text: qsTr("Apply to")
+                    color: Theme.muted
+                    font.pixelSize: 12
+                }
+                SegmentedButtons {
+                    objectName: "visualApplyToChoice"
+                    Layout.fillWidth: true
+                    enabled: bar.tools.railEnabled
+                    currentIndex: bar.tools.batchCount > 0 ? 1 : 0
+                    choices: [
+                        { name: "visualApplyToLine", text: qsTr("This line") },
+                        //: Apply to: the lines picked for the visual tools; %1 how many
+                        { name: "visualApplyToPicked", text: qsTr("Picked lines (%1)").arg(bar.tools.batchCount),
+                          tip: qsTr("Picks the selected lines: the tools edit them, not the active line") }
+                    ]
+                    onActivated: index => index === 1 ? bar.tools.pickBatch() : bar.tools.clearBatch()
+                }
+                Label {
+                    objectName: "visualInspectorTargets"
+                    visible: bar.hydra
+                    text: bar.targetText(bar.tools.targetCount)
+                    color: Theme.muted
+                    font.features: { "tnum": 1 }
+                }
+            }
         }
-        IconToolButton {
-            id: pick
-            objectName: "visualPickBatch"
-            Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 1
-            visible: bar.batchTool
-            iconRole: "pick-lines"
-            text: qsTr("Pick selected lines")
-            // Without an English catalog %n has no singular, so one line has its own text.
-            tip: bar.tools.batchCount === 1
-                 ? qsTr("Pick selected lines (1 line picked: the tools edit it, not the active line)")
-                 : bar.tools.batchCount > 1
-                 ? qsTr("Pick selected lines (%n lines picked: the tools edit them, not the active line)", "",
-                        bar.tools.batchCount)
-                 : qsTr("Pick selected lines (the tools edit them, not the active line)")
-            checked: bar.tools.batchCount > 0
-            Accessible.description: bar.tools.batchCount === 1 ? qsTr("1 line picked")
-                                    : bar.tools.batchCount > 1 ? qsTr("%n lines picked", "", bar.tools.batchCount) : ""
-            focusPolicy: Qt.TabFocus
-            enabled: bar.tools.railEnabled
-            onClicked: bar.tools.pickBatch()
-        }
-        Label {
-            id: targets
-            objectName: "visualTargetCount"
-            Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 5
-            Layout.leftMargin: 4
-            visible: bar.batchTool && bar.hydra
-            text: bar.targetText(bar.tools.targetCount)
-            font.features: { "tnum": 1 }
-        }
-        Label {
-            id: picked
-            objectName: "visualPickedCount"
-            Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 5
-            visible: bar.batchTool && !bar.hydra && bar.tools.batchCount > 0
-            text: bar.tools.batchCount === 1 ? qsTr("1 line") : qsTr("%n lines", "", bar.tools.batchCount)
-            font.features: { "tnum": 1 }
-        }
-        IconToolButton {
-            id: clear
-            objectName: "visualClearBatch"
-            Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 1
-            visible: bar.batchTool && bar.tools.batchCount > 0
-            iconRole: "clear"
-            text: qsTr("Clear picked lines")
-            focusPolicy: Qt.TabFocus
-            onClicked: bar.tools.clearBatch()
+        RowLayout {
+            id: row
+            visible: !bar.column
+            anchors.fill: parent
+            spacing: 4
+            Row {
+                id: groupsRow
+                objectName: "visualToolGroups"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 0
+                Layout.preferredWidth: 0
+                Layout.alignment: Qt.AlignTop
+                clip: true
+                spacing: bar.groupSpacing
+                Repeater {
+                    id: groups
+                    model: bar.column ? [] : bar.segments
+                    delegate: segmentDelegate
+                }
+            }
+            IconToolButton {
+                id: rowGuide
+                objectName: "visualToolGuideButton"
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 1
+                visible: bar.shown && bar.hint.length > 0
+                iconRole: "help"
+                text: qsTr("How this tool works")
+                tip: bar.hint
+                checked: guide.visible
+                focusPolicy: Qt.TabFocus
+                onClicked: guide.openBeside(rowGuide)
+            }
+            IconToolButton {
+                id: more
+                objectName: "visualToolMore"
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 1
+                visible: bar.foldedSegments.length > 0
+                iconRole: "menu-more"
+                text: qsTr("More options")
+                checked: morePopover.visible
+                focusPolicy: Qt.TabFocus
+                onClicked: morePopover.openAt(more)
+            }
+            IconToolButton {
+                id: pick
+                objectName: "visualPickBatch"
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 1
+                visible: bar.batchTool
+                iconRole: "pick-lines"
+                text: qsTr("Pick selected lines")
+                // Without an English catalog %n has no singular, so one line has its own text.
+                tip: bar.tools.batchCount === 1
+                     ? qsTr("Pick selected lines (1 line picked: the tools edit it, not the active line)")
+                     : bar.tools.batchCount > 1
+                     ? qsTr("Pick selected lines (%n lines picked: the tools edit them, not the active line)", "",
+                            bar.tools.batchCount)
+                     : qsTr("Pick selected lines (the tools edit them, not the active line)")
+                checked: bar.tools.batchCount > 0
+                Accessible.description: bar.tools.batchCount === 1 ? qsTr("1 line picked")
+                                        : bar.tools.batchCount > 1 ? qsTr("%n lines picked", "", bar.tools.batchCount) : ""
+                focusPolicy: Qt.TabFocus
+                enabled: bar.tools.railEnabled
+                onClicked: bar.tools.pickBatch()
+            }
+            Label {
+                id: targets
+                objectName: "visualTargetCount"
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 5
+                Layout.leftMargin: 4
+                visible: bar.batchTool && bar.hydra
+                text: bar.targetText(bar.tools.targetCount)
+                font.features: { "tnum": 1 }
+            }
+            Label {
+                id: picked
+                objectName: "visualPickedCount"
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 5
+                visible: bar.batchTool && !bar.hydra && bar.tools.batchCount > 0
+                text: bar.tools.batchCount === 1 ? qsTr("1 line") : qsTr("%n lines", "", bar.tools.batchCount)
+                font.features: { "tnum": 1 }
+            }
+            IconToolButton {
+                id: clear
+                objectName: "visualClearBatch"
+                Layout.alignment: Qt.AlignTop
+                Layout.topMargin: 1
+                visible: bar.batchTool && bar.tools.batchCount > 0
+                iconRole: "clear"
+                text: qsTr("Clear picked lines")
+                focusPolicy: Qt.TabFocus
+                onClicked: bar.tools.clearBatch()
+            }
         }
     }
     background: Rectangle {
@@ -324,7 +537,7 @@ Control {
         Row {
             Repeater {
                 id: measures
-                model: bar.measureShape.length > 0 ? bar.measuredSegments(JSON.parse(bar.measureShape)) : []
+                model: !bar.column && bar.measureShape.length > 0 ? bar.measuredSegments(JSON.parse(bar.measureShape)) : []
                 delegate: segmentDelegate
                 onItemAdded: ++bar.measuredItems
                 onItemRemoved: ++bar.measuredItems
@@ -340,7 +553,15 @@ Control {
             delegate: segmentDelegate
         }
     }
-    onFamilyChanged: morePopover.close()
+    VisualToolGuide {
+        id: guide
+        tools: bar.tools
+        keyOf: bar.keyOf
+    }
+    onFamilyChanged: {
+        morePopover.close()
+        guide.close()
+    }
     onFoldedSegmentsChanged: if (foldedSegments.length === 0) morePopover.close()
 
     property bool dialogs: true

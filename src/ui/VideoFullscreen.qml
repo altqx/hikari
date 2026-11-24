@@ -14,17 +14,18 @@ Window {
     readonly property Item keyTarget: keyScope
     readonly property alias contextMenu: fullscreenMenu
     readonly property bool cursorHidden: controller.cursorHidden
-    readonly property real pinnedPanelHeight: controller.pinned ? bar.height : 0
-    readonly property bool toolOn: shell.visualTools.railEnabled
-                                   && shell.visualTools.activeFamily > 0
+    readonly property real pinnedPanelHeight: controller.stripReserved ? strip.height : 0
+    readonly property bool typesetting: controller.mode === VideoFullscreenController.Mode.Typesetting
+    readonly property color ink: "#EEF0F2"
+    readonly property color inkMuted: Qt.rgba(0xEE / 255, 0xF0 / 255, 0xF2 / 255, 0.62)
     signal openVideoRequested()
     signal openSubtitlesRequested()
     signal aspectRatioRequested()
-    signal fileQuestionRequested(bool next)
     signal audioSettingsRequested()
+    signal fullscreenSettingsRequested()
 
     title: ""
-    color: Theme.background
+    color: "#000000"
     flags: Qt.Window | Qt.FramelessWindowHint
     // On Wayland a parented window is its dialog (xdg_toplevel set_parent): sway keeps the keyboard on the parent.
     transientParent: controller.ownedByMainWindow() ? shell : null
@@ -45,6 +46,9 @@ Window {
         fullscreenMenu.at = point
         fullscreenMenu.popup(stageHolder, point)
     }
+    function openStripMenu(point) {
+        stripMenu.popup(strip, point)
+    }
     function popupAbove(menu, button) {
         const place = () => {
             if (menu.visible)
@@ -63,8 +67,7 @@ Window {
     Binding {
         target: fs.controller
         property: "menuOpen"
-        value: fullscreenMenu.opened || outputMenu.opened || modeMenu.opened || toolsMenu.opened
-               || rail.menuOpen || toolBar.popoverOpen || speaker.activeFocus
+        value: fullscreenMenu.opened || outputMenu.opened || stripMenu.opened || strip.holdsFocus
     }
     Connections {
         target: fs.controller
@@ -82,6 +85,9 @@ Window {
         Accessible.role: Accessible.Pane
         Accessible.name: qsTr("Full screen video")
 
+        function typesettingKey(event) {
+            return fs.shell.hotkeys.actionFor(0, event.key, event.modifiers) === "GLOBAL_FULL_SCREEN_TYPESETTING"
+        }
         function leaves(event) {
             return (event.key === Qt.Key_Escape || event.key === Qt.Key_B)
                     && fs.shell.hotkeys.actionFor(0, event.key, event.modifiers) === ""
@@ -89,14 +95,46 @@ Window {
         MenuKey.onRequested: fs.openMenuAt(fs.shell.videoView.cursorIn(stageHolder))
         Keys.onShortcutOverride: event => event.accepted = fs.shell.visualTools.takesKey(event.key, event.modifiers)
                                                           || fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
-                                                          || keyScope.leaves(event)
+                                                          || keyScope.typesettingKey(event) || keyScope.leaves(event)
+        function stripGroups() {
+            const centred = [previousFrame, playPause, nextFrame].find(b => b.enabled) ?? modeSwitch
+            return [leadingGroup, centred, modeSwitch]
+        }
+        function focusPicture() {
+            for (let i = fs.activeFocusItem; i && i !== keyScope; i = i.parent)
+                i.focus = false
+            keyScope.forceActiveFocus(Qt.OtherFocusReason)
+        }
+        function nextGroup(back) {
+            const groups = keyScope.stripGroups()
+            const at = groups.findIndex(g => g.activeFocus)
+            const next = at < 0 ? (back ? groups.length - 1 : 0) : at + (back ? -1 : 1)
+            if (next < 0 || next >= groups.length)
+                keyScope.focusPicture()
+            else
+                groups[next].forceActiveFocus(back ? Qt.BacktabFocusReason : Qt.TabFocusReason)
+        }
         Keys.onPressed: event => {
             const action = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers)
-            if (fs.shell.visualTools.takesKey(event.key, event.modifiers)) {
+            const back = (event.modifiers & Qt.ShiftModifier) !== 0
+            if (event.key === Qt.Key_F6 && action === "" && typesetting.item) {
+                typesetting.item.nextRegion(fs.activeFocusItem, back)
+                event.accepted = true
+            } else if (event.key === Qt.Key_F6 && action === "" && fs.controller.barShown) {
+                keyScope.nextGroup(back)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Escape && fs.activeFocusItem !== keyScope
+                       && (strip.holdsFocus || typesetting.item && typesetting.item.regionOf(fs.activeFocusItem) >= 0)) {
+                keyScope.focusPicture()
+                event.accepted = true
+            } else if (fs.shell.visualTools.takesKey(event.key, event.modifiers)) {
                 fs.shell.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)
                 event.accepted = true
             } else if (action !== "") {
                 fs.shell.runVideoHotkey(action)
+                event.accepted = true
+            } else if (keyScope.typesettingKey(event)) {
+                fs.shell.runGlobalHotkey("GLOBAL_FULL_SCREEN_TYPESETTING")
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape && fs.shell.visualTools.escape()) {
                 event.accepted = true
@@ -106,9 +144,6 @@ Window {
             } else if (event.key === Qt.Key_F) {
                 fs.controller.toggle(0)
                 event.accepted = true
-            } else if (event.key === Qt.Key_Backtab && speaker.enabled) {
-                speaker.forceActiveFocus(Qt.BacktabFocusReason)
-                event.accepted = true
             } else if (fs.shell.videoView.key(event.key, event.modifiers)) {
                 event.accepted = true
             } else if (fs.shell.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)) {
@@ -117,52 +152,110 @@ Window {
         }
         Keys.onReleased: event => event.accepted = fs.shell.visualTools.key(event.key, event.modifiers, true, event.isAutoRepeat)
 
+        Loader {
+            id: typesetting
+            anchors.fill: parent
+            active: fs.typesetting && fs.controller.active
+            sourceComponent: FullscreenTypesetting {
+                shell: fs.shell
+                controller: fs.controller
+                onPictureFocusRequested: keyScope.focusPicture()
+            }
+        }
+
         Item {
             id: stageHolder
             objectName: "videoFullscreenStage"
-            anchors { left: parent.left; right: parent.right; top: parent.top }
-            height: fs.controller.pinned ? parent.height - bar.height : parent.height
+            readonly property rect frame: typesetting.item ? typesetting.item.frameRect
+                                                           : Qt.rect(0, 0, parent.width,
+                                                                     fs.controller.stripReserved ? parent.height - strip.height
+                                                                                                 : parent.height)
+            x: frame.x
+            y: frame.y
+            width: frame.width
+            height: frame.height
         }
 
         Rectangle {
-            id: titleStrip
-            objectName: "videoFullscreenTitle"
-            anchors { left: parent.left; right: parent.right; top: parent.top }
-            height: 32
-            z: 3
-            color: Theme.panel
-            opacity: fs.controller.barShown && !fs.controller.pinned ? 1 : 0
-            visible: opacity > 0
-            Behavior on opacity { NumberAnimation { duration: 200 } }
-            HoverHandler {
-                cursorShape: Qt.ArrowCursor
-                onPointChanged: if (hovered) fs.pointerMoved(point.scenePosition)
+            id: seekingShade
+            objectName: "videoFullscreenSeeking"
+            anchors.fill: stageHolder
+            z: 1
+            color: Qt.rgba(0, 0, 0, 0.45)
+            visible: false
+            Timer {
+                interval: 250
+                running: fs.controller.seeking
+                onTriggered: seekingShade.visible = true
             }
-            MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
-            Rectangle {
-                anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                height: 1
-                color: Theme.line
+            Connections {
+                target: fs.controller
+                function onSeekingChanged() {
+                    if (!fs.controller.seeking)
+                        seekingShade.visible = false
+                }
             }
-            Label {
-                objectName: "fullscreenVideoName"
-                anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter
-                          leftMargin: 12; rightMargin: 12 }
-                text: fs.controller.videoName
-                textFormat: Text.PlainText
-                maximumLineCount: 1
-                clip: true
-                color: Theme.text
-                elide: Text.ElideMiddle
+            Column {
+                anchors.centerIn: parent
+                spacing: 8
+                BusyIndicator {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    implicitWidth: 34
+                    implicitHeight: 34
+                    running: seekingShade.visible
+                }
+                Label {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: qsTr("Seeking…")
+                    color: fs.ink
+                }
+            }
+        }
+
+        Rectangle {
+            id: failure
+            objectName: "videoFullscreenFailure"
+            anchors.fill: stageHolder
+            z: 1
+            color: "#000000"
+            visible: fs.controller.failedFrame >= 0
+            Column {
+                anchors.centerIn: parent
+                width: Math.min(parent.width - 48, 640)
+                spacing: 8
+                Icon {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    iconRole: "notice-warning"
+                    size: 34
+                    color: fs.ink
+                    accentColor: fs.ink
+                }
+                Label {
+                    objectName: "videoFullscreenFailureText"
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    //: Full screen, when a frame can't be decoded: %1 the frame number, %2 the video's file name
+                    text: qsTr("Can’t decode frame %1 of %2. Playback stopped.").arg(fs.controller.failedFrame, fs.controller.videoName)
+                    color: fs.ink
+                }
+                Label {
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    text: qsTr("Seek to another time, or press Esc to leave full screen.")
+                    color: fs.inkMuted
+                }
             }
         }
 
         Item {
             id: progress
             objectName: "videoFullscreenProgress"
-            anchors { fill: parent; topMargin: titleStrip.visible ? titleStrip.height : 0 }
+            anchors.fill: stageHolder
             z: 2
-            visible: fs.controller.active && fs.shell.videoView.progressBar && fs.shell.video.hasVideo
+            visible: fs.controller.active && fs.controller.overlays && fs.shell.videoView.progressBar && fs.shell.video.hasVideo
             enabled: false
             TextMetrics {
                 id: progressMetrics
@@ -201,32 +294,17 @@ Window {
             }
         }
 
-        VisualToolRail {
-            id: rail
-            objectName: "fullscreenToolRail"
-            tools: fs.shell.visualTools
-            keyOf: symbol => fs.shell.boundKeys(symbol, 3)
-            visible: fs.toolOn
-            z: 3
-            x: 8
-            y: titleStrip.visible ? titleStrip.height + 8 : 8
-            height: Math.min(implicitHeight, (bar.visible ? bar.y : fs.height) - y - 8)
-            // On X11 its buttons take the hover from the picture.
-            HoverHandler {
-                onPointChanged: if (hovered) fs.pointerMoved(point.scenePosition)
-            }
-        }
 
         Rectangle {
             id: hint
             objectName: "videoFullscreenHint"
-            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 40 }
+            anchors { horizontalCenter: stageHolder.horizontalCenter; top: stageHolder.top; topMargin: 40 }
             z: 4
             width: hintText.implicitWidth + 32
             height: hintText.implicitHeight + 14
             radius: height / 2
-            color: Theme.panel
-            border.color: Theme.line
+            color: "#1B1D21"
+            border.color: Qt.rgba(1, 1, 1, 0.18)
             opacity: 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 200 } }
@@ -245,246 +323,300 @@ Window {
                 anchors.centerIn: parent
                 //: Shown for two seconds on entering full screen video
                 text: qsTr("Press Esc to exit full screen")
-                color: Theme.text
+                color: fs.ink
             }
         }
 
-        Rectangle {
-            id: bar
+        Item {
+            id: strip
             objectName: "videoFullscreenPanel"
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            implicitHeight: barColumn.implicitHeight + 10
-            height: implicitHeight
-            color: Theme.panel
+            readonly property bool over: fs.controller.barPosition === VideoFullscreenController.BarPosition.Over
+            readonly property int showBar: fs.controller.barMode
+            readonly property bool holdsFocus: {
+                for (let i = fs.activeFocusItem; i; i = i.parent)
+                    if (i === strip)
+                        return true
+                return false
+            }
+            MenuKey.onRequested: fs.openStripMenu(Qt.point(16, 0))
+            height: Math.max(over ? 0 : 112, stripColumn.implicitHeight + 24)
             z: 3
             opacity: fs.controller.barShown ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 200 } }
             Rectangle {
+                anchors.fill: parent
+                visible: !strip.over
+                color: "#000000"
+            }
+            Rectangle {
+                anchors.fill: parent
+                visible: strip.over
+                gradient: Gradient {
+                    GradientStop { position: 0; color: Qt.rgba(0, 0, 0, 0) }
+                    GradientStop { position: 1; color: Qt.rgba(0, 0, 0, 0.82) }
+                }
+            }
+            Rectangle {
                 anchors { left: parent.left; right: parent.right; top: parent.top }
                 height: 1
-                color: Theme.line
+                color: "#ffffff"
+                visible: Theme.highContrast
             }
             HoverHandler {
                 cursorShape: Qt.ArrowCursor
                 onHoveredChanged: fs.controller.pointerOverBar = hovered
             }
-            MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
+            MouseArea {
+                anchors.fill: parent
+                acceptedButtons: Qt.AllButtons
+                onClicked: mouse => {
+                    if (mouse.button === Qt.RightButton)
+                        fs.openStripMenu(Qt.point(mouse.x, mouse.y))
+                }
+            }
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: event => fs.shell.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
             }
 
             ColumnLayout {
-                id: barColumn
-                anchors { left: parent.left; right: parent.right; top: parent.top
-                          leftMargin: 8; rightMargin: 8; topMargin: 5 }
-                spacing: 2
-                RowLayout {
-                    id: inspectorSlot
-                    objectName: "fullscreenInspectorSlot"
-                    Layout.fillWidth: true
-                    visible: fs.toolOn
-                    VisualToolBar {
-                        id: toolBar
-                        objectName: "fullscreenToolBar"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        tools: fs.shell.visualTools
-                        background: null
-                        dialogs: fs.visible
-                        settings: fs.shell.app.settings
-                    }
-                }
-                Slider {
-                    objectName: "fullscreenSlider"
-                    id: fullscreenSeekBar
-                    Layout.fillWidth: true
-                    from: 0
-                    to: Math.max(0, fs.shell.video.frameCount - 1)
-                    stepSize: 1
-                    Binding on value {
-                        when: !fullscreenSeekBar.pressed
-                        value: Math.max(0, fs.shell.video.frame)
-                        restoreMode: Binding.RestoreNone
-                    }
-                    enabled: fs.shell.video.hasVideo
-                    focusPolicy: Qt.NoFocus
-                    Accessible.name: qsTr("Video position")
-                    onMoved: fs.shell.video.seekBarMoved(Math.round(value), pressed)
-                    onPressedChanged: if (!pressed) fs.shell.video.seekBarReleased()
-                }
+                id: stripColumn
+                anchors { left: parent.left; right: parent.right; bottom: parent.bottom
+                          leftMargin: 16; rightMargin: 16; bottomMargin: 12 }
+                spacing: 6
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 2
-                    IconButton {
-                        objectName: "fullscreenPreviousFile"
-                        iconRole: "media-previous-file"
-                        text: qsTr("Previous video file")
-                        focusPolicy: Qt.NoFocus
-                        tip: fs.shell.bitmapTip(qsTr("Previous video file"), "VIDEO_PREVIOUS_FILE", 3)
-                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3, "bitmap")) fs.fileQuestionRequested(false)
-                    }
-                    IconButton {
-                        objectName: "fullscreenPlayPause"
-                        iconRole: fs.shell.video.playing ? "media-pause" : "media-play"
-                        text: fs.shell.video.playing ? qsTr("Pause") : qsTr("Play")
-                        enabled: fs.shell.video.hasVideo
-                        focusPolicy: Qt.NoFocus
-                        tip: fs.shell.bitmapTip(qsTr("Play or pause"), "VIDEO_PLAY_PAUSE", 3)
-                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) fs.shell.video.togglePlay()
-                    }
-                    IconButton {
-                        objectName: "fullscreenPlayLine"
-                        iconRole: "play-line"
-                        text: qsTr("Play the current line")
-                        enabled: fs.shell.video.hasVideo
-                        focusPolicy: Qt.NoFocus
-                        tip: fs.shell.bitmapTip(qsTr("Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
-                        onClicked: if (!fs.shell.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap")) fs.shell.runGlobalHotkey("GLOBAL_PLAY_ACTUAL_LINE")
-                    }
-                    IconButton {
-                        objectName: "fullscreenStop"
-                        iconRole: "media-stop"
-                        text: qsTr("Stop")
-                        enabled: fs.shell.video.hasVideo
-                        focusPolicy: Qt.NoFocus
-                        tip: fs.shell.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
-                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) fs.shell.video.stop()
-                    }
-                    IconButton {
-                        objectName: "fullscreenNextFile"
-                        iconRole: "media-next-file"
-                        text: qsTr("Next file")
-                        focusPolicy: Qt.NoFocus
-                        tip: fs.shell.bitmapTip(qsTr("Next file"), "VIDEO_NEXT_FILE", 3)
-                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) fs.fileQuestionRequested(true)
-                    }
-                    ToolSeparator {}
+                    spacing: 10
                     Label {
-                        objectName: "fullscreenTimes"
-                        text: fs.shell.video.times
-                        color: fs.shell.video.keyframeShown ? Theme.warning : Theme.text
-                        Accessible.name: qsTr("Video times")
+                        objectName: "fullscreenStartTime"
+                        text: fs.controller.positionText
+                        color: fs.inkMuted
+                        font.family: "monospace"
+                        font.pixelSize: 12
                     }
-                    ToolSeparator { visible: currentLine.visible }
-                    RowLayout {
-                        id: currentLine
-                        objectName: "fullscreenLine"
+                    Slider {
+                        objectName: "fullscreenSlider"
+                        id: fullscreenSeekBar
                         Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        visible: fs.shell.editor.hasLine
+                        from: 0
+                        to: Math.max(0, fs.shell.video.frameCount - 1)
+                        stepSize: 1
+                        Binding on value {
+                            when: !fullscreenSeekBar.pressed
+                            value: Math.max(0, fs.shell.video.frame)
+                            restoreMode: Binding.RestoreNone
+                        }
+                        enabled: fs.shell.video.hasVideo
+                        focusPolicy: Qt.NoFocus
+                        Accessible.name: qsTr("Seek bar")
+                        onMoved: fs.shell.video.seekBarMoved(Math.round(value), pressed)
+                        onPressedChanged: if (!pressed) fs.shell.video.seekBarReleased()
+                        Item {
+                            id: ticks
+                            objectName: "fullscreenKeyframeTicks"
+                            x: fullscreenSeekBar.leftPadding
+                            y: fullscreenSeekBar.topPadding + (fullscreenSeekBar.availableHeight - height) / 2
+                            width: fullscreenSeekBar.availableWidth
+                            height: 8
+                            z: -1
+                            property var positions: []
+                            function refresh() { positions = fs.controller.keyframeTicks(Math.round(width)) }
+                            onWidthChanged: refresh()
+                            Connections {
+                                target: fs.controller
+                                function onKeyframesChanged() { ticks.refresh() }
+                            }
+                            Connections {
+                                target: fs.shell.video
+                                function onFrameCountChanged() { ticks.refresh() }
+                            }
+                            Repeater {
+                                model: ticks.positions
+                                Rectangle {
+                                    required property int modelData
+                                    x: modelData
+                                    width: 1
+                                    height: ticks.height
+                                    color: Qt.rgba(1, 1, 1, 0.3)
+                                }
+                            }
+                        }
+                    }
+                    Label {
+                        objectName: "fullscreenLength"
+                        text: fs.controller.lengthText
+                        color: fs.inkMuted
+                        font.family: "monospace"
+                        font.pixelSize: 12
+                    }
+                }
+                Item {
+                    Layout.fillWidth: true
+                    implicitHeight: 34
+                    RowLayout {
+                        id: leadingGroup
+                        objectName: "fullscreenLine"
+                        anchors { left: parent.left; verticalCenter: parent.verticalCenter }
+                        width: Math.max(0, centredGroup.x - 16)
                         spacing: 8
                         clip: true
+                        activeFocusOnTab: false
+                        readonly property bool hasLine: fs.shell.editor.hasLine
                         Accessible.role: Accessible.StaticText
-                        //: The full screen bar's current line: %1 its number, %2 its times, %3 its text
-                        Accessible.name: qsTr("Line %1, %2: %3").arg(lineNumber.text, fs.shell.editor.videoTimes, lineText.text)
+                        //: The full screen strip's current line: %1 its number, %2 its text
+                        Accessible.name: hasLine ? qsTr("Line %1: %2").arg(fs.shell.shell.activeLineNumber, lineText.text)
+                                                 : noLine.text
                         Label {
                             id: lineNumber
                             objectName: "fullscreenLineNumber"
-                            visible: fs.shell.shell.activeLineNumber > 0
+                            visible: leadingGroup.hasLine && fs.shell.shell.activeLineNumber > 0
                             text: fs.shell.shell.activeLineNumber
-                            color: Theme.muted
-                            font.pointSize: Math.max(1, Qt.application.font.pointSize - 1)
-                            leftPadding: 4
-                            rightPadding: 4
-                            background: Rectangle {
-                                color: "transparent"
-                                border.color: Theme.line
-                                radius: 2
-                            }
-                        }
-                        Label {
-                            objectName: "fullscreenLineTimes"
-                            text: fs.shell.editor.videoTimes
-                            color: Theme.muted
-                            Layout.minimumWidth: 0
-                            Layout.maximumWidth: implicitWidth
-                            elide: Text.ElideRight
+                            color: fs.inkMuted
+                            font.family: "monospace"
                         }
                         Label {
                             id: lineText
                             objectName: "fullscreenLineText"
+                            visible: leadingGroup.hasLine
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             text: fs.controller.lineLabel(fs.shell.editor.videoText)
                             textFormat: Text.PlainText
-                            color: Theme.text
+                            color: fs.ink
                             elide: Text.ElideRight
                             maximumLineCount: 1
                         }
-                    }
-                    IconButton {
-                        objectName: "fullscreenOpenEditor"
-                        iconRole: "editor"
-                        text: qsTr("Open editor")
-                        focusPolicy: Qt.NoFocus
-                        onClicked: fs.shell.openEditorFromFullScreen()
-                    }
-                    Item { Layout.fillWidth: !currentLine.visible }
-                    IconButton {
-                        id: toolsButton
-                        objectName: "fullscreenToolsButton"
-                        // MUST KILL: iconRole list mirrors application::visual::Family order and must stay on one line for icon_tests
-                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient", "tool-text-on-path"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
-                        text: qsTr("Visual tools")
-                        enabled: fs.shell.visualTools.railEnabled
-                        down: toolsMenu.visible
-                        focusPolicy: Qt.NoFocus
-                        onClicked: fs.popupAbove(toolsMenu, toolsButton)
-                    }
-                    ToolSeparator { visible: toolsButton.visible }
-                    IconButton {
-                        id: speaker
-                        objectName: "fullscreenSpeaker"
-                        iconRole: fs.shell.videoView.muted ? "volume-muted" : "volume"
-                        text: fs.shell.videoView.muted ? qsTr("Unmute") : qsTr("Mute")
-                        //: The full screen speaker's tooltip: %1 is Mute or Unmute
-                        tip: qsTr("%1 · Wheel: volume · Right-click: output device").arg(text)
-                        enabled: fs.shell.video.hasVideo
-                        down: outputMenu.visible
-                        focusPolicy: Qt.TabFocus
-                        onClicked: fs.shell.videoView.toggleMute()
-                        MenuKey.onRequested: fs.popupAbove(outputMenu, speaker)
-                        Keys.onTabPressed: keyScope.forceActiveFocus(Qt.TabFocusReason)
-                        Keys.onBacktabPressed: keyScope.forceActiveFocus(Qt.BacktabFocusReason)
-                        Keys.onEscapePressed: keyScope.forceActiveFocus(Qt.OtherFocusReason)
-                        WheelHandler {
-                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                            onWheel: event => fs.shell.videoView.volumeWheel(Math.round(event.angleDelta.y / 120))
-                        }
-                        TapHandler {
-                            acceptedButtons: Qt.RightButton
-                            onTapped: fs.popupAbove(outputMenu, speaker)
+                        Label {
+                            id: noLine
+                            objectName: "fullscreenNoLine"
+                            visible: !leadingGroup.hasLine
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            //: The full screen strip when no Line is at the current time
+                            text: qsTr("No line at this time")
+                            color: fs.inkMuted
+                            elide: Text.ElideRight
                         }
                     }
-                    VideoVolumeSlider {
-                        sliderName: "fullscreenVolume"
-                        view: fs.shell.videoView
-                        hasVideo: fs.shell.video.hasVideo
-                        showIcon: false
-                        sliderWidth: 80
+                    Rectangle {
+                        x: leadingGroup.x - 4
+                        y: leadingGroup.y - 4
+                        width: leadingGroup.width + 8
+                        height: leadingGroup.height + 8
+                        visible: leadingGroup.activeFocus
+                        color: "transparent"
+                        border.color: fs.ink
+                        radius: 4
                     }
-                    ToolSeparator {}
-                    IconTextButton {
-                        id: modeButton
-                        objectName: "fullscreenBarMode"
-                        iconRole: "show-toolbar"
-                        flat: true
-                        text: modeMenu.names[fs.controller.barMode]
-                        tip: fs.shell.bitmapTip(qsTr("Full screen bar"), "VIDEO_FULLSCREEN_BAR", 3)
-                        down: modeMenu.visible
-                        focusPolicy: Qt.NoFocus
-                        Accessible.name: qsTr("Full screen bar: %1").arg(text)
-                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_FULLSCREEN_BAR", 3, "bitmap")) fs.popupAbove(modeMenu, modeButton)
+                    RowLayout {
+                        id: centredGroup
+                        objectName: "fullscreenTransport"
+                        anchors.centerIn: parent
+                        spacing: 2
+                        FullscreenStripButton {
+                            id: previousFrame
+                            objectName: "fullscreenPreviousFrame"
+                            iconRole: "frame-previous"
+                            text: qsTr("Previous frame")
+                            enabled: fs.shell.video.hasVideo && fs.shell.video.frame > 0
+                            tip: fs.shell.bitmapTip(text, "GLOBAL_PREVIOUS_FRAME", 0)
+                            onClicked: if (!fs.shell.hotkeyGesture("GLOBAL_PREVIOUS_FRAME", 0, "bitmap")) fs.shell.video.stepFrames(-1)
+                        }
+                        FullscreenStripButton {
+                            id: playPause
+                            objectName: "fullscreenPlayPause"
+                            iconRole: fs.shell.video.playing ? "media-pause" : "media-play"
+                            text: fs.shell.video.playing ? qsTr("Pause") : qsTr("Play")
+                            enabled: fs.shell.video.hasVideo
+                            tip: fs.shell.bitmapTip(qsTr("Play or pause"), "VIDEO_PLAY_PAUSE", 3)
+                            onClicked: if (!fs.shell.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) fs.shell.video.togglePlay()
+                        }
+                        FullscreenStripButton {
+                            id: nextFrame
+                            objectName: "fullscreenNextFrame"
+                            iconRole: "frame-next"
+                            text: qsTr("Next frame")
+                            enabled: fs.shell.video.hasVideo && fs.shell.video.frame + 1 < fs.shell.video.frameCount
+                            tip: fs.shell.bitmapTip(text, "GLOBAL_NEXT_FRAME", 0)
+                            onClicked: if (!fs.shell.hotkeyGesture("GLOBAL_NEXT_FRAME", 0, "bitmap")) fs.shell.video.stepFrames(1)
+                        }
+                        FullscreenStripButton {
+                            objectName: "fullscreenPlayLine"
+                            iconRole: "play-line"
+                            text: qsTr("Play the current line")
+                            enabled: fs.shell.video.hasVideo
+                            tip: fs.shell.bitmapTip(text, "GLOBAL_PLAY_ACTUAL_LINE", 0)
+                            onClicked: if (!fs.shell.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap")) fs.shell.runGlobalHotkey("GLOBAL_PLAY_ACTUAL_LINE")
+                        }
+                        FullscreenStripButton {
+                            objectName: "fullscreenStop"
+                            iconRole: "media-stop"
+                            text: qsTr("Stop")
+                            enabled: fs.shell.video.hasVideo
+                            tip: fs.shell.bitmapTip(text, "VIDEO_STOP", 3)
+                            onClicked: if (!fs.shell.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) fs.shell.video.stop()
+                        }
+                        Label {
+                            objectName: "fullscreenTime"
+                            Layout.leftMargin: 10
+                            text: fs.controller.positionText
+                            color: fs.ink
+                            opacity: fs.controller.failedFrame >= 0 ? 0.5 : 1
+                            font.family: "monospace"
+                            font.pixelSize: 20
+                            Accessible.name: qsTr("Video time, %1").arg(text)
+                        }
                     }
-                    IconButton {
-                        objectName: "fullscreenExit"
-                        iconRole: "fullscreen-exit"
-                        text: qsTr("Exit full screen")
-                        tip: fs.shell.bitmapTip(text, "VIDEO_FULL_SCREEN", 3, ShellMenus.keyText("Esc"))
-                        focusPolicy: Qt.NoFocus
-                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_FULL_SCREEN", 3, "bitmap")) fs.controller.leave()
+                    RowLayout {
+                        id: trailingGroup
+                        objectName: "fullscreenTrailing"
+                        anchors { right: parent.right; verticalCenter: parent.verticalCenter }
+                        spacing: 2
+                        FullscreenStripButton {
+                            id: modeSwitch
+                            objectName: "fullscreenTypeset"
+                            iconRole: "tool-position"
+                            label: qsTr("Typeset")
+                            text: label
+                            tip: qsTr("Typeset: switch to full-screen typesetting · the frame keeps its place")
+                            onClicked: fs.controller.mode = VideoFullscreenController.Mode.Typesetting
+                        }
+                        FullscreenStripButton {
+                            id: speaker
+                            objectName: "fullscreenSpeaker"
+                            iconRole: fs.shell.videoView.muted ? "volume-muted" : "volume"
+                            text: fs.shell.videoView.muted ? qsTr("Unmute") : qsTr("Mute")
+                            //: The full screen speaker's tooltip: %1 is Mute or Unmute
+                            tip: qsTr("%1 · Wheel: volume · Right-click: output device").arg(text)
+                            enabled: fs.shell.video.hasVideo
+                            down: outputMenu.visible
+                            onClicked: fs.shell.videoView.toggleMute()
+                            MenuKey.onRequested: fs.popupAbove(outputMenu, speaker)
+                            WheelHandler {
+                                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                                onWheel: event => fs.shell.videoView.volumeWheel(Math.round(event.angleDelta.y / 120))
+                            }
+                            TapHandler {
+                                acceptedButtons: Qt.RightButton
+                                onTapped: fs.popupAbove(outputMenu, speaker)
+                            }
+                        }
+                        VideoVolumeSlider {
+                            sliderName: "fullscreenVolume"
+                            view: fs.shell.videoView
+                            hasVideo: fs.shell.video.hasVideo
+                            showIcon: false
+                            sliderWidth: 80
+                        }
+                        FullscreenStripButton {
+                            objectName: "fullscreenExit"
+                            iconRole: "fullscreen-exit"
+                            text: qsTr("Leave full screen")
+                            tip: fs.shell.bitmapTip(text, "VIDEO_FULL_SCREEN", 3, ShellMenus.keyText("Esc"))
+                            onClicked: if (!fs.shell.hotkeyGesture("VIDEO_FULL_SCREEN", 3, "bitmap")) fs.controller.leave()
+                        }
                     }
                 }
             }
@@ -498,6 +630,7 @@ Window {
             onOpenVideoRequested: fs.openVideoRequested()
             onOpenSubtitlesRequested: fs.openSubtitlesRequested()
             onAspectRatioRequested: fs.aspectRatioRequested()
+            onFullscreenSettingsRequested: fs.fullscreenSettingsRequested()
             onClosed: keyScope.forceActiveFocus()
         }
         AudioOutputMenu {
@@ -505,35 +638,14 @@ Window {
             objectName: "fullscreenAudioOutputMenu"
             app: fs.shell.app
             onSettingsRequested: fs.audioSettingsRequested()
-            onClosed: if (!speaker.activeFocus) keyScope.forceActiveFocus()
+            onClosed: if (!strip.holdsFocus) keyScope.forceActiveFocus()
         }
         FullscreenBarMenu {
-            id: modeMenu
-            objectName: "fullscreenBarModeMenu"
+            id: stripMenu
+            objectName: "fullscreenStripMenu"
             controller: fs.controller
+            onSettingsRequested: fs.fullscreenSettingsRequested()
             onClosed: keyScope.forceActiveFocus()
-        }
-        ShellMenu {
-            id: toolsMenu
-            objectName: "fullscreenToolsMenu"
-            onClosed: keyScope.forceActiveFocus()
-            Instantiator {
-                model: fs.shell.visualTools.railOrder
-                delegate: ShellMenuItem {
-                    required property int modelData
-                    readonly property int family: modelData
-                    objectName: "fullscreenTool" + family
-                    // MUST KILL: iconRole list mirrors application::visual::Family order and must stay on one line for icon_tests
-                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective", "tool-gradient", "tool-text-on-path"][family] ?? ""
-                    text: fs.shell.visualTools.families[family]?.name ?? ""
-                    checkable: true
-                    checked: fs.shell.visualTools.activeFamily === family
-                    keepsMenuOpen: false
-                    onTriggered: if (fs.shell.visualTools.activeFamily !== family) fs.shell.visualTools.selectFamily(family)
-                }
-                onObjectAdded: (index, object) => toolsMenu.insertItem(index, object)
-                onObjectRemoved: (index, object) => toolsMenu.removeItem(object)
-            }
         }
     }
 }

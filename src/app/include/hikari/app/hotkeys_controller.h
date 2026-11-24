@@ -84,8 +84,13 @@ public:
 
     Q_INVOKABLE void beginOptions();
     Q_INVOKABLE void filter(int mode);
+    // As HotkeyList::filterSource and filterConflicts.
+    Q_INVOKABLE void filterSource(int source);
+    Q_INVOKABLE void filterConflicts(bool on);
     // Also matches a macro's row by its script and macro names.
     Q_INVOKABLE void search(const QString &text);
+    // {name, keys} for every row whose text holds each word of text, staged edits included.
+    Q_INVOKABLE QVariantList matching(const QString &text) const;
     Q_INVOKABLE void select(int position);
     // The gutter box after a shown position; -1 is the one above the first.
     Q_INVOKABLE void toggleBlock(int position);

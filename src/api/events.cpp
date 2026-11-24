@@ -14,6 +14,14 @@ void addEvents(Registry &registry)
                                     "revision": {"$ref": "#/$defs/Revision"},
                                     "step": {"type": "string", "description": "The History step now current."}},
                                     "required": ["document", "revision", "step"], "additionalProperties": false})")});
+    registry.addEvent(EventType{"problems.changed",
+                                "The problems on a Document changed: a source set or cleared them, an edit or a deleted "
+                                "Line dropped some, a plugin stopped, or the open QC notes changed.",
+                                schema(R"({"type": "object", "properties": {
+                                    "document": {"$ref": "#/$defs/DocumentId"},
+                                    "sources": {"type": "array", "items": {"type": "string"},
+                                        "description": "The ids of the sources whose problems changed: qc or a plugin id."}},
+                                    "required": ["document", "sources"], "additionalProperties": false})")});
     registry.addEvent(EventType{"program.output",
                                 "A started program wrote to stdout or stderr. Only its plugin hears it, in order and never "
                                 "merged.",
@@ -180,6 +188,17 @@ void Api::documentChanged(application::DocumentId document)
     publish(Event{"document.changed", Json::object({{"document", Json(document.value)},
                                                     {"revision", Json(session->revision())},
                                                     {"step", Json(step)}})},
+            document);
+    if (m_host.problems)
+        m_host.problems->refresh(document, session->document());
+}
+
+void Api::problemsChanged(application::DocumentId document, const std::vector<std::string> &sources)
+{
+    Json ids = Json::array();
+    for (const std::string &source : sources)
+        ids.push(Json(source));
+    publish(Event{"problems.changed", Json::object({{"document", Json(document.value)}, {"sources", std::move(ids)}})},
             document);
 }
 

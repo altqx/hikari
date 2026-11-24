@@ -59,6 +59,7 @@ struct Caller {
     // A plugin whose manifest asks for permissions.programs: programs.* answer it.
     bool programs = false;
     bool vcsRead = false;
+    bool presence = false;
     // The SHA-256 of the plugin package the user approved; plugins.install refuses any other.
     std::string approvedPackage;
 };
@@ -196,6 +197,7 @@ public:
     // An Automation macro run ended, however it was started.
     void macroRan(application::DocumentId document, std::string_view file, std::string_view macro, std::string_view outcome,
                   const std::vector<DialogAnswer> &dialogs);
+    void problemsChanged(application::DocumentId document, const std::vector<std::string> &sources);
 
     // The handle files.* use for `path`; granting a path again updates `writable`.
     std::string grantFile(const std::string &callerId, const std::string &path, bool writable);

@@ -259,13 +259,18 @@ public:
     /// provider is gone or its key can't be read.
     void readKey(const std::string &providerId, std::function<void(std::optional<std::string>)> done);
 
+    /// Called after every change that was saved.
+    void observe(std::function<void()> changed) { m_changed = std::move(changed); }
+
 private:
     void store(Provider provider, std::optional<std::string> key, std::function<void(std::optional<SaveError>)> done);
+    bool commit(Config next);
 
     ConfigStore &m_configs;
     KeyStore &m_keys;
     Config m_config;
     std::map<std::string, std::string, std::less<>> m_keyCache;
+    std::function<void()> m_changed;
 };
 
 /// The search services' keys, kept in the keychain like the providers'.

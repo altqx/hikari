@@ -21,6 +21,8 @@
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
 
+#include <optional>
+
 using namespace hikari;
 namespace ai = hikari::application::ai;
 
@@ -150,7 +152,11 @@ protected:
         ASSERT_TRUE(store->switchToStaged());
     }
 
-    void SetUp() override { channel.addRuntime(QStringLiteral("1.4.4-0123abcd"), "runtime"); }
+    void SetUp() override
+    {
+        channel.addRuntime(QStringLiteral("1.4.4-0123abcd"), "runtime");
+        settings.set(app::AiFeatures::kOffSetting, false);
+    }
 
     QTemporaryDir dir;
     ui::SettingsStore settings;
@@ -160,6 +166,59 @@ protected:
     test::MinisignSigner signer;
     bool policyOff = false;
 };
+
+TEST_F(AiFeaturesTest, AFreshProfileStartsWithAiOffAndNothingBuilt)
+{
+    settings.reset(QLatin1String(app::AiFeatures::kOffSetting));
+    app::AiFeatures::settleOffDefault(settings, ports(false, true));
+    EXPECT_FALSE(settings.contains(app::AiFeatures::kOffSetting));
+    app::AiFeatures features(settings, ports(false, true));
+    EXPECT_FALSE(features.on());
+    EXPECT_EQ(features.updater(), nullptr);
+    EXPECT_EQ(counts.keyStores, 0);
+    EXPECT_EQ(counts.keyReads, 0);
+    EXPECT_EQ(counts.sidecarHosts, 0);
+    EXPECT_EQ(release.fetches(".json"), 0);
+}
+
+TEST_F(AiFeaturesTest, AProfileThatNeverSetAiOffKeepsItOnOnlyWithTheComponentOrAProvider)
+{
+    const auto settled = [&](const app::AiFeatures::Ports &p) -> std::optional<bool> {
+        settings.reset(QLatin1String(app::AiFeatures::kOffSetting));
+        app::AiFeatures::settleOffDefault(settings, p);
+        if (!settings.contains(app::AiFeatures::kOffSetting))
+            return std::nullopt;
+        return settings.boolean(app::AiFeatures::kOffSetting);
+    };
+    EXPECT_EQ(settled(ports(false, true)), std::nullopt);
+    EXPECT_EQ(settled(ports(true, true)), false);
+    EXPECT_EQ(settled(ports(false, false)), false);
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    EXPECT_EQ(settled(ports(false, true)), false);
+    EXPECT_EQ(counts.keyStores, 0);
+    EXPECT_EQ(counts.keyReads, 0);
+
+    settings.set(app::AiFeatures::kOffSetting, true);
+    app::AiFeatures::settleOffDefault(settings, ports(true, true));
+    EXPECT_TRUE(settings.boolean(app::AiFeatures::kOffSetting));
+}
+
+TEST_F(AiFeaturesTest, ResettingAiOffTurnsAiOffAtOnceAndTheNextStartSettlesItAgain)
+{
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    {
+        app::AiFeatures features(settings, ports(false, true));
+        ASSERT_TRUE(features.on());
+        settings.reset(QLatin1String(app::AiFeatures::kOffSetting));
+        EXPECT_FALSE(features.on());
+    }
+    app::AiFeatures::settleOffDefault(settings, ports(false, true));
+    app::AiFeatures again(settings, ports(false, true));
+    EXPECT_TRUE(again.on());
+    EXPECT_FALSE(settings.boolean(app::AiFeatures::kOffSetting));
+}
 
 TEST_F(AiFeaturesTest, WithAiOffNothingIsBuiltAcrossStartupAndASession)
 {
@@ -629,6 +688,50 @@ TEST_F(AiFeaturesTest, ANewSidecarSwitchesInOnlyOnceNothingHasBeenBusyForTheIdle
     EXPECT_EQ(features.sidecar(), nullptr);
     EXPECT_EQ(features.updater()->previous(), QStringLiteral("1.1.0"));
     features.removeBusySource(source);
+}
+
+TEST_F(AiFeaturesTest, OneSidecarServesEveryRequestAcrossChecksThatFindNothingNew)
+{
+    publish(QStringLiteral("1.1.0"));
+    installNewest();
+    app::AiFeatures::Ports p = ports(true, true);
+    p.timing.checkMs = 150;
+    app::AiFeatures features(settings, std::move(p));
+    backends::ai::AiSidecarHost *host = features.sidecarForAction();
+    ASSERT_NE(host, nullptr);
+    qint64 pid = 0;
+    for (int i = 0; i < 5; ++i) {
+        bool answered = false;
+        features.sidecarForAction()->request("echo", api::Json(i), [&](backends::ai::SidecarResult r) { answered = r.has_value(); });
+        ASSERT_TRUE(waitFor([&] { return answered; }));
+        if (i == 0)
+            pid = host->processId();
+        EXPECT_EQ(features.sidecarForAction(), host);
+        EXPECT_EQ(host->processId(), pid);
+    }
+    const int checks = release.fetches(".json");
+    ASSERT_TRUE(waitFor([&] { return release.fetches(".json") >= checks + 3; }));
+    waitFor([] { return false; }, 500);
+    EXPECT_EQ(features.sidecar(), host);
+    EXPECT_EQ(host->processId(), pid);
+    EXPECT_EQ(counts.sidecarHosts, 1);
+}
+
+TEST_F(AiFeaturesTest, AComponentFirstInstalledByUpdateNowIsCheckedHourlyFromThen)
+{
+    publish(QStringLiteral("1.1.0"));
+    app::AiFeatures::Ports p = ports(false, true);
+    p.timing.checkMs = 200;
+    app::AiFeatures features(settings, std::move(p));
+    EXPECT_FALSE(features.installed());
+    waitFor([] { return false; }, 400);
+    EXPECT_EQ(release.fetches(".json"), 0);
+
+    features.updateNow();
+    ASSERT_TRUE(waitFor([&] { return features.installed(); }));
+    EXPECT_EQ(features.updater()->current()->version, QStringLiteral("1.1.0"));
+    const int afterInstall = release.fetches(".json");
+    EXPECT_TRUE(waitFor([&] { return release.fetches(".json") > afterInstall; }, 2'000));
 }
 
 TEST_F(AiFeaturesTest, ThePolicyKeepsChecksButNeverDownloads)

@@ -93,17 +93,13 @@ inline int zeroit(int ms) { return (ms / 10) * 10; }
 int startMs(const core::LineRecord &line);
 int endMs(const core::LineRecord &line);
 
-inline constexpr std::uint32_t kHandleFill = 0xAA121150;
-inline constexpr std::uint32_t kHandleSelectedFill = 0xAAFCE6B1;
-inline constexpr std::uint32_t kHandleBorder = 0xFFBB0000;
 inline constexpr std::uint32_t kHelperColour = 0xFFFF00FF;
 void drawRect(Overlay &out, PointF pos, bool selected = false, float size = 5.0f);
 void drawCircle(Overlay &out, PointF pos, bool selected = false, float size = 6.0f);
 void drawCross(Overlay &out, PointF pos, std::uint32_t colour = 0xFFFF0000);
 // Draws the head at `to`; returns where the line should end.
 PointF drawArrow(Overlay &out, PointF from, PointF to, int diff = 0);
-void drawDashedLine(Overlay &out, const PointF *points, std::size_t count, int dashLength = 4,
-                    std::uint32_t colour = kHandleBorder);
+void drawDashedLine(Overlay &out, const PointF *points, std::size_t count, int dashLength, std::uint32_t colour);
 // Dashed lines across the video rectangle and a small square.
 void drawHelperLine(Overlay &out, int x, int y, const VideoView &view);
 

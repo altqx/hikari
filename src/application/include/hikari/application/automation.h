@@ -19,12 +19,22 @@ struct ScriptMacro {
     bool hasIsActive = false;
 };
 
+// aegisub.register_filter(name, description, priority, process, config).
+struct ScriptFilter {
+    std::string name;
+    std::string description;
+    int priority = 0;
+    bool hasConfig = false;
+    bool operator==(const ScriptFilter &) const = default;
+};
+
 struct ScriptInfo {
     std::string name; // script_name, or the file name when the script sets none
     std::string description;
     std::string author;
     std::string version;
     std::vector<ScriptMacro> macros;
+    std::vector<ScriptFilter> filters;
     // Files the top level loaded as Lua code, transitively, first load first,
     // each once, as absolute normalized UTF-8 paths; excludes the script itself.
     std::vector<std::string> loadedFiles;
@@ -129,6 +139,26 @@ struct MacroSnapshot {
     bool canModify = true;
 };
 
+// The lists as they stood when aegisub.set_undo_point(description) closed a step.
+struct MacroUndoStep {
+    std::string description;
+    std::vector<MacroInfoLine> info;
+    std::vector<MacroStyleLine> styles;
+    std::vector<MacroDialogueLine> dialogues;
+    bool operator==(const MacroUndoStep &) const = default;
+};
+
+// What a macro's validation and isactive functions answered for one snapshot. A function that raised gives
+// Failed with its message as help; one that ran past its time budget gives TooSlow.
+struct MacroCheck {
+    enum class Verdict : std::int32_t { Valid = 0, Invalid = 1, Failed = 2, TooSlow = 3 };
+    int index = 0;
+    Verdict verdict = Verdict::Valid;
+    std::string help; // validation's second return, Aegisub's dynamic help text
+    std::optional<bool> active;
+    bool operator==(const MacroCheck &) const = default;
+};
+
 struct MacroResult {
     std::vector<MacroInfoLine> info;
     std::vector<MacroStyleLine> styles;
@@ -141,6 +171,10 @@ struct MacroResult {
     std::string validationError;
     // What the script attached with aegisub.hikari.report; empty for none.
     std::string report;
+    // The steps before the last one, oldest first; the lists above are the last step.
+    std::vector<MacroUndoStep> undoSteps;
+    // The last step's set_undo_point description; empty names it after the macro.
+    std::string undoDescription;
 };
 
 // Answered asynchronously, once. Per service (positions are 0-based UTF-16 offsets in the Line editor):

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/problems.h"
 #include "hikari/application/row_marks.h"
 
 #include "hikari/app/ai_karaoke.h"
@@ -20,13 +21,17 @@
 #include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/video_analysis_controller.h"
 #include "hikari/app/lyrics_import_controller.h"
+#include "hikari/app/text_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
+#include "hikari/app/problems_controller.h"
+#include "hikari/app/reading_problems.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
 #include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/app/lua_export_filters.h"
 #include "hikari/app/plugin_manager.h"
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
@@ -72,6 +77,7 @@
 #include "hikari/backends/directshow_player.h"
 #endif
 #include "hikari/backends/platform_files.h"
+#include "file_write_queue.h"
 #include "line_editor_controller.h"
 #include "node_effects_controller.h"
 #include "template_editor_controller.h"
@@ -79,6 +85,7 @@
 #include "colour_picker_controller.h"
 #include "workspace_layout.h"
 #include "shift_times_controller.h"
+#include "export_recipes.h"
 #include "tag_buttons_controller.h"
 #include "grid_filter_controller.h"
 #include "visual_tools_controller.h"
@@ -208,6 +215,8 @@ public:
         QStringList systemUiLanguages;
         // Empty: no autosave.
         QString recoveryDir;
+        // Unset: the autosave.intervalSeconds setting.
+        std::optional<int> autosaveIntervalMs;
         // Whether video playback may open an audio device.
         bool playbackAudio = true;
         // Unset: PortAudio, or with playbackAudio off an output without a device.
@@ -251,6 +260,8 @@ public:
         // HikariSub legacy's autosave folder, read only; empty: "Subs" in the first legacy
         // root that has one, or none without a settings file.
         QString legacyAutosaveDir;
+        // Where legacy settings are looked for; unset: SettingsImportStore::defaultCandidates().
+        std::optional<QStringList> legacySettingsFolders;
         // Empty: none (Open user folder does nothing).
         QString userFolder;
         UserFolder::MoveReport userFolderMove;
@@ -284,6 +295,12 @@ public:
     Q_INVOKABLE bool openReference(const QString &path);
     // No review: callers review first.
     Q_INVOKABLE bool closeEditingTarget();
+    // A window or panel in `shellWindow` reports a presence activity key (docs/ux/discord-presence.md#modes).
+    Q_INVOKABLE void presenceActivity(int shellWindow, const QString &key, bool going);
+    Q_INVOKABLE QVariantMap presencePreview(const QVariantMap &values) const { return m_presence->preview(values); }
+    Q_INVOKABLE QVariantList presencePlugins() const;
+    // {key, name, when, layout} for each mode, in Settings order.
+    Q_INVOKABLE QVariantList presenceModes() const;
 
     // then: "close", "new" or "quit". One row per Document with unsaved work: {id,
     // title, untitled, folder (native; "" when untitled)}; none: call finishClose().
@@ -343,6 +360,8 @@ public:
     // and {sources}: "project" or "local" for each one a project file sets. Empty without a Project.
     Q_INVOKABLE QVariantMap openProjectSettings(int shellWindow);
     Q_INVOKABLE QStringList projectOverrides(int shellWindow) const;
+    // Projectable settings the window's Project sets that wait for trust (ADR 0030).
+    Q_INVOKABLE QStringList projectWaitsForTrust(int shellWindow) const;
     // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
     Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
     // The Project is untrusted and holds scripts (.hikari/automation/), a [plugins] table or AI keys it names.
@@ -385,6 +404,11 @@ public:
     Q_INVOKABLE int tabOfFile(int shellWindow, const QString &path) const;
     // Opens `path` in a new current tab, or in the current tab while it is an untouched Untitled one.
     Q_INVOKABLE bool openInTab(const QString &path);
+    // Open subtitles' filters for the running plugins' formats, and their format ids, in the same order.
+    Q_INVOKABLE QStringList pluginOpenFilters() const;
+    Q_INVOKABLE QStringList pluginOpenFormats() const;
+    // As reviewOpen, but read only by the plugin format `format`; the result comes in pluginOpenReviewed.
+    Q_INVOKABLE QVariantMap reviewOpenAs(const QString &path, const QString &format);
     QString projectOf(int shellWindow) const { return m_projects->root(shellWindow); }
     std::optional<api::ProjectState> activeProject() const;
     static std::vector<std::string> projectAiExclude(const std::string &root);
@@ -440,6 +464,7 @@ public:
     Q_PROPERTY(QString translationHint READ translationHint NOTIFY tabsChanged)
     Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
     Q_PROPERTY(QString timecodesFile READ timecodesFile NOTIFY timecodesChanged)
+    Q_PROPERTY(QString keyframesFile READ keyframesFile NOTIFY keyframesChanged)
     bool translatorModeAvailable() const;
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
@@ -511,7 +536,9 @@ public:
     // count removed.
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     bool autosaveNow();
+    ui::FileWriteQueue &recoveryWrites() { return m_recoveryWrites; }
     bool autosavePending(application::DocumentId document) const;
+    int autosaveIntervalMs() const;
     // kind: "videoTime", "frames", "chars", "words", "wraps" or "tagBlocks".
     Q_INVOKABLE bool splitLines(const QString &kind);
     // Each selected Line in pieces of `count` frames, or seconds; frames need video.
@@ -525,8 +552,9 @@ public:
     Q_INVOKABLE QString applyShift(const QString &tool);
     // What applyShift would do: {problem (empty when it can run), changed, total, amount (ms, or frames
     // when byFrames), targetMs (the video or audio mark time, -1 without), rows: [{line (1-based),
-    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "snappedStart",
-    // "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed, snapped}}.
+    // startBefore, endBefore, start, end, text, rules: ["leadIn", "leadOut", "gapClosed", "overlapClosed",
+    // "snappedStart", "snappedEnd"]}], more (changed lines not in rows), ruleCounts: {leadIn, leadOut, gapClosed,
+    // overlapClosed, snapped}}.
     Q_INVOKABLE QVariantMap shiftPreview(const QString &tool, int shellWindow);
     Q_INVOKABLE bool hasKeyframes() const;
     // 0: none. Ids are never reused.
@@ -534,12 +562,23 @@ public:
     Q_INVOKABLE bool exactTimebase() const;
     // Empty: loaded (or kept until a video opens); else the message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
+    // Writes the video's current keyframes as an Aegisub keyframes file. Empty: saved; else the message.
+    Q_INVOKABLE QString saveKeyframesFile(const QUrl &file);
+    // Drops the loaded keyframes file; the video's own keyframes come back.
+    Q_INVOKABLE void closeKeyframes();
+    // The current tab's loaded keyframes file; empty when none.
+    QString keyframesFile() const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
-    // video size is the subtitles'); empty for a Document that is not ASS.
+    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo, matrix, videoMatrix, matrices} (without a
+    // video the video size is the subtitles'); matrix is "" unless the subtitles name one that converts, and
+    // videoMatrix "" unless the video's does. Empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
+    // [left, right, top, bottom]: application::fittingEdges.
+    Q_INVOKABLE QVariantList resampleEdges(int subsWidth, int subsHeight, int width, int height, bool crop) const;
+    // `edges` as resampleEdges gives them; `matrix` converts the colours to it ("" keeps the matrix).
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch,
-                              bool adjustRotations = true);
+                              bool adjustRotations = true, const QVariantList &edges = {},
+                              const QString &matrix = {});
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
     // {data (the clipboard's Power-Pin data when it fits the selection), frames, firstFrame, relativeFrame,
@@ -696,8 +735,23 @@ public:
     // target's last export choice, else the last export's; empty without an editing target.
     Q_INVOKABLE QVariantMap exportSetup() const;
     // Writes a copy of the editing target (its Document is never changed) and remembers the choice.
-    // {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number, losses}]}.
+    // options.steps, [{id, on, settings}], run on the copy first for HikariSub's own formats; a failing step
+    // writes nothing. {ok, problem} or {ok, file, document, written, comments, empty, notes: [{line, number,
+    // losses}]}, both with steps: [{id, name, state, lines, problem, error}] when steps ran and stepsFailed when
+    // one failed; {pending} while a Lua step runs, the result then coming from pluginExportFinished.
     Q_INVOKABLE QVariantMap exportTo(const QUrl &file, const QString &format, const QVariantMap &options);
+    // Before export's lists for the editing target: {available: [{id, name, priority, hasConfig, script}],
+    // newList, fromFile (empty without an Export Filters line): [{id, on, settings}], recipes: [{name, tier,
+    // hidden}], hasProject}.
+    Q_INVOKABLE QVariantMap exportSteps() const;
+    // Asks a Lua step's script for its settings dialog, showing `settings`; exportStepDialogReady answers.
+    Q_INVOKABLE bool askExportStepDialog(const QString &id, const QVariantMap &settings);
+    // The settings a step's dialog values give, by control name.
+    Q_INVOKABLE QVariantMap exportStepSettings(const QString &id, const QVariantList &values) const;
+    Q_INVOKABLE QVariantList exportRecipe(const QString &name, const QString &tier) const;
+    Q_INVOKABLE bool saveExportRecipe(const QString &name, const QString &tier, const QVariantList &steps);
+    Q_INVOKABLE bool removeExportRecipe(const QString &name, const QString &tier);
+    Q_INVOKABLE bool renameExportRecipe(const QString &tier, const QString &from, const QString &to);
     // The panel's values: {scope ("document", "openDocuments", "folder"),
     // replaceShown, find, replace, styles, filters, folder, field ("text", "style",
     // "actor", "effect"), lines ("all", "selected", "fromSelection"), matchCase, regex,
@@ -775,6 +829,9 @@ public:
     Q_INVOKABLE QVariantList columnChoices(bool paste);
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
+    // The style step from the active Line: {from, fromNumber, id, number}; no id at either end.
+    // Through the picked Lines when several are picked, else every shown Line, in Grid order.
+    Q_INVOKABLE QVariantMap styleStep(int direction) const;
     // columns: bits OR'ed; the choice is remembered.
     // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
     Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
@@ -794,6 +851,11 @@ public:
     // Writes only controls whose value differs from the stored one. resetAll: every
     // setting but the appearance, hotkeys and recent files goes back to its default first.
     Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // The controls' values as openSettingsDialog() gives them, after a change from outside the window.
+    Q_INVOKABLE QVariantMap currentSettings();
+    // Opens in the system's editor: "settings" (settings.toml), "hotkeys", "plugins" (plugins.json) or
+    // "project" (the window's .hikari/project.toml), or "local" (project.local.toml).
+    Q_INVOKABLE void openSettingsFile(int shellWindow, const QString &file);
     // Due after the first start; Finish, Skip setup, Close and Esc mark it done.
     Q_INVOKABLE bool gettingStartedDue() const;
     // As openSettingsDialog(), plus legacy: whether a HikariSub legacy installation was
@@ -874,9 +936,14 @@ public:
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // Timing helpers on the selection; false (nothing done) without an exact timebase or when no Line changes.
     Q_INVOKABLE bool snapToAdjacentKeyframe(bool end, bool next);
+    // Writes the audio from the earliest selected start to the latest selected
+    // end as a mono 16-bit WAV; the problem, or empty when saved.
+    Q_INVOKABLE QString saveSelectedAudio(const QUrl &file);
+    Q_INVOKABLE bool canSaveSelectedAudio();
+    Q_INVOKABLE bool snapToScene();
     // The amounts are audio.leadInValue / audio.leadOutValue.
     Q_INVOKABLE bool changeLead(bool end, bool add);
-    Q_INVOKABLE bool nudgeEdge(bool end, int frames);
+    Q_INVOKABLE bool nudgeEdge(bool end, int steps, bool shiftFollowing = false);
     Q_INVOKABLE bool extendNeighbour(bool next);
     // The Timing assistant's suggestion for the active Line, from the postprocessor rules:
     // {ok, line, index, count, style, text, startBefore, endBefore, start, end, startReason,
@@ -928,7 +995,10 @@ public:
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
     VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
+    TextImportController &textImport() { return *m_textImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
+    ProblemsController &problemsList() { return *m_problemsList; }
+    application::Problems &problems() { return m_problems; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -1155,15 +1225,64 @@ signals:
     void documentWritten(qulonglong document);
     // Also when cancelled: the write published nothing.
     void documentWriteFailed(qulonglong document);
+    // An exportTo that answered pending: its result, as exportTo gives one.
+    void pluginExportFinished(const QVariantMap &result);
+    // A pending exportTo's Before export step has started; step counts from 1.
+    void exportStepStarted(const QString &name, int step, int count);
+    // {controls, columns} as AutomationDialogController gives them, or {problem}.
+    void exportStepDialogReady(const QString &id, const QVariantMap &dialog);
+    // A file a plugin read is ready to open in `shellWindow`: reviewOpen's result.
+    void pluginOpenReviewed(int shellWindow, const QVariantMap &result);
     // A later start handed files over, about to open.
     void filesForwarded();
     void timecodesChanged();
+    void keyframesChanged();
 
 private:
     struct WindowMedia;
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     static QString openProblem(const QString &path, const application::StageFailure &failure);
+    QVariantMap continueOpen(application::StagedOpen staged, const QString &path, bool here);
+
+    static QString formatText(const PluginRuntime::Format &format);
+    static QString formatFilter(const PluginRuntime::Format &format);
+    std::vector<PluginRuntime::Format> pluginFormats(bool imports) const;
+    std::vector<std::string> pluginImportExtensions() const;
+    // The plugin format of the file the Document is saved at; nullopt: HikariSub's own.
+    std::optional<std::string> fileFormat(application::DocumentId document) const;
+    // fileFormat, while its plugin runs and writes it.
+    std::optional<PluginRuntime::Format> exportingFormat(application::DocumentId document) const;
+    // As hikari.document.read gives it; only: these Lines alone.
+    std::optional<api::Json> formatSnapshot(application::DocumentId document, const std::optional<std::set<core::LineId>> &only);
+    // A format call's options: {frameRate, video, path}; frameRate < 1: the video's, else null.
+    api::Json formatOptions(double frameRate, const QString &path) const;
+    struct ExportWrite;
+    QVariantMap writeExport(application::DocumentId target, const ExportWrite &write, const core::Document &document);
+    QVariantMap exportAfterSteps(application::DocumentId target, std::shared_ptr<ExportWrite> write,
+                                 const application::ExportRecipe &recipe, const core::Document &document);
+    QVariantMap exportPluginFormat(application::DocumentId target, const PluginRuntime::Format &format, const QString &path,
+                                   const QVariantMap &values);
+    QVariantMap exportThroughPlugin(application::DocumentId document, const PluginRuntime::Format &format, const QString &path,
+                                    const std::optional<std::set<core::LineId>> &lines, double frameRate);
+    std::optional<application::DeferredBytes> pluginSaveBytes(application::DocumentId document,
+                                                              const application::DestinationKey &destination);
+    struct SaveTarget {
+        QString path;
+        bool toAss = false;
+        std::string pluginFormat; // empty: HikariSub writes it
+    };
+    // Where a Save as to `path` with the dialog's `chosen` format writes, and how.
+    SaveTarget saveTargetFor(application::DocumentId document, QString path, const QString &chosen) const;
+    void useSaveTarget(const SaveTarget &target);
+    // The running plugins' import formats for the file's extension, in install order; only: that format alone.
+    std::vector<PluginRuntime::Format> importCandidates(const QString &path, const QString &only) const;
+    static bool builtInExtension(const QString &path);
+    // Tries each candidate in turn; the first that reads the file wins. firstProblem: what to show when none does.
+    void importThroughPlugins(const QString &path, std::vector<PluginRuntime::Format> candidates, QString firstProblem,
+                              std::function<void(std::expected<application::StagedOpen, QString>)> done);
+    void openThroughPlugins(const QString &path, bool here, std::vector<PluginRuntime::Format> candidates, QString firstProblem);
+    void openInTabThroughPlugins(const QString &path);
     void rememberRecent(const std::string &path, bool opened = true);
     void storeRecent();
     // MUST KILL: returns whether the Document changed since the video last showed it.
@@ -1180,6 +1299,8 @@ private:
     void rememberColumns(bool paste, int columns, const QString &tagNames);
     void protectReference();
     void refreshViews();
+    void wirePresence();
+    void refreshPresence();
     std::optional<std::string> setKeyframesFromApi(const std::vector<std::int64_t> &frames,
                                                    const std::optional<std::string> &file);
     void showRowMarks(application::DocumentId document);
@@ -1187,7 +1308,7 @@ private:
     void refreshVideo();
     void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
-                          bool adjustRotations);
+                          bool adjustRotations, application::Edges edges = {}, const std::string &matrix = {});
     application::visual::perspective::TextMeasure perspectiveMeasure() const;
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
@@ -1335,11 +1456,13 @@ private:
     WindowViews &views(int shellWindow);
     const WindowViews &views(int shellWindow) const;
     WindowViews &activeViews() { return views(m_workspace.activeWindow()); }
+    void watchPresence(WindowViews &v);
     const WindowViews &activeViews() const { return views(m_workspace.activeWindow()); }
     std::vector<WindowViews *> allViews();
     void makeViews(WindowViews &views, int shellWindow);
     void makeTemplateEditor(WindowViews &views, int shellWindow);
     void makeNodeEffects(WindowViews &views, int shellWindow);
+    void showPluginContent();
     void makeKanjiTimer(WindowViews &views, int shellWindow);
     void commitTemplates();
     void applyScriptInfoOnSave(application::DocumentId document);
@@ -1370,6 +1493,8 @@ private:
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
     application::RowMarks m_rowMarks;
+    application::Problems m_problems;
+    ReadingProblems m_readingProblems{m_problems};
     std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
@@ -1388,6 +1513,8 @@ private:
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
     std::unique_ptr<DiscordPresence> m_presence;
+    std::map<int, std::set<QString>> m_presenceGoing;
+    int m_presenceNotes = 0;
     std::unique_ptr<StarPrompt> m_starPrompt;
     QString bundledScriptName(const QString &path) const;
     std::unique_ptr<WhatsNew> m_whatsNew;
@@ -1397,12 +1524,16 @@ private:
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
     std::unique_ptr<VideoAnalysisController> m_videoAnalysis;
     std::unique_ptr<LyricsImportController> m_lyricsImport;
+    std::unique_ptr<TextImportController> m_textImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
+    std::unique_ptr<ProblemsController> m_problemsList;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;
     std::map<std::uint64_t, QString> m_importPaths;
+    // Files opened or saved through a plugin's format, by absolute path: the format id.
+    std::map<std::string, std::string> m_fileFormats;
     std::set<std::uint64_t> m_lyricsImports;
     std::optional<application::DocumentId> m_matroskaTarget;
     std::uint64_t m_matroskaRevision = 0;
@@ -1448,6 +1579,10 @@ private:
     ui::WorkspaceLayoutController &layoutFor(application::DocumentId document);
     std::vector<ui::WorkspaceLayoutController *> layouts();
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
+    std::unique_ptr<ui::ExportRecipes> m_exportRecipes;
+    std::unique_ptr<LuaExportFilters> m_luaExportFilters;
+    std::map<std::uint64_t, std::string> m_exportFiltersToSave;
+    std::map<QString, application::DialogRequest> m_exportStepDialogs;
     int m_selectOptions = 0;
     std::optional<core::ConversionOptions> assConversionOptions() const;
     std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
@@ -1532,8 +1667,10 @@ private:
     QString m_recoveryDir;
     QString m_sessionId;
     std::map<std::uint64_t, QTimer *> m_autosaveTimers;
+    std::optional<int> m_autosaveIntervalOverrideMs;
+    ui::FileWriteQueue m_recoveryWrites;
     void scheduleAutosave(std::optional<application::DocumentId> document = std::nullopt);
-    bool autosave(application::DocumentId document);
+    bool autosave(application::DocumentId document, bool now);
     void discardRecovery(application::DocumentId document);
     std::string recoveryKey(application::DocumentId document) const;
     void reportGroupBreak();
@@ -1608,6 +1745,7 @@ private:
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
+    void syncReadingProblems();
     std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
@@ -1620,6 +1758,10 @@ private:
     // By dictionary language and Project folder; windows on both the same share a checker.
     std::map<QString, SpellSlot> m_spellCheckers;
     std::vector<std::filesystem::path> m_spellingFolders;
+    std::vector<application::PluginDictionary> m_pluginDictionaries;
+    bool m_pluginDictionariesRead = false;
+    bool m_spellingWaitsForPlugins = false;
+    void readPluginDictionaries();
     SpellSlot *spellSlot(const QString &language, const QString &projectRoot = {});
     // MUST KILL: the editor keeps the toggle's value after a failed start unless the Project sets it
     bool editorSpellingOn() const;
@@ -1756,9 +1898,15 @@ private:
         QString timecodes;
         std::optional<application::AegisubFrameTimes> frameTimes;
         bool timecodesDropped = false;
+        bool keyframesDropped = false;
         bool timecodesListFrames = false;
         int scroll = 0;
         bool audioFromVideo = false;
+        QString openedAudio;
+        bool videoDropped = false;
+        bool audioDropped = false;
+        std::optional<int> fileFrame;
+        std::optional<double> fileAspect; // width / height
     };
     struct UnresolvedRestore {
         application::DocumentId document;
@@ -1780,7 +1928,7 @@ private:
     std::map<std::uint64_t, TabMedia> m_tabMedia;
     void loadTabTimecodes(TabMedia &media, const QString &path, const application::Timecodes &timecodes);
     void warnShortTimecodes(TabMedia &media);
-    std::vector<application::ProjectGarbageEdit> timecodesGarbage(application::DocumentId document,
+    std::vector<application::ProjectGarbageEdit> mediaFileGarbage(application::DocumentId document,
                                                                    const application::DestinationKey &destination) const;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;

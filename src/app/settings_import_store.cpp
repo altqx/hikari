@@ -357,12 +357,17 @@ QStringList SettingsImportStore::defaultCandidates()
     // An installed HikariSub legacy (0.0.2 on) keeps its settings here.
     if (const QString local = qEnvironmentVariable("LOCALAPPDATA"); !local.isEmpty())
         out << QDir::fromNativeSeparators(local) + QStringLiteral("/HikariSub/Legacy");
+    if (const QString roaming = qEnvironmentVariable("APPDATA"); !roaming.isEmpty())
+        out << QDir::fromNativeSeparators(roaming) + QStringLiteral("/Aegisub");
+#elif defined(__APPLE__)
+    out << QDir::homePath() + QStringLiteral("/Library/Application Support/Aegisub");
 #else
     // An installed HikariSub legacy (0.0.2 on) keeps its settings here.
     QString data = qEnvironmentVariable("XDG_DATA_HOME");
     if (data.isEmpty() || QDir::isRelativePath(data))
         data = QDir::homePath() + QStringLiteral("/.local/share");
     out << data + QStringLiteral("/HikariSub/Legacy");
+    out << QDir::homePath() + QStringLiteral("/.aegisub");
 #endif
     return out;
 }

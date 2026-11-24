@@ -15,7 +15,7 @@ The chrome steps back so the Document carries the screen.
 
 **What the evidence is.** The Gate A inventory is real screenshots of main 344efa574 in all four themes at 1920 × 1080 and 1366 × 768, with 25 findings. The Gate B boards are HTML mockups drawn with the real icon set. Neither is committed; both use Sprite Fright (© Blender Foundation | studio.blender.org, CC BY 4.0). [Fixes by area](#fixes-by-area) carries the 25 findings, so code cards can be cut from it.
 
-**Where the app is today.** Until the code cards land after the beta.4 tag, the app still draws Compact Studio's metrics and palette. The values in this document are the target. `hikari_ui_theme_tests` measures the roles that the theme layer resolves, so a card that changes a role updates the test's expected values and keeps its contrast floors.
+**Where the app is today.** The four built-in themes are theme files in `src/ui/themes`, read by the same loader, schema and contrast check as plugin themes, and they carry Quiet's roles and accents. The shared controls in HikariStyle draw Quiet's state table. The windows and panels outside the shared controls still keep Compact Studio's layout until their #1205 area lands. `hikari_themes_tests` checks the built-in files against the schema and the floors, and `hikari_ui_theme_tests` measures the roles the theme layer resolves, so a change to a role updates both tests' expected values and keeps its contrast floors.
 
 HikariSub owns the Qt application layer under [ADR 0001](../adr/0001-hikari-owned-qt-layer.md). The vocabulary of **workspace**, **editing target** and **protected reference** comes from [CONTEXT.md](../../CONTEXT.md). Panel membership, workspace ownership and document behaviour belong to the [workspace specification](workspaces.md); this document defines their visual and interaction presentation.
 
@@ -424,6 +424,8 @@ The preview text of "Change the size only" says which way the text goes: "smalle
 **Q583: shapes within 1 % are the same** (owner, 2026-11-17). Two sizes are the same shape when `|(videoWidth ÷ subsWidth) ÷ (videoHeight ÷ subsHeight) − 1| < 0.01`. Then the case line says "same shape" and "Resample and stretch" isn't offered (1920 × 1080 → 1920 × 1088, or the 0.05 % of 1920 × 804 → 2048 × 858). Today any difference at all counts.
 
 "Don’t ask again" keeps today's meaning: it sets `video.dontAskForBadResolution`, and Settings → Notices → Ask again brings the question back. Subtitles › Resample subtitles stays the place to do it later. The strings live in the `HikariSub.Conversion` context.
+
+Subtitles › Resample subtitles, with its letterbox and crop edges and its matrix choice, is specified in [resample.md](resample.md).
 
 ## Fixes by area
 

@@ -72,6 +72,11 @@ std::optional<InstalledPlugin> readPlugin(const Json &json)
                 return std::nullopt;
             *field = value->asString();
         }
+    if (const Json *installed = json.find("installed")) {
+        if (!installed->isInt() || installed->asInt() < 1)
+            return std::nullopt;
+        plugin.installed = installed->asInt();
+    }
     if (const Json *revoked = json.find("revoked")) {
         const Json *reason = revoked->find("reason");
         const Json *lastGood = revoked->find("lastGood");
@@ -146,6 +151,8 @@ bool saveRegistry(const std::filesystem::path &file, const Registry &registry)
                                    {"path", &plugin.path}, {"accepted", &plugin.accepted}})
             if (!field->empty())
                 entry[name] = *field;
+        if (plugin.installed > 0)
+            entry["installed"] = plugin.installed;
         if (plugin.revoked)
             entry["revoked"] = Json::object({{"reason", plugin.revoked->reason}, {"lastGood", plugin.revoked->lastGood}});
         plugins[id] = std::move(entry);

@@ -8,9 +8,10 @@ KDDWViews.TabBarBase {
     id: root
     objectName: "dockHeader"
 
-    readonly property int headerHeight: 35
-    readonly property int contentGap: titleMode ? 0 : 8
-    implicitHeight: headerHeight
+    readonly property int menuInset: 4
+    readonly property font titleFont: TypeRoles.sized(fontSource.font, 12, Font.DemiBold)
+    readonly property font tabFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    implicitHeight: Theme.headerHeight
 
     function nameAt(index: int): string {
         return root.tabBarCpp && index >= 0 && index < root.count ? Docking.dockNameAt(root.tabBarCpp, index) : ""
@@ -80,17 +81,14 @@ KDDWViews.TabBarBase {
             tab.forceActiveFocus(reason)
     }
 
+    Label {
+        id: fontSource
+        visible: false
+    }
     Rectangle {
         objectName: "dockHeaderStrip"
         anchors.fill: parent
-        color: root.titleMode ? Theme.field : Theme.raised
-    }
-    Rectangle {
-        visible: !root.titleMode
-        width: parent.width
-        height: 1
-        y: parent.height - 1
-        color: Theme.line
+        color: Theme.panel
     }
 
     Text {
@@ -103,7 +101,7 @@ KDDWViews.TabBarBase {
         text: root.currentTitle
         textFormat: Text.PlainText
         color: Theme.text
-        font.bold: true
+        font: root.titleFont
         elide: Text.ElideRight
         Accessible.ignored: true
         HoverHandler { id: titleHover }
@@ -137,8 +135,8 @@ KDDWViews.TabBarBase {
                 readonly property string text: title // KDDockWidgets reads it
                 readonly property bool selected: index === root.currentTabIndex
                 readonly property bool hovered: root.tabBarCpp !== null && root.tabBarCpp.hoveredTabIndex === index
-                readonly property real naturalWidth: Math.ceil(10 + boldMetrics.advanceWidth
-                                                               + (selected ? 6 + menuButton.width + 6 : 10) + 1)
+                readonly property real trailingSpace: selected ? root.menuInset + menuButton.width + root.menuInset : 10
+                readonly property real naturalWidth: Math.ceil(10 + boldMetrics.advanceWidth + trailingSpace)
                 readonly property bool cutOff: !selected && root.naturalTabsWidth > root.width - root.slotWidth
                 objectName: "dockTab" + index
                 height: root.height
@@ -161,31 +159,23 @@ KDDWViews.TabBarBase {
 
                 TextMetrics {
                     id: boldMetrics
-                    font: Qt.font({ family: label.font.family, pointSize: label.font.pointSize, bold: true })
+                    font: root.titleFont
                     text: tab.title
                 }
                 Rectangle {
                     objectName: "dockTabBackground"
                     anchors.fill: parent
-                    color: tab.selected ? Theme.field : Theme.raised
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.bottomMargin: 1
-                    visible: tab.hovered && !tab.selected
-                    color: Theme.field
-                    opacity: 0.5
+                    color: tab.hovered ? Theme.hover : "transparent"
                 }
                 Text {
                     id: label
                     x: 10
-                    width: tab.cutOff ? undefined
-                                      : Math.max(0, tab.width - x - (tab.selected ? 6 + menuButton.width + 6 : 10) - 1)
+                    width: tab.cutOff ? undefined : Math.max(0, tab.width - x - tab.trailingSpace)
                     anchors.verticalCenter: parent.verticalCenter
                     text: tab.title
                     textFormat: Text.PlainText
-                    color: Theme.text
-                    font.bold: tab.selected
+                    color: tab.selected ? Theme.text : Theme.muted
+                    font: tab.selected ? root.titleFont : root.tabFont
                     elide: tab.cutOff ? Text.ElideNone : Text.ElideRight
                     Accessible.ignored: true
                     ToolTip.visible: tab.hovered && ToolTip.text.length > 0
@@ -194,33 +184,28 @@ KDDWViews.TabBarBase {
                 Rectangle {
                     objectName: "dockTabFade"
                     visible: tab.cutOff
-                    width: Math.min(20, tab.width - 1)
-                    x: tab.width - 1 - width
-                    height: tab.height - 1
+                    width: Math.min(20, tab.width)
+                    x: tab.width - width
+                    height: tab.height
                     gradient: Gradient {
                         orientation: Gradient.Horizontal
-                        GradientStop { position: 0.0; color: Color.transparent(Theme.raised, 0) }
-                        GradientStop { position: 1.0; color: Color.transparent(Theme.raised, 0.7) }
+                        GradientStop { position: 0.0; color: Color.transparent(Theme.panel, 0) }
+                        GradientStop { position: 1.0; color: Color.transparent(Theme.panel, 0.7) }
                     }
                 }
                 Rectangle {
-                    width: 1
-                    height: parent.height - (tab.selected ? 0 : 1)
-                    x: parent.width - 1
-                    color: Theme.line
-                }
-                Rectangle {
-                    visible: !tab.selected
+                    objectName: "dockTabUnderline"
+                    visible: tab.selected
                     width: parent.width
-                    height: 1
-                    y: parent.height - 1
-                    color: Theme.line
+                    height: 2
+                    y: parent.height - height
+                    color: Theme.accent
                 }
                 Rectangle {
                     objectName: "tabFocusRing"
                     anchors.fill: parent
                     anchors.margins: 1
-                    anchors.rightMargin: tab.selected ? 6 + menuButton.width + 3 : 1
+                    anchors.rightMargin: tab.selected ? root.menuInset + menuButton.width + 2 : 1
                     color: "transparent"
                     border.width: 1
                     border.color: Theme.focus
@@ -253,8 +238,8 @@ KDDWViews.TabBarBase {
         visible: root.count > 0 && (root.titleMode || root.currentTab !== null)
         panelTitle: root.currentTitle
         menuOpen: root.menuOpen
-        x: root.titleMode ? root.width - 12 - width
-                          : (root.currentTab ? tabRow.x + root.currentTab.x + root.currentTab.width - 1 - 6 - width : 0)
+        x: root.titleMode ? root.width - root.menuInset - width
+                          : (root.currentTab ? tabRow.x + root.currentTab.x + root.currentTab.width - root.menuInset - width : 0)
         anchors.verticalCenter: parent.verticalCenter
         // Qt refuses to take the focused item out of the Tab order.
         activeFocusOnTab: root.titleMode || activeFocus
@@ -277,7 +262,7 @@ KDDWViews.TabBarBase {
         z: root.mouseAreaZ + 2
         anchors.right: parent.right
         anchors.rightMargin: 4
-        height: parent.height - 1
+        height: parent.height
         width: toolbar ? Math.min(toolbar.implicitWidth, Math.max(0, root.width - root.selectedNaturalWidth - 12)) : 0
     }
 

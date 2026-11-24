@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/api/api.h"
+#include "hikari/api/base64.h"
 #include "hikari/application/node_graph.h"
 
 #include <string_view>
@@ -26,21 +27,20 @@ void addTranslationOperations(Registry &registry);
 void addNodeOperations(Registry &registry);
 void addEffectsOperations(Registry &registry);
 void addPluginOperations(Registry &registry);
+void addFormatOperations(Registry &registry);
 void addTypesetOperations(Registry &registry);
 void addProjectOperations(Registry &registry);
 void addKaraokeOperations(Registry &registry);
 void addMarkOperations(Registry &registry);
+void addProblemOperations(Registry &registry);
 void addVcsOperations(Registry &registry);
 void addProgramOperations(Registry &registry);
+void addPresenceOperations(Registry &registry);
 void addEvents(Registry &registry);
 Json projectJson(const Host &host);
 
 void addOperation(Registry &registry, Access access, std::string name, std::string summary, std::string_view params,
                   std::string_view result, Handler handler, int since = 1);
-
-std::string base64(std::string_view bytes);
-// nullopt: not base64.
-std::optional<std::string> fromBase64(std::string_view text);
 
 struct Target {
     application::DocumentId id;
@@ -62,6 +62,10 @@ std::string lowerAscii(std::string_view s);
 // document.apply: the edits as one undo step, recorded for review when the caller is reviewed.
 Result documentApply(const Context &context, const Json &params);
 std::unexpected<Error> noVideo();
+// A plugin handler's context.via for this caller: "ai" or "api".
+std::string_view viaOf(const Caller &caller);
+// refused, reason disabled, with the reason commands.list gives the plugin command.
+std::unexpected<Error> disabled(const PluginHost &plugins, std::string_view command);
 bool videoOpen(const Context &context);
 const core::LineRecord *findLine(const core::Document &document, core::LineId id);
 std::unexpected<Error> noLine(core::LineId id);

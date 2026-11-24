@@ -12,9 +12,13 @@ DialogWindow {
     readonly property color warningColour: Theme.warning
     readonly property color successColour: Theme.success
     readonly property bool working: collector.stage === 1
+    readonly property var segmentActions: [0, 1, 3, 2]
+    readonly property bool zip: collector.action === 2
+    readonly property bool linking: collector.action === 3
     readonly property var hints: [qsTr("Lists the fonts the subtitles use and whether this computer has each one."),
                                   qsTr("Copies each font file the subtitles use into the folder."),
-                                  qsTr("Puts each font file the subtitles use into a zip archive.")]
+                                  qsTr("Puts each font file the subtitles use into a zip archive."),
+                                  qsTr("Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.")]
     title: qsTr("Font collector")
     dialogId: "fontCollector"
     resizable: true
@@ -23,7 +27,7 @@ DialogWindow {
     function openDialog() {
         collector.open()
         path.text = collector.directory
-        actions.currentIndex = collector.action
+        actions.currentIndex = segmentActions.indexOf(collector.action)
         subsDirectory.checked = collector.useSubsDirectory
         fromMkv.checked = collector.fromMkv
         acknowledge.checked = false
@@ -36,16 +40,13 @@ DialogWindow {
         else
             openDialog()
     }
-    function changeOptions() { collector.changeOptions(actions.currentIndex, subsDirectory.checked) }
+    function changeOptions() { collector.changeOptions(segmentActions[actions.currentIndex], subsDirectory.checked) }
     function start(allTabs) {
         acknowledge.checked = false
         const r = collector.start(path.text, allTabs)
         if (r.message !== undefined) {
-            // MUST KILL: missingPath recognises the error by comparing its translated message text
-            const missingPath = r.message === qsTr("Select the folder where you want to copy fonts")
-                             || r.message === qsTr("Choose a name for the archive")
-            messages.ask({ title: dialog.title, text: r.message, severity: missingPath ? "warning" : "error" }, () => {
-                if (missingPath)
+            messages.ask({ title: dialog.title, text: r.message, severity: r.missingPath ? "warning" : "error" }, () => {
+                if (r.missingPath)
                     path.forceActiveFocus()
             })
         } else if (r.question !== undefined) {
@@ -86,7 +87,7 @@ DialogWindow {
     }
     function choosePath() {
         const s = collector.chooserStart(path.text)
-        if (collector.action === 1) {
+        if (!zip) {
             if (s.folder.length > 0)
                 folderDialog.currentFolder = collector.fileUrl(s.folder)
             folderDialog.open()
@@ -131,6 +132,7 @@ DialogWindow {
                 Accessible.name: qsTr("Action")
                 choices: [{ text: qsTr("Check fonts"), name: "fontCollectorOption0" },
                           { text: qsTr("Copy to a folder"), name: "fontCollectorOption1" },
+                          { text: qsTr("Link to a folder"), name: "fontCollectorOption3" },
                           { text: qsTr("Zip archive"), name: "fontCollectorOption2" }]
                 onActivated: index => {
                     currentIndex = index
@@ -139,7 +141,9 @@ DialogWindow {
             }
             Label {
                 objectName: "fontCollectorActionHint"
-                text: dialog.hints[actions.currentIndex] ?? ""
+                text: (dialog.hints[dialog.segmentActions[actions.currentIndex]] ?? "")
+                      + (dialog.segmentActions[actions.currentIndex] === 3 && fromMkv.enabled && fromMkv.checked
+                         ? "\n" + qsTr("Fonts from the MKV file are copied: there’s no file to link to.") : "")
                 color: Theme.muted
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
@@ -160,7 +164,7 @@ DialogWindow {
                     enabled: !dialog.working && dialog.collector.action !== 0
                     onAccepted: dialog.start(false)
                     Accessible.name: qsTr("Save to")
-                    placeholderText: dialog.collector.action === 2 ? qsTr("Choose an archive") : qsTr("Choose a folder")
+                    placeholderText: dialog.zip ? qsTr("Choose an archive") : qsTr("Choose a folder")
                     validator: RegularExpressionValidator {
                         regularExpression: Qt.platform.os === "windows" ? /[^\/*?"<>|]*/ : /[^*?"<>|]*/
                     }
@@ -248,18 +252,20 @@ DialogWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 text: dialog.collector.reviewIncomplete ? qsTr("Some fonts were not found, so the collection is incomplete.")
-                    : dialog.collector.action === 2 ? qsTr("Ready to write %1").arg(dialog.collector.copyPath)
+                    : dialog.zip ? qsTr("Ready to write %1").arg(dialog.collector.copyPath)
+                    : dialog.linking ? qsTr("Ready to link into %1").arg(dialog.collector.copyPath)
                     : qsTr("Ready to copy to %1").arg(dialog.collector.copyPath)
             }
             CheckBox {
                 id: acknowledge
                 objectName: "fontCollectorAcknowledge"
                 visible: dialog.collector.reviewIncomplete
-                text: dialog.collector.action === 2 ? qsTr("Write it, labelled incomplete") : qsTr("Copy it, labelled incomplete")
+                text: dialog.zip ? qsTr("Write it, labelled incomplete")
+                    : dialog.linking ? qsTr("Link it, labelled incomplete") : qsTr("Copy it, labelled incomplete")
             }
             PrimaryButton {
                 objectName: "fontCollectorApply"
-                text: dialog.collector.action === 2 ? qsTr("Write archive") : qsTr("Copy fonts")
+                text: dialog.zip ? qsTr("Write archive") : dialog.linking ? qsTr("Link fonts") : qsTr("Copy fonts")
                 enabled: !dialog.collector.reviewIncomplete || acknowledge.checked
                 onClicked: dialog.applyFonts()
             }

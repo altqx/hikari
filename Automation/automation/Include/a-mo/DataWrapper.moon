@@ -15,7 +15,7 @@ if haveDepCtrl
 		{
 			{ 'a-mo.Log',               version: '1.0.0'               }
 			{ 'a-mo.DataHandler',       version: '1.0.5'       }
-			{ 'a-mo.ShakeShapeHandler', version: '1.0.1' }
+			{ 'a-mo.ShakeShapeHandler', version: '1.0.2' }
 		}
 	}
 	log, DataHandler, ShakeShapeHandler = version\requireModules!

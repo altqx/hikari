@@ -4,6 +4,7 @@
 
 #include "hikari/application/edit_session.h"
 #include "hikari/application/legacy_timebase.h"
+#include "hikari/application/reading_limits.h"
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/document.h"
 #include "hikari/core/spelling.h"
@@ -59,7 +60,7 @@ public:
         AnchorRole,
         StartMicrosecondsRole,
         EndMicrosecondsRole,
-        CpsTooHighRole,
+        CpsSeverityRole,
         BadWrapsRole,
         // MUST KILL: HiddenBlockRole is a magic int (0 none, 1 hidden block, 2 revealed block)
         HiddenBlockRole,
@@ -119,6 +120,8 @@ public:
     void setChangeState(ChangeState changeState) { m_changeState = std::move(changeState); }
     void setReview(Review review) { m_review = std::move(review); }
     void setHideTags(bool hide, const QString &swap);
+    void setReadingLimits(const application::ReadingLimits &profile);
+    const application::ReadingLimits &readingLimits() const { return m_limits; }
     bool hideTags() const { return m_hideTags; }
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
     void setDraft(std::optional<core::LineRecord> draft);
@@ -175,6 +178,8 @@ public:
     std::optional<int> rowOf(core::LineId id) const;
     std::optional<core::LineId> lineAt(int row) const;
     const core::LineRecord *recordAt(int row) const;
+    // Case-insensitive, in Text without tags (and Translation in TLMode), Actor, Effect or Style.
+    bool matchesText(int row, const QString &text) const;
     const application::Selection &selection() const { return m_selection; }
 
     int rowCount(const QModelIndex &parent = {}) const override;
@@ -186,11 +191,13 @@ public:
 
 signals:
     void runFoldChanged(qulonglong first);
+    void activeChanged();
 
 private:
     struct Measures {
         QString cps, wraps;
-        bool cpsTooHigh = false, badWraps = false;
+        double cpsSeverity = 0;
+        bool badWraps = false;
     };
     struct Row {
         core::LineRecord line;
@@ -239,6 +246,9 @@ private:
     application::Selection m_selection;
     std::optional<core::LineId> m_anchor;
     core::SubtitleFormat m_format = core::SubtitleFormat::Ass;
+    application::ReadingLimits m_profileLimits;
+    application::ScriptReadingLimits m_scriptLimits;
+    application::ReadingLimits m_limits;
     bool m_translationMode = false;
     bool m_showOriginal = false;
     bool m_runMarks = false;
@@ -268,6 +278,9 @@ public:
 
     void setLineModel(LineTableModel *model);
     void setPredicate(Predicate predicate);
+    // An active Line that matched stays shown until another Line is active, so an edit never hides it.
+    void setText(const QString &text);
+    const QString &text() const { return m_text; }
     int hiddenSelectedCount() const;
     bool passes(int sourceRow) const;
     int nearestVisibleRow(core::LineId id) const;
@@ -286,8 +299,13 @@ protected:
                                                                   const QList<int> &roles) const;
 
 private:
+    bool matchesText(int sourceRow, const core::LineRecord &record) const;
+    void pinActive();
+
     LineTableModel *m_lines = nullptr;
     Predicate m_predicate;
+    QString m_text;
+    std::optional<core::LineId> m_pinned;
 };
 
 }

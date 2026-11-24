@@ -31,9 +31,44 @@ std::optional<PackageProblem> qmlProblem(const Manifest &manifest, const std::ve
     return std::nullopt;
 }
 
+std::optional<PackageProblem> contentProblem(const std::string &path, const ContentFileCheck &check,
+                                            const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    const auto file = std::ranges::find(files, path, &PackageFile::path);
+    if (file == files.end())
+        return PackageProblem{Kind::MissingContent, path, {}, {}};
+    if (check)
+        if (auto refused = check(file->data))
+            return PackageProblem{Kind::BadContent, path, {}, std::move(*refused)};
+    return std::nullopt;
 }
 
-std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion)
+std::optional<PackageProblem> contentProblem(const std::vector<ContentFile> &content, const ContentFileCheck &check,
+                                            const std::vector<PackageFile> &files)
+{
+    for (const ContentFile &item : content)
+        if (auto problem = contentProblem(item.path, check, files))
+            return problem;
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> dictionaryProblem(const std::vector<Dictionary> &dictionaries,
+                                               const ContentFileChecks &checks, const std::vector<PackageFile> &files)
+{
+    for (const Dictionary &dictionary : dictionaries) {
+        if (auto problem = contentProblem(dictionary.aff, checks.dictionaryAff, files))
+            return problem;
+        if (auto problem = contentProblem(dictionary.dic, checks.dictionaryDic, files))
+            return problem;
+    }
+    return std::nullopt;
+}
+
+}
+
+std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion,
+                                                   const ContentFileChecks &checks)
 {
     using Kind = PackageProblem::Kind;
     if (files.size() > kMaxPackageFiles)
@@ -87,6 +122,13 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
         return std::unexpected(std::move(*problem));
     if (auto problem = qmlProblem(*manifest, files))
         return std::unexpected(std::move(*problem));
+    for (auto problem : {contentProblem(manifest->styles, checks.styleCatalogue, files),
+                         contentProblem(manifest->karaokePresets, checks.karaokePreset, files),
+                         dictionaryProblem(manifest->dictionaries, checks, files),
+                         contentProblem(manifest->graphs, checks.graph, files),
+                         contentProblem(manifest->layouts, checks.layout, files)})
+        if (problem)
+            return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};
 }
 

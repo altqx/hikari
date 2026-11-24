@@ -1,7 +1,12 @@
 #include "hikari/app/application.h"
+#include "audio_controller.h"
 #include "hikari/application/timing_helpers.h"
+#include "hikari/backends/external_aligner.h"
 
+#include <QCoreApplication>
+#include <QSaveFile>
 #include <QStringList>
+#include <QUrl>
 #include <QVariantList>
 
 #include <algorithm>
@@ -44,6 +49,33 @@ bool styleChosen(const application::ShiftTimesSettings &settings, const core::Li
 
 }
 
+bool Application::canSaveSelectedAudio()
+{
+    auto *session = targetSession();
+    return session && activeMedia().audio && activeMedia().audio->box().sharedAudio() &&
+           application::selectedLinesSpan(*session).has_value();
+}
+
+QString Application::saveSelectedAudio(const QUrl &file)
+{
+    auto *session = targetSession();
+    const auto span = session ? application::selectedLinesSpan(*session) : std::nullopt;
+    const auto audio = activeMedia().audio ? activeMedia().audio->box().sharedAudio() : nullptr;
+    if (!span || !audio || audio->sampleRate() <= 0)
+        return QCoreApplication::translate("HikariSub.Audio", "Open audio and select lines with some length first.");
+    if (!audio->finished())
+        return QCoreApplication::translate("HikariSub.Audio", "The audio is still loading.");
+    const int rate = audio->sampleRate();
+    const std::int64_t first = std::int64_t{span->startMs} * rate / 1000;
+    const std::int64_t count = std::int64_t{span->endMs - span->startMs} * rate / 1000;
+    std::vector<std::int16_t> samples(static_cast<std::size_t>(count));
+    audio->read(first, count, samples.data());
+    QSaveFile out(file.isLocalFile() ? file.toLocalFile() : file.toString());
+    if (!out.open(QIODevice::WriteOnly) || out.write(backends::wavBytes(samples, rate)) < 0 || !out.commit())
+        return QCoreApplication::translate("HikariSub.Audio", "The audio couldn’t be saved there.");
+    return {};
+}
+
 bool Application::snapToAdjacentKeyframe(bool end, bool next)
 {
     auto *session = targetSession();
@@ -54,6 +86,20 @@ bool Application::snapToAdjacentKeyframe(bool end, bool next)
     const bool done = application::snapToAdjacentKeyframe(*session, video.legacyTimebase(), keyframes,
                                                           end ? TimingEdge::End : TimingEdge::Start,
                                                           next ? TimingToward::Next : TimingToward::Previous)
+                          .has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::snapToScene()
+{
+    auto *session = targetSession();
+    if (!session || !exactTimebase())
+        return false;
+    const auto &video = activeMedia().video->session();
+    const bool done = application::snapToScene(*session, video.legacyTimebase(), video.keyframes(),
+                                               video.reportedFrame().value_or(0))
                           .has_value();
     editor().reloadFromSession();
     refreshViews();
@@ -74,14 +120,21 @@ bool Application::changeLead(bool end, bool add)
     return done;
 }
 
-bool Application::nudgeEdge(bool end, int frames)
+bool Application::nudgeEdge(bool end, int steps, bool shiftFollowing)
 {
+    constexpr int kStepMs = 10;
     auto *session = targetSession();
-    if (!session || !exactTimebase())
+    if (!session)
         return false;
-    const bool done = application::nudgeEdgeByFrames(*session, activeMedia().video->session().legacyTimebase(),
-                                                     end ? TimingEdge::End : TimingEdge::Start, frames)
-                          .has_value();
+    if (end)
+        if (const auto syllable = audio().nudgeSyllableEnd(steps * kStepMs, shiftFollowing))
+            return *syllable;
+    const auto edge = end ? TimingEdge::End : TimingEdge::Start;
+    const bool done =
+        (exactTimebase() ? application::nudgeEdgeByFrames(*session, activeMedia().video->session().legacyTimebase(),
+                                                          edge, steps, shiftFollowing)
+                         : application::nudgeEdgeByMs(*session, edge, steps * kStepMs, shiftFollowing))
+            .has_value();
     editor().reloadFromSession();
     refreshViews();
     return done;

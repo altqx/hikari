@@ -186,6 +186,10 @@ def cross_badge():
     return accent(stroke("M10 10l4 4M14 10l-4 4"))
 
 
+def save_badge():
+    return accent(stroke("M12 9v5M9.75 11.75L12 14l2.25-2.25"))
+
+
 def clock_badge():
     return accent(circle(12, 12, 3), stroke("M12 10.5V12l1 1"))
 
@@ -314,6 +318,9 @@ icon("history", "History", ["History.png"], [EDIT, "history-panel"],
 icon("find-replace", "Find and replace", ["FindReplace.png"], [EDIT, "search-tool"],
      magnifier(6, 6, 4, 2) + accent(stroke("M8.5 12.5h6M12.5 10.5l2 2-2 2")), mirror=True)
 icon("search", "Find", ["Search.png"], [EDIT, "search-tool"], magnifier(6.5, 6.5, 4.5, 4))
+icon("quick-open", "Quick Open", [], [FILE, "quick-pick"], page(True) + accent(magnifier(11, 11, 2.5, 1.75)))
+icon("command-palette", "Command palette", [], [VIEW, "quick-pick"],
+     rect(1.5, 2.5, 13, 11, 1) + accent(stroke("M4.5 6l2 2-2 2")) + stroke("M8.5 10h3"), mirror=True)
 icon("sort", "Sort lines", ["Sort.png"], [EDIT, "style-manager"],
      stroke("M1.5 4.5h7M1.5 8h5M1.5 11.5h3") + accent(stroke("M12 2.5v11M9.5 11l2.5 2.5 2.5-2.5")), mirror=True)
 icon("sort-selected", "Sort selected lines", ["SortSel.png"], [EDIT],
@@ -330,6 +337,8 @@ icon("recent-video", "Recently opened videos", ["RecentVideo.png"], [VIDEO, "vid
      + accent(stroke("M11.5 9.5h2a4 4 0 0 1 2 2v2a4 4 0 0 1-2 2h-2a4 4 0 0 1-2-2v-2a4 4 0 0 1 2-2z"),
               stroke("M12.5 11.5v1h1")))
 icon("open-keyframes", "Open keyframes", ["OpenKeyframes.png"], [VIDEO, "explorer"], diamond(6, 6.5, 4.5) + plus_badge())
+icon("save-keyframes", "Save keyframes", [], [VIDEO], diamond(6, 6.5, 4.5) + accent(stroke("M12 9.5v4.5M10 12l2 2 2-2")))
+icon("close-keyframes", "Close keyframes", [], [VIDEO], diamond(6, 6.5, 4.5) + cross_badge())
 icon("recent-keyframes", "Recently opened keyframes", ["RecentKeyframes.png"], [VIDEO],
      diamond(6, 6.5, 4.5) + clock_badge())
 icon("open-timecodes", "Open timecodes", [], [VIDEO, "explorer"], timecodes_ruler() + plus_badge())
@@ -340,9 +349,9 @@ icon("set-start-time", "Insert start time from video", ["SetStartTime.png"], [VI
      time_insert(start=True))
 icon("set-end-time", "Insert end time from video", ["SetEndTime.png"], [VIDEO],
      time_insert(start=False))
-icon("frame-previous", "Previous frame", ["PrevFrame.png"], [VIDEO, TRANSPORT],
+icon("frame-previous", "Previous frame", ["PrevFrame.png"], [VIDEO, TRANSPORT, FULLSCREEN],
      rect(6.5, 3.5, 8, 9, 1) + stroke("M9.5 3.5v9M11.5 3.5v9") + accent(stroke("M4 5.5L1.5 8 4 10.5")))
-icon("frame-next", "Next frame", ["NextFrame.png"], [VIDEO, TRANSPORT],
+icon("frame-next", "Next frame", ["NextFrame.png"], [VIDEO, TRANSPORT, FULLSCREEN],
      rect(1.5, 3.5, 8, 9, 1) + stroke("M4.5 3.5v9M6.5 3.5v9") + accent(stroke("M12 5.5L14.5 8 12 10.5")))
 icon("keyframe-previous", "Go to previous keyframe", ["PrevKeyframe.png"], [VIDEO, TRANSPORT],
      diamond(10.5, 8, 4) + accent(stroke("M4 5.5L1.5 8 4 10.5")))
@@ -373,11 +382,11 @@ icon("media-stop", "Stop", ["stop.png", "stop1.png", "button_stop.png"], [TRANSP
 icon("play-line", "Play the current line", ["playline.png", "playline1.png", "button_playsel.png"],
      [TRANSPORT, FULLSCREEN, AUDIOBOX],
      stroke("M3.5 2.5h-2v11h2M12.5 2.5h2v11h-2") + triangle(5.5, 4.5, 6, 7))
-icon("media-previous-file", "Previous file", ["backward.png", "backward1.png"], [TRANSPORT, FULLSCREEN],
+icon("media-previous-file", "Previous file", ["backward.png", "backward1.png"], [TRANSPORT],
      frect(1, 2, 2, 12, 0.5) + triangle(4.5, 2.5, 9, 11, right=False))
-icon("media-next-file", "Next file", ["forward.png", "forward1.png"], [TRANSPORT, FULLSCREEN],
+icon("media-next-file", "Next file", ["forward.png", "forward1.png"], [TRANSPORT],
      triangle(2.5, 2.5, 9, 11) + frect(13, 2, 2, 12, 0.5))
-icon("show-toolbar", "Full screen bar", [], [FULLSCREEN],
+icon("show-toolbar", "Full screen bar", [], [FULLSCREEN, "settings-dialog"],
      layout(stroke("M1.5 9.5h13"), frect(3.5, 10.75, 2, 1.5, 0.25), frect(7, 10.75, 2, 1.5, 0.25),
             frect(10.5, 10.75, 2, 1.5, 0.25)))
 
@@ -386,6 +395,7 @@ icon("recent-audio", "Recently opened audio", ["RecentAudio.png"], [AUDIO], note
 icon("audio-from-video", "Open audio from video", ["OpenAudioFromVideo.png"], [AUDIO],
      video_film() + accent(note(8.5, 8, 6.5)))
 icon("close-audio", "Close audio", ["CloseAudio.png"], [AUDIO], note(.75, 1, 10) + cross_badge())
+icon("save-audio", "Save audio of selected lines", [], [AUDIO, "grid-menu"], note(.75, 1, 10) + save_badge())
 
 icon("audio-previous-line", "Previous line", ["button_prev.png"], [AUDIOBOX],
      solid("M7.5 3.5v9L2 8z") + solid("M14 3.5v9L8.5 8z"))
@@ -516,7 +526,7 @@ icon("credits", "Credits", ["Helpers.png"], [HELP, "credits"],
 icon("whats-new", "What's new", [], [HELP, "home"],
      stroke("M9.5 2.5h-6v11h9v-6") + stroke("M5.5 9.5h5M5.5 11.5h3") + accent(stroke("M12.5 1v4M10.5 3h4")))
 
-icon("notice-warning", "Warning", [], ["dialogs"],
+icon("notice-warning", "Warning", [], ["dialogs", FULLSCREEN],
      stroke("M8 2l6.5 11.5h-13z") + accent(stroke("M8 6.5v3.5"), dot(8, 11.75, 0.75)))
 icon("notice-error", "Error", [], ["dialogs", "notices"],
      stroke("M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z") + accent(stroke("M8 4.75v4"), dot(8, 11.25, 0.75)))
@@ -557,7 +567,7 @@ icon("window-close", "Close", [], ["title-bar"], stroke("M3.5 3.5l9 9M12.5 3.5l-
 icon("tool-crosshair", "Position pointer", ["Cross.png"], [VISUAL],
      circle(8, 8, 4) + stroke("M8 1.5v3M8 11.5v3M1.5 8h3M11.5 8h3") + accent(dot(8, 8, 1)))
 ARROWS4 = stroke("M8 1.5v13M1.5 8h13M6 3.5l2-2 2 2M6 12.5l2 2 2-2M3.5 6l-2 2 2 2M12.5 6l2 2-2 2")
-icon("tool-position", "Text positioning", ["Position.png"], [VISUAL], ARROWS4 + accent(dot(8, 8, 1.75)))
+icon("tool-position", "Text positioning", ["Position.png"], [VISUAL, FULLSCREEN], ARROWS4 + accent(dot(8, 8, 1.75)))
 icon("tool-move", "Text moving", ["Move.png"], [VISUAL],
      accent(circle(3.5, 8, 2)) + stroke("M6.5 8h8M12.5 6l2 2-2 2"))
 icon("tool-scale", "Text scaling", ["Scale.png"], [VISUAL],
@@ -727,7 +737,7 @@ icon("extract-subtitles", "Load subtitles from an MKV file", [], [GRIDMENU],
 
 # Qt's antialiased 1-px lines draw sharp half a unit across, a whole unit down: the x crosses there.
 icon("close-video", "Unload video", [], [VIDEO], video_film() + accent(stroke("M10.5 11l4 4M14.5 11l-4 4")))
-icon("fullscreen", "Full screen", [], [VIDEOMENU],
+icon("fullscreen", "Full screen", [], [VIDEOMENU, "settings-dialog"],
      stroke("M1.5 5.5v-3a1 1 0 0 1 1-1h3M10.5 1.5h3a1 1 0 0 1 1 1v3M14.5 10.5v3a1 1 0 0 1-1 1h-3M5.5 14.5h-3a1 1 0 0 1-1-1v-3"))
 icon("fullscreen-exit", "Exit full screen", [], [VIDEOMENU, FULLSCREEN],
      stroke("M5.5 1.5v3a1 1 0 0 1-1 1h-3M10.5 1.5v3a1 1 0 0 0 1 1h3M14.5 10.5h-3a1 1 0 0 0-1 1v3M1.5 10.5h3a1 1 0 0 1 1 1v3"))
@@ -848,7 +858,7 @@ icon("video-filters", "Filters", [], [VIDEOMENU, FULLSCREEN],
      + accent(stroke("M5 8h1.25M9.75 8H11")))
 
 icon("panels", "Panels", [], [VIEW], layout(stroke("M6.5 2.5v11M6.5 8h8")))
-icon("show", "Show", [], [VIEW], EYE + accent(dot(8, 8, 2)))
+icon("show", "Show", [], [VIEW, FULLSCREEN], EYE + accent(dot(8, 8, 2)))
 icon("hide", "Hide", [], [VIEW, GRIDMENU, TEXTMENU], EYE + circle(8, 8, 2) + accent(stroke("M2.5 13.5l11-11")))
 icon("panel-float", "Float", [], [VIEW, PANELS],
      stroke("M8.5 2.5h-5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-5") + accent(stroke("M9.5 6.5l5-5M10.5 1.5h4v4")))
@@ -960,14 +970,8 @@ icon("language", "Language", [], ["settings-dialog"],
      + accent(stroke("M1.5 8h13")))
 icon("ui-font", "Program font", [], ["settings-dialog"],
      stroke("M1.5 13.5L5 2.5h1l3.5 11M3 9.5h5") + accent(circle(11.5, 11.5, 2), stroke("M13.5 9.5v4")))
-icon("renderer", "Subtitle display filter", [], ["settings-dialog"],
-     rect(1.5, 2.5, 13, 11, 1) + triangle(6.5, 4.5, 3, 3.5) + accent(stroke("M4 9.5h8M5.5 11.5h5")))
 icon("video-seek", "Video seeking method", [], ["settings-dialog"],
      stroke("M1.5 12.5h13") + stroke("M2.5 7.5h5M5.5 5.5l2 2-2 2") + accent(stroke("M10.5 4.5v8"), solid("M9 2.5h3l-1.5 2z")))
-icon("audio-device", "Audio output", [], ["settings-dialog"],
-     rect(3.5, 1.5, 9, 13, 1) + circle(8, 10, 2.5) + accent(dot(8, 5, 1.25)))
-icon("audio-delay", "Audio delay", [], ["settings-dialog"],
-     stroke("M1.5 7v2M3.5 5v6M5.5 6v4M7.5 4.5v7") + clock_badge())
 icon("theme", "Theme", [], ["settings-dialog"],
      stroke("M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z") + accent(stroke("M11.5 1.5v2M10.5 2.5h2")))
 icon("accent-colour", "Accent color", [], ["settings-dialog"],
@@ -1046,13 +1050,6 @@ icon("restart", "Restart now", [], ["updates"],
      RELOAD_CW + accent(solid("M6.5 5.5v5l4-2.5z")))
 icon("skip-version", "Skip this version", [], ["updates", "settings-dialog"],
      rect(5.5, 10.5, 5, 4, 1) + accent(stroke("M2.5 10a5.5 5.5 0 0 1 11 0M11.5 8l2 2 2-2")))
-icon("tab-name-length", "Tab name length", [], ["settings-dialog"],
-     stroke("M1.5 10.5h1v-5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v5h1") + stroke("M5 7.5h6")
-     + accent(stroke("M3.5 13.5h9M5 12l-1.5 1.5L5 15M11 12l1.5 1.5L11 15")))
-icon("time-offset-start", "Start frame offset", [], ["settings-dialog", VIDEO],
-     rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M2.5 4.5h6M4 3L2.5 4.5 4 6M7 3l1.5 1.5L7 6")))
-icon("time-offset-end", "End frame offset", [], ["settings-dialog", VIDEO],
-     rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M9 3L7.5 4.5 9 6M12 3l1.5 1.5L12 6")))
 icon("start-frame-earlier", "Move start one frame earlier", [], [TIMING],
      rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M8.5 4.5h-6M4 3L2.5 4.5 4 6")))
 icon("start-frame-later", "Move start one frame later", [], [TIMING],
@@ -1061,21 +1058,10 @@ icon("end-frame-earlier", "Move end one frame earlier", [], [TIMING],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M13.5 4.5h-6M9 3L7.5 4.5 9 6")))
 icon("end-frame-later", "Move end one frame later", [], [TIMING],
      rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M12 3l1.5 1.5L12 6")))
-icon("preview-resolution", "Preview subtitles at", [], ["settings-dialog"],
-     rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
-     + accent(stroke("M4.5 9.5l2-2M4.5 9.5V8M4.5 9.5H6M11.5 4.5l-2 2M11.5 4.5V6M11.5 4.5H10")))
-icon("boundary-thickness", "Line boundaries thickness", [], ["settings-dialog"],
-     stroke("M2.5 2.5v11") + frect(5.5, 2.5, 2, 11, 0.5) + accent(frect(10, 2.5, 3.5, 11, 0.5)))
-icon("inactive-lines", "Inactive lines", [], ["settings-dialog"],
-     rect(5.5, 3.5, 5, 9, 1) + accent(stroke("M3.5 3.5h-2v9h2M12.5 3.5h2v9h-2")))
-icon("cache", "Cache files kept", [], ["settings-dialog"],
-     stroke("M2.5 4a5.5 2 0 1 0 11 0a5.5 2 0 1 0-11 0") + stroke("M2.5 4v8a5.5 2 0 0 0 11 0V4")
-     + accent(stroke("M2.5 8a5.5 2 0 0 0 11 0")))
-icon("time-per-letter", "Time per letter", [], ["settings-dialog"],
-     stroke("M1.5 11.5L4.5 2.5h1l3 9M2.75 8.5h4.5") + clock_badge())
-icon("tags-insert", "Tags at the start of each line", [], ["settings-dialog"],
-     stroke("M7.5 5.5h7M7.5 9h7M7.5 12.5h4")
-     + accent(stroke("M5 3.5h-.5a1 1 0 0 0-1 1v2L2.5 8l1 1.5v2a1 1 0 0 0 1 1H5")), mirror=True)
+icon("end-later-shift-following", "Lengthen and shift what follows", [], [TIMING],
+     rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M3.5 4.5h9M11 3l1.5 1.5L11 6")))
+icon("end-earlier-shift-following", "Shorten and shift what follows", [], [TIMING],
+     rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M12.5 4.5h-9M5 3L3.5 4.5 5 6")))
 icon("preview-text", "Preview text", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 11, 1) + accent(letters("T", 4, 6)) + stroke("M9.5 6.5h2.5M9.5 9.5h2.5"), mirror=True)
 icon("resolution-from-video", "Use video resolution", [], ["script-properties", "script-resolution"],
@@ -1354,6 +1340,8 @@ icon("layers", "Blur and glow layers", [], [GRIDMENU, SUBS, "text-field-menu"],
 icon("layers-repeat", "Repeat blur and glow layers", [], [GRIDMENU, SUBS],
      solid("M6 1.5l4.5 2.5L6 6.5 1.5 4z") + stroke("M1.5 6.5l4.5 2.5 2.5-1.25M1.5 9l4.5 2.5 1.5-.75") + REPEAT_BADGE)
 
+icon("snap-to-scene", "Snap to scene", [], [TIMING],
+     diamond(3, 8, 2.25) + diamond(13, 8, 2.25) + accent(stroke("M6 5.5h4v5H6z")))
 icon("snap-start-to-previous-keyframe", "Snap start to previous keyframe", [], [TIMING],
      KEY_DIAMOND_L + START_EDGE_R + ARROW_TO_LEFT)
 icon("snap-start-to-next-keyframe", "Snap start to next keyframe", [], [TIMING],
@@ -1421,7 +1409,7 @@ icon("align-top", "Align top", [], [VISUAL],
      accent(stroke("M1 1.5h14")) + rect(2.5, 3.5, 4, 10, 1) + rect(9.5, 3.5, 4, 6, 1))
 icon("align-middle", "Align middle", [], [VISUAL],
      accent(stroke("M1 8h14")) + rect(2.5, 2.5, 4, 11, 1) + rect(9.5, 4.5, 4, 7, 1))
-icon("align-bottom", "Align bottom", [], [VISUAL],
+icon("align-bottom", "Align bottom", [], [VISUAL, FULLSCREEN],
      accent(stroke("M1 14.5h14")) + rect(2.5, 2.5, 4, 10, 1) + rect(9.5, 6.5, 4, 6, 1))
 icon("distribute-horizontal", "Distribute horizontally", [], [VISUAL],
      accent(stroke("M1.5 1.5v13M14.5 1.5v13")) + frect(3, 4, 2, 8, .5) + frect(7, 3, 2, 10, .5) + frect(11, 5, 2, 6, .5))
