@@ -39,6 +39,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     problems_controller.cpp include/hikari/app/problems_controller.h
     reading_problems.cpp include/hikari/app/reading_problems.h
     language_providers.cpp include/hikari/app/language_providers.h
+    language_servers.cpp include/hikari/app/language_servers.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_karaoke.cpp include/hikari/app/ai_karaoke.h
@@ -50,7 +51,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h model_picker.cpp include/hikari/app/model_picker.h
     inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
     plugin_manager.cpp include/hikari/app/plugin_manager.h
-    plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h
+    plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h plugin_test_harness.cpp include/hikari/app/plugin_test_harness.h
     plugin_programs.cpp include/hikari/app/plugin_programs.h
     plugin_program_downloads.cpp include/hikari/app/plugin_program_downloads.h
     plugin_files.cpp include/hikari/app/plugin_files.h plugin_network.cpp include/hikari/app/plugin_network.h

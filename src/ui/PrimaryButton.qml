@@ -6,10 +6,11 @@ import Hikari.Ui
 T.Button {
     id: button
     implicitWidth: Math.max(80, implicitContentWidth + leftPadding + rightPadding)
-    implicitHeight: Math.max(30, implicitContentHeight + topPadding + bottomPadding)
-    padding: 5
-    leftPadding: 10
-    rightPadding: 10
+    implicitHeight: Math.max(Theme.controlHeight, implicitContentHeight + topPadding + bottomPadding)
+    topPadding: 3
+    bottomPadding: 3
+    leftPadding: 12
+    rightPadding: 12
     focusPolicy: Qt.StrongFocus
     background: Rectangle {
         color: !button.enabled ? "transparent"
@@ -18,12 +19,12 @@ T.Button {
              : Theme.accent
         border.width: button.enabled ? 0 : 1
         border.color: Theme.line
-        radius: 1
+        radius: Theme.radius
         FocusRing { control: button }
     }
     contentItem: Label {
         text: button.text
-        font.bold: true
+        font.weight: Font.DemiBold
         color: button.enabled ? Theme.onAccent : Theme.disabled
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

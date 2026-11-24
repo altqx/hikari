@@ -2979,7 +2979,7 @@ private slots:
         QTRY_COMPARE(editor.text(), QStringLiteral("first"));
     }
 
-    void hideTagsSwitchesTheGridsTags()
+    void tagsInTheGridShowReplaceOrHide()
     {
         const QString tagged = writeFile(dir, "tagged.ass",
                                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Hi{\\i0} there\n");
@@ -2987,33 +2987,64 @@ private slots:
         auto *model = item("editingGrid")->property("model").value<QAbstractItemModel *>();
         const auto shown = [&] { return model->index(0, ui::LineTableModel::TextColumn).data().toString(); };
         QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
-        auto *menuItem = named("hideTagsMenuItem");
-        QVERIFY(menuItem);
-        QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("hide-tags"));
-        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Hide tags in the Grid"));
-        QVERIFY(menuItem->property("checkable").toBool());
-        QVERIFY(!menuItem->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        auto *submenu = named("gridTagsMenu");
+        QVERIFY(submenu);
+        QCOMPARE(submenu->property("title").toString(), QStringLiteral("Tags in the Grid"));
+        QCOMPARE(submenu->property("iconRole").toString(), QStringLiteral("hide-tags"));
+        QObject *rows[] = {named("gridTagsShowMenuItem"), named("gridTagsReplaceMenuItem"), named("gridTagsHideMenuItem")};
+        const auto checkedRow = [&] {
+            int checked = -1;
+            for (int i = 0; i < 3; ++i)
+                if (rows[i]->property("checked").toBool())
+                    checked = checked < 0 ? i : 3;
+            return checked;
+        };
+        for (auto *row : rows) {
+            QVERIFY(row);
+            QVERIFY(row->property("checkable").toBool());
+        }
+        QTRY_COMPARE(checkedRow(), 0);
+        QVERIFY(QMetaObject::invokeMethod(rows[1], "triggered"));
         QCOMPARE(shown(), QStringLiteral("☀Hi☀ there"));
-        QVERIFY(application->settingsStore()->boolean("grid.hideTags"));
-        QTRY_VERIFY(menuItem->property("checked").toBool());
+        QCOMPARE(application->settingsStore()->integer("grid.tagsMode"), 1);
+        QTRY_COMPARE(checkedRow(), 1);
         application->settingsStore()->set("grid.tagsSwapCharacter", QStringLiteral("~"));
         QCOMPARE(shown(), QStringLiteral("~Hi~ there"));
-        QVariant ran;
-        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
-                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
-        QVERIFY(ran.toBool());
+        QVERIFY(QMetaObject::invokeMethod(rows[2], "triggered"));
+        QCOMPARE(shown(), QStringLiteral("Hi there"));
+        QTRY_COMPARE(checkedRow(), 2);
+
+        const auto cycle = [&] {
+            QVariant ran;
+            QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                              Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
+            QVERIFY(ran.toBool());
+        };
+        const auto status = [&] { return item<QObject>("statusText")->property("text").toString(); };
+        cycle();
         QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
-        QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
-        QTRY_VERIFY(!menuItem->property("checked").toBool());
+        QCOMPARE(application->settingsStore()->integer("grid.tagsMode"), 0);
+        QTRY_COMPARE(checkedRow(), 0);
+        QCOMPARE(status(), QStringLiteral("Tags in the Grid: Show"));
+        cycle();
+        QCOMPARE(shown(), QStringLiteral("~Hi~ there"));
+        QCOMPARE(status(), QStringLiteral("Tags in the Grid: Replace with symbol"));
+        cycle();
+        QCOMPARE(shown(), QStringLiteral("Hi there"));
+        QCOMPARE(status(), QStringLiteral("Tags in the Grid: Hide"));
+
         QVERIFY(!item("showTags"));
         auto *editorItem = named("hideEditorTagsMenuItem");
         QVERIFY(editorItem);
         QCOMPARE(editorItem->property("iconRole").toString(), QStringLiteral("hide-tags"));
         QVERIFY(application->editor().showTags());
+        QVariant ran;
         QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
-                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_GRID_TAGS_SHOW"))));
+        QVERIFY(ran.toBool());
+        QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
         QVERIFY(application->editor().showTags());
+        application->settingsStore()->set("grid.tagsSwapCharacter", QStringLiteral("☀"));
     }
 
     void menuBarRowsFollowTheBoard()
@@ -3295,6 +3326,71 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
         QTRY_COMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Deleting text"));
+    }
+
+    void deleteTextKeepTagsLeavesTheTagBlocks()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "keep-tags.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,"
+                                                "{\\b1}first{\\i1} line\n"
+                                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QTRY_VERIFY(item("lineText")->property("text").toString().contains(QStringLiteral("first")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_A, Qt::ControlModifier);
+        const auto steps = session->historySize();
+        auto *menuItem = named("deleteTextKeepTags");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Delete text, keep tags"));
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_REMOVE_TEXT_KEEP_TAGS"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Deleting text, keeping tags"));
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("{\\b1}{\\i1}"));
+        QCOMPARE(text(session->document().lines()[1]), QString());
+        QVERIFY(application->editor().undo());
+        QCOMPARE(text(session->document().lines()[1]), QStringLiteral("second"));
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_REMOVE_TEXT_KEEP_TAGS"))));
+        QVERIFY(ran.toBool());
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("{\\b1}{\\i1}"));
+    }
+
+    void altArrowsMoveTheSelectedLinesInOneStep()
+    {
+        QVERIFY(application->openFile(episode));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto order = [&] {
+            QStringList out;
+            for (const auto *line : session->document().lines())
+                out << text(line);
+            return out;
+        };
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("first"));
+        item("editingGrid")->forceActiveFocus();
+        QVERIFY(!application->canMoveLines(true));
+        QVERIFY(application->canMoveLines(false));
+        const auto steps = session->historySize();
+        press(Qt::Key_Down, Qt::AltModifier);
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("second"), QStringLiteral("first")}));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Moving lines"));
+        QCOMPARE(item("lineText")->property("text").toString(), QStringLiteral("first"));
+        press(Qt::Key_Down, Qt::AltModifier);
+        QCOMPARE(session->historySize(), steps + 1);
+        press(Qt::Key_Up, Qt::AltModifier);
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("first"), QStringLiteral("second")}));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(order(), (QStringList{QStringLiteral("second"), QStringLiteral("first")}));
+        auto *up = named("moveLinesUp");
+        QVERIFY(up);
+        QCOMPARE(up->property("text").toString(), QStringLiteral("Move lines up"));
+        QVERIFY(QMetaObject::invokeMethod(up, "triggered"));
+        QTRY_COMPARE(order(), (QStringList{QStringLiteral("first"), QStringLiteral("second")}));
+        QCOMPARE(session->historySize(), steps + 2);
     }
 
     void changedLinesAreMarkedUntilSaved()
@@ -13039,13 +13135,13 @@ private slots:
         QVERIFY(!names.isEmpty());
         QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
         QVERIFY(find->property("editText").toString() != QStringLiteral("alpha"));
-        QVERIFY(dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
+        QCOMPARE(dialogItem("selectLinesDialog", "selectMatch")->property("currentIndex").toInt(), 2);
         QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
         QCOMPARE(find->property("editText").toString(), QStringLiteral("^$"));
         QVERIFY(QMetaObject::invokeMethod(styles, "revert"));
         QTRY_VERIFY(!styles->property("visible").toBool());
         QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));
-        QVERIFY(!dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
+        QCOMPARE(dialogItem("selectLinesDialog", "selectMatch")->property("currentIndex").toInt(), 0);
         auto *fields = dialogItem("selectLinesDialog", "selectField");
         QCOMPARE(fields->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectChooseStyles"), "click"));
@@ -13077,6 +13173,49 @@ private slots:
             {{QStringLiteral("find"), QStringLiteral("BET")}, {QStringLiteral("field"), 0}, {QStringLiteral("action"), 1}}, false);
         QCOMPARE(QGuiApplication::clipboard()->text(),
                  QStringLiteral("Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\r\n"));
+        application->editor().discard();
+    }
+
+    void selectLinesDialogExactAndIntersect()
+    {
+        const QString path = dir.filePath(QStringLiteral("select-exact.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Alpha\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,beta\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        auto *dialog = named("selectLinesDialog");
+        QVERIFY(QMetaObject::invokeMethod(named("selectLinesMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        dialogItem("selectLinesDialog", "selectFindText")->setProperty("editText", QStringLiteral("alpha"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMatch1"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMode0"), "click"));
+        auto *toasts = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("toastStack"));
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
+        QTRY_VERIFY(toastWith(QStringLiteral("1 lines selected.")));
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[0]->id});
+
+        session->setSelection(
+            application::Selection{lines[1]->id, {lines[0]->id, lines[1]->id, lines[2]->id}, lines[1]->id, {}});
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMatch0"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectMode3"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
+        QTRY_VERIFY(toastWith(QStringLiteral("1 lines removed from selection.")));
+        QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        const QVariantMap saved = application->selectLinesSettings();
+        QCOMPARE(saved.value(QStringLiteral("match")).toInt(), 0);
+        QCOMPARE(saved.value(QStringLiteral("mode")).toInt(), 3);
+        application->saveSelectLinesSettings({{QStringLiteral("match"), 0}, {QStringLiteral("mode"), 0}});
         application->editor().discard();
     }
 
@@ -27191,7 +27330,8 @@ private slots:
         for (const auto &b : legacyDefaults())
             if (!keys.contains(QString::fromLatin1(b.accel)))
                 keys.append(QString::fromLatin1(b.accel));
-        QStringList departures = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES")};
+        QStringList departures = {QStringLiteral("Editor Shift-Delete: nothing, legacy GLOBAL_REMOVE_LINES"),
+                                  QStringLiteral("Grid Alt-Down: GRID_MOVE_DOWN, legacy nothing")};
         for (const auto &context : contexts) {
             departures.append(QStringLiteral("%1 Ctrl-E: nothing, legacy GLOBAL_EDITOR").arg(QLatin1String(context.first)));
             departures.append(QStringLiteral("%1 Alt-F4: GLOBAL_CLOSE_WINDOW, legacy GLOBAL_QUIT").arg(QLatin1String(context.first)));
@@ -34683,6 +34823,63 @@ private slots:
         QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[1]->id});
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("turnOffFiltering")), "triggered"));
         QTRY_VERIFY(!application->shell().filtered());
+    }
+
+    void gridMarksTheLinesOnTheCurrentFrame()
+    {
+        const QString path = writeFile(dir, "pg-frame-marks.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:00.50,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.40,0:00:01.20,Default,,0,0,0,,b\n"
+                                       "Comment: 0,0:00:00.40,0:00:01.20,Default,,0,0,0,,note\n"
+                                       "Dialogue: 0,0:00:01.50,0:00:01.90,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        auto *grid = item("editingGrid");
+        auto *model = grid->property("model").value<QAbstractItemModel *>();
+        const auto marked = [&] {
+            std::set<core::LineId> found;
+            for (int row = 0; row < model->rowCount(); ++row)
+                if (const auto at = model->index(row, 0); at.data(ui::LineTableModel::OnFrameRole).toBool())
+                    found.insert(core::LineId{at.data(ui::LineTableModel::LineIdRole).toULongLong()});
+            return found;
+        };
+        const auto ticks = [&] { return grid->property("onFrameTicks").value<QList<qreal>>().size(); };
+        QVERIFY(application->markCurrentFrame());
+        QVERIFY(marked().empty());
+        application->setAskForBadResolution(false);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        QTRY_COMPARE(marked(), std::set<core::LineId>{lines[0]->id});
+        QVERIFY(application->video().showFrameAt(11));
+        QTRY_COMPARE(marked(), (std::set<core::LineId>{lines[0]->id, lines[1]->id}));
+        QCOMPARE(ticks(), 2);
+        QVERIFY(application->selectLinesVisibleOnVideo());
+        QCOMPARE(session->selection().selected, marked());
+        QVERIFY(application->video().showFrameAt(47));
+        QTRY_VERIFY(marked().empty());
+        QCOMPARE(ticks(), 0);
+        QVERIFY(application->video().showFrameAt(40));
+        QTRY_COMPARE(marked(), std::set<core::LineId>{lines[3]->id});
+
+        auto *menuItem = named("markCurrentFrameMenuItem");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_GRID_MARK_CURRENT_FRAME"));
+        QVERIFY(menuItem->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QVERIFY(!application->settingsStore()->boolean("grid.markCurrentFrame"));
+        QVERIFY(marked().empty());
+        QTRY_VERIFY(!menuItem->property("checked").toBool());
+        QVERIFY(application->video().showFrameAt(11));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 11);
+        QVERIFY(marked().empty());
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_GRID_MARK_CURRENT_FRAME"))));
+        QVERIFY(ran.toBool());
+        QVERIFY(application->settingsStore()->boolean("grid.markCurrentFrame"));
+        QCOMPARE(marked(), (std::set<core::LineId>{lines[0]->id, lines[1]->id}));
+        QTRY_VERIFY(menuItem->property("checked").toBool());
     }
 
     void centerTimesWithinFramesKeepsEachFrame()

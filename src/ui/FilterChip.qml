@@ -9,16 +9,22 @@ T.Button {
     property string iconRole
     property bool on: false
     implicitWidth: implicitContentWidth + leftPadding + rightPadding
-    implicitHeight: 26
+    implicitHeight: Theme.controlHeight
     leftPadding: 8
     rightPadding: 6
     focusPolicy: Qt.StrongFocus
     Accessible.role: Accessible.ButtonMenu
     background: Rectangle {
         radius: height / 2
-        color: chip.on ? Theme.select : chip.down ? Theme.select : Theme.raised
+        color: chip.on ? Theme.select : Theme.raised
         border.width: 1
-        border.color: chip.on || chip.hovered ? Theme.accent : Theme.line
+        border.color: chip.on ? Theme.accent : Theme.control
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            visible: chip.enabled && (chip.hovered || chip.down)
+            color: chip.down ? Theme.pressed : Theme.hover
+        }
         FocusRing { control: chip; radius: parent.radius + 1 }
     }
     contentItem: RowLayout {
@@ -31,7 +37,7 @@ T.Button {
         Label {
             textFormat: Text.PlainText
             text: chip.text
-            font.bold: chip.on
+            font.weight: chip.on ? Font.DemiBold : Font.Normal
             elide: Text.ElideRight
             Layout.maximumWidth: 200
         }

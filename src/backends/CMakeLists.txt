@@ -29,6 +29,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp libass_log.h o
     mecab_readings.cpp include/hikari/backends/mecab_readings.h
     icu_text.cpp include/hikari/backends/icu_text.h
     harper_client.cpp include/hikari/backends/harper_client.h
+    lsp_connection.cpp include/hikari/backends/lsp_connection.h
     plugin_link.cpp include/hikari/backends/plugin_link.h
     plugin_process.cpp include/hikari/backends/plugin_process.h
     program_plugin_link.cpp include/hikari/backends/program_plugin_link.h
