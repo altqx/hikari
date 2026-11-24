@@ -3,6 +3,7 @@
 #include "hikari/api/json.h"
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_http_relay.h"
+#include "hikari/backends/program_process.h"
 
 #include <QByteArray>
 #include <QObject>
@@ -11,6 +12,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <expected>
 #include <functional>
 #include <map>
 #include <memory>
@@ -35,7 +37,8 @@ inline constexpr const char *kMcpServersAdmit = "_hikari/mcpServers.admit";
 /// The operation an MCP tool call goes through AgentThreads' gate as; its params are mcpCallParams'.
 inline constexpr std::string_view kMcpCallOperation = "mcp.call";
 
-/// A server the user added in Settings › AI, as saved in `ai.mcp.servers`. Its secrets are in the keychain.
+/// A server the user added in Settings › AI, as saved in `ai.mcp.servers`, with its secrets in the keychain; or one a
+/// plugin contributes, which the plugin starts.
 struct McpServerEntry {
     enum class Transport { Stdio, Http };
 
@@ -51,6 +54,9 @@ struct McpServerEntry {
     std::set<std::string> approved;
     /// Grows with every change, so the sidecar connects again.
     std::int64_t revision = 1;
+    /// The contributing plugin and the server's id in its manifest; empty for a server the user added.
+    std::string plugin;
+    std::string pluginServer;
 
     api::Json toJson() const;
     static std::optional<McpServerEntry> fromJson(const api::Json &json);
@@ -59,6 +65,8 @@ struct McpServerEntry {
 
 std::vector<McpServerEntry> mcpServersFromJson(const api::Json &json);
 api::Json mcpServersToJson(const std::vector<McpServerEntry> &servers);
+/// A plugin server's id: `p-<the first 8 hex digits of the SHA-256 of "<plugin>/<server>">-<server>`.
+std::string pluginMcpServerId(const std::string &plugin, const std::string &server);
 /// A short id from the name, not yet in `taken`: letters, digits and '-'.
 std::string newMcpServerId(const std::string &name, const std::vector<McpServerEntry> &servers);
 /// The keychain entry for a server's secrets.
@@ -122,10 +130,14 @@ api::Json mcpCallParams(const McpServerEntry &server, const std::string &tool, c
                         const McpToolHints &hints);
 
 /// The servers the user added, for one running sidecar: Qt starts each stdio server unsandboxed (ADR 0029), relays
-/// each HTTP server's requests with its secrets, and admits each tool call through the session's gate.
+/// each HTTP server's requests with its secrets, and admits each tool call through the session's gate. A plugin's
+/// server starts in the plugin's sandbox, as `PluginStart` says.
 class McpClients final : public QObject {
     Q_OBJECT
 public:
+    /// How a plugin server's program starts, or why it can't.
+    using PluginStart = std::function<std::expected<ProgramProcess::Options, QString>(const McpServerEntry &server)>;
+
     struct Status {
         std::string state; // connecting, ready or failed
         int tools = 0;
@@ -139,6 +151,7 @@ public:
     void setServers(std::vector<McpServerEntry> servers);
     const std::vector<McpServerEntry> &servers() const { return m_servers; }
     void attach(AiSidecarHost &host, AgentBroker &broker);
+    void setPluginStart(PluginStart start) { m_pluginStart = std::move(start); }
     /// Adds {"kind": "mcp", "id": …}: the server's URL with its bearer token, its traffic guarded. Other targets go
     /// to `next`.
     RelayTargets relayTargets(RelayTargets next);
@@ -156,11 +169,13 @@ private:
     void load(std::function<void()> done);
     void announce();
     void registerStdio();
+    AgentSpec pluginSpec(const McpServerEntry &server);
     std::shared_ptr<McpTraffic> traffic(const std::string &server);
     const McpServerEntry *find(const std::string &server) const;
 
     application::ai::KeyStore &m_keys;
     QString m_workingDirectory;
+    PluginStart m_pluginStart;
     std::vector<McpServerEntry> m_servers;
     std::map<std::string, McpSecrets> m_secrets;
     std::map<std::string, std::shared_ptr<McpTraffic>> m_traffic;

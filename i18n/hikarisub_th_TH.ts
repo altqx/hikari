@@ -17270,6 +17270,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml มีข้อผิดพลาดที่บรรทัด %1</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>มาจากปลั๊กอิน ทำงานในแซนด์บ็อกซ์ของปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18352,6 +18360,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>ปลั๊กอินนี้คือโปรแกรม %1 ซึ่งไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>มีเซิร์ฟเวอร์ MCP ให้ใช้ในการตั้งค่า › AI ซึ่งปิดอยู่จนกว่าคุณจะเปิด: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
     </message>
 </context>
 <context>

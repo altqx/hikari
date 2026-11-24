@@ -17270,6 +17270,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml의 %1번째 줄에 오류가 있습니다.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>플러그인 제공, 해당 플러그인의 샌드박스에서 실행</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>켬</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18352,6 +18360,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>이 플러그인은 프로그램 %1(이)며, 이 컴퓨터에서는 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>설정 › AI에 MCP 서버를 제공하며, 켜기 전까지는 꺼져 있습니다: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>플러그인이 꺼져 있습니다.</translation>
     </message>
 </context>
 <context>

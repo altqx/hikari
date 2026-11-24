@@ -971,6 +971,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
+    m_ai->setPluginMcpStart([runtime = QPointer(m_pluginRuntime.get())](const backends::ai::McpServerEntry &server)
+                                -> std::expected<backends::ProgramProcess::Options, QString> {
+        if (!runtime)
+            return std::unexpected(QStringLiteral("HikariSub is closing."));
+        return runtime->mcpServerStart(server);
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::mcpServersChanged, m_ai.get(), [this] {
+        if (const auto &installed = m_pluginRuntime->installed())
+            m_ai->keepPluginMcpChoices(*installed);
+        m_ai->setPluginMcpServers(m_pluginRuntime->mcpServers());
+    });
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
     QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
