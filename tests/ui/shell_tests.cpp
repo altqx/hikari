@@ -30319,6 +30319,7 @@ private slots:
         QCOMPARE(session->historySize(), sameSteps);
     }
 
+private:
     struct PickSetup {
         application::EditSession *session = nullptr;
         core::LineId sign;
@@ -30367,6 +30368,7 @@ private slots:
         return {};
     }
 
+private slots:
     void pickOnTheVideoSetsAPointAndTheToolSeesNoClick()
     {
         using namespace application::visual;
