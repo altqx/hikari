@@ -1,4 +1,6 @@
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_themes.h"
+#include "theme.h"
 #include "hikari/api/api.h"
 #include "hikari/backends/desktop_handoff.h"
 
@@ -9,6 +11,8 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
+
+#include <filesystem>
 
 using hikari::app::PluginManager;
 
@@ -270,6 +274,32 @@ private slots:
         QCOMPARE(only(manager).value(QStringLiteral("adds")).toStringList(), QStringList{QStringLiteral("Colour theme: Dusk")});
 
         QVERIFY(!manager.review(fixture("hello-1.0.0.hikariplugin")).value(QStringLiteral("dataOnly")).toBool());
+    }
+
+    void aShownPluginThemeIsChoosableUntilItGoes()
+    {
+        PluginManager manager(folders());
+        QVERIFY(manager.review(fixture("looks-1.0.0-data-only.hikariplugin")).value(QStringLiteral("ok")).toBool());
+        QCOMPARE(manager.install(false), QString());
+        const std::filesystem::path root = m_dir.filePath(QStringLiteral("user/plugins/com.example.looks")).toStdU16String();
+        hikari::plugins::Manifest manifest;
+        manifest.name = "Looks";
+        manifest.themes = {{"dusk", "Dusk", "dark", "themes/dusk.json"}};
+        const QString dusk = QStringLiteral("plugin:com.example.looks/dusk");
+
+        QVERIFY(hikari::app::syncPluginThemes(hikari::app::pluginThemesOf("com.example.looks", manifest, root, true)).isEmpty());
+        QVERIFY(hikari::ui::theme::find(dusk));
+        QCOMPARE(hikari::ui::theme::find(dusk)->plugin, QStringLiteral("Looks"));
+        QCOMPARE(hikari::ui::theme::typeOf(dusk), hikari::themes::Type::Dark);
+
+        QVERIFY(hikari::app::syncPluginThemes(hikari::app::pluginThemesOf("com.example.looks", manifest, root, false)).isEmpty());
+        QVERIFY(!hikari::ui::theme::find(dusk));
+
+        manifest.themes[0].path = "themes/gone.json";
+        const QStringList problems = hikari::app::syncPluginThemes(hikari::app::pluginThemesOf("com.example.looks", manifest, root, true));
+        QCOMPARE(problems.size(), 1);
+        QVERIFY(problems.first().startsWith(QStringLiteral("Dusk: ")));
+        QVERIFY(!hikari::ui::theme::find(dusk));
     }
 
     void rememberedFoldersAreListedAndCanBeForgotten()

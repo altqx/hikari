@@ -18589,6 +18589,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>아이콘 테마: %1</translation>
     </message>
     <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>테마를 사용할 수 없습니다: %1</translation>
+    </message>
+    <message>
         <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
         <translation>허용한 것보다 많은 권한을 요청하므로 변경 사항이 검토를 기다립니다.</translation>
     </message>

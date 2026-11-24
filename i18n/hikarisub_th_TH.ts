@@ -18589,6 +18589,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ธีมไอคอน: %1</translation>
     </message>
     <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>ใช้ธีมไม่ได้: %1</translation>
+    </message>
+    <message>
         <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
         <translation>ปลั๊กอินนี้ขอมากกว่าที่คุณตกลงไว้ การเปลี่ยนแปลงจึงรอให้คุณตรวจสอบ</translation>
     </message>

@@ -18729,6 +18729,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>படவுரு கருப்பொருள்: %1</translation>
     </message>
     <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>கருப்பொருளைப் பயன்படுத்த முடியாது: %1</translation>
+    </message>
+    <message>
         <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
         <translation>நீங்கள் ஒப்புக்கொண்டதை விட இது அதிகம் கேட்கிறது, எனவே நீங்கள் மதிப்பாய்வு செய்யும் வரை மாற்றம் காத்திருக்கிறது.</translation>
     </message>

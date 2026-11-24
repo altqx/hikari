@@ -18869,6 +18869,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Motyw ikon: %1</translation>
     </message>
     <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>Nie można użyć motywu: %1</translation>
+    </message>
+    <message>
         <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
         <translation>Prosi o więcej niż to, na co wyrażono zgodę, więc zmiana czeka, aż ją przejrzysz.</translation>
     </message>
