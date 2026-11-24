@@ -957,6 +957,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->pluginFeatureUsed(feature);
     };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    m_languageProviders = std::make_unique<LanguageProviders>(*m_pluginRuntime);
     m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
         return pluginSaveBytes(document, destination);
     });
@@ -2094,6 +2095,39 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
+    const auto fieldOf = [](int role) { return role == 1 ? QStringLiteral("translation") : QStringLiteral("text"); };
+    v.editor->tagList()->setHover(
+        [this, fieldOf](int role) { return !m_pluginRuntime->providers("hover", fieldOf(role).toStdString()).empty(); },
+        [this, fieldOf](int role, const QString &text, int position, ui::TagListController::HoverAnswer answer) {
+            const auto target = m_workspace.editingTarget();
+            const auto *session = target ? m_files->session(*target) : nullptr;
+            const auto line = session ? session->selection().active : std::nullopt;
+            if (!line)
+                return answer(std::nullopt);
+            m_languageProviders->hover({target->value, line->value, fieldOf(role), text, position, {}},
+                                       [answer](std::optional<HoverText> hover) {
+                                           answer(hover ? std::optional(ui::ProviderHover{hover->text, hover->source, hover->from, hover->to})
+                                                        : std::nullopt);
+                                       });
+        });
+    v.editor->tagList()->setProviders(
+        [this, fieldOf](int role) { return m_languageProviders->triggers(fieldOf(role)); },
+        [this, fieldOf](int role, const QString &text, int caret, const QString &trigger, ui::TagListController::Rows answer) {
+            const auto target = m_workspace.editingTarget();
+            const auto *session = target ? m_files->session(*target) : nullptr;
+            const auto line = session ? session->selection().active : std::nullopt;
+            if (!line)
+                return answer({});
+            m_languageProviders->complete({target->value, line->value, fieldOf(role), text, caret, trigger},
+                                          [answer](std::vector<CompletionItem> items) {
+                                              std::vector<ui::ProviderRow> rows;
+                                              rows.reserve(items.size());
+                                              for (CompletionItem &item : items)
+                                                  rows.push_back({std::move(item.label), std::move(item.insert), std::move(item.detail),
+                                                                  std::move(item.source), item.from, item.to, item.snippet});
+                                              answer(std::move(rows));
+                                          });
+        });
     v.shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(v.shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this, &v] { m_settings->set("grid.hideColumns", v.shell->hiddenColumns()); });

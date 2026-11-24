@@ -540,6 +540,35 @@ bool PluginRuntime::importFile(const Format &format, std::string bytes, const st
            it->second->process->importFile(format.format.id, std::move(bytes), fileName, std::move(done));
 }
 
+std::vector<PluginRuntime::Provider> PluginRuntime::providers(std::string_view provider, std::string_view field) const
+{
+    std::vector<Provider> out;
+    for (const std::string &id : m_installOrder) {
+        const auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            continue;
+        const plugins::Manifest &m = it->second->manifest;
+        const auto answers = [&](const std::vector<std::string> &fields) { return std::ranges::contains(fields, field); };
+        if (provider == "completion" && m.completion && answers(m.completion->fields))
+            out.push_back({id, QString::fromStdString(m.name), m.completion->triggers});
+        else if (provider == "hover" && m.hover && answers(m.hover->fields))
+            out.push_back({id, QString::fromStdString(m.name), {}});
+    }
+    return out;
+}
+
+bool PluginRuntime::provide(const std::string &plugin, const std::string &provider, const api::Json &request,
+                            PluginProcess::FormatDone done)
+{
+    const auto it = m_plugins.find(plugin);
+    if (it == m_plugins.end())
+        return false;
+    const plugins::Manifest &m = it->second->manifest;
+    if ((provider == "completion" && !m.completion) || (provider == "hover" && !m.hover))
+        return false;
+    return it->second->process->provide(provider, request.dump(), std::move(done));
+}
+
 std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string &id, plugins::Manifest manifest)
 {
     auto plugin = std::make_unique<Running>();
@@ -570,6 +599,10 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
             if (format.imports)
                 request.importers.push_back(format.id);
         }
+        if (m.completion)
+            request.providers.push_back("completion");
+        if (m.hover)
+            request.providers.push_back("hover");
         return request;
     };
     raw->process = std::make_unique<PluginProcess>(m_wiring.helperPath, load, m_wiring.limits);
