@@ -39290,10 +39290,10 @@ private slots:
         if (!f.open(QIODevice::WriteOnly))
             return false;
         f.write(!script.isEmpty() ? script
-                : "[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n"
-                  "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                  "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n"
-                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n");
+                : QByteArray("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n"
+                             "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n"));
         f.close();
         if (!application->openFile(subtitles))
             return false;
