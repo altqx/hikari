@@ -201,7 +201,12 @@ QString expectHeightsAllowingTheLiveMinimum(QJsonObject &expected, const QJsonOb
         if (group.value(QStringLiteral("floating")).toBool() || delta <= kSlack)
             continue;
         const QJsonObject restored = liveOf(group);
-        const bool top = edgeOf(restored, true) < edgeOf(group, true) - kSlack;
+        const bool dockedBelow = std::any_of(groups.begin(), groups.end(), [&](const QJsonValue &o) {
+            const QJsonObject other = o.toObject();
+            return !other.value(QStringLiteral("floating")).toBool()
+                && std::abs(edgeOf(other, true) - edgeOf(group, false)) <= kSlack + 1;
+        });
+        const bool top = edgeOf(restored, true) < edgeOf(group, true) - kSlack || !dockedBelow;
         const int edge = edgeOf(group, top);
         QString why = QStringLiteral("%1 recorded %2 below its live minimum %3, so it restores %4 taller; across its %5 edge:")
                           .arg(group.value(QStringLiteral("current")).toString()).arg(recorded).arg(liveMinimum).arg(delta)
