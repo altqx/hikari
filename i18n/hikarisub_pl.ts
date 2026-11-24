@@ -9067,6 +9067,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>Wycinek wektorowy: rysuj odręcznie</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -15105,6 +15109,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
+        <source>Styles for new files</source>
+        <translation>Style nowych plików</translation>
+    </message>
+    <message>
+        <source>File › New starts with this style catalogue’s styles.</source>
+        <translation>Plik › Nowy zaczyna ze stylami z tego katalogu stylów.</translation>
+    </message>
+    <message>
         <source>Activities</source>
         <translation>Aktywności</translation>
     </message>
@@ -15327,6 +15339,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>Przeciąganie środkowym przyciskiem przesuwa obraz. Uszczypnięcie na touchpadzie powiększa wokół wskaźnika.</translation>
+    </message>
+    <message>
+        <source>Built-in Default</source>
+        <translation>Wbudowany Default</translation>
     </message>
     <message>
         <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
@@ -17846,6 +17862,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>Włączone</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>Ikony</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>Zastępuje ikony interfejsu HikariSub. Ikony, których motyw nie obejmuje, pozostają ikonami HikariSub.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18954,6 +18978,99 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>A theme can’t be used: %1</source>
         <translation>Nie można użyć motywu: %1</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to, so the change waits for you to review it.</source>
+        <translation>Prosi o więcej niż to, na co wyrażono zgodę, więc zmiana czeka, aż ją przejrzysz.</translation>
+    </message>
+    <message>
+        <source>Dev</source>
+        <extracomment>The badge on a plugin run from a folder while its author works on it</extracomment>
+        <translation>Dev</translation>
+    </message>
+    <message>
+        <source>Dev plugin, runs from %1</source>
+        <translation>Wtyczka deweloperska, uruchamiana z %1</translation>
+    </message>
+    <message>
+        <source>Load dev plugin</source>
+        <translation>Wczytaj wtyczkę deweloperską</translation>
+    </message>
+    <message>
+        <source>Reload dev plugin</source>
+        <translation>Wczytaj ponownie wtyczkę deweloperską</translation>
+    </message>
+    <message>
+        <source>Load “%1” %2 from its folder?</source>
+        <translation>Wczytać „%1” %2 z folderu wtyczki?</translation>
+    </message>
+    <message>
+        <source>Reload “%1” %2 from its folder?</source>
+        <translation>Wczytać ponownie „%1” %2 z folderu wtyczki?</translation>
+    </message>
+    <message>
+        <source>It asks for more than you said yes to</source>
+        <translation>Prosi o więcej niż to, na co wyrażono zgodę</translation>
+    </message>
+    <message>
+        <source>A dev plugin runs from %1 as it is, unsigned, and reloads when its files change. It keeps its own data, settings and folders, apart from an installed copy.</source>
+        <translation>Wtyczka deweloperska działa z %1 w obecnej postaci, bez podpisu, i wczytuje się ponownie, gdy zmienią się jej pliki. Ma własne dane, ustawienia i foldery, oddzielne od zainstalowanej kopii.</translation>
+    </message>
+    <message>
+        <source>Unload and remove its data</source>
+        <translation>Wyładuj i usuń dane</translation>
+    </message>
+    <message>
+        <source>Unload dev plugin</source>
+        <translation>Wyładuj wtyczkę deweloperską</translation>
+    </message>
+    <message>
+        <source>Unload “%1”?</source>
+        <translation>Wyładować „%1”?</translation>
+    </message>
+    <message>
+        <source>The installed %1 runs again.</source>
+        <translation>Zainstalowana wtyczka %1 znów będzie działać.</translation>
+    </message>
+    <message>
+        <source>Its folder stays as it is.</source>
+        <translation>Jej folder pozostaje bez zmian.</translation>
+    </message>
+    <message>
+        <source>Unload</source>
+        <translation>Wyładuj</translation>
+    </message>
+    <message>
+        <source>Plugin not unloaded</source>
+        <translation>Nie wyładowano wtyczki</translation>
+    </message>
+    <message>
+        <source>Install dev plugin…</source>
+        <translation>Zainstaluj wtyczkę deweloperską…</translation>
+    </message>
+    <message>
+        <source>Its files changed, but HikariSub kept running the last good ones: %1</source>
+        <translation>Pliki wtyczki się zmieniły, ale HikariSub nadal używa ostatniej działającej wersji: %1</translation>
+    </message>
+    <message>
+        <source>Its files changed and ask for more than you said yes to, so the change waits for you.</source>
+        <translation>Pliki wtyczki się zmieniły i proszą o więcej niż to, na co wyrażono zgodę, więc zmiana czeka na Ciebie.</translation>
+    </message>
+    <message>
+        <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
+        <translation>Zainstalowana wtyczka %1 jest zastąpiona wtyczką deweloperską, dopóki jej nie wyładujesz.</translation>
+    </message>
+    <message>
+        <source>Choose a plugin folder</source>
+        <translation>Wybierz folder wtyczki</translation>
+    </message>
+    <message>
+        <source>Unload…</source>
+        <translation>Wyładuj…</translation>
+    </message>
+    <message>
+        <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
+        <translation>Manifest podaje teraz identyfikator „%1”. Wyładuj wtyczkę i wczytaj folder ponownie.</translation>
     </message>
 </context>
 <context>
@@ -28184,6 +28301,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Środek obrotu</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>Rysuj odręcznie</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>Płaszczyzna</translation>
     </message>
@@ -29038,6 +29159,11 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Tekst na ścieżce</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>Rysuj odręcznie: przytrzymaj i rysuj.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>Wskaż obraz, aby odczytać pozycję. Ctrl+kliknięcie umieszcza tam linijkę.</translation>
     </message>
@@ -29208,16 +29334,20 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Odwróć wycinek przełącza między pokazywaniem tego, co w środku, a tego, co na zewnątrz.</translation>
     </message>
     <message>
-        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, rysowanie odręczne, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
     </message>
     <message>
-        <source>Click to add points and drag them to reshape.</source>
-        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt.</translation>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt. Kliknij segment prawym przyciskiem, aby zamienić go na krzywą lub prostą, podzielić albo usunąć.</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl+kliknięcie zaznacza kilka punktów. Alt podczas przeciągania przyciąga do współrzędnej x lub y innego punktu.</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>W trybie Rysuj odręcznie przytrzymaj przycisk i rysuj. Wygładzanie określa, jak dokładnie krzywe podążają za pociągnięciem.</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -29458,6 +29588,14 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Add B-spline</source>
         <translation>Dodaj krzywą B-sklejaną</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>Wygładzanie</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>Krzywe</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -30083,6 +30221,23 @@ nie działają na komentarzach</translation>
     <message>
         <source>More in the guide</source>
         <translation>Więcej w podręczniku</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>Zamień na krzywą</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>Zamień na linię prostą</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>Wstaw tutaj punkt</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>Usuń segment</translation>
     </message>
 </context>
 <context>

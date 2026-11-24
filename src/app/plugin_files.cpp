@@ -254,8 +254,7 @@ void PluginFiles::place(const Plugin &plugin, const std::string &name, std::func
         done(api::fail(errors::kUnavailable, "the plugin folders are not available here"));
         return;
     }
-    const fs::path base = name == "data" ? m_installer->folders().data : m_installer->folders().cache;
-    const fs::path root = base / pathOf(plugin.id);
+    const fs::path root = name == "data" ? m_installer->dataFolder(plugin.id) : m_installer->cacheFolder(plugin.id);
     std::error_code error;
     fs::create_directories(root, error);
     if (error) {

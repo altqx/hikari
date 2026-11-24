@@ -179,6 +179,33 @@ Item {
         }
 
         SettingsSection {
+            objectName: "appearanceIcons"
+            host: page.dialog
+            key: "appearance.icons"
+            visible: IconTheme.themes.length > 0
+            SettingsRow {
+                host: page.dialog
+                setting: "appearance.iconTheme"
+                ComboBox {
+                    id: iconThemeBox
+                    objectName: "setting_appearance.iconTheme"
+                    readonly property string docsSetting: "appearance.iconTheme"
+                    readonly property string docsControl: "choice"
+                    readonly property var docsValues: choices
+                    readonly property var choices: [{value: "hikarisub", label: "HikariSub"}].concat(
+                        IconTheme.themes.map(t => ({value: t.id, label: t.title + " — " + t.plugin})))
+                    model: choices
+                    textRole: "label"
+                    valueRole: "value"
+                    currentIndex: Math.max(0, choices.findIndex(c => c.value === (page.staged("appearance.iconTheme") || "hikarisub")))
+                    onActivated: index => page.dialog.put("appearance.iconTheme", choices[index].value)
+                    Layout.preferredWidth: 260
+                    Accessible.name: SettingsCatalogue.label("appearance.iconTheme")
+                }
+            }
+        }
+
+        SettingsSection {
             objectName: "appearanceHighContrast"
             host: page.dialog
             key: "appearance.uiColours"

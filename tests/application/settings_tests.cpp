@@ -450,7 +450,7 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
                            "grammar.group.properNouns", "scriptProperties.title", "scriptProperties.updateOn",
                            "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "ai.exclude",
                            "translation.sourceLanguage", "translation.targetLanguage", "export.format",
-                           "explorer.exclude"})
+                           "explorer.exclude", "new.styleCatalog"})
         EXPECT_TRUE(findSetting(id)->projectable) << id;
     for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
                            "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",

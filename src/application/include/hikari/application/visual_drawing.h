@@ -84,6 +84,8 @@ public:
                   ValueEdit edit = ValueEdit::Commit) override;
     // Pathfinder's entries, as setOption("pathfinder", i) takes them.
     void previewOption(const std::string &name, int index, VisualHost &host) override;
+    std::optional<Segment> segmentAt(PointF pos, const VisualHost &host) const override;
+    bool editSegment(Segment segment, SegmentEdit edit, PointF pos, VisualHost &host) override;
     // Rereads the preset at `listSelection`, even if unchanged. Hidden, the tool reads its Line on reset.
     void presetsChanged(int listSelection, VisualHost &host, bool shown = true);
 
@@ -119,6 +121,7 @@ public:
 private:
     void readActive(VisualHost &host);
     void apply(VisualHost &host, bool commit);
+    void commitPoints(VisualHost &host);
     VectorEditor::Callbacks callbacks(VisualHost &host);
     void syncMove(const VisualHost &host) const;
     void shapePointer(const Pointer &event, VisualHost &host);
@@ -164,6 +167,7 @@ private:
 
     // Set by the first sample after a reset; later samples replace only the drawing.
     bool m_placed = false;
+    std::uint64_t m_strokeRevision = 0;
     std::size_t m_placedStart = 0, m_placedEnd = 0;
     bool m_began = false;
     bool m_inKey = false, m_keyCommit = false;

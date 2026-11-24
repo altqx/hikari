@@ -55,6 +55,7 @@
 #include "dialog_placement.h"
 #include "list_files.h"
 #include "project_file.h"
+#include "icon_theme.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -730,6 +731,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
     m_renderer.countCost(m_settings->boolean("video.renderCost"));
     ui::theme::useSettings(m_settings.get());
+    ui::icons::useSettings(m_settings.get());
     for (const QString &problem : ui::theme::loadProblems())
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Options", "Themes"),
                       QCoreApplication::translate("HikariSub.Options", "A built-in theme could not be read, so Dark is shown."),
@@ -964,6 +966,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
+    connect(m_pluginManager.get(), &PluginManager::devReloaded, m_pluginRuntime.get(), &PluginRuntime::reload);
+    connect(m_pluginManager.get(), &PluginManager::devProblem, this,
+            [this](const QString &, const QString &name, const QString &problem) { m_log->log(problem, ui::LogController::Error, name); });
     m_automationHotkeys->setPluginRunner(
         [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
@@ -1090,6 +1095,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
+        m_files->setNewFileStyles([this]() -> std::optional<application::NewFileStyles> {
+            const auto &window = views(m_workspace.activeWindow());
+            const std::string name = (window.settings ? window.settings->settings() : m_settings->settings()).text("new.styleCatalog");
+            if (name.empty())
+                return std::nullopt;
+            m_styleManager->projectChanged();
+            const std::u8string catalog(name.begin(), name.end());
+            auto styles = m_styleManager->catalogStore().list(catalog);
+            if (!styles)
+                return std::nullopt;
+            return application::NewFileStyles{catalog, std::move(*styles)};
+        });
     }
     {
         AlignToVideoController::Hooks hooks;
@@ -7892,6 +7909,9 @@ bool validAppearance(std::string_view id, const QVariant &value)
             return ui::theme::find(value.toString()) && ui::theme::typeOf(value.toString()) == ui::theme::Type(i);
     if (id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting)
         return value.canConvert<QStringList>();
+    if (id == ui::icons::kThemeSetting)
+        return value.toString() == QLatin1String(ui::icons::kBuiltinTheme)
+            || std::ranges::contains(ui::icons::themes(), value.toString(), &ui::icons::PluginIconTheme::id);
     return false;
 }
 }
@@ -7963,7 +7983,7 @@ namespace {
 constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage", "translation.glossary",
                                                "translation.translator", "translation.reviewer", "ai.exclude",
                                                "translation.targetLanguage", "export.format", "privacy.discordProject",
-                                               "privacy.discordShow"};
+                                               "privacy.discordShow", "new.styleCatalog"};
 
 void insertExtras(QVariantMap &values, const application::Settings &settings)
 {

@@ -21,7 +21,7 @@ Without a Project nothing changes: only the user's tier is listed, with no chips
 
 | Store | Project copy | Rule | Notes |
 | --- | --- | --- | --- |
-| Style catalogues | `.hikari/catalogs/<name>.sty` | Hidden by name | The Style manager's Catalogue box. `Last Style Storage`, `styles.lastCatalog` and Convert's style catalogue (`convert.styleCatalog`) name a catalogue, which resolves the Project first. The user's `Default` can't be deleted or moved, only copied; the Project's can be deleted, and the user's shows again. |
+| Style catalogues | `.hikari/catalogs/<name>.sty` | Hidden by name | The Style manager's Catalogue box. `Last Style Storage`, `styles.lastCatalog`, Convert's style catalogue (`convert.styleCatalog`) and the catalogue new files take their styles from (`new.styleCatalog`, which a Project can set too) name a catalogue, which resolves the Project first. The user's `Default` can't be deleted or moved, only copied; the Project's can be deleted, and the user's shows again. |
 | Font catalogues | `.hikari/catalogs/fonts.toml` | Hidden by name | The Font catalogues window and every font list that filters by catalogue. Load from a file and the autosave copies (`fonts.autosave-<n>.toml`) are the user's only. |
 | Layouts | `.hikari/layouts.json` | Hidden by name | Save layout as, Manage layouts and the layout menu, which lists the Project's first. Applying a layout writes neither file. |
 | Drawing shapes | `.hikari/shapes.toml` | Hidden by name | Edit shapes; the drawing tool offers the visible shapes. Restore default shapes replaces only the user's. |
