@@ -13,6 +13,12 @@ Pane {
     property int lineMs: -1
     readonly property int ms: qcNotes.parseTime(time.text)
     readonly property bool canSave: ms >= 0 && note.text.trim().length > 0
+    readonly property font labelFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    readonly property font timeFont: {
+        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        f.features = { "tnum": 1 }
+        return f
+    }
     signal save(int ms, string section, string text, bool done)
     signal cancel()
     signal remove()
@@ -37,7 +43,7 @@ Pane {
     }
 
     padding: 8
-    background: Rectangle { color: Theme.raised; border.color: Theme.accent; radius: 4 }
+    background: Rectangle { color: Theme.raised; border.color: Theme.line; radius: Theme.radius }
     Keys.onPressed: event => {
         if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & Qt.ControlModifier)) {
             editor.trySave()
@@ -48,13 +54,25 @@ Pane {
         }
     }
 
+    Label {
+        id: fontSource
+        visible: false
+    }
+    TextMetrics {
+        id: timeMetrics
+        font: editor.timeFont
+        text: "0:00:00.00"
+    }
+
     GridLayout {
         anchors.fill: parent
         columns: 2
         columnSpacing: 8
-        rowSpacing: 6
+        rowSpacing: 8
         Label {
             text: qsTr("Time")
+            font: editor.labelFont
+            color: Theme.muted
             Layout.alignment: Qt.AlignVCenter
         }
         RowLayout {
@@ -62,10 +80,13 @@ Pane {
             TextField {
                 id: time
                 objectName: "qcNoteTime"
-                font.family: "monospace"
+                font: editor.timeFont
+                implicitHeight: Theme.controlHeight
+                topPadding: 0
+                bottomPadding: 0
                 Accessible.name: qsTr("Time")
                 color: editor.ms >= 0 ? Theme.text : Theme.danger
-                Layout.preferredWidth: 110
+                Layout.preferredWidth: Math.ceil(timeMetrics.advanceWidth) + leftPadding + rightPadding + 2
                 Keys.forwardTo: [editor]
             }
             LinkButton {
@@ -85,19 +106,26 @@ Pane {
         }
         Label {
             text: qsTr("Section")
+            font: editor.labelFont
+            color: Theme.muted
             Layout.alignment: Qt.AlignVCenter
         }
         ComboBox {
             id: sectionBox
             objectName: "qcNoteSection"
             editable: true
+            font: fontSource.font
+            implicitHeight: Theme.controlHeight
             Accessible.name: qsTr("Section")
             Layout.fillWidth: true
             Keys.forwardTo: [editor]
         }
         Label {
             text: qsTr("Note")
+            font: editor.labelFont
+            color: Theme.muted
             Layout.alignment: Qt.AlignTop
+            Layout.topMargin: note.topPadding
         }
         ScrollView {
             Layout.fillWidth: true
@@ -120,6 +148,10 @@ Pane {
                 objectName: "qcNoteDoneBox"
                 visible: !editor.adding
                 text: qsTr("Done")
+                font: fontSource.font
+                implicitHeight: Theme.controlHeight
+                topPadding: 0
+                bottomPadding: 0
             }
             DangerButton {
                 objectName: "qcNoteDelete"
@@ -130,6 +162,7 @@ Pane {
             Label {
                 visible: editor.adding
                 text: qsTr("Ctrl+Enter saves · Esc cancels")
+                font: editor.labelFont
                 color: Theme.muted
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -138,6 +171,9 @@ Pane {
             Button {
                 objectName: "qcNoteCancel"
                 text: qsTr("Cancel")
+                implicitHeight: Theme.controlHeight
+                topPadding: 0
+                bottomPadding: 0
                 onClicked: editor.cancel()
             }
             PrimaryButton {

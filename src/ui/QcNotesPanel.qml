@@ -27,6 +27,20 @@ FocusScope {
     property string message: ""
     property bool exporting: false
     property string importName: ""
+    readonly property font labelFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    readonly property font headingFont: TypeRoles.sized(fontSource.font, 12, Font.DemiBold)
+    readonly property font titleFont: TypeRoles.sized(fontSource.font, 13, Font.DemiBold)
+    readonly property font numberFont: {
+        const f = Qt.font(fontSource.font)
+        f.features = { "tnum": 1 }
+        return f
+    }
+    readonly property font countFont: {
+        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        f.features = { "tnum": 1 }
+        return f
+    }
+    readonly property int rowInset: Math.max(0, Math.floor((Theme.controlHeight - lineMetrics.height) / 2))
 
     function say(text) {
         message = text
@@ -186,6 +200,14 @@ FocusScope {
         })
     }
 
+    Label {
+        id: fontSource
+        visible: false
+    }
+    FontMetrics {
+        id: lineMetrics
+        font: fontSource.font
+    }
     Timer {
         id: messageTimer
         interval: 8000
@@ -279,7 +301,7 @@ FocusScope {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 8
-        spacing: 6
+        spacing: 8
 
         RowLayout {
             Layout.fillWidth: true
@@ -289,6 +311,7 @@ FocusScope {
                 objectName: "qcNotesCount"
                 text: qsTr("In this file") + " · " + qsTr("%n note(s)", "", panel.qcNotes.total)
                       + (panel.problems.problemCount > 0 ? " · " + qsTr("%n problem(s)", "", panel.problems.problemCount) : "")
+                font: panel.countFont
                 color: Theme.muted
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -297,6 +320,9 @@ FocusScope {
                 objectName: "qcNotesAdd"
                 iconRole: "add"
                 text: qsTr("Add note")
+                implicitHeight: Theme.controlHeight
+                topPadding: 0
+                bottomPadding: 0
                 enabled: panel.qcNotes.editable && panel.editing !== newNote
                 onClicked: panel.startAdding()
             }
@@ -308,27 +334,39 @@ FocusScope {
             visible: panel.exporting
             Layout.fillWidth: true
             padding: 8
-            background: Rectangle { color: Theme.raised; border.color: Theme.line; radius: 4 }
+            background: Rectangle { color: Theme.raised; border.color: Theme.line; radius: Theme.radius }
             ColumnLayout {
                 anchors.fill: parent
                 spacing: 4
-                Label { text: qsTr("Export QC notes"); font.bold: true }
+                Label { text: qsTr("Export QC notes"); font: panel.titleFont }
                 CheckBox {
                     id: includeDone
                     objectName: "qcNotesExportDone"
                     text: qsTr("Include done notes")
+                    font: fontSource.font
+                    implicitHeight: Theme.controlHeight
+                    topPadding: 0
+                    bottomPadding: 0
                 }
                 CheckBox {
                     id: onlySection
                     objectName: "qcNotesExportSection"
+                    font: fontSource.font
+                    implicitHeight: Theme.controlHeight
+                    topPadding: 0
+                    bottomPadding: 0
                     enabled: panel.qcNotes.section.length > 0
                     checked: enabled
                     text: enabled ? qsTr("Only the chosen section (%1)").arg(panel.qcNotes.section) : qsTr("Only the chosen section")
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignRight
+                    spacing: 8
                     Button {
                         text: qsTr("Cancel")
+                        implicitHeight: Theme.controlHeight
+                        topPadding: 0
+                        bottomPadding: 0
                         onClicked: panel.exporting = false
                     }
                     PrimaryButton {
@@ -364,9 +402,10 @@ FocusScope {
         Flow {
             objectName: "problemsSeverities"
             Layout.fillWidth: true
-            spacing: 6
+            spacing: 4
             visible: panel.problems.problemCount > 0
             FilterChip {
+                implicitHeight: Theme.smallControlHeight
                 objectName: "problemsSeverityAll"
                 text: qsTr("All")
                 on: panel.problems.severity.length === 0
@@ -375,6 +414,7 @@ FocusScope {
             Repeater {
                 model: panel.problems.severities
                 FilterChip {
+                    implicitHeight: Theme.smallControlHeight
                     required property var modelData
                     objectName: "problemsSeverity_" + modelData.id
                     text: modelData.name + "  " + modelData.count
@@ -396,9 +436,10 @@ FocusScope {
         Flow {
             objectName: "problemsSources"
             Layout.fillWidth: true
-            spacing: 6
+            spacing: 4
             visible: panel.problems.problemCount > 0
             FilterChip {
+                implicitHeight: Theme.smallControlHeight
                 objectName: "problemsSourceAll"
                 text: qsTr("All sources")
                 on: panel.problems.source.length === 0
@@ -407,6 +448,7 @@ FocusScope {
             Repeater {
                 model: panel.problems.sources
                 FilterChip {
+                    implicitHeight: Theme.smallControlHeight
                     required property var modelData
                     objectName: "problemsSource_" + modelData.id
                     text: modelData.name + "  " + modelData.count
@@ -419,9 +461,10 @@ FocusScope {
         Flow {
             objectName: "qcNotesSections"
             Layout.fillWidth: true
-            spacing: 6
+            spacing: 4
             visible: panel.qcNotes.total > 0 && (panel.problems.source.length === 0 || panel.problems.source === "qc")
             FilterChip {
+                implicitHeight: Theme.smallControlHeight
                 objectName: "qcNotesSectionAll"
                 text: qsTr("All") + "  " + panel.qcNotes.total
                 on: panel.qcNotes.section.length === 0
@@ -430,6 +473,7 @@ FocusScope {
             Repeater {
                 model: panel.qcNotes.sections
                 FilterChip {
+                    implicitHeight: Theme.smallControlHeight
                     required property var modelData
                     objectName: "qcNotesSection_" + modelData.name
                     text: modelData.name + "  " + (panel.qcNotes.hideDone && modelData.open !== modelData.count
@@ -451,7 +495,6 @@ FocusScope {
             model: panel.entries
             currentIndex: panel.chosenRow
             keyNavigationEnabled: false
-            spacing: 2
             ScrollBar.vertical: ScrollBar {}
             Accessible.role: Accessible.List
             Accessible.name: qsTr("Problems")
@@ -460,14 +503,14 @@ FocusScope {
             section.delegate: Label {
                 required property string section
                 width: ListView.view.width
-                topPadding: 6
-                bottomPadding: 2
-                leftPadding: 6
+                topPadding: 8
+                bottomPadding: 4
+                leftPadding: 4
                 text: section
                 textFormat: Text.PlainText
                 elide: Text.ElideRight
                 color: Theme.muted
-                font.bold: true
+                font: panel.headingFont
                 Accessible.role: Accessible.Heading
                 Accessible.name: text
             }
@@ -505,7 +548,8 @@ FocusScope {
                 readonly property bool isEditing: isNote && panel.editing === modelData.index
                 readonly property bool isCurrent: isNote && panel.qcNotes.current === modelData.index
                 width: ListView.view.width
-                implicitHeight: isEditing ? rowEditor.implicitHeight : (isNote ? noteRow.implicitHeight : problemRow.implicitHeight) + 8
+                implicitHeight: isEditing ? rowEditor.implicitHeight
+                                          : Math.max(Theme.controlHeight, isNote ? noteRow.implicitHeight : problemRow.implicitHeight)
                 objectName: (isNote ? "qcNote_" : "problem_") + index
                 Accessible.role: Accessible.ListItem
                 Accessible.name: isNote
@@ -516,8 +560,8 @@ FocusScope {
                 Rectangle {
                     anchors.fill: parent
                     visible: !row.isEditing
-                    radius: 3
-                    color: row.ListView.isCurrentItem ? Theme.select : mouse.containsMouse ? Theme.raised : "transparent"
+                    radius: Theme.radius
+                    color: row.ListView.isCurrentItem ? Theme.select : mouse.containsMouse ? Theme.hover : "transparent"
                     border.width: row.isCurrent ? 1 : 0
                     border.color: Theme.accent
                 }
@@ -546,8 +590,8 @@ FocusScope {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
+                    anchors.leftMargin: 4
+                    anchors.rightMargin: 4
                     spacing: 8
                     Rectangle {
                         objectName: "problemSeverity"
@@ -557,20 +601,24 @@ FocusScope {
                         radius: 4
                         color: ink
                         Layout.alignment: Qt.AlignTop
-                        Layout.topMargin: 4
+                        Layout.topMargin: (Theme.controlHeight - height) / 2
                     }
                     Label {
                         text: row.modelData.message ?? ""
                         textFormat: Text.PlainText
                         wrapMode: Text.Wrap
+                        topPadding: panel.rowInset
+                        bottomPadding: panel.rowInset
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignBaseline
                     }
                     Label {
                         text: row.isNote ? "" : row.modelData.fixes.length > 0
                               ? qsTr("%1 · %n fix(es)", "", row.modelData.fixes.length).arg(row.modelData.sourceName)
                               : row.modelData.sourceName
+                        font: panel.labelFont
                         color: Theme.muted
-                        Layout.alignment: Qt.AlignTop
+                        Layout.alignment: Qt.AlignBaseline
                     }
                 }
                 RowLayout {
@@ -579,8 +627,8 @@ FocusScope {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
+                    anchors.leftMargin: 4
+                    anchors.rightMargin: 4
                     spacing: 8
                     opacity: row.modelData.done === true ? 0.55 : 1
                     CheckBox {
@@ -588,27 +636,33 @@ FocusScope {
                         checked: row.modelData.done === true
                         enabled: panel.qcNotes.editable
                         focusPolicy: Qt.NoFocus
+                        implicitHeight: Theme.controlHeight
+                        padding: 0
                         Accessible.name: qsTr("Done")
                         onClicked: panel.qcNotes.setDone(row.modelData.index, checked)
                         Layout.alignment: Qt.AlignTop
                     }
                     Label {
                         text: row.modelData.timeText ?? ""
-                        font.family: "monospace"
-                        Layout.alignment: Qt.AlignTop
+                        font: panel.numberFont
+                        Layout.alignment: Qt.AlignBaseline
                     }
                     Label {
                         text: row.modelData.section ?? ""
                         visible: panel.qcNotes.section.length === 0
+                        font: panel.labelFont
                         color: Theme.muted
-                        Layout.alignment: Qt.AlignTop
+                        Layout.alignment: Qt.AlignBaseline
                     }
                     Label {
                         text: row.modelData.text ?? ""
                         textFormat: Text.PlainText
                         wrapMode: Text.Wrap
                         font.strikeout: row.modelData.done === true
+                        topPadding: panel.rowInset
+                        bottomPadding: panel.rowInset
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignBaseline
                     }
                 }
                 QcNoteEditor {
@@ -642,7 +696,7 @@ FocusScope {
             Label {
                 visible: !panel.qcNotes.hasDocument || panel.qcNotes.canKeepNotes
                 text: panel.qcNotes.hasDocument ? qsTr("Drop a notes file here") : qsTr("Open a subtitle file to keep QC notes in it.")
-                font.bold: true
+                font: panel.titleFont
                 Layout.alignment: Qt.AlignHCenter
             }
             Label {
@@ -656,15 +710,22 @@ FocusScope {
             RowLayout {
                 visible: panel.qcNotes.hasDocument && panel.qcNotes.canKeepNotes
                 Layout.alignment: Qt.AlignHCenter
+                spacing: 8
                 Button {
                     objectName: "qcNotesEmptyImport"
                     text: qsTr("Import notes file…")
+                    implicitHeight: Theme.controlHeight
+                    topPadding: 0
+                    bottomPadding: 0
                     enabled: panel.qcNotes.editable
                     onClicked: panel.openImport()
                 }
                 Button {
                     objectName: "qcNotesEmptyPaste"
                     text: qsTr("Import from the clipboard")
+                    implicitHeight: Theme.controlHeight
+                    topPadding: 0
+                    bottomPadding: 0
                     enabled: panel.qcNotes.editable && panel.qcNotes.clipboardHasNotes
                     onClicked: panel.importClipboard()
                 }
@@ -672,6 +733,7 @@ FocusScope {
             Label {
                 visible: panel.qcNotes.hasDocument && panel.qcNotes.canKeepNotes
                 text: qsTr("Notes start with a time: 3:24 - …\n[Section] lines group them.")
+                font: panel.labelFont
                 color: Theme.muted
                 horizontalAlignment: Text.AlignHCenter
                 Layout.alignment: Qt.AlignHCenter
@@ -691,7 +753,7 @@ FocusScope {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: 4
             visible: panel.qcNotes.total > 0
             IconToolButton {
                 objectName: "qcNotesPrevious"
@@ -708,12 +770,18 @@ FocusScope {
             CheckBox {
                 objectName: "qcNotesHideDone"
                 text: qsTr("Hide done")
+                font: fontSource.font
+                implicitHeight: Theme.controlHeight
+                topPadding: 0
+                bottomPadding: 0
+                Layout.leftMargin: 4
                 checked: panel.qcNotes.hideDone
                 onToggled: panel.qcNotes.hideDone = checked
             }
             Item { Layout.fillWidth: true }
             Label {
                 objectName: "qcNotesPosition"
+                font: panel.countFont
                 color: Theme.muted
                 text: panel.chosenRow >= 0 ? qsTr("%1 of %2").arg(panel.chosenRow + 1, panel.entries.length)
                                            : qsTr("%n note(s)", "", panel.notes.length)
