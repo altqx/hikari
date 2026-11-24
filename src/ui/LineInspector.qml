@@ -16,10 +16,10 @@ ColumnLayout {
     }
     readonly property bool wide: step === "wide"
     spacing: 6
-    readonly property int slotSpacing: 8
+    readonly property int slotSpacing: 6
     readonly property int timeWidth: Math.ceil(timeMetrics.advanceWidth) + startField.leftPadding + startField.rightPadding + 2
     readonly property int marginWidth: 56
-    readonly property int marginMinimum: 48
+    readonly property int marginMinimum: 44
     readonly property font labelFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
     readonly property font valueFont: {
         const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
@@ -196,7 +196,7 @@ ColumnLayout {
         editable: true
         currentIndex: -1
         Layout.fillWidth: true
-        Layout.minimumWidth: 52
+        Layout.minimumWidth: 44
         validator: RegularExpressionValidator { regularExpression: /[^,]*/ }
         function sync() {
             if (editText === value)
@@ -316,8 +316,10 @@ ColumnLayout {
                 id: comment
                 objectName: "commentBox"
                 text: qsTr("Comment")
-                topPadding: 4
-                bottomPadding: 4
+                font: inspector.labelFont
+                implicitHeight: Theme.controlHeight
+                topPadding: 0
+                bottomPadding: 0
                 leftPadding: 0
                 rightPadding: 0
                 checked: inspector.editor.comment
@@ -426,8 +428,10 @@ ColumnLayout {
                 currentIndex: inspector.editor.styleIndex
                 enabled: inspector.editor.editable && inspector.editor.assFields
                 focusPolicy: Qt.TabFocus
+                font: inspector.valueFont
+                implicitHeight: Theme.controlHeight
                 Layout.fillWidth: true
-                Layout.minimumWidth: 100
+                Layout.minimumWidth: 84
                 Accessible.name: qsTr("Style")
                 Accessible.description: qsTr("Line style")
                 ToolTip.visible: hovered

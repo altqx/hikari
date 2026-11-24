@@ -180,6 +180,33 @@ class ThemeTests : public QObject {
     Q_OBJECT
 
 private slots:
+    void aPluginThemeIsChosenAndFallsBackWhenItGoes()
+    {
+        const QString dawn = QStringLiteral("plugin:com.example.looks/dawn");
+        ui::SettingsStore store;
+        ui::theme::useSettings(&store);
+        store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), false);
+        ui::theme::install({dawn, QStringLiteral("Dawn"), QStringLiteral("Looks"), ui::theme::find(QStringLiteral("light"))->file});
+        store.setValue(QLatin1String(ui::theme::kThemeSetting), dawn);
+        store.setValue(QLatin1String(ui::theme::kPairSettings[0]), dawn);
+        QCOMPARE(ui::theme::current().id, dawn);
+        ui::Theme singleton;
+        const QVariantList listed = singleton.property("themeList").toList();
+        QCOMPARE(listed.last().toMap().value(QStringLiteral("plugin")).toString(), QStringLiteral("Looks"));
+
+        ui::theme::uninstall(dawn);
+        QCOMPARE(store.value(QLatin1String(ui::theme::kThemeSetting)).toString(), QStringLiteral("light"));
+        QCOMPARE(store.value(QLatin1String(ui::theme::kPairSettings[0])).toString(), QStringLiteral("light"));
+        QCOMPARE(ui::theme::current().id, QStringLiteral("light"));
+        QVERIFY(!ui::theme::find(dawn));
+
+        const QString night = QStringLiteral("plugin:com.example.looks/night");
+        store.setValue(QLatin1String(ui::theme::kPairSettings[1]), night);
+        ui::theme::fallBackFrom(night, ui::theme::Type::Dark);
+        QCOMPARE(store.value(QLatin1String(ui::theme::kPairSettings[1])).toString(), QStringLiteral("dark"));
+        ui::theme::useSettings(nullptr);
+    }
+
     void initTestCase()
     {
         // Qt Quick Controls take a style only before any engine loads them.
