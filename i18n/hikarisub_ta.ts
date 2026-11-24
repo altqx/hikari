@@ -18849,6 +18849,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>அதன் மேனிஃபெச்ட் இப்போது அடையாளம் “%1” என்கிறது. அதன் ஏற்றத்தை நீக்கி, கோப்புறையை மீண்டும் ஏற்றவும்.</translation>
     </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>கருப்பொருள் செருகுநிரலாக ஒரு நகலைச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>கருப்பொருள் செருகுநிரலைச் சேமிக்கும் இடத்தைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 நகல்</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>கருப்பொருள் செருகுநிரலை %1 இல் எழுத முடியவில்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
