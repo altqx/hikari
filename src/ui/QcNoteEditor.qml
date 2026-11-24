@@ -171,9 +171,6 @@ Pane {
             Button {
                 objectName: "qcNoteCancel"
                 text: qsTr("Cancel")
-                implicitHeight: Theme.controlHeight
-                topPadding: 0
-                bottomPadding: 0
                 onClicked: editor.cancel()
             }
             PrimaryButton {

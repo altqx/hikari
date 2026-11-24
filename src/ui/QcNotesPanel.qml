@@ -364,9 +364,6 @@ FocusScope {
                     spacing: 8
                     Button {
                         text: qsTr("Cancel")
-                        implicitHeight: Theme.controlHeight
-                        topPadding: 0
-                        bottomPadding: 0
                         onClicked: panel.exporting = false
                     }
                     PrimaryButton {
@@ -708,18 +705,12 @@ FocusScope {
                 Button {
                     objectName: "qcNotesEmptyImport"
                     text: qsTr("Import notes file…")
-                    implicitHeight: Theme.controlHeight
-                    topPadding: 0
-                    bottomPadding: 0
                     enabled: panel.qcNotes.editable
                     onClicked: panel.openImport()
                 }
                 Button {
                     objectName: "qcNotesEmptyPaste"
                     text: qsTr("Import from the clipboard")
-                    implicitHeight: Theme.controlHeight
-                    topPadding: 0
-                    bottomPadding: 0
                     enabled: panel.qcNotes.editable && panel.qcNotes.clipboardHasNotes
                     onClicked: panel.importClipboard()
                 }
