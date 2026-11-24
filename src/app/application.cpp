@@ -1090,6 +1090,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
+        m_files->setNewFileStyles([this]() -> std::optional<application::NewFileStyles> {
+            const auto &window = views(m_workspace.activeWindow());
+            const std::string name = (window.settings ? window.settings->settings() : m_settings->settings()).text("new.styleCatalog");
+            if (name.empty())
+                return std::nullopt;
+            m_styleManager->projectChanged();
+            const std::u8string catalog(name.begin(), name.end());
+            auto styles = m_styleManager->catalogStore().list(catalog);
+            if (!styles)
+                return std::nullopt;
+            return application::NewFileStyles{catalog, std::move(*styles)};
+        });
     }
     {
         AlignToVideoController::Hooks hooks;
@@ -7902,7 +7914,7 @@ namespace {
 constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage", "translation.glossary",
                                                "translation.translator", "translation.reviewer", "ai.exclude",
                                                "translation.targetLanguage", "export.format", "privacy.discordProject",
-                                               "privacy.discordShow"};
+                                               "privacy.discordShow", "new.styleCatalog"};
 
 void insertExtras(QVariantMap &values, const application::Settings &settings)
 {

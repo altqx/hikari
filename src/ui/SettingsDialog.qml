@@ -32,6 +32,7 @@ DialogWindow {
     property var dictionaries: []
     property var catalogs: []
     property var styles: []
+    readonly property var newFileCatalogs: [{value: "", text: qsTr("Built-in Default")}].concat(catalogs.map(name => ({value: name, text: name})))
     property var renderers: []
     property var rendererLabels: []
     property var outputDevices: []
@@ -2154,6 +2155,27 @@ DialogWindow {
                     Section {
                         key: "subtitleProperties.files"
                         SettingCheck { setting: "subtitles.layoutInFile" }
+                        SettingsRow {
+                            host: dialog
+                            setting: "new.styleCatalog"
+                            ComboBox {
+                                id: newStyleCatalog
+                                objectName: "setting_new.styleCatalog"
+                                model: dialog.newFileCatalogs
+                                textRole: "text"
+                                Layout.preferredWidth: 260
+                                Accessible.name: (SettingsCatalogue.revision >= 0 ? SettingsCatalogue.label("new.styleCatalog") : "")
+                                currentIndex: {
+                                    dialog.changedIds
+                                    const v = dialog.settings ? dialog.settings.value("new.styleCatalog") : ""
+                                    return Math.max(0, dialog.newFileCatalogs.findIndex(c => c.value === v))
+                                }
+                                onActivated: index => {
+                                    dialog.settings.setValue("new.styleCatalog", dialog.newFileCatalogs[index].value)
+                                    dialog.refreshChanged()
+                                }
+                            }
+                        }
                     }
                 }
 

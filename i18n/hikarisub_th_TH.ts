@@ -14768,6 +14768,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เลื่อนไปยังบรรทัดที่มองเห็นหลังออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Styles for new files</source>
+        <translation>สไตล์สำหรับไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>File › New starts with this style catalogue’s styles.</source>
+        <translation>ไฟล์ › ใหม่ จะเริ่มด้วยสไตล์จากแคตตาล็อกสไตล์นี้</translation>
+    </message>
+    <message>
         <source>Activities</source>
         <translation>กิจกรรม</translation>
     </message>
@@ -14990,6 +14998,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>ลากด้วยปุ่มกลางเพื่อเลื่อนภาพ การจีบนิ้วบนทัชแพดจะซูมรอบตัวชี้</translation>
+    </message>
+    <message>
+        <source>Built-in Default</source>
+        <translation>Default ในตัว</translation>
     </message>
     <message>
         <source>A project can’t set “%1”, so it opens on the Yours tab.</source>

@@ -245,6 +245,7 @@ constexpr Row kRows[] = {
     {"scriptProperties.update", "subtitleProperties.credits", {QT_TRANSLATE_NOOP("HikariSub.ScriptProperties", "Editing"), "HikariSub.ScriptProperties"}, {}},
     {"scriptProperties.updateOn", "subtitleProperties.credits", {QT_TRANSLATE_NOOP("HikariSub.ScriptProperties", "Editing"), "HikariSub.ScriptProperties"}, {}},
     {"subtitles.layoutInFile", "subtitleProperties.files", {QT_TRANSLATE_NOOP("HikariSub.Options", "Save the panel layout in subtitle files")}, {}},
+    {"new.styleCatalog", "subtitleProperties.files", {QT_TRANSLATE_NOOP("HikariSub.Options", "Styles for new files")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "File › New starts with this style catalogue’s styles.")}},
     {"automation.traceLevel", "automation.debugging", {QT_TRANSLATE_NOOP("HikariSub.Options", "Lua trace level")}, {}},
     {"automation.fillLastAnswers", "automation.scriptDialogs", {QT_TRANSLATE_NOOP("HikariSub.Options", "Fill in my last answers")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "Script dialogs open with the answers you gave last time. A value the script works out itself, from the selection say, still wins. Off: they open with the script’s values, and ⋯ › Last used fills yours in.")}},
     {"ai.off", "ai.aiFeatures", {QT_TRANSLATE_NOOP("HikariSub.Options", "Turn off all AI features")}, {}},
