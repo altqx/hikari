@@ -14999,6 +14999,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>முழுத் திரையிலிருந்து வெளியேறிய பின் தெரியும் வரியைக் கண்டுபிடி</translation>
     </message>
     <message>
+        <source>Styles for new files</source>
+        <translation>புதிய கோப்புகளுக்கான பாணிகள்</translation>
+    </message>
+    <message>
+        <source>File › New starts with this style catalogue’s styles.</source>
+        <translation>கோப்பு › புதிய இந்தப் பாணிப் பட்டியலின் பாணிகளுடன் தொடங்கும்.</translation>
+    </message>
+    <message>
         <source>Activities</source>
         <translation>செயல்பாடுகள்</translation>
     </message>
@@ -15221,6 +15229,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>நடுப் பொத்தானால் இழுத்தால் படம் நகரும். தொடுதிட்டில் கிள்ளினால் சுட்டியைச் சுற்றிப் பெரிதாக்கும்.</translation>
+    </message>
+    <message>
+        <source>Built-in Default</source>
+        <translation>உள்ளமைந்த Default</translation>
     </message>
     <message>
         <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
@@ -18831,6 +18843,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Icon theme: %1</source>
         <translation>படவுரு கருப்பொருள்: %1</translation>
+    </message>
+    <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>கருப்பொருளைப் பயன்படுத்த முடியாது: %1</translation>
     </message>
 </context>
 <context>

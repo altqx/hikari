@@ -15126,6 +15126,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
+        <source>Styles for new files</source>
+        <translation>Style nowych plików</translation>
+    </message>
+    <message>
+        <source>File › New starts with this style catalogue’s styles.</source>
+        <translation>Plik › Nowy zaczyna ze stylami z tego katalogu stylów.</translation>
+    </message>
+    <message>
         <source>Activities</source>
         <translation>Aktywności</translation>
     </message>
@@ -15348,6 +15356,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>Przeciąganie środkowym przyciskiem przesuwa obraz. Uszczypnięcie na touchpadzie powiększa wokół wskaźnika.</translation>
+    </message>
+    <message>
+        <source>Built-in Default</source>
+        <translation>Wbudowany Default</translation>
     </message>
     <message>
         <source>A project can’t set “%1”, so it opens on the Yours tab.</source>
@@ -18971,6 +18983,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Icon theme: %1</source>
         <translation>Motyw ikon: %1</translation>
+    </message>
+    <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>Nie można użyć motywu: %1</translation>
     </message>
 </context>
 <context>

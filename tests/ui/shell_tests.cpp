@@ -761,7 +761,7 @@ class ShellTest : public QObject {
         return QMetaObject::invokeMethod(window, "runVideoHotkey",
                                          Q_ARG(QVariant, QString::fromLatin1(next ? "VIDEO_NEXT_FILE" : "VIDEO_PREVIOUS_FILE")));
     }
-    void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
+    void widenForTheInspectorBar() { window->resize(2560, std::max(window->height(), 900)); }
     bool timingBesideTheLineEditor()
     {
         auto *timing = item<QQuickItem>("timingDock");
@@ -9050,7 +9050,7 @@ private slots:
             if (QTest::currentTestFailed())
                 return false;
             const QSize least = docking->layoutMinimumSize(mainName) + rows;
-            if (least == least.boundedTo(window->screen()->availableGeometry().size())) {
+            if (least == least.boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()))) {
                 ++fitted;
                 for (const char *name : panels) {
                     QQuickItem *panel = item(name);

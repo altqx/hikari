@@ -304,6 +304,10 @@ ColumnLayout {
             }
             ProjectCheck { setting: "scriptProperties.askForChange" }
         }
+        Section {
+            key: "subtitleProperties.files"
+            ProjectPick { setting: "new.styleCatalog"; choices: pages.dialog.newFileCatalogs }
+        }
     }
     Page {
         page: "ai"

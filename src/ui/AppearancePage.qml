@@ -48,7 +48,7 @@ Item {
                     rowSpacing: 8
                     Layout.fillWidth: true
                     Repeater {
-                        model: Theme.themes()
+                        model: Theme.themeList
                         delegate: AbstractButton {
                             id: card
                             required property var modelData
