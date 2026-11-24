@@ -153,12 +153,14 @@ LE5 ([#230](https://github.com/altqx/hikari/issues/230)) replaced the Manage tag
 
 - **WS3 [#217](https://github.com/altqx/hikari/issues/217)** removes the View arrangements (GLOBAL_VIEW_*, roles view-all, view-video-subs, view-audio-subs, view-only-video, view-only-subs) and Enable / Disable editor. IC1 draws nothing for them. WS3 drops the view-* roles or marks them as not placed. The editor role stays: the Settings Editor page and the video menu's Open editor use it. WS3's new Save layout as… and Manage layouts… items need icons. layout-preset, layout-reset and layout-restore are there for its menu.
 - **LE2 [#227](https://github.com/altqx/hikari/issues/227)** adds a checkable Times/Frames item to the video panel's menu, and **GR3 [#236](https://github.com/altqx/hikari/issues/236)** adds a checkable auto-hide toggle under Hide columns. Check items need no icon. **VF1 [#288](https://github.com/altqx/hikari/issues/288)** adds the Seek on and Then play submenus after it, with video-to-start-time and play-line; their choices are check items.
-- **AV1 [#238](https://github.com/altqx/hikari/issues/238)**'s speaker button and device menu can take audio-device (a loudspeaker, drawn for Settings › Audio output). Its "Audio settings" item needs an icon: settings-audio.
+- **AV1 [#238](https://github.com/altqx/hikari/issues/238)**'s "Audio settings" item needs an icon: settings-audio.
 - **PF1 [#225](https://github.com/altqx/hikari/issues/225)** places the Options icons below. The manifest marks them `pending: "PF1 #225"`.
 
 ## Options: the primary options of each page
 
 IC1 also draws icons for each Settings page's primary options, which PF1 places beside their labels (MS1's research, docs/research/musescore-shell.md, PF1 "Per-option icons"). An option that matches a menu command uses that command's icon.
+
+Since the unified Settings window of [#1359](https://github.com/altqx/hikari/issues/1359), rows carry no icons; only the pages do ([settings.md](settings.md)). [#1377](https://github.com/altqx/hikari/issues/1377) retired the roles drawn only for rows: audio-device, audio-delay, audio-commit-default, boundary-thickness, cache, inactive-lines, preview-resolution, renderer, tab-name-length, tags-insert, time-offset-end, time-offset-start and time-per-letter. tools/icons/draw_icons.py's history can redraw any of them for a new surface. The table below is what PF1 placed.
 
 | Page | Option | Role |
 | --- | --- | --- |
@@ -171,13 +173,13 @@ IC1 also draws icons for each Settings page's primary options, which PF1 places 
 | Editor › Advanced | Subtitle grid font, Program font | ui-font (new: Aa) |
 | Editor › Advanced | Folder with external fonts | folder-open |
 | Editor › Advanced | Autoload loading method, LUA scripts tracking level | automation |
-| Video | Subtitle display filter | renderer (new: subtitles on the picture) |
+| Video | Subtitle display filter | renderer (retired in #1377) |
 | Video | FFMS2 video seeking method | video-seek (new) |
 | Video | Playback | media-play |
 | Video | Start video zoom in percent | zoom |
 | Video | Preferred audio | video-streams |
-| Audio | Audio output (device, API) | audio-device (new: a loudspeaker) |
-| Audio | Audio delay in milliseconds | audio-delay (new: the waveform with the clock) |
+| Audio | Audio output (device, API) | audio-device (retired in #1377) |
+| Audio | Audio delay in milliseconds | audio-delay (retired in #1377) |
 | Audio | Lead-in / Lead-out | lead-in |
 | Appearance | Theme | theme (new: the moon and a star) |
 | Appearance | Accent color | accent-colour (new: a drop of the accent) |

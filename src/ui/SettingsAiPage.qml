@@ -1422,7 +1422,7 @@ Item {
                     Accessible.name: SettingsCatalogue.label("translation.translator")
                 }
                 IconTextButton {
-                    iconRole: "open"
+                    iconRole: "folder-open"
                     text: qsTr("Open settings file")
                     onClicked: page.dialog.openSettingsFile("translation.translator")
                 }
@@ -1443,7 +1443,7 @@ Item {
                     Accessible.name: SettingsCatalogue.label("translation.reviewer")
                 }
                 IconTextButton {
-                    iconRole: "open"
+                    iconRole: "folder-open"
                     text: qsTr("Open settings file")
                     onClicked: page.dialog.openSettingsFile("translation.reviewer")
                 }
@@ -3051,7 +3051,7 @@ Item {
                     Accessible.name: SettingsCatalogue.label("ai.exclude")
                 }
                 IconTextButton {
-                    iconRole: "open"
+                    iconRole: "folder-open"
                     text: qsTr("Open settings file")
                     onClicked: page.dialog.openSettingsFile("ai.exclude")
                 }

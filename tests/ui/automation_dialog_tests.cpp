@@ -1225,7 +1225,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
         QVERIFY(QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("presetSaveTierMine")), "triggered"));
-        QCOMPARE(face->property("text").toString(), QStringLiteral("Save to mine"));
+        QCOMPARE(face->property("text").toString(), QStringLiteral("Save to yours"));
         QVERIFY(store.list("workspace.saveTiers").contains(QStringLiteral("dialogPresets\tmine")));
         QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
 
