@@ -307,7 +307,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>เปลี่ยนชื่อ</translation>
+        <translation type="vanished">เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -752,10 +752,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1436,7 +1432,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>เปิด</translation>
+        <translation type="vanished">เปิด</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -12726,7 +12722,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>เปิด</translation>
+        <translation type="vanished">เปิด</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13263,7 +13259,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">ยกเลิก</translation>
+        <translation type="obsolete">ยกเลิก</translation>
     </message>
     <message>
         <source>Rename</source>
