@@ -9939,6 +9939,7 @@ ApplicationWindow {
         id: videoFullscreenWindow
         shell: root
         controller: root.videoFullscreen
+        cancelPick: () => visualOverlay.cancelPick()
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.show()
         onAspectRatioRequested: root.lazy(aspectRatioDialogLoader).openAtCursor(videoFullscreenWindow.contentItem)

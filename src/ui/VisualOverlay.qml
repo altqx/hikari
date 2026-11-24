@@ -11,7 +11,6 @@ Item {
     property VideoViewController view: null
     // MUST KILL: cursorOverride -1 means the tool's cursor
     property int cursorOverride: -1
-    // One-shot Pick on the video: called with the script point of the next left click.
     property var pickPoint: null
     signal pickCancelled()
     signal contextMenuRequested(real x, real y)
@@ -20,6 +19,12 @@ Item {
 
     property bool pointerInside: false
 
+    function cancelPick() {
+        if (overlayItem.pickPoint === null)
+            return false
+        overlayItem.pickCancelled()
+        return true
+    }
     function route(kind, x, y, button, buttons, modifiers, steps) {
         if (kind === 1) {
             if (!pointerInside)
@@ -89,13 +94,18 @@ Item {
                      : overlayItem.tools.pointerShape
         onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
-        onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
+        onPositionChanged: mouse => {
+            if (!pickPress)
+                overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
+        }
         property bool segmentPress: false
         property bool pickPress: false
+        property bool lastWasPick: false
         onPressed: mouse => {
             if (overlayItem.focusTarget)
                 overlayItem.focusTarget.forceActiveFocus()
             pickPress = overlayItem.pickPoint !== null
+            lastWasPick = pickPress
             if (pickPress) {
                 const picked = overlayItem.tools.scriptPointAt(mouse.x, mouse.y)
                 if (mouse.button === Qt.LeftButton && picked.x !== undefined)
@@ -116,7 +126,10 @@ Item {
             else
                 overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
-        onDoubleClicked: mouse => overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        onDoubleClicked: mouse => {
+            if (!lastWasPick)
+                overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        }
         onWheel: wheel => {
             if (overlayItem.view && overlayItem.view.wheel(wheel.x, wheel.y, wheel.angleDelta.x / 120,
                                                            wheel.angleDelta.y / 120, wheel.modifiers)) {
@@ -132,7 +145,7 @@ Item {
     Shortcut {
         sequence: StandardKey.Cancel
         enabled: overlayItem.pickPoint !== null
-        onActivated: overlayItem.pickCancelled()
+        onActivated: overlayItem.cancelPick()
     }
 
     PinchHandler {

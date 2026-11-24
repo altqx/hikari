@@ -30326,8 +30326,9 @@ private slots:
     };
     std::optional<PickSetup> openAPointFieldOverVideo()
     {
-        auto *action = item<QObject>("nodeEffectsMenuItem")->property("action").value<QObject *>();
-        if (!QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))))
+        auto *menuItem = item<QObject>("nodeEffectsMenuItem");
+        auto *action = menuItem ? menuItem->property("action").value<QObject *>() : nullptr;
+        if (!action || !QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))))
             return std::nullopt;
         const char *extra = "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an5\\pos(100,80)}Sign\n";
         if (!application->openFile(visualDocument("pick.ass", extra)))
@@ -30340,8 +30341,7 @@ private slots:
         application->video().openVideo(nativeFixture("cfr.mkv"));
         if (!QTest::qWaitFor([&] { return action->property("enabled").toBool() && !application->visualTools().videoRect().isEmpty(); }, 20000))
             return std::nullopt;
-        QMetaObject::invokeMethod(action, "trigger");
-        if (!QTest::qWaitFor([&] { return item("nodeModeBar")->isVisible(); }))
+        if (!QMetaObject::invokeMethod(action, "trigger") || !QTest::qWaitFor([&] { return item("nodeModeBar")->isVisible(); }))
             return std::nullopt;
         application->visualTools().selectFamily(1);
         auto &effects = application->nodeEffects();
@@ -30359,7 +30359,7 @@ private slots:
                 return f.toMap().value(QStringLiteral("value"));
         return {};
     }
-    QString lineText(application::EditSession &session, core::LineId id) const
+    QString textOfLine(application::EditSession &session, core::LineId id) const
     {
         for (const auto *l : session.document().lines())
             if (l->id == id)
@@ -30374,7 +30374,7 @@ private slots:
         QVERIFY(setup);
         auto &tools = application->visualTools();
         auto &effects = application->nodeEffects();
-        const QString signBefore = lineText(*setup->session, setup->sign);
+        const QString signBefore = textOfLine(*setup->session, setup->sign);
         const std::size_t steps = setup->session->historySize();
 
         QVERIFY(QMetaObject::invokeMethod(visualItem("nodePick_point"), "click"));
@@ -30386,7 +30386,9 @@ private slots:
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
         QVERIFY(!tools.gestureActive());
         QVERIFY(effects.pickingPoint().isEmpty());
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at);
+        QTest::mouseMove(window, at + QPoint(12, 0));
+        QVERIFY(!tools.gestureActive());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at + QPoint(12, 0));
         QVERIFY(!tools.gestureActive());
 
         const auto &view = tools.videoView();
@@ -30399,7 +30401,7 @@ private slots:
         QCOMPARE(picked[1].toFloat(), expected.y);
         QCOMPARE(setup->session->historySize(), steps + 1);
         QCOMPARE(setup->session->history().back().name, std::string("Edit graph"));
-        QCOMPARE(lineText(*setup->session, setup->sign), signBefore);
+        QCOMPARE(textOfLine(*setup->session, setup->sign), signBefore);
         QTRY_VERIFY(pointerArea->property("cursorShape").toInt() != int(Qt::CrossCursor));
     }
 
@@ -30409,7 +30411,7 @@ private slots:
         QVERIFY(setup);
         auto &tools = application->visualTools();
         auto &effects = application->nodeEffects();
-        const QString signBefore = lineText(*setup->session, setup->sign);
+        const QString signBefore = textOfLine(*setup->session, setup->sign);
         const QVariant pointBefore = pointField(QStringLiteral("point"));
         const std::size_t steps = setup->session->historySize();
         const QPoint at = videoPoint(tools.videoRect().center());
@@ -30423,10 +30425,25 @@ private slots:
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, at);
         QTRY_VERIFY(effects.pickingPoint().isEmpty());
         QVERIFY(!tools.gestureActive());
+        QTest::qWait(50);
+        QVERIFY(!named("videoContextMenu")->property("visible").toBool());
+
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QVERIFY(fsWindow);
+        QTRY_VERIFY(fsWindow->isExposed());
+        effects.pickPoint(QStringLiteral("point"));
+        fsWindow->requestActivate();
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QTRY_VERIFY(effects.pickingPoint().isEmpty());
+        QVERIFY(fs.active());
+        fs.toggle(0);
+        QTRY_VERIFY(!fs.active());
 
         QCOMPARE(pointField(QStringLiteral("point")), pointBefore);
         QCOMPARE(setup->session->historySize(), steps);
-        QCOMPARE(lineText(*setup->session, setup->sign), signBefore);
+        QCOMPARE(textOfLine(*setup->session, setup->sign), signBefore);
     }
 
     void vectorClipCommandsChooseTheRowsButtons()
