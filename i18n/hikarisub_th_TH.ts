@@ -6409,6 +6409,14 @@ Failed to copy %2 fonts.</source>
         <translation>ตามจุดแบ่งบรรทัด</translation>
     </message>
     <message>
+        <source>Move lines up</source>
+        <translation>ย้ายบรรทัดขึ้น</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>ย้ายบรรทัดลง</translation>
+    </message>
+    <message>
         <source>Typesetting</source>
         <translation>ไทป์เซ็ต</translation>
     </message>
@@ -6451,6 +6459,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Translation matching…</source>
         <translation>การจับคู่การแปล…</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>ลบข้อความ คงแท็กไว้</translation>
     </message>
     <message numerus="yes">
         <source>Delete %n line(s)</source>
@@ -6630,6 +6642,21 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Only these tags</source>
         <translation>เฉพาะแท็กเหล่านี้</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>แท็กในตาราง: แสดง</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>แท็กในตาราง: แทนที่ด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>แท็กในตาราง: ซ่อน</translation>
     </message>
     <message>
         <source>changed</source>
@@ -8180,6 +8207,10 @@ Failed to copy %2 fonts.</source>
         <translation>เล่น 500 มิลลิวินาทีหลังจุดสิ้นสุด</translation>
     </message>
     <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>วนรอบการแสดงแท็กในตาราง</translation>
+    </message>
+    <message>
         <source>Open subtitles…</source>
         <translation>เปิดคำบรรยาย…</translation>
     </message>
@@ -8554,6 +8585,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>แสดงแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>แทนที่แท็กในตารางด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>ลบข้อความ คงแท็กไว้</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>ทำเครื่องหมายบรรทัดในเฟรมปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>ย้ายบรรทัดขึ้น</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>ย้ายบรรทัดลง</translation>
     </message>
     <message>
         <source>Full screen typesetting</source>
@@ -11575,12 +11630,48 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;รายงานปัญหา…</translation>
     </message>
     <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>แสดง แทนที่ หรือซ่อนแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>แท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>แสดงแท็กในตารางตามเดิม</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>แสดงบล็อกแท็กแต่ละบล็อกในตารางเป็นสัญลักษณ์ที่กำหนดไว้ใน การตั้งค่า › ตาราง</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>แทนที่ด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>ซ่อนแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>ซ่อน</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>แต้มสีบรรทัดในตารางที่แสดงบนเฟรมวิดีโอปัจจุบัน</translation>
+    </message>
+    <message>
         <source>Only in Translation mode</source>
         <translation>เฉพาะในโหมดการแปล</translation>
     </message>
     <message>
         <source>Opens a subtitle file</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>ทำเครื่องหมายบรรทัดในเฟรมปัจจุบัน</translation>
     </message>
     <message>
         <source>Opens a video file</source>
@@ -11860,11 +11951,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Shows or hides tags in the Grid</source>
-        <translation>แสดงหรือซ่อนแท็กในตาราง</translation>
+        <translation type="vanished">แสดงหรือซ่อนแท็กในตาราง</translation>
     </message>
     <message>
         <source>Hide tags in the Grid</source>
-        <translation>ซ่อนแท็กในตาราง</translation>
+        <translation type="vanished">ซ่อนแท็กในตาราง</translation>
     </message>
     <message>
         <source>Shows or hides tags in the line editor</source>
@@ -19819,12 +19910,28 @@ because it was edited.</source>
         <translation>บรรทัดที่มีหรือไม่มีข้อความ</translation>
     </message>
     <message>
+        <source>Contains</source>
+        <translation>ประกอบด้วย</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>ตรงกันทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>การจับคู่</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>ใน</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>บรรทัด</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>หาส่วนร่วมกับส่วนที่เลือก</translation>
     </message>
     <message>
         <source>Then</source>
@@ -19865,6 +19972,10 @@ because it was edited.</source>
     <message>
         <source>Invalid regular expression “%1”: %2</source>
         <translation>นิพจน์ทั่วไป “%1” ไม่ถูกต้อง: %2</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>นำ %1 บรรทัดออกจากส่วนที่เลือกแล้ว</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>

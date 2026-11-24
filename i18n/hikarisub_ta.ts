@@ -6466,6 +6466,14 @@ Failed to copy %2 fonts.</source>
         <translation>வரி மடக்குகளின்படி</translation>
     </message>
     <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
+    </message>
+    <message>
         <source>Typesetting</source>
         <translation>டைப்செட்டிங்</translation>
     </message>
@@ -6508,6 +6516,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Translation matching…</source>
         <translation>மொழிபெயர்ப்புப் பொருத்தம்…</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
     </message>
     <message numerus="yes">
         <source>Delete %n line(s)</source>
@@ -6692,6 +6704,21 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Only these tags</source>
         <translation>இந்தக் குறிச்சொற்கள் மட்டும்</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: காட்டு</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: மறை</translation>
     </message>
     <message>
         <source>changed</source>
@@ -8247,6 +8274,10 @@ Failed to copy %2 fonts.</source>
         <translation>முடிவுக்கு 500 ms பின் இயக்கு</translation>
     </message>
     <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைச் சுழற்று</translation>
+    </message>
+    <message>
         <source>Open subtitles…</source>
         <translation>வசன வரிகளைத் திற…</translation>
     </message>
@@ -8621,6 +8652,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
     </message>
     <message>
         <source>Full screen typesetting</source>
@@ -11680,12 +11735,48 @@ Failed to copy %2 fonts.</source>
         <translation>சிக்கலைப் புகாரளி… (&amp;r)</translation>
     </message>
     <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது, மாற்றுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை உள்ளபடியே காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>கட்டத்தில் ஒவ்வொரு குறிச்சொல் தொகுதியையும் அமைப்புகள் › கட்டம் இல் அமைத்த அடையாளமாகக் காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>மறை</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>தற்போதைய வீடியோ சட்டகத்தில் தெரியும் வரிகளைக் கட்டத்தில் நிறமிடுகிறது</translation>
+    </message>
+    <message>
         <source>Only in Translation mode</source>
         <translation>மொழிபெயர்ப்பு பயன்முறையில் மட்டும்</translation>
     </message>
     <message>
         <source>Opens a subtitle file</source>
         <translation>வசனக் கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
     </message>
     <message>
         <source>Opens a video file</source>
@@ -11965,11 +12056,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Shows or hides tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
+        <translation type="vanished">கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
     </message>
     <message>
         <source>Hide tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களை மறை</translation>
+        <translation type="vanished">கட்டத்தில் குறிச்சொற்களை மறை</translation>
     </message>
     <message>
         <source>Shows or hides tags in the line editor</source>
@@ -19985,12 +20076,28 @@ because it was edited.</source>
         <translation>உரை உள்ள அல்லது இல்லாத வரிகள்</translation>
     </message>
     <message>
+        <source>Contains</source>
+        <translation>கொண்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>துல்லியமான பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>பொருத்தம்</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>இதில்</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>தேர்வுடன் பொதுவானவற்றை மட்டும் வை</translation>
     </message>
     <message>
         <source>Then</source>
@@ -20031,6 +20138,10 @@ because it was edited.</source>
     <message>
         <source>Invalid regular expression “%1”: %2</source>
         <translation>தவறான வழக்கமான வெளிப்பாடு “%1”: %2</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>%1 வரிகள் தேர்விலிருந்து நீக்கப்பட்டன.</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>

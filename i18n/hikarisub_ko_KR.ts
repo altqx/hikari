@@ -6409,6 +6409,14 @@ Failed to copy %2 fonts.</source>
         <translation>줄 바꿈 기준으로</translation>
     </message>
     <message>
+        <source>Move lines up</source>
+        <translation>줄 위로 이동</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>줄 아래로 이동</translation>
+    </message>
+    <message>
         <source>Typesetting</source>
         <translation>식자</translation>
     </message>
@@ -6451,6 +6459,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Translation matching…</source>
         <translation>번역 맞추기…</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>글자 삭제, 태그 유지</translation>
     </message>
     <message numerus="yes">
         <source>Delete %n line(s)</source>
@@ -6630,6 +6642,21 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Only these tags</source>
         <translation>이 태그만</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 표시</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 숨기기</translation>
     </message>
     <message>
         <source>changed</source>
@@ -8180,6 +8207,10 @@ Failed to copy %2 fonts.</source>
         <translation>종료 후 0.5초 재생</translation>
     </message>
     <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>자막 목록에서 태그 표시 방식 순환</translation>
+    </message>
+    <message>
         <source>Open subtitles…</source>
         <translation>자막 열기…</translation>
     </message>
@@ -8554,6 +8585,30 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>자막 목록에서 태그 표시</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>자막 목록에서 태그를 기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>글자 삭제, 태그 유지</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>줄 위로 이동</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>줄 아래로 이동</translation>
     </message>
     <message>
         <source>Full screen typesetting</source>
@@ -11575,12 +11630,48 @@ Failed to copy %2 fonts.</source>
         <translation>문제 보고…[&amp;R]</translation>
     </message>
     <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>자막 목록에서 태그를 표시하거나, 기호로 바꾸거나, 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>자막 목록의 태그</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>자막 목록에서 태그를 그대로 표시합니다</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>자막 목록의 각 태그 블록을 설정 › 자막 목록에서 지정한 기호로 표시합니다</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>자막 목록에서 태그를 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>숨기기</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>현재 영상 프레임에 표시되는 줄을 자막 목록에서 색으로 강조합니다</translation>
+    </message>
+    <message>
         <source>Only in Translation mode</source>
         <translation>번역 모드에서만</translation>
     </message>
     <message>
         <source>Opens a subtitle file</source>
         <translation>자막 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
     </message>
     <message>
         <source>Opens a video file</source>
@@ -11860,11 +11951,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Shows or hides tags in the Grid</source>
-        <translation>자막 목록에서 태그를 표시하거나 숨깁니다</translation>
+        <translation type="vanished">자막 목록에서 태그를 표시하거나 숨깁니다</translation>
     </message>
     <message>
         <source>Hide tags in the Grid</source>
-        <translation>자막 목록에서 태그 숨기기</translation>
+        <translation type="vanished">자막 목록에서 태그 숨기기</translation>
     </message>
     <message>
         <source>Shows or hides tags in the line editor</source>
@@ -19819,12 +19910,28 @@ because it was edited.</source>
         <translation>글자를 포함하거나 포함하지 않는 줄</translation>
     </message>
     <message>
+        <source>Contains</source>
+        <translation>부분 일치</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>정확히 일치</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>일치 방식</translation>
+    </message>
+    <message>
         <source>In</source>
         <translation>찾을 부분</translation>
     </message>
     <message>
         <source>Lines</source>
         <translation>줄</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>선택과 교차</translation>
     </message>
     <message>
         <source>Then</source>
@@ -19865,6 +19972,10 @@ because it was edited.</source>
     <message>
         <source>Invalid regular expression “%1”: %2</source>
         <translation>잘못된 정규식 “%1”: %2</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>선택 항목에서 %1개 줄을 제외했습니다.</translation>
     </message>
     <message>
         <source>Failed to find match for regular expression: %1</source>
