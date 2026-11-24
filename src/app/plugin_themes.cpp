@@ -143,11 +143,9 @@ std::expected<std::filesystem::path, QString> writeThemePlugin(const ui::theme::
                                                                const std::function<bool(const std::string &id)> &taken)
 {
     const std::string slug = slugOf(theme.id);
-    const QByteArray source = theme.title.toUtf8();
-    const QString shownTitle = theme.plugin.isEmpty() ? QCoreApplication::translate("HikariSub.Options", source.constData())
-                                                      : theme.title;
-    const std::string title =
-        QCoreApplication::translate("HikariSub.Plugins", "%1 copy", "a theme plugin saved from a theme").arg(shownTitle).toStdString();
+    const std::string title = QCoreApplication::translate("HikariSub.Plugins", "%1 copy", "a theme plugin saved from a theme")
+                                  .arg(ui::theme::shownTitle(theme))
+                                  .toStdString();
     std::string id, name;
     std::filesystem::path folder;
     for (int n = 1;; ++n) {
