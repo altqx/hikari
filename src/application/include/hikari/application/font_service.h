@@ -7,7 +7,9 @@
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -146,12 +148,26 @@ struct ReimportCheck {
 
 enum class FontError { RendererUnavailable, InvalidInput, Cancelled };
 
+// Files read so far and the share of the listing done, 0 to 100. Returning
+// false ends the listing early.
+using FaceListProgress = std::function<bool(std::size_t files, int percent)>;
+
 class FontServicePort {
 public:
     virtual ~FontServicePort() = default;
     virtual std::expected<FontReport, FontError> resolve(const FontEnvironment &environment,
                                                          const std::vector<FontRequest> &requests) = 0;
     virtual std::vector<SystemFace> systemFaces() = 0;
+    // systemFaces, reporting its progress on the calling thread.
+    virtual std::vector<SystemFace> listSystemFaces(const FaceListProgress &progress)
+    {
+        std::vector<SystemFace> faces = systemFaces();
+        std::set<std::string> files;
+        for (const auto &face : faces)
+            files.insert(face.path);
+        progress(files.size(), 100);
+        return faces;
+    }
     // Renders `script` at each event's midpoint and gathers what was used.
     // `cancel`, when set during the work, ends it with Cancelled.
     virtual std::expected<FontCollection, FontError> collect(const std::vector<std::byte> &script,

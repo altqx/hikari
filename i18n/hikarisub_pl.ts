@@ -23442,6 +23442,18 @@ ponieważ została zmieniona.</translation>
         <translation>Przenieś do Twoich</translation>
     </message>
     <message>
+        <source>Finding fonts</source>
+        <translation>Wyszukiwanie czcionek</translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1 %</source>
+        <translation>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1 %</numerusform>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1 %</numerusform>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1 %</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>No style chosen</source>
         <translation>Nie wybrano stylu</translation>
     </message>

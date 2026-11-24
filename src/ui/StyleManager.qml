@@ -1599,6 +1599,41 @@ DialogWindow {
             Layout.preferredWidth: 680
             Layout.minimumWidth: 420
             ColumnLayout {
+                objectName: "styleFindingFonts"
+                readonly property int percent: manager.catalogs.scanPercent
+                visible: manager.catalogs.scanning
+                spacing: 4
+                Layout.fillWidth: true
+                Layout.leftMargin: 24
+                Layout.rightMargin: 24
+                Layout.topMargin: 10
+                Label {
+                    objectName: "styleFindingFontsText"
+                    text: parent.percent < 0 ? qsTr("Finding fonts")
+                        : qsTr("Finding fonts · reading %n font file(s) · %1 %", "", manager.catalogs.scanFiles)
+                              .arg(parent.percent)
+                    color: Theme.muted
+                    font: manager.fontAt(12)
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+                Rectangle {
+                    objectName: "styleFindingFontsLine"
+                    color: Theme.highContrast ? Theme.line : Theme.raised
+                    radius: 1
+                    implicitHeight: 2
+                    Layout.fillWidth: true
+                    Rectangle {
+                        objectName: "styleFindingFontsDone"
+                        visible: parent.parent.percent >= 0
+                        color: Theme.accent
+                        radius: 1
+                        height: parent.height
+                        width: parent.width * Math.max(0, parent.parent.percent) / 100
+                    }
+                }
+            }
+            ColumnLayout {
                 objectName: "styleNoneChosen"
                 visible: !manager.editing
                 spacing: 8

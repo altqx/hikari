@@ -23239,6 +23239,17 @@ because it was edited.</source>
         <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
     </message>
     <message>
+        <source>Finding fonts</source>
+        <translation>எழுத்துருக்களைத் தேடுகிறது</translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1 %</source>
+        <translation>
+            <numerusform>எழுத்துருக்களைத் தேடுகிறது · %n எழுத்துருக் கோப்பைப் படிக்கிறது · %1 %</numerusform>
+            <numerusform>எழுத்துருக்களைத் தேடுகிறது · %n எழுத்துருக் கோப்புகளைப் படிக்கிறது · %1 %</numerusform>
+        </translation>
+    </message>
+    <message>
         <source>No style chosen</source>
         <translation>பாணி எதுவும் தேர்ந்தெடுக்கப்படவில்லை</translation>
     </message>
