@@ -8604,7 +8604,7 @@ ApplicationWindow {
                         aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
                         onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
-                        onSettingsRequested: root.openSettings("ai")
+                        onSettingsRequested: id => root.settingsWindow().openAt(id)
                         onLogRequested: root.showPanel(logDock)
                         onExportRequested: id => agentExportDialog.openFor(id)
                         onPluginRequested: id => pluginManagerDialog.showPlugin(id)

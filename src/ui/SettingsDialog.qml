@@ -112,6 +112,13 @@ DialogWindow {
             for (const warning of r.warnings)
                 notices.post("warning", qsTr("Settings"), warning)
     }
+    // An in-app link: a page or section id opens there, anything else lands on its row.
+    function openAt(id) {
+        if (isNode(id))
+            openDialog(id)
+        else
+            openSetting(id, false)
+    }
     // A setting link: opens the window at the row, never changing a value.
     function openSetting(setting, project) {
         openDialog()
@@ -130,13 +137,17 @@ DialogWindow {
         }
         Qt.callLater(() => dialog.land(setting))
     }
+    function isNode(id) {
+        return catalogue.some(p => p.id === id) || sectionInfo(id) !== undefined
+    }
     function land(setting) {
         const section = SettingsCatalogue.sectionOf(setting) || pluginSection(setting)
-        unfold(section.split(".")[0])
+        unfold((section || setting).split(".")[0])
         const item = rowItem(setting)
         if (!item)
             return
         scrollTo(item, rowsView.height / 3)
+        rowFlash.row = item
         flashSetting = setting
         flashEnd.restart()
         const control = firstControl(item)
@@ -1099,6 +1110,28 @@ DialogWindow {
                     Connections {
                         target: rowsView.contentItem
                         function onContentYChanged() { dialog.followScroll() }
+                    }
+                    Rectangle {
+                        id: rowFlash
+                        objectName: "settingsRowFlash"
+                        property Item row: null
+                        readonly property bool lit: dialog.flashSetting.length > 0
+                        function offset(axis) {
+                            let at = 0
+                            for (let item = row; item && item !== rowsColumn; item = item.parent)
+                                at += item[axis]
+                            return at
+                        }
+                        visible: row !== null
+                        x: rowsColumn.x + offset("x") - 8
+                        y: rowsColumn.y + offset("y") - 4
+                        width: row ? row.width + 16 : 0
+                        height: row ? row.height + 8 : 0
+                        radius: 2
+                        color: lit ? Theme.select : "transparent"
+                        border.width: lit && Theme.highContrast ? 1 : 0
+                        border.color: Theme.accent
+                        Behavior on color { enabled: !rowFlash.lit; ColorAnimation { duration: 2000 } }
                     }
                     ColumnLayout {
                         id: rowsColumn

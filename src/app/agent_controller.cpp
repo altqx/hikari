@@ -544,8 +544,10 @@ QVariantList AgentController::pickerItems(const QString &current, const QString 
     const auto agentGroup = [&](const QString &key, const QString &name, const ai::ModelRef &ref) {
         ModelPickerGroup group{.name = name, .key = key};
         group.agentDefault = ModelPickerModel{modelValue(ref), name, {}, name};
-        if (key == QLatin1String("codex") && m_wiring.codexSignedOut && m_wiring.codexSignedOut())
+        if (key == QLatin1String("codex") && m_wiring.codexSignedOut && m_wiring.codexSignedOut()) {
             group.blockedBy = QCoreApplication::translate("HikariSub.Agent", "Sign in with %1…").arg(QStringLiteral("ChatGPT"));
+            group.blockedRow = QStringLiteral("ai.agent.") + key;
+        }
         if (const auto it = m_agentModels.find(key.toStdString()); it != m_agentModels.end()) {
             for (const auto &[id, text] : it->second.models)
                 group.models.push_back({modelValue({ref.providerId, id.toStdString()}), text, id,
@@ -563,11 +565,13 @@ QVariantList AgentController::pickerItems(const QString &current, const QString 
     if (const ai::Providers *providers = m_wiring.ai.providers())
         for (const ai::Provider &p : providers->config().providers) {
             ModelPickerGroup group{.name = qs(p.name), .key = qs(p.id)};
-            if (p.needsKey && m_wiring.lacksKey && m_wiring.lacksKey(group.key))
+            if (p.needsKey && m_wiring.lacksKey && m_wiring.lacksKey(group.key)) {
                 group.blockedBy = (p.preset == ai::Preset::OpenRouter
                                        ? QCoreApplication::translate("HikariSub.Agent", "Sign in with %1…")
                                        : QCoreApplication::translate("HikariSub.Agent", "Add a key for %1…"))
                                       .arg(group.name);
+                group.blockedRow = QStringLiteral("ai.provider.") + group.key;
+            }
             for (const ai::Model &m : p.models)
                 group.models.push_back({modelValue({p.id, m.id}), qs(m.name.empty() ? m.id : m.name), qs(m.id), group.name});
             request.groups.push_back(std::move(group));

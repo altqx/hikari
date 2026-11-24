@@ -100,7 +100,7 @@ void addGroup(const ModelPickerRequest &request, const ModelPickerGroup &group, 
 {
     items.group(group.name);
     if (!group.blockedBy.isEmpty()) {
-        items.action(QStringLiteral("blocked\t") + group.key, group.blockedBy, QStringLiteral("settings"), group.key);
+        items.action(QStringLiteral("blocked\t") + group.key, group.blockedBy, QStringLiteral("settings"), group.blockedRow);
         return;
     }
     const bool alwaysShow = matchesGroup(request.filter, group);
@@ -133,7 +133,7 @@ QVariantList modelPickerItems(const ModelPickerRequest &request)
     if (request.settingsRow) {
         items.group(QString());
         items.action(QStringLiteral("settings"), QCoreApplication::translate("HikariSub.Agent", "Settings › AI…"),
-                     QStringLiteral("settings"), QString(), QStringLiteral("settings"));
+                     QStringLiteral("settings"), QStringLiteral("ai"), QStringLiteral("settings"));
     }
     return items.take();
 }
