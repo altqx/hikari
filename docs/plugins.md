@@ -855,7 +855,7 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
   | `command` | `{command, args, context}` | `null`, or what the command gives back. `args` and `context` are a Lua handler's: `args` is `{}` from a menu, key or status item, and `context.via` says what ran it. |
   | `event` | `{name, data}` | `null`, for each event it subscribed to. |
   | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
-| `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
+  | `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
   | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
   | `export` | `{format, document, options}`, as a [Lua exporter](#formats) gets them | `{data, encoding}`: the file as text, or as base64 with `encoding: "base64"`. |
   | `import` | `{format, data, name}`, with the file's bytes in base64 | `{lines, styles, info}`, as a Lua importer returns. |
@@ -867,7 +867,7 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
 - **Errors.** A Hikari API error comes back as `{"code": -32000, "message", "data": {"code": "not_granted", "data": {…}}}`. An unknown method is `-32601`, and parameters that break the schema are `-32602` with `data.pointer`.
 - **Other output.** stderr goes to the Log panel, at most 20 lines a minute. Anything on stdout that isn't a JSON-RPC message stops the program, as a crash does, and its next command starts it again.
 - **Its sandbox.** The `main` program runs as any [program](#programs) does, with the same profile, folders and network. A program plugin whose program is still downloading starts once the download is checked.
-- **Types.** #1231's TypeScript types cover the protocol, and a sample program plugin in TypeScript (built into one file with `bun build --compile`) proves it.
+- **Types.** [`hikari.d.ts`](types/hikari.d.ts) covers the protocol, and the [Word count](examples/word-count/) sample, a program plugin in TypeScript built into one file with `bun build --compile`, uses it. See [Developer tools](#developer-tools).
 
 ### Language features and problems
 
@@ -1041,6 +1041,10 @@ end)
 
 It builds on `tests/api/scripts/`. Dialogs answer from `{"answer": {…}}` steps.
 
-**Type hints.** `hikarisub --export-docs <dir>` also writes `hikari.lua`, LuaLS `---@meta` annotations for the `hikari` global and every operation, and `hikari.d.ts`, TypeScript types for every operation, event and protocol message, both generated from `api.json`.
+**Type hints.** `hikarisub --export-docs <dir>` also writes `hikari.lua`, LuaLS `---@meta` annotations for the `hikari` global and every operation, and `hikari.d.ts`, TypeScript types for every operation, event and protocol message, both generated from `api.json`. [docs/types/](types/) holds both for this version.
+
+- **`hikari.lua`.** A class for each type, and each operation's params and result. `hikari.call` has an overload per operation and `hikari.events.on` one per event, so the editor knows what `hikari.call("lines.list", …)` gives back. The other members of the global carry their own signatures, and `PluginStateTest.TheLuaTypeHintsDeclareEveryMemberOfTheHikariGlobal` fails when the helper's global and the file differ.
+- **`hikari.d.ts`.** An interface for each type and each operation's params and result. `Operations` and `Events` map names to them, and the protocol has `InitializeParams`, `HostRequests`, `PluginMethods`, `ProgramCalls`, `Request`, `Response` and the error codes.
+- **The sample.** [Word count](examples/word-count/) is a program plugin in TypeScript. In builds with the AI sidecar's Bun, `hikari_word_count_sample_types` type-checks it with the sidecar's `tsc`, and skips when that isn't installed. On Linux, `hikari_word_count_sample_build` compiles it with `bun build --compile`, and `hikari_ui_program_plugin_tests` runs it as a plugin's main program, skipping where it wasn't compiled.
 
 **The guide.** [plugin-guide.md](plugin-guide.md) gains a page for each capability above.

@@ -337,7 +337,8 @@ QJsonObject meta()
             {QStringLiteral("api"), api::kApiVersion},
             {QStringLiteral("files"), QJsonArray{QStringLiteral("commands.json"), QStringLiteral("settings.json"),
                                                  QStringLiteral("guide-links.json"), QStringLiteral("api.json"),
-                                                 QStringLiteral("api.md")}}};
+                                                 QStringLiteral("api.md"), QStringLiteral("hikari.lua"),
+                                                 QStringLiteral("hikari.d.ts")}}};
 }
 
 }
@@ -394,6 +395,8 @@ bool exportDocs(const QString &dir, QString *error)
            write(dir, QStringLiteral("guide-links.json"), guideLinks(), error) &&
            write(dir, QStringLiteral("api.json"), QByteArray::fromStdString(api::apiReference().dump(2) + "\n"), error) &&
            write(dir, QStringLiteral("api.md"), QByteArray::fromStdString(api::referenceMarkdown(api::apiReference())), error) &&
+           write(dir, QStringLiteral("hikari.lua"), QByteArray::fromStdString(api::luaAnnotations(api::apiReference())), error) &&
+           write(dir, QStringLiteral("hikari.d.ts"), QByteArray::fromStdString(api::typeScriptTypes(api::apiReference())), error) &&
            write(dir, QStringLiteral("meta.json"), meta(), error);
 }
 
