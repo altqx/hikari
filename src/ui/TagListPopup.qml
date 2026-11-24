@@ -22,7 +22,7 @@ Popup {
     parent: field
     x: field.cursorRectangle.x
     y: field.cursorRectangle.y + field.cursorRectangle.height + 5
-    width: controller.popupWidth(field.font)
+    width: controller.rows.length >= 0 ? controller.popupWidth(field.font) : 0
     height: headerHeight + rowHeight * shownRows + 2
     padding: 1
     focus: false
@@ -74,11 +74,12 @@ Popup {
                 required property string modelData
                 required property int index
                 readonly property bool selected: index === popup.controller.selection
+                readonly property int provided: index - popup.controller.tagRows
                 width: ListView.view.width
                 height: popup.rowHeight
                 color: "transparent"
                 Accessible.role: Accessible.ListItem
-                Accessible.name: modelData
+                Accessible.name: provided >= 0 ? modelData + ", " + popup.controller.providerDetails[provided] : modelData
                 Accessible.selected: selected
                 Accessible.selectable: true
                 Rectangle {
@@ -94,6 +95,17 @@ Popup {
                     text: row.modelData
                     font: popup.field.font
                     color: Theme.text
+                    textFormat: Text.PlainText
+                }
+                Text {
+                    objectName: "providerDetail"
+                    visible: row.provided >= 0
+                    anchors.right: parent.right
+                    anchors.rightMargin: 3
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: visible ? popup.controller.providerDetails[row.provided] : ""
+                    font: popup.field.font
+                    color: Theme.muted
                     textFormat: Text.PlainText
                 }
             }

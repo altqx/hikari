@@ -8668,6 +8668,10 @@ Failed to copy %2 fonts.</source>
         <translation>วางช่วงถัดไป</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>เรียกการเติมคำอัตโนมัติ</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>แบ่งพยางค์ที่เคอร์เซอร์</translation>
     </message>
