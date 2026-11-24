@@ -80,6 +80,7 @@ TEST(SettingsCatalogue, ThePagesKeepTheirOrderAndTheProjectTabShowsOnlyProjectSe
     EXPECT_EQ(project, (QStringList{QStringLiteral("lineEditor.translationMode"), QStringLiteral("spelling.spelling"),
                                     QStringLiteral("spelling.grammar"), QStringLiteral("spelling.ruleGroups"),
                                     QStringLiteral("conversion.export"), QStringLiteral("subtitleProperties.credits"),
+                                    QStringLiteral("subtitleProperties.files"),
                                     QStringLiteral("ai.models"), QStringLiteral("ai.privacy"), QStringLiteral("ai.keys")}));
 }
 

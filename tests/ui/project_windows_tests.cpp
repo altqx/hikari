@@ -13,6 +13,7 @@
 #include "docking.h"
 #include "hikari/application/all_tags.h"
 #include "hikari/application/shape_presets.h"
+#include "hikari/core/style.h"
 #include "list_files.h"
 #include "menu_rows.h"
 #include "line_table_model.h"
@@ -1312,6 +1313,72 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
         QTRY_VERIFY(popover->property("opened").toBool());
         QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
+    }
+
+    void newFilesTakeTheirStylesFromTheWindowsCatalogue()
+    {
+        writeAll(home.filePath(QStringLiteral("Catalog/House.sty")), catalogLine("Mine house") + catalogLine("Default").mid(3));
+        writeAll(home.filePath(QStringLiteral("Catalog/Empty.sty")), QByteArray("\xEF\xBB\xBF"));
+        start();
+        const QString show = folder("house", true);
+        writeAll(show + QStringLiteral("/.hikari/catalogs/Signs.sty"), catalogLine("Project sign"));
+        writeAll(show + QStringLiteral("/.hikari/project.toml"), "version = 1\n[new]\nstyleCatalog = \"Signs\"\n");
+        const auto newFile = [&] {
+            application->addPage();
+            const auto &document = application->files().session(*application->workspace().editingTarget())->document();
+            const auto text = [](const std::u8string &s) {
+                return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
+            };
+            QStringList out{text(document.scriptInfo(u8"Last Style Storage").value_or(u8"")),
+                            text(document.lines().front()->style)};
+            for (const auto &style : core::decodeStyles(document))
+                out << text(style.name);
+            return out;
+        };
+        QCOMPARE(newFile(), (QStringList{QStringLiteral("Default"), QStringLiteral("Default"), QStringLiteral("Default")}));
+        auto *store = application->settingsStore();
+        store->setValue(QStringLiteral("new.styleCatalog"), QStringLiteral("House"));
+        QCOMPARE(newFile(), (QStringList{QStringLiteral("House"), QStringLiteral("Default"), QStringLiteral("Mine house"),
+                                         QStringLiteral("Default")}));
+        QVERIFY(!application->files().session(*application->workspace().editingTarget())->isDirty());
+        store->setValue(QStringLiteral("new.styleCatalog"), QStringLiteral("Gone"));
+        QCOMPARE(newFile(), (QStringList{QStringLiteral("Default"), QStringLiteral("Default"), QStringLiteral("Default")}));
+        store->setValue(QStringLiteral("new.styleCatalog"), QStringLiteral("Empty"));
+        QCOMPARE(newFile(), (QStringList{QStringLiteral("Default"), QStringLiteral("Default"), QStringLiteral("Default")}));
+
+        store->setValue(QStringLiteral("new.styleCatalog"), QStringLiteral("House"));
+        const int w = openProjectWindow(show);
+        QVERIFY(w > 0);
+        QVERIFY(application->projectOverrides(w).contains(QStringLiteral("new.styleCatalog")));
+        QCOMPARE(newFile(), (QStringList{QStringLiteral("Signs"), QStringLiteral("Project sign"), QStringLiteral("Project sign")}));
+
+        QVERIFY(QMetaObject::invokeMethod(shell(w), "openSettings", Q_ARG(QVariant, QStringLiteral("subtitleProperties")),
+                                          Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(dialog("settingsDialog"));
+        QQuickWindow *settings = dialog("settingsDialog");
+        const auto row = [&](const char *name) { return item(settings->contentItem(), QLatin1String(name)); };
+        const QString shots = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        const auto shot = [&](const char *name) {
+            QVERIFY(QMetaObject::invokeMethod(settings, "land", Q_ARG(QVariant, QStringLiteral("new.styleCatalog"))));
+            if (!shots.isEmpty()) {
+                QTest::qWait(300);
+                QVERIFY(QDir().mkpath(shots));
+                QVERIFY(settings->grabWindow().save(shots + u'/' + QLatin1String(name) + QStringLiteral(".png")));
+            }
+        };
+        QTRY_VERIFY(row("setting_new.styleCatalog") && row("setting_new.styleCatalog")->isVisible());
+        QCOMPARE(row("setting_new.styleCatalog")->property("currentText").toString(), QStringLiteral("House"));
+        QCOMPARE(row("setting_new.styleCatalog")->property("count").toInt(), 5);
+        shot("new-style-catalog-yours");
+        settings->setProperty("projectTab", true);
+        QTRY_VERIFY(row("project_new.styleCatalog") && row("project_new.styleCatalog")->isVisible());
+        QCOMPARE(row("project_new.styleCatalog")->property("currentText").toString(), QStringLiteral("Signs"));
+        shot("new-style-catalog-project");
+        settings->close();
+        application->activateShellWindow(0);
+        QTRY_COMPARE(application->workspace().activeWindow(), 0);
+        QCOMPARE(newFile(), (QStringList{QStringLiteral("House"), QStringLiteral("Default"), QStringLiteral("Mine house"),
+                                         QStringLiteral("Default")}));
     }
 
     void fontCatalogsAndLayoutsHaveAProjectTier()

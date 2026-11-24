@@ -39,7 +39,7 @@ constexpr std::string_view kProjectable[] = {
     "translation.translator",        "translation.reviewer",         "ai.exclude",
     "translation.sourceLanguage",    "translation.targetLanguage",   "export.format",
     "explorer.exclude",              "privacy.discordProject",       "privacy.discordShow",
-    "privacy.discordDetails",        "privacy.discordState",
+    "privacy.discordDetails",        "privacy.discordState",         "new.styleCatalog",
 };
 // Projectable ids whose Project value waits for trust.
 constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer", "privacy.discordShow",
@@ -136,6 +136,7 @@ std::vector<SettingDefinition> &definitions()
         {"convert.showSettings", "CONVERT_SHOW_SETTINGS", Bool, Profile, Mapped, false, false},
         {"convert.style", "CONVERT_STYLE", String, Profile, Mapped, false, std::string("Default")},
         {"convert.styleCatalog", "CONVERT_STYLE_CATALOG", String, Profile, Mapped, false, std::string("Default")},
+        {"new.styleCatalog", "", String, Profile, Mapped, false, std::string()},
         {"convert.timePerCharacter", "CONVERT_TIME_PER_CHARACTER", Int, Profile, Mapped, false, std::int64_t{110}},
         {"grid.copyColumns", "COPY_COLLUMS_SELECTIONS", Int, Profile, Mapped, false, std::int64_t{0}},
         {"editor.dictionaryLanguage", "DICTIONARY_LANGUAGE", String, Profile, Mapped, false, std::string("en_US")},

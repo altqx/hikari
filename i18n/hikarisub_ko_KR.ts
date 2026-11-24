@@ -14621,6 +14621,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>전체 화면 종료 후 보이는 줄 찾기</translation>
     </message>
     <message>
+        <source>Styles for new files</source>
+        <translation>새 파일의 스타일</translation>
+    </message>
+    <message>
+        <source>File › New starts with this style catalogue’s styles.</source>
+        <translation>파일 › 새로 만들기는 이 스타일 목록의 스타일로 시작합니다.</translation>
+    </message>
+    <message>
         <source>Activities</source>
         <translation>활동</translation>
     </message>
@@ -14843,6 +14851,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Middle-drag pans. A touchpad pinch zooms around the pointer.</source>
         <translation>가운데 버튼으로 끌면 화면이 이동합니다. 터치패드에서 두 손가락을 오므리거나 벌리면 포인터를 중심으로 확대/축소합니다.</translation>
+    </message>
+    <message>
+        <source>Built-in Default</source>
+        <translation>기본 제공 Default</translation>
     </message>
     <message>
         <source>A project can’t set “%1”, so it opens on the Yours tab.</source>

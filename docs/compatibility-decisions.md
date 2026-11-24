@@ -137,6 +137,10 @@ When a video opens, HikariSub offers to set a missing or mismatched YCbCr Matrix
 
 A mismatched matrix can also be converted: "Convert colours and set to …" converts every Style colour and each `\c`, `\1c`–`\4c` (inside `\t` too) as Aegisub's Resample does with its matrix option (`ycbcr_converter`), then sets the matrix, in one undo step. Karaoke `template` and `code` comments are left alone. "Set to …" stays the default button, so Enter never rewrites colours. A missing matrix and `None` are only set, never converted. [#1215](https://github.com/altqx/hikari/issues/1215), coordinator decision 2026-11-23.
 
+## PS4-new-file-styles
+
+File › New takes its Styles from the catalogue named by Settings › Script properties › Styles for new files (`new.styleCatalog`), like Aegisub's Default Style Catalog. A Project can set its own. Empty, the default, keeps the built-in Default Style, where Aegisub reads the user's Default catalogue. A catalogue that is gone or has no Styles falls back to the built-in Default without a notice. `Last Style Storage` names the catalogue, so the Style manager opens it. The first Line takes `Default`, or the catalogue's first Style when no Style has that name. Aegisub keeps `Default` even when the catalogue has none. [#1215](https://github.com/altqx/hikari/issues/1215), owner decision 2026-11-23.
+
 ## 738-resample-stretch-axis
 
 Resample subtitles with "Stretch" scales text by the smaller of the two resolution factors, and puts the rest on the axis that grew more: ScaleX and `\fscx` when the width grew more, ScaleY and `\fscy` when the height did. Drawings are scaled to match. Before, a taller change also went to ScaleX and `\fscx`, so stretched text came out wide when it should have been tall. A change that grows the width more resamples as before. [#738](https://github.com/altqx/hikari/issues/738), owner decision 2026-11-04.

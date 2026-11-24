@@ -73,3 +73,4 @@ HikariSub.Discord	In the Editing layout, or when no other mode applies	title-cas
 HikariSub.Discord	In the Typesetting layout, and in full-screen typesetting	title-case	names the Typesetting layout
 HikariSub.Discord	In the Karaoke layout	title-case	names the Karaoke layout
 HikariSub.Discord	While Simple mode is open	title-case	names Simple mode (#1207)
+HikariSub.Options	Built-in Default	title-case	Default is the style’s name
