@@ -148,6 +148,7 @@ signals:
     // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
+    void markCurrentFrameChanged();
     void askForBadResolutionChanged();
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
@@ -487,6 +488,9 @@ public:
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
+    Q_PROPERTY(bool markCurrentFrame READ markCurrentFrame WRITE setMarkCurrentFrame NOTIFY markCurrentFrameChanged)
+    bool markCurrentFrame() const { return m_settings->boolean("grid.markCurrentFrame"); }
+    void setMarkCurrentFrame(bool on);
     Q_INVOKABLE void openWebsite();
     // kind: "panel" or "window" (guide_links.h); anything else opens the guide's home.
     Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
@@ -517,15 +521,20 @@ public:
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
     Q_INVOKABLE bool deleteText();
+    Q_INVOKABLE bool deleteTextKeepTags();
     // AU20 text commands on the shown selection, one undo step each. command: "balancedBreak",
     // "breakLeft", "breakRight", "removeBreaks", "wrapAtBreaksOnly", "lowercase", "uppercase",
     // "titleCase", "sentenceCase", "fullWidth", "halfWidth", "swapAlternatives".
     Q_INVOKABLE bool textCommand(const QString &command);
     Q_INVOKABLE bool selectionWrapsAtBreaksOnly() const;
-    Q_INVOKABLE void toggleHideTags();
+    // mode: 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
+    Q_INVOKABLE void setGridTagsMode(int mode);
+    Q_INVOKABLE void cycleGridTagsMode();
     // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
+    Q_INVOKABLE bool moveLines(bool up);
+    Q_INVOKABLE bool canMoveLines(bool up) const;
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
     Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
     Q_INVOKABLE bool setFpsFromVideo();
@@ -1258,6 +1267,7 @@ signals:
 
 private:
     struct WindowMedia;
+    application::GridTagsMode gridTagsMode() const;
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     static QString openProblem(const QString &path, const application::StageFailure &failure);
@@ -1706,6 +1716,8 @@ private:
     QTimer *m_editRefresh = nullptr;
     std::optional<core::LineId> m_leftEditedLine;
     void trackVideoFollow(WindowMedia &media);
+    std::vector<core::LineId> linesVisibleOnVideo(application::EditSession &session, const application::ShownLine &shown);
+    void refreshFrameMarks();
     void followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left);
     void followEditOn(const application::FollowedLine &line);
     void followShownLine(bool rowChanged, LineChangeOrigin origin);

@@ -2112,7 +2112,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         if (m_review)
             Q_EMIT m_review->currentChanged();
     });
-    v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    v.shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
@@ -2724,6 +2724,7 @@ void Application::refreshViews()
     m_problems.keepOnly(m_workspace.documents());
     syncReadingProblems();
     shell().setRowMarks(rowMarksOf(target));
+    refreshFrameMarks();
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();
     // MUST KILL: must run after editor().setDocument above
@@ -5216,12 +5217,14 @@ application::SelectLinesSettings selectSettings(const QVariantMap &m, int option
     s.find = utf8(m.value(QStringLiteral("find")).toString());
     s.with = m.value(QStringLiteral("with"), s.with).toBool();
     s.matchCase = m.value(QStringLiteral("matchCase"), s.matchCase).toBool();
-    s.regex = m.value(QStringLiteral("regex"), s.regex).toBool();
+    s.match = static_cast<S::Match>(std::clamp(m.value(QStringLiteral("match"), int(s.match)).toInt(), 0,
+                                               int(S::Match::Regex)));
     s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field"), int(s.field)).toInt(), 0,
                                                int(S::Field::Overlaps)));
     s.dialogues = m.value(QStringLiteral("dialogues"), s.dialogues).toBool();
     s.comments = m.value(QStringLiteral("comments"), s.comments).toBool();
-    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0, 2));
+    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0,
+                                             int(S::Mode::Intersect)));
     s.action = static_cast<S::Action>(std::clamp(m.value(QStringLiteral("action"), int(s.action)).toInt(), 0, 6));
     return s;
 }
@@ -5236,7 +5239,7 @@ QVariantMap Application::selectLinesSettings() const
     const auto s = application::selectLinesFromOptions(m_selectOptions);
     return {{QStringLiteral("with"), s.with},
             {QStringLiteral("matchCase"), s.matchCase},
-            {QStringLiteral("regex"), s.regex},
+            {QStringLiteral("match"), int(s.match)},
             {QStringLiteral("field"), int(s.field)},
             {QStringLiteral("dialogues"), s.dialogues},
             {QStringLiteral("comments"), s.comments},
@@ -5303,10 +5306,15 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     m_settings->set("selectLines.recentSelections", m_selectRecent);
     saveSelectLinesSettings(map);
     using M = application::SelectLinesSettings::Mode;
-    return settings.mode == M::Select           ? QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count)
-           : settings.mode == M::AddToSelection ? QCoreApplication::translate("HikariSub.SelectLines",
-                                                                              "%1 lines added to selection.").arg(count)
-                                                : QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    switch (settings.mode) {
+    case M::Select: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count);
+    case M::AddToSelection:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines added to selection.").arg(count);
+    case M::Deselect: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    case M::Intersect:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines removed from selection.").arg(count);
+    }
+    return {};
 }
 
 QString Application::selectStylesPattern(const QStringList &styles) const
@@ -7051,10 +7059,32 @@ bool Application::deleteLines()
     return done;
 }
 
-void Application::toggleHideTags()
+application::GridTagsMode Application::gridTagsMode() const
 {
-    m_settings->set("grid.hideTags", !shell().hideTags());
-    shell().setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    return application::GridTagsMode(std::clamp<qint64>(m_settings->integer("grid.tagsMode"), 0, 2));
+}
+
+void Application::setGridTagsMode(int mode)
+{
+    m_settings->set("grid.tagsMode", std::clamp(mode, 0, 2));
+}
+
+void Application::cycleGridTagsMode()
+{
+    const int mode = (int(gridTagsMode()) + 1) % 3;
+    setGridTagsMode(mode);
+    const QString shown = std::array{
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Show"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Replace with symbol"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Hide")}[std::size_t(mode)];
+    shell().setStatusText(shown);
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, shown] {
+        if (shell().statusText() == shown)
+            shell().setStatusText(QString());
+    });
 }
 
 bool Application::deleteText()
@@ -7063,6 +7093,17 @@ bool Application::deleteText()
     if (!session)
         return false;
     const bool done = application::deleteText(*session, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::deleteTextKeepTags()
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::deleteTextKeepTags(*session, shownLines()).has_value();
     editor().reloadFromSession();
     refreshViews();
     return done;
@@ -7127,6 +7168,23 @@ bool Application::swapLines()
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+bool Application::moveLines(bool up)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::moveLines(*session, up, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::canMoveLines(bool up) const
+{
+    const auto *session = targetSession();
+    return session && application::canMoveLines(*session, up, shownLines());
 }
 
 bool Application::makeContinuous(bool withPrevious)
@@ -7553,7 +7611,10 @@ void Application::settingChanged(const QString &id)
         choosePlayer();
     if (id == QLatin1String("subtitles.saveWithVideoName"))
         emit saveWithVideoNameChanged();
-    else if (id == QLatin1String("video.dontAskForBadResolution"))
+    else if (id == QLatin1String("grid.markCurrentFrame")) {
+        emit markCurrentFrameChanged();
+        refreshFrameMarks();
+    } else if (id == QLatin1String("video.dontAskForBadResolution"))
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
@@ -7597,9 +7658,9 @@ void Application::settingChanged(const QString &id)
     else if (id == QLatin1String("editor.timesToFramesSwitch") && !m_resettingSettings)
         for (auto *views : allViews())
             views->editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
-    else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
+    else if (id == QLatin1String("grid.tagsMode") || id == QLatin1String("grid.tagsSwapCharacter"))
         for (auto *views : allViews())
-            views->shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+            views->shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     else if (id == QLatin1String("program.language"))
         switchLanguage();
     else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))

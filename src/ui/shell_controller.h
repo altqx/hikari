@@ -36,9 +36,10 @@ class ShellController : public QObject {
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
     Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
+    // 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
+    Q_PROPERTY(int tagsMode READ tagsMode NOTIFY tagsModeChanged)
     Q_PROPERTY(QString gridFilterText READ gridFilterText WRITE setGridFilterText NOTIFY gridFilterChanged)
     Q_PROPERTY(bool gridFilterMatchesNothing READ gridFilterMatchesNothing NOTIFY gridFilterChanged)
-    Q_PROPERTY(bool hideTags READ hideTags NOTIFY hideTagsChanged)
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
     Q_PROPERTY(bool referenceLinked READ referenceLinked NOTIFY referenceNavigationChanged)
     Q_PROPERTY(int referenceMatchCount READ referenceMatchCount NOTIFY referenceNavigationChanged)
@@ -126,14 +127,14 @@ public:
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
     bool filtered() const { return m_lines.headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool(); }
-    bool hideTags() const { return m_lines.hideTags(); }
-    void setHideTags(bool hide, const QString &swap)
+    int tagsMode() const { return int(m_lines.tagsMode()); }
+    void setTagsMode(application::GridTagsMode mode, const QString &swap)
     {
-        const bool changed = hide != m_lines.hideTags();
-        m_lines.setHideTags(hide, swap);
-        m_referenceLines.setHideTags(hide, swap);
+        const bool changed = mode != m_lines.tagsMode();
+        m_lines.setTagsMode(mode, swap);
+        m_referenceLines.setTagsMode(mode, swap);
         if (changed)
-            emit hideTagsChanged();
+            emit tagsModeChanged();
     }
     void setReadingLimits(const application::ReadingLimits &profile)
     {
@@ -165,6 +166,7 @@ public:
         m_lines.setQcMarks(std::move(marks), current);
     }
     void setRowMarks(LineTableModel::RowMarks marks) { m_lines.setRowMarks(std::move(marks)); }
+    void setLinesOnFrame(const std::vector<core::LineId> &lines) { m_lines.setLinesOnFrame(lines); }
 
     bool foldGenerated() const { return m_lines.foldGenerated(); }
     // MUST KILL: setFoldGenerated emits foldGeneratedChanged before the rows fold; Application relies on that order
@@ -207,7 +209,7 @@ signals:
     void autoHideColumnsChanged();
     void gridColumnWidthsChanged();
     void foldGeneratedChanged();
-    void hideTagsChanged();
+    void tagsModeChanged();
     void gridFilterChanged();
     void referenceNavigationChanged();
     void referenceLineShown(qulonglong id);

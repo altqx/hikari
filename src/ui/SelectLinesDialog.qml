@@ -25,7 +25,7 @@ DialogWindow {
         const s = app.openSelectLines()
         withChoice.currentIndex = s.with ? 0 : 1
         matchCase.checked = s.matchCase
-        regex.checked = s.regex
+        match.currentIndex = s.match
         fields.currentIndex = s.field
         dialogues.checked = s.dialogues
         comments.checked = s.comments
@@ -38,7 +38,7 @@ DialogWindow {
     }
     function searchSettings() {
         return {find: findText.editText, with: withChoice.currentIndex === 0, matchCase: matchCase.checked,
-                regex: regex.checked, field: fields.currentIndex, dialogues: dialogues.checked,
+                match: match.currentIndex, field: fields.currentIndex, dialogues: dialogues.checked,
                 comments: comments.checked, mode: modes.currentIndex, action: actions.currentIndex}
     }
     function run(allTabs) {
@@ -91,7 +91,7 @@ DialogWindow {
                 iconRole: "styles"
                 text: qsTr("Choose styles")
                 onClicked: {
-                    stylesChooser.before = { text: findText.editText, field: fields.currentIndex, regex: regex.checked }
+                    stylesChooser.before = { text: findText.editText, field: fields.currentIndex, match: match.currentIndex }
                     stylesChooser.openFor(selectChooseStylesButton, dialog.app.styleNames(), [], { counts: dialog.app.styleLineCounts() })
                 }
             }
@@ -100,8 +100,16 @@ DialogWindow {
         Item { implicitWidth: 1 }
         RowLayout {
             spacing: 18
+            SegmentedButtons {
+                id: match
+                objectName: "selectMatch"
+                enabled: !dialog.byOverlap
+                choices: [{ text: qsTr("Contains"), name: "selectMatch0" }, { text: qsTr("Exact match"), name: "selectMatch1" },
+                          { text: qsTr("Regular expressions"), name: "selectMatch2" }]
+                Accessible.name: qsTr("Match")
+                onActivated: index => currentIndex = index
+            }
             CheckBox { id: matchCase; objectName: "selectMatchCase"; text: qsTr("Match case"); enabled: !dialog.byOverlap }
-            CheckBox { id: regex; objectName: "selectRegex"; text: qsTr("Regular expressions"); enabled: !dialog.byOverlap }
         }
 
         RowLabel { text: qsTr("In") }
@@ -126,7 +134,8 @@ DialogWindow {
             id: modes
             objectName: "selectMode"
             choices: [{ text: qsTr("Select"), name: "selectMode0" }, { text: qsTr("Add to selection"), name: "selectMode1" },
-                      { text: qsTr("Deselect"), name: "selectMode2" }]
+                      { text: qsTr("Deselect"), name: "selectMode2" },
+                      { text: qsTr("Intersect with selection"), name: "selectMode3" }]
             Accessible.name: qsTr("Selection")
             Layout.fillWidth: true
             onActivated: index => currentIndex = index
@@ -174,11 +183,11 @@ DialogWindow {
             if (reverted && before) {
                 findText.editText = before.text
                 fields.currentIndex = before.field
-                regex.checked = before.regex
+                match.currentIndex = before.match
             } else {
                 findText.editText = dialog.app.selectStylesPattern(names)
                 fields.currentIndex = 1
-                regex.checked = true
+                match.currentIndex = 2
             }
         }
     }

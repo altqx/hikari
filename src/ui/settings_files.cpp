@@ -562,6 +562,17 @@ void migrateIni(QVariantMap &ini)
         ini.insert(to, out);
         ini.remove(from);
     }
+    if (const QString hideTags = QStringLiteral("profile/") + qs(application::kRetiredHideTagsSetting);
+        ini.contains(hideTags)) {
+        const QString swap = targetKey("grid.tagsSwapCharacter");
+        const QString mode = targetKey(application::kGridTagsModeSetting);
+        if (!ini.contains(mode))
+            ini.insert(mode, QVariant::fromValue<qlonglong>(qlonglong(application::gridTagsModeOfHideTags(
+                                 ini.value(hideTags).toBool(),
+                                 ini.contains(swap) ? std::optional(ini.value(swap).toString().toStdString())
+                                                    : std::nullopt))));
+        ini.remove(hideTags);
+    }
     if (ini.value(QStringLiteral("registry/schema"), 0).toInt() >= 1)
         return;
     for (const auto &interim : application::interimKeys()) {
@@ -777,6 +788,18 @@ void SettingsFiles::load()
         list = application::foldInto(std::move(list), folded, old->value<std::string>().value_or(""));
         putToml(*tomlParent(m_settings, folded.to, true), idSegments(folded.to).back(), list);
         eraseToml(m_settings, folded.from);
+        changed(Settings);
+    }
+    if (const auto *hideTags = tomlNode(m_settings, application::kRetiredHideTagsSetting)) {
+        if (!tomlNode(m_settings, application::kGridTagsModeSetting)) {
+            const auto *swap = tomlNode(m_settings, "grid.tagsSwapCharacter");
+            const auto mode = application::gridTagsModeOfHideTags(
+                hideTags->value<bool>().value_or(false), swap ? swap->value<std::string>() : std::nullopt);
+            if (mode != application::GridTagsMode::Show)
+                putToml(*tomlParent(m_settings, application::kGridTagsModeSetting, true),
+                        idSegments(application::kGridTagsModeSetting).back(), std::int64_t(mode));
+        }
+        eraseToml(m_settings, application::kRetiredHideTagsSetting);
         changed(Settings);
     }
     // MUST KILL: settings.toml is written at a first start only so that its existence marks later starts
