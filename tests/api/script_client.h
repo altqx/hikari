@@ -18,10 +18,6 @@
 
 namespace hikari::api::testing {
 
-// Where `expected` is not contained in `actual`: objects match by the keys
-// expected names, arrays item by item at equal length, other values by equality.
-std::optional<std::string> mismatch(const Json &expected, const Json &actual, const std::string &path = "");
-
 // Null when the pointer leads nowhere.
 const Json *pointer(const Json &value, std::string_view at);
 

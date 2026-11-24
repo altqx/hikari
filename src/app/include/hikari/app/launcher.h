@@ -55,13 +55,14 @@ inline std::optional<Look> parseLook(std::string_view text)
     return Look{colours[0], colours[1], colours[2]};
 }
 
-// The starts that never show a window: --version, --export-docs and the update handoff.
+// The starts that never show a window: --version, --export-docs, --test-plugin and the update handoff.
 inline bool startsWindow(std::span<const std::string_view> arguments)
 {
     if (!arguments.empty() && arguments.front() == application::kApplyUpdateSwitch)
         return false;
     for (const std::string_view argument : arguments)
-        if (argument == "--version" || argument == "--export-docs" || argument.starts_with("--export-docs="))
+        if (argument == "--version" || argument == "--export-docs" || argument.starts_with("--export-docs=") ||
+            argument == "--test-plugin")
             return false;
     return true;
 }
