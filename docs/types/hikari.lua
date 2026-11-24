@@ -1728,6 +1728,35 @@ function hikari.formats.exporter(id, fn) end
 ---@param fn fun(data: string, name: string): { lines: table[], styles?: table[], info?: table<string, string> }
 function hikari.formats.importer(id, fn) end
 
+---@class hikari.ProviderRequest
+---@field document integer
+---@field line integer
+---@field field string
+---@field text string
+---@field offset integer UTF-16 offset of the caret in `text`.
+---@field trigger? string The trigger character typed; nil for Ctrl+Space and hovers.
+
+---@class hikari.CompletionItem
+---@field label string
+---@field insert? string Defaults to `label`.
+---@field detail? string
+---@field from? integer Defaults to the request's `offset`.
+---@field to? integer
+---@field snippet? boolean `insert` has tab stops such as `${1:200}`.
+
+---@class hikari.Hover
+---@field text string
+---@field from? integer
+---@field to? integer
+
+hikari.providers = {}
+---Answers completions for `contributes.providers.completion`, at most 200 items within 1 second.
+---@param fn fun(request: hikari.ProviderRequest): hikari.CompletionItem[]?
+function hikari.providers.completion(fn) end
+---Answers hovers for `contributes.providers.hover` within 1 second.
+---@param fn fun(request: hikari.ProviderRequest): hikari.Hover?
+function hikari.providers.hover(fn) end
+
 hikari.problems = {}
 ---@param problems hikari.Problem[]
 ---@param options { revision: integer, set?: string, document?: integer }
