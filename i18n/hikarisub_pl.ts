@@ -7660,6 +7660,33 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Filter the Grid</source>
         <translation>Filtruj listę napisów</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Pokaż</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Ukryj</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9637,6 +9664,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>Przełącz tryb tagów na liście napisów</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>Pokaż tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>Zastąp tagi na liście napisów symbolem</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
     </message>
 </context>
 <context>
@@ -12838,14 +12893,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Najpierw otwórz plik</translation>
     </message>
     <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>Pokazuje lub ukrywa tagi na liście napisów</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>Ukryj tagi na liście napisów</translation>
-    </message>
-    <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>Pokazuje lub ukrywa tagi w edytorze linijki</translation>
     </message>
@@ -12912,6 +12959,42 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>Pokazuje, zastępuje symbolem lub ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>Tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>Pokazuje tagi na liście napisów bez zmian</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>Pokazuje każdy blok tagów na liście napisów jako symbol ustawiony w Ustawienia › Lista napisów</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>Ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>Zabarwia linijki na liście napisów widoczne na bieżącej klatce wideo</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
     </message>
 </context>
 <context>
@@ -21419,6 +21502,26 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Overlapping lines</source>
         <translation>Nakładające się linijki</translation>
+    </message>
+    <message>
+        <source>Contains</source>
+        <translation>Częściowe dopasowanie</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>Dokładne dopasowanie</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>Dopasowanie</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>Zawęź zaznaczenie</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>Usunięto z zaznaczenia linijek: %1.</translation>
     </message>
 </context>
 <context>
