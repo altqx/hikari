@@ -307,7 +307,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>이름 바꾸기</translation>
+        <translation type="vanished">이름 바꾸기</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -752,10 +752,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>새 스레드 기본값</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1436,7 +1432,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>열기</translation>
+        <translation type="vanished">열기</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -3483,6 +3479,22 @@ Output device: %2</source>
         <translation>내 변경 사항 유지</translation>
     </message>
     <message>
+        <source>%1 looks like %2, not UTF-8. Reopening drops the changes you made here.</source>
+        <translation>%1은(는) UTF-8이 아니라 %2(으)로 보입니다. 다시 열면 여기서 바꾼 내용이 사라집니다.</translation>
+    </message>
+    <message>
+        <source>%1 looks like %2, not UTF-8.</source>
+        <translation>%1은(는) UTF-8이 아니라 %2(으)로 보입니다.</translation>
+    </message>
+    <message>
+        <source>Reopen as %1</source>
+        <translation>%1(으)로 다시 열기</translation>
+    </message>
+    <message>
+        <source>Other encoding…</source>
+        <translation>다른 인코딩…</translation>
+    </message>
+    <message>
         <source>Convert “%1” to ASS before saving it?</source>
         <translation>저장하기 전에 “%1”을(를) ASS로 변환할까요?</translation>
     </message>
@@ -3531,6 +3543,14 @@ Output device: %2</source>
         <translation>%1(을)를 읽을 수 없습니다.</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation>텍스트 가져오기</translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation>텍스트 파일 (*.txt)</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>자막 열기</translation>
     </message>
@@ -3549,6 +3569,22 @@ Output device: %2</source>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>자막이 포함된 영상 (*.mkv *.ogm)</translation>
+    </message>
+    <message>
+        <source>Reopening drops the changes you made here. The file then saves as UTF-8.</source>
+        <translation>다시 열면 여기서 바꾼 내용이 사라집니다. 이후 파일은 UTF-8로 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>The file then saves as UTF-8.</source>
+        <translation>이후 파일은 UTF-8로 저장됩니다.</translation>
+    </message>
+    <message>
+        <source>Detected</source>
+        <translation>감지됨</translation>
+    </message>
+    <message>
+        <source>Reopen</source>
+        <translation>다시 열기</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -3641,6 +3677,10 @@ Output device: %2</source>
     <message>
         <source>Choose where to save the untitled document.</source>
         <translation>새 자막을 저장할 위치를 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>The file is not text in that encoding; nothing was changed.</source>
+        <translation>그 인코딩으로는 파일이 텍스트가 아닙니다. 아무것도 바뀌지 않았습니다.</translation>
     </message>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
@@ -4008,6 +4048,57 @@ Output device: %2</source>
     <message>
         <source>it isn’t running.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>파일이 %nMB보다 큽니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation type="vanished">파일이 UTF-8 텍스트가 아닙니다. 텍스트 편집기에서 UTF-8로 저장한 다음 가져오십시오.</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>파일이 %1 텍스트가 아닙니다. 다른 인코딩을 선택하십시오.</translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation>타임코드 파일입니다. 대신 영상 › 타임코드 열기…로 여십시오.</translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation>파일에 가져올 줄이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation>배우 구분자</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>없음</translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation>주석 시작 문자</translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation>빈 줄을 주석 줄로 유지</translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation>배우가 없는 줄은 직전 배우 유지</translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
+        <translation>주석: %1</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding</source>
+        <translation>인코딩을 지정해 다시 열기</translation>
     </message>
 </context>
 <context>
@@ -4681,12 +4772,20 @@ Output device: %2</source>
         <translation>1에서 1000 사이의 프레임 속도를 입력하세요.</translation>
     </message>
     <message>
+        <source>Choose an encoding from the list.</source>
+        <translation>목록에서 인코딩을 고르세요.</translation>
+    </message>
+    <message>
         <source>The style options can’t be saved in this file.</source>
         <translation>이 파일에는 스타일 옵션을 저장할 수 없습니다.</translation>
     </message>
     <message>
         <source>YouTube timed text couldn’t be made from this file: %1</source>
         <translation>이 파일로 YouTube 시간 지정 텍스트를 만들 수 없습니다: %1</translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written in %1.</source>
+        <translation>파일을 %1(으)로 쓸 수 없습니다.</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -5059,8 +5158,24 @@ Output device: %2</source>
         <translation>%1 삭제</translation>
     </message>
     <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>%1(으)로는 이 파일의 모든 문자를 담을 수 없습니다</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>다음 문자는 대체 문자로 기록됩니다: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>그래도 쓰기</translation>
+    </message>
+    <message>
         <source>Format</source>
         <translation>형식</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>인코딩</translation>
     </message>
     <message>
         <source>Lines</source>
@@ -8997,6 +9112,10 @@ Failed to copy %2 fonts.</source>
         <translation>가사 가져오기…</translation>
     </message>
     <message>
+        <source>Import text…</source>
+        <translation>텍스트 가져오기…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9131,6 +9250,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full screen typesetting</source>
         <translation>전체 화면 식자</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding…</source>
+        <translation>인코딩을 지정해 다시 열기…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -12188,6 +12311,10 @@ Failed to copy %2 fonts.</source>
         <translation>자막 파일을 엽니다</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>인코딩을 지정해 다시 열기…</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>영상 파일을 엽니다</translation>
     </message>
@@ -12210,6 +12337,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>%1을(를) 엽니다</translation>
+    </message>
+    <message>
+        <source>Reads the file again in the encoding you choose; it then saves as UTF-8</source>
+        <translation>고른 인코딩으로 파일을 다시 읽습니다. 이후 UTF-8로 저장됩니다</translation>
+    </message>
+    <message>
+        <source>Open a saved file first</source>
+        <translation>먼저 저장된 파일을 여세요</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation>일반 텍스트 파일을 열린 파일이나 새 파일의 줄로 바꿉니다</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>텍스트 가져오기…</translation>
     </message>
     <message>
         <source>Saves the document</source>
@@ -12584,7 +12727,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>열기</translation>
+        <translation type="vanished">열기</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13121,7 +13264,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
+        <translation type="obsolete">취소</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -18432,6 +18575,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin isn’t on.</source>
         <translation>플러그인이 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>색상 테마: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>아이콘 테마: %1</translation>
     </message>
 </context>
 <context>

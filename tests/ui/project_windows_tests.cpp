@@ -20,12 +20,14 @@
 #include "shell_controller.h"
 #include "shift_times_controller.h"
 #include "spelling/fake_spelling.h"
+#include "theme.h"
 #include "visual_tools_controller.h"
 #include "workspace_layout.h"
 
 #include "qtest_parts.h"
 
 #include <QDir>
+#include <QFontMetricsF>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -38,6 +40,7 @@
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QtQuickTest/quicktest.h>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
@@ -1312,6 +1315,68 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
         QTRY_VERIFY(popover->property("opened").toBool());
         QCOMPARE(create->property("text").toString(), QStringLiteral("Save to yours"));
+    }
+
+    void styleCatalogueShowsItsNamesWithAProject()
+    {
+        writeAll(home.filePath(QStringLiteral("Catalog/Default.sty")), catalogLine("Mine default"));
+        writeAll(home.filePath(QStringLiteral("Catalog/Film subtitles.sty")), catalogLine("Mine film"));
+        start();
+        const QString show = folder("named", true);
+        writeAll(show + QStringLiteral("/.hikari/catalogs/Sprite Fright.sty"), catalogLine("Project sign"));
+        auto &styles = application->styleManager();
+        const int w = openProjectWindow(show);
+        QVERIFY(w >= 0);
+        QVERIFY(application->openFile(writeAss(show + QStringLiteral("/ep.ass"), "a")));
+        QTRY_VERIFY(styles.hasProject());
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Sprite Fright"), QStringLiteral("project")));
+
+        QVERIFY(QMetaObject::invokeMethod(named(shell(w), "styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
+        auto *manager = shell(w)->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QTRY_VERIFY(manager && manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        QQuickItem *box = item(manager->contentItem(), QStringLiteral("styleCatalog"));
+        QVERIFY(box);
+        QTRY_VERIFY(item(manager->contentItem(), QStringLiteral("catalogTierMenuButton"))->isVisible());
+
+        application->settingsStore()->setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const char *code : {"light", "dark"}) {
+            application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            QTRY_COMPARE(ui::theme::current().id, QString::fromLatin1(code));
+            QVERIFY(QQuickTest::qWaitForPolish(manager));
+
+            const QFontMetricsF metrics(box->property("font").value<QFont>());
+            const qreal padding = box->property("leftPadding").toReal() + box->property("rightPadding").toReal();
+            QVERIFY2(box->width() >= metrics.horizontalAdvance(QStringLiteral("Sprite Fright")) + padding,
+                     qPrintable(QStringLiteral("%1 px").arg(box->width())));
+
+            const QString shots = qEnvironmentVariable("HIKARI_TEST_ARTIFACT_DIR");
+            const auto shoot = [&](const char *state) {
+                if (!shots.isEmpty())
+                    QVERIFY(QDir().mkpath(shots)
+                            && manager->grabWindow().save(shots + QStringLiteral("/style-catalogue-project-%1-%2.png")
+                                                                      .arg(QLatin1String(state), QLatin1String(code))));
+            };
+            shoot("closed");
+            auto *popup = box->property("popup").value<QObject *>();
+            QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+            QTRY_VERIFY(popup->property("opened").toBool());
+            auto *list = popup->property("contentItem").value<QQuickItem *>();
+            for (const char *row : {"styleCatalogRow_project_Sprite Fright", "styleCatalogRow_mine_Default",
+                                    "styleCatalogRow_mine_Film subtitles"}) {
+                QQuickItem *shown = nullptr;
+                QTRY_VERIFY((shown = item(list, QLatin1String(row))));
+                const QString name = QString::fromLatin1(row).section(QLatin1Char('_'), 2);
+                QQuickItem *label = nullptr;
+                for (QQuickItem *child : shown->property("contentItem").value<QQuickItem *>()->childItems())
+                    if (child->property("text").toString() == name)
+                        label = child;
+                QVERIFY2(label && label->isVisible() && !label->property("truncated").toBool(), row);
+            }
+            shoot("open");
+            QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+        }
     }
 
     void fontCatalogsAndLayoutsHaveAProjectTier()

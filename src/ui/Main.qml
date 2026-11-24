@@ -79,6 +79,7 @@ ApplicationWindow {
     required property var alignToVideo
     required property var videoAnalysis
     required property var lyricsImport
+    required property var textImport
     required property var qcNotes
     required property var problems
     required property var fontCollector
@@ -2777,6 +2778,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_KEYFRAMES")) root.app.closeKeyframes()
         }
         Action {
+            id: reopenWithEncodingAction
+            text: qsTr("Reopen with encoding…")
+            enabled: root.app.canReopenWithEncoding
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REOPEN_WITH_ENCODING")) root.chooseReopenEncoding()
+        }
+        Action {
             id: fullScreenTypesettingAction
             readonly property bool open: root.videoFullscreen.active
                                          && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
@@ -3231,6 +3238,14 @@ ApplicationWindow {
                             height: visible ? implicitHeight : 0
                         }
                     }
+                    ShellMenuItem {
+                        command: "GLOBAL_REOPEN_WITH_ENCODING"
+                        help: qsTr("Reads the file again in the encoding you choose; it then saves as UTF-8")
+                        iconRole: "refresh"
+                        objectName: "reopenWithEncodingMenuItem"
+                        reason: reopenWithEncodingAction.enabled ? "" : qsTr("Open a saved file first")
+                        action: reopenWithEncodingAction
+                    }
                     MenuSeparator {}
                     ShellMenuItem {
                         command: "GRID_SUBS_FROM_MKV"
@@ -3248,6 +3263,14 @@ ApplicationWindow {
                         objectName: "importLyricsMenuItem"
                         text: qsTr("Import lyrics…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_IMPORT_TEXT"
+                        help: qsTr("Turns a plain text file into lines, in the open file or a new one")
+                        iconRole: "import"
+                        objectName: "importTextMenuItem"
+                        text: qsTr("Import text…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_TEXT")) textDialog.show()
                     }
                     MenuSeparator {}
                     ShellMenuItem {
@@ -9160,6 +9183,30 @@ ApplicationWindow {
                 }
             }
         }
+        InlineBar {
+            id: encodingBar
+            objectName: "encodingBar"
+            readonly property var tab: root.currentTab()
+            visible: !root.windowHome && root.app.encodingSuggestion.length > 0
+            severity: tab.modified ? "warning" : "info"
+            text: tab.modified
+                  ? qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8. Reopening drops the changes you made here.")
+                        .arg(tab.title, root.app.encodingSuggestion)
+                  : qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8.").arg(tab.title, root.app.encodingSuggestion)
+            onClosed: root.app.dismissEncodingSuggestion()
+            Layout.fillWidth: true
+            IconTextButton {
+                iconRole: "refresh"
+                objectName: "encodingBarReopen"
+                text: qsTranslate("HikariSub.Documents", "Reopen as %1").arg(root.app.encodingSuggestion)
+                onClicked: root.app.reopenWithEncoding(root.app.reopenEncodings()[0].name)
+            }
+            Button {
+                objectName: "encodingBarChoose"
+                text: qsTranslate("HikariSub.Documents", "Other encoding…")
+                onClicked: root.chooseReopenEncoding()
+            }
+        }
         ColumnLayout {
             objectName: "unresolvedBars"
             visible: entryBars.count > 0
@@ -9755,6 +9802,41 @@ ApplicationWindow {
         lyricsImportLoader.active = true
         lyricsImportLoader.item.open()
     }
+    FileChooser {
+        id: textDialog
+        objectName: "textOpenDialog"
+        title: qsTranslate("HikariSub.Documents", "Import text")
+        nameFilters: [qsTranslate("HikariSub.Documents", "Text files (*.txt)"),
+                      qsTranslate("HikariSub.Documents", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("text", selectedFile)
+            root.openTextImport(root.app.localPath(selectedFile))
+        }
+        function show() {
+            const folder = root.pickerFolder("text")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+    }
+    Loader {
+        id: textImportLoader
+        active: false
+        sourceComponent: TextImportDialog {
+            controller: root.textImport
+            settings: root.app.settings
+            onChooseAnother: textDialog.show()
+        }
+    }
+    function openTextImport(path) {
+        if (!root.textImport.load(path)) {
+            root.notices.post("error", qsTranslate("HikariSub.Documents", "Import text"),
+                              qsTranslate("HikariSub.Documents", "Could not read %1.").arg(path))
+            return
+        }
+        textImportLoader.active = true
+        textImportLoader.item.open()
+    }
     Loader {
         id: dummyVideoLoader
         active: false
@@ -10166,6 +10248,29 @@ ApplicationWindow {
             root.rememberPickerFolder("audio", selectedFile)
             root.audio.openAudioUrl(selectedFile)
         }
+    }
+    ListChooser {
+        id: encodingChooser
+        objectName: "encodingChooser"
+        settings: root.app.settings
+    }
+    function chooseReopenEncoding() {
+        const encodings = root.app.reopenEncodings()
+        const suggested = root.app.encodingSuggestion
+        encodingChooser.choose({
+            title: qsTranslate("HikariSub.Documents", "Reopen with encoding"),
+            text: root.currentTab().modified
+                  ? qsTranslate("HikariSub.Documents", "Reopening drops the changes you made here. The file then saves as UTF-8.")
+                  : qsTranslate("HikariSub.Documents", "The file then saves as UTF-8."),
+            rows: encodings.map((row, index) => ({
+                text: row.label,
+                detail: index === 0 && suggested.length > 0 ? qsTranslate("HikariSub.Documents", "Detected") : ""
+            })),
+            acceptText: qsTranslate("HikariSub.Documents", "Reopen")
+        }, index => {
+            if (index >= 0)
+                root.app.reopenWithEncoding(encodings[index].name)
+        })
     }
     Connections {
         target: root.audio
@@ -11364,6 +11469,7 @@ ApplicationWindow {
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
         GLOBAL_CLOSE_TIMECODES: closeTimecodesAction, GLOBAL_SAVE_KEYFRAMES: saveKeyframesAction,
         GLOBAL_CLOSE_KEYFRAMES: closeKeyframesAction,
+        GLOBAL_REOPEN_WITH_ENCODING: reopenWithEncodingAction,
         GLOBAL_FULL_SCREEN_TYPESETTING: fullScreenTypesettingAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
@@ -11570,6 +11676,7 @@ ApplicationWindow {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
         case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
+        case "GLOBAL_IMPORT_TEXT": textDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true

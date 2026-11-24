@@ -168,6 +168,15 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     return path;
 }
 
+QString writeText(const QTemporaryDir &dir, const char *name, const QByteArray &bytes)
+{
+    const QString path = dir.filePath(QLatin1String(name));
+    QFile f(path);
+    if (f.open(QIODevice::WriteOnly))
+        f.write(bytes);
+    return path;
+}
+
 struct MemoryAi {
     std::map<std::string, std::string> keys;
     application::ai::Config config;
@@ -34442,6 +34451,101 @@ private slots:
         QVERIFY(!dialogItem("lyricsImportDialog", "lyricsImportImport")->isEnabled());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("lyricsImportDialog", "lyricsImportCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    void importTextAddsLinesToTheOpenFileInOneStep()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "pf4-open.ass",
+                                                "Dialogue: 0,0:00:30.00,0:00:31.00,Default,,0,0,0,,mine\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        const QString text = writeText(dir, "pf4-script.txt", "Ana: Hello\n\n#A note\n  still Ana\n");
+        auto *menuItem = item<QObject>("importTextMenuItem");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_IMPORT_TEXT"));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTextImport", Q_ARG(QVariant, text)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("textImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QVERIFY(controller->property("canImport").toBool());
+        QVERIFY(controller->property("intoOpenFile").toBool());
+        QCOMPARE(controller->property("style").toString(), QStringLiteral("Default"));
+        QCOMPARE(controller->property("lineCount").toInt(), 3);
+        const QVariantList preview = controller->property("preview").toList();
+        QCOMPARE(preview.size(), 3);
+        QCOMPARE(preview[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Ana"));
+        QVERIFY(preview[1].toMap().value(QStringLiteral("comment")).toBool());
+        auto *importButton = dialogItem("textImportDialog", "textImportImport");
+        QVERIFY(importButton);
+        QVERIFY(QMetaObject::invokeMethod(importButton, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), 4u);
+        QCOMPARE(lines[1]->actor, std::u8string(u8"Ana"));
+        QCOMPARE(lines[1]->text, std::u8string(u8"Hello"));
+        QVERIFY(lines[2]->comment);
+        QCOMPARE(lines[3]->actor, std::u8string(u8"Ana"));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Import text"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines().size(), 1u);
+    }
+
+    void importTextOpensANewFileAndRemembersItsOptions()
+    {
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.reset(QStringLiteral("textImport.options")); });
+        const auto open = [&](const QString &path) {
+            QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTextImport", Q_ARG(QVariant, path)));
+        };
+        open(writeText(dir, "pf4-utf16.txt", QByteArray("\xff\xfe" "A\x00", 4)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("textImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QCOMPARE(controller->property("encoding").toString(), QStringLiteral("UTF-16LE"));
+        QCOMPARE(dialogItem("textImportDialog", "textImportEncoding")->property("currentText").toString(), QStringLiteral("UTF-16 LE"));
+        QCOMPARE(controller->property("lineCount").toInt(), 1);
+        controller->setProperty("encoding", QStringLiteral("UTF-8"));
+        QVERIFY(controller->property("problem").toString().contains(QStringLiteral("UTF-8")));
+        QTRY_VERIFY(!dialogItem("textImportDialog", "textImportImport")->isEnabled());
+        controller->setProperty("encoding", QStringLiteral("UTF-16LE"));
+        QCOMPARE(controller->property("preview").toList().value(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("A"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        open(writeText(dir, "pf4-timecodes.txt", "# timecode format v2\n0\n42\n"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(controller->property("problem").toString().contains(QStringLiteral("timecodes")));
+        QVERIFY(!controller->property("canImport").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        open(writeText(dir, "pf4-lines.txt", "\xEF\xBB\xBF" "Ana - Hi: there\nPlain\n"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(controller->property("encoding").toString(), QStringLiteral("UTF-8"));
+        controller->setProperty("actorSeparator", QStringLiteral(" - "));
+        controller->setProperty("namesCarryOver", false);
+        controller->setProperty("intoOpenFile", false);
+        const QVariantList preview = controller->property("preview").toList();
+        QCOMPARE(preview.size(), 2);
+        QCOMPARE(preview[0].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Hi: there"));
+        const QJsonObject remembered = QJsonDocument::fromJson(settings.text("textImport.options").toUtf8()).object();
+        QCOMPARE(remembered.value(QStringLiteral("actorSeparator")).toString(), QStringLiteral(" - "));
+        QCOMPARE(remembered.value(QStringLiteral("namesCarryOver")).toBool(true), false);
+        const auto documents = application->workspace().documents().size();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportImport"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_COMPARE(application->workspace().documents().size(), documents + 1);
+        const auto target = *application->workspace().editingTarget();
+        QCOMPARE(QString::fromStdString(*application->workspace().title(target)), QStringLiteral("pf4-lines.ass"));
+        const auto lines = application->files().session(target)->document().lines();
+        QCOMPARE(lines.size(), 2u);
+        QCOMPARE(lines[0]->actor, std::u8string(u8"Ana"));
+        QCOMPARE(lines[0]->text, std::u8string(u8"Hi: there"));
+        QVERIFY(lines[1]->actor.empty());
+        QCOMPARE(lines[1]->start.value.microseconds(), 0);
     }
 
     void alignToVideoTimesTheLineToTheKeyPointsFrames()

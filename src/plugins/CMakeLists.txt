@@ -10,5 +10,5 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${schema}" "${ma
 add_library(hikari_plugins STATIC archive.cpp include/hikari/plugins/archive.h conditions.cpp manifest.cpp marketplace.cpp media.cpp package.cpp project_plugins.cpp qml_imports.cpp registry.cpp installer.cpp
     surface.cpp "${CMAKE_CURRENT_BINARY_DIR}/manifest_schema.cpp" "${CMAKE_CURRENT_BINARY_DIR}/marketplace_schema.cpp")
 target_include_directories(hikari_plugins PUBLIC include)
-target_link_libraries(hikari_plugins PUBLIC hikari_api hikari_minisign PRIVATE ZLIB::ZLIB)
-hikari_module(hikari_plugins ALLOW hikari_api hikari_minisign ZLIB::ZLIB)
+target_link_libraries(hikari_plugins PUBLIC hikari_api hikari_minisign PRIVATE ZLIB::ZLIB hikari_themes)
+hikari_module(hikari_plugins ALLOW hikari_api hikari_minisign ZLIB::ZLIB hikari_themes)

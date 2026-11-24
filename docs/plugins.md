@@ -8,7 +8,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 
 - Entry names are `/`-separated paths of letters, digits, spaces and `_ . - +`. HikariSub refuses an absolute path, `.` or `..`, a backslash or colon, a name ending in a dot or space, a Windows device name (`CON`, `NUL`, `COM1`…), two names that differ only in case, a file whose name is also a folder, and a link.
 - A package holds at most 4096 files and 64 MB unpacked.
-- `main` must be one of the package's files.
+- `main`, when there is one, must be one of the package's files. So must each theme file, each icon of an icon theme and each own icon, which also follow the [icon rules](#themes-and-icons).
 - The marketplace's media rules below hold for `icon`, `screenshots` and `README.md`.
 
 ## The manifest
@@ -20,7 +20,7 @@ A `.hikariplugin` file is a zip. It holds `hikari-plugin.json` at its top level 
 | `id` | yes | Reverse-DNS, lowercase, at least two parts: `com.example.line-tools`. It names the plugin's folders. |
 | `name`, `version` | yes | The shown name, and a semantic version 2.0.0 that orders updates. |
 | `api` | yes | The lowest Hikari API number the plugin needs. A higher number than HikariSub's `kApiVersion` is refused with both numbers. |
-| `main` | yes | The Lua file the helper runs. |
+| `main` | no | The Lua file the helper runs. A package without one runs no code; see [Kinds of package](#kinds-of-package). |
 | `authors` | yes | One or more names. The card's "author" is a list, as in research §6. |
 | `tier` | no | `restricted` (the default) or `unrestricted`, which needs the user's full trust. |
 | `description`, `license`, `homepage` | no | `license` is an SPDX expression; `homepage` is `https://`. |
@@ -617,7 +617,7 @@ A new download URL or hash for an existing program is not more, since the signed
 
 - keeps the [SVG rules](#media-and-readme);
 - has a `viewBox` of `0 0 16 16`;
-- draws in `currentColor` only, with an optional `<g id="accent">` layer that HikariSub paints in the accent.
+- draws in `currentColor` only, with an optional `<g id="accent">` layer that HikariSub paints in the accent. `fill`, `stroke`, `color`, `stop-color`, `flood-color` and `lighting-color`, as attributes or in `style`, take only `currentColor`, `none` or `inherit`, and a `<style>` element is refused.
 
 Other colours are refused, so the icons follow the theme and high contrast. A role that a later HikariSub adds shows the built-in icon until the theme covers it, and the plugin manager says how many roles the theme covers. Registry review checks the icons against the [icon grid](ux/icons.md).
 
@@ -855,7 +855,7 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
   | `command` | `{command, args, context}` | `null`, or what the command gives back. `args` and `context` are a Lua handler's: `args` is `{}` from a menu, key or status item, and `context.via` says what ran it. |
   | `event` | `{name, data}` | `null`, for each event it subscribed to. |
   | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
-| `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
+  | `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
   | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
   | `export` | `{format, document, options}`, as a [Lua exporter](#formats) gets them | `{data, encoding}`: the file as text, or as base64 with `encoding: "base64"`. |
   | `import` | `{format, data, name}`, with the file's bytes in base64 | `{lines, styles, info}`, as a Lua importer returns. |
@@ -867,7 +867,7 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
 - **Errors.** A Hikari API error comes back as `{"code": -32000, "message", "data": {"code": "not_granted", "data": {…}}}`. An unknown method is `-32601`, and parameters that break the schema are `-32602` with `data.pointer`.
 - **Other output.** stderr goes to the Log panel, at most 20 lines a minute. Anything on stdout that isn't a JSON-RPC message stops the program, as a crash does, and its next command starts it again.
 - **Its sandbox.** The `main` program runs as any [program](#programs) does, with the same profile, folders and network. A program plugin whose program is still downloading starts once the download is checked.
-- **Types.** #1231's TypeScript types cover the protocol, and a sample program plugin in TypeScript (built into one file with `bun build --compile`) proves it.
+- **Types.** [`hikari.d.ts`](types/hikari.d.ts) covers the protocol, and the [Word count](examples/word-count/) sample, a program plugin in TypeScript built into one file with `bun build --compile`, uses it. See [Developer tools](#developer-tools).
 
 ### Language features and problems
 
@@ -1041,6 +1041,10 @@ end)
 
 It builds on `tests/api/scripts/`. Dialogs answer from `{"answer": {…}}` steps.
 
-**Type hints.** `hikarisub --export-docs <dir>` also writes `hikari.lua`, LuaLS `---@meta` annotations for the `hikari` global and every operation, and `hikari.d.ts`, TypeScript types for every operation, event and protocol message, both generated from `api.json`.
+**Type hints.** `hikarisub --export-docs <dir>` also writes `hikari.lua`, LuaLS `---@meta` annotations for the `hikari` global and every operation, and `hikari.d.ts`, TypeScript types for every operation, event and protocol message, both generated from `api.json`. [docs/types/](types/) holds both for this version.
+
+- **`hikari.lua`.** A class for each type, and each operation's params and result. `hikari.call` has an overload per operation and `hikari.events.on` one per event, so the editor knows what `hikari.call("lines.list", …)` gives back. The other members of the global carry their own signatures, and `PluginStateTest.TheLuaTypeHintsDeclareEveryMemberOfTheHikariGlobal` fails when the helper's global and the file differ.
+- **`hikari.d.ts`.** An interface for each type and each operation's params and result. `Operations` and `Events` map names to them, and the protocol has `InitializeParams`, `HostRequests`, `PluginMethods`, `ProgramCalls`, `Request`, `Response` and the error codes.
+- **The sample.** [Word count](examples/word-count/) is a program plugin in TypeScript. In builds with the AI sidecar's Bun, `hikari_word_count_sample_types` type-checks it with the sidecar's `tsc`, and skips when that isn't installed. On Linux, `hikari_word_count_sample_build` compiles it with `bun build --compile`, and `hikari_ui_program_plugin_tests` runs it as a plugin's main program, skipping where it wasn't compiled.
 
 **The guide.** [plugin-guide.md](plugin-guide.md) gains a page for each capability above.
