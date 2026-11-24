@@ -18588,6 +18588,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Icon theme: %1</source>
         <translation>ธีมไอคอน: %1</translation>
     </message>
+    <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>ใช้ธีมไม่ได้: %1</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
