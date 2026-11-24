@@ -861,6 +861,13 @@ class ShellTest : public QObject {
     {
         return QTest::qWaitFor([&] { return QGuiApplication::focusWindow() == w; }, ms);
     }
+    static QStringList pickLabels(QObject *pick)
+    {
+        QStringList labels;
+        for (const QVariant &item : pick->property("model").value<QObject *>()->property("items").toList())
+            labels << item.toMap().value(QStringLiteral("label")).toString();
+        return labels;
+    }
     QObject *named(const char *name) const
     {
         auto *root = engine->rootObjects().first();
@@ -7866,8 +7873,6 @@ private slots:
             {main, QStringLiteral(R"("sortAll_" + modelData.key)"), QStringLiteral("a sort key, under Sort all lines")},
             {main, QStringLiteral(R"("sortSelected_" + modelData.key)"),
              QStringLiteral("a sort key, under Sort selected lines")},
-            {QStringLiteral("MacroMenuEntries.qml"), QStringLiteral("entries.itemPrefix + (macro.id ?? macro.name)"),
-             QStringLiteral("a macro of the loaded scripts, or a plugin's command")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
             {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogDeletePreset_" + window.presetKey(modelData))"),
              QStringLiteral("a script dialog's preset, under Delete preset")},
@@ -11923,7 +11928,7 @@ private slots:
         QTRY_VERIFY(matroska.available());
         application->duplicateLines();
         QVERIFY(application->files().session(before)->isDirty());
-        auto *chooser = named("mkvTrackChooser");
+        auto *chooser = named("appQuickPick");
         QVERIFY(chooser);
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
         QTRY_VERIFY(mkvQuestionShown());
@@ -11935,9 +11940,9 @@ private slots:
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose the subtitle track"));
-        QCOMPARE(chooser->property("rows").toStringList(),
+        QCOMPARE(pickLabels(chooser),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
-        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "cancel"));
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(target(), before);
         QVERIFY(application->files().session(before)->isDirty());
@@ -11953,7 +11958,7 @@ private slots:
         QTRY_VERIFY(mkvQuestionShown());
         QVERIFY(mkvAnswer("save"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != before, 20000);
         application->waitForWrites();
         {
@@ -11995,8 +12000,9 @@ private slots:
         QTRY_VERIFY(mkvQuestionShown());
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        chooser->setProperty("current", 1);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser->property("model").value<QObject *>(), "setCurrentById",
+                                          Q_ARG(QString, QStringLiteral("1"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != ass, 20000);
         auto *srt = application->files().session(target());
         QCOMPARE(srt->document().format(), core::SubtitleFormat::Srt);
@@ -12013,7 +12019,7 @@ private slots:
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         application->duplicateLines();
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(application->workspace().tabs().size(), tabs + 1);
@@ -12031,7 +12037,7 @@ private slots:
         QTRY_VERIFY(mkvQuestionShown());
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(application->workspace().tabs().size(), tabs + 1);
@@ -12049,7 +12055,7 @@ private slots:
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(draftSession->editDraftText(*draftSession->selection().active, u8"typed"));
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(application->workspace().tabs().size(), tabs + 2);
@@ -12068,7 +12074,7 @@ private slots:
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         application->video().openVideo(nativeFixture("cfr.mkv"));
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(application->workspace().tabs().size(), tabs + 3);
@@ -12079,7 +12085,7 @@ private slots:
     {
         auto &matroska = application->matroska();
         auto *dialog = named("subtitlesOpenDialog");
-        auto *chooser = named("mkvTrackChooser");
+        auto *chooser = named("appQuickPick");
         QVERIFY(dialog && chooser);
         auto *root = engine->rootObjects().first();
         QVERIFY(!application->workspace().editingTarget());
@@ -12089,7 +12095,7 @@ private slots:
         QCOMPARE(root->property("mkvTab").toString(), QStringLiteral("home"));
         QVERIFY(application->openFile(writeFile(dir, "home.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,kept\n")));
         const auto opened = *application->workspace().editingTarget();
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != opened, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
@@ -12103,7 +12109,7 @@ private slots:
     void anMkvReadKeepsATabReloadedMeanwhile()
     {
         auto &matroska = application->matroska();
-        auto *chooser = named("mkvTrackChooser");
+        auto *chooser = named("appQuickPick");
         QVERIFY(chooser);
         const QString subs = writeFile(dir, "mkvreload.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
         QVERIFY(application->openFile(subs));
@@ -12117,7 +12123,7 @@ private slots:
         QVERIFY(matroska.start());
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(application->reloadTarget());
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != reloaded, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(application->workspace().tabs().size(), tabs + 1);
@@ -12129,7 +12135,7 @@ private slots:
     void anMkvReadReplacesATabLeftAndComeBackTo()
     {
         auto &matroska = application->matroska();
-        auto *chooser = named("mkvTrackChooser");
+        auto *chooser = named("appQuickPick");
         QVERIFY(chooser);
         const QString subs = writeFile(dir, "mkvback.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
         QVERIFY(application->openFile(subs));
@@ -12150,7 +12156,7 @@ private slots:
         const auto tabs = application->workspace().tabs();
         application->selectTab(int(std::ranges::find(tabs, source) - tabs.begin()));
         QVERIFY(ready());
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(!application->files().session(source), 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(application->workspace().tabs().size(), tabs.size());
@@ -12167,7 +12173,7 @@ private slots:
             dialog->setProperty("selectedFile", QUrl::fromLocalFile(path));
             return QMetaObject::invokeMethod(dialog, "accepted");
         };
-        auto *chooser = named("mkvTrackChooser");
+        auto *chooser = named("appQuickPick");
         QVERIFY(chooser);
         const auto target = [&] { return application->workspace().editingTarget(); };
         const auto tabs = [&] { return application->workspace().tabs().size(); };
@@ -12196,9 +12202,9 @@ private slots:
         QVERIFY(choose(mkv));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(!mkvQuestionShown());
-        QCOMPARE(chooser->property("rows").toStringList(),
+        QCOMPARE(pickLabels(chooser),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target().has_value() && application->workspace().title(*target()) &&
                                      *application->workspace().title(*target()) == "mkvextract.ass",
                                  20000);
@@ -12219,7 +12225,7 @@ private slots:
         QVERIFY(choose(upper));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(!mkvQuestionShown());
-        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "cancel"));
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(target(), first);
         QCOMPARE(tabs(), std::size_t(1));
@@ -12233,8 +12239,9 @@ private slots:
         QCOMPARE(QString::fromStdString(*application->workspace().title(file)), QStringLiteral("mkvopen.ass"));
         QVERIFY(choose(upper));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        chooser->setProperty("current", 1);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser->property("model").value<QObject *>(), "setCurrentById",
+                                          Q_ARG(QString, QStringLiteral("1"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != file, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(tabs(), before + 1);
@@ -12262,7 +12269,7 @@ private slots:
         QTRY_VERIFY(mkvQuestionShown());
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(target() != untitled, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(tabs(), count);
@@ -16296,7 +16303,7 @@ private slots:
         QObject *reassign = item<QObject>("automationReassign");
         QVERIFY(reassign && QMetaObject::invokeMethod(reassign, "open"));
         QTRY_VERIFY(reassign->property("opened").toBool());
-        QObject *chooser = named("audioTrackChooser");
+        QObject *chooser = named("fixSuggestions");
         const QVariantMap track{{QStringLiteral("title"), QStringLiteral("Track")},
                                 {QStringLiteral("rows"), QStringList{QStringLiteral("1")}}};
         QVERIFY(QMetaObject::invokeMethod(chooser, "choose", Q_ARG(QVariant, track), Q_ARG(QVariant, QVariant())));
@@ -17108,6 +17115,52 @@ private slots:
     {
         auto *menuItem = item<QObject>("translationModeMenuItem");
         return menuItem ? menuItem->property("action").value<QObject *>() : nullptr;
+    }
+
+    void nodeGraphRenameAsksInTheInputBoxOneAtATime()
+    {
+        auto *action = item<QObject>("nodeEffectsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        QVERIFY(application->openFile(writeFile(dir, "node-rename.ass",
+                                                "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\k40}ka{\\k60}ra\n")));
+        QTRY_VERIFY(action->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(item("nodeModeBar")->isVisible());
+        auto &effects = application->nodeEffects();
+        QVERIFY(effects.addPreset(0));
+        const QString name = effects.name();
+        auto *box = named("appInputBox");
+        auto *rename = named("nodeMenuRename");
+        QVERIFY(box && rename);
+
+        QVERIFY(QMetaObject::invokeMethod(rename, "triggered"));
+        QTRY_VERIFY(box->property("opened").toBool());
+        QCOMPARE(box->property("text").toString(), name);
+        QCOMPARE(box->property("prompt").toString(), QStringLiteral("Graph name"));
+        QVERIFY(QMetaObject::invokeMethod(box, "accepted", Q_ARG(QString, QStringLiteral("a/b"))));
+        QCOMPARE(box->property("severity").toString(), QStringLiteral("error"));
+        QCOMPARE(box->property("message").toString(), effects.graphNameProblem(QStringLiteral("a/b")));
+        QVERIFY(box->property("opened").toBool());
+        QCOMPARE(effects.name(), name);
+        QVERIFY(QMetaObject::invokeMethod(box, "accepted", Q_ARG(QString, QStringLiteral("glow"))));
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QTRY_COMPARE(effects.name(), QStringLiteral("glow"));
+
+        auto *quickOpen = named("quickOpen");
+        QVERIFY(QMetaObject::invokeMethod(rename, "triggered"));
+        QTRY_VERIFY(box->property("opened").toBool());
+        QCOMPARE(box->property("message").toString(), QString());
+        QVERIFY(QMetaObject::invokeMethod(quickOpen, "open", Q_ARG(QVariant, QString())));
+        QTRY_VERIFY(quickOpen->property("popup").value<QObject *>()->property("opened").toBool());
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(rename, "triggered"));
+        QTRY_VERIFY(box->property("opened").toBool());
+        QTRY_VERIFY(!quickOpen->property("popup").value<QObject *>()->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "cancel"));
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QCOMPARE(effects.name(), QStringLiteral("glow"));
+        QVERIFY(QMetaObject::invokeMethod(item("nodeLeave"), "clicked"));
+        QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
     }
 
     void nodeEffectsModeHasItsOwnLayout()
@@ -24375,14 +24428,16 @@ private slots:
         QVERIFY(application->openFile(episode));
         auto &audio = application->audio();
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
-        auto *chooser = item<QObject>("audioTrackChooser");
+        auto *chooser = named("appQuickPick");
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(audio.trackChoices(), (QStringList{QStringLiteral("1: Main [eng] (pcm_s16le)"),
                                                     QStringLiteral("2: Commentary [jpn] (pcm_s16le)")}));
-        QVERIFY(!chooser->property("inPopover").toBool());
-        QCOMPARE(chooser->property("current").toInt(), 0);
-        chooser->setProperty("current", 1);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, 1)));
+        QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose the audio track"));
+        QCOMPARE(pickLabels(chooser), audio.trackChoices());
+        auto *model = chooser->property("model").value<QObject *>();
+        QCOMPARE(model->property("currentId").toString(), QStringLiteral("0"));
+        QVERIFY(QMetaObject::invokeMethod(model, "setCurrentById", Q_ARG(QString, QStringLiteral("1"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QCOMPARE(audio.box().track(), 2);
         QCOMPARE(audio.box().audio()->peaks() != nullptr, true);
@@ -24396,7 +24451,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(video.session().state(), application::VideoSession::State::Ready);
         QCOMPARE(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"));
-        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "cancel"));
         QTRY_VERIFY(!chooser->property("opened").toBool());
         QVERIFY(audio.trackChoices().isEmpty());
         QTest::qWait(200);
@@ -24404,7 +24459,8 @@ private slots:
         QCOMPARE(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"));
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, 1)));
+        QVERIFY(QMetaObject::invokeMethod(model, "setCurrentById", Q_ARG(QString, QStringLiteral("1"))));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose"));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), nativeFixture("tracks.mkv"), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         QCOMPARE(video.session().audioTrack(), 2);

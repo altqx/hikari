@@ -1665,6 +1665,11 @@ void WorkspaceLayoutController::reservePresetNames(const QStringList &names)
 void WorkspaceLayoutController::reloadSavedLayouts()
 {
     readSavedLayouts();
+    layoutsRead();
+}
+
+void WorkspaceLayoutController::layoutsRead()
+{
     m_layout = knownLayout(m_layout);
     for (auto &[id, tab] : m_tabs)
         if (tab.arrangement)
@@ -1676,7 +1681,8 @@ void WorkspaceLayoutController::reloadSavedLayouts()
 void WorkspaceLayoutController::pluginLayoutsRead()
 {
     m_pluginLayoutsPending = false;
-    reloadSavedLayouts();
+    readPluginLayouts();
+    layoutsRead();
 }
 
 void WorkspaceLayoutController::readSavedLayouts()
