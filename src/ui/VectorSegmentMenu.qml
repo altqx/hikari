@@ -21,6 +21,7 @@ ShellMenu {
 
     ShellMenuItem {
         objectName: "segmentMakeCurve"
+        iconRole: "vector-bezier"
         //: The menu of a vector clip's or drawing's segment
         text: qsTr("Make curve")
         enabled: !segmentMenu.segment.curve
@@ -28,17 +29,20 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: "segmentMakeStraight"
+        iconRole: "vector-line"
         text: qsTr("Make straight")
         enabled: segmentMenu.segment.curve
         onTriggered: segmentMenu.edit(VisualToolsController.MakeStraight)
     }
     ShellMenuItem {
         objectName: "segmentInsertPoint"
+        iconRole: "add"
         text: qsTr("Insert point here")
         onTriggered: segmentMenu.edit(VisualToolsController.InsertPoint)
     }
     ShellMenuItem {
         objectName: "segmentDelete"
+        iconRole: "delete"
         text: qsTr("Delete segment")
         onTriggered: segmentMenu.edit(VisualToolsController.DeleteSegment)
     }
