@@ -50,6 +50,8 @@ hikari_add_gtest(hikari_application_grid_clipboard_tests SOURCES grid_clipboard_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_lyrics_insert_tests SOURCES lyrics_insert_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_text_import_tests SOURCES text_import_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_filtering_tests SOURCES grid_filtering_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_groups_tests SOURCES grid_groups_tests.cpp

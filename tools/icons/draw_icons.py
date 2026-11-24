@@ -972,16 +972,8 @@ icon("language", "Language", [], ["settings-dialog"],
      + accent(stroke("M1.5 8h13")))
 icon("ui-font", "Program font", [], ["settings-dialog"],
      stroke("M1.5 13.5L5 2.5h1l3.5 11M3 9.5h5") + accent(circle(11.5, 11.5, 2), stroke("M13.5 9.5v4")))
-icon("renderer", "Subtitle display filter", [], ["settings-dialog"],
-     rect(1.5, 2.5, 13, 11, 1) + triangle(6.5, 4.5, 3, 3.5) + accent(stroke("M4 9.5h8M5.5 11.5h5")))
 icon("video-seek", "Video seeking method", [], ["settings-dialog"],
      stroke("M1.5 12.5h13") + stroke("M2.5 7.5h5M5.5 5.5l2 2-2 2") + accent(stroke("M10.5 4.5v8"), solid("M9 2.5h3l-1.5 2z")))
-icon("audio-device", "Audio output", [], ["settings-dialog"],
-     rect(3.5, 1.5, 9, 13, 1) + circle(8, 10, 2.5) + accent(dot(8, 5, 1.25)))
-icon("audio-delay", "Audio delay", [], ["settings-dialog"],
-     stroke("M1.5 7v2M3.5 5v6M5.5 6v4M7.5 4.5v7") + clock_badge())
-icon("audio-commit-default", "Default line duration", [], ["settings-dialog"],
-     stroke("M1.5 6.5l2.5 2.5 5-5.5") + accent(stroke("M1.5 12.5h13M1.5 11v3M14.5 11v3")))
 icon("theme", "Theme", [], ["settings-dialog"],
      stroke("M13.5 10A6 6 0 1 1 6 2.5a5 5 0 0 0 7.5 7.5z") + accent(stroke("M11.5 1.5v2M10.5 2.5h2")))
 icon("accent-colour", "Accent color", [], ["settings-dialog"],
@@ -1060,13 +1052,6 @@ icon("restart", "Restart now", [], ["updates"],
      RELOAD_CW + accent(solid("M6.5 5.5v5l4-2.5z")))
 icon("skip-version", "Skip this version", [], ["updates", "settings-dialog"],
      rect(5.5, 10.5, 5, 4, 1) + accent(stroke("M2.5 10a5.5 5.5 0 0 1 11 0M11.5 8l2 2 2-2")))
-icon("tab-name-length", "Tab name length", [], ["settings-dialog"],
-     stroke("M1.5 10.5h1v-5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v5h1") + stroke("M5 7.5h6")
-     + accent(stroke("M3.5 13.5h9M5 12l-1.5 1.5L5 15M11 12l1.5 1.5L11 15")))
-icon("time-offset-start", "Start frame offset", [], ["settings-dialog", VIDEO],
-     rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M2.5 4.5h6M4 3L2.5 4.5 4 6M7 3l1.5 1.5L7 6")))
-icon("time-offset-end", "End frame offset", [], ["settings-dialog", VIDEO],
-     rect(1.5, 8.5, 7, 5, 1) + accent(stroke("M10.5 7.5v7M7.5 4.5h6M9 3L7.5 4.5 9 6M12 3l1.5 1.5L12 6")))
 icon("start-frame-earlier", "Move start one frame earlier", [], [TIMING],
      rect(7.5, 8.5, 7, 5, 1) + accent(stroke("M5.5 7.5v7M8.5 4.5h-6M4 3L2.5 4.5 4 6")))
 icon("start-frame-later", "Move start one frame later", [], [TIMING],
@@ -1079,21 +1064,6 @@ icon("end-later-shift-following", "Lengthen and shift what follows", [], [TIMING
      rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M3.5 4.5h9M11 3l1.5 1.5L11 6")))
 icon("end-earlier-shift-following", "Shorten and shift what follows", [], [TIMING],
      rect(1.5, 8.5, 5, 5, 1) + rect(10.5, 8.5, 4, 5, 1) + accent(stroke("M12.5 4.5h-9M5 3L3.5 4.5 5 6")))
-icon("preview-resolution", "Preview subtitles at", [], ["settings-dialog"],
-     rect(1.5, 2.5, 13, 9, 1) + stroke("M6.5 11.5v2M9.5 11.5v2M4.5 13.5h7")
-     + accent(stroke("M4.5 9.5l2-2M4.5 9.5V8M4.5 9.5H6M11.5 4.5l-2 2M11.5 4.5V6M11.5 4.5H10")))
-icon("boundary-thickness", "Line boundaries thickness", [], ["settings-dialog"],
-     stroke("M2.5 2.5v11") + frect(5.5, 2.5, 2, 11, 0.5) + accent(frect(10, 2.5, 3.5, 11, 0.5)))
-icon("inactive-lines", "Inactive lines", [], ["settings-dialog"],
-     rect(5.5, 3.5, 5, 9, 1) + accent(stroke("M3.5 3.5h-2v9h2M12.5 3.5h2v9h-2")))
-icon("cache", "Cache files kept", [], ["settings-dialog"],
-     stroke("M2.5 4a5.5 2 0 1 0 11 0a5.5 2 0 1 0-11 0") + stroke("M2.5 4v8a5.5 2 0 0 0 11 0V4")
-     + accent(stroke("M2.5 8a5.5 2 0 0 0 11 0")))
-icon("time-per-letter", "Time per letter", [], ["settings-dialog"],
-     stroke("M1.5 11.5L4.5 2.5h1l3 9M2.75 8.5h4.5") + clock_badge())
-icon("tags-insert", "Tags at the start of each line", [], ["settings-dialog"],
-     stroke("M7.5 5.5h7M7.5 9h7M7.5 12.5h4")
-     + accent(stroke("M5 3.5h-.5a1 1 0 0 0-1 1v2L2.5 8l1 1.5v2a1 1 0 0 0 1 1H5")), mirror=True)
 icon("preview-text", "Preview text", [], ["settings-dialog"],
      rect(1.5, 2.5, 13, 11, 1) + accent(letters("T", 4, 6)) + stroke("M9.5 6.5h2.5M9.5 9.5h2.5"), mirror=True)
 icon("resolution-from-video", "Use video resolution", [], ["script-properties", "script-resolution"],

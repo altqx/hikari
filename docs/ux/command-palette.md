@@ -101,7 +101,8 @@ Menu-only entries that are lists of things (Open recent's files, the layout entr
 
 - **Recently used first.** With nothing typed after `>`, the ten most recently run commands come first, under **Recently used**, then every other command, A to Z, under **All commands**. While typing, a recently used command ranks above an equal match. The list is kept across sessions. **Clear command history**, a command with no key, empties it.
 - **Matching** works as it does for files, over the name, then the menu path. `>jump` and `>jt` both find Jump to; `>auto` also finds every command under Automation.
-- **Disabled commands** show greyed with their reason (#1224). A Lua macro whose validation fails has the reason "Not available here", because Automation gives no reason.
+- **Disabled commands** show greyed with their reason (#1224).
+- **Lua macros** take the Automation menu's checks ([automation.md](../automation.md), #1216). Opening the palette checks the macros on the selection, as opening the menu does; the busy bar runs until the answers come. A macro whose validation fails is greyed with its reason (the validation's text, or "Can’t run on this selection"), a valid macro's help text is its tooltip, and a macro with an `is_active` function shows a check box in the icon gutter, ticked while it answers true.
 - **Running** closes the quick pick first, then runs the command with `via: "palette"`, so a command that opens a dialog or its own quick pick opens it in the cleared place. Running records the command as recently used.
 
 ## The shared quick pick and input box

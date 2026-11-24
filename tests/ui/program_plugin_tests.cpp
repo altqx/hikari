@@ -44,7 +44,7 @@ class ProgramPluginTests : public QObject {
             load.locale = "pl";
             load.memoryLimit = 1;
             load.settings = R"({"name":"Ann"})";
-            load.commands = {"hello", "fail", "subscribe", "edit", "bad"};
+            load.commands = {"hello", "fail", "subscribe", "edit", "bad", "count"};
             return load;
         });
         process->setLinkFactory([this, background, limits]() -> std::expected<std::unique_ptr<backends::PluginLink>, QString> {
@@ -120,7 +120,7 @@ private slots:
         QSignalSpy finished(process.get(), &PluginProcess::finished);
         process->start();
         QVERIFY(loaded.wait(20000));
-        QCOMPARE(process->handledCommands().size(), std::size_t(5));
+        QCOMPARE(process->handledCommands().size(), std::size_t(6));
         const QJsonObject init = QJsonDocument::fromJson(logged(QStringLiteral("init ")).toUtf8()).object();
         const QJsonObject params = init.value(QStringLiteral("params")).toObject();
         QCOMPARE(params.value(QStringLiteral("protocol")).toInt(), 1);
@@ -275,6 +275,36 @@ private slots:
         process->start();
         QVERIFY(failed.wait(20000));
         QCOMPARE(process->state(), PluginProcess::State::LoadFailed);
+    }
+
+    void theTypeScriptSampleCountsWords()
+    {
+#ifndef HIKARI_WORD_COUNT
+        QSKIP("Only Linux builds with Bun compile the sample.");
+#else
+        if (!QFileInfo::exists(QStringLiteral(HIKARI_WORD_COUNT)))
+            QSKIP("hikari_word_count_sample_build hasn't compiled the sample.");
+        const QString sample = folder(QStringLiteral("package/bin/")) + QFileInfo(QStringLiteral(HIKARI_WORD_COUNT)).fileName();
+        QFile::remove(sample);
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_WORD_COUNT), sample));
+        QFile::setPermissions(sample, QFile::permissions(sample) | QFileDevice::ExeOwner);
+        m_manifest.programs.front().platforms.begin()->second = plugins::ProgramRun{
+            "bin/" + QFileInfo(sample).fileName().toStdString(), std::nullopt, {}, {}};
+        m_answer = [](const PluginProcess::ServiceRequest &request) {
+            return std::string(request.service == backends::plugin::Service::Call
+                                   ? R"({"result":{"revision":1,"lines":[{"id":1,"row":1,"text":"one two"},{"id":2,"row":2,"text":"three"}]}})"
+                                   : "");
+        };
+        auto process = plugin();
+        QSignalSpy finished(process.get(), &PluginProcess::finished);
+        process->start();
+        QVERIFY(process->run("count", R"({"args":{},"context":{"via":"menu"}})"));
+        QVERIFY(finished.wait(20000));
+        QCOMPARE(m_served.size(), std::size_t(2));
+        QCOMPARE(m_served[0].name, std::string("lines.list"));
+        QCOMPARE(m_served[1].service, backends::plugin::Service::Notify);
+        QCOMPARE(m_served[1].text, std::string("3 words in 2 lines"));
+#endif
     }
 
     void aMissingProgramFailsTheLoad()

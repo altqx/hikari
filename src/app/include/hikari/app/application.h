@@ -21,6 +21,7 @@
 #include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/video_analysis_controller.h"
 #include "hikari/app/lyrics_import_controller.h"
+#include "hikari/app/text_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
 #include "hikari/app/problems_controller.h"
@@ -418,6 +419,17 @@ public:
     Q_INVOKABLE QString externalChange();
     // A failed or stale reload keeps the Document as it is.
     Q_INVOKABLE bool reloadTarget();
+    Q_PROPERTY(QString encodingSuggestion READ encodingSuggestion NOTIFY encodingSuggestionChanged)
+    Q_PROPERTY(bool canReopenWithEncoding READ canReopenWithEncoding NOTIFY encodingSuggestionChanged)
+    bool canReopenWithEncoding() const;
+    // The label of the legacy encoding the target's file looks like it is in; empty for UTF-8 and once dismissed.
+    QString encodingSuggestion() const;
+    Q_INVOKABLE void dismissEncodingSuggestion();
+    // {name, label} rows: the suggested encoding first, then the others Reopen with encoding offers.
+    Q_INVOKABLE QVariantList reopenEncodings() const;
+    // Reads the target's file as `name` (an ICU name) into UTF-8; the Document starts modified, so the next save
+    // writes UTF-8. A file that is not text in `name` keeps the Document as it is.
+    Q_INVOKABLE bool reopenWithEncoding(const QString &name);
     // id 0: the editing target. Its next save writes over the change on disk.
     Q_INVOKABLE bool acceptFileOnDisk(qulonglong id);
     // Opens the file on disk as the read-only reference and compares the two; false
@@ -994,6 +1006,7 @@ public:
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
     VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
+    TextImportController &textImport() { return *m_textImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
     ProblemsController &problemsList() { return *m_problemsList; }
     application::Problems &problems() { return m_problems; }
@@ -1234,6 +1247,7 @@ signals:
     // A later start handed files over, about to open.
     void filesForwarded();
     void timecodesChanged();
+    void encodingSuggestionChanged();
     void keyframesChanged();
 
 private:
@@ -1522,6 +1536,7 @@ private:
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
     std::unique_ptr<VideoAnalysisController> m_videoAnalysis;
     std::unique_ptr<LyricsImportController> m_lyricsImport;
+    std::unique_ptr<TextImportController> m_textImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
     std::unique_ptr<ProblemsController> m_problemsList;
@@ -1730,6 +1745,7 @@ private:
     void applyProjectTierFiles(int shellWindow, const QString &root);
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
+    mutable std::map<std::uint64_t, std::optional<std::string>> m_encodingSuggestions;
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
     application::SpellChecker *spellChecker() { return spellChecker(m_workspace.activeWindow()); }
@@ -1875,6 +1891,7 @@ private:
     application::RecentFiles m_recentTimecodes;
     void rememberRecentTimecodes(const QString &path);
     std::expected<application::Timecodes, QString> readTimecodes(const QString &path) const;
+    bool reloadTarget(const application::ToUtf8 &toUtf8, const QString &title);
     void showTabTimecodes(WindowMedia &media, std::optional<application::DocumentId> document);
     QString tabTimecodes(std::optional<application::DocumentId> document) const;
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};

@@ -3483,6 +3483,22 @@ Output device: %2</source>
         <translation>เก็บฉบับของฉัน</translation>
     </message>
     <message>
+        <source>%1 looks like %2, not UTF-8. Reopening drops the changes you made here.</source>
+        <translation>%1 ดูเหมือนเป็น %2 ไม่ใช่ UTF-8 การเปิดใหม่จะทิ้งการเปลี่ยนแปลงที่คุณทำไว้ที่นี่</translation>
+    </message>
+    <message>
+        <source>%1 looks like %2, not UTF-8.</source>
+        <translation>%1 ดูเหมือนเป็น %2 ไม่ใช่ UTF-8</translation>
+    </message>
+    <message>
+        <source>Reopen as %1</source>
+        <translation>เปิดใหม่เป็น %1</translation>
+    </message>
+    <message>
+        <source>Other encoding…</source>
+        <translation>การเข้ารหัสอักขระอื่น…</translation>
+    </message>
+    <message>
         <source>Convert “%1” to ASS before saving it?</source>
         <translation>แปลง “%1” เป็น ASS ก่อนบันทึกหรือไม่</translation>
     </message>
@@ -3531,6 +3547,14 @@ Output device: %2</source>
         <translation>อ่าน %1 ไม่ได้</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation>นำเข้าข้อความ</translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation>ไฟล์ข้อความ (*.txt)</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>เปิดคำบรรยาย</translation>
     </message>
@@ -3549,6 +3573,22 @@ Output device: %2</source>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>วิดีโอที่ฝังคำบรรยาย (*.mkv *.ogm)</translation>
+    </message>
+    <message>
+        <source>Reopening drops the changes you made here. The file then saves as UTF-8.</source>
+        <translation>การเปิดใหม่จะทิ้งการเปลี่ยนแปลงที่คุณทำไว้ที่นี่ จากนั้นไฟล์จะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>The file then saves as UTF-8.</source>
+        <translation>จากนั้นไฟล์จะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>Detected</source>
+        <translation>ตรวจพบ</translation>
+    </message>
+    <message>
+        <source>Reopen</source>
+        <translation>เปิดใหม่</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -3641,6 +3681,10 @@ Output device: %2</source>
     <message>
         <source>Choose where to save the untitled document.</source>
         <translation>เลือกตำแหน่งที่จะบันทึกเอกสารที่ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>The file is not text in that encoding; nothing was changed.</source>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความในการเข้ารหัสอักขระนั้น ไม่มีสิ่งใดถูกเปลี่ยน</translation>
     </message>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
@@ -4008,6 +4052,52 @@ Output device: %2</source>
     <message>
         <source>it isn’t running.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>ไฟล์มีขนาดใหญ่กว่า %n MB</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation>นี่คือไฟล์ไทม์โค้ด ให้เปิดด้วย วิดีโอ › เปิดไทม์โค้ด… แทน</translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation>ไฟล์ไม่มีบรรทัดที่จะนำเข้า</translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation>ตัวคั่นผู้พูด</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation>เครื่องหมายความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation>เก็บบรรทัดว่างไว้เป็นบรรทัดความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation>บรรทัดที่ไม่มีผู้พูดใช้ผู้พูดของบรรทัดก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
+        <translation>ความคิดเห็น: %1</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ</translation>
     </message>
 </context>
 <context>
@@ -4681,12 +4771,20 @@ Output device: %2</source>
         <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
     </message>
     <message>
+        <source>Choose an encoding from the list.</source>
+        <translation>เลือกการเข้ารหัสอักขระจากรายการ</translation>
+    </message>
+    <message>
         <source>The style options can’t be saved in this file.</source>
         <translation>บันทึกตัวเลือกสไตล์ในไฟล์นี้ไม่ได้</translation>
     </message>
     <message>
         <source>YouTube timed text couldn’t be made from this file: %1</source>
         <translation>สร้างข้อความกำหนดเวลาของ YouTube จากไฟล์นี้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written in %1.</source>
+        <translation>ไม่สามารถเขียนไฟล์เป็น %1 ได้</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -5059,8 +5157,24 @@ Output device: %2</source>
         <translation>ลบ %1</translation>
     </message>
     <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>%1 ไม่สามารถเก็บอักขระทุกตัวของไฟล์นี้ได้</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>อักขระเหล่านี้จะเขียนเป็นอักขระแทนที่: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>เขียนต่อไป</translation>
+    </message>
+    <message>
         <source>Format</source>
         <translation>รูปแบบ</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>การเข้ารหัสอักขระ</translation>
     </message>
     <message>
         <source>Lines</source>
@@ -9001,6 +9115,10 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าเนื้อเพลง…</translation>
     </message>
     <message>
+        <source>Import text…</source>
+        <translation>นำเข้าข้อความ…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9135,6 +9253,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Full screen typesetting</source>
         <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding…</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -12192,6 +12314,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
@@ -12214,6 +12340,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>เปิด %1</translation>
+    </message>
+    <message>
+        <source>Reads the file again in the encoding you choose; it then saves as UTF-8</source>
+        <translation>อ่านไฟล์อีกครั้งด้วยการเข้ารหัสอักขระที่คุณเลือก จากนั้นจะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>Open a saved file first</source>
+        <translation>เปิดไฟล์ที่บันทึกไว้ก่อน</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation>แปลงไฟล์ข้อความธรรมดาเป็นบรรทัด ในไฟล์ที่เปิดอยู่หรือไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>นำเข้าข้อความ…</translation>
     </message>
     <message>
         <source>Saves the document</source>
@@ -18436,6 +18578,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin isn’t on.</source>
         <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>ธีมสี: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>ธีมไอคอน: %1</translation>
     </message>
 </context>
 <context>

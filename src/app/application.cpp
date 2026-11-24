@@ -1141,6 +1141,20 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_lyricsImport = std::make_unique<LyricsImportController>(*m_settings, std::move(hooks));
     }
     {
+        TextImportController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.openNew = [this](core::LoadResult load, const QString &path) {
+            application::StagedOpen staged{{}, std::move(load), std::nullopt, 0, 0};
+            staged.imported = true;
+            (void)publish(std::move(staged), path, false);
+        };
+        m_textImport = std::make_unique<TextImportController>(*m_settings, std::move(hooks));
+    }
+    {
         QcNotesController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
         hooks.editable = [this] {
@@ -2599,6 +2613,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     noteLastUsedWindow();
+    emit encodingSuggestionChanged();
     noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
@@ -3701,20 +3716,29 @@ bool Application::acceptFileOnDisk(qulonglong id)
 
 bool Application::reloadTarget()
 {
+    return reloadTarget({}, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"));
+}
+
+bool Application::reloadTarget(const application::ToUtf8 &toUtf8, const QString &title)
+{
     const auto target = m_workspace.editingTarget();
     if (!target)
         return false;
-    auto staged = m_files->stageReload(*target);
+    auto staged = m_files->stageReload(*target, toUtf8);
     if (!staged) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
-                      QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
+        m_log->notice(ui::LogController::Error, title,
+                      staged.error().reason == application::OpenError::NotInEncoding
+                          ? QCoreApplication::translate("HikariSub.Documents",
+                                                        "The file is not text in that encoding; nothing was changed.")
+                          : QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
         return false;
     }
     if (!m_files->activate(std::move(*staged))) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
+        m_log->notice(ui::LogController::Error, title,
                       QCoreApplication::translate("HikariSub.Documents", "The subtitles changed while reloading; nothing was replaced."));
         return false;
     }
+    m_encodingSuggestions.erase(target->value);
     if (auto *session = m_files->session(*target))
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
@@ -7384,6 +7408,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
             {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
+            {QStringLiteral("textImport"), QVariant::fromValue(static_cast<QObject *>(m_textImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("problems"), QVariant::fromValue(static_cast<QObject *>(m_problemsList.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},

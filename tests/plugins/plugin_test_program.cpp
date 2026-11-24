@@ -103,6 +103,7 @@ int main(int argc, char **argv)
 #ifdef _WIN32
     _setmode(_fileno(stdin), _O_BINARY);
     _setmode(_fileno(stdout), _O_BINARY);
+    _setmode(_fileno(stderr), _O_BINARY);
 #endif
     const std::string mode = argc > 1 ? argv[1] : "";
     if (mode == "echo") {

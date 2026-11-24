@@ -12,6 +12,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <functional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -43,6 +44,18 @@ class AutomationMenuChecksTests : public QObject {
     QString script;
 
     QObject *named(const QString &name) const { return root->findChild<QObject *>(name); }
+    QQuickItem *shown(const QString &name) const
+    {
+        std::function<QQuickItem *(QQuickItem *)> find = [&](QQuickItem *at) -> QQuickItem * {
+            if (at->objectName() == name && at->isVisible())
+                return at;
+            for (QQuickItem *child : at->childItems())
+                if (QQuickItem *found = find(child))
+                    return found;
+            return nullptr;
+        };
+        return find(qobject_cast<QQuickWindow *>(root)->contentItem());
+    }
     QObject *row(const char *macro) const { return named(QStringLiteral("macro_") + QLatin1String(macro)); }
     QString firstLine() const
     {
@@ -190,6 +203,52 @@ private slots:
         QVERIFY2(checking(), "the edit is a new revision");
         QTRY_VERIFY_WITH_TIMEOUT(!checking(), 10'000);
         QCOMPARE(check("Blocked").value(QStringLiteral("reason")).toString(), QStringLiteral("Select a karaoke line"));
+    }
+
+    void thePaletteChecksMacrosWhenItOpensAndShowsTheMenusAnswers()
+    {
+        QObject *palette = named(QStringLiteral("quickOpen"));
+        QObject *pick = palette->property("popup").value<QObject *>();
+        QObject *model = pick->property("model").value<QObject *>();
+        const auto command = [this](const char *macro) {
+            return QStringLiteral("macro:checked-macros.lua:%1").arg(ordinal(macro));
+        };
+        const auto item = [&](const char *macro) {
+            for (const QVariant &v : model->property("items").toList())
+                if (v.toMap().value(QStringLiteral("id")).toString() == command(macro))
+                    return v.toMap();
+            return QVariantMap();
+        };
+
+        QVERIFY(QMetaObject::invokeMethod(palette, "open", Q_ARG(QVariant, QStringLiteral(">"))));
+        QTRY_VERIFY(pick->property("opened").toBool());
+        QVERIFY2(checking(), "opening the palette starts the menu's check");
+        QVERIFY(pick->property("busy").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(!checking(), 10'000);
+        QTRY_VERIFY(!pick->property("busy").toBool());
+
+        QTRY_COMPARE(item("Blocked").value(QStringLiteral("disabled")).toString(), QStringLiteral("Select a karaoke line"));
+        QCOMPARE(item("Silent no").value(QStringLiteral("disabled")).toString(), QStringLiteral("Can’t run on this selection"));
+        QCOMPARE(item("Ready").value(QStringLiteral("disabled")).toString(), QString());
+        QCOMPARE(item("Ready").value(QStringLiteral("tooltip")).toString(), QStringLiteral("Turns the line around"));
+        QVERIFY(item("On").value(QStringLiteral("checkable")).toBool());
+        QVERIFY(item("On").value(QStringLiteral("checked")).toBool());
+        QVERIFY(item("Off").value(QStringLiteral("checkable")).toBool());
+        QVERIFY(!item("Off").value(QStringLiteral("checked")).toBool());
+        QVERIFY(!item("Plain").value(QStringLiteral("checkable")).toBool());
+        QCOMPARE(item("Plain").value(QStringLiteral("disabled")).toString(), QString());
+
+        pick->setProperty("text", QStringLiteral(">On"));
+        QTRY_VERIFY(model->property("currentId").toString() == command("On"));
+        QTRY_VERIFY(shown(QStringLiteral("quickPickMark_") + command("On")));
+        QVERIFY(shown(QStringLiteral("quickPickMark_") + command("On"))->property("checked").toBool());
+
+        pick->setProperty("text", QStringLiteral(">Blocked"));
+        QTRY_VERIFY(model->property("currentId").toString() == command("Blocked"));
+        QVERIFY(QMetaObject::invokeMethod(pick, "choose"));
+        QVERIFY2(pick->property("visible").toBool(), "a macro that can't run on the selection doesn't run");
+        QVERIFY(QMetaObject::invokeMethod(palette, "close"));
+        QTRY_VERIFY(!pick->property("visible").toBool());
     }
 };
 

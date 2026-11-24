@@ -3813,53 +3813,9 @@
    ]
   },
   {
-   "role": "renderer",
-   "file": "renderer.svg",
-   "label": "Subtitle display filter",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
    "role": "video-seek",
    "file": "video-seek.svg",
    "label": "Video seeking method",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "audio-device",
-   "file": "audio-device.svg",
-   "label": "Audio output",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "audio-delay",
-   "file": "audio-delay.svg",
-   "label": "Audio delay",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "audio-commit-default",
-   "file": "audio-commit-default.svg",
-   "label": "Default line duration",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -4197,41 +4153,6 @@
    ]
   },
   {
-   "role": "tab-name-length",
-   "file": "tab-name-length.svg",
-   "label": "Tab name length",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "time-offset-start",
-   "file": "time-offset-start.svg",
-   "label": "Start frame offset",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog",
-    "menu:video"
-   ]
-  },
-  {
-   "role": "time-offset-end",
-   "file": "time-offset-end.svg",
-   "label": "End frame offset",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog",
-    "menu:video"
-   ]
-  },
-  {
    "role": "start-frame-earlier",
    "file": "start-frame-earlier.svg",
    "label": "Move start one frame earlier",
@@ -4295,72 +4216,6 @@
    "legacy": [],
    "surfaces": [
     "menu:timing"
-   ]
-  },
-  {
-   "role": "preview-resolution",
-   "file": "preview-resolution.svg",
-   "label": "Preview subtitles at",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "boundary-thickness",
-   "file": "boundary-thickness.svg",
-   "label": "Line boundaries thickness",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "inactive-lines",
-   "file": "inactive-lines.svg",
-   "label": "Inactive lines",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "cache",
-   "file": "cache.svg",
-   "label": "Cache files kept",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "time-per-letter",
-   "file": "time-per-letter.svg",
-   "label": "Time per letter",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
-   ]
-  },
-  {
-   "role": "tags-insert",
-   "file": "tags-insert.svg",
-   "label": "Tags at the start of each line",
-   "accent": true,
-   "mirror": true,
-   "legacy": [],
-   "surfaces": [
-    "settings-dialog"
    ]
   },
   {
