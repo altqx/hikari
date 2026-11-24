@@ -1028,7 +1028,7 @@ std::vector<std::string> PluginState::handledCommands() const
     return out;
 }
 
-std::expected<void, std::string> PluginState::run(const std::string &command, const Json &call, Host &host)
+std::expected<Json, std::string> PluginState::run(const std::string &command, const Json &call, Host &host)
 {
     lua_State *L = m_lua;
     lua_getfield(L, LUA_REGISTRYINDEX, kCommandsKey);
@@ -1043,7 +1043,11 @@ std::expected<void, std::string> PluginState::run(const std::string &command, co
         const Json *value = call.isObject() ? call.find(key) : nullptr;
         pushJson(L, value && value->isObject() ? *value : Json::object());
     }
-    return protectedCall(2, host);
+    if (auto ran = protectedCall(2, host, 1); !ran)
+        return std::unexpected(ran.error());
+    auto out = toJson(L, lua_gettop(L), 0);
+    lua_pop(L, 1);
+    return out;
 }
 
 std::expected<void, std::string> PluginState::dispatch(const std::string &event, const Json &data, Host &host)
