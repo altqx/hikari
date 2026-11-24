@@ -62,7 +62,7 @@ A column with the tool's name as its header and a **?** button at the trailing e
 3. **On the frame**: each handle the tool draws, named, with a small swatch of its mark ("Start point · filled circle").
 4. **Apply to** at the foot: This line / Picked lines (N). This is VT1's batch picker as a segmented group.
 
-The windowed panel keeps VT1's one-line inspector bar. It is the same component, laid out as a row: the hint becomes the **?** button's tooltip, and the handle names show when the pointer is over a handle.
+The windowed panel keeps VT1's one-line inspector bar. It is the same component, laid out as a row: the hint becomes the **?** button's tooltip, and the handle names show when the pointer is over a handle. When the row is short, the **?** gives way first: it moves into More's header before any field folds (#1414).
 
 **The guide (Q626).** **?** opens a popover beside the inspector:
 
