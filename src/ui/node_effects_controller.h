@@ -154,7 +154,7 @@ public:
     int sourceStartMs() const;
     int sourceEndMs() const;
     QVariantList previewLines() const;
-    bool previewKept() const { return m_previewKept; }
+    bool previewKept() const { return m_previewKept && trusted(); }
     double previewMs() const { return m_previewSeconds * 1000; }
     bool previewOnVideo() const { return m_previewOnVideo; }
     void setPreviewOnVideo(bool on);

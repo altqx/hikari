@@ -17366,7 +17366,7 @@ private slots:
                                                         QString::number(effects.source())));
         QTRY_VERIFY(item("videoNodeBadge")->isVisible());
         QCOMPARE(effects.sourceNumber(), 2);
-        QTRY_VERIFY(item("videoNodeBadgeText")->property("text").toString().contains(QStringLiteral("line 2")));
+        QTRY_VERIFY(item("videoNodeBadgeText")->property("text").toString().contains(QStringLiteral("no source line here")));
         QTRY_VERIFY(video.lastOverlay()->pixels != plain->pixels);
         effects.commit();
         QVERIFY(!video.playing());
@@ -17461,6 +17461,16 @@ private slots:
                 QTRY_VERIFY(application->workspaceLayout().nodeEffects());
                 QVERIFY(application->nodeEffects().addTypesettingGraph(graphIndex("shake")));
                 shot("0-typesetting-graph");
+
+                freshAppAt("ne1-problems");
+                QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTypesettingGraph"));
+                QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+                application->nodeEffects().setDelays(3000, 800);
+                QVERIFY(application->nodeEffects().addTypesettingGraph(graphIndex("shake")));
+                application->nodeEffects().disconnectInput(QStringLiteral("emit"), QStringLiteral("units"));
+                QTRY_COMPARE_WITH_TIMEOUT(application->nodeEffects().previewBlocked(), QStringLiteral("problems"), 10000);
+                application->nodeEffects().setDelays(150, 800);
+                shot("0-problems");
 
                 freshAppAt("ne1-view");
                 auto &effects = application->nodeEffects();

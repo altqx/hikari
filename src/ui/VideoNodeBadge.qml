@@ -32,19 +32,20 @@ Rectangle {
             id: label
             objectName: "videoNodeBadgeText"
             anchors.verticalCenter: parent.verticalCenter
-            textFormat: Text.StyledText
+            textFormat: Text.RichText
             color: badge.warns ? Theme.muted : Theme.text
+            readonly property string title: "<span style=\"font-weight:600\">" + qsTr("Preview") + "</span>"
             text: badge.controller.previewBlocked === "noSource"
-                  //: Over the video: the node effects' preview has no source line chosen, or none at the playhead
-                  ? qsTr("<b>Preview</b> · no source line here")
+                  //: Over the video: the node effects' preview has no source line chosen, or none at the playhead; %1 is "Preview"
+                  ? qsTr("%1 · no source line here").arg(title)
                   : badge.controller.previewBlocked === "untrusted"
-                  //: Over the video: the node effects' preview waits until the file's Lua is trusted
-                  ? qsTr("Preview off until you trust this file")
+                  //: Over the video: the node effects' preview waits until the file's Lua is trusted; %1 is "Preview"
+                  ? qsTr("%1 off until you trust this file").arg(title)
                   : badge.controller.previewBlocked === "problems"
-                  //: Over the video: the graph has problems and no earlier run worked
-                  ? qsTr("<b>Preview</b> · fix the problems to see it")
-                  //: Over the video: the node effects' preview of Line %1, %2 "not applied" or "last run that worked"
-                  : qsTr("<b>Preview</b> · line %1 · %2").arg(badge.controller.sourceNumber,
+                  //: Over the video: the graph has problems and no earlier run worked; %1 is "Preview"
+                  ? qsTr("%1 · fix the problems to see it").arg(title)
+                  //: Over the video: %1 is "Preview", then the node effects' preview of Line %2, %3 "not applied" or "last run that worked"
+                  : qsTr("%1 · line %2 · %3").arg(title, badge.controller.sourceNumber,
                         badge.controller.previewKept ? qsTr("last run that worked") : qsTr("not applied"))
         }
     }

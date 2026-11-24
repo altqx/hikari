@@ -503,6 +503,7 @@ private slots:
         QVERIFY(controller().sources().isEmpty());
         QCOMPARE(controller().source(), qulonglong(dialogue[2].value));
         QTRY_VERIFY(controller().videoPreview());
+        QCOMPARE(controller().previewBlocked(), QStringLiteral("noSource"));
         QVERIFY(!controller().canApply());
         m_session->setSelection({dialogue[0], {dialogue[0]}, {}, {}});
         controller().refresh();
@@ -557,6 +558,23 @@ private slots:
 
         controller().setPreviewOnVideo(false);
         QVERIFY(controller().previewBlocked().isEmpty());
+    }
+
+    void untrustedLuaListsNoPreviewLines()
+    {
+        const auto dialogue = lineIds(*m_session);
+        controller().setTargetLines({dialogue[0]});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QTRY_VERIFY(!controller().previewLines().isEmpty());
+
+        TemplateEditorController editor;
+        editor.setSessionSource([this] { return &*m_session; });
+        controller().shareTrustWith(&editor);
+        controller().addNode(QStringLiteral("lua.code"), 300, 200);
+        controller().commit();
+        QCOMPARE(controller().previewBlocked(), QStringLiteral("untrusted"));
+        QVERIFY(controller().previewLines().isEmpty());
+        QVERIFY(!controller().previewKept());
     }
 
     void groupingAndEnteringAGroup()

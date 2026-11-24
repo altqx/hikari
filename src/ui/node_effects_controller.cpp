@@ -1091,7 +1091,7 @@ int NodeEffectsController::sourceEndMs() const
 QVariantList NodeEffectsController::previewLines() const
 {
     QVariantList out;
-    if (!m_preview)
+    if (!m_preview || !trusted())
         return out;
     for (const core::LineRecord &l : m_preview->lines)
         out << QVariantMap{{QStringLiteral("layer"), qint64(l.layer.value)},
@@ -1121,7 +1121,7 @@ QString NodeEffectsController::previewBlocked() const
 {
     if (!m_shown || !m_previewOnVideo || !m_graph)
         return {};
-    if (!m_source)
+    if (!m_source || m_sources.empty())
         return QStringLiteral("noSource");
     if (!trusted())
         return QStringLiteral("untrusted");
