@@ -316,7 +316,7 @@ private slots:
         QTRY_COMPARE(shownText(), QStringLiteral("Hi there"));
         QVERIFY(action->property("checked").toBool());
         QVERIFY(application->settingsStore()->boolean("editor.hideTags"));
-        QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
+        QCOMPARE(application->settingsStore()->integer("grid.tagsMode"), 0);
         restart();
         QVERIFY(!application->editor().showTags());
         QVERIFY(showLine(tagged));
