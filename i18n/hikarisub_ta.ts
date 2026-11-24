@@ -18857,6 +18857,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>அதன் மேனிஃபெச்ட் இப்போது அடையாளம் “%1” என்கிறது. அதன் ஏற்றத்தை நீக்கி, கோப்புறையை மீண்டும் ஏற்றவும்.</translation>
     </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 நின்றது: %2</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

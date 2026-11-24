@@ -18717,6 +18717,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>이제 매니페스트에 지정된 ID가 “%1”입니다. 불러오기를 해제하고 폴더를 다시 불러오십시오.</translation>
     </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1이(가) 멈췄습니다: %2</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

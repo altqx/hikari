@@ -18717,6 +18717,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>ตอนนี้แมนิเฟสต์ระบุรหัสเป็น “%1” เลิกโหลดปลั๊กอินแล้วโหลดโฟลเดอร์อีกครั้ง</translation>
     </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 หยุดทำงาน: %2</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
