@@ -1,7 +1,10 @@
+#include "hikari/app/ai_features.h"
 #include "hikari/app/application.h"
+#include "hikari/application/ai_providers.h"
 #include "hikari/application/guide_links.h"
 #include "desktop_guard.h"
 #include "docking.h"
+#include "settings_store.h"
 #include "workspace_layout.h"
 
 #include <QDir>
@@ -25,8 +28,28 @@ Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 using namespace hikari;
 using application::GuideSurface;
 namespace recorded = hikari::test::desktop;
+namespace ai = application::ai;
 
 namespace {
+
+class NoKeys final : public ai::KeyStore {
+public:
+    void read(const std::string &, std::function<void(ai::KeyResult)> done) override { done(ai::KeyError::NotFound); }
+    void write(const std::string &, const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
+    {
+        done(std::nullopt);
+    }
+    void remove(const std::string &, std::function<void(std::optional<ai::KeyError>)> done) override
+    {
+        done(std::nullopt);
+    }
+};
+
+class NoProviders final : public ai::ConfigStore {
+public:
+    ai::Config load() override { return {}; }
+    bool save(const ai::Config &) override { return true; }
+};
 
 QUrl guide(GuideSurface kind, const QString &id)
 {
@@ -81,6 +104,32 @@ class UserGuideTests : public QObject {
         return opened.size() == before + 1 ? opened.last() : QUrl();
     }
 
+    void pressF1OnEachPanel(QStringList &names)
+    {
+        const int count = run(QStringLiteral("panels.length")).toInt();
+        for (int i = 0; i < count; ++i) {
+            const QString name = run(QStringLiteral("dockList[%1].uniqueName").arg(i)).toString();
+            run(QStringLiteral("showPanel(dockList[%1])").arg(i));
+            run(QStringLiteral("focusPanel(panels[%1], Qt.OtherFocusReason)").arg(i));
+            auto *panel = qvariant_cast<QQuickItem *>(run(QStringLiteral("panels[%1]").arg(i)));
+            QVERIFY2(panel, qPrintable(name));
+            QQuickWindow *shown = panel->window();
+            QVERIFY2(shown, qPrintable(name));
+            shown->requestActivate();
+            QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(shown));
+            QTRY_VERIFY2(run(QStringLiteral("panelOf(%1.activeFocusItem) === panels[%2]")
+                                 .arg(shown == window ? QStringLiteral("root") : QStringLiteral("workspaceLayout.focusWindow"))
+                                 .arg(i))
+                             .toBool(),
+                         qPrintable(name));
+            const qsizetype before = recorded::opened().size();
+            QTest::keyClick(shown, Qt::Key_F1);
+            QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, name));
+            names << name;
+        }
+        names.sort();
+    }
+
 private slots:
     void initTestCase()
     {
@@ -89,6 +138,10 @@ private slots:
         o.settingsFile = home.filePath(QStringLiteral("settings.toml"));
         o.playbackAudio = false;
         o.spellingBackend = {};
+        app::AiFeatures::Ports ai;
+        ai.keyStore = [] { return std::make_unique<NoKeys>(); };
+        ai.configStore = [] { return std::make_unique<NoProviders>(); };
+        o.aiPorts = std::move(ai);
         application = new app::Application(o);
         // MUST KILL: a fake key clock that steps 1 s per read to dodge the hotkey repeat filter
         auto t = std::make_shared<qint64>(0);
@@ -164,27 +217,28 @@ private slots:
 
     void f1OnEachPanelOpensItsPage()
     {
-        const int count = run(QStringLiteral("panels.length")).toInt();
-        QCOMPARE(count, int(ui::WorkspaceLayoutController::panelIds().size()));
-        for (int i = 0; i < count; ++i) {
-            const QString name = run(QStringLiteral("dockList[%1].uniqueName").arg(i)).toString();
-            run(QStringLiteral("showPanel(dockList[%1])").arg(i));
-            run(QStringLiteral("focusPanel(panels[%1], Qt.OtherFocusReason)").arg(i));
-            auto *panel = qvariant_cast<QQuickItem *>(run(QStringLiteral("panels[%1]").arg(i)));
-            QVERIFY2(panel, qPrintable(name));
-            QQuickWindow *shown = panel->window();
-            QVERIFY2(shown, qPrintable(name));
-            shown->requestActivate();
-            QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(shown));
-            QTRY_VERIFY2(run(QStringLiteral("panelOf(%1.activeFocusItem) === panels[%2]")
-                                 .arg(shown == window ? QStringLiteral("root") : QStringLiteral("workspaceLayout.focusWindow"))
-                                 .arg(i))
-                             .toBool(),
-                         qPrintable(name));
-            const qsizetype before = recorded::opened().size();
-            QTest::keyClick(shown, Qt::Key_F1);
-            QTRY_COMPARE(openedAfter(before), guide(GuideSurface::Panel, name));
-        }
+        QStringList all = ui::WorkspaceLayoutController::panelIds();
+        all.sort();
+        QStringList withoutReview = all;
+        withoutReview.removeOne(QStringLiteral("Review"));
+
+        QVERIFY(!application->ai()->on());
+        QStringList pressed;
+        pressF1OnEachPanel(pressed);
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(pressed, withoutReview);
+
+        application->settingsStore()->set(app::AiFeatures::kOffSetting, false);
+        QTRY_VERIFY(run(QStringLiteral("review.on")).toBool());
+        pressed.clear();
+        pressF1OnEachPanel(pressed);
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(pressed, all);
+
+        application->settingsStore()->set(app::AiFeatures::kOffSetting, true);
+        QTRY_VERIFY(!run(QStringLiteral("review.on")).toBool());
     }
 
     void f1InTheGrammarModeOpensItsPage()

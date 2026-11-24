@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <clocale>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <optional>
 #include <set>
@@ -189,11 +190,12 @@ Edges fittingEdges(Resolution from, Resolution to, bool crop)
     const double fromAspect = double(from.width) / from.height, toAspect = double(to.width) / to.height;
     if (std::abs(fromAspect - toAspect) / toAspect <= .01)
         return {};
+    const std::int64_t crossed = std::int64_t(from.height) * to.width - std::int64_t(from.width) * to.height;
     Edges edges;
     if ((toAspect > fromAspect) != crop)
-        edges.left = edges.right = static_cast<int>((from.height * toAspect - from.width) / 2);
+        edges.left = edges.right = static_cast<int>(crossed / (2 * std::int64_t(to.height)));
     else
-        edges.top = edges.bottom = static_cast<int>((from.width / toAspect - from.height) / 2);
+        edges.top = edges.bottom = static_cast<int>(-crossed / (2 * std::int64_t(to.width)));
     return edges;
 }
 
