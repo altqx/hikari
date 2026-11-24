@@ -17497,6 +17497,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>On</source>
         <translation>켬</translation>
     </message>
+    <message>
+        <source>Icons</source>
+        <translation>아이콘</translation>
+    </message>
+    <message>
+        <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
+        <translation>HikariSub의 인터페이스 아이콘을 바꿉니다. 테마에 없는 아이콘은 HikariSub의 기본 아이콘으로 표시됩니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/plugins/manifest.h"
+#include "icon_theme.h"
 #include "hikari/themes/theme.h"
 
 #include <QString>
@@ -30,5 +31,16 @@ std::vector<PluginTheme> pluginThemesOf(const std::string &id, const plugins::Ma
 // Makes the shown themes choosable and every other plugin theme go (docs/plugins.md, Themes and icons).
 // Returns why a shown theme couldn't be loaded, one line each.
 QStringList syncPluginThemes(const std::vector<PluginTheme> &themes);
+
+struct PluginIcons {
+    std::vector<ui::icons::PluginIconTheme> themes;
+    QHash<QString, QByteArray> own; // by ui::icons::pluginIconRole
+};
+
+// A shown plugin's icon themes, holding the roles they cover, and its own icons.
+void addPluginIcons(PluginIcons &into, const std::string &id, const plugins::Manifest &manifest,
+                    const std::filesystem::path &root);
+// Makes exactly these icon themes choosable and these own icons drawable.
+void syncPluginIcons(PluginIcons icons);
 
 }

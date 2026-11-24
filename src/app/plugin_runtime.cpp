@@ -376,6 +376,7 @@ void PluginRuntime::sync()
     std::map<std::string, std::string> unavailable;
     application::PluginContent content;
     std::vector<PluginTheme> pluginThemes;
+    PluginIcons pluginIcons;
     if (m_installer) {
         std::set<std::string> installedIds;
         const auto registry = m_installer->registry();
@@ -400,8 +401,10 @@ void PluginRuntime::sync()
                                      QUrl::fromLocalFile(QString::fromStdU16String(root.u16string())),
                                      manifest->tier == plugins::Tier::Unrestricted, manifest->version});
                 const bool shows = pluginContentShows(entry, *manifest);
-                if (shows)
+                if (shows) {
                     addPluginContent(content, id, *manifest, root);
+                    addPluginIcons(pluginIcons, id, *manifest, root);
+                }
                 std::ranges::move(pluginThemesOf(id, *manifest, root, shows), std::back_inserter(pluginThemes));
                 if (!manifest->nodes.empty()) {
                     std::expected<std::vector<application::PluginNode>, std::string> own = std::unexpected(std::string());
@@ -459,6 +462,7 @@ void PluginRuntime::sync()
     m_onIn = std::move(onIn);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
     application::setPluginContent(std::move(content));
+    syncPluginIcons(std::move(pluginIcons));
     for (const QString &problem : syncPluginThemes(pluginThemes))
         if (m_wiring.log)
             m_wiring.log->log(QCoreApplication::translate("HikariSub.Plugins", "A theme can’t be used: %1").arg(problem),
@@ -1034,7 +1038,7 @@ void PluginRuntime::relist()
                                     {QStringLiteral("pluginName"), name},
                                     {QStringLiteral("title"), qs(command.title)},
                                     {QStringLiteral("titles"), QStringList{name, qs(command.title)}},
-                                    {QStringLiteral("icon"), qs(command.icon)},
+                                    {QStringLiteral("icon"), ui::icons::pluginIconRole(qs(plugin->id), qs(command.icon))},
                                     {QStringLiteral("description"), qs(command.description)},
                                     {QStringLiteral("palette"), command.palette}};
         for (const plugins::MenuPlacement &placement : plugin->manifest.menus) {
@@ -1043,7 +1047,7 @@ void PluginRuntime::relist()
                                      {QStringLiteral("plugin"), qs(plugin->id)},
                                      {QStringLiteral("pluginName"), name},
                                      {QStringLiteral("title"), qs(command->title)},
-                                     {QStringLiteral("icon"), qs(command->icon)},
+                                     {QStringLiteral("icon"), ui::icons::pluginIconRole(qs(plugin->id), qs(command->icon))},
                                      {QStringLiteral("location"), menuLocation(placement.location)},
                                      {QStringLiteral("group"), qs(placement.group)},
                                      {QStringLiteral("name"), qs("pluginMenu_" + plugin->id + "_" + placement.command)}};
@@ -1179,7 +1183,7 @@ QVariantList PluginRuntime::statusItems() const
                                    {QStringLiteral("key"), qs(plugin.id + "/" + s.item.id)},
                                    {QStringLiteral("title"), qs(s.item.title)},
                                    {QStringLiteral("text"), qs(s.item.text)},
-                                   {QStringLiteral("icon"), qs(s.item.icon)},
+                                   {QStringLiteral("icon"), ui::icons::pluginIconRole(qs(plugin.id), qs(s.item.icon))},
                                    {QStringLiteral("tooltip"), qs(s.item.tooltip)},
                                    {QStringLiteral("tone"), s.tone},
                                    {QStringLiteral("command"),
