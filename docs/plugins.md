@@ -855,7 +855,7 @@ This changes the index schema, `docs/schemas/marketplace-index.schema.json` and 
   | `command` | `{command, args, context}` | `null`, or what the command gives back. `args` and `context` are a Lua handler's: `args` is `{}` from a menu, key or status item, and `context.via` says what ran it. |
   | `event` | `{name, data}` | `null`, for each event it subscribed to. |
   | `panel`, `dialog` | `{panel or dialog, event}` | `null`, as `hikari.panels.on` and `hikari.dialogs.on` get them. |
-| `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
+  | `quick_pick`, `input_box` | `{pick or box, event}` | `null`, for an [open quick pick or input box](#quick-picks-and-input-boxes)'s events. |
   | `complete`, `hover` | As for [Lua providers](#language-features-and-problems) | The items, or the hover. |
   | `export` | `{format, document, options}`, as a [Lua exporter](#formats) gets them | `{data, encoding}`: the file as text, or as base64 with `encoding: "base64"`. |
   | `import` | `{format, data, name}`, with the file's bytes in base64 | `{lines, styles, info}`, as a Lua importer returns. |

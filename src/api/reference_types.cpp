@@ -307,6 +307,67 @@ constexpr std::string_view kLuaHead = R"(---@meta hikari
 ---@field values? table<string, any>
 ---@field files? hikari.File[]
 
+---An icon button in a quick pick's title row or on its active item.
+---@class hikari.QuickPickButton
+---@field id string
+---@field icon string
+---@field tooltip string
+
+---@class hikari.QuickPickItem
+---@field kind? "item"|"separator"
+---@field id? string Needed by every item but a separator.
+---@field label string
+---@field description? string
+---@field detail? string
+---@field icon? string
+---@field picked? boolean
+---@field always_show? boolean
+---@field disabled? string Why the item can't be picked.
+---@field buttons? hikari.QuickPickButton[]
+
+---@class hikari.QuickPickSpec
+---@field title? string
+---@field placeholder? string
+---@field value? string
+---@field items? hikari.QuickPickItem[]
+---@field many? boolean
+---@field match_on? ("description"|"detail")[]
+---@field keep_order? boolean
+---@field step? { current: integer, total: integer }
+---@field back? boolean
+---@field buttons? hikari.QuickPickButton[]
+---@field filter? "fuzzy"|"none"
+---@field busy? boolean
+---@field active? string
+
+---@class hikari.InputBoxSpec
+---@field title? string
+---@field prompt? string
+---@field placeholder? string
+---@field value? string
+---@field selection? { from: integer, to: integer }
+---@field password? boolean
+---@field validation? { pattern?: string, message: string, min_length?: integer, max_length?: integer }
+---@field step? { current: integer, total: integer }
+---@field back? boolean
+---@field message? { severity: "error"|"warning"|"info", text: string }|hikari.Null
+---@field busy? boolean
+
+---An open quick pick's event.
+---@class hikari.QuickPickEvent
+---@field kind "value"|"active"|"accept"|"button"|"back"|"hide"
+---@field pick string
+---@field value? string
+---@field item? string
+---@field items? string[]
+---@field button? string
+
+---An open input box's event.
+---@class hikari.InputBoxEvent
+---@field kind "value"|"accept"|"back"|"hide"
+---@field box string
+---@field value? string
+
 ---Stages the edits of one `hikari.document.edit`.
 ---@class hikari.Change
 local Change = {}
@@ -471,6 +532,45 @@ function hikari.dialogs.close(dialog) end
 ---@param fn fun(event: hikari.UiEvent)
 function hikari.dialogs.on(dialog, fn) end
 
+hikari.quick_pick = {}
+---Shows the list and waits: the picked ids, or nil and `"back"`, or nil, `"button"` and the button's id.
+---@param spec hikari.QuickPickSpec
+---@return string[]? items
+---@return ("back"|"button")? why
+---@return string? button
+function hikari.quick_pick.ask(spec) end
+---Shows the list and answers its id at once; its events reach `hikari.quick_pick.on`.
+---@param spec? hikari.QuickPickSpec
+---@return string pick
+function hikari.quick_pick.open(spec) end
+---@param pick string
+---@param fields hikari.QuickPickSpec
+function hikari.quick_pick.update(pick, fields) end
+---@param pick string
+function hikari.quick_pick.close(pick) end
+---@param pick string
+---@param fn fun(event: hikari.QuickPickEvent)
+function hikari.quick_pick.on(pick, fn) end
+
+hikari.input_box = {}
+---Shows the box and waits: the text, or nil (and `"back"` after Back).
+---@param spec? hikari.InputBoxSpec
+---@return string? value
+---@return "back"? why
+function hikari.input_box.ask(spec) end
+---Shows the box and answers its id at once; its events reach `hikari.input_box.on`.
+---@param spec? hikari.InputBoxSpec
+---@return string box
+function hikari.input_box.open(spec) end
+---@param box string
+---@param fields hikari.InputBoxSpec
+function hikari.input_box.update(box, fields) end
+---@param box string
+function hikari.input_box.close(box) end
+---@param box string
+---@param fn fun(event: hikari.InputBoxEvent)
+function hikari.input_box.on(box, fn) end
+
 hikari.files = {}
 ---@param place string `"data"`, `"cache"`, `"project"` or a folder id
 ---@param path string
@@ -592,6 +692,52 @@ function hikari.programs.send(process, data, close) end
 ---@return true? stopped
 ---@return hikari.Error? error
 function hikari.programs.stop(process) end
+
+hikari.formats = {}
+---Writes a format from `contributes.formats`: the file as text, or as base64 with `"base64"` second.
+---@param id string
+---@param fn fun(doc: hikari.Snapshot, options: { frameRate?: number, video?: string, path?: string }): string, "base64"?
+function hikari.formats.exporter(id, fn) end
+---Reads a format from `contributes.formats`: Lines as `insert_line` fields, Styles as `set_style` fields, Script Info by key.
+---@param id string
+---@param fn fun(data: string, name: string): { lines: table[], styles?: table[], info?: table<string, string> }
+function hikari.formats.importer(id, fn) end
+
+hikari.problems = {}
+---@param problems hikari.Problem[]
+---@param options { revision: integer, set?: string, document?: integer }
+---@return hikari.ProblemsSetResult? result
+---@return hikari.Error? error
+function hikari.problems.set(problems, options) end
+---@param options? { document?: integer, set?: string }
+---@return integer? cleared
+---@return hikari.Error? error
+function hikari.problems.clear(options) end
+---@param options? hikari.ProblemsListParams
+---@return hikari.Problem[]? problems
+---@return hikari.Error? error
+function hikari.problems.list(options) end
+---@param problem string
+---@param fix integer
+---@param document? integer
+---@return hikari.ProblemsFixResult? result
+---@return hikari.Error? error
+function hikari.problems.fix(problem, fix, document) end
+
+hikari.status = {}
+---Changes one of the plugin's `contributes.statusItems`.
+---@param item string
+---@param fields? { text?: string, icon?: string, tooltip?: string, tone?: "normal"|"warning"|"danger", visible?: boolean }
+---@return hikari.StatusItemsSetResult? result
+---@return hikari.Error? error
+function hikari.status.set(item, fields) end
+
+hikari.presence = {}
+---The plugin's text for `{plugin}` in the user's Discord status; nil or empty clears it.
+---@param text? string
+---@return hikari.PresenceSetTextResult? result
+---@return hikari.Error? error
+function hikari.presence.set_text(text) end
 )";
 
 constexpr std::string_view kTypeScriptHead = R"(// TypeScript types for HikariSub program plugins, generated from api.json by `hikarisub --export-docs`.
@@ -641,8 +787,9 @@ export interface InitializeParams {
 
 export interface CommandParams {
     command: string;
-    /** null for a command the user runs. */
+    /** `{}` from a menu, key or status item. */
     args: Json;
+    context: { via: "menu" | "key" | "palette" | "status" | "api" | "ai" };
 }
 
 export type EventParams = { [N in keyof Events]: { name: N; data: Events[N] } }[keyof Events];
@@ -657,6 +804,122 @@ export interface DialogParams {
     event: UiEvent;
 }
 
+/** An icon button in a quick pick's title row or on its active item. */
+export interface QuickPickButton {
+    id: string;
+    icon: string;
+    tooltip: string;
+}
+
+export interface QuickPickItem {
+    kind?: "item" | "separator";
+    /** Needed by every item but a separator. */
+    id?: string;
+    label: string;
+    description?: string;
+    detail?: string;
+    icon?: string;
+    picked?: boolean;
+    always_show?: boolean;
+    /** Why the item can't be picked. */
+    disabled?: string;
+    buttons?: QuickPickButton[];
+}
+
+/** The params of `quick_pick.ask`, `quick_pick.open` and, with `pick`, `quick_pick.update`. */
+export interface QuickPickSpec {
+    title?: string;
+    placeholder?: string;
+    value?: string;
+    items?: QuickPickItem[];
+    many?: boolean;
+    match_on?: ("description" | "detail")[];
+    keep_order?: boolean;
+    step?: { current: number; total: number };
+    back?: boolean;
+    buttons?: QuickPickButton[];
+    filter?: "fuzzy" | "none";
+    busy?: boolean;
+    active?: string;
+}
+
+/** The params of `input_box.ask`, `input_box.open` and, with `box`, `input_box.update`. */
+export interface InputBoxSpec {
+    title?: string;
+    prompt?: string;
+    placeholder?: string;
+    value?: string;
+    selection?: { from: number; to: number };
+    password?: boolean;
+    validation?: { pattern?: string; message: string; min_length?: number; max_length?: number };
+    step?: { current: number; total: number };
+    back?: boolean;
+    message?: { severity: "error" | "warning" | "info"; text: string } | null;
+    busy?: boolean;
+}
+
+export interface QuickPickEvent {
+    kind: "value" | "active" | "accept" | "button" | "back" | "hide";
+    pick: string;
+    value?: string;
+    item?: string;
+    items?: string[];
+    button?: string;
+}
+
+export interface InputBoxEvent {
+    kind: "value" | "accept" | "back" | "hide";
+    box: string;
+    value?: string;
+}
+
+export interface QuickPickParams {
+    pick: string;
+    event: QuickPickEvent;
+}
+
+export interface InputBoxParams {
+    box: string;
+    event: InputBoxEvent;
+}
+
+/** A snapshot of one Document, as an exporter gets it. */
+export interface Snapshot {
+    document: number;
+    revision: number;
+    title: string;
+    format: string;
+    lines: Line[];
+    styles: Style[];
+    info: { key: string; value: string }[];
+}
+
+export interface ExportParams {
+    format: string;
+    document: Snapshot;
+    options: { frameRate?: number; video?: string; path?: string };
+}
+
+/** The file as text, or as base64 with `encoding: "base64"`. */
+export interface ExportResult {
+    data: string;
+    encoding?: "utf8" | "base64";
+}
+
+export interface ImportParams {
+    format: string;
+    /** The file's bytes, in base64. */
+    data: string;
+    name: string;
+}
+
+/** Lines as `insert_line` fields, Styles as `set_style` fields with their `name`, and Script Info by key. */
+export interface ImportResult {
+    lines: { [field: string]: Json }[];
+    styles?: { [field: string]: Json }[];
+    info?: { [key: string]: string };
+}
+
 /** What HikariSub asks the program, and what it answers. */
 export interface HostRequests {
     initialize: { params: InitializeParams; result: Record<string, never> };
@@ -664,6 +927,10 @@ export interface HostRequests {
     event: { params: EventParams; result: null };
     panel: { params: PanelParams; result: null };
     dialog: { params: DialogParams; result: null };
+    quick_pick: { params: QuickPickParams; result: null };
+    input_box: { params: InputBoxParams; result: null };
+    export: { params: ExportParams; result: ExportResult };
+    import: { params: ImportParams; result: ImportResult };
     shutdown: { params: Record<string, never>; result: null };
 }
 

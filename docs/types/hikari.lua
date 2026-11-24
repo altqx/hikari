@@ -28,6 +28,67 @@
 ---@field values? table<string, any>
 ---@field files? hikari.File[]
 
+---An icon button in a quick pick's title row or on its active item.
+---@class hikari.QuickPickButton
+---@field id string
+---@field icon string
+---@field tooltip string
+
+---@class hikari.QuickPickItem
+---@field kind? "item"|"separator"
+---@field id? string Needed by every item but a separator.
+---@field label string
+---@field description? string
+---@field detail? string
+---@field icon? string
+---@field picked? boolean
+---@field always_show? boolean
+---@field disabled? string Why the item can't be picked.
+---@field buttons? hikari.QuickPickButton[]
+
+---@class hikari.QuickPickSpec
+---@field title? string
+---@field placeholder? string
+---@field value? string
+---@field items? hikari.QuickPickItem[]
+---@field many? boolean
+---@field match_on? ("description"|"detail")[]
+---@field keep_order? boolean
+---@field step? { current: integer, total: integer }
+---@field back? boolean
+---@field buttons? hikari.QuickPickButton[]
+---@field filter? "fuzzy"|"none"
+---@field busy? boolean
+---@field active? string
+
+---@class hikari.InputBoxSpec
+---@field title? string
+---@field prompt? string
+---@field placeholder? string
+---@field value? string
+---@field selection? { from: integer, to: integer }
+---@field password? boolean
+---@field validation? { pattern?: string, message: string, min_length?: integer, max_length?: integer }
+---@field step? { current: integer, total: integer }
+---@field back? boolean
+---@field message? { severity: "error"|"warning"|"info", text: string }|hikari.Null
+---@field busy? boolean
+
+---An open quick pick's event.
+---@class hikari.QuickPickEvent
+---@field kind "value"|"active"|"accept"|"button"|"back"|"hide"
+---@field pick string
+---@field value? string
+---@field item? string
+---@field items? string[]
+---@field button? string
+
+---An open input box's event.
+---@class hikari.InputBoxEvent
+---@field kind "value"|"accept"|"back"|"hide"
+---@field box string
+---@field value? string
+
 ---Stages the edits of one `hikari.document.edit`.
 ---@class hikari.Change
 local Change = {}
@@ -164,7 +225,7 @@ function Change:set_info(key, value) end
 
 ---@alias hikari.Edit { op: "set_line", line: hikari.LineId, fields: hikari.LineFields }|{ op: "insert_line", after?: hikari.LineId, before?: hikari.LineId, fields?: hikari.LineFields }|{ op: "delete_line", line: hikari.LineId }|{ op: "move_line", line: hikari.LineId, before: hikari.LineId|hikari.Null }|{ op: "set_style", name: string, fields?: hikari.StyleFields }|{ op: "delete_style", name: string }|{ op: "set_info", key: string, value: string|hikari.Null }
 
----@alias hikari.SettingValue boolean|integer|string|string[]
+---@alias hikari.SettingValue boolean|integer|number|string|string[]
 
 ---@class hikari.NodePort
 ---@field name string
@@ -203,6 +264,19 @@ function Change:set_info(key, value) end
 ---@field values table<string, string|number|boolean> The answered values by control name.
 ---@field button? string The pressed button's label; empty when the dialog was closed.
 
+---@class hikari.Problem
+---@field id? string Given by problems.list; problems.set ignores it.
+---@field line? hikari.LineId Absent only for a QC note that matches no Line.
+---@field time? integer A QC note's time in milliseconds; problems.set ignores it.
+---@field field? "text"|"translation" text when omitted.
+---@field from? integer UTF-16 offset in the field; with to, the squiggle. The whole Line when omitted.
+---@field to? integer
+---@field severity "error"|"warning"|"info"|"hint"
+---@field message string
+---@field code? string The check's own name, such as a grammar rule.
+---@field source? { kind: "qc"|"plugin"|"server", id: string, set?: string, name: string } Given by problems.list.
+---@field fixes? { title: string, edits: { from: integer, to: integer, insert: string }[] }[]
+
 ---A theme role, so the mark follows the theme and high contrast.
 ---@alias hikari.MarkColour "accent"|"warning"|"danger"|"success"|"muted"
 
@@ -214,7 +288,7 @@ function Change:set_info(key, value) end
 
 ---The result of documents.list.
 ---@class hikari.DocumentsListResult
----@field documents { document?: hikari.DocumentId, title?: string, path?: string|hikari.Null, format?: "ass"|"srt"|"tmplayer"|"microdvd"|"mpl2"|"text", revision?: hikari.Revision, editingTarget?: boolean, reference?: boolean, dirty?: boolean, readOnly?: boolean }[]
+---@field documents { document?: hikari.DocumentId, title?: string, path?: string|hikari.Null, format?: string, revision?: hikari.Revision, editingTarget?: boolean, reference?: boolean, dirty?: boolean, readOnly?: boolean }[]
 
 ---The params of documents.get.
 ---@class hikari.DocumentsGetParams
@@ -225,7 +299,7 @@ function Change:set_info(key, value) end
 ---@field document? hikari.DocumentId
 ---@field title? string
 ---@field path? string|hikari.Null
----@field format? "ass"|"srt"|"tmplayer"|"microdvd"|"mpl2"|"text"
+---@field format? string A formats.list id: ass, srt, tmplayer, microdvd, mpl2, text or plugin:<plugin id>/<format id>.
 ---@field revision? hikari.Revision
 ---@field editingTarget? boolean
 ---@field reference? boolean The protected comparison reference.
@@ -340,7 +414,7 @@ function Change:set_info(key, value) end
 
 ---The result of settings.list.
 ---@class hikari.SettingsListResult
----@field settings { setting: string, type: "boolean"|"integer"|"string"|"stringList", scope: "profile"|"collections"|"workspace", default: hikari.SettingValue, value: hikari.SettingValue }[]
+---@field settings { setting: string, type: "boolean"|"integer"|"number"|"string"|"stringList", scope: "profile"|"collections"|"workspace", default: hikari.SettingValue, value: hikari.SettingValue, title?: string, source?: string, projectable?: boolean }[]
 
 ---The params of settings.get.
 ---@class hikari.SettingsGetParams
@@ -394,6 +468,15 @@ function Change:set_info(key, value) end
 ---@field open boolean
 ---@field floating boolean
 ---@field focused boolean
+
+---The params of settings.open.
+---@class hikari.SettingsOpenParams
+---@field setting? string A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>.
+---@field scope? "yours"|"project" The tab; yours when omitted.
+
+---The result of settings.open.
+---@class hikari.SettingsOpenResult
+---@field opened true
 
 ---The params of settings.set.
 ---@class hikari.SettingsSetParams
@@ -880,6 +963,26 @@ function Change:set_info(key, value) end
 ---@class hikari.PluginsRunResult
 ---@field ran true
 
+---The params of status_items.set.
+---@class hikari.StatusItemsSetParams
+---@field item string An id from contributes.statusItems.
+---@field text? string Empty: icon only.
+---@field icon? string An icon role or own:<id>; empty: text only.
+---@field tooltip? string
+---@field tone? "normal"|"warning"|"danger"
+---@field visible? boolean
+
+---The result of status_items.set.
+---@class hikari.StatusItemsSetResult
+---@field item string
+
+---The params of formats.list.
+---@alias hikari.FormatsListParams table<string, any>
+
+---The result of formats.list.
+---@class hikari.FormatsListResult
+---@field formats { id: string, title: string, extensions: string[], import: boolean, export: boolean, plugin?: string }[]
+
 ---The params of typeset.perspective.
 ---@class hikari.TypesetPerspectiveParams
 ---@field document? hikari.DocumentId Defaults to the active Document.
@@ -1013,6 +1116,13 @@ function Change:set_info(key, value) end
 ---@field commit string
 ---@field path string The Document's path in the repository, '/'-separated.
 ---@field text string The file at that commit, as UTF-8.
+
+---The params of presence.set_text.
+---@class hikari.PresenceSetTextParams
+---@field text string Plain text; empty clears it.
+
+---The result of presence.set_text.
+---@alias hikari.PresenceSetTextResult table<string, any>
 
 ---The params of karaoke.syllables.
 ---@class hikari.KaraokeSyllablesParams
@@ -1159,6 +1269,52 @@ function Change:set_info(key, value) end
 ---@field document hikari.DocumentId
 ---@field marks { line: hikari.LineId, colour: hikari.MarkColour, tooltip: string }[]
 
+---The params of problems.list.
+---@class hikari.ProblemsListParams
+---@field document? hikari.DocumentId Defaults to the active Document.
+---@field lines? hikari.LineId[] These Lines only.
+---@field severity? "error"|"warning"|"info"|"hint" This severity and worse only.
+---@field source? string One source id only.
+
+---The result of problems.list.
+---@class hikari.ProblemsListResult
+---@field document hikari.DocumentId
+---@field revision hikari.Revision
+---@field problems hikari.Problem[]
+
+---The params of problems.set.
+---@class hikari.ProblemsSetParams
+---@field document? hikari.DocumentId Defaults to the active Document.
+---@field revision hikari.Revision The revision the offsets were measured on; stale_revision when it moved.
+---@field set? string The plugin's own name for this group of checks; default when omitted.
+---@field problems hikari.Problem[]
+
+---The result of problems.set.
+---@class hikari.ProblemsSetResult
+---@field document hikari.DocumentId
+---@field count integer
+
+---The params of problems.clear.
+---@class hikari.ProblemsClearParams
+---@field document? hikari.DocumentId Every Document when omitted.
+---@field set? string Every set of the caller's when omitted.
+
+---The result of problems.clear.
+---@class hikari.ProblemsClearResult
+---@field cleared integer
+
+---The params of problems.fix.
+---@class hikari.ProblemsFixParams
+---@field document? hikari.DocumentId Defaults to the active Document.
+---@field problem string An id from problems.list.
+---@field fix integer The fix's index.
+
+---The result of problems.fix.
+---@class hikari.ProblemsFixResult
+---@field revision hikari.Revision
+---@field inserted hikari.LineId[] New Lines, in edit order.
+---@field changed boolean False when the edits changed nothing: no undo step was added.
+
 ---The params of programs.run.
 ---@class hikari.ProgramsRunParams
 ---@field program string
@@ -1213,6 +1369,11 @@ function Change:set_info(key, value) end
 ---@field document hikari.DocumentId
 ---@field revision hikari.Revision
 ---@field step string The History step now current.
+
+---The problems on a Document changed: a source set or cleared them, an edit or a deleted Line dropped some, a plugin stopped, or the open QC notes changed.
+---@class hikari.ProblemsChangedData
+---@field document hikari.DocumentId
+---@field sources string[] The ids of the sources whose problems changed: qc or a plugin id.
 
 ---A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged.
 ---@class hikari.ProgramOutputData
@@ -1331,7 +1492,7 @@ hikari.project = {}
 function hikari.project.info() end
 
 hikari.document = {}
----@return { document?: hikari.DocumentId, title?: string, path?: string|hikari.Null, format?: "ass"|"srt"|"tmplayer"|"microdvd"|"mpl2"|"text", revision?: hikari.Revision, editingTarget?: boolean, reference?: boolean, dirty?: boolean, readOnly?: boolean }[]? documents
+---@return { document?: hikari.DocumentId, title?: string, path?: string|hikari.Null, format?: string, revision?: hikari.Revision, editingTarget?: boolean, reference?: boolean, dirty?: boolean, readOnly?: boolean }[]? documents
 ---@return hikari.Error? error
 function hikari.document.list() end
 ---@param document? integer
@@ -1395,6 +1556,45 @@ function hikari.dialogs.close(dialog) end
 ---@param dialog string
 ---@param fn fun(event: hikari.UiEvent)
 function hikari.dialogs.on(dialog, fn) end
+
+hikari.quick_pick = {}
+---Shows the list and waits: the picked ids, or nil and `"back"`, or nil, `"button"` and the button's id.
+---@param spec hikari.QuickPickSpec
+---@return string[]? items
+---@return ("back"|"button")? why
+---@return string? button
+function hikari.quick_pick.ask(spec) end
+---Shows the list and answers its id at once; its events reach `hikari.quick_pick.on`.
+---@param spec? hikari.QuickPickSpec
+---@return string pick
+function hikari.quick_pick.open(spec) end
+---@param pick string
+---@param fields hikari.QuickPickSpec
+function hikari.quick_pick.update(pick, fields) end
+---@param pick string
+function hikari.quick_pick.close(pick) end
+---@param pick string
+---@param fn fun(event: hikari.QuickPickEvent)
+function hikari.quick_pick.on(pick, fn) end
+
+hikari.input_box = {}
+---Shows the box and waits: the text, or nil (and `"back"` after Back).
+---@param spec? hikari.InputBoxSpec
+---@return string? value
+---@return "back"? why
+function hikari.input_box.ask(spec) end
+---Shows the box and answers its id at once; its events reach `hikari.input_box.on`.
+---@param spec? hikari.InputBoxSpec
+---@return string box
+function hikari.input_box.open(spec) end
+---@param box string
+---@param fields hikari.InputBoxSpec
+function hikari.input_box.update(box, fields) end
+---@param box string
+function hikari.input_box.close(box) end
+---@param box string
+---@param fn fun(event: hikari.InputBoxEvent)
+function hikari.input_box.on(box, fn) end
 
 hikari.files = {}
 ---@param place string `"data"`, `"cache"`, `"project"` or a folder id
@@ -1518,6 +1718,52 @@ function hikari.programs.send(process, data, close) end
 ---@return hikari.Error? error
 function hikari.programs.stop(process) end
 
+hikari.formats = {}
+---Writes a format from `contributes.formats`: the file as text, or as base64 with `"base64"` second.
+---@param id string
+---@param fn fun(doc: hikari.Snapshot, options: { frameRate?: number, video?: string, path?: string }): string, "base64"?
+function hikari.formats.exporter(id, fn) end
+---Reads a format from `contributes.formats`: Lines as `insert_line` fields, Styles as `set_style` fields, Script Info by key.
+---@param id string
+---@param fn fun(data: string, name: string): { lines: table[], styles?: table[], info?: table<string, string> }
+function hikari.formats.importer(id, fn) end
+
+hikari.problems = {}
+---@param problems hikari.Problem[]
+---@param options { revision: integer, set?: string, document?: integer }
+---@return hikari.ProblemsSetResult? result
+---@return hikari.Error? error
+function hikari.problems.set(problems, options) end
+---@param options? { document?: integer, set?: string }
+---@return integer? cleared
+---@return hikari.Error? error
+function hikari.problems.clear(options) end
+---@param options? hikari.ProblemsListParams
+---@return hikari.Problem[]? problems
+---@return hikari.Error? error
+function hikari.problems.list(options) end
+---@param problem string
+---@param fix integer
+---@param document? integer
+---@return hikari.ProblemsFixResult? result
+---@return hikari.Error? error
+function hikari.problems.fix(problem, fix, document) end
+
+hikari.status = {}
+---Changes one of the plugin's `contributes.statusItems`.
+---@param item string
+---@param fields? { text?: string, icon?: string, tooltip?: string, tone?: "normal"|"warning"|"danger", visible?: boolean }
+---@return hikari.StatusItemsSetResult? result
+---@return hikari.Error? error
+function hikari.status.set(item, fields) end
+
+hikari.presence = {}
+---The plugin's text for `{plugin}` in the user's Discord status; nil or empty clears it.
+---@param text? string
+---@return hikari.PresenceSetTextResult? result
+---@return hikari.Error? error
+function hikari.presence.set_text(text) end
+
 ---Calls a Hikari API operation as the plugin: the result, or nil and the error.
 ---@overload fun(operation: "documents.list", params?: hikari.DocumentsListParams): hikari.DocumentsListResult?, hikari.Error?
 ---@overload fun(operation: "documents.get", params?: hikari.DocumentsGetParams): hikari.DocumentsGetResult?, hikari.Error?
@@ -1536,6 +1782,7 @@ function hikari.programs.stop(process) end
 ---@overload fun(operation: "panels.open", params: hikari.PanelsOpenParams): hikari.PanelsOpenResult?, hikari.Error?
 ---@overload fun(operation: "panels.close", params: hikari.PanelsCloseParams): hikari.PanelsCloseResult?, hikari.Error?
 ---@overload fun(operation: "panels.focus", params: hikari.PanelsFocusParams): hikari.PanelsFocusResult?, hikari.Error?
+---@overload fun(operation: "settings.open", params?: hikari.SettingsOpenParams): hikari.SettingsOpenResult?, hikari.Error?
 ---@overload fun(operation: "settings.set", params: hikari.SettingsSetParams): hikari.SettingsSetResult?, hikari.Error?
 ---@overload fun(operation: "document.apply", params: hikari.DocumentApplyParams): hikari.DocumentApplyResult?, hikari.Error?
 ---@overload fun(operation: "selection.set", params: hikari.SelectionSetParams): hikari.SelectionSetResult?, hikari.Error?
@@ -1576,6 +1823,8 @@ function hikari.programs.stop(process) end
 ---@overload fun(operation: "plugins.review", params?: hikari.PluginsReviewParams): hikari.PluginsReviewResult?, hikari.Error?
 ---@overload fun(operation: "plugins.install", params?: hikari.PluginsInstallParams): hikari.PluginsInstallResult?, hikari.Error?
 ---@overload fun(operation: "plugins.run", params: hikari.PluginsRunParams): hikari.PluginsRunResult?, hikari.Error?
+---@overload fun(operation: "status_items.set", params: hikari.StatusItemsSetParams): hikari.StatusItemsSetResult?, hikari.Error?
+---@overload fun(operation: "formats.list", params?: hikari.FormatsListParams): hikari.FormatsListResult?, hikari.Error?
 ---@overload fun(operation: "typeset.perspective", params: hikari.TypesetPerspectiveParams): hikari.TypesetPerspectiveResult?, hikari.Error?
 ---@overload fun(operation: "typeset.clip", params: hikari.TypesetClipParams): hikari.TypesetClipResult?, hikari.Error?
 ---@overload fun(operation: "typeset.drawing", params: hikari.TypesetDrawingParams): hikari.TypesetDrawingResult?, hikari.Error?
@@ -1586,6 +1835,7 @@ function hikari.programs.stop(process) end
 ---@overload fun(operation: "project.info", params?: hikari.ProjectInfoParams): hikari.ProjectInfoResult?, hikari.Error?
 ---@overload fun(operation: "vcs.refs", params?: hikari.VcsRefsParams): hikari.VcsRefsResult?, hikari.Error?
 ---@overload fun(operation: "vcs.show", params: hikari.VcsShowParams): hikari.VcsShowResult?, hikari.Error?
+---@overload fun(operation: "presence.set_text", params: hikari.PresenceSetTextParams): hikari.PresenceSetTextResult?, hikari.Error?
 ---@overload fun(operation: "karaoke.syllables", params: hikari.KaraokeSyllablesParams): hikari.KaraokeSyllablesResult?, hikari.Error?
 ---@overload fun(operation: "karaoke.split", params: hikari.KaraokeSplitParams): hikari.KaraokeSplitResult?, hikari.Error?
 ---@overload fun(operation: "karaoke.time", params: hikari.KaraokeTimeParams): hikari.KaraokeTimeResult?, hikari.Error?
@@ -1600,6 +1850,10 @@ function hikari.programs.stop(process) end
 ---@overload fun(operation: "marks.set", params: hikari.MarksSetParams): hikari.MarksSetResult?, hikari.Error?
 ---@overload fun(operation: "marks.clear", params?: hikari.MarksClearParams): hikari.MarksClearResult?, hikari.Error?
 ---@overload fun(operation: "marks.list", params?: hikari.MarksListParams): hikari.MarksListResult?, hikari.Error?
+---@overload fun(operation: "problems.list", params?: hikari.ProblemsListParams): hikari.ProblemsListResult?, hikari.Error?
+---@overload fun(operation: "problems.set", params: hikari.ProblemsSetParams): hikari.ProblemsSetResult?, hikari.Error?
+---@overload fun(operation: "problems.clear", params?: hikari.ProblemsClearParams): hikari.ProblemsClearResult?, hikari.Error?
+---@overload fun(operation: "problems.fix", params: hikari.ProblemsFixParams): hikari.ProblemsFixResult?, hikari.Error?
 ---@overload fun(operation: "programs.run", params: hikari.ProgramsRunParams): hikari.ProgramsRunResult?, hikari.Error?
 ---@overload fun(operation: "programs.start", params: hikari.ProgramsStartParams): hikari.ProgramsStartResult?, hikari.Error?
 ---@overload fun(operation: "programs.send", params: hikari.ProgramsSendParams): hikari.ProgramsSendResult?, hikari.Error?
@@ -1614,6 +1868,7 @@ hikari.events = {}
 ---Calls `fn(data)` for each Hikari API event of that name.
 ---@overload fun(name: "project.changed", fn: fun(data: hikari.ProjectChangedData))
 ---@overload fun(name: "document.changed", fn: fun(data: hikari.DocumentChangedData))
+---@overload fun(name: "problems.changed", fn: fun(data: hikari.ProblemsChangedData))
 ---@overload fun(name: "program.output", fn: fun(data: hikari.ProgramOutputData))
 ---@overload fun(name: "program.exited", fn: fun(data: hikari.ProgramExitedData))
 ---@overload fun(name: "document.saved", fn: fun(data: hikari.DocumentSavedData))
