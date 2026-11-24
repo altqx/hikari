@@ -32137,6 +32137,14 @@ private slots:
             QTRY_VERIFY(visualItem("visualOption_plane"));
             QTest::mouseMove(window, QPoint(1, 1));
             shoot(QStringLiteral("vt3-perspective") + suffix);
+            if (QQuickItem *more = visualItem("visualToolMore"); more && more->isVisible()) {
+                QVERIFY(QMetaObject::invokeMethod(more, "click"));
+                QTRY_VERIFY(visualItem("visualToolMoreGuide") && visualItem("visualToolMoreGuide")->isVisible());
+                QTest::qWait(300);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/vt3-perspective-more") + suffix));
+                QTest::keyClick(window, Qt::Key_Escape);
+                QTRY_VERIFY(!visualItem("visualToolMoreGuide") || !visualItem("visualToolMoreGuide")->isVisible());
+            }
             QVERIFY(tools.setOption(QStringLiteral("plane"), 1));
             QVERIFY(tools.setOption(QStringLiteral("grid"), 1));
             QTRY_VERIFY(visualItem("visualOption_grid")->property("checked").toBool());
@@ -33100,6 +33108,13 @@ private slots:
                 const int folded = lengthOf("foldedSegments");
                 QCOMPARE(more->isVisible(), folded > 0);
                 QCOMPARE(bar->property("fitCount").toInt() + folded, lengthOf("segments"));
+                QQuickItem *rowGuide = visualItem("visualToolGuideButton");
+                QVERIFY(rowGuide);
+                QCOMPARE(rowGuide->isVisible(), bar->property("guideInRow").toBool());
+                QVERIFY2(!(folded > 0 && rowGuide->isVisible()), qPrintable(what));
+                if (rowGuide->isVisible())
+                    QVERIFY2(rowGuide->mapToItem(bar, QPointF(rowGuide->width(), 0)).x() <= bar->width() + 0.5,
+                             qPrintable(what));
                 settleVisualBar();
                 stageHeights << stage->height();
             }
@@ -33145,6 +33160,17 @@ private slots:
             return nullptr;
         };
         QVERIFY(!editableIn(popover));
+        QQuickItem *moreGuide = visualItem("visualToolMoreGuide");
+        QVERIFY(moreGuide && moreGuide->isVisible());
+        QVERIFY(!visualItem("visualToolGuideButton")->isVisible());
+        QCOMPARE(moreGuide->property("tip").toString(), bar->property("hint").toString());
+        QVERIFY(QMetaObject::invokeMethod(moreGuide, "click"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        auto *guide = bar->findChild<QObject *>(QStringLiteral("visualToolGuide"));
+        QVERIFY(guide);
+        QTRY_VERIFY(guide->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(guide, "close"));
+        QTRY_VERIFY(!guide->property("visible").toBool());
         tools.selectFamily(5);
         QTRY_VERIFY(!popover->property("visible").toBool());
         settleVisualBar();
@@ -33173,6 +33199,7 @@ private slots:
         tools.selectFamily(11);
         QTRY_VERIFY2(drawn() && !more->isVisible(), qPrintable(QStringLiteral("width %1: %2").arg(bar->width()).arg(widthsOf())));
         QTRY_VERIFY(drawn() && visualItem("visualValue_frx") && visualItem("visualValue_frx")->isVisible());
+        QTRY_VERIFY(visualItem("visualToolGuideButton")->isVisible());
         tools.selectFamily(0);
         application->selectLine(session->document().lines()[3]->id.value);
         tools.selectFamily(11);
@@ -41118,9 +41145,14 @@ private slots:
         tools.selectFamily(2);
         QVERIFY(fs.leave());
         QTRY_VERIFY(!fsWindow->isVisible());
-        QTRY_VERIFY(item("visualToolGuideButton") && item("visualToolGuideButton")->isVisible());
-        QCOMPARE(item("visualToolGuideButton")->property("tip").toString(),
+        QTRY_VERIFY(item("visualToolMore") && item("visualToolMore")->isVisible());
+        QVERIFY(!item("visualToolGuideButton")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("visualToolMore"), "click"));
+        QTRY_VERIFY(item("visualToolMoreGuide") && item("visualToolMoreGuide")->isVisible());
+        QCOMPARE(item("visualToolMoreGuide")->property("tip").toString(),
                  QStringLiteral("Drag the start or end point; right-drag sets the end. The line travels between them."));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!item("visualToolMoreGuide") || !item("visualToolMoreGuide")->isVisible());
         tools.selectFamily(0);
     }
 
