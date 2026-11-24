@@ -15241,6 +15241,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>“%1” உடன் எந்த அமைப்பும் பொருந்தவில்லை.</translation>
     </message>
     <message>
+        <source>Backup copies kept</source>
+        <translation>வைத்திருக்கும் காப்பு நகல்கள்</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>மீட்புக் கோப்புறையில் வைத்திருக்கும் ஒவ்வொரு கோப்பின் முந்தைய சேமிப்புகள். வரம்பு 0 முதல் 100 வரை</translation>
+    </message>
+    <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
         <translation>சக்கரம் சுட்டியைச் சுற்றிப் பெரிதாக்கும். வீடியோவைப் பெரிதாக்கு இழுக்கக்கூடிய சட்டகத்தைக் காட்டும்.</translation>
     </message>
@@ -21454,6 +21462,10 @@ because it was edited.</source>
         <translation>முந்தைய பதிப்பு</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>முந்தைய சேமிப்பு</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>முந்தைய பதிப்பின் தானியங்கு சேமிப்பு</translation>
     </message>
@@ -21478,8 +21490,12 @@ because it was edited.</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>ஒவ்வொன்றும் சேமிக்கப்படாத புதிய நகலாகத் திறக்கும்; அசல் கோப்பு மாறாது. முந்தைய சேமிப்புகள் என்பவை ஒரு சேமிப்பு மாற்றுவதற்கு முன்பு இருந்த கோப்பு. முந்தைய பதிப்பின் தானியங்கு சேமிப்புகள் படிக்க மட்டுமே.</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>ஒவ்வொன்றும் சேமிக்கப்படாத புதிய நகலாகத் திறக்கும்; அசல் கோப்பு மாறாது. முந்தைய பதிப்பின் தானியங்கு சேமிப்புகள் படிக்க மட்டுமே.</translation>
+        <translation type="vanished">ஒவ்வொன்றும் சேமிக்கப்படாத புதிய நகலாகத் திறக்கும்; அசல் கோப்பு மாறாது. முந்தைய பதிப்பின் தானியங்கு சேமிப்புகள் படிக்க மட்டுமே.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21667,6 +21683,10 @@ because it was edited.</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1 ஐத் திறக்க முடியவில்லை; எதுவும் மாற்றப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (முந்தைய சேமிப்பு)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>

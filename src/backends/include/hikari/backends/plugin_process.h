@@ -74,11 +74,12 @@ public:
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.
-    // `call` is the JSON {args, context} the handler gets.
-    bool run(const std::string &command, const std::string &call);
-    // What a format call gives: the file's bytes for an export, the JSON {lines, styles, info} for an import;
-    // else the error to show. Called once, also when the helper stops first.
+    // What a call gives: a command's result as JSON (null when its handler returns nothing), the file's bytes for an
+    // export, the JSON {lines, styles, info} for an import; else the error to show. Called once, also when the helper
+    // stops first.
     using FormatDone = std::function<void(std::expected<std::string, QString>)>;
+    // `call` is the JSON {args, context} the handler gets.
+    bool run(const std::string &command, const std::string &call, FormatDone done = {});
     // Queued and started as run is.
     bool exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson, FormatDone done);
     bool importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done);

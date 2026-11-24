@@ -20048,6 +20048,7 @@ private slots:
               {"program.tabTextMaxChars", nullptr},
               {"autosave.maxFiles", nullptr},
               {"autosave.intervalSeconds", nullptr},
+              {"autosave.savedCopies", nullptr},
               {"notices.toasts", "Show notices as toasts"},
               {"fonts.externalDirectory", nullptr}}},
             {"settingsPageAppearance",
