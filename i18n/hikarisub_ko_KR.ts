@@ -4061,7 +4061,12 @@ Output device: %2</source>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation>파일이 UTF-8 텍스트가 아닙니다. 텍스트 편집기에서 UTF-8로 저장한 다음 가져오십시오.</translation>
+        <translation type="vanished">파일이 UTF-8 텍스트가 아닙니다. 텍스트 편집기에서 UTF-8로 저장한 다음 가져오십시오.</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>파일이 %1 텍스트가 아닙니다. 다른 인코딩을 선택하십시오.</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
