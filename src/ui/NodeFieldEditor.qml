@@ -32,9 +32,11 @@ ColumnLayout {
     readonly property bool scrubbed: kind === "Number" || kind === "Integer" || kind === "Time" || kind === "Alpha"
     readonly property bool slid: kind === "Alpha" || (field.minimum === 0 && field.maximum === 1)
     readonly property string mixedText: qsTr("Mixed")
+    //: Read out by screen readers for a Node panel field whose value isn't the node's default
+    readonly property string changedText: editor.field.changed === true ? qsTr("Changed from the default") : ""
 
     objectName: "nodeField_" + name
-    spacing: 2
+    spacing: 4
     onNameChanged: refusal = ""
 
     function label(text) {
@@ -179,7 +181,7 @@ ColumnLayout {
                 objectName: editor.objectName + "Chip"
                 visible: editor.wired
                 implicitHeight: Theme.smallControlHeight
-                implicitWidth: chipRow.implicitWidth + 12
+                implicitWidth: chipRow.implicitWidth + 16
                 Layout.maximumWidth: parent.width - 2 * Theme.controlHeight - 8
                 radius: Theme.radius
                 color: Theme.raised
@@ -188,8 +190,8 @@ ColumnLayout {
                 RowLayout {
                     id: chipRow
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
                     spacing: 4
                     NodePort {
                         visible: (editor.field.type ?? "") !== ""
@@ -249,6 +251,7 @@ ColumnLayout {
             refused: editor.refusal !== ""
             valueFont: editor.valueFont
             Accessible.name: editor.label(editor.name)
+            stateText: editor.changedText
             onEdited: value => editor.apply(value)
             onTyped: text => editor.applyTyped(text)
             onFinished: editor.commit()
@@ -268,6 +271,7 @@ ColumnLayout {
                 value: Number(editor.field.value ?? 0)
                 enabled: editor.editable
                 Accessible.name: editor.label(editor.name)
+                Accessible.description: editor.changedText
                 onMoved: editor.apply(Number(value.toFixed(editor.kind === "Alpha" ? 0 : 2)))
                 onPressedChanged: if (!pressed) editor.commit()
             }
@@ -285,6 +289,7 @@ ColumnLayout {
                 refused: editor.refusal !== ""
                 valueFont: editor.valueFont
                 Accessible.name: editor.label(editor.name)
+                stateText: editor.changedText
                 onEdited: value => editor.apply(value)
                 onTyped: text => editor.applyTyped(text)
                 onFinished: editor.commit()
@@ -302,6 +307,7 @@ ColumnLayout {
             checkState: editor.mixed ? Qt.PartiallyChecked : editor.field.value === true ? Qt.Checked : Qt.Unchecked
             enabled: editor.editable
             Accessible.name: editor.label(editor.name)
+            Accessible.description: editor.changedText
             onToggled: editor.apply(checkState !== Qt.Unchecked)
         }
     }
@@ -314,6 +320,7 @@ ColumnLayout {
             choices: (editor.field.choices ?? []).map(c => ({ text: editor.label(c), name: "nodeFieldChoice_" + editor.name + "_" + c }))
             currentIndex: editor.mixed ? -1 : (editor.field.choices ?? []).indexOf(String(editor.field.value))
             Accessible.name: editor.label(editor.name)
+            Accessible.description: editor.changedText
             onActivated: index => editor.apply(editor.field.choices[index])
         }
     }
@@ -330,6 +337,7 @@ ColumnLayout {
             displayText: editor.mixed ? editor.mixedText : currentText
             enabled: editor.editable
             Accessible.name: editor.label(editor.name)
+            Accessible.description: editor.changedText
             onActivated: index => editor.apply(editor.field.choices[index])
         }
     }
@@ -347,6 +355,7 @@ ColumnLayout {
                 font: editor.monoFont
                 text: editor.mixed ? "" : String(editor.field.value ?? "")
                 Accessible.name: editor.label(editor.name)
+                Accessible.description: editor.changedText
                 onEditingFinished: {
                     if (text !== String(editor.field.value ?? "") && editor.apply(text))
                         editor.commit()
@@ -392,6 +401,7 @@ ColumnLayout {
                     refused: editor.refusal !== ""
                     valueFont: editor.valueFont
                     Accessible.name: index === 0 ? qsTr("X position") : qsTr("Y position")
+                    stateText: editor.changedText
                     function withAxis(v) {
                         const next = point.value.slice()
                         next[index] = v
@@ -422,6 +432,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 text: editor.mixed || editor.field.value === undefined || editor.field.value === null ? "" : String(editor.field.value)
                 Accessible.name: editor.label(editor.name)
+                Accessible.description: editor.changedText
                 onTextEdited: editor.apply(text)
                 onEditingFinished: editor.commit()
             }
@@ -434,7 +445,16 @@ ColumnLayout {
             radius: Theme.radius
             color: Theme.field
             border.width: 1
-            border.color: codeArea.activeFocus ? Theme.focus : Theme.line
+            border.color: !codeArea.enabled ? Theme.disabled
+                          : codeArea.activeFocus ? Theme.accent
+                          : codeHover.hovered ? Theme.text
+                          : Theme.control
+            HoverHandler {
+                id: codeHover
+            }
+            FocusRing {
+                control: codeArea
+            }
             TextArea {
                 id: codeArea
                 objectName: "nodeLuaCode"

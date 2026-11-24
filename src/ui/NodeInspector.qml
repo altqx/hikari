@@ -31,12 +31,17 @@ Pane {
         f.features = { "tnum": 1 }
         return f
     }
-    readonly property font monoFont: Qt.font({ family: "monospace", pixelSize: labelFont.pixelSize })
+    readonly property font monoFont: {
+        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        f.family = "monospace"
+        f.features = { "tnum": 1 }
+        return f
+    }
     readonly property real labelWidth: {
         let widest = 0
         for (const f of root.fields.concat(root.wired))
             widest = Math.max(widest, labelMetrics.advanceWidth(root.label(f.name)))
-        return Math.ceil(Math.min(widest, 110)) + 10
+        return Math.ceil(Math.min(widest, 110)) + 8
     }
 
     function label(name) {
@@ -76,7 +81,7 @@ Pane {
         property alias text: heading.text
         property alias detail: detailLabel.text
         Layout.fillWidth: true
-        Layout.topMargin: 8
+        Layout.topMargin: 12
         spacing: 8
         Label {
             id: heading
@@ -143,7 +148,7 @@ Pane {
             x: 12
             y: 12
             width: scroller.width - 24
-            spacing: 6
+            spacing: 8
 
             RowLayout {
                 Layout.fillWidth: true
@@ -184,11 +189,13 @@ Pane {
                         font: root.monoFont
                         text: nameField.text
                     }
-                    background: Rectangle {
+                    Rectangle {
+                        anchors.fill: parent
                         radius: Theme.radius
-                        color: Theme.field
+                        color: "transparent"
                         border.width: 1
-                        border.color: nameField.refusal !== "" ? Theme.danger : nameField.activeFocus ? Theme.focus : Theme.line
+                        border.color: Theme.danger
+                        visible: nameField.refusal !== ""
                     }
                     onTextEdited: refusal = ""
                     onEditingFinished: {
@@ -427,14 +434,15 @@ Pane {
                     id: warning
                     required property var modelData
                     required property int index
+                    readonly property string severity: modelData.severity ?? "warning"
                     objectName: "nodeInspectorWarning_" + index
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 8
                     Icon {
                         Layout.alignment: Qt.AlignTop
-                        iconRole: "notice-warning"
-                        color: Theme.danger
-                        accentColor: Theme.danger
+                        iconRole: warning.severity === "error" ? "notice-error" : warning.severity === "info" ? "notice-info" : "notice-warning"
+                        color: warning.severity === "error" ? Theme.danger : warning.severity === "info" ? Theme.accent : Theme.warning
+                        accentColor: color
                     }
                     ColumnLayout {
                         Layout.fillWidth: true

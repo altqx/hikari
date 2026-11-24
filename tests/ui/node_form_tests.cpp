@@ -228,6 +228,7 @@ private slots:
         QTest::mouseClick(m_view.get(), Qt::LeftButton, {}, up->mapToScene(QPointF(up->width() / 2, up->height() / 2)).toPoint());
         QTRY_COMPARE(stored(controller(), random, QStringLiteral("step")).toDouble(), 1.0);
         QTRY_VERIFY(item(QStringLiteral("nodeField_stepReset"))->isVisible());
+        QCOMPARE(field->property("stateText").toString(), QStringLiteral("Changed from the default"));
 
         QQuickItem *drag = item(QStringLiteral("nodeFieldValue_stepDrag"));
         const QPoint at = drag->mapToScene(QPointF(drag->width() / 2, drag->height() / 2)).toPoint();

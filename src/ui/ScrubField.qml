@@ -27,7 +27,8 @@ FocusScope {
     implicitHeight: Theme.controlHeight
     activeFocusOnTab: true
     Accessible.role: Accessible.SpinBox
-    Accessible.description: input.text
+    property string stateText: ""
+    Accessible.description: [input.text, stateText].filter(t => t !== "").join(", ")
 
     function clamped(v) {
         if (scrub.minimum !== undefined && v < scrub.minimum)
@@ -60,9 +61,20 @@ FocusScope {
         color: Theme.field
         border.width: 1
         border.color: scrub.refused ? Theme.danger
-                      : input.activeFocus ? Theme.focus
-                      : drag.containsMouse && scrub.enabled ? Theme.muted
-                      : Theme.line
+                      : !scrub.enabled ? Theme.disabled
+                      : input.activeFocus ? Theme.accent
+                      : drag.containsMouse ? Theme.text
+                      : Theme.control
+        Rectangle {
+            objectName: "focusRing"
+            anchors.fill: parent
+            anchors.margins: -1
+            radius: parent.radius + 1
+            color: "transparent"
+            border.width: 1
+            border.color: Theme.focus
+            visible: input.activeFocus && !input.mouseFocus
+        }
     }
 
     RowLayout {
@@ -82,14 +94,14 @@ FocusScope {
             Accessible.name: direction < 0 ? qsTr("Step down") : qsTr("Step up")
             contentItem: Text {
                 text: stepper.direction < 0 ? "‹" : "›"
-                color: stepper.hovered ? Theme.text : Theme.muted
+                color: stepper.enabled ? Theme.muted : Theme.disabled
                 font: scrub.valueFont
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
             }
             background: Rectangle {
                 radius: Theme.radius
-                color: stepper.pressed ? Theme.raised : "transparent"
+                color: stepper.pressed ? Theme.pressed : stepper.hovered && stepper.enabled ? Theme.hover : "transparent"
             }
             onClicked: scrub.stepBy(direction, false)
         }
@@ -119,10 +131,12 @@ FocusScope {
                     text = scrub.blank ? "" : scrub.shown(scrub.value)
                     selectAll()
                 } else {
+                    mouseFocus = false
                     scrub.display()
                 }
             }
             property bool retyped: false
+            property bool mouseFocus: false
             onTextEdited: retyped = true
             onEditingFinished: {
                 if (retyped) {
@@ -171,8 +185,10 @@ FocusScope {
                 onReleased: {
                     if (scrubbing)
                         scrub.finished()
-                    else
+                    else {
+                        input.mouseFocus = true
                         input.forceActiveFocus(Qt.MouseFocusReason)
+                    }
                     scrubbing = false
                 }
             }
