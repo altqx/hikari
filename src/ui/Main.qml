@@ -8874,6 +8874,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     controller: root.nodeEffects
                     colourPicker: root.colourPicker
+                    onGoToNode: node => nodeGraphTool.centreOn(node)
                 }
             }
         }

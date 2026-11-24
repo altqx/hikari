@@ -263,6 +263,10 @@ hikari_add_qttest(hikari_ui_node_effects_controller_tests SOURCES node_effects_c
 target_compile_definitions(hikari_ui_node_effects_controller_tests PRIVATE
     HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
 target_include_directories(hikari_ui_node_effects_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
+hikari_add_qttest(hikari_ui_node_form_tests SOURCES node_form_tests.cpp LIBRARIES hikari_ui hikari_uiplugin OFFSCREEN_ONLY)
+target_compile_definitions(hikari_ui_node_form_tests PRIVATE
+    HIKARI_KARAOKE_PRESET_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-presets")
+target_include_directories(hikari_ui_node_form_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 hikari_add_qttest(hikari_ui_tag_list_controller_tests SOURCES tag_list_controller_tests.cpp LIBRARIES hikari_ui OFFSCREEN_ONLY)
 target_include_directories(hikari_ui_tag_list_controller_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/ui")
 hikari_add_qttest(hikari_ui_template_editor_shell_tests SOURCES template_editor_shell_tests.cpp
