@@ -708,6 +708,18 @@ private slots:
         QCOMPARE(ui::theme::current().roles.accent, hex(0x9CDBC9));
     }
 
+    void tintFillsAreTheRoleAtTheirAlphaExceptInHighContrast()
+    {
+        ui::theme::State dark;
+        dark.roles = roles(Code::Dark);
+        QCOMPARE(ui::theme::tintFill(dark, dark.roles.danger, 0.18F).rgba(), QRgb(0x2EFFADAD));
+        QCOMPARE(ui::theme::tintFill(dark, dark.roles.success, 0.14F).rgba(), QRgb(0x244DBA4D));
+        ui::theme::State black;
+        black.type = ui::theme::Type::HighContrastDark;
+        black.roles = roles(Code::HighContrastBlack, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
+        QCOMPARE(ui::theme::tintFill(black, black.roles.danger, 0.18F), black.roles.panel);
+    }
+
     void themeSingletonExposesTheRoles()
     {
         QQmlEngine engine;

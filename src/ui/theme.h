@@ -157,6 +157,8 @@ struct State {
     Content content;
 };
 const State &current();
+// `ink` at `alpha`; `panel` in high contrast, where the caller draws a 1-unit ring of `ink`.
+QColor tintFill(const State &state, QColor ink, float alpha);
 bool currentIs(Code code);
 void onChanged(QObject *context, std::function<void()> slot);
 void useSettings(SettingsStore *settings);
@@ -197,7 +199,6 @@ class Theme : public QObject {
     Q_PROPERTY(QColor control READ control NOTIFY changed FINAL)
     Q_PROPERTY(QColor hover READ hover NOTIFY changed FINAL)
     Q_PROPERTY(QColor pressed READ pressed NOTIFY changed FINAL)
-    // A tinted panel in Light and Dark; `panel` in high contrast, where the surface draws a ring instead.
     Q_PROPERTY(QColor successFill READ successFill NOTIFY changed FINAL)
     Q_PROPERTY(QColor dangerFill READ dangerFill NOTIFY changed FINAL)
     Q_PROPERTY(int radius READ radius CONSTANT FINAL)
@@ -243,8 +244,8 @@ public:
     QColor control() const { return roles().control; }
     QColor hover() const { return roles().hover; }
     QColor pressed() const { return roles().pressed; }
-    QColor successFill() const { return fill(roles().success, 0.14); }
-    QColor dangerFill() const { return fill(roles().danger, 0.18); }
+    QColor successFill() const { return theme::tintFill(theme::current(), roles().success, 0.14F); }
+    QColor dangerFill() const { return theme::tintFill(theme::current(), roles().danger, 0.18F); }
     QColor spellcheck() const { return theme::current().content.spellcheck; }
     QColor grammar() const { return theme::current().content.grammar; }
     int radius() const { return 4; }
@@ -285,13 +286,6 @@ signals:
 
 private:
     static const theme::Roles &roles() { return theme::current().roles; }
-    QColor fill(QColor tint, float alpha) const
-    {
-        if (highContrast())
-            return roles().panel;
-        tint.setAlphaF(alpha);
-        return tint;
-    }
 };
 
 }

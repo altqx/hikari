@@ -668,6 +668,14 @@ const State &current()
     return Hub::get().state;
 }
 
+QColor tintFill(const State &state, QColor ink, float alpha)
+{
+    if (themes::isHighContrast(state.type))
+        return state.roles.panel;
+    ink.setAlphaF(alpha);
+    return ink;
+}
+
 bool currentIs(Code code)
 {
     return current().id == codeName(code);
