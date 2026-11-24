@@ -16,6 +16,8 @@ extern "C" {
 #include <functional>
 #include <map>
 #include <random>
+#include <set>
+#include <sstream>
 
 using hikari::api::Json;
 using namespace hikari::plugin_helper;
@@ -332,6 +334,26 @@ TEST_F(PluginStateTest, AHandlerGetsItsArgsAndHowItWasRun)
     ASSERT_TRUE((*state)->run("greet", *Json::parse(R"({"args": {"name": "Ana"}, "context": {"via": "menu"}})"), m_host));
     ASSERT_TRUE((*state)->run("greet", *Json::parse(R"({"context": {"via": "key"}})"), m_host));
     EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"menu Ana", "key nil"}));
+}
+
+TEST_F(PluginStateTest, WhatAHandlerReturnsIsTheCommandsResult)
+{
+    auto state = load("hikari.commands.register('greet', function(args) return {hello = args.name, n = 2} end) "
+                      "hikari.commands.register('count', function() end)");
+    ASSERT_TRUE(state) << state.error();
+    auto greeted = (*state)->run("greet", *Json::parse(R"({"args": {"name": "Ana"}})"), m_host);
+    ASSERT_TRUE(greeted) << greeted.error();
+    EXPECT_EQ(*greeted, *Json::parse(R"({"hello": "Ana", "n": 2})"));
+    auto counted = (*state)->run("count", Json::object(), m_host);
+    ASSERT_TRUE(counted) << counted.error();
+    EXPECT_TRUE(counted->isNull());
+}
+
+TEST_F(PluginStateTest, AResultThatIsNotJsonFailsTheCommand)
+{
+    auto state = load("hikari.commands.register('greet', function() return print end)");
+    ASSERT_TRUE(state) << state.error();
+    EXPECT_FALSE((*state)->run("greet", Json::object(), m_host));
 }
 
 TEST_F(PluginStateTest, OnlyDeclaredCommandsTakeHandlersAndOnlyOnce)
@@ -721,4 +743,51 @@ TEST_F(PluginStateTest, PanelAndDialogHandlersRunWithoutAnApiSubscription)
     ASSERT_TRUE((*state)->dispatch("panel:board", Json::object({{"kind", "click"}, {"widget", "refresh"}}), m_host));
     ASSERT_TRUE((*state)->dispatch("dialog:join", Json::object({{"kind", "button"}, {"button", "cancel"}}), m_host));
     EXPECT_EQ(m_host.texts(), (std::vector<std::string>{"panel refresh", "dialog cancel"}));
+}
+
+TEST_F(PluginStateTest, TheLuaTypeHintsDeclareEveryMemberOfTheHikariGlobal)
+{
+    const std::string walk = R"(
+        local seen, out = {}, {}
+        local function visit(t, path)
+            seen[t] = true
+            for k, v in pairs(t) do
+                local name = path .. "." .. tostring(k)
+                if type(v) == "table" and getmetatable(v) == nil and not seen[v] then
+                    visit(v, name)
+                else
+                    out[#out + 1] = name
+                end
+            end
+        end
+        visit(hikari, "hikari")
+        table.sort(out)
+        hikari.notify(table.concat(out, "\n"))
+    )";
+    ASSERT_TRUE(load(walk));
+    std::set<std::string> live;
+    std::istringstream lines(m_host.notices.back().text);
+    for (std::string line; std::getline(lines, line);)
+        live.insert(line);
+
+    std::ifstream file(HIKARI_LUA_TYPES, std::ios::binary);
+    ASSERT_TRUE(file) << HIKARI_LUA_TYPES;
+    std::set<std::string> typed;
+    for (std::string line; std::getline(file, line);) {
+        if (line.starts_with("function hikari."))
+            typed.insert(line.substr(9, line.find('(') - 9));
+        else if (const std::size_t equals = line.find(" = "); line.starts_with("hikari.") && equals != std::string::npos &&
+                                                               line.substr(equals + 3) != "{}")
+            typed.insert(line.substr(0, equals));
+    }
+
+    std::string missing, extra;
+    for (const std::string &name : live)
+        if (!typed.contains(name))
+            missing += name + "\n";
+    for (const std::string &name : typed)
+        if (!live.contains(name))
+            extra += name + "\n";
+    EXPECT_TRUE(missing.empty()) << "docs/types/hikari.lua lacks:\n" << missing;
+    EXPECT_TRUE(extra.empty()) << "docs/types/hikari.lua declares what the helper doesn't have:\n" << extra;
 }

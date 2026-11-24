@@ -39,7 +39,7 @@ constexpr std::string_view kProjectable[] = {
     "translation.translator",        "translation.reviewer",         "ai.exclude",
     "translation.sourceLanguage",    "translation.targetLanguage",   "export.format",
     "explorer.exclude",              "privacy.discordProject",       "privacy.discordShow",
-    "privacy.discordDetails",        "privacy.discordState",
+    "privacy.discordDetails",        "privacy.discordState",         "new.styleCatalog",
 };
 // Projectable ids whose Project value waits for trust.
 constexpr std::string_view kWidening[] = {"translation.translator", "translation.reviewer", "privacy.discordShow",
@@ -136,6 +136,7 @@ std::vector<SettingDefinition> &definitions()
         {"convert.showSettings", "CONVERT_SHOW_SETTINGS", Bool, Profile, Mapped, false, false},
         {"convert.style", "CONVERT_STYLE", String, Profile, Mapped, false, std::string("Default")},
         {"convert.styleCatalog", "CONVERT_STYLE_CATALOG", String, Profile, Mapped, false, std::string("Default")},
+        {"new.styleCatalog", "", String, Profile, Mapped, false, std::string()},
         {"convert.timePerCharacter", "CONVERT_TIME_PER_CHARACTER", Int, Profile, Mapped, false, std::int64_t{110}},
         {"grid.copyColumns", "COPY_COLLUMS_SELECTIONS", Int, Profile, Mapped, false, std::int64_t{0}},
         {"editor.dictionaryLanguage", "DICTIONARY_LANGUAGE", String, Profile, Mapped, false, std::string("en_US")},
@@ -163,7 +164,7 @@ std::vector<SettingDefinition> &definitions()
         {"grid.filterInverted", "GRID_FILTER_INVERTED", Bool, Profile, Mapped, false, false},
         {"grid.filterStyles", "GRID_FILTER_STYLES", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.hideColumns", "GRID_HIDE_COLUMNS", Int, Profile, Mapped, false, std::int64_t{0}},
-        {"grid.hideTags", "GRID_HIDE_TAGS", Bool, Profile, Mapped, false, false},
+        {"grid.tagsMode", "GRID_HIDE_TAGS", Int, Profile, Mapped, false, std::int64_t{0}},
         {"grid.ignoreFiltering", "GRID_IGNORE_FILTERING", Bool, Profile, Mapped, false, false},
         {"grid.loadSortedSubs", "GRID_LOAD_SORTED_SUBS", Bool, Profile, Mapped, false, false},
         {"editor.saveAfterCharacterCount", "GRID_SAVE_AFTER_CHARACTER_COUNT", Int, Profile, Mapped, false, std::int64_t{1}},
@@ -284,6 +285,8 @@ std::vector<SettingDefinition> &definitions()
         {"appearance.darkTheme", "", String, Profile, Mapped, false, std::string("dark")},
         {"appearance.highContrastLightTheme", "", String, Profile, Mapped, false, std::string("highContrastWhite")},
         {"appearance.highContrastDarkTheme", "", String, Profile, Mapped, false, std::string("highContrastBlack")},
+        // "hikarisub" or "plugin:<plugin id>/<icon theme id>".
+        {"appearance.iconTheme", "", String, Profile, Mapped, false, std::string("hikarisub")},
         // "<theme id>=<accent choice id>" rows.
         {"appearance.accents", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // "<theme id>/<role>=#RRGGBB" rows.
@@ -413,6 +416,7 @@ std::vector<SettingDefinition> &definitions()
         {"typesetting.layerOptions", "", String, Profile, Mapped, false, std::string()},
         // JSON: {"gapOn", "gap", "lastLine"}, the Import lyrics end-time choices.
         {"lyrics.importOptions", "", String, Profile, Mapped, false, std::string()},
+        {"textImport.options", "", String, Profile, Mapped, false, std::string()},
         {"tags.removeOptions", "", String, Profile, Mapped, false, std::string()},
         {"grid.splitEvery", "", String, Profile, Mapped, false, std::string()},
         {"automation.scriptResolutionFromVideo", "", Bool, Profile, Mapped, false, false},
@@ -421,10 +425,12 @@ std::vector<SettingDefinition> &definitions()
         {"grid.autoHideColumns", "", Bool, Profile, Mapped, false, true},
         {"grid.columnWidths", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"grid.foldGenerated", "", Bool, Profile, Mapped, false, false},
+        {"grid.markCurrentFrame", "", Bool, Profile, Mapped, false, true},
         {"grid.cpsWarning", "", Int, Profile, Mapped, false, std::int64_t{15}},
         {"grid.cpsError", "", Int, Profile, Mapped, false, std::int64_t{30}},
         {"grid.lineLength", "", Int, Profile, Mapped, false, std::int64_t{43}},
         {"grid.maxLines", "", Int, Profile, Mapped, false, std::int64_t{2}},
+        {"problems.reading", "", Bool, Profile, Mapped, false, true},
         // Setting ids the Karaoke layout turned on and nobody changed since.
         {"workspace.karaokeTurnedOn", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
@@ -460,8 +466,10 @@ std::vector<SettingDefinition> &definitions()
         {"ai.mcp.skills", "", Bool, Profile, Mapped, false, false},
         // servers: one McpServerEntry JSON object per row; their secrets are in the keychain.
         {"ai.mcp.servers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // pluginServers: the plugin servers the user turned on, one {id, plugin, trusted, approved} object per row.
+        {"ai.mcp.pluginServers", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.exclude", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        {"ai.off", "", Bool, Profile, Mapped, false, false},
+        {"ai.off", "", Bool, Profile, Mapped, false, true},
         {"ai.autoUpdate", "", Bool, Profile, Mapped, false, true},
         {"ai.promptCaching", "", Bool, Profile, Mapped, false, true},
         {"ai.webSearch", "", Bool, Profile, Mapped, false, true},
@@ -473,6 +481,7 @@ std::vector<SettingDefinition> &definitions()
         {"ai.agent.autoCompact", "", Bool, Profile, Mapped, false, true},
         {"ai.agent.fullAccessWarned", "", Bool, Profile, Mapped, false, false},
         {"ai.agent.models", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {"ai.models.recent", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // actions: one {"name", "instruction", "role", "ask"} JSON object per row.
         {"ai.agents.custom", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"ai.inline.actions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
@@ -505,6 +514,9 @@ std::vector<SettingDefinition> &definitions()
         {"export.format", "", String, Profile, Mapped, false, std::string()},
         // Percent of HikariSub legacy's size.
         {"video.handleSize", "", Int, Profile, Mapped, false, std::int64_t{100}},
+        // The Freehand mode's Smoothing, 0 to 100.
+        {"video.vectorClipSmoothing", "", Int, Profile, Mapped, false, std::int64_t{45}},
+        {"video.drawingSmoothing", "", Int, Profile, Mapped, false, std::int64_t{45}},
         // application::VideoPropertyAction values.
         {"video.missingMatrix", "", Int, Profile, Mapped, false, std::int64_t{1}},
         {"video.matrixMismatch", "", Int, Profile, Mapped, false, std::int64_t{1}},
@@ -514,6 +526,7 @@ std::vector<SettingDefinition> &definitions()
         {"video.untaggedMatrixWarning", "", Bool, Profile, Mapped, false, true},
         {"video.hdrWarning", "", Bool, Profile, Mapped, false, true},
         {"autosave.intervalSeconds", "", Int, Profile, Mapped, false, std::int64_t{20}},
+        {"autosave.savedCopies", "", Int, Profile, Mapped, false, std::int64_t{3}},
     });
     return table;
 }
@@ -595,6 +608,13 @@ std::span<const std::string_view> retiredSettings()
         "icons.highContrast.normal", "icons.highContrast.accent", "icons.highContrast.active",
         "icons.highContrast.disabled", "workspace.editorOn"};
     return ids;
+}
+
+GridTagsMode gridTagsModeOfHideTags(bool hideTags, const std::optional<std::string> &swapCharacter)
+{
+    if (!hideTags)
+        return GridTagsMode::Show;
+    return swapCharacter && swapCharacter->empty() ? GridTagsMode::Hide : GridTagsMode::ReplaceWithSymbol;
 }
 
 void setInstalledVersion(std::string_view version)

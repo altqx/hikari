@@ -46,12 +46,24 @@ DocumentFiles::Entry *DocumentFiles::find(DocumentId document)
     return it == m_documents.end() ? nullptr : &it->second;
 }
 
-std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKey &destination)
+std::expected<StagedOpen, StageFailure> DocumentFiles::stage(const DestinationKey &destination, const ToUtf8 &toUtf8)
 {
     auto bytes = m_reader.read(destination);
     if (!bytes)
         return std::unexpected(StageFailure{openError(bytes.error()), std::nullopt});
     const std::u8string extension = extensionOf(destination.value);
+    if (toUtf8) {
+        auto text = toUtf8(*bytes);
+        if (!text)
+            return std::unexpected(StageFailure{OpenError::NotInEncoding, std::nullopt});
+        auto load = core::loadSubtitle(*text, extension);
+        if (!load)
+            return std::unexpected(StageFailure{OpenError::InvalidFormat, std::nullopt});
+        StagedOpen staged{destination, std::move(*load), std::nullopt, 0, 0};
+        staged.fileBytes = std::move(*bytes);
+        staged.converted = true;
+        return staged;
+    }
     if (const auto format = core::lyricsFormatOf(extension)) {
         if (core::lyricsEncrypted(*bytes, *format))
             return std::unexpected(StageFailure{OpenError::MalformedLyrics, core::LyricsProblem{core::LyricsProblem::Kind::Encrypted}});
@@ -86,12 +98,12 @@ std::expected<StagedOpen, StageFailure> DocumentFiles::stageOpen(const Destinati
     return stage(destination);
 }
 
-std::expected<StagedOpen, StageFailure> DocumentFiles::stageReload(DocumentId document)
+std::expected<StagedOpen, StageFailure> DocumentFiles::stageReload(DocumentId document, const ToUtf8 &toUtf8)
 {
     Entry *entry = find(document);
     if (!entry)
         return std::unexpected(StageFailure{OpenError::UnknownDocument, std::nullopt});
-    auto staged = stage(entry->destination);
+    auto staged = stage(entry->destination, toUtf8);
     if (staged) {
         staged->replaces = document;
         staged->expectedGeneration = entry->generation;
@@ -110,7 +122,10 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
         if (entry->generation != staged.expectedGeneration || entry->session->revision() != staged.expectedRevision)
             return std::unexpected(OpenError::StaleTarget);
         entry->session = std::make_unique<EditSession>(std::move(staged.load.document));
-        entry->session->markSaved(entry->session->contentId());
+        if (staged.converted)
+            entry->session->markUnsaved();
+        else
+            entry->session->markSaved(entry->session->contentId());
         entry->knownBytes = std::move(bytes);
         ++entry->generation;
         entry->lastSave.reset();
@@ -154,14 +169,35 @@ std::string_view defaultScript()
     return kDefault;
 }
 
+namespace {
+
+void startWith(core::Document &document, const NewFileStyles &styles)
+{
+    std::vector<core::Document::StyleSlot> slots;
+    for (const auto &style : styles.styles)
+        slots.push_back({std::nullopt, core::legacy::styleRawFields(style)});
+    document.rearrangeStyles(slots);
+    document.setScriptInfo(u8"Last Style Storage", styles.catalog);
+    if (std::ranges::none_of(styles.styles, [](const core::StyleValues &s) { return s.name == u8"Default"; }))
+        document.editLines([&](core::LineRecord &line) {
+            line.style = styles.styles.front().name;
+            return true;
+        });
+}
+
+}
+
 DocumentId DocumentFiles::createNew()
 {
     const std::string_view script = defaultScript();
     std::vector<std::byte> bytes(script.size());
     std::memcpy(bytes.data(), script.data(), script.size());
     const DocumentId id{m_nextDocument++};
+    core::Document document = core::loadAss(bytes).document;
+    if (auto styles = m_newFileStyles ? m_newFileStyles() : std::nullopt; styles && !styles->styles.empty())
+        startWith(document, *styles);
     Entry entry;
-    entry.session = std::make_unique<EditSession>(core::loadAss(bytes).document);
+    entry.session = std::make_unique<EditSession>(std::move(document));
     entry.session->markSaved(entry.session->contentId());
     entry.session->markNewDocument();
     if (const auto lines = entry.session->document().lines(); !lines.empty())
@@ -286,18 +322,17 @@ std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, boo
         return std::unexpected(SaveRefusal::UnknownDocument);
     if (entry->generation != plan.generation || entry->session->revision() != plan.revision)
         return std::unexpected(SaveRefusal::StalePlan);
-    if (!plan.saveAs && !overwriteExternalChange) {
-        const auto current = m_reader.read(plan.destination);
-        if (!current || *current != entry->knownBytes)
-            return std::unexpected(SaveRefusal::ExternalChange);
-    }
+    auto current = m_reader.read(plan.destination);
+    if (!plan.saveAs && !overwriteExternalChange && (!current || *current != entry->knownBytes))
+        return std::unexpected(SaveRefusal::ExternalChange);
     auto permit = m_writes.requestPermit(plan.document, plan.destination, plan.revision);
     if (!permit)
         return std::unexpected(permit.error() == PermitRefusal::DestinationOwnedByOtherDocument
                                    ? SaveRefusal::Collision
                                    : SaveRefusal::WriteInProgress);
     m_pending.emplace(*permit, Pending{plan.document, plan.generation, plan.content, plan.destination, plan.bytes,
-                                       plan.saveAs, plan.activeLine, plan.layout});
+                                       plan.saveAs, plan.activeLine, plan.layout,
+                                       current ? std::optional(std::move(*current)) : std::nullopt});
     entry->lastSave = SaveStatus{*permit, std::nullopt};
     if (plan.deferred) {
         (*plan.deferred)([this, permit = *permit](std::optional<std::vector<std::byte>> bytes) { writeDeferred(permit, std::move(bytes)); });
@@ -343,13 +378,15 @@ void DocumentFiles::onWriteResult(const WriteResult &result)
         return;
     Pending pending = std::move(it->second);
     m_pending.erase(it);
+    const bool published =
+        result.outcome == WriteOutcome::Written || result.outcome == WriteOutcome::DurabilityUncertain;
+    if (published && m_savedOver && pending.previous && *pending.previous != pending.bytes)
+        m_savedOver(pending.destination, std::move(*pending.previous));
     Entry *entry = find(pending.document);
     if (!entry || entry->generation != pending.generation)
         return;
     if (entry->lastSave && entry->lastSave->permit == result.permit)
         entry->lastSave->outcome = result.outcome;
-    const bool published =
-        result.outcome == WriteOutcome::Written || result.outcome == WriteOutcome::DurabilityUncertain;
     if (!published)
         return;
     entry->session->markSaved(pending.content);

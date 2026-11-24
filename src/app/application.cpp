@@ -30,6 +30,7 @@
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
 #include "hikari/application/select_lines.h"
+#include "hikari/application/matrix_conversion.h"
 #include "hikari/application/resample.h"
 #include "hikari/application/position_commands.h"
 #include "hikari/application/visual_transform.h"
@@ -54,6 +55,7 @@
 #include "dialog_placement.h"
 #include "list_files.h"
 #include "project_file.h"
+#include "icon_theme.h"
 #include "theme.h"
 #include "window_frame.h"
 
@@ -76,6 +78,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QLocale>
+#include <QCryptographicHash>
 #include <QDir>
 #include <QUuid>
 #include <QCoreApplication>
@@ -630,6 +633,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_files->setLyricsDecoder([](std::span<const std::byte> bytes) {
         return backends::lyricsUtf8(bytes, backends::detectLyricsEncoding(bytes));
     });
+    m_files->setSavedOver([this](const application::DestinationKey &destination, std::vector<std::byte> previous) {
+        keepEarlierSave(destination, std::move(previous));
+    });
     m_log = std::make_unique<ui::LogController>();
     m_log->setActiveWindow([this] { return m_workspace.activeWindow(); });
     m_mediaHelper = mediaHelperPath(options.mediaHelper);
@@ -729,6 +735,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString());
     m_renderer.countCost(m_settings->boolean("video.renderCost"));
     ui::theme::useSettings(m_settings.get());
+    ui::icons::useSettings(m_settings.get());
     for (const QString &problem : ui::theme::loadProblems())
         m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Options", "Themes"),
                       QCoreApplication::translate("HikariSub.Options", "A built-in theme could not be read, so Dark is shown."),
@@ -743,6 +750,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"),
         options.presetsDir.isEmpty() ? QString() : options.presetsDir + QStringLiteral("/layouts.json"));
+    m_workspaceLayout->waitForPluginLayouts();
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     makeViews(m_mainViews, 0);
     choosePlayer();
@@ -828,12 +836,20 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                 QString::fromStdString(value.dump()));
             return refused.isEmpty() ? std::nullopt : std::optional(refused.toStdString());
         },
-        m_pluginPrograms.get(), m_presence.get()});
+        m_pluginPrograms.get(), m_presence.get(), &m_problems});
     m_apiHost->setPluginFormat([this](application::DocumentId document) { return fileFormat(document); });
     m_automation->setMacroRan([this](const AutomationShell::Ran &ran) {
         m_apiHost->api().macroRan(ran.document, application::scriptFileName(ran.path), ran.macro, ran.outcome, ran.dialogs);
     });
     m_rowMarks.setObserver([this](application::DocumentId document) { showRowMarks(document); });
+    m_problems.setObserver([this](application::DocumentId document, std::vector<std::string> sources) {
+        m_apiHost->api().problemsChanged(document, sources);
+        for (WindowViews *v : allViews())
+            if (v->editorDocument == document)
+                v->shell->setRowMarks(rowMarksOf(document));
+        if (m_problemsList)
+            m_problemsList->problemsChanged(document);
+    });
     AiFeatures::Ports aiPorts = options.aiPorts ? std::move(*options.aiPorts)
                                                 : AiFeatures::defaultPorts(m_userFolder, &m_apiHost->api(),
                                                                            options.appVersion.isEmpty()
@@ -850,6 +866,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->aiComponentRolledBack(version, reason, m_ai->versionProperties());
         return m_crashReports && m_crashReports->aiComponentFailed(version, reason);
     };
+    AiFeatures::settleOffDefault(*m_settings, aiPorts);
     m_ai = std::make_unique<AiFeatures>(*m_settings, std::move(aiPorts));
     m_aiMcp = std::make_unique<AiMcp>(*m_settings, *m_ai,
                                       m_userFolder.isEmpty() ? QString() : backends::ai::mcpEndpointFile(m_userFolder),
@@ -871,7 +888,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_agent = std::make_unique<AgentController>(AgentController::Wiring{
         *m_ai, *m_settings, m_apiHost->api(), m_apiHost->review(), m_workspace, *m_files, m_userFolder, {},
         m_aiScripts.get(), m_automation.get(),
-        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); }});
+        [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); },
+        [this](const QString &providerId) { return m_aiSettings->lacksKey(providerId); },
+        [this] { return m_aiSettings->codexSignedOut(); }});
+    connect(m_aiSettings.get(), &AiSettings::providersChanged, m_agent.get(), &AgentController::modelsChanged);
+    connect(m_aiSettings.get(), &AiSettings::codexChanged, m_agent.get(), &AgentController::modelsChanged);
     m_skillsSettings = std::make_unique<SkillsSettings>(
         m_userFolder, [this](int window) { return m_projects ? m_projects->root(window) : QString(); });
     m_ai->setProjectKeys([this](const std::string &project, const std::string &providerId) {
@@ -931,6 +952,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.windowPlugins = [this] { return windowPlugins(); };
     pluginWiring.activeWindow = [this] { return m_workspace.activeWindow(); };
     pluginWiring.marks = &m_rowMarks;
+    pluginWiring.problems = &m_problems;
     pluginWiring.programs = m_pluginPrograms.get();
 #ifdef Q_OS_WIN
     pluginWiring.lowRightsHelper = QCoreApplication::applicationDirPath() + QStringLiteral("/hikarisub-confine.exe");
@@ -944,12 +966,30 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->pluginFeatureUsed(feature);
     };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    m_languageProviders = std::make_unique<LanguageProviders>(*m_pluginRuntime);
+    m_languageServers = std::make_unique<LanguageServers>(LanguageServers::Wiring{
+        [this] { return m_pluginRuntime->languageServers(); },
+        [this](const std::string &plugin, const std::string &server) { return m_pluginRuntime->languageServerStart(plugin, server); },
+        [this](const std::string &plugin) { return m_pluginRuntime->pluginSettings(plugin); },
+        [this](const std::string &plugin, const QString &line) { m_pluginRuntime->logProgramLine(plugin, line); },
+        [this] {
+            LanguageServers::Open open;
+            for (const application::DocumentId id : m_workspace.documents())
+                open.emplace_back(id, m_files->session(id));
+            return open;
+        },
+        &m_problems,
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::languageServersChanged, m_languageServers.get(), &LanguageServers::serversChanged);
     m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
         return pluginSaveBytes(document, destination);
     });
     connect(m_pluginManager.get(), &PluginManager::folderForgotten, m_pluginRuntime.get(), &PluginRuntime::endFileAccess);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, m_pluginRuntime.get(), &PluginRuntime::sync);
     connect(m_pluginManager.get(), &PluginManager::settingChanged, m_pluginRuntime.get(), &PluginRuntime::settingChanged);
+    connect(m_pluginManager.get(), &PluginManager::devReloaded, m_pluginRuntime.get(), &PluginRuntime::reload);
+    connect(m_pluginManager.get(), &PluginManager::devProblem, this,
+            [this](const QString &, const QString &name, const QString &problem) { m_log->log(problem, ui::LogController::Error, name); });
     m_automationHotkeys->setPluginRunner(
         [this](const QString &command) { return m_pluginRuntime->run(command, QStringLiteral("key")); });
     connect(m_pluginRuntime.get(), &PluginRuntime::commandsChanged, m_automationHotkeys.get(), [this] {
@@ -958,6 +998,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_pluginMarketplace->setBusy([this](const QString &id) { return m_pluginRuntime->busy(id); });
     connect(m_pluginRuntime.get(), &PluginRuntime::idle, m_pluginMarketplace.get(), &PluginMarketplace::pluginIdle);
+    m_ai->setPluginMcpStart([runtime = QPointer(m_pluginRuntime.get())](const backends::ai::McpServerEntry &server)
+                                -> std::expected<backends::ProgramProcess::Options, QString> {
+        if (!runtime)
+            return std::unexpected(QStringLiteral("HikariSub is closing."));
+        return runtime->mcpServerStart(server);
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::mcpServersChanged, m_ai.get(), [this] {
+        if (const auto &installed = m_pluginRuntime->installed())
+            m_ai->keepPluginMcpChoices(*installed);
+        m_ai->setPluginMcpServers(m_pluginRuntime->mcpServers());
+    });
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
     QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
@@ -1065,6 +1116,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         hooks.projectRoot = [this] { return m_projects ? m_projects->root(m_workspace.activeWindow()) : QString(); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
+        m_files->setNewFileStyles([this]() -> std::optional<application::NewFileStyles> {
+            const auto &window = views(m_workspace.activeWindow());
+            const std::string name = (window.settings ? window.settings->settings() : m_settings->settings()).text("new.styleCatalog");
+            if (name.empty())
+                return std::nullopt;
+            m_styleManager->projectChanged();
+            const std::u8string catalog(name.begin(), name.end());
+            auto styles = m_styleManager->catalogStore().list(catalog);
+            if (!styles)
+                return std::nullopt;
+            return application::NewFileStyles{catalog, std::move(*styles)};
+        });
     }
     {
         AlignToVideoController::Hooks hooks;
@@ -1117,6 +1180,20 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_lyricsImport = std::make_unique<LyricsImportController>(*m_settings, std::move(hooks));
     }
     {
+        TextImportController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.openNew = [this](core::LoadResult load, const QString &path) {
+            application::StagedOpen staged{{}, std::move(load), std::nullopt, 0, 0};
+            staged.imported = true;
+            (void)publish(std::move(staged), path, false);
+        };
+        m_textImport = std::make_unique<TextImportController>(*m_settings, std::move(hooks));
+    }
+    {
         QcNotesController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
         hooks.editable = [this] {
@@ -1136,6 +1213,29 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             shell().setQcMarks(std::move(marks), current);
         };
         m_qcNotes = std::make_unique<QcNotesController>(*m_settings, std::move(hooks));
+    }
+    {
+        ProblemsController::Hooks hooks;
+        hooks.document = [this] { return m_workspace.editingTarget(); };
+        hooks.session = [this] { return targetSession(); };
+        hooks.selectLine = [this](core::LineId line) { selectLine(line.value); };
+        hooks.seek = [this](int ms) { return activeMedia().video->hasVideo() && activeMedia().video->session().seekToMs(ms); };
+        hooks.fix = [this](application::DocumentId document, const std::string &problem, int fix) {
+            bool fixed = false;
+            m_apiHost->api().call(api::Caller{"hikarisub.problems", "Problems", true}, "problems.fix",
+                                  api::Json::object({{"document", api::Json(document.value)},
+                                                     {"problem", api::Json(problem)},
+                                                     {"fix", api::Json(std::int64_t(fix))}}),
+                                  [&](const api::Result &result) { fixed = result.has_value(); });
+            if (fixed) {
+                editor().reloadFromSession();
+                refreshViews();
+            }
+            return fixed;
+        };
+        hooks.editorRaw = [this](int role) { return editorRaw(role); };
+        hooks.displaySpan = [this](int role, int from, int to) { return editor().displaySpan(role, from, to); };
+        m_problemsList = std::make_unique<ProblemsController>(m_problems, *m_qcNotes, std::move(hooks));
     }
     {
         FontCollectorController::Hooks hooks;
@@ -1270,6 +1370,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
+    m_earlierSaves = std::make_unique<application::RecoveryStore>(
+        m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path((m_recoveryDir + QStringLiteral("/saves")).toStdU16String()),
+        "saves", m_recoveryDir.isEmpty() ? 0 : m_settings->integer("autosave.savedCopies"));
     m_autosaveIntervalOverrideMs = options.autosaveIntervalMs;
     m_spellingText = backends::legacySpellingText(true);
     m_bundledDictionaryDir = options.bundledDictionaryDir;
@@ -2026,10 +2129,43 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         if (m_review)
             Q_EMIT m_review->currentChanged();
     });
-    v.shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    v.shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
+    const auto fieldOf = [](int role) { return role == 1 ? QStringLiteral("translation") : QStringLiteral("text"); };
+    v.editor->tagList()->setHover(
+        [this, fieldOf](int role) { return !m_pluginRuntime->providers("hover", fieldOf(role).toStdString()).empty(); },
+        [this, fieldOf](int role, const QString &text, int position, ui::TagListController::HoverAnswer answer) {
+            const auto target = m_workspace.editingTarget();
+            const auto *session = target ? m_files->session(*target) : nullptr;
+            const auto line = session ? session->selection().active : std::nullopt;
+            if (!line)
+                return answer(std::nullopt);
+            m_languageProviders->hover({target->value, line->value, fieldOf(role), text, position, {}},
+                                       [answer](std::optional<HoverText> hover) {
+                                           answer(hover ? std::optional(ui::ProviderHover{hover->text, hover->source, hover->from, hover->to})
+                                                        : std::nullopt);
+                                       });
+        });
+    v.editor->tagList()->setProviders(
+        [this, fieldOf](int role) { return m_languageProviders->triggers(fieldOf(role)); },
+        [this, fieldOf](int role, const QString &text, int caret, const QString &trigger, ui::TagListController::Rows answer) {
+            const auto target = m_workspace.editingTarget();
+            const auto *session = target ? m_files->session(*target) : nullptr;
+            const auto line = session ? session->selection().active : std::nullopt;
+            if (!line)
+                return answer({});
+            m_languageProviders->complete({target->value, line->value, fieldOf(role), text, caret, trigger},
+                                          [answer](std::vector<CompletionItem> items) {
+                                              std::vector<ui::ProviderRow> rows;
+                                              rows.reserve(items.size());
+                                              for (CompletionItem &item : items)
+                                                  rows.push_back({std::move(item.label), std::move(item.insert), std::move(item.detail),
+                                                                  std::move(item.source), item.from, item.to, item.snippet});
+                                              answer(std::move(rows));
+                                          });
+        });
     v.shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(v.shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this, &v] { m_settings->set("grid.hideColumns", v.shell->hiddenColumns()); });
@@ -2166,6 +2302,8 @@ void Application::showPluginContent()
     for (WindowViews *views : allViews())
         if (views->nodeEffects)
             views->nodeEffects->pluginContentChanged();
+    for (auto *layout : layouts())
+        layout->pluginLayoutsRead();
 }
 
 void Application::makeNodeEffects(WindowViews &v, int shellWindow)
@@ -2550,6 +2688,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     noteLastUsedWindow();
+    emit encodingSuggestionChanged();
     noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
@@ -2599,7 +2738,11 @@ void Application::refreshViews()
         editor().setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
     }
     m_rowMarks.keepOnly(m_workspace.documents());
+    m_problems.keepOnly(m_workspace.documents());
+    syncReadingProblems();
+    m_languageServers->sync();
     shell().setRowMarks(rowMarksOf(target));
+    refreshFrameMarks();
     if (auto &active = activeViews(); target != std::exchange(active.findDocument, target))
         active.find->reset();
     // MUST KILL: must run after editor().setDocument above
@@ -2608,6 +2751,8 @@ void Application::refreshViews()
     kanjiTimer().documentEdited();
     if (m_qcNotes)
         m_qcNotes->documentEdited();
+    if (m_problemsList)
+        m_problemsList->documentEdited();
     refreshVideo();
     refreshAudio();
     if (activeViews().statusBar)
@@ -2677,6 +2822,8 @@ ui::LineTableModel::RowMarks Application::rowMarksOf(std::optional<application::
     ui::LineTableModel::RowMarks out;
     if (!document)
         return out;
+    if (const auto *session = m_files->session(*document))
+        addProblemMarks(out, m_problems, *document, session->document());
     for (const auto &[line, marks] : m_rowMarks.shown(*document))
         for (const application::OwnedMark &mark : marks) {
             const QString note = QCoreApplication::translate("HikariSub.Grid", "%1: %2",
@@ -3646,20 +3793,29 @@ bool Application::acceptFileOnDisk(qulonglong id)
 
 bool Application::reloadTarget()
 {
+    return reloadTarget({}, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"));
+}
+
+bool Application::reloadTarget(const application::ToUtf8 &toUtf8, const QString &title)
+{
     const auto target = m_workspace.editingTarget();
     if (!target)
         return false;
-    auto staged = m_files->stageReload(*target);
+    auto staged = m_files->stageReload(*target, toUtf8);
     if (!staged) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
-                      QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
+        m_log->notice(ui::LogController::Error, title,
+                      staged.error().reason == application::OpenError::NotInEncoding
+                          ? QCoreApplication::translate("HikariSub.Documents",
+                                                        "The file is not text in that encoding; nothing was changed.")
+                          : QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
         return false;
     }
     if (!m_files->activate(std::move(*staged))) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
+        m_log->notice(ui::LogController::Error, title,
                       QCoreApplication::translate("HikariSub.Documents", "The subtitles changed while reloading; nothing was replaced."));
         return false;
     }
+    m_encodingSuggestions.erase(target->value);
     if (auto *session = m_files->session(*target))
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
@@ -3940,6 +4096,36 @@ int Application::selectedLineCount(bool shownOnly) const
         return int(selected.size());
     const auto shown = shownLines();
     return int(std::ranges::count_if(selected, [&](core::LineId id) { return shown(id); }));
+}
+
+QVariantMap Application::styleStep(int direction) const
+{
+    auto *session = targetSession();
+    if (!session || !session->selection().active)
+        return {};
+    const core::LineId active = *session->selection().active;
+    const auto grid = shell().actionLines();
+    const auto picked = visualTools().batchCount() > 1 ? visualTools().batchTargets() : std::vector<core::LineId>{};
+    const std::set<core::LineId> stops(picked.begin(), picked.end());
+    const auto stop = [&](core::LineId id) { return id != active && (stops.empty() || stops.contains(id)); };
+    const auto at = std::ranges::find(grid, active);
+    std::optional<core::LineId> next;
+    if (direction > 0) {
+        for (auto it = at == grid.end() ? grid.begin() : std::next(at); it != grid.end() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    } else if (direction < 0 && at != grid.end()) {
+        for (auto it = std::make_reverse_iterator(at); it != grid.rend() && !next; ++it)
+            if (stop(*it))
+                next = *it;
+    }
+    QVariantMap out{{QStringLiteral("from"), QVariant::fromValue(active.value)},
+                    {QStringLiteral("fromNumber"), shell().lineNumber(active).value_or(0)}};
+    if (const auto number = next ? shell().lineNumber(*next) : std::nullopt) {
+        out.insert(QStringLiteral("id"), QVariant::fromValue(next->value));
+        out.insert(QStringLiteral("number"), *number);
+    }
+    return out;
 }
 
 QVariantList Application::columnChoices(bool paste)
@@ -4287,16 +4473,15 @@ bool sessionEnded(const QString &dir, const std::string &session)
 
 }
 
-QVariantList Application::recoveryBundles() const
+namespace {
+
+QVariantList bundleRows(const application::RecoveryStore &store, const std::vector<application::RecoveryBundle> &bundles)
 {
     QVariantList out;
-    if (!m_recovery)
-        return out;
-    const QString dir = m_recoveryDir;
-    for (const auto &bundle : m_recovery->leftovers([&](const std::string &s) { return sessionEnded(dir, s); })) {
+    for (const auto &bundle : bundles) {
         QVariantList generations;
         for (auto it = bundle.generations.rbegin(); it != bundle.generations.rend(); ++it)
-            if (const auto content = m_recovery->read(bundle.key, *it))
+            if (const auto content = store.read(bundle.key, *it))
                 generations << QVariantMap{{QStringLiteral("generation"), QVariant::fromValue<qulonglong>(*it)},
                                            {QStringLiteral("written"), QDateTime::fromMSecsSinceEpoch(content->writtenMs).toString(Qt::ISODate)}};
         out << QVariantMap{{QStringLiteral("key"), QString::fromStdString(bundle.key)},
@@ -4306,6 +4491,54 @@ QVariantList Application::recoveryBundles() const
                            {QStringLiteral("generations"), generations}};
     }
     return out;
+}
+
+}
+
+QVariantList Application::recoveryBundles() const
+{
+    if (!m_recovery)
+        return {};
+    const QString dir = m_recoveryDir;
+    return bundleRows(*m_recovery, m_recovery->leftovers([&](const std::string &s) { return sessionEnded(dir, s); }));
+}
+
+void Application::keepEarlierSave(const application::DestinationKey &destination, std::vector<std::byte> previous)
+{
+    if (!m_earlierSaves || !m_earlierSaves->enabled())
+        return;
+    const QFileInfo file(QString::fromStdString(destination.value));
+    application::RecoveryContent content;
+    content.bytes = std::move(previous);
+    content.extension = file.suffix().toLower().toStdString();
+    content.title = file.fileName().toStdString();
+    content.originalPath = destination.value;
+    content.writtenMs = QDateTime::currentMSecsSinceEpoch();
+    const std::string key =
+        QCryptographicHash::hash(QByteArray::fromStdString(destination.value), QCryptographicHash::Sha1).toHex().left(16).toStdString();
+    m_recoveryWrites.put(QStringLiteral("saves-%1").arg(++m_earlierSaveWrites),
+                         [store = *m_earlierSaves, key, content = std::move(content)]() mutable { return store.write(key, content); });
+}
+
+QVariantList Application::earlierSaves()
+{
+    if (!m_earlierSaves)
+        return {};
+    m_recoveryWrites.finishWrites();
+    return bundleRows(*m_earlierSaves, m_earlierSaves->bundles());
+}
+
+bool Application::openEarlierSave(const QString &key, qulonglong generation)
+{
+    const auto content = m_earlierSaves ? m_earlierSaves->read(key.toStdString(), generation) : std::nullopt;
+    return content && openRecovered(*content, QCoreApplication::translate("HikariSub.Session", "%1 (earlier save)"));
+}
+
+void Application::deleteEarlierSaves(const QString &key)
+{
+    m_recoveryWrites.finishWrites();
+    if (m_earlierSaves)
+        m_earlierSaves->discard(key.toStdString());
 }
 
 QString Application::targetVideoPath() const
@@ -4377,29 +4610,31 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 bool Application::recoverBundle(const QString &key, qulonglong generation)
 {
     const auto content = m_recovery ? m_recovery->read(key.toStdString(), generation) : std::nullopt;
-    if (!content)
-        return false;
-    const std::u8string extension(content->extension.begin(), content->extension.end());
-    auto loaded = core::loadSubtitle(content->bytes, extension);
+    return content && openRecovered(*content, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)"));
+}
+
+bool Application::openRecovered(const application::RecoveryContent &content, const QString &titleFormat)
+{
+    const std::u8string extension(content.extension.begin(), content.extension.end());
+    auto loaded = core::loadSubtitle(content.bytes, extension);
     if (!loaded)
         return false;
     core::Document document = std::move(loaded->document);
-    if (content->frameRate)
-        if (const auto rate = core::FrameRate::make(content->frameRate->first, content->frameRate->second))
+    if (content.frameRate)
+        if (const auto rate = core::FrameRate::make(content.frameRate->first, content.frameRate->second))
             document.setFrameRate(*rate);
     const auto id = m_files->createUnsaved(std::move(document));
     auto *session = m_files->session(id);
     selectLegacyActiveLine(*session);
-    if (content->draftRow) {
+    if (content.draftRow) {
         const auto lines = session->document().lines();
-        if (*content->draftRow < lines.size()) {
-            const auto line = lines[*content->draftRow]->id;
+        if (*content.draftRow < lines.size()) {
+            const auto line = lines[*content.draftRow]->id;
             session->setSelection(application::Selection{line, {line}, line, {}});
-            session->editDraft(line, content->draft);
+            session->editDraft(line, content.draft);
         }
     }
-    m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)")
-                            .arg(QString::fromStdString(content->title)).toStdString());
+    m_workspace.add(id, titleFormat.arg(QString::fromStdString(content.title)).toStdString());
     takeFileArrangement(id);
     m_workspace.setEditingTarget(id);
     refreshViews();
@@ -5000,12 +5235,14 @@ application::SelectLinesSettings selectSettings(const QVariantMap &m, int option
     s.find = utf8(m.value(QStringLiteral("find")).toString());
     s.with = m.value(QStringLiteral("with"), s.with).toBool();
     s.matchCase = m.value(QStringLiteral("matchCase"), s.matchCase).toBool();
-    s.regex = m.value(QStringLiteral("regex"), s.regex).toBool();
+    s.match = static_cast<S::Match>(std::clamp(m.value(QStringLiteral("match"), int(s.match)).toInt(), 0,
+                                               int(S::Match::Regex)));
     s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field"), int(s.field)).toInt(), 0,
                                                int(S::Field::Overlaps)));
     s.dialogues = m.value(QStringLiteral("dialogues"), s.dialogues).toBool();
     s.comments = m.value(QStringLiteral("comments"), s.comments).toBool();
-    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0, 2));
+    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0,
+                                             int(S::Mode::Intersect)));
     s.action = static_cast<S::Action>(std::clamp(m.value(QStringLiteral("action"), int(s.action)).toInt(), 0, 6));
     return s;
 }
@@ -5020,7 +5257,7 @@ QVariantMap Application::selectLinesSettings() const
     const auto s = application::selectLinesFromOptions(m_selectOptions);
     return {{QStringLiteral("with"), s.with},
             {QStringLiteral("matchCase"), s.matchCase},
-            {QStringLiteral("regex"), s.regex},
+            {QStringLiteral("match"), int(s.match)},
             {QStringLiteral("field"), int(s.field)},
             {QStringLiteral("dialogues"), s.dialogues},
             {QStringLiteral("comments"), s.comments},
@@ -5087,10 +5324,15 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     m_settings->set("selectLines.recentSelections", m_selectRecent);
     saveSelectLinesSettings(map);
     using M = application::SelectLinesSettings::Mode;
-    return settings.mode == M::Select           ? QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count)
-           : settings.mode == M::AddToSelection ? QCoreApplication::translate("HikariSub.SelectLines",
-                                                                              "%1 lines added to selection.").arg(count)
-                                                : QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    switch (settings.mode) {
+    case M::Select: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines selected.").arg(count);
+    case M::AddToSelection:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines added to selection.").arg(count);
+    case M::Deselect: return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines deselected.").arg(count);
+    case M::Intersect:
+        return QCoreApplication::translate("HikariSub.SelectLines", "%1 lines removed from selection.").arg(count);
+    }
+    return {};
 }
 
 QString Application::selectStylesPattern(const QStringList &styles) const
@@ -5523,6 +5765,20 @@ int spellingRoleOf(const application::EditSession *session)
     return session && application::spellsTranslation(session->document()) ? 1 : 0;
 }
 
+}
+
+void Application::syncReadingProblems()
+{
+    m_readingProblems.setSettings(ReadingProblems::Settings{
+        .shown = m_settings->boolean("problems.reading"),
+        .profile = application::profileReadingLimits(m_settings->settings()),
+        .allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps"),
+        .allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps"),
+    });
+    std::vector<std::pair<application::DocumentId, const application::EditSession *>> open;
+    for (const application::DocumentId id : m_workspace.documents())
+        open.emplace_back(id, m_files->session(id));
+    m_readingProblems.sync(open);
 }
 
 std::optional<std::u16string> Application::editorRaw(int role) const
@@ -6154,20 +6410,43 @@ QVariantMap Application::resampleValues() const
     const auto subs = application::scriptResolution(session->document());
     application::Resolution video = subs;
     const bool hasVideo = activeMedia().video->session().state() == application::VideoSession::State::Ready && activeMedia().video->session().lastFrame();
-    if (hasVideo)
-        video = {activeMedia().video->session().sourceGeometry().width, activeMedia().video->session().sourceGeometry().height};
+    std::string videoMatrix;
+    if (hasVideo) {
+        const auto &videoSession = activeMedia().video->session();
+        video = {videoSession.sourceGeometry().width, videoSession.sourceGeometry().height};
+        videoMatrix = application::recommendedMatrix(videoSession.colour(), video.width, video.height);
+    }
+    QStringList matrices;
+    for (const auto &m : application::matrixNames())
+        if (const std::string name(m.begin(), m.end()); application::namesConvertibleMatrix(name))
+            matrices << QString::fromStdString(name);
+    const auto info = session->document().scriptInfo(u8"YCbCr Matrix");
+    const std::string written = info ? std::string(info->begin(), info->end()) : std::string();
     return {{QStringLiteral("subsWidth"), subs.width},
             {QStringLiteral("subsHeight"), subs.height},
             {QStringLiteral("videoWidth"), video.width},
             {QStringLiteral("videoHeight"), video.height},
-            {QStringLiteral("hasVideo"), hasVideo}};
+            {QStringLiteral("hasVideo"), hasVideo},
+            {QStringLiteral("matrix"), application::namesConvertibleMatrix(written) ? QString::fromStdString(written) : QString()},
+            {QStringLiteral("videoMatrix"),
+             application::namesConvertibleMatrix(videoMatrix) ? QString::fromStdString(videoMatrix) : QString()},
+            {QStringLiteral("matrices"), matrices}};
 }
 
-bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations)
+QVariantList Application::resampleEdges(int subsWidth, int subsHeight, int width, int height, bool crop) const
+{
+    const auto e = application::fittingEdges({subsWidth, subsHeight}, {width, height}, crop);
+    return {e.left, e.right, e.top, e.bottom};
+}
+
+bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch, bool adjustRotations,
+                           const QVariantList &edges, const QString &matrix)
 {
     if ((subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
         return false;
-    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations);
+    const auto edge = [&](int i) { return edges.size() == 4 ? edges.at(i).toInt() : 0; };
+    return changeResolution(subsWidth, subsHeight, width, height, true, stretch, adjustRotations,
+                            {edge(0), edge(1), edge(2), edge(3)}, matrix.toStdString());
 }
 
 bool Application::matchVideoResolution(int option)
@@ -6181,7 +6460,7 @@ bool Application::matchVideoResolution(int option)
 }
 
 bool Application::changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
-                                   bool adjustRotations)
+                                   bool adjustRotations, application::Edges edges, const std::string &matrix)
 {
     auto *session = targetSession();
     if (!session)
@@ -6189,6 +6468,8 @@ bool Application::changeResolution(int fromWidth, int fromHeight, int width, int
     QStringList unscaled, unadjusted;
     application::ResampleOptions options;
     options.stretch = stretch;
+    options.edges = edges;
+    options.matrix = matrix;
     options.adjustRotations = adjustRotations;
     const auto &video = activeMedia().video->session();
     if (video.state() == application::VideoSession::State::Ready && video.lastFrame())
@@ -6796,10 +7077,32 @@ bool Application::deleteLines()
     return done;
 }
 
-void Application::toggleHideTags()
+application::GridTagsMode Application::gridTagsMode() const
 {
-    m_settings->set("grid.hideTags", !shell().hideTags());
-    shell().setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    return application::GridTagsMode(std::clamp<qint64>(m_settings->integer("grid.tagsMode"), 0, 2));
+}
+
+void Application::setGridTagsMode(int mode)
+{
+    m_settings->set("grid.tagsMode", std::clamp(mode, 0, 2));
+}
+
+void Application::cycleGridTagsMode()
+{
+    const int mode = (int(gridTagsMode()) + 1) % 3;
+    setGridTagsMode(mode);
+    const QString shown = std::array{
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Show"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Replace with symbol"),
+        //: Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid's row
+        QCoreApplication::translate("HikariSub.Grid", "Tags in the Grid: Hide")}[std::size_t(mode)];
+    shell().setStatusText(shown);
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, shown] {
+        if (shell().statusText() == shown)
+            shell().setStatusText(QString());
+    });
 }
 
 bool Application::deleteText()
@@ -6808,6 +7111,17 @@ bool Application::deleteText()
     if (!session)
         return false;
     const bool done = application::deleteText(*session, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::deleteTextKeepTags()
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::deleteTextKeepTags(*session, shownLines()).has_value();
     editor().reloadFromSession();
     refreshViews();
     return done;
@@ -6872,6 +7186,23 @@ bool Application::swapLines()
     editor().reloadFromSession();
     refreshViews();
     return done;
+}
+
+bool Application::moveLines(bool up)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::moveLines(*session, up, shownLines()).has_value();
+    editor().reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::canMoveLines(bool up) const
+{
+    const auto *session = targetSession();
+    return session && application::canMoveLines(*session, up, shownLines());
 }
 
 bool Application::makeContinuous(bool withPrevious)
@@ -7260,7 +7591,9 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
             {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
+            {QStringLiteral("textImport"), QVariant::fromValue(static_cast<QObject *>(m_textImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
+            {QStringLiteral("problems"), QVariant::fromValue(static_cast<QObject *>(m_problemsList.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
@@ -7296,10 +7629,15 @@ void Application::settingChanged(const QString &id)
         choosePlayer();
     if (id == QLatin1String("subtitles.saveWithVideoName"))
         emit saveWithVideoNameChanged();
-    else if (id == QLatin1String("video.dontAskForBadResolution"))
+    else if (id == QLatin1String("grid.markCurrentFrame")) {
+        emit markCurrentFrameChanged();
+        refreshFrameMarks();
+    } else if (id == QLatin1String("video.dontAskForBadResolution"))
         emit askForBadResolutionChanged();
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles"));
+    else if (id == QLatin1String("autosave.savedCopies") && !m_recoveryDir.isEmpty() && m_earlierSaves)
+        m_earlierSaves->setCapacity(m_settings->integer("autosave.savedCopies"));
     else if (id == QLatin1String("autosave.intervalSeconds")) {
         for (auto &[document, timer] : m_autosaveTimers)
             if (timer)
@@ -7320,6 +7658,7 @@ void Application::settingChanged(const QString &id)
         for (auto *views : allViews())
             views->editor->optionsChanged();
         refreshVideo();
+        syncReadingProblems();
     }
     else if (id == QLatin1String("grid.cpsWarning") || id == QLatin1String("grid.cpsError") ||
              id == QLatin1String("grid.lineLength") || id == QLatin1String("grid.maxLines")) {
@@ -7327,16 +7666,19 @@ void Application::settingChanged(const QString &id)
             views->shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
             views->editor->optionsChanged();
         }
+        syncReadingProblems();
     }
+    else if (id == QLatin1String("problems.reading"))
+        syncReadingProblems();
     else if (id == QLatin1String("editor.hideTags") && !m_resettingSettings)
         for (auto *views : allViews())
             views->editor->setShowTags(!m_settings->boolean("editor.hideTags"));
     else if (id == QLatin1String("editor.timesToFramesSwitch") && !m_resettingSettings)
         for (auto *views : allViews())
             views->editor->setShowFrames(m_settings->boolean("editor.timesToFramesSwitch"));
-    else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
+    else if (id == QLatin1String("grid.tagsMode") || id == QLatin1String("grid.tagsSwapCharacter"))
         for (auto *views : allViews())
-            views->shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+            views->shell->setTagsMode(gridTagsMode(), m_settings->text("grid.tagsSwapCharacter"));
     else if (id == QLatin1String("program.language"))
         switchLanguage();
     else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))
@@ -7643,6 +7985,9 @@ bool validAppearance(std::string_view id, const QVariant &value)
             return ui::theme::find(value.toString()) && ui::theme::typeOf(value.toString()) == ui::theme::Type(i);
     if (id == ui::theme::kAccentsSetting || id == ui::theme::kColoursSetting)
         return value.canConvert<QStringList>();
+    if (id == ui::icons::kThemeSetting)
+        return value.toString() == QLatin1String(ui::icons::kBuiltinTheme)
+            || std::ranges::contains(ui::icons::themes(), value.toString(), &ui::icons::PluginIconTheme::id);
     return false;
 }
 }
@@ -7714,7 +8059,7 @@ namespace {
 constexpr std::string_view kProjectExtras[] = {"translation.autoMoveTagsFromOriginal", "translation.sourceLanguage", "translation.glossary",
                                                "translation.translator", "translation.reviewer", "ai.exclude",
                                                "translation.targetLanguage", "export.format", "privacy.discordProject",
-                                               "privacy.discordShow"};
+                                               "privacy.discordShow", "new.styleCatalog"};
 
 void insertExtras(QVariantMap &values, const application::Settings &settings)
 {

@@ -187,6 +187,7 @@ protected:
 
     void SetUp() override
     {
+        settings.set(app::AiFeatures::kOffSetting, false);
         auth.script("ok");
         previousRoutes = backends::desktop::replaceRoutes({.openUrl = [this](const QUrl &url) {
             opened.push_back(url);
@@ -323,11 +324,43 @@ TEST_F(AiSettingsTest, TestingAProviderShowsTheProvidersAnswer)
     page.test(QStringLiteral("openai"));
     ASSERT_TRUE(waitFor([&] { return row(page, 0).value(QStringLiteral("state")).toString() == QLatin1String("failed"); }));
     EXPECT_EQ(row(page, 0).value(QStringLiteral("error")).toString(), QStringLiteral("key"));
+    EXPECT_TRUE(page.lacksKey(QStringLiteral("openai")));
 
     chain.keys["openai"] = "sk";
     page.refreshModels();
     ASSERT_TRUE(waitFor([&] { return row(page, 0).value(QStringLiteral("state")).toString() == QLatin1String("ok"); }));
+    EXPECT_FALSE(page.lacksKey(QStringLiteral("openai")));
     EXPECT_EQ(row(page, 0).value(QStringLiteral("models")).toInt(), 1);
+}
+
+TEST_F(AiSettingsTest, ARoleRowsPickerListsOnlyProvidersModelsAndVisionOnlyThoseThatReadImages)
+{
+    ai::Provider google = ai::presetProvider(ai::Preset::Gemini, "gemini", "Google Gemini");
+    google.models = {{.id = "flash", .name = "Flash"}, {.id = "pro", .name = "Pro"}};
+    ai::Provider openRouter = ai::presetProvider(ai::Preset::OpenRouter, "openrouter", "OpenRouter");
+    openRouter.models = {{.id = "text/only", .name = "Text only"}};
+    stored.providers = {google, openRouter};
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    const auto ids = [&](const QString &role, const QString &current) {
+        QStringList out;
+        for (const QVariant &item : page.rolePickerItems(role, current, {}))
+            out << item.toMap().value(QStringLiteral("id")).toString();
+        return out;
+    };
+    const auto icon = [&](const QString &role, const QString &current, const QString &id) {
+        for (const QVariant &item : page.rolePickerItems(role, current, {}))
+            if (item.toMap().value(QStringLiteral("id")).toString() == id)
+                return item.toMap().value(QStringLiteral("icon")).toString();
+        return QString();
+    };
+    EXPECT_EQ(ids(QStringLiteral("chat"), {}),
+              (QStringList{QStringLiteral("gemini\tflash"), QStringLiteral("gemini\tpro"), QStringLiteral("openrouter\ttext/only")}));
+    EXPECT_EQ(ids(QStringLiteral("vision"), {}),
+              (QStringList{QStringLiteral("empty"), QStringLiteral("gemini\tflash"), QStringLiteral("gemini\tpro")}));
+    EXPECT_EQ(icon(QStringLiteral("vision"), {}, QStringLiteral("empty")), QStringLiteral("karaoke-check"));
+    EXPECT_EQ(icon(QStringLiteral("reviewer"), QStringLiteral("gemini\tpro"), QStringLiteral("gemini\tpro")), QStringLiteral("karaoke-check"));
+    EXPECT_EQ(icon(QStringLiteral("reviewer"), QStringLiteral("gemini\tpro"), QStringLiteral("empty")), QString());
 }
 
 TEST_F(AiSettingsTest, RoleModelsChangeOnlyWhenApplied)
@@ -543,6 +576,53 @@ TEST_F(AiSettingsTest, AnMcpServerIsSavedWithoutItsSecretsWhichGoToTheKeychain)
     EXPECT_FALSE(chain.keys.contains("mcp-server:my-notes"));
 }
 
+TEST_F(AiSettingsTest, APluginMcpServerIsOffUntilTurnedOnAndGoesWithItsPlugin)
+{
+    app::AiFeatures features(settings, ports());
+    app::AiMcpServers servers(settings, features);
+    backends::ai::McpServerEntry offered;
+    offered.id = backends::ai::pluginMcpServerId("dict", "lookup");
+    offered.name = "Lookup (Dictionary)";
+    offered.plugin = "dict";
+    offered.pluginServer = "lookup";
+    features.setPluginMcpServers({offered});
+    EXPECT_EQ(offered.id.substr(0, 2), "p-");
+    EXPECT_TRUE(offered.id.ends_with("-lookup"));
+
+    QVariantList rows = servers.servers();
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_TRUE(rows[0].toMap()[QStringLiteral("plugin")].toBool());
+    EXPECT_FALSE(rows[0].toMap()[QStringLiteral("on")].toBool());
+    EXPECT_EQ(rows[0].toMap()[QStringLiteral("command")].toString(), QString());
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+
+    const QString id = QString::fromStdString(offered.id);
+    servers.setOn(id, true);
+    servers.setTrusted(id, true);
+    servers.setApproved(id, QStringLiteral("define"), true);
+    rows = servers.servers();
+    EXPECT_TRUE(rows[0].toMap()[QStringLiteral("on")].toBool());
+    EXPECT_TRUE(rows[0].toMap()[QStringLiteral("trusted")].toBool());
+    ASSERT_EQ(features.mcpClients()->servers().size(), 1u);
+    EXPECT_EQ(features.mcpClients()->servers()[0].plugin, "dict");
+    EXPECT_TRUE(features.mcpClients()->servers()[0].trusted);
+    EXPECT_EQ(features.mcpClients()->servers()[0].approved, std::set<std::string>{"define"});
+    EXPECT_TRUE(settings.list(app::AiFeatures::kMcpServersSetting).isEmpty());
+
+    features.setPluginMcpServers({});
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+    EXPECT_TRUE(servers.servers().isEmpty());
+    features.setPluginMcpServers({offered});
+    EXPECT_EQ(features.mcpClients()->servers().size(), 1u);
+
+    features.keepPluginMcpChoices({"other"});
+    EXPECT_TRUE(settings.list(app::AiFeatures::kPluginMcpServersSetting).isEmpty());
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+    servers.setOn(id, true);
+    servers.setOn(id, false);
+    EXPECT_TRUE(features.mcpClients()->servers().empty());
+}
+
 TEST_F(AiSettingsTest, AnMcpServerNeedsANameACommandOrAUrlAndWellFormedVariables)
 {
     app::AiFeatures features(settings, ports());
@@ -597,6 +677,46 @@ TEST_F(AiSettingsTest, TurningAiOffEmptiesThePageAndBuildsNothing)
     EXPECT_TRUE(page.on());
     EXPECT_EQ(page.providers().size(), 1);
     EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, TurningAiOnWithoutTheComponentInstallsItAtOnceAndAFailureOffersRetry)
+{
+    settings.set(app::AiFeatures::kOffSetting, true);
+    app::AiFeatures features(settings, ports(true));
+    app::AiSettings page(features);
+    QSignalSpy ready(&page, &app::AiSettings::componentReady);
+    settings.set(app::AiFeatures::kOffSetting, false);
+    EXPECT_TRUE(page.download().value(QStringLiteral("active")).toBool());
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 1; }));
+    EXPECT_FALSE(ready.front().front().toBool());
+    EXPECT_EQ(page.download().value(QStringLiteral("error")).toString(), QStringLiteral("downloadManifest"));
+    EXPECT_FALSE(component(page, "installed").toBool());
+
+    serveSidecar();
+    page.installComponent();
+    ASSERT_TRUE(waitFor([&] { return ready.count() == 2; }));
+    EXPECT_TRUE(ready.back().front().toBool());
+    EXPECT_TRUE(component(page, "installed").toBool());
+
+    settings.set(app::AiFeatures::kOffSetting, true);
+    EXPECT_TRUE(QFile::exists(dir.filePath(QStringLiteral("ai/sidecar/state.json"))));
+    const std::size_t requests = release.requested.size();
+    settings.set(app::AiFeatures::kOffSetting, false);
+    EXPECT_FALSE(page.download().value(QStringLiteral("active")).toBool());
+    EXPECT_TRUE(component(page, "installed").toBool());
+    EXPECT_EQ(release.requested.size(), requests);
+    EXPECT_EQ(hostsBuilt, 0);
+}
+
+TEST_F(AiSettingsTest, TurningAiOnWithItsOwnSidecarDownloadsNothing)
+{
+    settings.set(app::AiFeatures::kOffSetting, true);
+    app::AiFeatures features(settings, ports());
+    app::AiSettings page(features);
+    settings.set(app::AiFeatures::kOffSetting, false);
+    EXPECT_TRUE(page.on());
+    EXPECT_FALSE(page.download().value(QStringLiteral("active")).toBool());
+    EXPECT_TRUE(release.requested.empty());
 }
 
 TEST_F(AiSettingsTest, TheCachingSettingReachesEveryRequest)

@@ -189,6 +189,11 @@ private slots:
         app::Application::Options options;
         options.settingsFile = root.filePath(QStringLiteral("settings.toml"));
         options.playbackAudio = false;
+        {
+            ui::SettingsStore seed(options.settingsFile);
+            seed.set(app::AiFeatures::kOffSetting, false);
+            seed.sync();
+        }
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));

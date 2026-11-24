@@ -6,6 +6,7 @@
 #include <climits>
 #include <cmath>
 #include <cstdio>
+#include <utility>
 
 // Built without floating-point contraction so float results match MSVC x64 (SSE, no FMA).
 
@@ -341,6 +342,9 @@ void VectorEditor::normaliseFirst()
 
 void VectorEditor::wheel(int steps)
 {
+    // MUST KILL: the wheel cycles legacy's buttons only, so it leaves Freehand as if from beside Spline
+    if (mode == Freehand)
+        mode = steps > 0 ? Spline + 1 : Spline;
     mode -= steps;
     if (mode < 0)
         mode = modeCount - 1;
@@ -613,11 +617,13 @@ bool VectorEditor::key(const Key &event, const VectorFrame &frame, const Callbac
         return true;
     }
     if (keyCode == keys::Delete) {
+        forgetStroke();
         removePoints(-1, cb, true);
         return true;
     }
     // Shift nudges by a tenth in a drawing only: a clip is written in whole units.
     if (const auto direction = nudgeDirection(event)) {
+        forgetStroke();
         const float increase = (event.shift && drawing) ? 0.1f : 1.f;
         moveSelected(direction->x * increase, direction->y * increase, cb);
         return true;
@@ -661,6 +667,35 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
         }
         if (leaving && m_drawCross)
             m_drawCross = false;
+    }
+
+    if (m_stroking) {
+        if (leftisdown) {
+            const float pixel = frame.coeffW / frame.zoomScale.x;
+            const PointF p{(zx * frame.coeffW) - frame.offsetX, (zy * frame.coeffH) - frame.offsetY};
+            if (std::hypot(p.x - m_stroke.back().x, p.y - m_stroke.back().y) >= pixel)
+                m_stroke.push_back(p);
+            return;
+        }
+        m_stroking = false;
+        m_lastStroke = Stroke{points, std::exchange(m_stroke, {}), frame.coeffW / frame.zoomScale.x, 0};
+        placeStroke();
+        if (m_lastStroke->curves == 0) {
+            m_lastStroke.reset();
+            return;
+        }
+        cb.apply(false);
+        cb.apply(true);
+        return;
+    }
+    if (press)
+        forgetStroke();
+    if (mode == Freehand && click) {
+        m_grabbed = -1;
+        m_drawCross = false;
+        m_stroking = true;
+        m_stroke = {{(zx * frame.coeffW) - frame.offsetX, (zy * frame.coeffH) - frame.offsetY}};
+        return;
     }
 
     if (event.kind == Pointer::Kind::Release) {
@@ -804,6 +839,82 @@ void VectorEditor::pointer(const Pointer &event, const VectorFrame &frame, const
     }
 }
 
+void VectorEditor::placeStroke()
+{
+    Stroke &stroke = *m_lastStroke;
+    points = stroke.before;
+    const auto curves = fitStroke(stroke.samples, freehandTolerance(smoothing) * stroke.viewPixel);
+    stroke.curves = static_cast<int>(curves.size());
+    if (curves.empty())
+        return;
+    points.push_back({curves.front()[0].x, curves.front()[0].y, u'm', true, false});
+    for (const auto &c : curves) {
+        points.push_back({c[1].x, c[1].y, u'b', true, false});
+        points.push_back({c[2].x, c[2].y, u'b', false, false});
+        points.push_back({c[3].x, c[3].y, u'b', false, false});
+    }
+}
+
+bool VectorEditor::refitStroke()
+{
+    if (!m_lastStroke)
+        return false;
+    placeStroke();
+    return true;
+}
+
+ToolOption freehandOption(const VectorEditor &editor, bool enabled)
+{
+    ToolOption out;
+    out.name = "freehand";
+    out.iconRole = "vector-freehand";
+    out.tooltip = u"Freehand";
+    out.checked = enabled && editor.mode == VectorEditor::Freehand;
+    out.enabled = enabled;
+    out.group = u"Points";
+    return out;
+}
+
+std::vector<ToolValue> freehandValues(const VectorEditor &editor)
+{
+    if (editor.mode != VectorEditor::Freehand)
+        return {};
+    ToolValue smoothing;
+    smoothing.name = "smoothing";
+    smoothing.label = u"Smoothing";
+    smoothing.text = legacy::getfloat(static_cast<float>(editor.smoothing), ".0f");
+    smoothing.editable = true;
+    smoothing.group = u"Freehand";
+    std::vector<ToolValue> out{smoothing};
+    if (const auto curves = editor.strokeCurves()) {
+        ToolValue points;
+        points.name = "strokePoints";
+        points.label = u"Points";
+        points.text = legacy::getfloat(static_cast<float>(*curves + 1), ".0f");
+        points.group = u"Freehand";
+        ToolValue count = points;
+        count.name = "strokeCurves";
+        count.label = u"Curves";
+        count.text = legacy::getfloat(static_cast<float>(*curves), ".0f");
+        out.push_back(points);
+        out.push_back(count);
+    }
+    return out;
+}
+
+std::optional<int> smoothingOf(const std::string &name, const std::u16string &text)
+{
+    double value = 0;
+    if (name != "smoothing" || !parseValue(text, value))
+        return std::nullopt;
+    return static_cast<int>(std::lround(std::clamp(value, 0.0, 100.0)));
+}
+
+std::optional<int> VectorEditor::strokeCurves() const
+{
+    return m_lastStroke ? std::optional(m_lastStroke->curves) : std::nullopt;
+}
+
 void VectorEditor::drawRect(Overlay &out, const VectorFrame &frame, int i) const
 {
     pointSquare(out, frame.toView(points[i]), points[i].selected, 3.0f * frame.unit);
@@ -912,6 +1023,9 @@ void VectorEditor::draw(Overlay &out, const VectorFrame &frame) const
             {static_cast<float>(s.left), static_cast<float>(s.top)}};
         dashedLines(out, v5, 4, kRed, 2);
     }
+    for (std::size_t i = 1; m_stroking && i < m_stroke.size(); ++i)
+        line(out, frame.toView({m_stroke[i - 1].x, m_stroke[i - 1].y}), frame.toView({m_stroke[i].x, m_stroke[i].y}),
+             kRed, 1);
     if (points.empty())
         return;
     VectorEditor copy = *this;
@@ -975,6 +1089,324 @@ void VectorEditor::drawPoints(Overlay &out, const VectorFrame &frame) const
         dashedLines(out, {{x, 0}, {x, static_cast<float>(frame.videoRect.bottom)}}, 4, kCross, 1);
         dashedLines(out, {{0, y}, {static_cast<float>(frame.videoRect.right), y}}, 4, kCross, 1);
     }
+}
+
+}
+
+namespace hikari::application::visual {
+
+namespace {
+
+struct Vec {
+    double x = 0, y = 0;
+};
+Vec operator+(Vec a, Vec b) { return {a.x + b.x, a.y + b.y}; }
+Vec operator-(Vec a, Vec b) { return {a.x - b.x, a.y - b.y}; }
+Vec operator*(Vec a, double s) { return {a.x * s, a.y * s}; }
+double dot(Vec a, Vec b) { return a.x * b.x + a.y * b.y; }
+double length(Vec a) { return std::sqrt(dot(a, a)); }
+Vec unit(Vec a)
+{
+    const double l = length(a);
+    return l > 0 ? a * (1 / l) : Vec{};
+}
+
+using Cubic = std::array<Vec, 4>;
+
+Vec bezier(const Cubic &c, double t)
+{
+    const double s = 1 - t;
+    return c[0] * (s * s * s) + c[1] * (3 * s * s * t) + c[2] * (3 * s * t * t) + c[3] * (t * t * t);
+}
+
+double newtonRoot(const Cubic &c, Vec p, double t)
+{
+    const Cubic d1{(c[1] - c[0]) * 3, (c[2] - c[1]) * 3, (c[3] - c[2]) * 3, {}};
+    const Cubic d2{(d1[1] - d1[0]) * 2, (d1[2] - d1[1]) * 2, {}, {}};
+    const double s = 1 - t;
+    const Vec q = bezier(c, t) - p;
+    const Vec q1 = d1[0] * (s * s) + d1[1] * (2 * s * t) + d1[2] * (t * t);
+    const Vec q2 = d2[0] * s + d2[1] * t;
+    const double denominator = dot(q1, q1) + dot(q, q2);
+    return denominator == 0 ? t : t - dot(q, q1) / denominator;
+}
+
+class Fitter {
+public:
+    Fitter(const std::vector<Vec> &samples, double tolerance)
+        : m_p(samples), m_squaredTolerance(tolerance * tolerance)
+    {
+    }
+
+    std::vector<Cubic> run()
+    {
+        const std::size_t last = m_p.size() - 1;
+        fit(0, last, unit(m_p[1] - m_p[0]), unit(m_p[last - 1] - m_p[last]));
+        return std::move(m_out);
+    }
+
+private:
+    Cubic straight(std::size_t first, std::size_t last, Vec t1, Vec t2) const
+    {
+        const double third = length(m_p[last] - m_p[first]) / 3;
+        return {m_p[first], m_p[first] + t1 * third, m_p[last] + t2 * third, m_p[last]};
+    }
+
+    Cubic generate(std::size_t first, std::size_t last, const std::vector<double> &u, Vec t1, Vec t2) const
+    {
+        double c00 = 0, c01 = 0, c11 = 0, x0 = 0, x1 = 0;
+        const Vec a = m_p[first], b = m_p[last];
+        for (std::size_t i = first; i <= last; ++i) {
+            const double t = u[i - first], s = 1 - t;
+            const Vec a1 = t1 * (3 * s * s * t);
+            const Vec a2 = t2 * (3 * s * t * t);
+            c00 += dot(a1, a1);
+            c01 += dot(a1, a2);
+            c11 += dot(a2, a2);
+            const Vec rest = m_p[i] - (a * (s * s * s + 3 * s * s * t) + b * (3 * s * t * t + t * t * t));
+            x0 += dot(a1, rest);
+            x1 += dot(a2, rest);
+        }
+        const double det = c00 * c11 - c01 * c01;
+        const double alpha1 = det == 0 ? 0 : (x0 * c11 - x1 * c01) / det;
+        const double alpha2 = det == 0 ? 0 : (c00 * x1 - c01 * x0) / det;
+        const double epsilon = 1e-6 * length(b - a);
+        if (alpha1 < epsilon || alpha2 < epsilon)
+            return straight(first, last, t1, t2);
+        return {a, a + t1 * alpha1, b + t2 * alpha2, b};
+    }
+
+    std::vector<double> chordLengths(std::size_t first, std::size_t last) const
+    {
+        std::vector<double> u{0};
+        for (std::size_t i = first + 1; i <= last; ++i)
+            u.push_back(u.back() + length(m_p[i] - m_p[i - 1]));
+        for (double &v : u)
+            v = u.back() > 0 ? v / u.back() : 0;
+        return u;
+    }
+
+    double maxError(std::size_t first, std::size_t last, const Cubic &c, const std::vector<double> &u,
+                    std::size_t &split) const
+    {
+        double worst = 0;
+        split = (first + last) / 2;
+        for (std::size_t i = first + 1; i < last; ++i) {
+            const Vec d = bezier(c, u[i - first]) - m_p[i];
+            if (dot(d, d) >= worst) {
+                worst = dot(d, d);
+                split = i;
+            }
+        }
+        return worst;
+    }
+
+    void fit(std::size_t first, std::size_t last, Vec t1, Vec t2)
+    {
+        if (last - first == 1) {
+            m_out.push_back(straight(first, last, t1, t2));
+            return;
+        }
+        std::vector<double> u = chordLengths(first, last);
+        Cubic c = generate(first, last, u, t1, t2);
+        std::size_t split = 0;
+        double error = maxError(first, last, c, u, split);
+        if (error <= m_squaredTolerance) {
+            m_out.push_back(c);
+            return;
+        }
+        if (error <= m_squaredTolerance * 16) {
+            for (int iteration = 0; iteration < 4; ++iteration) {
+                for (std::size_t i = first; i <= last; ++i)
+                    u[i - first] = newtonRoot(c, m_p[i], u[i - first]);
+                c = generate(first, last, u, t1, t2);
+                error = maxError(first, last, c, u, split);
+                if (error <= m_squaredTolerance) {
+                    m_out.push_back(c);
+                    return;
+                }
+            }
+        }
+        Vec centre = unit(m_p[split - 1] - m_p[split + 1]);
+        if (length(centre) == 0)
+            centre = unit(Vec{-(m_p[split + 1] - m_p[split]).y, (m_p[split + 1] - m_p[split]).x});
+        fit(first, split, t1, centre);
+        fit(split, last, centre * -1, t2);
+    }
+
+    const std::vector<Vec> &m_p;
+    double m_squaredTolerance;
+    std::vector<Cubic> m_out;
+};
+
+double distanceToLine(Vec p, Vec a, Vec b)
+{
+    const Vec ab = b - a;
+    const double l = dot(ab, ab);
+    const double t = l > 0 ? std::clamp(dot(p - a, ab) / l, 0.0, 1.0) : 0;
+    return length(p - (a + ab * t));
+}
+
+Vec vec(const VectorPoint &p) { return {p.x, p.y}; }
+
+Cubic cubicAt(const std::vector<VectorPoint> &points, int i)
+{
+    return {vec(points[i - 1]), vec(points[i]), vec(points[i + 1]), vec(points[i + 2])};
+}
+
+constexpr int kCurveSamples = 64;
+
+double nearestT(const Cubic &c, Vec p)
+{
+    double best = 0, bestDistance = INFINITY;
+    for (int k = 0; k <= kCurveSamples; ++k) {
+        const double t = static_cast<double>(k) / kCurveSamples;
+        const Vec d = bezier(c, t) - p;
+        if (dot(d, d) < bestDistance) {
+            bestDistance = dot(d, d);
+            best = t;
+        }
+    }
+    return best;
+}
+
+}
+
+std::vector<Segment> VectorEditor::segments() const
+{
+    std::vector<Segment> out;
+    const int size = static_cast<int>(points.size());
+    int run = 0;
+    for (int i = 1; i < size; ++i) {
+        if (points[i].type != u'b' || points[i - 1].type != u'b')
+            run = i;
+        if (points[i - 1].type == u's')
+            continue;
+        if (points[i].type == u'l')
+            out.push_back({i, false});
+        else if (points[i].type == u'b' && (i - run) % 3 == 0 && i + 2 < size && points[i + 1].type == u'b' &&
+                 points[i + 2].type == u'b')
+            out.push_back({i, true});
+    }
+    return out;
+}
+
+PointF VectorEditor::toPoints(PointF device, const VectorFrame &frame) const
+{
+    const float zx = (device.x / frame.zoomScale.x) + frame.zoomMove.x;
+    const float zy = (device.y / frame.zoomScale.y) + frame.zoomMove.y;
+    return {(zx * frame.coeffW) - frame.offsetX, (zy * frame.coeffH) - frame.offsetY};
+}
+
+std::optional<Segment> VectorEditor::segmentAt(PointF pos, const VectorFrame &frame) const
+{
+    const PointF zoomedOut{(pos.x / frame.zoomScale.x) + frame.zoomMove.x, (pos.y / frame.zoomScale.y) + frame.zoomMove.y};
+    if (checkPos(zoomedOut, frame) != -1)
+        return std::nullopt;
+    const PointF at = toPoints(pos, frame);
+    const Vec p{at.x, at.y};
+    const double reach = static_cast<double>(frame.pointArea()) * frame.coeffW;
+    std::optional<Segment> best;
+    double bestDistance = reach;
+    for (const Segment &s : segments()) {
+        double distance = 0;
+        if (s.curve) {
+            const Cubic c = cubicAt(points, s.index);
+            distance = length(bezier(c, nearestT(c, p)) - p);
+        } else {
+            distance = distanceToLine(p, vec(points[s.index - 1]), vec(points[s.index]));
+        }
+        if (distance <= bestDistance) {
+            bestDistance = distance;
+            best = s;
+        }
+    }
+    return best;
+}
+
+bool VectorEditor::editSegment(Segment segment, SegmentEdit edit, PointF pos, const VectorFrame &frame)
+{
+    if (const auto all = segments(); std::ranges::find(all, segment) == all.end())
+        return false;
+    forgetStroke();
+    const int i = segment.index;
+    const auto at = [&](Vec v, char16_t type, bool start) {
+        return VectorPoint{static_cast<float>(v.x), static_cast<float>(v.y), type, start, false};
+    };
+    const auto it = [&](int k) { return points.begin() + k; };
+    switch (edit) {
+    case SegmentEdit::MakeCurve: {
+        if (segment.curve)
+            return false;
+        const Vec a = vec(points[i - 1]), b = vec(points[i]);
+        points[i] = at(b, u'b', false);
+        points.insert(it(i), {at(a + (b - a) * (1.0 / 3), u'b', true), at(a + (b - a) * (2.0 / 3), u'b', false)});
+        if (i + 3 < static_cast<int>(points.size()) && points[i + 3].type == u'l')
+            points[i + 3].start = true;
+        return true;
+    }
+    case SegmentEdit::MakeStraight:
+        if (!segment.curve)
+            return false;
+        points.erase(it(i), it(i + 2));
+        points[i].type = u'l';
+        points[i].start = true;
+        return true;
+    case SegmentEdit::InsertPoint: {
+        const PointF click = toPoints(pos, frame);
+        if (!segment.curve) {
+            points.insert(it(i), at({click.x, click.y}, u'l', true));
+            return true;
+        }
+        const Cubic c = cubicAt(points, i);
+        const double t = std::clamp(nearestT(c, {click.x, click.y}), 1.0 / kCurveSamples, 1 - 1.0 / kCurveSamples);
+        const auto mix = [t](Vec u, Vec v) { return u + (v - u) * t; };
+        const Vec q0 = mix(c[0], c[1]), q1 = mix(c[1], c[2]), q2 = mix(c[2], c[3]);
+        const Vec r0 = mix(q0, q1), r1 = mix(q1, q2);
+        const Vec split = mix(r0, r1);
+        points[i] = at(q0, u'b', true);
+        points[i + 1] = at(r0, u'b', false);
+        points[i + 2] = at(split, u'b', false);
+        points.insert(it(i + 3), {at(r1, u'b', true), at(q2, u'b', false), at(c[3], u'b', false)});
+        return true;
+    }
+    case SegmentEdit::Delete: {
+        int m = i;
+        if (segment.curve)
+            points.erase(it(i), it(i + 2));
+        points[m].type = u'm';
+        points[m].start = true;
+        if (points[m - 1].type == u'm') {
+            points.erase(it(m - 1));
+            --m;
+        }
+        if (m + 1 == static_cast<int>(points.size()) || points[m + 1].type == u'm')
+            points.erase(it(m));
+        return true;
+    }
+    }
+    return false;
+}
+
+double freehandTolerance(int smoothing)
+{
+    const double s = std::clamp(smoothing, 0, 100);
+    return 0.5 + s * s / 400;
+}
+
+std::vector<std::array<PointF, 4>> fitStroke(const std::vector<PointF> &stroke, double tolerance)
+{
+    std::vector<Vec> samples;
+    for (const PointF &p : stroke)
+        if (samples.empty() || samples.back().x != p.x || samples.back().y != p.y)
+            samples.push_back({p.x, p.y});
+    if (samples.size() < 2)
+        return {};
+    std::vector<std::array<PointF, 4>> out;
+    const auto toPoint = [](Vec v) { return PointF{static_cast<float>(v.x), static_cast<float>(v.y)}; };
+    for (const Cubic &c : Fitter(samples, std::max(tolerance, 1e-3)).run())
+        out.push_back({toPoint(c[0]), toPoint(c[1]), toPoint(c[2]), toPoint(c[3])});
+    return out;
 }
 
 }

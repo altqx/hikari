@@ -123,6 +123,28 @@ class ExportDialogTest : public QObject {
         QVERIFY(QMetaObject::invokeMethod(part("exportRun"), "click"));
     }
 
+    QObject *steps() const { return part<QObject>("beforeExport"); }
+    // Turns on one step of a new list with `settings` over its defaults.
+    void addStep(const QString &id, const QVariantMap &settings = {})
+    {
+        QVERIFY(QMetaObject::invokeMethod(steps(), "addSteps"));
+        const QVariantList list = steps()->property("steps").toList();
+        int index = -1;
+        for (int i = 0; i < list.size(); ++i)
+            if (list[i].toMap().value(QStringLiteral("id")).toString() == id)
+                index = i;
+        QVERIFY(index >= 0);
+        QVERIFY(QMetaObject::invokeMethod(steps(), "setOn", Q_ARG(QVariant, index), Q_ARG(QVariant, true)));
+        for (auto it = settings.begin(); it != settings.end(); ++it)
+            QVERIFY(QMetaObject::invokeMethod(steps(), "setSetting", Q_ARG(QVariant, index), Q_ARG(QVariant, it.key()),
+                                              Q_ARG(QVariant, it.value())));
+    }
+    QVariantMap transformTo(double output)
+    {
+        return {{QStringLiteral("input"), 25}, {QStringLiteral("output"), QStringLiteral("constant")},
+                {QStringLiteral("outputFps"), output}};
+    }
+
 private slots:
     void init()
     {
@@ -276,6 +298,49 @@ private slots:
         openDialog();
         QCOMPARE(dialog()->property("format").toString(), QStringLiteral("sbv"));
         QCOMPARE(part("exportDestination")->property("text").toString(), dir.filePath(QStringLiteral("new.sbv")));
+    }
+
+    void aTextExportTakesAnEncodingAndAsksAboutWhatItCannotHold()
+    {
+        QVERIFY(!open("encoded.ass",
+                      "[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                      "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                      "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,日本語\n"
+                      "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,café ☃\n")
+                     .isEmpty());
+        openDialog();
+        const QString out = dir.filePath(QStringLiteral("encoded.txt"));
+        choose("vtt", out);
+        QVERIFY(!part("exportEncoding")->isVisible());
+        choose("text", out);
+        QTRY_VERIFY(part("exportEncoding")->isVisible());
+        const QVariantList encodings = part("exportEncoding")->property("model").toList();
+        QCOMPARE(encodings.size(), 17);
+        QCOMPARE(encodings.first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("UTF-8"));
+        QCOMPARE(part("exportEncoding")->property("currentIndex").toInt(), 0);
+        int shiftJis = -1;
+        for (int i = 0; i < encodings.size(); ++i)
+            if (encodings[i].toMap().value(QStringLiteral("name")).toString() == QLatin1String("Shift_JIS"))
+                shiftJis = i;
+        QVERIFY(shiftJis > 0);
+        part("exportEncoding")->setProperty("currentIndex", shiftJis);
+        run();
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = dialog()->findChild<QObject *>(QStringLiteral("exportReplaceQuestion"))) &&
+                    question->property("visible").toBool());
+        QVERIFY(question->property("detail").toString().endsWith(QStringLiteral(": é ☃")));
+        QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QVERIFY(!QFile::exists(out));
+        run();
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("write"))));
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        QVERIFY(contents(out).startsWith(QByteArray("\x93\xfa\x96\x7b\x8c\xea\n" "caf")));
+        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QTRY_VERIFY(!dialog()->property("visible").toBool());
+
+        openDialog();
+        QCOMPARE(part("exportEncoding")->property("currentIndex").toInt(), shiftJis);
     }
 
     void aFrameRateIsNeededForMicroDvd()
@@ -478,6 +543,85 @@ private slots:
         run();
         QTRY_VERIFY(part("exportProblem")->isVisible());
         QVERIFY(!dialog()->property("reported").toBool());
+    }
+
+    void beforeExportStartsWithNoStepsAndRunsTheOnesTurnedOn()
+    {
+        QVERIFY(!open("episode.ass").isEmpty());
+        openDialog();
+        QVERIFY(steps()->property("visible").toBool());
+        QVERIFY(part("beforeExportNone")->isVisible());
+        QCOMPARE(part("beforeExportRecipe")->property("text").toString(), QStringLiteral("No steps"));
+        addStep(QStringLiteral("transform-frame-rate"), transformTo(50));
+        QTRY_VERIFY(part("beforeExportSteps")->isVisible());
+        QCOMPARE(part("beforeExportShowSteps")->property("text").toString(), QStringLiteral("Hide steps"));
+        const QString out = dir.filePath(QStringLiteral("transformed.srt"));
+        choose("srt", out);
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        QVERIFY2(contents(out).contains("00:00:02,000 --> 00:00:04,000"), contents(out).constData());
+        QCOMPARE(part("exportRanBefore")->property("text").toString(), QStringLiteral("Ran before export: Transform frame rate."));
+        QCOMPARE(contents(dir.filePath(QStringLiteral("episode.ass"))), QByteArray(kSubtitles));
+    }
+
+    void aFailingStepWritesNothingAndCanBeTurnedOff()
+    {
+        QVERIFY(!open("episode.ass").isEmpty());
+        openDialog();
+        addStep(QStringLiteral("transform-frame-rate"), transformTo(0));
+        const QString out = dir.filePath(QStringLiteral("failing.srt"));
+        choose("srt", out);
+        run();
+        QTRY_VERIFY(part("beforeExportFailure")->isVisible());
+        QVERIFY(!dialog()->property("reported").toBool());
+        QVERIFY(!QFile::exists(out));
+        QCOMPARE(part("beforeExportFailureTitle")->property("text").toString(),
+                 QStringLiteral("Not saved. “Transform frame rate” failed."));
+        QVERIFY(QMetaObject::invokeMethod(part("beforeExportTurnOff"), "click"));
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        QVERIFY2(contents(out).contains("00:00:01,000 --> 00:00:02,000"), contents(out).constData());
+        QVERIFY(part("exportRanBefore")->property("text").toString().isEmpty());
+    }
+
+    void aSavedRecipeComesBackWithItsStepsAndOrder()
+    {
+        QVERIFY(!open("episode.ass").isEmpty());
+        openDialog();
+        addStep(QStringLiteral("fix-styles"));
+        QVERIFY(QMetaObject::invokeMethod(steps(), "move", Q_ARG(QVariant, 3), Q_ARG(QVariant, 0)));
+        const QVariantList made = steps()->property("steps").toList();
+        QCOMPARE(made.value(0).toMap().value(QStringLiteral("id")).toString(), QStringLiteral("fix-styles"));
+        QVERIFY(QMetaObject::invokeMethod(steps(), "saveRecipe", Q_ARG(QVariant, QStringLiteral(" Release ")),
+                                          Q_ARG(QVariant, QStringLiteral("mine"))));
+        QCOMPARE(steps()->property("recipe").toString(), QStringLiteral("Release"));
+        QVERIFY(!steps()->property("changed").toBool());
+        QVERIFY(QMetaObject::invokeMethod(steps(), "setOn", Q_ARG(QVariant, 0), Q_ARG(QVariant, false)));
+        QVERIFY(steps()->property("changed").toBool());
+        QTRY_VERIFY(part("beforeExportChanged")->isVisible());
+
+        QVERIFY(QMetaObject::invokeMethod(steps(), "chooseNone"));
+        QVERIFY(QMetaObject::invokeMethod(steps(), "chooseRecipe", Q_ARG(QVariant, QStringLiteral("Release")),
+                                          Q_ARG(QVariant, QStringLiteral("mine"))));
+        QCOMPARE(steps()->property("steps").toList(), made);
+        QCOMPARE(part("beforeExportRecipe")->property("text").toString(), QStringLiteral("Release"));
+        QVERIFY(application->settingsStore()->list("export.recipes").value(0).contains(QStringLiteral("\"fix-styles\"")));
+    }
+
+    void aLuaStepWhoseScriptIsntLoadedStaysOffAndIsCounted()
+    {
+        QVERIFY(!open("episode.ass").isEmpty());
+        QVERIFY(application->saveExportRecipe(
+            QStringLiteral("Signs"), QStringLiteral("mine"),
+            QVariantList{QVariantMap{{QStringLiteral("id"), QStringLiteral("lua:sign-fx.lua/Sign blur pass")},
+                                     {QStringLiteral("on"), true}}}));
+        openDialog();
+        QVERIFY(QMetaObject::invokeMethod(steps(), "chooseRecipe", Q_ARG(QVariant, QStringLiteral("Signs")),
+                                          Q_ARG(QVariant, QStringLiteral("mine"))));
+        QVERIFY(!steps()->property("steps").toList().value(0).toMap().value(QStringLiteral("on")).toBool());
+        QTRY_VERIFY(part("beforeExportMissing")->isVisible());
+        QCOMPARE(part("beforeExportMissing")->property("text").toString(),
+                 QStringLiteral("1 step won’t run: its script isn’t loaded."));
+        QVERIFY(part("exportRun")->property("enabled").toBool());
     }
 };
 

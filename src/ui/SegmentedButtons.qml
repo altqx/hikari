@@ -12,7 +12,8 @@ Rectangle {
     signal activated(int index)
 
     implicitWidth: row.implicitWidth + 2
-    implicitHeight: Math.max(30, row.implicitHeight + 2)
+    implicitHeight: Math.max(Theme.controlHeight, row.implicitHeight + 2)
+    radius: Theme.radius
     color: "transparent"
     border.width: 1
     border.color: enabled ? Theme.control : Theme.line
@@ -41,7 +42,7 @@ Rectangle {
                 readonly property string iconRole: modelData.iconRole || ""
                 implicitWidth: Math.ceil(Math.max(label.implicitWidth, boldText.implicitWidth)) + 20
                                + (iconRole.length > 0 ? glyph.size + content.spacing : 0)
-                implicitHeight: label.implicitHeight + 10
+                implicitHeight: label.implicitHeight + 6
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: text
                 Accessible.checkable: true
@@ -54,6 +55,13 @@ Rectangle {
                         group.activated(index)
                 }
                 background: Rectangle {
+                    readonly property real corner: Math.max(0, group.radius - 1)
+                    readonly property bool leading: choice.index === 0
+                    readonly property bool trailing: choice.index === group.choices.length - 1
+                    topLeftRadius: (choice.mirrored ? trailing : leading) ? corner : 0
+                    bottomLeftRadius: topLeftRadius
+                    topRightRadius: (choice.mirrored ? leading : trailing) ? corner : 0
+                    bottomRightRadius: topRightRadius
                     color: choice.checked ? Theme.select : choice.down ? Theme.raised
                          : choice.hovered && choice.enabled ? Color.transparent(Theme.raised, 0.6)
                          : "transparent"
@@ -78,7 +86,7 @@ Rectangle {
                     visible: false
                     textFormat: Text.PlainText
                     text: choice.text
-                    font.bold: true
+                    font.weight: Font.DemiBold
                 }
                 contentItem: Item {
                     RowLayout {
@@ -96,7 +104,7 @@ Rectangle {
                             id: label
                             textFormat: Text.PlainText
                             text: choice.text
-                            font.bold: choice.checked
+                            font.weight: choice.checked ? Font.DemiBold : Font.Normal
                             color: choice.enabled ? Theme.text : Theme.disabled
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
@@ -105,6 +113,7 @@ Rectangle {
                             elide: Text.ElideRight
                             Layout.preferredWidth: Math.ceil(Math.max(implicitWidth, boldText.implicitWidth))
                             Layout.minimumWidth: 0
+                            Layout.fillWidth: true
                         }
                     }
                 }

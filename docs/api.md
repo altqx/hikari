@@ -65,6 +65,10 @@ Schemas use a subset of JSON Schema 2020-12: `type`, `properties`, `required`, `
 | `files.write` | write | Replaces a file granted for writing, or makes one in a writable folder. |
 | `programs.run` | write | Runs one of the plugin's declared programs to the end and gives its output. Plugins with the `programs` permission only. |
 | `programs.start`, `programs.send`, `programs.stop` | write | Starts one of the plugin's declared programs and keeps it running, writes to its stdin, or ends it. |
+| `problems.list` | read | The problems on a Document: the open QC notes and plugins' problems, in Document order. |
+| `problems.set` | write | Replaces the caller's problems under one set on a Document. Plugins only. |
+| `problems.clear` | write | Removes the caller's problems. Plugins only. |
+| `problems.fix` | write | Applies one of a problem's quick fixes as one undo step. |
 
 Commands and panels are those of the shell window used last (ADR 0025), never a closed window's.
 
@@ -111,6 +115,7 @@ A caller subscribes to events by name and hears them only while subscribed.
 | `panel.changed` | A panel opened, closed or floated. |
 | `program.output` | A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged. |
 | `program.exited` | A started program ended. Only its plugin hears it. |
+| `problems.changed` | The problems on a Document changed: a plugin set or cleared them, an edit dropped some, or the open QC notes changed. It names the Document and the sources. |
 | `command.ran` | A command was triggered, from the API, a menu, a toolbar or a key. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, even when it is then cancelled. Use `document.saved` to know a file was written. |
 
 The application notices changes after each refresh of its views and each selection change, so a burst of edits gives one event per refresh, not one per edit.
@@ -143,10 +148,6 @@ An error is `{code, message, data}`. The message is English text for developers 
 | Operation | Mark | Callers | What it does | Card |
 | --- | --- | --- | --- | --- |
 | `status_items.set` | write | plugins | Changes one of the caller's status bar items. | #1224 |
-| `problems.list` | read | all | The problems on a Document: the open QC notes, plugins' problems and language servers' findings. | #1227 |
-| `problems.set` | write | plugins | Replaces the caller's problems from one source on a Document. | #1227 |
-| `problems.clear` | write | plugins | Removes the caller's problems. | #1227 |
-| `problems.fix` | write | all | Applies one quick fix as one undo step. | #1227 |
 | `formats.list` | read | all | The subtitle formats HikariSub can open and export, built-in and from plugins. | #1229 |
 | `plugins.run` | write | all | Gains `args` and gives the command's `result`. | #1228 |
 | `presence.set_text` | write | plugins | Sets or clears the caller's text for `{plugin}` in the user's Discord status. | #1245 |
@@ -155,7 +156,6 @@ An error is `{code, message, data}`. The message is English text for developers 
 
 | Event | When | Card |
 | --- | --- | --- |
-| `problems.changed` | The problems on a Document changed; it names the Document and the sources that changed. | #1227 |
 | `plugin_settings.changed` | One of the plugin's own settings changed, from the plugin manager, Settings or a Project. Only its plugin hears it. | #1230 |
 
 ### New `$defs`
@@ -456,7 +456,7 @@ Result: `{"type": "object", "additionalProperties": false}`.
 {"type": "object", "properties": {
   "cancelled": {"type": "boolean"},
   "items": {"type": "array", "items": {"type": "string"}, "description": "The picked ids in list order; absent when cancelled."},
-  "button": {"type": "string", "description": "A title button the user pressed instead of picking; cancelled is then true."},
+  "button": {"type": "string", "description": "A title or item button the user pressed instead of picking; cancelled is then true."},
   "back": {"type": "boolean", "description": "true when the user pressed Back; cancelled is then true."}},
  "required": ["cancelled"], "additionalProperties": false}
 ```
@@ -602,7 +602,7 @@ The version is a running number. Every release that grows the API bumps it, and 
 
 ## Reference
 
-`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. It also writes `api.md`, the same reference as Markdown for authors, which [docs/api-reference.md](api-reference.md) holds; `ApiReferenceMarkdown.TheCheckedInReferenceIsCurrent` in `hikari_api_tests` fails when that file differs, and rerunning it with `HIKARI_API_WRITE_MARKDOWN_REFERENCE=docs/api-reference.md` rewrites it. The release attaches both in `hikarisub-docs-<version>.zip`, and the site builds its API reference from them. The AI sidecar keeps a copy as `src/ai-sidecar/src/tools/api.json`, from which its tool schemas and types are built; see [AI tools](ai-tools.md).
+`hikarisub --export-docs <dir>` writes `api.json`: `{schema, version, $defs, operations, events, nodes}`, each operation with its name, mark, summary, `since`, `deprecatedIn` when set, and its parameter and result schemas. `meta.json` gives the API version as `api`. It also writes `api.md`, the same reference as Markdown for authors, which [docs/api-reference.md](api-reference.md) holds; `ApiReferenceMarkdown.TheCheckedInReferenceIsCurrent` in `hikari_api_tests` fails when that file differs, and rerunning it with `HIKARI_API_WRITE_MARKDOWN_REFERENCE=docs/api-reference.md` rewrites it. It also writes the [type hints](plugins.md#developer-tools) `hikari.lua` and `hikari.d.ts`, which [docs/types/](types/) holds; `ApiTypeHints.TheCheckedIn*` fail when those differ, and `HIKARI_API_WRITE_LUA_TYPES` and `HIKARI_API_WRITE_TYPESCRIPT_TYPES` rewrite them. The release attaches both in `hikarisub-docs-<version>.zip`, and the site builds its API reference from them. The AI sidecar keeps a copy as `src/ai-sidecar/src/tools/api.json`, from which its tool schemas and types are built; see [AI tools](ai-tools.md).
 
 ## Tests
 

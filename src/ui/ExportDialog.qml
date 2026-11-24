@@ -84,8 +84,10 @@ DialogWindow {
         ttmlNetflix.checked = o.ttmlNetflix
         ttmlFrames.checked = o.ttmlFrames
         language.text = o.language
+        encodingChoice.currentIndex = Math.max(0, (setup.encodings || []).findIndex(e => e.name === o.encoding))
         fps.text = Number(o.fps).toFixed(3).replace(/\.?0+$/, "")
         destination.text = suggestedPath()
+        beforeExport.load()
         open()
     }
     function extension(id) {
@@ -105,13 +107,19 @@ DialogWindow {
     function fpsNumber() {
         return Number(fps.text.replace(",", "."))
     }
-    function choice(replace) {
+    function encodingName() {
+        const encodings = setup.encodings || []
+        return encodings.length > 0 ? encodings[Math.max(0, encodingChoice.currentIndex)].name : "UTF-8"
+    }
+    function choice(replace, writeUnencodable) {
         return {
+            encoding: encodingName(), writeUnencodable: writeUnencodable === true,
             lines: lineChoices[linesChoice.currentIndex], mergeOverlaps: merge.checked, srtFontColour: srtColour.checked,
             srtAlignmentTags: srtAlignment.checked, vttPositions: vttPositions.checked, vttStyles: vttStyles.checked,
             vttKaraoke: vttKaraoke.checked, textTimes: textTimes.checked, textActors: textActors.checked,
             ttmlNetflix: ttmlNetflix.checked, ttmlFrames: ttmlFrames.checked, language: language.text.trim(),
-            fps: fpsNumber(), replace: replace, srv3Styles: srv3Rows
+            fps: fpsNumber(), replace: replace, srv3Styles: srv3Rows,
+            steps: beforeExport.visible ? beforeExport.choice() : []
         }
     }
     function srv3Set(index, key, value) {
@@ -133,8 +141,10 @@ DialogWindow {
         srv3Colour.key = key
         srv3Popover.openFor(swatch, srv3Colour, () => srv3Colour.begin(), { title: name, alpha: false, clear: true, focus: swatch })
     }
-    function run(replace) {
-        const result = app.exportTo(app.fileUrl(destination.text.trim()), format, choice(replace))
+    function run(replace, writeUnencodable) {
+        beforeExport.progress = ""
+        beforeExport.outcome = []
+        const result = app.exportTo(app.fileUrl(destination.text.trim()), format, choice(replace, writeUnencodable))
         if (result.pending) {
             problem = ""
             exporting = true
@@ -154,6 +164,26 @@ DialogWindow {
                     { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }
                 ]
             }, id => { if (id === "replace") dialog.run(true) })
+            return
+        }
+        if (result.unencodable) {
+            const characters = Array.from(result.unencodable)
+            replaceQuestion.ask({
+                title: qsTr("Export as"),
+                text: qsTr("%1 can’t hold every character of this file").arg(result.encoding),
+                detail: qsTr("These are written as a substitute character: %1")
+                            .arg(characters.slice(0, 40).join(" ") + (characters.length > 40 ? " …" : "")),
+                severity: "warning",
+                choices: [
+                    { id: "write", text: qsTr("Write anyway"), role: "destructive" },
+                    { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }
+                ]
+            }, id => { if (id === "write") dialog.run(true, true) })
+            return
+        }
+        if (result.stepsFailed) {
+            problem = ""
+            beforeExport.outcome = result.steps
             return
         }
         if (!result.ok) {
@@ -198,6 +228,17 @@ DialogWindow {
             Layout.preferredWidth: 214
             Accessible.name: qsTr("Format")
             onActivated: destination.text = dialog.withExtension(destination.text)
+        }
+
+        RowLabel { text: qsTr("Encoding"); visible: encodingChoice.visible }
+        ComboBox {
+            id: encodingChoice
+            objectName: "exportEncoding"
+            visible: (dialog.setup.encodingFormats || []).indexOf(dialog.format) >= 0
+            model: dialog.setup.encodings || []
+            textRole: "label"
+            Layout.preferredWidth: 214
+            Accessible.name: qsTr("Encoding")
         }
 
         RowLabel { text: qsTr("Lines") }
@@ -580,6 +621,22 @@ DialogWindow {
             }
         }
 
+        RowLabel {
+            text: qsTr("Before export")
+            visible: beforeExport.visible
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 6
+        }
+        BeforeExportSteps {
+            id: beforeExport
+            app: dialog.app
+            host: dialog
+            colourPicker: dialog.colourPicker
+            videoFps: dialog.setup.videoFps ?? 0
+            exporting: dialog.exporting
+            visible: !dialog.format.startsWith("plugin:")
+            onExportWithout: dialog.run(false)
+        }
         Item { implicitWidth: 1; visible: dialog.problem.length > 0 }
         FieldError {
             objectName: "exportProblem"
@@ -600,6 +657,11 @@ DialogWindow {
             wrapMode: Text.Wrap
             text: dialog.reported ? qsTr("Exported %n line(s) to “%1”.", "", dialog.report.written)
                                         .arg(dialog.app.localPath(dialog.report.file).replace(/^.*[\\/]/, "")) : ""
+        }
+        Hint {
+            objectName: "exportRanBefore"
+            visible: text !== ""
+            text: dialog.reported ? beforeExport.ranText(dialog.report.steps) : ""
         }
         Hint {
             objectName: "exportSkipped"

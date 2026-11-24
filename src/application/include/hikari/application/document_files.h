@@ -6,6 +6,7 @@
 #include "hikari/application/write_coordinator.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/lyrics_import.h"
+#include "hikari/core/style.h"
 
 #include <expected>
 #include <functional>
@@ -37,6 +38,7 @@ enum class OpenError {
     MalformedSrv3,
     UnknownDocument,
     StaleTarget,   // the Document changed or was replaced after staging
+    NotInEncoding, // the file is not text in the encoding it was reopened with
 };
 
 enum class SaveRefusal {
@@ -67,6 +69,8 @@ struct StagedOpen {
     bool imported = false;
     // The file as read, when the Document was built from it rather than parsed (a plugin's format).
     std::optional<std::vector<std::byte>> fileBytes;
+    // Built from the file converted to UTF-8: it starts modified, so its next save writes UTF-8.
+    bool converted = false;
 };
 
 // Gets a save's bytes later: nullopt when there are none, after the user was told why.
@@ -131,6 +135,17 @@ struct SaveStatus {
 
 // A lyrics file's bytes as UTF-8, or nullopt when they are not text.
 using LyricsDecoder = std::function<std::optional<std::vector<std::byte>>(std::span<const std::byte>)>;
+// A file's bytes as UTF-8, or nullopt when they are not text in the encoding it reads.
+using ToUtf8 = std::function<std::optional<std::vector<std::byte>>(std::span<const std::byte>)>;
+// What a published save replaced at `destination`: the file as it was just before the write.
+using SavedOver = std::function<void(const DestinationKey &destination, std::vector<std::byte> previous)>;
+
+struct NewFileStyles {
+    std::u8string catalog;
+    std::vector<core::StyleValues> styles;
+};
+// nullopt, or no Styles: the built-in Default.
+using NewFileStylesSource = std::function<std::optional<NewFileStyles>()>;
 
 class DocumentFiles {
 public:
@@ -138,14 +153,19 @@ public:
 
     // Without one, lyrics files must be UTF-8.
     void setLyricsDecoder(LyricsDecoder decoder) { m_lyricsDecoder = std::move(decoder); }
+    // Told once per published save that replaced a file with different bytes.
+    void setSavedOver(SavedOver savedOver) { m_savedOver = std::move(savedOver); }
+    void setNewFileStyles(NewFileStylesSource source) { m_newFileStyles = std::move(source); }
 
     std::expected<StagedOpen, StageFailure> stageOpen(const DestinationKey &destination);
-    std::expected<StagedOpen, StageFailure> stageReload(DocumentId document);
+    // With `toUtf8`, the file is read through it and the replacement is converted.
+    std::expected<StagedOpen, StageFailure> stageReload(DocumentId document, const ToUtf8 &toUtf8 = {});
     // Publishes a staged open once: a new Document, or the replacement of the
     // one it was staged for when that Document is still exactly as it was.
     std::expected<DocumentId, OpenError> activate(StagedOpen staged);
 
-    // Untitled, with the default Script Info, Style and one empty Line; starts saved.
+    // Untitled, with the default Script Info, the new file Styles and one empty Line; starts saved. The
+    // Line takes "Default", or the first Style when none has that name.
     DocumentId createNew();
     // Untitled, holding `document` with unsaved work.
     DocumentId createUnsaved(core::Document document);
@@ -201,13 +221,16 @@ private:
         bool saveAs = false;
         std::optional<std::u8string> activeLine;
         std::optional<std::u8string> layout;
+        std::optional<std::vector<std::byte>> previous;
     };
-    std::expected<StagedOpen, StageFailure> stage(const DestinationKey &destination);
+    std::expected<StagedOpen, StageFailure> stage(const DestinationKey &destination, const ToUtf8 &toUtf8 = {});
     Entry *find(DocumentId document);
     void writeDeferred(PermitId permit, std::optional<std::vector<std::byte>> bytes);
 
     FileReadPort &m_reader;
     LyricsDecoder m_lyricsDecoder;
+    SavedOver m_savedOver;
+    NewFileStylesSource m_newFileStyles;
     WriteCoordinator &m_writes;
     std::map<DocumentId, Entry> m_documents;
     std::map<PermitId, Pending> m_pending;

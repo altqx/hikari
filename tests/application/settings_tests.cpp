@@ -179,6 +179,7 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
     }
     EXPECT_EQ(findSetting("autosave.maxFiles")->legacyKey, "AUTOSAVE_MAX_FILES");
     EXPECT_EQ(findSetting("autosave.intervalSeconds")->defaultValue, SettingValue(std::int64_t{20}));
+    EXPECT_EQ(findSetting("autosave.savedCopies")->defaultValue, SettingValue(std::int64_t{3}));
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
 }
 
@@ -301,6 +302,7 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
     }
     EXPECT_EQ(settings.text("appearance.titleBar"), "auto");
     EXPECT_EQ(settings.text("appearance.aiSideBar"), "start");
+    EXPECT_EQ(settings.text("appearance.iconTheme"), "hikarisub");
     std::size_t count = 0;
     for (const auto &s : settingDefinitions())
         if (s.id.starts_with("appearance.")) {
@@ -308,7 +310,33 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
             EXPECT_TRUE(s.legacyKey.empty()) << s.id;
             EXPECT_EQ(s.scope, SettingScope::Profile) << s.id;
         }
-    EXPECT_EQ(count, 10u);
+    EXPECT_EQ(count, 11u);
+}
+
+TEST(SettingsRegistry, TheOldHideTagsFlagIsATagsMode)
+{
+    using enum GridTagsMode;
+    EXPECT_EQ(findSetting(kRetiredHideTagsSetting), nullptr);
+    const auto *mode = findLegacySetting("GRID_HIDE_TAGS");
+    ASSERT_NE(mode, nullptr);
+    EXPECT_EQ(mode->id, kGridTagsModeSetting);
+    EXPECT_EQ(mode->type, SettingType::Int);
+    EXPECT_EQ(mode->defaultValue, SettingValue(std::int64_t(Show)));
+    EXPECT_EQ(gridTagsModeOfHideTags(false, std::nullopt), Show);
+    EXPECT_EQ(gridTagsModeOfHideTags(false, std::string()), Show);
+    EXPECT_EQ(gridTagsModeOfHideTags(true, std::nullopt), ReplaceWithSymbol);
+    EXPECT_EQ(gridTagsModeOfHideTags(true, std::string("*")), ReplaceWithSymbol);
+    EXPECT_EQ(gridTagsModeOfHideTags(true, std::string()), Hide);
+}
+
+TEST(SettingsRegistry, GridMarksTheCurrentFrameByDefaultAsAegisubDoes)
+{
+    const auto *mark = findSetting("grid.markCurrentFrame");
+    ASSERT_NE(mark, nullptr);
+    EXPECT_EQ(mark->type, SettingType::Bool);
+    EXPECT_EQ(mark->scope, SettingScope::Profile);
+    EXPECT_TRUE(mark->legacyKey.empty());
+    EXPECT_EQ(mark->defaultValue, SettingValue(true));
 }
 
 TEST(SettingsRegistry, FoldingKeepsAnEntryAlreadyInTheList)
@@ -424,7 +452,7 @@ TEST(ProjectSettings, TheAllowlistCoversTheProjectDataSettings)
                            "grammar.group.properNouns", "scriptProperties.title", "scriptProperties.updateOn",
                            "scriptProperties.askForChange", "translation.autoMoveTagsFromOriginal", "ai.exclude",
                            "translation.sourceLanguage", "translation.targetLanguage", "export.format",
-                           "explorer.exclude"})
+                           "explorer.exclude", "new.styleCatalog"})
         EXPECT_TRUE(findSetting(id)->projectable) << id;
     for (const char *id : {"privacy.usageData", "updater.autoInstall", "ai.off", "ai.webSearch", "plugins.network",
                            "trust.folders", "program.theme", "program.font", "shortcuts.hotkeys",

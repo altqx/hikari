@@ -4,6 +4,7 @@
 #include "hikari/app/automation_shell.h"
 
 #include "hikari/app/ai_features.h"
+#include "hikari/app/model_picker.h"
 #include "hikari/application/ai_review.h"
 #include "hikari/application/document_files.h"
 #include "hikari/backends/ai_agent.h"
@@ -58,6 +59,23 @@ ai::ModelRef acpRef(const AiFeatures::AcpAgent &agent)
 QString modelValue(const ai::ModelRef &ref)
 {
     return qs(ref.providerId) + QLatin1Char('\t') + qs(ref.modelId);
+}
+
+QString failureText(const AgentThreads::AgentModelsFailure &failure)
+{
+    using Kind = AgentThreads::AgentModelsFailure::Kind;
+    switch (failure.kind) {
+    case Kind::Refused:
+        return QCoreApplication::translate("HikariSub.Agent", "This agent can’t start here");
+    case Kind::NoComponent:
+        return QCoreApplication::translate("HikariSub.Agent", "AI component isn’t ready");
+    case Kind::TimedOut:
+        return QCoreApplication::translate("HikariSub.Agent", "It took longer than 30 seconds.");
+    case Kind::Failed:
+        break;
+    }
+    return failure.detail.empty() ? QCoreApplication::translate("HikariSub.Agent", "The agent sent no list.")
+                                  : qs(failure.detail);
 }
 
 const ai::Model *modelIn(const ai::Config &config, const ai::ModelRef &ref)
@@ -485,22 +503,80 @@ void AgentController::loadAgentModels(const QString &agent)
     if (list.asked)
         return;
     list.asked = list.loading = true;
+    list.failure.reset();
     ++m_agentModelsRevision;
     emit agentModelsChanged();
-    m_threads->listAgentModels(key, [this, key](std::optional<std::vector<AgentThreads::AgentModel>> models) {
+    m_threads->listAgentModels(key, [this, key](AgentThreads::AgentModels models) {
         AgentModelList &done = m_agentModels[key];
         done.loading = false;
-        done.asked = models.has_value();
         if (models) {
             done.models.clear();
             for (const AgentThreads::AgentModel &m : *models)
                 done.models.emplace_back(qs(m.id), qs(m.name));
             saveAgentModels();
+        } else {
+            done.failure = failureText(models.error());
         }
         ++m_agentModelsRevision;
         emit agentModelsChanged();
         emit threadChanged();
     });
+}
+
+void AgentController::retryAgentModels(const QString &agent)
+{
+    if (const auto it = m_agentModels.find(agent.toStdString()); it != m_agentModels.end() && !it->second.loading)
+        it->second.asked = false;
+    loadAgentModels(agent);
+}
+
+bool AgentController::agentModelsLoading() const
+{
+    return std::ranges::any_of(m_agentModels, [](const auto &entry) { return entry.second.loading; });
+}
+
+QVariantList AgentController::pickerItems(const QString &current, const QString &filter) const
+{
+    ModelPickerRequest request{.recent = m_wiring.settings.list(kRecentModelsSetting),
+                               .current = current,
+                               .filter = filter,
+                               .settingsRow = true};
+    const auto agentGroup = [&](const QString &key, const QString &name, const ai::ModelRef &ref) {
+        ModelPickerGroup group{.name = name, .key = key};
+        group.agentDefault = ModelPickerModel{modelValue(ref), name, {}, name};
+        if (key == QLatin1String("codex") && m_wiring.codexSignedOut && m_wiring.codexSignedOut()) {
+            group.blockedBy = QCoreApplication::translate("HikariSub.Agent", "Sign in with %1…").arg(QStringLiteral("ChatGPT"));
+            group.blockedRow = QStringLiteral("ai.agent.") + key;
+        }
+        if (const auto it = m_agentModels.find(key.toStdString()); it != m_agentModels.end()) {
+            for (const auto &[id, text] : it->second.models)
+                group.models.push_back({modelValue({ref.providerId, id.toStdString()}), text, id,
+                                        name + QStringLiteral(" · ") + text});
+            group.loading = it->second.loading;
+            group.failure = it->second.failure;
+        }
+        request.groups.push_back(std::move(group));
+    };
+    for (const AgentModel &agent : kAgentModels)
+        if (m_wiring.ai.offersAgent(QString::fromLatin1(agent.program)))
+            agentGroup(QString::fromLatin1(agent.program), agent.text(), agent.ref());
+    for (const AiFeatures::AcpAgent &acp : m_wiring.ai.acpAgents())
+        agentGroup(QStringLiteral("acp:") + acp.id, acp.name, acpRef(acp));
+    if (const ai::Providers *providers = m_wiring.ai.providers())
+        for (const ai::Provider &p : providers->config().providers) {
+            ModelPickerGroup group{.name = qs(p.name), .key = qs(p.id)};
+            if (p.needsKey && m_wiring.lacksKey && m_wiring.lacksKey(group.key)) {
+                group.blockedBy = (p.preset == ai::Preset::OpenRouter
+                                       ? QCoreApplication::translate("HikariSub.Agent", "Sign in with %1…")
+                                       : QCoreApplication::translate("HikariSub.Agent", "Add a key for %1…"))
+                                      .arg(group.name);
+                group.blockedRow = QStringLiteral("ai.provider.") + group.key;
+            }
+            for (const ai::Model &m : p.models)
+                group.models.push_back({modelValue({p.id, m.id}), qs(m.name.empty() ? m.id : m.name), qs(m.id), group.name});
+            request.groups.push_back(std::move(group));
+        }
+    return modelPickerItems(request);
 }
 
 void AgentController::saveAgentModels()
@@ -518,13 +594,24 @@ void AgentController::saveAgentModels()
     m_wiring.settings.set(kAgentModelsSetting, out);
 }
 
-QString AgentController::defaultModelText() const
+std::optional<ai::ModelRef> AgentController::defaultRef() const
 {
     const ai::Providers *providers = m_wiring.ai.providers();
     if (const auto chat = providers ? providers->config().modelFor(ai::Role::Chat) : std::nullopt)
-        return modelTextOf(*chat);
-    const auto agent = foundAgent();
-    return agent ? modelTextOf(*agent) : QString();
+        return chat;
+    return foundAgent();
+}
+
+QString AgentController::defaultModelText() const
+{
+    const auto ref = defaultRef();
+    return ref ? modelTextOf(*ref) : QString();
+}
+
+QString AgentController::defaultModel() const
+{
+    const auto ref = defaultRef();
+    return ref ? modelValue(*ref) : QString();
 }
 
 void AgentController::fallBackToAnAgent(const std::string &thread)
@@ -895,8 +982,13 @@ void AgentController::setMode(const QString &mode)
 void AgentController::setModel(const QString &value)
 {
     const auto parts = value.split(QLatin1Char('\t'));
-    if (m_threads && parts.size() == 2)
-        m_threads->setModel(m_current, {parts[0].toStdString(), parts[1].toStdString()});
+    if (!m_threads || parts.size() != 2)
+        return;
+    m_threads->setModel(m_current, {parts[0].toStdString(), parts[1].toStdString()});
+    QStringList recent = m_wiring.settings.list(kRecentModelsSetting);
+    recent.removeAll(value);
+    recent.prepend(value);
+    m_wiring.settings.set(kRecentModelsSetting, recent.mid(0, kRecentModels));
 }
 
 void AgentController::openScript(const QString &file)

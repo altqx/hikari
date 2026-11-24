@@ -6,6 +6,7 @@
 #include "hikari/application/audio_karaoke.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/dialog_memory.h"
+#include "hikari/application/problems.h"
 #include "hikari/application/row_marks.h"
 #include "hikari/application/furigana.h"
 #include "hikari/application/karaoke_split.h"
@@ -408,6 +409,7 @@ struct Host {
     ProgramHost *programs = nullptr;
     PresenceHost *presence = nullptr;
     SettingsHost *settingsWindow = nullptr;
+    application::Problems *problems = nullptr;
 };
 
 }

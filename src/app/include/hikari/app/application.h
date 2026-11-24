@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hikari/application/problems.h"
 #include "hikari/application/row_marks.h"
 
 #include "hikari/app/ai_karaoke.h"
@@ -20,8 +21,11 @@
 #include "hikari/app/align_to_video_controller.h"
 #include "hikari/app/video_analysis_controller.h"
 #include "hikari/app/lyrics_import_controller.h"
+#include "hikari/app/text_import_controller.h"
 #include "hikari/app/kanji_timer_controller.h"
 #include "hikari/app/qc_notes_controller.h"
+#include "hikari/app/problems_controller.h"
+#include "hikari/app/reading_problems.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
@@ -32,6 +36,8 @@
 #include "hikari/app/plugin_secrets.h"
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
+#include "hikari/app/language_providers.h"
+#include "hikari/app/language_servers.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
@@ -144,6 +150,7 @@ signals:
     // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
+    void markCurrentFrameChanged();
     void askForBadResolutionChanged();
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
@@ -423,6 +430,17 @@ public:
     Q_INVOKABLE QString externalChange();
     // A failed or stale reload keeps the Document as it is.
     Q_INVOKABLE bool reloadTarget();
+    Q_PROPERTY(QString encodingSuggestion READ encodingSuggestion NOTIFY encodingSuggestionChanged)
+    Q_PROPERTY(bool canReopenWithEncoding READ canReopenWithEncoding NOTIFY encodingSuggestionChanged)
+    bool canReopenWithEncoding() const;
+    // The label of the legacy encoding the target's file looks like it is in; empty for UTF-8 and once dismissed.
+    QString encodingSuggestion() const;
+    Q_INVOKABLE void dismissEncodingSuggestion();
+    // {name, label} rows: the suggested encoding first, then the others Reopen with encoding offers.
+    Q_INVOKABLE QVariantList reopenEncodings() const;
+    // Reads the target's file as `name` (an ICU name) into UTF-8; the Document starts modified, so the next save
+    // writes UTF-8. A file that is not text in `name` keeps the Document as it is.
+    Q_INVOKABLE bool reopenWithEncoding(const QString &name);
     // id 0: the editing target. Its next save writes over the change on disk.
     Q_INVOKABLE bool acceptFileOnDisk(qulonglong id);
     // Opens the file on disk as the read-only reference and compares the two; false
@@ -479,6 +497,9 @@ public:
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
+    Q_PROPERTY(bool markCurrentFrame READ markCurrentFrame WRITE setMarkCurrentFrame NOTIFY markCurrentFrameChanged)
+    bool markCurrentFrame() const { return m_settings->boolean("grid.markCurrentFrame"); }
+    void setMarkCurrentFrame(bool on);
     Q_INVOKABLE void openWebsite();
     // kind: "panel" or "window" (guide_links.h); anything else opens the guide's home.
     Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
@@ -509,15 +530,20 @@ public:
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
     Q_INVOKABLE bool deleteText();
+    Q_INVOKABLE bool deleteTextKeepTags();
     // AU20 text commands on the shown selection, one undo step each. command: "balancedBreak",
     // "breakLeft", "breakRight", "removeBreaks", "wrapAtBreaksOnly", "lowercase", "uppercase",
     // "titleCase", "sentenceCase", "fullWidth", "halfWidth", "swapAlternatives".
     Q_INVOKABLE bool textCommand(const QString &command);
     Q_INVOKABLE bool selectionWrapsAtBreaksOnly() const;
-    Q_INVOKABLE void toggleHideTags();
+    // mode: 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
+    Q_INVOKABLE void setGridTagsMode(int mode);
+    Q_INVOKABLE void cycleGridTagsMode();
     // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
+    Q_INVOKABLE bool moveLines(bool up);
+    Q_INVOKABLE bool canMoveLines(bool up) const;
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
     Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
     Q_INVOKABLE bool setFpsFromVideo();
@@ -536,6 +562,10 @@ public:
     // Opens a new unsaved copy with its draft pending; the bundle stays until dismissed.
     Q_INVOKABLE bool recoverBundle(const QString &key, qulonglong generation);
     Q_INVOKABLE void dismissBundle(const QString &key);
+    // Files as they were before a save replaced them; the recoveryBundles shape.
+    Q_INVOKABLE QVariantList earlierSaves();
+    Q_INVOKABLE bool openEarlierSave(const QString &key, qulonglong generation);
+    Q_INVOKABLE void deleteEarlierSaves(const QString &key);
     // All when date is invalid; a running session's work is never touched. Returns the
     // count removed.
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
@@ -573,11 +603,16 @@ public:
     // The current tab's loaded keyframes file; empty when none.
     QString keyframesFile() const;
     Q_INVOKABLE QString activeLineStyle() const;
-    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo} (without a video the
-    // video size is the subtitles'); empty for a Document that is not ASS.
+    // {subsWidth, subsHeight, videoWidth, videoHeight, hasVideo, matrix, videoMatrix, matrices} (without a
+    // video the video size is the subtitles'); matrix is "" unless the subtitles name one that converts, and
+    // videoMatrix "" unless the video's does. Empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
+    // [left, right, top, bottom]: application::fittingEdges.
+    Q_INVOKABLE QVariantList resampleEdges(int subsWidth, int subsHeight, int width, int height, bool crop) const;
+    // `edges` as resampleEdges gives them; `matrix` converts the colours to it ("" keeps the matrix).
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch,
-                              bool adjustRotations = true);
+                              bool adjustRotations = true, const QVariantList &edges = {},
+                              const QString &matrix = {});
     // option: 0 only the resolution, 1 resample, 2 resample with stretch; resampling adjusts 3D rotations.
     Q_INVOKABLE bool matchVideoResolution(int option);
     // {data (the clipboard's Power-Pin data when it fits the selection), frames, firstFrame, relativeFrame,
@@ -743,6 +778,10 @@ public:
     // newList, fromFile (empty without an Export Filters line): [{id, on, settings}], recipes: [{name, tier,
     // hidden}], hasProject}.
     Q_INVOKABLE QVariantMap exportSteps() const;
+    // Asks a Lua step's script for its settings dialog, showing `settings`; exportStepDialogReady answers.
+    Q_INVOKABLE bool askExportStepDialog(const QString &id, const QVariantMap &settings);
+    // The settings a step's dialog values give, by control name.
+    Q_INVOKABLE QVariantMap exportStepSettings(const QString &id, const QVariantList &values) const;
     Q_INVOKABLE QVariantList exportRecipe(const QString &name, const QString &tier) const;
     Q_INVOKABLE bool saveExportRecipe(const QString &name, const QString &tier, const QVariantList &steps);
     Q_INVOKABLE bool removeExportRecipe(const QString &name, const QString &tier);
@@ -824,6 +863,9 @@ public:
     Q_INVOKABLE QVariantList columnChoices(bool paste);
     // shownOnly: only those the filter shows.
     Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
+    // The style step from the active Line: {from, fromNumber, id, number}; no id at either end.
+    // Through the picked Lines when several are picked, else every shown Line, in Grid order.
+    Q_INVOKABLE QVariantMap styleStep(int direction) const;
     // columns: bits OR'ed; the choice is remembered.
     // tagNames: the comma list of the NamedTags bit ("\blur, \3c").
     Q_INVOKABLE bool copyColumns(int columns, const QString &tagNames = {});
@@ -890,6 +932,8 @@ public:
     Q_INVOKABLE QVariantList recentKeyframes();
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
+    // "*.mkv *.mp4 …": every video extension, for open-dialog filters.
+    Q_INVOKABLE QString videoFilePatterns() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
     // Empty: loaded; else the message.
     Q_INVOKABLE QString openTimecodesFile(const QString &path);
@@ -987,7 +1031,10 @@ public:
     AlignToVideoController &alignToVideo() { return *m_alignToVideo; }
     VideoAnalysisController &videoAnalysis() { return *m_videoAnalysis; }
     LyricsImportController &lyricsImport() { return *m_lyricsImport; }
+    TextImportController &textImport() { return *m_textImport; }
     QcNotesController &qcNotes() { return *m_qcNotes; }
+    ProblemsController &problemsList() { return *m_problemsList; }
+    application::Problems &problems() { return m_problems; }
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; }
     MatroskaController &matroska() { return *m_matroska; }
@@ -1038,6 +1085,8 @@ public:
     PluginMarketplace *pluginMarketplace() const { return m_pluginMarketplace.get(); }
     Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
     PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
+    LanguageProviders *languageProviders() const { return m_languageProviders.get(); }
+    LanguageServers *languageServers() const { return m_languageServers.get(); }
     QVariantMap qmlProperties(int shellWindow = 0);
     // A further shell window on the engine of the first (ADR 0025); MW2 gives it the user-facing moves.
     QQuickWindow *openShellWindow(QQmlEngine &engine);
@@ -1216,15 +1265,21 @@ signals:
     void documentWriteFailed(qulonglong document);
     // An exportTo that answered pending: its result, as exportTo gives one.
     void pluginExportFinished(const QVariantMap &result);
+    // A pending exportTo's Before export step has started; step counts from 1.
+    void exportStepStarted(const QString &name, int step, int count);
+    // {controls, columns} as AutomationDialogController gives them, or {problem}.
+    void exportStepDialogReady(const QString &id, const QVariantMap &dialog);
     // A file a plugin read is ready to open in `shellWindow`: reviewOpen's result.
     void pluginOpenReviewed(int shellWindow, const QVariantMap &result);
     // A later start handed files over, about to open.
     void filesForwarded();
     void timecodesChanged();
+    void encodingSuggestionChanged();
     void keyframesChanged();
 
 private:
     struct WindowMedia;
+    application::GridTagsMode gridTagsMode() const;
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     static QString openProblem(const QString &path, const application::StageFailure &failure);
@@ -1293,7 +1348,7 @@ private:
     void refreshVideo();
     void switchTabMedia(WindowMedia &media, std::optional<application::DocumentId> tab);
     bool changeResolution(int fromWidth, int fromHeight, int width, int height, bool resample, bool stretch,
-                          bool adjustRotations);
+                          bool adjustRotations, application::Edges edges = {}, const std::string &matrix = {});
     application::visual::perspective::TextMeasure perspectiveMeasure() const;
     void applySubtitlesAt();
     void writeFinished(const application::WriteResult &result);
@@ -1478,6 +1533,8 @@ private:
     std::unique_ptr<AiKaraoke> m_aiKaraoke;
     std::unique_ptr<AiPlugins> m_aiPlugins;
     application::RowMarks m_rowMarks;
+    application::Problems m_problems;
+    ReadingProblems m_readingProblems{m_problems};
     std::unique_ptr<backends::GitReader> m_git;
     std::unique_ptr<ApiHost> m_apiHost;
     std::unique_ptr<AiFeatures> m_ai;
@@ -1493,6 +1550,8 @@ private:
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginPrograms> m_pluginPrograms;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
+    std::unique_ptr<LanguageProviders> m_languageProviders;
+    std::unique_ptr<LanguageServers> m_languageServers;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
@@ -1508,8 +1567,10 @@ private:
     std::unique_ptr<AlignToVideoController> m_alignToVideo;
     std::unique_ptr<VideoAnalysisController> m_videoAnalysis;
     std::unique_ptr<LyricsImportController> m_lyricsImport;
+    std::unique_ptr<TextImportController> m_textImport;
     QString m_readingDictionary;
     std::unique_ptr<QcNotesController> m_qcNotes;
+    std::unique_ptr<ProblemsController> m_problemsList;
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;
     std::unique_ptr<MatroskaController> m_matroska;
@@ -1564,6 +1625,7 @@ private:
     std::unique_ptr<ui::ExportRecipes> m_exportRecipes;
     std::unique_ptr<LuaExportFilters> m_luaExportFilters;
     std::map<std::uint64_t, std::string> m_exportFiltersToSave;
+    std::map<QString, application::DialogRequest> m_exportStepDialogs;
     int m_selectOptions = 0;
     std::optional<core::ConversionOptions> assConversionOptions() const;
     std::optional<core::ConversionResult> convertedToAss(const application::EditSession &session) const;
@@ -1644,6 +1706,10 @@ private:
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     std::uint64_t m_seenGroupBreaks = 0;
     std::unique_ptr<application::RecoveryStore> m_recovery;
+    std::unique_ptr<application::RecoveryStore> m_earlierSaves;
+    std::uint64_t m_earlierSaveWrites = 0;
+    void keepEarlierSave(const application::DestinationKey &destination, std::vector<std::byte> previous);
+    bool openRecovered(const application::RecoveryContent &content, const QString &titleFormat);
     std::unique_ptr<QLockFile> m_sessionLock;
     QString m_recoveryDir;
     QString m_sessionId;
@@ -1664,6 +1730,8 @@ private:
     QTimer *m_editRefresh = nullptr;
     std::optional<core::LineId> m_leftEditedLine;
     void trackVideoFollow(WindowMedia &media);
+    std::vector<core::LineId> linesVisibleOnVideo(application::EditSession &session, const application::ShownLine &shown);
+    void refreshFrameMarks();
     void followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left);
     void followEditOn(const application::FollowedLine &line);
     void followShownLine(bool rowChanged, LineChangeOrigin origin);
@@ -1714,6 +1782,7 @@ private:
     void applyProjectTierFiles(int shellWindow, const QString &root);
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
+    mutable std::map<std::uint64_t, std::optional<std::string>> m_encodingSuggestions;
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
     application::SpellChecker *spellChecker() { return spellChecker(m_workspace.activeWindow()); }
@@ -1726,6 +1795,7 @@ private:
     void restartSpellChecker();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
+    void syncReadingProblems();
     std::optional<std::u16string> windowLineRaw(int shellWindow, int role) const;
     QVariantMap spellCheckState(int shellWindow, bool changed, const QString &problem = {});
     std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
@@ -1858,6 +1928,7 @@ private:
     application::RecentFiles m_recentTimecodes;
     void rememberRecentTimecodes(const QString &path);
     std::expected<application::Timecodes, QString> readTimecodes(const QString &path) const;
+    bool reloadTarget(const application::ToUtf8 &toUtf8, const QString &title);
     void showTabTimecodes(WindowMedia &media, std::optional<application::DocumentId> document);
     QString tabTimecodes(std::optional<application::DocumentId> document) const;
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};

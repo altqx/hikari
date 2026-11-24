@@ -78,6 +78,7 @@ protected:
             request.commands = {"greet", "spin", "wait", "crash", "scan"};
             request.exporters = {"csv", "bin", "spin"};
             request.importers = {"csv"};
+            request.providers = {"completion"};
             return request;
         };
         auto p = std::make_unique<PluginProcess>(QStringLiteral(HIKARI_PLUGIN_HELPER), load, limits);
@@ -299,6 +300,22 @@ TEST_F(PluginProcessTest, MarksGoThroughTheHikariApi)
     EXPECT_EQ(m_calls[2], "marks.list {}");
 }
 
+TEST_F(PluginProcessTest, ProblemsGoThroughTheHikariApi)
+{
+    auto p = process(plugin("problems", "hikari.commands.register('greet', function() "
+                                        "hikari.problems.set({{line = 2, severity = 'warning', message = 'Odd'}}, "
+                                        "{revision = 4, set = 'grammar'}) "
+                                        "hikari.problems.list({severity = 'warning', lines = {2}}) "
+                                        "hikari.problems.fix('p1', 0) hikari.problems.clear({set = 'grammar'}) end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    ASSERT_TRUE(p->run("greet", "{}"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    EXPECT_EQ(m_calls, (std::vector<std::string>{
+                           R"(problems.set {"problems":[{"line":2,"message":"Odd","severity":"warning"}],"revision":4,"set":"grammar"})",
+                           R"(problems.list {"lines":[2],"severity":"warning"})", R"(problems.fix {"fix":0,"problem":"p1"})",
+                           R"(problems.clear {"set":"grammar"})"}));
+}
+
 TEST_F(PluginProcessTest, ForceStopEndsAJobThatIgnoresCancel)
 {
     m_id = "example.chains";
@@ -500,6 +517,24 @@ struct FormatResult {
 
 }
 
+TEST_F(PluginProcessTest, ACommandGivesBackWhatItsHandlerReturns)
+{
+    auto p = process(plugin("result", "hikari.commands.register('greet', function(args) return {hi = args.name} end) "
+                                      "hikari.commands.register('scan', function() end) "
+                                      "hikari.commands.register('crash', function() error('no') end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    FormatResult greeted, scanned, crashed;
+    ASSERT_TRUE(p->run("greet", R"({"args": {"name": "Ana"}})", greeted.done()));
+    ASSERT_TRUE(p->run("scan", "{}", scanned.done()));
+    ASSERT_TRUE(p->run("crash", "{}", crashed.done()));
+    ASSERT_TRUE(waitFor([&] { return greeted.value && scanned.value && crashed.value; }));
+    EXPECT_EQ(greeted.value->value_or(std::string()), R"({"hi":"Ana"})");
+    EXPECT_EQ(scanned.value->value_or(std::string()), "null");
+    ASSERT_FALSE(crashed.value->has_value());
+    EXPECT_TRUE(crashed.value->error().contains(QStringLiteral("no")));
+    EXPECT_EQ(finished.count(), 2);
+}
+
 TEST_F(PluginProcessTest, AnExporterTurnsTheSnapshotIntoTheFilesBytes)
 {
     auto p = process(plugin("formats", R"(
@@ -567,6 +602,94 @@ TEST_F(PluginProcessTest, OnlyDeclaredFormatsTakeAHandler)
     ASSERT_TRUE(waitFor([&] { return failed.count() == 1 && never.value; }));
     EXPECT_TRUE(failed.at(0).at(0).toString().contains(QStringLiteral("“bin” isn't a format with import in hikari-plugin.json")));
     EXPECT_FALSE(never.value->has_value());
+}
+
+TEST_F(PluginProcessTest, ACompletionProviderAnswersWithItsHandlersTable)
+{
+    auto p = process(plugin("providers", R"(
+hikari.providers.completion(function(r)
+    if r.trigger == "x" then return nil end
+    return {{label = r.text:sub(1, r.offset), from = 0, to = r.offset}}
+end)
+)"));
+    FormatResult items, none;
+    ASSERT_TRUE(p->provide("completion", R"({"text": "\\fad", "offset": 3, "trigger": "\\"})", items.done()));
+    ASSERT_TRUE(waitFor([&] { return items.value.has_value(); }));
+    ASSERT_TRUE(items.value->has_value()) << items.value->error().toStdString();
+    EXPECT_EQ(**items.value, R"([{"from":0,"label":"\\fa","to":3}])");
+    ASSERT_TRUE(p->provide("completion", R"({"text": "", "offset": 0, "trigger": "x"})", none.done()));
+    ASSERT_TRUE(waitFor([&] { return none.value.has_value(); }));
+    ASSERT_TRUE(none.value->has_value());
+    EXPECT_EQ(**none.value, "null");
+}
+
+TEST_F(PluginProcessTest, ALateAnswerIsDroppedAndThePluginKeepsRunning)
+{
+    m_slowReplyMs = 400;
+    auto p = process(plugin("providers", R"(
+hikari.providers.completion(function() hikari.call("api.version") return {} end)
+hikari.commands.register("greet", function() hikari.notify("hi") end)
+)"),
+                     PluginProcess::Limits{.answerMs = 150});
+    QSignalSpy stopped(p.get(), &PluginProcess::stopped);
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    FormatResult late;
+    ASSERT_TRUE(p->provide("completion", "{}", late.done()));
+    ASSERT_TRUE(waitFor([&] { return late.value.has_value(); }));
+    EXPECT_EQ(late.value->error(), QStringLiteral("the plugin answered too late"));
+    m_slowReplyMs = 0;
+    ASSERT_TRUE(p->run("greet", "{}"));
+    ASSERT_TRUE(waitFor([&] { return finished.count() == 1; }));
+    EXPECT_EQ(stopped.count(), 0);
+}
+
+TEST_F(PluginProcessTest, ANewerRequestReplacesAQueuedOne)
+{
+    m_slowReplyMs = 200;
+    auto p = process(plugin("providers", R"(
+hikari.providers.completion(function(r) hikari.call("api.version") return {{label = r.text}} end)
+)"));
+    QSignalSpy loaded(p.get(), &PluginProcess::loaded);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
+    FormatResult running, replaced, newest;
+    ASSERT_TRUE(p->provide("completion", R"({"text": "a"})", running.done()));
+    ASSERT_TRUE(p->provide("completion", R"({"text": "b"})", replaced.done()));
+    ASSERT_TRUE(p->provide("completion", R"({"text": "c"})", newest.done()));
+    ASSERT_TRUE(waitFor([&] { return running.value && replaced.value && newest.value; }));
+    EXPECT_EQ(replaced.value->error(), QStringLiteral("a newer request replaced it"));
+    ASSERT_TRUE(running.value->has_value());
+    ASSERT_TRUE(newest.value->has_value()) << newest.value->error().toStdString();
+    EXPECT_EQ(**newest.value, R"([{"label":"c"}])");
+}
+
+TEST_F(PluginProcessTest, EndingTheProcessAnswersWhatWasWaitingEvenOnceItIsGone)
+{
+    m_holdReplies = true;
+    auto p = process(plugin("providers", R"(
+hikari.providers.completion(function(r) hikari.call("api.version") return {{label = r.text}} end)
+)"));
+    QSignalSpy loaded(p.get(), &PluginProcess::loaded);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return loaded.count() == 1; }));
+    FormatResult running, queued;
+    ASSERT_TRUE(p->provide("completion", R"({"text": "a"})", running.done()));
+    ASSERT_TRUE(waitFor([&] { return !m_held.empty(); }));
+    ASSERT_TRUE(p->exportDocument("csv", "{}", "{}", queued.done()));
+    p->end();
+    p.reset();
+    ASSERT_TRUE(waitFor([&] { return running.value && queued.value; }));
+    EXPECT_EQ(running.value->error(), QStringLiteral("the plugin was stopped"));
+    EXPECT_EQ(queued.value->error(), QStringLiteral("the plugin was stopped"));
+}
+
+TEST_F(PluginProcessTest, OnlyDeclaredProvidersTakeAHandler)
+{
+    auto p = process(plugin("providers", "hikari.providers.hover(function() end)"));
+    QSignalSpy failed(p.get(), &PluginProcess::loadFailed);
+    p->start();
+    ASSERT_TRUE(waitFor([&] { return failed.count() == 1; }));
+    EXPECT_TRUE(failed.at(0).at(0).toString().contains(QStringLiteral("declares no contributes.providers.hover")));
 }
 
 TEST_F(PluginProcessTest, TimersNeedTheBackgroundPermission)

@@ -710,6 +710,8 @@ void VectorClipTool::reset(VisualHost &host)
     m_maskBody = read.maskBody;
     m_editor.points = parseVectorPoints(read.body);
     m_editor.normaliseFirst();
+    m_editor.forgetStroke();
+    m_editor.smoothing = host.freehandSmoothing(family()).value_or(kDefaultSmoothing);
     host.toolChanged();
 }
 
@@ -798,8 +800,11 @@ void VectorClipTool::pointer(const Pointer &event, VisualHost &host)
     if (event.kind == Pointer::Kind::Press && !host.gesture())
         m_began = false;
     m_inKey = false;
+    const bool stroking = m_editor.stroking();
     m_editor.pointer(event, frame(host), callbacks(host));
     m_editor.normaliseFirst();
+    if (stroking && !m_editor.stroking() && host.session())
+        m_strokeRevision = host.session()->revision();
     host.toolChanged();
 }
 
@@ -862,6 +867,8 @@ std::vector<ToolOption> VectorClipTool::options(const VisualHost &host) const
         mode.checked = m_editor.mode == i;
         mode.group = u"Points";
         out.push_back(std::move(mode));
+        if (i == VectorEditor::Spline)
+            out.push_back(freehandOption(m_editor, true));
     }
     ToolOption invert;
     invert.name = "invert";
@@ -885,7 +892,61 @@ bool VectorClipTool::setOption(const std::string &name, int value, VisualHost &h
         host.toolChanged();
         return true;
     }
+    if (name == "freehand") {
+        m_editor.mode = VectorEditor::Freehand;
+        host.toolChanged();
+        return true;
+    }
     return false;
+}
+
+std::vector<ToolValue> VectorClipTool::values(const VisualHost &host) const
+{
+    (void)host;
+    return freehandValues(m_editor);
+}
+
+bool VectorClipTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    (void)edit;
+    const auto smoothing = smoothingOf(name, text);
+    if (!smoothing)
+        return false;
+    m_editor.smoothing = *smoothing;
+    host.setFreehandSmoothing(family(), *smoothing);
+    if (m_editor.strokeCurves() && host.undoStep(m_strokeRevision)) {
+        m_editor.refitStroke();
+        commitPoints(host);
+        m_strokeRevision = host.session() ? host.session()->revision() : 0;
+    } else {
+        m_editor.forgetStroke();
+    }
+    host.toolChanged();
+    return true;
+}
+
+void VectorClipTool::commitPoints(VisualHost &host)
+{
+    m_began = false;
+    apply(host, false);
+    if (host.gesture())
+        apply(host, true);
+    m_began = false;
+}
+
+std::optional<Segment> VectorClipTool::segmentAt(PointF pos, const VisualHost &host) const
+{
+    return host.view().hasVideo() ? m_editor.segmentAt(pos, frame(host)) : std::nullopt;
+}
+
+bool VectorClipTool::editSegment(Segment segment, SegmentEdit edit, PointF pos, VisualHost &host)
+{
+    if (!host.view().hasVideo() || !m_editor.editSegment(segment, edit, pos, frame(host)))
+        return false;
+    m_editor.normaliseFirst();
+    commitPoints(host);
+    host.toolChanged();
+    return true;
 }
 
 void VectorClipTool::invert(VisualHost &host)

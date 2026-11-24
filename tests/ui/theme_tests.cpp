@@ -180,6 +180,33 @@ class ThemeTests : public QObject {
     Q_OBJECT
 
 private slots:
+    void aPluginThemeIsChosenAndFallsBackWhenItGoes()
+    {
+        const QString dawn = QStringLiteral("plugin:com.example.looks/dawn");
+        ui::SettingsStore store;
+        ui::theme::useSettings(&store);
+        store.setValue(QLatin1String(ui::theme::kFollowSystemSetting), false);
+        ui::theme::install({dawn, QStringLiteral("Dawn"), QStringLiteral("Looks"), ui::theme::find(QStringLiteral("light"))->file});
+        store.setValue(QLatin1String(ui::theme::kThemeSetting), dawn);
+        store.setValue(QLatin1String(ui::theme::kPairSettings[0]), dawn);
+        QCOMPARE(ui::theme::current().id, dawn);
+        ui::Theme singleton;
+        const QVariantList listed = singleton.property("themeList").toList();
+        QCOMPARE(listed.last().toMap().value(QStringLiteral("plugin")).toString(), QStringLiteral("Looks"));
+
+        ui::theme::uninstall(dawn);
+        QCOMPARE(store.value(QLatin1String(ui::theme::kThemeSetting)).toString(), QStringLiteral("light"));
+        QCOMPARE(store.value(QLatin1String(ui::theme::kPairSettings[0])).toString(), QStringLiteral("light"));
+        QCOMPARE(ui::theme::current().id, QStringLiteral("light"));
+        QVERIFY(!ui::theme::find(dawn));
+
+        const QString night = QStringLiteral("plugin:com.example.looks/night");
+        store.setValue(QLatin1String(ui::theme::kPairSettings[1]), night);
+        ui::theme::fallBackFrom(night, ui::theme::Type::Dark);
+        QCOMPARE(store.value(QLatin1String(ui::theme::kPairSettings[1])).toString(), QStringLiteral("dark"));
+        ui::theme::useSettings(nullptr);
+    }
+
     void initTestCase()
     {
         // Qt Quick Controls take a style only before any engine loads them.
@@ -820,6 +847,44 @@ Window {
         store.setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastBlack"));
         store.setValue(QStringLiteral("appearance.colours"), QStringList{QStringLiteral("highContrastBlack/line=#00FF00")});
         QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
+    }
+
+    void actionButtonsAndChipsMatchTheButton()
+    {
+        QQmlEngine engine;
+        QQmlComponent component(&engine);
+        component.setData(R"(
+import QtQuick
+import QtQuick.Controls
+import Hikari.Ui
+Window {
+    width: 400; height: 400
+    property var heights: [button.height, primary.height, danger.height, chip.height, segments.height]
+    property var radii: [button.background.radius, primary.background.radius, danger.background.radius, segments.radius]
+    property color chipRest: chip.background.border.color
+    property color chipOn: chipNarrowing.background.border.color
+    property color control: Theme.control
+    property color accent: Theme.accent
+    Column {
+        Button { id: button; text: "Save" }
+        PrimaryButton { id: primary; text: "Save" }
+        DangerButton { id: danger; text: "Delete" }
+        FilterChip { id: chip; text: "Style" }
+        FilterChip { id: chipNarrowing; text: "Style: Default"; on: true }
+        SegmentedButtons { id: segments; choices: [{text: "Rules"}, {text: "Changes"}] }
+    }
+}
+)", QUrl(QStringLiteral("qrc:/action-buttons.qml")));
+        std::unique_ptr<QObject> window(component.create());
+        QVERIFY2(window, qPrintable(component.errorString()));
+        const auto heights = window->property("heights").toList();
+        for (const QVariant &height : heights)
+            QCOMPARE(height.toReal(), heights.front().toReal());
+        const auto radii = window->property("radii").toList();
+        for (const QVariant &radius : radii)
+            QCOMPARE(radius.toReal(), radii.front().toReal());
+        QCOMPARE(window->property("chipRest").value<QColor>(), window->property("control").value<QColor>());
+        QCOMPARE(window->property("chipOn").value<QColor>(), window->property("accent").value<QColor>());
     }
 
     void comboBoxFieldCarriesTheBoxName()

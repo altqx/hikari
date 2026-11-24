@@ -2,7 +2,9 @@
 
 #include "hikari/application/visual_tools.h"
 
+#include <array>
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -56,6 +58,19 @@ void dashedLines(Overlay &out, const std::vector<PointF> &polyline, int dashLen,
 void pointSquare(Overlay &out, PointF centre, bool selected, float size);
 void pointCircle(Overlay &out, PointF centre, bool selected, float size);
 
+// Smoothing (0–100) as the farthest a fitted curve strays from the stroke, in view pixels.
+inline constexpr int kDefaultSmoothing = 45;
+double freehandTolerance(int smoothing);
+// Cubic Béziers through a stroke, each within `tolerance` of the samples it covers (Schneider, Graphics Gems I).
+std::vector<std::array<PointF, 4>> fitStroke(const std::vector<PointF> &stroke, double tolerance);
+
+class VectorEditor;
+ToolOption freehandOption(const VectorEditor &editor, bool enabled);
+// In Freehand mode: Smoothing, then the last stroke's points and curves.
+std::vector<ToolValue> freehandValues(const VectorEditor &editor);
+// Smoothing from a value's text, rounded and kept within 0–100; nullopt for another value or a bad number.
+std::optional<int> smoothingOf(const std::string &name, const std::u16string &text);
+
 struct VectorFrame {
     float coeffW = 1, coeffH = 1;   // script units per video pixel, divided by the drawing's or clip's scale
     float offsetX = 0, offsetY = 0; // a drawing's position; 0 for clips
@@ -70,7 +85,7 @@ struct VectorFrame {
 class VectorEditor {
 public:
     // MUST KILL: Move adds a separate "m" point (Drag moves points); InvertSlot is a button index
-    enum Mode { Drag = 0, Line, Bezier, Spline, Move, Delete, InvertSlot };
+    enum Mode { Drag = 0, Line, Bezier, Spline, Move, Delete, InvertSlot, Freehand };
     static constexpr int kModeCount = 7;
 
     struct Callbacks {
@@ -84,6 +99,7 @@ public:
     bool drawing = false; // Shift nudges by a tenth
     // Buttons the wheel cycles over: seven for the clip, six for the drawing.
     int modeCount = kModeCount;
+    int smoothing = kDefaultSmoothing;
 
     // In the video window's device pixels. True when the event was used.
     void pointer(const Pointer &event, const VectorFrame &frame, const Callbacks &cb);
@@ -91,6 +107,17 @@ public:
     // Wraps over the modeCount buttons.
     void wheel(int steps);
     void draw(Overlay &out, const VectorFrame &frame) const;
+    // The last freehand stroke, fitted again at `smoothing` in place of its first fit; false without one.
+    bool refitStroke();
+    void forgetStroke() { m_lastStroke.reset(); }
+    // The last stroke's curves; nullopt without one.
+    std::optional<int> strokeCurves() const;
+    bool stroking() const { return m_stroking; }
+    // `pos` in the video window's device pixels, as a Pointer's; a click on a point is not on a segment.
+    std::optional<Segment> segmentAt(PointF pos, const VectorFrame &frame) const;
+    // Make curve puts the controls at a third and two thirds; Insert point keeps a curve's shape; Delete opens
+    // the contour there. False when `segment` no longer matches the points.
+    bool editSegment(Segment segment, SegmentEdit edit, PointF pos, const VectorFrame &frame);
     // A first "l" or "b" point becomes the missing "m".
     void normaliseFirst();
     void endDrag()
@@ -125,6 +152,19 @@ private:
     int drawCurve(Overlay &out, const VectorFrame &frame, int i, bool bspline) const;
     void drawRect(Overlay &out, const VectorFrame &frame, int i) const;
     void drawCircle(Overlay &out, const VectorFrame &frame, int i) const;
+    void placeStroke();
+    std::vector<Segment> segments() const;
+    PointF toPoints(PointF device, const VectorFrame &frame) const;
+
+    struct Stroke {
+        std::vector<VectorPoint> before;
+        std::vector<PointF> samples;
+        float viewPixel = 1;
+        int curves = 0;
+    };
+    std::vector<PointF> m_stroke;
+    bool m_stroking = false;
+    std::optional<Stroke> m_lastStroke;
 
     VectorPoint m_acpoint, m_lastpoint;
     int m_grabbed = -1;

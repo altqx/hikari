@@ -111,6 +111,15 @@ struct FormatContribution {
     bool exports = false;
 };
 
+struct CompletionProvider {
+    std::vector<std::string> triggers;
+    std::vector<std::string> fields;
+};
+
+struct HoverProvider {
+    std::vector<std::string> fields;
+};
+
 struct ProgramDownload {
     std::string url;
     std::string sha256;
@@ -137,6 +146,26 @@ struct Program {
     Confinement confinement = Confinement::Container;
 };
 
+struct McpServer {
+    std::string id;
+    std::string title;
+    std::string description;
+    std::string program;
+};
+
+struct LanguageServer {
+    enum class Scope { Document, Line };
+    enum class Tags { Blank, Keep };
+    std::string id;
+    std::string title;
+    std::string program;
+    Scope scope = Scope::Document;
+    std::vector<std::string> fields; // "text", "translation"
+    Tags tags = Tags::Blank;
+    std::string languageId = "plaintext";
+    api::Json initializationOptions; // null without one
+};
+
 // "linux-x64", "windows-arm64", …: the platform key of the computer HikariSub runs on.
 std::string_view thisPlatform();
 
@@ -160,12 +189,31 @@ struct Dictionary {
     std::string dic;
 };
 
+struct ColourTheme {
+    std::string id;
+    std::string title;
+    std::string type; // as hikari-theme.schema.json names it: "light", "dark", "highContrastLight", "highContrastDark"
+    std::string path;
+};
+
+struct IconTheme {
+    std::string id;
+    std::string title;
+    std::string folder; // a package folder holding <role>.svg
+};
+
+struct OwnIcon {
+    std::string id;
+    std::string path;
+};
+
 struct Manifest {
     std::string id;
     std::string name;
     std::string version;
     std::int64_t api = 1;
-    std::string main;
+    std::string main;        // the Lua main file, or empty
+    std::string mainProgram; // a program plugin's program id, or empty
     Tier tier = Tier::Restricted;
     std::vector<std::string> authors;
     std::string description;
@@ -184,13 +232,22 @@ struct Manifest {
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
     std::vector<FormatContribution> formats;
+    std::optional<CompletionProvider> completion;
+    std::optional<HoverProvider> hover;
     std::vector<Program> programs;
     std::vector<ContentFile> styles;
     std::vector<ContentFile> karaokePresets;
     std::vector<Dictionary> dictionaries;
     std::vector<ContentFile> graphs;
+    std::vector<ContentFile> layouts;
+    std::vector<McpServer> mcpServers;
+    std::vector<LanguageServer> languageServers;
+    std::vector<ColourTheme> themes;
+    std::vector<IconTheme> iconThemes;
+    std::vector<OwnIcon> icons;
 
     bool hasQmlPanels() const;
+    bool dataOnly() const { return main.empty() && programs.empty(); }
     const Program *program(std::string_view id) const;
 };
 
@@ -231,11 +288,12 @@ struct PermissionIncrease {
     // Programs that are new, gain network, or move to lowIntegrity.
     std::vector<std::string> programs;
     bool presence = false;
+    std::vector<std::string> mcpServers;
 
     bool any() const
     {
         return unrestricted || allDocuments || !networkHosts.empty() || !files.empty() || vcsRead || background ||
-               runPrograms || !programs.empty() || presence;
+               runPrograms || !programs.empty() || !mcpServers.empty() || presence;
     }
 };
 PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &next);

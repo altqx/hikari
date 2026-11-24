@@ -101,6 +101,10 @@ public:
         done(std::move(result));
         return true;
     }
+    bool configure(const std::string &, const std::string &, const app::MacroSnapshot &, DialogDone) override
+    {
+        return false;
+    }
     std::map<std::string, std::string> loaded; // empty value: the run fails
     bool refuse = false;
     std::vector<std::string> ran;
@@ -212,6 +216,20 @@ TEST(ExportSteps, StepsRunInOrderOnTheCopyAndAMissingScriptIsSkipped)
                                     {"karaoke-template", "Apply karaoke template", Outcome::State::Done, 1},
                                     {"lua:sign-fx.lua/Sign blur pass", "Sign blur pass", Outcome::State::Done},
                                     {"lua:gone.lua/Gone", "Gone", Outcome::State::Skipped}}));
+}
+
+TEST(ExportSteps, EachStepThatRunsSaysSoAsItStarts)
+{
+    std::vector<std::string> started;
+    app::ExportStepsContext context;
+    context.started = [&](std::size_t step, std::size_t count, const std::string &name) {
+        started.push_back(std::to_string(step + 1) + "/" + std::to_string(count) + " " + name);
+    };
+    app::ExportRecipe recipe{{{"fix-styles", true, {}}, {"remove-tags", false, {}}, {"transform-frame-rate", true, {}}}};
+    const auto result = runSteps(documentWith("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"), recipe,
+                                 app::availableSteps({}), context);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(started, (std::vector<std::string>{"1/2 Set unknown styles to Default", "2/2 Transform frame rate"}));
 }
 
 TEST(ExportSteps, AFailingStepStopsTheRunAndTheRestDontRun)

@@ -50,6 +50,8 @@ hikari_add_gtest(hikari_application_grid_clipboard_tests SOURCES grid_clipboard_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_lyrics_insert_tests SOURCES lyrics_insert_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_text_import_tests SOURCES text_import_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_filtering_tests SOURCES grid_filtering_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_groups_tests SOURCES grid_groups_tests.cpp
@@ -210,6 +212,8 @@ hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
     HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/clip-cases.txt"
     HIKARI_CLIP_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t4-clip-20261005/observations.jsonl")
+hikari_add_gtest(hikari_application_visual_vector_edit_tests SOURCES visual_vector_edit_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_drawing_tests SOURCES visual_drawing_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_drawing_tests PRIVATE
@@ -243,6 +247,8 @@ hikari_add_gtest(hikari_application_qc_notes_tests SOURCES qc_notes_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_qc_notes_tests PRIVATE
     HIKARI_EXTRADATA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/aegisub-extradata")
+hikari_add_gtest(hikari_application_problems_tests SOURCES problems_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_perspective_tracking_tests SOURCES perspective_tracking_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp

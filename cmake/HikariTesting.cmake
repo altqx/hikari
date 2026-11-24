@@ -21,6 +21,7 @@ find_program(HIKARI_XVFB Xvfb)
 set(HIKARI_XVFB_SUITES
     # xcb: a first-frame arrangement upset a tab's cursor, and xcb's Redo key let Ctrl+Y skip the draft.
     hikari_ui_shell_tests.documents
+    hikari_ui_shell_tests.documents2
     # The Timing panel's sections and a floating panel's focus.
     hikari_ui_shell_tests.panels
     hikari_ui_shell_tests.panels2
@@ -30,6 +31,7 @@ set(HIKARI_XVFB_SUITES
     hikari_ui_shell_tests.hotkeys3
     # On xcb the fullscreen rail took the hover from the picture.
     hikari_ui_shell_tests.video
+    hikari_ui_shell_tests.video2
     # A restart after Cancel stalled harper-ls under xcb.
     hikari_ui_grammar_tests
     # The progress card's timer fired only under X11.

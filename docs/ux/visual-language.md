@@ -65,6 +65,10 @@ All components share the same semantic roles, and switching theme switches the w
 | Error | `danger` | `#FFADAD` | `#A51F31` | `#A00000` | `#FFADAD` |
 | Warning | `warning` | `#E0A030` | `#8A5A00` | `#6B4500` | `#FFD54A` |
 | Success | `success` | `#4DBA4D` | `#008000` | `#005A00` | `#7CFC7C` |
+| Error fill: the word being checked, a failed row | `dangerFill` | `danger` at 18 % | `danger` at 18 % | `panel`, 1-unit `danger` ring | `panel`, 1-unit `danger` ring |
+| Success fill: nothing lost, a finished run | `successFill` | `success` at 14 % | `success` at 14 % | `panel`, 1-unit `success` ring | `panel`, 1-unit `success` ring |
+
+A tint is only ever one of these fill roles, never an opacity picked at the call site; in high contrast a tint would fail contrast, so it becomes the ring. The code takes them from `theme::tintFill`.
 
 In theme files ([ADR 0034](../adr/0034-plugins-grow-into-an-extension-system.md)) `bg` is spelled `background` and `onaccent` is `onAccent`; the roles are the same.
 
@@ -424,6 +428,8 @@ The preview text of "Change the size only" says which way the text goes: "smalle
 **Q583: shapes within 1 % are the same** (owner, 2026-11-17). Two sizes are the same shape when `|(videoWidth ÷ subsWidth) ÷ (videoHeight ÷ subsHeight) − 1| < 0.01`. Then the case line says "same shape" and "Resample and stretch" isn't offered (1920 × 1080 → 1920 × 1088, or the 0.05 % of 1920 × 804 → 2048 × 858). Today any difference at all counts.
 
 "Don’t ask again" keeps today's meaning: it sets `video.dontAskForBadResolution`, and Settings → Notices → Ask again brings the question back. Subtitles › Resample subtitles stays the place to do it later. The strings live in the `HikariSub.Conversion` context.
+
+Subtitles › Resample subtitles, with its letterbox and crop edges and its matrix choice, is specified in [resample.md](resample.md).
 
 ## Fixes by area
 

@@ -33,6 +33,7 @@ struct PluginContent {
     std::vector<PluginContentFile> karaokePresets;
     std::vector<PluginDictionary> dictionaries;
     std::vector<PluginContentFile> graphs;
+    std::vector<PluginContentFile> layouts;
 };
 
 void setPluginContent(PluginContent content);

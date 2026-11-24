@@ -79,7 +79,9 @@ ApplicationWindow {
     required property var alignToVideo
     required property var videoAnalysis
     required property var lyricsImport
+    required property var textImport
     required property var qcNotes
+    required property var problems
     required property var fontCollector
     required property var fontCatalogs
     required property var matroska
@@ -809,11 +811,13 @@ ApplicationWindow {
         if (width !== root.sentShrinkableWidth && Docking.setShrinkableWidth(dockingArea.uniqueName, width))
             root.sentShrinkableWidth = width
     }
-    function sideBarWidth(bar) {
+    function sideBarRoom() {
         const shown = (root.leftSideBarShown ? 1 : 0) + (root.rightSideBarShown ? 1 : 0)
         const middleLeast = root.arrangementSettled ? Docking.layoutMinimumSize(dockingArea.uniqueName).width : 0
-        const room = Math.max(SideBarModel.minimumWidth, (root.width - middleLeast) / Math.max(1, shown))
-        return Math.round(Math.min(bar.width, room))
+        return Math.floor(Math.max(SideBarModel.minimumWidth, (root.width - middleLeast) / Math.max(1, shown)))
+    }
+    function sideBarWidth(width) {
+        return Math.round(Math.max(SideBarModel.minimumWidth, Math.min(width, root.sideBarRoom())))
     }
     function showInSideBar(dock, focus) {
         root.setSideBars(SideBarModel.shown(root.sideBarsJson, root.panelName(dock)))
@@ -910,7 +914,8 @@ ApplicationWindow {
             return
         }
         (left ? leftSideBar : rightSideBar).liveWidth = -1
-        root.setSideBars(SideBarModel.widened(root.sideBarsJson, second, width))
+        const kept = width < SideBarModel.minimumWidth ? width : Math.min(width, root.sideBarRoom())
+        root.setSideBars(SideBarModel.widened(root.sideBarsJson, second, kept))
     }
     function sideBarPanelCycle() {
         const leftPanel = leftSideBar.visible && leftSideBar.slot.children.length > 0 ? leftSideBar.slot.children[0] : null
@@ -964,7 +969,7 @@ ApplicationWindow {
         [spellDock, spellPanel], [logDock, logPanel], [stylesDock, stylesPanel], [templateDock, templatePanel],
         [qcNotesDock, qcNotesPanel], [reviewDock, reviewPanel], [agentDock, agentPanel], [nodeGraphDock, nodeGraphPanel],
         [nodeInspectorDock, nodeInspectorPanel], [nodeSourcesDock, nodeSourcesPanel], [explorerDock, explorerPanel]
-    ].filter(([dock]) => (dock !== reviewDock || root.review.on) && (dock !== agentDock || root.agent.on))
+    ].filter(([dock]) => dock !== reviewDock || root.review.on)
     readonly property var builtInDocks: builtIns.map(([dock]) => dock)
     readonly property var panelMenuGroups: [
         [videoDock, audioDock, gridDock, editorDock, originalDock, referenceDock],
@@ -1365,6 +1370,49 @@ ApplicationWindow {
     function stepQcNote(forward) {
         if (!qcNotesTool.step(forward) && !root.panelShown(qcNotesDock))
             root.notices.post("info", qsTranslate("HikariSub.QcNotes", "QC notes"), qsTranslate("HikariSub.QcNotes", "No more notes"))
+    }
+    function quickFix() {
+        const inList = qcNotesTool.activeFocus
+        const field = root.editedField()
+        const choices = inList ? qcNotesTool.quickFixChoices() : root.problems.editorFixesAt(field.role, field.cursorPosition)
+        if (choices.length === 0) {
+            root.notices.post("info", qsTranslate("HikariSub.QcNotes", "Quick fix"),
+                              inList ? qsTranslate("HikariSub.QcNotes", "The chosen row has no quick fixes.")
+                                     : qsTranslate("HikariSub.QcNotes", "No problem at the caret has a quick fix."))
+            return
+        }
+        if (choices.length === 1) {
+            root.problems.applyFix(choices[0].problem, choices[0].fix)
+            return
+        }
+        quickFixMenu.choices = choices
+        const at = inList ? qcNotesTool.chosenItem() : field
+        if (inList && at)
+            quickFixMenu.popup(at, 0, at.height)
+        else
+            quickFixMenu.popup(field, field.cursorRectangle.x, field.cursorRectangle.y + field.cursorRectangle.height)
+    }
+    ShellMenu {
+        id: quickFixMenu
+        objectName: "quickFixMenu"
+        property var choices: []
+        Instantiator {
+            model: quickFixMenu.choices
+            delegate: ShellMenuItem {
+                required property var modelData
+                required property int index
+                objectName: "quickFix" + index
+                iconRole: "edit"
+                text: modelData.title
+                detailText: modelData.source
+                onTriggered: {
+                    const choice = modelData
+                    Qt.callLater(() => root.problems.applyFix(choice.problem, choice.fix))
+                }
+            }
+            onObjectAdded: (index, object) => quickFixMenu.insertItem(index, object)
+            onObjectRemoved: (index, object) => quickFixMenu.removeItem(object)
+        }
     }
     function addQcNote(ms) {
         if (!root.qcNotes.editable) {
@@ -2730,6 +2778,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_KEYFRAMES")) root.app.closeKeyframes()
         }
         Action {
+            id: reopenWithEncodingAction
+            text: qsTr("Reopen with encoding…")
+            enabled: root.app.canReopenWithEncoding
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REOPEN_WITH_ENCODING")) root.chooseReopenEncoding()
+        }
+        Action {
             id: fullScreenTypesettingAction
             readonly property bool open: root.videoFullscreen.active
                                          && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
@@ -3080,6 +3134,17 @@ ApplicationWindow {
             }
         }
         Action {
+            id: markCurrentFrameAction
+            text: qsTr("Mark lines on the current frame")
+            checkable: true
+            checked: root.app.markCurrentFrame
+            onToggled: {
+                if (!root.hotkeyGesture("GLOBAL_GRID_MARK_CURRENT_FRAME"))
+                    root.app.markCurrentFrame = checked
+                checked = Qt.binding(() => root.app.markCurrentFrame)
+            }
+        }
+        Action {
             id: gettingStartedAction
             text: qsTr("Getting &started")
             onTriggered: if (!root.hotkeyGesture("GLOBAL_GETTING_STARTED")) root.lazy(gettingStartedDialogLoader).openSetup()
@@ -3184,6 +3249,14 @@ ApplicationWindow {
                             height: visible ? implicitHeight : 0
                         }
                     }
+                    ShellMenuItem {
+                        command: "GLOBAL_REOPEN_WITH_ENCODING"
+                        help: qsTr("Reads the file again in the encoding you choose; it then saves as UTF-8")
+                        iconRole: "refresh"
+                        objectName: "reopenWithEncodingMenuItem"
+                        reason: reopenWithEncodingAction.enabled ? "" : qsTr("Open a saved file first")
+                        action: reopenWithEncodingAction
+                    }
                     MenuSeparator {}
                     ShellMenuItem {
                         command: "GRID_SUBS_FROM_MKV"
@@ -3201,6 +3274,14 @@ ApplicationWindow {
                         objectName: "importLyricsMenuItem"
                         text: qsTr("Import lyrics…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_IMPORT_TEXT"
+                        help: qsTr("Turns a plain text file into lines, in the open file or a new one")
+                        iconRole: "import"
+                        objectName: "importTextMenuItem"
+                        text: qsTr("Import text…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_TEXT")) textDialog.show()
                     }
                     MenuSeparator {}
                     ShellMenuItem {
@@ -3409,8 +3490,15 @@ ApplicationWindow {
                 MenuSeparator {
                     id: reviewSeparator
                     objectName: "reviewSeparator"
-                    visible: root.review.on
+                }
+                ShellMenuItem {
+                    objectName: "turnOnAiMenuItem"
+                    visible: !root.agent.on
                     height: visible ? implicitHeight : 0
+                    text: qsTranslate("HikariSub.Agent", "Turn on AI…")
+                    help: qsTranslate("HikariSub.Agent", "Shows the Agent panel, where you can turn AI on")
+                    iconRole: "ai-assistant"
+                    onTriggered: root.showPanel(agentDock)
                 }
                 Instantiator {
                     active: editMenu.lazyItems?.placed ?? false
@@ -4387,6 +4475,7 @@ ApplicationWindow {
                     after: macrosSeparator
                     macros: automationMenu.lazyItems?.placed ? root.macroItems : []
                     enabled: !root.automation.running
+                    checkOf: macro => root.automation.checksRevision >= 0 ? root.automation.macroCheck(macro.path, macro.ordinal) : ({})
                     keys: macro => root.automationHotkeys.keys[root.automationHotkeys.legacyNameFor(macro.path, macro.ordinal)] ?? ""
                     onTriggered: macro => {
                         if (root.hotkeys.shiftClicked(true)) {
@@ -4619,21 +4708,48 @@ ApplicationWindow {
                     action: fullScreenTypesettingAction
                 }
                 MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_HIDE_TAGS"
-                    id: hideTagsItem
-                    help: qsTr("Shows or hides tags in the Grid")
+                ShellMenu {
+                    help: qsTr("Shows, replaces or hides tags in the Grid")
                     iconRole: "hide-tags"
-                    objectName: "hideTagsMenuItem"
-                    text: qsTr("Hide tags in the Grid")
-                    checkable: true
-                    checked: root.shell.hideTags
-                    keepsMenuOpen: false
-                    onTriggered: {
-                        checked = Qt.binding(() => root.shell.hideTags)
-                        if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS"))
-                            root.app.toggleHideTags()
+                    objectName: "gridTagsMenu"
+                    title: qsTr("Tags in the Grid")
+                    component GridTagsItem: MenuRadioItem {
+                        required property int mode
+                        checked: root.shell.tagsMode === mode
+                        onTriggered: {
+                            checked = Qt.binding(() => root.shell.tagsMode === mode)
+                            if (!root.hotkeyGesture(command))
+                                root.app.setGridTagsMode(mode)
+                        }
                     }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_SHOW"
+                        help: qsTr("Shows tags in the Grid as they are")
+                        objectName: "gridTagsShowMenuItem"
+                        text: qsTr("Show")
+                        mode: 0
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_REPLACE"
+                        help: qsTr("Shows each tag block in the Grid as the symbol set in Settings › Grid")
+                        objectName: "gridTagsReplaceMenuItem"
+                        text: qsTr("Replace with symbol")
+                        mode: 1
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_HIDE"
+                        help: qsTr("Hides tags in the Grid")
+                        objectName: "gridTagsHideMenuItem"
+                        text: qsTr("Hide")
+                        mode: 2
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_GRID_MARK_CURRENT_FRAME"
+                    help: qsTr("Tints the lines in the Grid that show on the current video frame")
+                    iconRole: "select-visible"
+                    objectName: "markCurrentFrameMenuItem"
+                    action: markCurrentFrameAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_EDITOR_HIDE_TAGS"
@@ -5004,9 +5120,149 @@ ApplicationWindow {
         property int misspellPosition: -1
         property var grammarRanges: []
         property var grammar: ({})
+        property var problemMarks: []
         function refreshMarks() {
             spellMarks.ranges = spelled ? root.app.editorSpellingMarks(role) : []
             grammarRanges = spelled ? root.app.editorGrammarMarks(role) : []
+            problemMarks = root.problems.editorMarks(role)
+        }
+        Shape {
+            id: problemWaves
+            objectName: field.objectName + "Problems"
+            anchors.fill: parent
+            z: 1
+            visible: rows.length > 0
+            readonly property var rows: {
+                field.text
+                field.width
+                field.font
+                const out = []
+                for (const mark of field.problemMarks) {
+                    if (mark.from < 0 || mark.to <= mark.from || mark.to > field.length)
+                        continue
+                    for (const r of field.underlineRows(field.positionToRectangle(mark.from), field.positionToRectangle(mark.to)))
+                        if (r.width > 0)
+                            out.push({x: r.x, y: r.y, width: r.width, severity: mark.severity})
+                }
+                return out
+            }
+            function waves(severity) {
+                return rows.filter(r => r.severity === severity).map(r => {
+                    const points = []
+                    for (let x = 0; x <= r.width; x += 2)
+                        points.push(Qt.point(r.x + x, r.y - ((x / 2) % 2 === 0 ? 0.5 : 2.5)))
+                    return points
+                })
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsError"
+                strokeColor: Theme.danger
+                strokeWidth: 1.2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathMultiline { paths: problemWaves.waves("error") }
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsWarning"
+                strokeColor: Theme.warning
+                strokeWidth: 1.2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathMultiline { paths: problemWaves.waves("warning") }
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsInfo"
+                strokeColor: Theme.accent
+                strokeWidth: 1.2
+                fillColor: "transparent"
+                capStyle: ShapePath.RoundCap
+                joinStyle: ShapePath.RoundJoin
+                PathMultiline { paths: problemWaves.waves("info") }
+            }
+            ShapePath {
+                objectName: field.objectName + "ProblemsHint"
+                strokeColor: Theme.muted
+                strokeWidth: 1.2
+                strokeStyle: ShapePath.DashLine
+                dashPattern: [1, 2]
+                fillColor: "transparent"
+                capStyle: ShapePath.FlatCap
+                PathMultiline {
+                    paths: problemWaves.rows.filter(r => r.severity === "hint")
+                                            .map(r => [Qt.point(r.x, r.y - 1), Qt.point(r.x + r.width, r.y - 1)])
+                }
+            }
+        }
+        HoverHandler {
+            id: problemHover
+            objectName: field.objectName + "ProblemHover"
+            enabled: field.problemMarks.length > 0
+        }
+        function problemAt(x, y) {
+            const at = field.positionAt(x, y)
+            const caret = field.positionToRectangle(at)
+            if (Math.abs(caret.y + caret.height / 2 - y) > caret.height)
+                return null
+            return field.problemMarks.find(m => m.from <= at && at < m.to) ?? null
+        }
+        readonly property var hoveredProblem: problemHover.hovered
+            ? field.problemAt(problemHover.point.position.x, problemHover.point.position.y) : null
+        ToolTip {
+            objectName: field.objectName + "ProblemTip"
+            visible: field.hoveredProblem !== null
+            delay: 600
+            x: problemHover.point.position.x
+            y: problemHover.point.position.y + 18
+            text: field.hoveredProblem
+                  ? qsTranslate("HikariSub.QcNotes", "%1 · %2", "A problem's message, then its source").arg(field.hoveredProblem.message, field.hoveredProblem.source)
+                  : ""
+        }
+        HoverHandler {
+            id: providerHover
+            objectName: field.objectName + "ProviderHover"
+            onPointChanged: if (hovered) providerHoverTimer.restart()
+            onHoveredChanged: if (!hovered) {
+                providerHoverTimer.stop()
+                root.editor.tagList.clearHover()
+            }
+        }
+        function textAt(x, y) {
+            const at = field.positionAt(x, y)
+            const caret = field.positionToRectangle(at)
+            return Math.abs(caret.y + caret.height / 2 - y) > caret.height || at >= field.text.length ? -1 : at
+        }
+        Timer {
+            id: providerHoverTimer
+            interval: 500
+            onTriggered: {
+                const at = field.textAt(providerHover.point.position.x, providerHover.point.position.y)
+                if (at < 0)
+                    root.editor.tagList.clearHover()
+                else
+                    root.editor.tagList.hoverAt(field.role, field.text, at)
+            }
+        }
+        readonly property var providerHoverShown: {
+            const hover = root.editor.tagList.hover
+            if (!providerHover.hovered || hover.role !== field.role || field.hoveredProblem !== null)
+                return null
+            const at = field.textAt(providerHover.point.position.x, providerHover.point.position.y)
+            return at >= 0 && (hover.from === hover.to || (hover.from <= at && at < hover.to)) ? hover : null
+        }
+        ToolTip {
+            objectName: field.objectName + "ProviderTip"
+            visible: field.providerHoverShown !== null
+            x: providerHover.point.position.x
+            y: providerHover.point.position.y + 18
+            text: field.providerHoverShown
+                  ? qsTranslate("HikariSub.QcNotes", "%1 · %2", "A problem's message, then its source").arg(field.providerHoverShown.text, field.providerHoverShown.source)
+                  : ""
+        }
+        Connections {
+            target: root.problems
+            function onChanged() { field.refreshMarks() }
         }
         onSpelledChanged: refreshMarks()
         // Qt Quick text draws straight underlines only, so the wavy one is a Shape.
@@ -5612,7 +5868,7 @@ ApplicationWindow {
         readonly property var state: onLeft ? root.leftSideBarState : root.rightSideBarState
         readonly property var dockShown: root.dockList.find(d => root.panelName(d) === shown) ?? null
         anchors { top: parent.top; bottom: parent.bottom }
-        width: liveWidth >= 0 ? Math.max(SideBarModel.minimumWidth, liveWidth) : root.sideBarWidth(state)
+        width: root.sideBarWidth(liveWidth >= 0 ? liveWidth : state.width)
         visible: (onLeft ? root.leftSideBarShown : root.rightSideBarShown) && !root.videoFullscreen.active
         entries: onLeft ? root.leftSideBarEntries : root.rightSideBarEntries
         shown: root.shownInSideBar(state, entries)
@@ -5876,6 +6132,7 @@ ApplicationWindow {
                     settings: root.app.settings
                     Layout.minimumWidth: 0
                     tools: root.visualTools
+                    keyOf: symbol => root.boundKeys(symbol, 3)
                 }
                 Slider {
                     objectName: "videoSlider"
@@ -7867,8 +8124,12 @@ ApplicationWindow {
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
                         property bool reviewShown: false
                         property bool hasFolds: false
+                        property bool canMoveUp: false
+                        property bool canMoveDown: false
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
+                            canMoveUp = root.app.canMoveLines(true)
+                            canMoveDown = root.app.canMoveLines(false)
                             canShiftTranslation = root.app.canShiftTranslation()
                             reviewShown = root.review.on && root.review.current.count !== undefined
                             hasFolds = root.app.canConvertFolds()
@@ -8051,6 +8312,22 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_UP"
+                            iconRole: "move-up"
+                            objectName: "moveLinesUp"
+                            text: qsTranslate("HikariSub.Grid", "Move lines up")
+                            enabled: gridMenu.canMoveUp
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_UP")) root.app.moveLines(true)
+                        }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_DOWN"
+                            iconRole: "move-down"
+                            objectName: "moveLinesDown"
+                            text: qsTranslate("HikariSub.Grid", "Move lines down")
+                            enabled: gridMenu.canMoveDown
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_DOWN")) root.app.moveLines(false)
+                        }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
                             iconRole: "continuous-next"
@@ -8206,6 +8483,7 @@ ApplicationWindow {
                         }
                         MenuSeparator {}
                         ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TEXT_KEEP_TAGS"; iconRole: "clear"; objectName: "deleteTextKeepTags"; text: qsTranslate("HikariSub.Grid", "Delete text, keep tags"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT_KEEP_TAGS")) root.app.deleteTextKeepTags() }
                         ShellMenuItem {
                             command: "GLOBAL_REMOVE_LINES"
                             iconRole: "delete"
@@ -8349,7 +8627,7 @@ ApplicationWindow {
             objectName: "qcNotesDock"
             uniqueName: root.engineName("QcNotes")
             affinities: root.dockAffinities
-            title: qsTranslate("HikariSub.QcNotes", "QC notes")
+            title: qsTranslate("HikariSub.QcNotes", "Problems")
             Panel {
                 id: qcNotesPanel
                 objectName: "qcNotesPanel"
@@ -8357,12 +8635,13 @@ ApplicationWindow {
                 onActiveFocusChanged: root.app.presenceActivity(root.shellWindow, "reviewing", activeFocus)
                 minimumBodySize: qcNotesTool.minimumBodySize
                 anchors.fill: parent
-                title: qsTranslate("HikariSub.QcNotes", "QC notes")
+                title: qsTranslate("HikariSub.QcNotes", "Problems")
                 QcNotesPanel {
                     id: qcNotesTool
                     anchors.fill: parent
                     focus: true
                     qcNotes: root.qcNotes
+                    problems: root.problems
                     messages: root.messages
                     onEscaped: root.focusPanel(gridPanel, Qt.OtherFocusReason)
                 }
@@ -8425,30 +8704,33 @@ ApplicationWindow {
                 id: agentPanel
                 objectName: "agentPanel"
                 dockName: root.engineName("Agent")
-                minimumBodySize: Qt.size(300, Math.max(240, agentLoader.item ? agentLoader.item.minimumHeight : 0))
+                minimumBodySize: Qt.size(300, Math.max(240, agentLoader.item?.minimumHeight ?? 0))
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.Agent", "Agent")
                 Loader {
                     id: agentLoader
                     anchors.fill: parent
-                    active: root.agent.on
                     focus: true
-                    sourceComponent: AgentPanel {
+                    sourceComponent: root.agent.on ? agentPanelOn : agentPanelOff
+                }
+                Component {
+                    id: agentPanelOff
+                    AgentPanelOff {
+                        onTurnOnRequested: root.app.settings.setValue("ai.off", false)
+                    }
+                }
+                Component {
+                    id: agentPanelOn
+                    AgentPanel {
                         agent: root.agent
+                        quickInput: appQuickInput
                         aiSettings: root.aiSettings
                         onReviewRequested: root.showPanel(reviewDock)
                         onRestoreRequested: turn => restoreCheckpointDialog.openFor(turn)
-                        onSettingsRequested: root.openSettings("ai")
+                        onSettingsRequested: id => root.settingsWindow().openAt(id)
                         onLogRequested: root.showPanel(logDock)
                         onExportRequested: id => agentExportDialog.openFor(id)
                         onPluginRequested: id => pluginManagerDialog.showPlugin(id)
-                    }
-                }
-                Connections {
-                    target: root.agent
-                    function onSwitched() {
-                        if (!root.agent.on && agentDock.isOpen)
-                            agentDock.close()
                     }
                 }
             }
@@ -8567,6 +8849,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     styles: root.styleManager
                     shellWindow: root.shellWindow
+                    activeNumber: root.shell.activeLineNumber
                     editor: root.editor
                     app: root.app
                     managerLoader: styleManagerWindowLoader
@@ -9000,6 +9283,30 @@ ApplicationWindow {
                 }
             }
         }
+        InlineBar {
+            id: encodingBar
+            objectName: "encodingBar"
+            readonly property var tab: root.currentTab()
+            visible: !root.windowHome && root.app.encodingSuggestion.length > 0
+            severity: tab.modified ? "warning" : "info"
+            text: tab.modified
+                  ? qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8. Reopening drops the changes you made here.")
+                        .arg(tab.title, root.app.encodingSuggestion)
+                  : qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8.").arg(tab.title, root.app.encodingSuggestion)
+            onClosed: root.app.dismissEncodingSuggestion()
+            Layout.fillWidth: true
+            IconTextButton {
+                iconRole: "refresh"
+                objectName: "encodingBarReopen"
+                text: qsTranslate("HikariSub.Documents", "Reopen as %1").arg(root.app.encodingSuggestion)
+                onClicked: root.app.reopenWithEncoding(root.app.reopenEncodings()[0].name)
+            }
+            Button {
+                objectName: "encodingBarChoose"
+                text: qsTranslate("HikariSub.Documents", "Other encoding…")
+                onClicked: root.chooseReopenEncoding()
+            }
+        }
         ColumnLayout {
             objectName: "unresolvedBars"
             visible: entryBars.count > 0
@@ -9043,6 +9350,7 @@ ApplicationWindow {
             visible: root.workspaceLayout.nodeEffects
             Layout.fillWidth: true
             controller: root.nodeEffects
+            quickInput: appQuickInput
             onLeave: root.setNodeEffects(false)
             onProblemChosen: node => {
                 root.nodeEffects.selection = [node]
@@ -9409,6 +9717,7 @@ ApplicationWindow {
         objectName: "matroskaSubtitles"
         matroska: root.matroska
         settings: root.app.settings
+        quickInput: appQuickInput
         notify: root.notify
         documentTitle: () => root.currentTab().title || ""
         videoName: () => root.currentTab().video || ""
@@ -9545,7 +9854,7 @@ ApplicationWindow {
     FileChooser {
         id: videoDialog
         objectName: "videoOpenDialog"
-        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Video", "Video (%1)").arg(root.app.videoFilePatterns()), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("video", selectedFile)
             if (root.videoFullscreen.active)
@@ -9592,6 +9901,41 @@ ApplicationWindow {
         }
         lyricsImportLoader.active = true
         lyricsImportLoader.item.open()
+    }
+    FileChooser {
+        id: textDialog
+        objectName: "textOpenDialog"
+        title: qsTranslate("HikariSub.Documents", "Import text")
+        nameFilters: [qsTranslate("HikariSub.Documents", "Text files (*.txt)"),
+                      qsTranslate("HikariSub.Documents", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("text", selectedFile)
+            root.openTextImport(root.app.localPath(selectedFile))
+        }
+        function show() {
+            const folder = root.pickerFolder("text")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+    }
+    Loader {
+        id: textImportLoader
+        active: false
+        sourceComponent: TextImportDialog {
+            controller: root.textImport
+            settings: root.app.settings
+            onChooseAnother: textDialog.show()
+        }
+    }
+    function openTextImport(path) {
+        if (!root.textImport.load(path)) {
+            root.notices.post("error", qsTranslate("HikariSub.Documents", "Import text"),
+                              qsTranslate("HikariSub.Documents", "Could not read %1.").arg(path))
+            return
+        }
+        textImportLoader.active = true
+        textImportLoader.item.open()
     }
     Loader {
         id: dummyVideoLoader
@@ -10006,28 +10350,45 @@ ApplicationWindow {
         }
     }
     ListChooser {
-        id: audioTrackChooser
-        objectName: "audioTrackChooser"
+        id: encodingChooser
+        objectName: "encodingChooser"
         settings: root.app.settings
-        Connections {
-            target: root.audio
-            function onTrackChoicesChanged() {
-                if (root.audio.trackChoices.length > 0) {
-                    audioTrackChooser.choose({
-                        title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
-                        rows: root.audio.trackChoices,
-                        acceptText: qsTranslate("HikariSub.Audio", "Open")
-                    }, row => {
-                        if (row >= 0)
-                            root.audio.chooseTrack(row)
-                        else
-                            root.audio.cancelTrackChoice()
-                    })
-                } else if (audioTrackChooser.opened) {
-                    audioTrackChooser.done = null
-                    audioTrackChooser.none()
-                }
+    }
+    function chooseReopenEncoding() {
+        const encodings = root.app.reopenEncodings()
+        const suggested = root.app.encodingSuggestion
+        encodingChooser.choose({
+            title: qsTranslate("HikariSub.Documents", "Reopen with encoding"),
+            text: root.currentTab().modified
+                  ? qsTranslate("HikariSub.Documents", "Reopening drops the changes you made here. The file then saves as UTF-8.")
+                  : qsTranslate("HikariSub.Documents", "The file then saves as UTF-8."),
+            rows: encodings.map((row, index) => ({
+                text: row.label,
+                detail: index === 0 && suggested.length > 0 ? qsTranslate("HikariSub.Documents", "Detected") : ""
+            })),
+            acceptText: qsTranslate("HikariSub.Documents", "Reopen")
+        }, index => {
+            if (index >= 0)
+                root.app.reopenWithEncoding(encodings[index].name)
+        })
+    }
+    Connections {
+        target: root.audio
+        function onTrackChoicesChanged() {
+            if (root.audio.trackChoices.length === 0) {
+                appQuickInput.dismissFrom(root.audio)
+                return
             }
+            appQuickInput.pickFrom({
+                title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
+                items: root.audio.trackChoices.map((label, row) => ({ id: String(row), label: label })),
+                from: root.audio
+            }, id => {
+                if (id === null)
+                    root.audio.cancelTrackChoice()
+                else
+                    root.audio.chooseTrack(Number(id))
+            })
         }
     }
     FileChooser {
@@ -10878,6 +11239,34 @@ ApplicationWindow {
         explorer: explorerModel
         hangFrom: (titleBar.visible ? titleBar.height : 0) + 8
     }
+    Connections {
+        target: quickOpen.popup
+        function onOpened() {
+            appQuickInput.cancel()
+            if (root.pluginUi)
+                root.pluginUi.popups.dismissShown()
+        }
+    }
+    PluginQuickInput {
+        id: pluginQuickInput
+        objectName: "pluginQuickInput"
+        popups: root.pluginUi ? root.pluginUi.popups : null
+        hangFrom: quickOpen.hangFrom
+        onShowing: {
+            quickOpen.close()
+            appQuickInput.cancel()
+        }
+    }
+    AppQuickInput {
+        id: appQuickInput
+        objectName: "appQuickInput"
+        hangFrom: quickOpen.hangFrom
+        onShowing: {
+            quickOpen.close()
+            if (root.pluginUi)
+                root.pluginUi.popups.dismissShown()
+        }
+    }
     function apiCommand(symbol, run) {
         const target = root.globalActions()[symbol]
         if (!target) {
@@ -11095,6 +11484,12 @@ ApplicationWindow {
         onTriggered: if (!root.hotkeyGesture("GLOBAL_AI_ACTIONS")) root.openInlineAiMenu()
     }
     Action {
+        id: quickFixAction
+        text: qsTranslate("HikariSub.Hotkeys", "Quick fix")
+        enabled: root.shell.hasEditingTarget
+        onTriggered: if (!root.hotkeyGesture("GLOBAL_QUICK_FIX")) root.quickFix()
+    }
+    Action {
         id: repeatAiActionAction
         text: qsTranslate("HikariSub.Hotkeys", "Repeat last AI action")
         enabled: root.inlineAi.on && !!root.inlineAi.ready.any && !!root.inlineAi.last.action
@@ -11174,6 +11569,7 @@ ApplicationWindow {
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
         GLOBAL_CLOSE_TIMECODES: closeTimecodesAction, GLOBAL_SAVE_KEYFRAMES: saveKeyframesAction,
         GLOBAL_CLOSE_KEYFRAMES: closeKeyframesAction,
+        GLOBAL_REOPEN_WITH_ENCODING: reopenWithEncodingAction,
         GLOBAL_FULL_SCREEN_TYPESETTING: fullScreenTypesettingAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
@@ -11186,6 +11582,7 @@ ApplicationWindow {
         GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
+        GLOBAL_GRID_MARK_CURRENT_FRAME: markCurrentFrameAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
         GLOBAL_NODE_EFFECTS: nodeEffectsAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
@@ -11195,6 +11592,7 @@ ApplicationWindow {
         GLOBAL_SHOW_AI_REVIEW: showAiReviewAction,
         GLOBAL_SHOW_AI_AGENT: showAiAgentAction, GLOBAL_NEW_AI_THREAD: newAiThreadAction,
         GLOBAL_AI_ACTIONS: aiActionsAction, GLOBAL_REPEAT_AI_ACTION: repeatAiActionAction,
+        GLOBAL_QUICK_FIX: quickFixAction,
         GLOBAL_CLOSE_PAGE: closeAction,
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingAction, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesAction,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerAction, GLOBAL_OPEN_SUBS_RESAMPLE: resampleAction,
@@ -11379,6 +11777,7 @@ ApplicationWindow {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
         case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
+        case "GLOBAL_IMPORT_TEXT": textDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true
@@ -11441,10 +11840,14 @@ ApplicationWindow {
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
-        case "GLOBAL_HIDE_TAGS": root.app.toggleHideTags(); return true
+        case "GLOBAL_HIDE_TAGS": root.app.cycleGridTagsMode(); return true
+        case "GLOBAL_GRID_TAGS_SHOW": root.app.setGridTagsMode(0); return true
+        case "GLOBAL_GRID_TAGS_REPLACE": root.app.setGridTagsMode(1); return true
+        case "GLOBAL_GRID_TAGS_HIDE": root.app.setGridTagsMode(2); return true
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
+        case "GLOBAL_REMOVE_TEXT_KEEP_TAGS": if (editing) root.app.deleteTextKeepTags(); return true
         case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true
@@ -11497,6 +11900,9 @@ ApplicationWindow {
         case "EDITBOX_COMMIT": root.editor.applyChanges(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
+        case "EDITBOX_TRIGGER_COMPLETION":
+            root.editor.tagList.trigger(field.text, field.cursorPosition, field.role)
+            return true
         case "EDITBOX_START_DIFFERENCE":
         case "EDITBOX_END_DIFFERENCE":
             root.editor.insertTimeDifference(action === "EDITBOX_END_DIFFERENCE", edited.selectionStart, edited.selectionEnd)
@@ -11581,6 +11987,8 @@ ApplicationWindow {
         case "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME": if (video) root.app.insertLine(true, "frame"); return true
         case "GRID_INSERT_AFTER_WITH_VIDEO_FRAME": if (video) root.app.insertLine(false, "frame"); return true
         case "GRID_SWAP_LINES": root.app.swapLines(); return true
+        case "GRID_MOVE_UP": root.app.moveLines(true); return true
+        case "GRID_MOVE_DOWN": root.app.moveLines(false); return true
         case "GRID_JOIN_LINES": root.app.joinLines("join"); return true
         case "GRID_JOIN_TO_FIRST_LINE": root.app.joinLines("first"); return true
         case "GRID_JOIN_TO_LAST_LINE": root.app.joinLines("last"); return true

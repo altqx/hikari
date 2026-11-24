@@ -100,6 +100,8 @@ Grid > Split > At tag blocks [GRID_SPLIT_AT_TAG_BLOCKS]
 Grid > Split > -
 Grid > Split > Every N frames or seconds… [GRID_SPLIT_EVERY_N]
 Grid > Swap lines [GRID_SWAP_LINES]
+Grid > Move lines up [GRID_MOVE_UP]
+Grid > Move lines down [GRID_MOVE_DOWN]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
 Grid > Make times continuous > With the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
@@ -178,6 +180,7 @@ Grid > Translation matching… [GRID_TRANSLATION_DIALOG]
 Grid > Add QC note… [GLOBAL_ADD_QC_NOTE]
 Grid > -
 Grid > Delete text [GLOBAL_REMOVE_TEXT]
+Grid > Delete text, keep tags [GLOBAL_REMOVE_TEXT_KEEP_TAGS]
 Grid > Delete 1 line(s) [GLOBAL_REMOVE_LINES]
 Grid header
 Grid header > Layer [GRID_HIDE_LAYER]
@@ -486,22 +489,22 @@ Panel options (Spellchecker) > -
 Panel options (Spellchecker) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
 Panel options (Spellchecker) > -
 Panel options (Spellchecker) > Close
-Panel options (QC notes)
-Panel options (QC notes) > Import notes file…
-Panel options (QC notes) > Import notes from the clipboard…
-Panel options (QC notes) > Export notes…
-Panel options (QC notes) > Mark all as not done
-Panel options (QC notes) > -
-Panel options (QC notes) > Delete all notes…
-Panel options (QC notes) > -
-Panel options (QC notes) > Move panel…
-Panel options (QC notes) > Move to the left side bar
-Panel options (QC notes) > Move to the right side bar
-Panel options (QC notes) > Dock
-Panel options (QC notes) > -
-Panel options (QC notes) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
-Panel options (QC notes) > -
-Panel options (QC notes) > Close
+Panel options (Problems)
+Panel options (Problems) > Import notes file…
+Panel options (Problems) > Import notes from the clipboard…
+Panel options (Problems) > Export notes…
+Panel options (Problems) > Mark all as not done
+Panel options (Problems) > -
+Panel options (Problems) > Delete all notes…
+Panel options (Problems) > -
+Panel options (Problems) > Move panel…
+Panel options (Problems) > Move to the left side bar
+Panel options (Problems) > Move to the right side bar
+Panel options (Problems) > Dock
+Panel options (Problems) > -
+Panel options (Problems) > Lock layout [GLOBAL_TOGGLE_LOCK_LAYOUT]
+Panel options (Problems) > -
+Panel options (Problems) > Close
 Panel options (Explorer)
 Panel options (Explorer) > New subtitle file
 Panel options (Explorer) > Refresh

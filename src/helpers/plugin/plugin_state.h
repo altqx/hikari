@@ -47,6 +47,7 @@ struct Options {
     std::vector<std::string> commands;
     std::vector<std::string> exporters; // format ids
     std::vector<std::string> importers;
+    std::vector<std::string> providers; // "completion", "hover"
 };
 
 // One plugin's LuaJIT state and its `hikari` global.
@@ -60,7 +61,7 @@ public:
 
     std::vector<std::string> handledCommands() const;
     // `call` is {args, context}; a missing one reaches the handler as an empty table.
-    std::expected<void, std::string> run(const std::string &command, const api::Json &call, Host &host);
+    std::expected<api::Json, std::string> run(const std::string &command, const api::Json &call, Host &host);
     // Runs every handler for `event`; the error is the first handler's.
     std::expected<void, std::string> dispatch(const std::string &event, const api::Json &data, Host &host);
     // Runs the timer's callback; `last` forgets it afterwards. An unknown id does nothing.
@@ -71,6 +72,8 @@ public:
     // What the format's hikari.formats.importer handler made of the file: {lines, styles, info}, unchecked.
     std::expected<api::Json, std::string> importFile(const std::string &format, std::string_view bytes,
                                                      const std::string &name, Host &host);
+    // The hikari.providers handler's answer to `request`, as Lua returned it: null when it returned nil.
+    std::expected<api::Json, std::string> provide(const std::string &provider, const api::Json &request, Host &host);
     std::size_t memoryInUse() const { return m_budget.used; }
 
     struct Budget {

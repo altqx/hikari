@@ -88,6 +88,43 @@ struct AiFeatures::Live {
     QTimer pollTimer;
 };
 
+std::vector<backends::ai::McpServerEntry> pluginMcpChoices(const QStringList &rows)
+{
+    std::vector<backends::ai::McpServerEntry> out;
+    for (const QString &row : rows) {
+        const auto json = api::Json::parse(row.toStdString());
+        if (!json || !json->isObject())
+            continue;
+        const api::Json *id = json->find("id");
+        const api::Json *plugin = json->find("plugin");
+        if (!id || !id->isString() || !plugin || !plugin->isString())
+            continue;
+        backends::ai::McpServerEntry choice;
+        choice.id = id->asString();
+        choice.plugin = plugin->asString();
+        const api::Json *trusted = json->find("trusted");
+        choice.trusted = trusted && trusted->isBool() && trusted->asBool();
+        if (const api::Json *approved = json->find("approved"); approved && approved->isArray())
+            for (const api::Json &tool : approved->asArray())
+                if (tool.isString())
+                    choice.approved.insert(tool.asString());
+        out.push_back(std::move(choice));
+    }
+    return out;
+}
+
+QString pluginMcpChoiceRow(const backends::ai::McpServerEntry &server)
+{
+    api::Json approved = api::Json::array();
+    for (const std::string &tool : server.approved)
+        approved.push(tool);
+    return QString::fromStdString(api::Json::object({{"id", server.id},
+                                                     {"plugin", server.plugin},
+                                                     {"trusted", server.trusted},
+                                                     {"approved", std::move(approved)}})
+                                      .dump());
+}
+
 namespace {
 
 std::vector<backends::ai::McpServerEntry> mcpServersOf(const ui::SettingsStore &settings)
@@ -214,6 +251,20 @@ AiFeatures::Ports AiFeatures::defaultPorts(const QString &userFolder, api::Api *
     return ports;
 }
 
+void AiFeatures::settleOffDefault(ui::SettingsStore &settings, const Ports &ports)
+{
+    if (settings.contains(kOffSetting))
+        return;
+    const auto hasComponent = [&] {
+        if (ports.localSidecar)
+            return true;
+        return ports.sidecarUpdater && ports.sidecarUpdater()->current().has_value();
+    };
+    const auto hasProvider = [&] { return ports.configStore && ports.configStore()->load().enabled(); };
+    if (hasComponent() || hasProvider())
+        settings.set(kOffSetting, false);
+}
+
 AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent)
     : QObject(parent), m_settings(settings), m_ports(std::move(ports))
 {
@@ -226,8 +277,8 @@ AiFeatures::AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent
             applyWebSearch();
         else if (id == QLatin1String(kCustomAgentsSetting) && m_live)
             addAcpAgents();
-        else if (id == QLatin1String(kMcpServersSetting) && m_live)
-            m_live->mcp->setServers(mcpServersOf(m_settings));
+        else if ((id == QLatin1String(kMcpServersSetting) || id == QLatin1String(kPluginMcpServersSetting)) && m_live)
+            m_live->mcp->setServers(mcpServers());
         else if (id == QLatin1String(kAutoUpdateSetting) && m_live) {
             emit componentsChanged();
             if (autoUpdate())
@@ -262,7 +313,8 @@ void AiFeatures::apply()
         m_live->searchKeys = std::make_unique<application::ai::SearchKeys>(*m_live->keys);
         applyWebSearch();
         m_live->mcp = std::make_unique<backends::ai::McpClients>(*m_live->keys, QDir::homePath());
-        m_live->mcp->setServers(mcpServersOf(m_settings));
+        m_live->mcp->setPluginStart(m_pluginMcpStart);
+        m_live->mcp->setServers(mcpServers());
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
             m_live->mcp->relayTargets(backends::ai::withRegistryTargets(m_live->requests->relayTargets())),
             *m_live->searchKeys,
@@ -278,6 +330,49 @@ void AiFeatures::apply()
         m_live.reset();
     }
     emit switched(wanted);
+}
+
+std::vector<backends::ai::McpServerEntry> AiFeatures::mcpServers() const
+{
+    std::vector<backends::ai::McpServerEntry> out = mcpServersOf(m_settings);
+    const std::vector<backends::ai::McpServerEntry> chosen = pluginMcpChoices(m_settings.list(kPluginMcpServersSetting));
+    for (backends::ai::McpServerEntry server : m_pluginMcpServers)
+        if (const auto choice = std::ranges::find(chosen, server.id, &backends::ai::McpServerEntry::id); choice != chosen.end()) {
+            server.trusted = choice->trusted;
+            server.approved = choice->approved;
+            out.push_back(std::move(server));
+        }
+    return out;
+}
+
+void AiFeatures::setPluginMcpServers(std::vector<backends::ai::McpServerEntry> servers)
+{
+    if (servers == m_pluginMcpServers)
+        return;
+    m_pluginMcpServers = std::move(servers);
+    if (m_live)
+        m_live->mcp->setServers(mcpServers());
+    emit pluginMcpServersChanged();
+}
+
+void AiFeatures::setPluginMcpStart(backends::ai::McpClients::PluginStart start)
+{
+    m_pluginMcpStart = std::move(start);
+    if (m_live)
+        m_live->mcp->setPluginStart(m_pluginMcpStart);
+}
+
+void AiFeatures::keepPluginMcpChoices(const std::set<std::string> &installed)
+{
+    const QStringList rows = m_settings.list(kPluginMcpServersSetting);
+    QStringList kept;
+    for (const QString &row : rows) {
+        const auto choice = pluginMcpChoices({row});
+        if (!choice.empty() && installed.contains(choice.front().plugin))
+            kept << row;
+    }
+    if (kept != rows)
+        m_settings.set(kPluginMcpServersSetting, kept);
 }
 
 backends::ai::McpClients *AiFeatures::mcpClients()

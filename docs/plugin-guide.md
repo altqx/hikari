@@ -1,6 +1,6 @@
 # Write your first plugin
 
-This guide makes a small plugin in three steps: a command, then a panel, then an edit to the subtitles. Then it explains the manifest, permissions and tiers, and how to sign and publish a plugin.
+This guide makes a small plugin in three steps: a command, then a panel, then an edit to the subtitles. Then it shows how to run it from its folder while you work, and explains the manifest, permissions and tiers, and how to sign and publish a plugin.
 
 [Plugins](plugins.md) is the full contract, and the [Hikari API reference](api-reference.md) lists every operation and event. Each step below is a complete plugin in [`examples/first-plugin`](examples/first-plugin/), and a test runs all three.
 
@@ -166,6 +166,46 @@ end)
 
 Every widget that sends events needs an `id`. Each event says which widget sent it, in `event.widget`.
 
+## Work on it in place
+
+Packing a zip after every change is slow. Instead, load the folder as a dev plugin:
+
+1. In the plugin manager, choose **Install dev plugin…** and pick the `first-plugin` folder.
+2. Answer the install question. The plugin runs from the folder, with a **Dev** badge.
+3. Edit a file and save. HikariSub reloads the plugin within a second. If the new files break a rule, it keeps the last good ones running and shows why in the plugin's details and the Log panel. If they ask for more permissions, the change waits until you choose **Review…**.
+
+A dev plugin has its own data, settings and folders, so it never touches an installed copy of the same plugin. While it's loaded, it stands in for that copy. **Unload…** in its details returns to the installed copy and leaves your folder alone. See [Developer tools](plugins.md#developer-tools).
+
+## Test it
+
+`hikarisub --test-plugin` runs your plugin against a subtitle file with no window, and says which steps failed. Put a test subtitle file and a `tests.jsonl` beside your plugin, one step per line:
+
+```jsonl
+{"call": "documents.get", "params": {}, "expect": {"lineCount": 2}}
+{"call": "selection.set", "params": {"selected": [1]}}
+{"run": "unbreak"}
+{"expectDocument": "unbroken.ass"}
+```
+
+```sh
+hikarisub --test-plugin first-plugin tests.jsonl --document episode.ass
+```
+
+- **The run.** It loads your folder as a dev plugin in a throwaway user folder, so your own settings and plugins are never touched. It gives the plugin every permission the manifest asks for, without asking, and lists them first.
+- **What a command returns** is checked with `expect`, as in `{"run": "greet", "expect": {"hello": "Ana"}}`.
+- **The result.** It prints a line for each failed step, with its line in `tests.jsonl`, and exits with 0 when all passed, 1 when one failed, and 2 when the tests couldn't run. `--json` prints a report for other tools instead.
+- **Prompts.** A command that asks the user gets its answer from the `answer` step before it.
+- **A stuck step.** Each step has 10 seconds, or `--timeout <ms>`.
+
+[The test harness](plugins.md#developer-tools) lists every step.
+
+**In your CI.** The harness needs no display, so it runs on any Linux or Windows runner with HikariSub installed. On Linux, run the command as above, from the AppImage or the installed package. On Windows, install it silently with `/S`, which installs it for the current user. `hikarisub.exe` is a windowed program, so pipe its output to let PowerShell wait for it and keep what it prints:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\HikariSub\hikarisub.exe" --test-plugin first-plugin tests.jsonl --document episode.ass | Write-Output
+exit $LASTEXITCODE
+```
+
 ## The manifest
 
 [The manifest](plugins.md#the-manifest) lists every field. Besides the fields above:
@@ -218,9 +258,25 @@ The marketplace lists plugins from [altqx/hikari-plugins](https://github.com/alt
 4. **Releases.** Publish a GitHub release with `<id>-<version>.hikariplugin` and its `.minisig`. The registry checks it, publishes it within half an hour, and uses the release notes as its changelog. Users who installed it from the marketplace get the update automatically.
 5. **More permissions.** An update that asks for more permissions waits for review. The users who installed the plugin then confirm the new permissions.
 
+## Type hints
+
+Your editor can check your calls and complete them. [docs/types/](types/) has two files, generated from the API of this version. `hikarisub --export-docs <folder>` writes them too.
+
+- **Lua.** Put [`hikari.lua`](types/hikari.lua) where [LuaLS](https://luals.github.io/) finds it, such as `Lua.workspace.library` in your workspace settings. `hikari.call("lines.list", {})` then gives you `hikari.LinesListResult`, and `hikari.events.on("document.changed", fn)` gives `fn` its data's type.
+- **TypeScript.** A [program plugin](plugins.md#program-plugins) can be written in TypeScript and compiled into one program with `bun build --compile`. Import the types from [`hikari.d.ts`](types/hikari.d.ts): `ProgramCalls` gives each method's params and result, and `HostRequest` is what HikariSub asks. The [Word count](examples/word-count/) sample answers `initialize` and its `count` command, and calls `lines.list` and `hikari/notify`:
+
+  ```ts
+  const { lines } = await call("lines.list", { fields: ["text"] });
+  ```
+
+  ```sh
+  bun build --compile src/main.ts --outfile bin/word-count
+  ```
+
 ## Next
 
 - **[Plugins](plugins.md).** Dialogs, events, files, the network, QML panels and the plugin manager.
 - **[Hikari API reference](api-reference.md).** Every operation, event and type, with its parameters and results. It is generated from HikariSub itself, so it matches the API version that HikariSub reports in `hikari.api_version`.
 - **[Line tools](examples/line-tools/).** A larger example with a chart, a list, a menu and a dialog.
 - **[Zigzag](examples/zigzag/).** A plugin that adds one node-effects node.
+- **[Word count](examples/word-count/).** A program plugin in TypeScript.

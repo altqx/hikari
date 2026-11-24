@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <stdexcept>
 
 namespace hikari::application {
 
@@ -781,6 +782,57 @@ std::string manualInstallCommand(std::string_view helper, std::string_view file,
     return "sudo " + quote(helper) + " install " + quote(file) + " " + quote(version);
 }
 
+namespace {
+
+PluginTestArguments pluginTestArguments(std::vector<std::string>::const_iterator &it,
+                                        std::vector<std::string>::const_iterator end)
+{
+    PluginTestArguments out;
+    const auto value = [&](std::string_view option) -> std::optional<std::string> {
+        if (std::next(it) == end) {
+            out.problem = std::string(option) + " needs a value";
+            return std::nullopt;
+        }
+        return *++it;
+    };
+    std::vector<std::string> positional;
+    while (std::next(it) != end) {
+        const std::string &argument = *++it;
+        if (argument == "--document") {
+            if (auto v = value(argument))
+                out.document = *v;
+        } else if (argument == "--timeout") {
+            const auto v = value(argument);
+            std::size_t used = 0;
+            int ms = 0;
+            try {
+                ms = v ? std::stoi(*v, &used) : 0;
+            } catch (const std::exception &) {
+                used = 0;
+            }
+            if (v && (used != v->size() || ms <= 0))
+                out.problem = "--timeout needs a number of milliseconds above 0";
+            else if (v)
+                out.stepTimeoutMs = ms;
+        } else if (argument == "--json") {
+            out.json = true;
+        } else if (argument.starts_with("--")) {
+            out.problem = "unknown option " + argument;
+        } else {
+            positional.push_back(argument);
+        }
+    }
+    if (positional.size() == 2) {
+        out.folder = positional[0];
+        out.script = positional[1];
+    } else if (out.problem.empty()) {
+        out.problem = "--test-plugin needs a plugin folder and a tests.jsonl file";
+    }
+    return out;
+}
+
+}
+
 StartupArguments parseStartupArguments(const std::vector<std::string> &arguments)
 {
     constexpr std::string_view health = "--hikari-health=", from = "--hikari-updated-from=";
@@ -810,6 +862,8 @@ StartupArguments parseStartupArguments(const std::vector<std::string> &arguments
             out.window = WindowRequest::Reuse;
         else if (argument == "--open-folder")
             out.openFolder = true;
+        else if (argument == "--test-plugin")
+            out.testPlugin = pluginTestArguments(it, arguments.end());
         else
             out.rest.push_back(argument);
     }

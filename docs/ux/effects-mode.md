@@ -2,7 +2,7 @@
 
 How the node effects mode looks in Quiet ([#1205](https://github.com/altqx/hikari/issues/1205)). What the mode does (switching, the docks, the canvas, wiring, Add node, the keyboard, the preview, presets) is [node-effects.md](../node-effects.md#the-node-effects-mode)'s (NE2); this document says how it looks. The Template editor looks as [the Karaoke layout](karaoke-layout.md#the-template-editor) says. While either is open, Discord shows Effects ([Discord presence settings](discord-presence.md#modes)).
 
-The owner chose this design from the mode gate board on 2026-11-17 ("Lgtm", Q730–Q734; see [Decisions](#decisions)). The app doesn't change until the code card lands after the beta.4 tag.
+The owner chose this design from the mode gate board on 2026-11-17 ("Lgtm", Q730–Q734; see [Decisions](#decisions)). It is built with the [node editor](node-editor.md) parts in beta.6 ([#1436](https://github.com/altqx/hikari/issues/1436)), which also change the Node panel, the Source lines and the canvas; where the two differ, node-editor.md wins.
 
 ## The window
 
@@ -67,7 +67,7 @@ From the top: the node's title in semibold with its id in a monospace field at t
 
 | State | Shown |
 | --- | --- |
-| No graph | In the Graph: the `node-editor` glyph, "This file has no node effects yet" in semibold, "A graph turns karaoke lines into new lines. It is saved in the file as a Comment line, and the lines it writes are marked fx with its name." in `muted`, then **New graph** (primary), **From a preset…** and **From the library…** (quiet). Source lines: "Pick or add a graph to see the karaoke lines it applies to." |
+| No graph | In the Graph: the `node-editor` glyph, "This file has no node effects yet" in semibold, "A graph turns karaoke lines into new lines. It is saved in the file as a Comment line, and the lines it writes are marked fx with its name." in `muted`, then **New graph** (primary), **From a preset…** and **From the library** (quiet). Source lines: "Pick or add a graph to see the karaoke lines it applies to." |
 | Applying | Under the Graph's header: "Applying node effect · 212 of 412 karaoke lines" with **Stop** (quiet) over a 2-unit `accent` progress line |
 | Problems | See [Problems](#problems) |
 | Lua not trusted | See [Lua trust](#lua-trust) |

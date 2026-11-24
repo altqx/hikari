@@ -1,6 +1,7 @@
 #include "hikari/application/resample.h"
 
 #include "hikari/application/grid_split.h"
+#include "hikari/application/matrix_conversion.h"
 #include "hikari/application/script_resolution.h"
 #include "hikari/core/style.h"
 #include "hikari/core/text_projection.h"
@@ -8,7 +9,9 @@
 #include <algorithm>
 #include <clocale>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -180,7 +183,24 @@ Resolution scriptResolution(const core::Document &document)
     return legacyScriptResolution(writtenScriptResolution(document));
 }
 
-void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool stretch, const ResampleWarning &warn)
+Edges fittingEdges(Resolution from, Resolution to, bool crop)
+{
+    if (from.width < 1 || from.height < 1 || to.width < 1 || to.height < 1)
+        return {};
+    const double fromAspect = double(from.width) / from.height, toAspect = double(to.width) / to.height;
+    if (std::abs(fromAspect - toAspect) / toAspect <= .01)
+        return {};
+    const std::int64_t crossed = std::int64_t(from.height) * to.width - std::int64_t(from.width) * to.height;
+    Edges edges;
+    if ((toAspect > fromAspect) != crop)
+        edges.left = edges.right = static_cast<int>(crossed / (2 * std::int64_t(to.height)));
+    else
+        edges.top = edges.bottom = static_cast<int>(-crossed / (2 * std::int64_t(to.width)));
+    return edges;
+}
+
+void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool stretch, const ResampleWarning &warn,
+                     Edges edges)
 {
     const float val = std::min(xnsize, ynsize), val1 = std::max(xnsize, ynsize);
     const float stretched = stretch ? val1 / val : 1.f;
@@ -191,15 +211,9 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
     const auto styles = core::decodeStyles(document);
     for (std::size_t i = 0; i < styles.size(); ++i) {
         core::StyleValues s = styles[i];
-        int ml = atoi8(s.marginLeft);
-        ml = static_cast<int>(ml * xnsize);
-        s.marginLeft = number(ml);
-        int mr = atoi8(s.marginRight);
-        mr = static_cast<int>(mr * xnsize);
-        s.marginRight = number(mr);
-        int mv = atoi8(s.marginVertical);
-        mv = static_cast<int>(mv * ynsize);
-        s.marginVertical = number(mv);
+        s.marginLeft = number(static_cast<int>((atoi8(s.marginLeft) + edges.left) * xnsize));
+        s.marginRight = number(static_cast<int>((atoi8(s.marginRight) + edges.right) * xnsize));
+        s.marginVertical = number(static_cast<int>((atoi8(s.marginVertical) + edges.top) * ynsize));
         const auto stretchScale = [](u8 &field, float by) {
             if (by == 1.f)
                 return;
@@ -235,17 +249,17 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
             continue;
         core::LineRecord changed = *line;
         bool marginChanged = false, textChanged = false;
-        auto scaleMargin = [&](core::IntField &field, float scale) {
+        auto scaleMargin = [&](core::IntField &field, int shift, float scale) {
             const int v = static_cast<int>(field.value);
             if (!v)
                 return;
-            field.value = static_cast<int>(v * scale);
+            field.value = static_cast<int>((v + shift) * scale);
             field.lexeme = number(field.value);
             marginChanged = true;
         };
-        scaleMargin(changed.marginLeft, xnsize);
-        scaleMargin(changed.marginRight, xnsize);
-        scaleMargin(changed.marginVertical, ynsize);
+        scaleMargin(changed.marginLeft, edges.left, xnsize);
+        scaleMargin(changed.marginRight, edges.right, xnsize);
+        scaleMargin(changed.marginVertical, edges.top, ynsize);
 
         const bool translated = !changed.translation.empty();
         u16 txt = core::toUtf16(translated ? changed.translation : changed.text);
@@ -266,6 +280,7 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
                 resized = tag.value.substr(0, mPos) + u"m ";
                 const bool drawing = tag.name == u"pvector";
                 const float xscale = drawing ? vectorXScale : xnsize, yscale = drawing ? vectorYScale : ynsize;
+                const int xshift = drawing ? 0 : edges.left, yshift = drawing ? 0 : edges.top;
                 int ii = 0;
                 for (u16 tkn : tokens(u16v(tag.value).substr(mPos + 1), u' ')) {
                     if (tkn != u"m" && tkn != u"l" && tkn != u"b" && tkn != u"s" && tkn != u"c") {
@@ -275,7 +290,7 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
                             lastC = u"c";
                         }
                         if (toCDouble(tkn, value)) {
-                            value *= (ii % 2 == 0) ? xscale : yscale;
+                            value = (ii % 2 == 0) ? (value + xshift) * xscale : (value + yshift) * yscale;
                             resized += getfloat(value) + lastC + u" ";
                         } else {
                             log(tkn, tag.name);
@@ -293,7 +308,7 @@ void resizeSubtitles(core::Document &document, float xnsize, float ynsize, bool 
                 for (u16 tkn : tokens(tag.value, u',')) {
                     tkn = trimmed(tkn);
                     if (ii < 4 && toCDouble(tkn, value)) {
-                        value *= (ii % 2 == 0) ? xnsize : ynsize;
+                        value = (ii % 2 == 0) ? (value + edges.left) * xnsize : (value + edges.top) * ynsize;
                         resized += getfloat(value) + u",";
                     } else {
                         if (ii < 4)
@@ -344,6 +359,7 @@ int infoNumber(const core::Document &d, std::u8string_view key)
 struct Rotation {
     double rx = 1, ry = 1, z0 = 0, z1 = 0;
     bool stretch = false;
+    double shiftX = 0, shiftY = 0;
 
     bool anamorphic() const { return rx != ry; }
     bool reaches(const persp::LineState &s) const
@@ -411,8 +427,8 @@ std::optional<persp::Transform> keptShape(const persp::LineState &before, const 
     }
     const visual::PointF c0 = persp::shownPosition(before.transform, rotation.z0);
     const auto map = [&](visual::PointF p) {
-        return visual::PointF{static_cast<float>(c0.x * rotation.rx + dx * (p.x - c0.x)),
-                              static_cast<float>(c0.y * rotation.ry + dy * (p.y - c0.y))};
+        return visual::PointF{static_cast<float>((c0.x + rotation.shiftX) * rotation.rx + dx * (p.x - c0.x)),
+                              static_cast<float>((c0.y + rotation.shiftY) * rotation.ry + dy * (p.y - c0.y))};
     };
     persp::Quad quad = persp::textToQuad(before.transform, before.box, rotation.z0);
     for (visual::PointF &p : quad)
@@ -451,21 +467,41 @@ void keepShapes(core::Document &d, Resolution to, const std::vector<Turned> &tur
 std::expected<void, CommandRefusal> changeResolution(EditSession &session, Resolution from, Resolution to,
                                                      bool resample, const ResampleOptions &options)
 {
-    const auto format = session.document().format();
+    const auto &document = session.document();
+    const auto format = document.format();
     if (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText)
         return std::unexpected(CommandRefusal::Invalid);
+    std::optional<MatrixConversion> conversion;
+    if (resample && !options.matrix.empty()) {
+        const auto written = document.scriptInfo(u8"YCbCr Matrix");
+        conversion = written ? MatrixConversion::between(std::string(written->begin(), written->end()), options.matrix)
+                             : std::nullopt;
+        if (!conversion)
+            return std::unexpected(CommandRefusal::Invalid);
+    }
+    const Edges edges = resample ? options.edges : Edges{};
+    const Resolution edged{from.width + edges.left + edges.right, from.height + edges.top + edges.bottom};
+    if (edged.width < 1 || edged.height < 1)
+        return std::unexpected(CommandRefusal::Invalid);
     std::set<core::LineId> touches;
-    for (const auto *line : session.document().lines())
+    for (const auto *line : document.lines())
         touches.insert(line->id);
     return session.run(Command{"Changing subtitles resolution", session.revision(), touches, [&](core::Document &d) {
         const int layoutX = infoNumber(d, u8"LayoutResX"), layoutY = infoNumber(d, u8"LayoutResY");
         const bool layout = layoutX > 0 && layoutY > 0;
-        const auto layoutHeight = [&](int scriptHeight) {
-            return layout ? layoutY : options.frameHeight > 0 ? options.frameHeight : scriptHeight;
+        const int newLayoutY =
+            layout ? layoutY + static_cast<int>(std::lround(layoutY * double(edges.top + edges.bottom) / from.height))
+                   : 0;
+        const auto layoutHeight = [&](int scriptHeight, int layoutValue) {
+            return layout ? layoutValue : options.frameHeight > 0 ? options.frameHeight : scriptHeight;
         };
-        const Rotation rotation{to.width / static_cast<double>(from.width), to.height / static_cast<double>(from.height),
-                                persp::screenZ(from.height, layoutHeight(from.height)),
-                                persp::screenZ(to.height, layoutHeight(to.height)), options.stretch};
+        const Rotation rotation{to.width / static_cast<double>(edged.width),
+                                to.height / static_cast<double>(edged.height),
+                                persp::screenZ(edged.height, layoutHeight(edged.height, layoutY)),
+                                persp::screenZ(to.height, layoutHeight(to.height, newLayoutY)),
+                                options.stretch,
+                                double(edges.left),
+                                double(edges.top)};
         const auto turned =
             resample && options.adjustRotations ? turnedLines(d, from, rotation, options) : std::vector<Turned>{};
 
@@ -476,11 +512,16 @@ std::expected<void, CommandRefusal> changeResolution(EditSession &session, Resol
         if (layout) {
             const double aspectChange = (to.width / static_cast<double>(to.height)) /
                                         (from.width / static_cast<double>(from.height));
-            d.setScriptInfo(u8"LayoutResX", number(std::llround(layoutX * aspectChange)));
+            d.setScriptInfo(u8"LayoutResX", number(std::llround(layoutX * (double(newLayoutY) / layoutY) * aspectChange)));
+            d.setScriptInfo(u8"LayoutResY", number(newLayoutY));
         }
-        resizeSubtitles(d, to.width / static_cast<float>(from.width), to.height / static_cast<float>(from.height),
-                        options.stretch, options.unscaled);
+        resizeSubtitles(d, to.width / static_cast<float>(edged.width), to.height / static_cast<float>(edged.height),
+                        options.stretch, options.unscaled, edges);
         keepShapes(d, to, turned, rotation, options);
+        if (conversion) {
+            convertColours(d, *conversion);
+            d.setScriptInfo(u8"YCbCr Matrix", u8(options.matrix.begin(), options.matrix.end()));
+        }
         return true;
     }});
 }

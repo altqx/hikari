@@ -15,6 +15,7 @@ Item {
     property string builtMode: ""
     property string foot: ""
     property string emptyText: ""
+    property bool checkingMacros: false
 
     readonly property var prefixes: [
         { prefix: ">", mode: "commands", text: qsTr("Run a command") },
@@ -102,7 +103,7 @@ Item {
         if (p.mode === "files")
             quick.buildFiles()
         else if (p.mode === "commands")
-            quick.buildCommands()
+            quick.startCommands()
         else if (p.mode === "styles")
             quick.buildStyles()
         else if (p.mode === "view")
@@ -139,6 +140,10 @@ Item {
         const kept = (settings.value("recent.commands") ?? []).filter(c => c !== command)
         settings.setValue("recent.commands", [command].concat(kept).slice(0, 10))
     }
+    function startCommands() {
+        quick.shell.automation.menuOpened()
+        quick.buildCommands()
+    }
     function buildCommands() {
         const menus = quick.shell.commandMenus()
         const recent = quick.shell.app.settings.value("recent.commands") ?? []
@@ -147,16 +152,21 @@ Item {
             plugins.set(p.id, p)
         const recentItems = []
         const rest = []
+        let checking = false
         for (const c of quick.shell.app.apiHost.commands()) {
             let description = c.group ?? ""
             let tooltip = ""
             let icon = ""
+            let check = ({})
             if (c.kind === "hotkey") {
                 const places = menus[c.command]
                 if (places && places.length > 0)
                     description = places[0].split(" > ").slice(0, -1).join(" › ")
             } else if (c.kind === "macro") {
                 description = qsTr("Automation")
+                check = quick.shell.automation.commandCheck(c.command)
+                tooltip = check.help ?? ""
+                checking = checking || check.note !== undefined
             } else if (c.kind === "plugin") {
                 const p = plugins.get(c.command)
                 if (p && p.palette === false)
@@ -165,12 +175,13 @@ Item {
                 tooltip = p?.description ?? ""
                 icon = p?.icon ?? ""
             }
-            const disabled = c.enabled ? "" : (c.disabledReason ?? "").length > 0 ? c.disabledReason
-                                                                                   : qsTr("Not available here")
+            const disabled = c.enabled ? check.reason ?? ""
+                                       : (c.disabledReason ?? "").length > 0 ? c.disabledReason : qsTr("Not available here")
             const at = recent.indexOf(c.command)
             const item = { id: c.command, label: c.title, description: description, tooltip: tooltip, icon: icon,
                            shortcut: c.kind === "hotkey" ? MenuKeys.text(c.command, c.windowIndex).replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+") : "",
-                           disabled: disabled, commandKind: c.kind, rank: at >= 0 ? at : 1000 }
+                           disabled: disabled, commandKind: c.kind, rank: at >= 0 ? at : 1000,
+                           checkable: check.active !== undefined, checked: check.active === true }
             if (at >= 0)
                 recentItems.push(item)
             else
@@ -182,6 +193,7 @@ Item {
             item.group = qsTr("Recently used")
         for (const item of rest)
             item.group = recentItems.length > 0 ? qsTr("All commands") : ""
+        quick.checkingMacros = checking
         pick.model.items = recentItems.concat(rest)
     }
     function runCommand(item) {
@@ -348,6 +360,16 @@ Item {
     }
 
     Connections {
+        target: quick.shell.automation
+        function onChecksChanged() {
+            if (!pick.visible || quick.builtMode !== "commands")
+                return
+            const current = pick.model.currentId
+            quick.buildCommands()
+            pick.model.setCurrentById(current)
+        }
+    }
+    Connections {
         target: quick.explorer
         function onFilesFound(found, done) {
             quick.projectFiles = done ? found : quick.projectFiles.concat(found)
@@ -366,7 +388,7 @@ Item {
                                                : qsTr("Search files by name. Type ? for the other searches.")
         foot: quick.foot
         emptyText: quick.emptyText
-        busy: quick.explorer.scanning
+        busy: quick.explorer.scanning || (quick.mode === "commands" && quick.checkingMacros)
         filterText: ""
         countText: quick.mode === "commands" ? qsTr("%n commands", "", pick.model.count)
                  : quick.mode === "files" ? qsTr("%n files", "", pick.model.count)

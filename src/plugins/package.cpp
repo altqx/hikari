@@ -5,9 +5,13 @@
 
 #include "hikari/plugins/archive.h"
 #include "hikari/plugins/qml_imports.h"
+#include "hikari/themes/theme.h"
 
 #include <algorithm>
+#include <fstream>
+#include <iterator>
 #include <set>
+#include <system_error>
 
 namespace hikari::plugins {
 
@@ -62,6 +66,49 @@ std::optional<PackageProblem> dictionaryProblem(const std::vector<Dictionary> &d
     return std::nullopt;
 }
 
+
+std::optional<PackageProblem> themeProblem(const std::vector<ColourTheme> &themes, const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    for (const ColourTheme &theme : themes) {
+        const auto file = std::ranges::find(files, theme.path, &PackageFile::path);
+        if (file == files.end())
+            return PackageProblem{Kind::MissingContent, theme.path, {}, {}};
+        const auto loaded = themes::load({reinterpret_cast<const char *>(file->data.data()), file->data.size()});
+        if (!loaded)
+            return PackageProblem{Kind::BadContent, theme.path, {},
+                                  "fails the theme check at " + (loaded.error().path.empty() ? "/" : loaded.error().path) +
+                                      ": " + loaded.error().message};
+        if (const std::string_view type = themes::typeName(loaded->type); type != theme.type)
+            return PackageProblem{Kind::BadContent, theme.path, {},
+                                  "is a " + std::string(type) + " theme, and hikari-plugin.json lists it as " + theme.type};
+    }
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> interfaceIconFileProblem(const std::string &path, const std::vector<PackageFile> &files)
+{
+    using Kind = PackageProblem::Kind;
+    const auto file = std::ranges::find(files, path, &PackageFile::path);
+    if (file == files.end())
+        return PackageProblem{Kind::MissingContent, path, {}, {}};
+    if (auto refused = interfaceIconProblem(*file))
+        return PackageProblem{Kind::BadContent, path, {}, std::move(*refused)};
+    return std::nullopt;
+}
+
+std::optional<PackageProblem> interfaceIconsProblem(const Manifest &manifest, const std::vector<std::string> &roles,
+                                                   const std::vector<PackageFile> &files)
+{
+    for (const IconTheme &theme : manifest.iconThemes)
+        for (const std::string &role : roles)
+            if (auto problem = interfaceIconFileProblem(theme.folder + "/" + role + ".svg", files))
+                return problem;
+    for (const OwnIcon &icon : manifest.icons)
+        if (auto problem = interfaceIconFileProblem(icon.path, files))
+            return problem;
+    return std::nullopt;
+}
 }
 
 std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> files, std::int64_t apiVersion,
@@ -99,8 +146,11 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     const auto holds = [&](const std::string &path) {
         return std::ranges::any_of(files, [&](const PackageFile &f) { return f.path == path; });
     };
-    if (!holds(manifest->main))
+    if (!manifest->main.empty() && !holds(manifest->main))
         return std::unexpected(PackageProblem{Kind::MissingMain, manifest->main, {}});
+    if (const Program *main = manifest->program(manifest->mainProgram);
+        main && !main->platforms.contains(std::string(thisPlatform())))
+        return std::unexpected(PackageProblem{Kind::MainProgramUnavailable, main->title, {}});
     bool forOnePlatform = false;
     for (const Program &program : manifest->programs)
         for (const auto &[platform, run] : program.platforms) {
@@ -119,10 +169,54 @@ std::expected<Package, PackageProblem> openPackage(std::vector<PackageFile> file
     for (auto problem : {contentProblem(manifest->styles, checks.styleCatalogue, files),
                          contentProblem(manifest->karaokePresets, checks.karaokePreset, files),
                          dictionaryProblem(manifest->dictionaries, checks, files),
-                         contentProblem(manifest->graphs, checks.graph, files)})
+                         contentProblem(manifest->graphs, checks.graph, files),
+                         contentProblem(manifest->layouts, checks.layout, files),
+                         themeProblem(manifest->themes, files), interfaceIconsProblem(*manifest, checks.iconRoles, files)})
         if (problem)
             return std::unexpected(std::move(*problem));
     return Package{std::move(*manifest), std::move(files)};
+}
+
+std::expected<std::vector<PackageFile>, PackageProblem> readPluginFolder(const std::filesystem::path &folder)
+{
+    namespace fs = std::filesystem;
+    using Kind = PackageProblem::Kind;
+    std::vector<PackageFile> files;
+    std::size_t total = 0;
+    std::error_code error;
+    fs::recursive_directory_iterator it(folder, fs::directory_options::none, error);
+    if (error)
+        return std::unexpected(PackageProblem{Kind::NoManifest, std::string(kManifestName), {}});
+    for (const fs::recursive_directory_iterator end; it != end; it.increment(error)) {
+        if (error)
+            return std::unexpected(PackageProblem{Kind::BadPath, {}, {}});
+        const fs::path relative = it->path().lexically_relative(folder);
+        const std::u8string generic = relative.generic_u8string();
+        const std::string path(generic.begin(), generic.end());
+        if (it->path().filename().u8string().starts_with(u8".")) {
+            if (it->is_directory(error))
+                it.disable_recursion_pending();
+            continue;
+        }
+        if (it->is_symlink(error))
+            return std::unexpected(PackageProblem{Kind::BadPath, path, {}});
+        if (!it->is_regular_file(error))
+            continue;
+        if (files.size() == kMaxPackageFiles)
+            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}});
+        total += std::size_t(it->file_size(error));
+        if (total > kMaxPlatformPackageBytes)
+            return std::unexpected(PackageProblem{Kind::TooLarge, {}, {}, {}, kMaxPlatformPackageBytes});
+        std::ifstream in(it->path(), std::ios::binary);
+        std::vector<char> data{std::istreambuf_iterator<char>(in), {}};
+        if (in.bad())
+            return std::unexpected(PackageProblem{Kind::BadPath, path, {}});
+        PackageFile file{path, {}};
+        file.data.resize(data.size());
+        std::ranges::transform(data, file.data.begin(), [](char c) { return std::byte(c); });
+        files.push_back(std::move(file));
+    }
+    return files;
 }
 
 }

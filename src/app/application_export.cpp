@@ -1,12 +1,16 @@
 #include "hikari/app/application.h"
 
+#include "hikari/application/dialog_memory.h"
 #include "hikari/application/edit_session.h"
 #include "hikari/application/export_steps.h"
+#include "hikari/application/macro_transaction.h"
 #include "hikari/application/export_format_ids.h"
 #include "hikari/application/style_manager.h"
+#include "hikari/backends/text_encoding.h"
 #include "hikari/core/export.h"
 #include "hikari/core/srv3.h"
 #include "hikari/core/text_projection.h"
+#include "automation_dialog_controller.h"
 #include "project_file.h"
 
 #include <QCoreApplication>
@@ -59,6 +63,25 @@ constexpr std::pair<const char *, bool core::ExportOptions::*> kExportFlags[] = 
 };
 
 constexpr int kRememberedExports = 100;
+
+bool takesAnEncoding(ExportFormat format)
+{
+    switch (format) {
+    case ExportFormat::Srt:
+    case ExportFormat::Sbv:
+    case ExportFormat::PlainText:
+    case ExportFormat::MicroDvd:
+    case ExportFormat::Mpl2:
+    case ExportFormat::TMPlayer: return true;
+    default: return false;
+    }
+}
+
+bool offeredEncoding(const QString &name)
+{
+    const std::string wanted = name.toStdString();
+    return std::ranges::any_of(hikari::backends::reopenEncodings(), [&](const auto &e) { return e.name == wanted; });
+}
 
 const ExportFormatRow *exportFormatNamed(const QString &id)
 {
@@ -363,6 +386,8 @@ struct Application::ExportWrite {
     ExportFormat format;
     core::ExportOptions options;
     QString lines, language;
+    std::string encoding;
+    bool writeUnencodable = false;
     std::vector<core::Srv3StyleOptions> srv3Saved;
     std::optional<std::vector<core::Srv3StyleOptions>> srv3Changed;
 };
@@ -395,6 +420,8 @@ QVariantMap Application::exportSetup() const
     }
     options.insert(QStringLiteral("ttmlNetflix"), saved.value(QStringLiteral("ttmlNetflix")).toBool());
     options.insert(QStringLiteral("language"), saved.value(QStringLiteral("language")).toString());
+    const QString encoding = saved.value(QStringLiteral("encoding")).toString();
+    options.insert(QStringLiteral("encoding"), offeredEncoding(encoding) ? encoding : QStringLiteral("UTF-8"));
     const QString lines = saved.value(QStringLiteral("lines")).toString();
     options.insert(QStringLiteral("lines"), lines == QLatin1String("selected") || lines == QLatin1String("shown")
                                                 ? lines
@@ -418,8 +445,16 @@ QVariantMap Application::exportSetup() const
     }
 
     QVariantMap extensions;
-    for (const auto &row : kExportFormats)
+    QStringList encodingFormats;
+    for (const auto &row : kExportFormats) {
         extensions.insert(QLatin1String(row.id), QLatin1String(row.extension));
+        if (takesAnEncoding(row.format))
+            encodingFormats << QLatin1String(row.id);
+    }
+    QVariantList encodings;
+    for (const auto &e : backends::reopenEncodings())
+        encodings << QVariantMap{{QStringLiteral("name"), QString::fromUtf8(e.name.data(), qsizetype(e.name.size()))},
+                                 {QStringLiteral("label"), QString::fromUtf8(e.label.data(), qsizetype(e.label.size()))}};
     QVariantList plugins;
     for (const auto &f : pluginFormats(false)) {
         const QString id = QString::fromStdString(f.id);
@@ -434,6 +469,8 @@ QVariantMap Application::exportSetup() const
             {QStringLiteral("options"), options},
             {QStringLiteral("extensions"), extensions},
             {QStringLiteral("pluginFormats"), plugins},
+            {QStringLiteral("encodings"), encodings},
+            {QStringLiteral("encodingFormats"), encodingFormats},
             {QStringLiteral("all"), all},
             {QStringLiteral("selected"), selected},
             {QStringLiteral("shown"), shown},
@@ -481,6 +518,11 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
         return problem(QCoreApplication::translate("HikariSub.Export", "Enter a frame rate between 1 and 1000."));
     if (fps >= 1)
         options.fps = fps;
+    QString encoding = values.value(QStringLiteral("encoding"), QStringLiteral("UTF-8")).toString();
+    if (!takesAnEncoding(format->format))
+        encoding = QStringLiteral("UTF-8");
+    if (!offeredEncoding(encoding))
+        return problem(QCoreApplication::translate("HikariSub.Export", "Choose an encoding from the list."));
     const QString lines = values.value(QStringLiteral("lines")).toString();
     if (lines == QLatin1String("selected")) {
         options.lines = session->selection().selected;
@@ -507,8 +549,10 @@ QVariantMap Application::exportTo(const QUrl &file, const QString &formatId, con
         }
     }
     const core::Document &document = draft ? *draft : session->document();
-    auto write = std::make_shared<ExportWrite>(
-        ExportWrite{path, formatId, format->format, options, lines, language, srv3Saved, std::move(srv3Changed)});
+    auto write = std::make_shared<ExportWrite>(ExportWrite{path, formatId, format->format, options, lines, language,
+                                                           encoding.toStdString(),
+                                                           values.value(QStringLiteral("writeUnencodable")).toBool(),
+                                                           srv3Saved, std::move(srv3Changed)});
     if (!withSteps)
         return writeExport(*target, *write, document);
     return exportAfterSteps(*target, std::move(write), recipe, document);
@@ -522,10 +566,22 @@ QVariantMap Application::writeExport(application::DocumentId target, const Expor
         return problem(QCoreApplication::translate("HikariSub.Export", "YouTube timed text couldn’t be made from this file: %1")
                            .arg(QString::fromStdString(result.refusal)));
 
+    std::vector<std::byte> bytes = result.bytes;
+    if (write.encoding != "UTF-8") {
+        const QString label = QString::fromStdString(backends::encodingLabel(write.encoding));
+        auto encoded = backends::encodeUtf8(result.bytes, write.encoding);
+        if (!encoded)
+            return problem(QCoreApplication::translate("HikariSub.Export", "The file couldn’t be written in %1.").arg(label));
+        if (!encoded->unencodable.empty() && !write.writeUnencodable)
+            return {{QStringLiteral("ok"), false},
+                    {QStringLiteral("unencodable"),
+                     QString::fromUcs4(encoded->unencodable.data(), qsizetype(encoded->unencodable.size()))},
+                    {QStringLiteral("encoding"), label}};
+        bytes = std::move(encoded->bytes);
+    }
     QSaveFile out(write.path);
     if (!out.open(QIODevice::WriteOnly) ||
-        out.write(reinterpret_cast<const char *>(result.bytes.data()), qint64(result.bytes.size())) !=
-            qint64(result.bytes.size()) ||
+        out.write(reinterpret_cast<const char *>(bytes.data()), qint64(bytes.size())) != qint64(bytes.size()) ||
         !out.commit())
         return problem(QCoreApplication::translate("HikariSub.Export", "Couldn’t write %1: %2").arg(QFileInfo(write.path).fileName(), out.errorString()));
 
@@ -546,6 +602,10 @@ QVariantMap Application::writeExport(application::DocumentId target, const Expor
     const QJsonObject before = rememberedExport(currentChoices(m_settings->list("export.choices")), exportKey(target));
     choice.insert(QStringLiteral("language"),
                   isTtml(write.format) ? write.language : before.value(QStringLiteral("language")).toString());
+    if (takesAnEncoding(write.format))
+        choice.insert(QStringLiteral("encoding"), QString::fromStdString(write.encoding));
+    else if (const QString kept = before.value(QStringLiteral("encoding")).toString(); !kept.isEmpty())
+        choice.insert(QStringLiteral("encoding"), kept);
     if (framesIn(write.format, write.options))
         choice.insert(QStringLiteral("fps"), write.options.fps);
     else if (const double kept = before.value(QStringLiteral("fps")).toDouble(); kept >= 1)
@@ -609,9 +669,12 @@ QVariantMap Application::exportAfterSteps(application::DocumentId target, std::s
         else
             *answer = std::move(out);
     };
-    application::runExportSteps(document, recipe, available,
-                                {activeMedia().video->session().aegisubFrameTimes(), m_luaExportFilters.get()},
-                                finished);
+    application::ExportStepsContext context{activeMedia().video->session().aegisubFrameTimes(), m_luaExportFilters.get()};
+    context.started = [self](std::size_t step, std::size_t count, const std::string &name) {
+        if (self)
+            emit self->exportStepStarted(QString::fromStdString(name), int(step) + 1, int(count));
+    };
+    application::runExportSteps(document, recipe, available, context, finished);
     *returned = true;
     if (*answer)
         return **answer;
@@ -642,6 +705,57 @@ QVariantMap Application::exportSteps() const
                            : ui::ExportRecipes::stepsOf(application::recipeFromExportFilters(names, available))},
             {QStringLiteral("recipes"), m_exportRecipes->rows()},
             {QStringLiteral("hasProject"), m_exportRecipes->hasProject()}};
+}
+
+bool Application::askExportStepDialog(const QString &id, const QVariantMap &settings)
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    const auto parts = application::luaStepParts(id.toStdString());
+    if (!session || !parts)
+        return false;
+    application::EditSession copy(session->document());
+    const auto snapshot = application::snapshotForMacro(copy);
+    if (!snapshot)
+        return false;
+    const auto saved = ui::ExportRecipes::recipeOf(
+        QVariantList{QVariantMap{{QStringLiteral("id"), id}, {QStringLiteral("settings"), settings}}});
+    QPointer<Application> self(this);
+    return m_luaExportFilters->configure(
+        parts->first, parts->second, *snapshot,
+        [self, id, settings = saved.steps.front().settings](std::expected<application::DialogRequest, std::string> dialog) {
+            if (!self)
+                return;
+            if (!dialog) {
+                emit self->exportStepDialogReady(id, {{QStringLiteral("problem"), QString::fromStdString(dialog.error())}});
+                return;
+            }
+            auto shown = application::initialDialogResult(*dialog);
+            for (std::size_t i = 0; i < dialog->controls.size(); ++i)
+                if (const auto it = settings.find(dialog->controls[i].name); it != settings.end())
+                    if (const auto v = application::dialogValueOf(dialog->controls[i], it->second))
+                        shown.values[i] = *v;
+            int columns = 1;
+            const QVariantList controls = ui::dialogControlRows(*dialog, shown, &columns);
+            self->m_exportStepDialogs[id] = std::move(*dialog);
+            emit self->exportStepDialogReady(id, {{QStringLiteral("controls"), controls}, {QStringLiteral("columns"), columns}});
+        });
+}
+
+QVariantMap Application::exportStepSettings(const QString &id, const QVariantList &values) const
+{
+    const auto dialog = m_exportStepDialogs.find(id);
+    if (dialog == m_exportStepDialogs.end())
+        return {};
+    const auto initial = application::initialDialogResult(dialog->second);
+    application::ExportStep step{id.toStdString()};
+    for (std::size_t i = 0; i < dialog->second.controls.size() && i < std::size_t(values.size()); ++i) {
+        const auto &control = dialog->second.controls[i];
+        if (control.name.empty() || application::dialogValueType(control.kind) == application::DialogValueType::None)
+            continue;
+        step.settings[control.name] = ui::dialogValueFrom(control, values[qsizetype(i)], initial.values[i]);
+    }
+    return ui::ExportRecipes::stepsOf({{step}}).value(0).toMap().value(QStringLiteral("settings")).toMap();
 }
 
 QVariantList Application::exportRecipe(const QString &name, const QString &tier) const

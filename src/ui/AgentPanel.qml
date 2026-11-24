@@ -8,9 +8,10 @@ FocusScope {
     id: panel
     required property QtObject agent
     property QtObject aiSettings: null
+    property AppQuickInput quickInput: null
     signal reviewRequested()
     signal restoreRequested(var turn)
-    signal settingsRequested()
+    signal settingsRequested(string id)
     signal logRequested()
     signal exportRequested(string id)
     signal pluginRequested(string id)
@@ -22,6 +23,21 @@ FocusScope {
     readonly property bool canCompact: hasThread && thread.external !== true
     readonly property real contextUsed: hasThread && thread.compactWindow > 0 ? thread.contextTokens / thread.compactWindow : 0
     readonly property bool isChild: hasThread && (thread.child?.parent ?? "").length > 0
+
+    function renameThread() {
+        const id = panel.thread.id
+        const title = panel.thread.title
+        panel.quickInput.askFor({
+            title: qsTr("Rename thread"),
+            prompt: qsTr("Thread name"),
+            value: title,
+            from: panel,
+            check: text => text.trim().length > 0 ? "" : qsTranslate("HikariSub.VisualTools", "Type a name.")
+        }, text => {
+            if (text !== null && text.trim() !== title)
+                panel.agent.rename(id, text.trim())
+        })
+    }
     property bool showingThreads: false
     property string componentResult: ""
     readonly property var download: aiSettings ? aiSettings.download : ({})
@@ -87,7 +103,17 @@ FocusScope {
         }
         panel.agent.setMode(m)
     }
-    function modelItemName(value) { return "agentModel_" + value.replace("\t", "/") }
+    readonly property font labelFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    readonly property font badgeFont: TypeRoles.sized(fontSource.font, 11, Font.Normal)
+    readonly property font titleFont: TypeRoles.sized(fontSource.font, 12, Font.DemiBold)
+    readonly property font monoFont: {
+        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        f.family = "monospace"
+        f.features = { "tnum": 1 }
+        return f
+    }
+    Label { id: fontSource; visible: false }
+    readonly property string currentModel: hasThread ? (thread.model ?? "") : agent.defaultModel
     function chooseModel(value) {
         if (!hasThread)
             agent.newThread()
@@ -150,43 +176,44 @@ FocusScope {
         default property alias content: cardColumn.data
         Layout.fillWidth: true
         implicitHeight: cardColumn.implicitHeight + 16
-        radius: 4
-        color: Theme.raised
+        radius: Theme.popupRadius
+        color: Theme.panel
         border.color: edge
         border.width: 1
         Rectangle {
             width: 3
             height: parent.height
-            radius: 2
+            topLeftRadius: card.radius
+            bottomLeftRadius: card.radius
             color: card.edge
             visible: card.edge !== Theme.line
         }
         ColumnLayout {
             id: cardColumn
-            x: 10
+            x: 12
             y: 8
-            width: parent.width - 20
-            spacing: 6
+            width: parent.width - 24
+            spacing: 8
         }
     }
     component CardTitle: RowLayout {
         property alias iconRole: titleIcon.iconRole
         property alias text: titleLabel.text
         property alias iconColor: titleIcon.color
-        spacing: 6
+        spacing: 8
         Layout.fillWidth: true
         Icon { id: titleIcon; size: 14; visible: iconRole.length > 0 }
-        Label { id: titleLabel; font.bold: true; wrapMode: Text.Wrap; Layout.fillWidth: true }
+        Label { id: titleLabel; font.weight: Font.DemiBold; wrapMode: Text.Wrap; Layout.fillWidth: true }
     }
     component Chip: Label {
         property color tint: Theme.muted
-        leftPadding: 6
-        rightPadding: 6
+        leftPadding: 4
+        rightPadding: 4
         topPadding: 1
         bottomPadding: 1
-        font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+        font: panel.badgeFont
         color: tint
-        background: Rectangle { radius: height / 2; color: "transparent"; border.color: parent.tint; border.width: 1 }
+        background: Rectangle { radius: 3; color: "transparent"; border.color: parent.tint; border.width: 1 }
     }
     component FileChip: Rectangle {
         id: fileChip
@@ -196,9 +223,9 @@ FocusScope {
         property bool active: false
         property real maxWidth: 280
         signal removed()
-        implicitHeight: 22
+        implicitHeight: Theme.smallControlHeight
         implicitWidth: Math.min(chipRow.implicitWidth + chipRow.anchors.leftMargin + chipRow.anchors.rightMargin, maxWidth)
-        radius: 3
+        radius: Theme.radius
         color: Theme.raised
         border.color: active ? Theme.accent : Theme.line
         Accessible.role: Accessible.StaticText
@@ -216,13 +243,13 @@ FocusScope {
                 text: fileChip.name
                 textFormat: Text.PlainText
                 elide: Text.ElideMiddle
-                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+                font: panel.labelFont
             }
             Label {
                 visible: fileChip.note.length > 0
                 text: fileChip.note
                 color: Theme.muted
-                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+                font: panel.labelFont
             }
             IconToolButton {
                 objectName: "fileChipRemove"
@@ -336,12 +363,12 @@ FocusScope {
     }
     component Mono: Label {
         Layout.fillWidth: true
-        font.family: "monospace"
+        font: panel.monoFont
         wrapMode: Text.WrapAnywhere
         maximumLineCount: 6
         elide: Text.ElideRight
         padding: 4
-        background: Rectangle { color: Theme.field; radius: 3 }
+        background: Rectangle { color: Theme.field; radius: Theme.radius }
     }
 
     readonly property real minimumHeight: composerBox.heightWithoutChips + (chips.visible ? composerBox.chipRowHeight : 0)
@@ -353,9 +380,13 @@ FocusScope {
 
         RowLayout {
             id: header
+            objectName: "agentHeader"
             Layout.fillWidth: true
-            Layout.margins: 4
-            spacing: 2
+            Layout.minimumHeight: Theme.headerHeight
+            Layout.maximumHeight: Theme.headerHeight
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 4
             IconToolButton {
                 objectName: "agentBackToParent"
                 iconRole: "chevron-left"
@@ -376,7 +407,7 @@ FocusScope {
                 objectName: "agentTitle"
                 Layout.fillWidth: true
                 elide: Text.ElideRight
-                font.bold: true
+                font: panel.titleFont
                 text: panel.showingThreads ? qsTr("Threads")
                                            : panel.hasThread && panel.thread.title.length > 0 ? panel.thread.title
                                                                                               : qsTr("New thread")
@@ -410,11 +441,37 @@ FocusScope {
         Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
 
         RowLayout {
+            id: componentStrip
+            objectName: "agentComponentStrip"
+            readonly property bool failed: (panel.download.error ?? "").length > 0 && panel.download.needed === true
+            visible: panel.download.active === true || failed
+            Layout.fillWidth: true
+            Layout.margins: 8
+            spacing: 8
+            Icon { iconRole: componentStrip.failed ? "notice-error" : "notice-info"; size: 14 }
+            Label {
+                objectName: "agentComponentStripText"
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: componentStrip.failed ? qsTr("The AI component didn’t download. Check your connection and try again.")
+                      : qsTr("Getting the AI component: %1 of %2 MB").arg(Math.round((panel.download.received || 0) / 1000000),
+                                                                           Math.round((panel.download.size || 0) / 1000000))
+            }
+            Button {
+                objectName: "agentComponentRetry"
+                visible: componentStrip.failed && !!panel.aiSettings
+                text: qsTr("Retry")
+                onClicked: panel.aiSettings.installComponent()
+            }
+        }
+
+        RowLayout {
             objectName: "agentChildBanner"
             visible: panel.agent.ready && panel.isChild && !panel.showingThreads
             Layout.fillWidth: true
             Layout.margins: 8
-            spacing: 6
+            spacing: 8
             Icon { iconRole: "notice-info"; size: 14 }
             Label {
                 Layout.fillWidth: true
@@ -431,12 +488,12 @@ FocusScope {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.margins: 24
-            spacing: 10
+            spacing: 12
             Item { Layout.fillHeight: true }
             Icon { iconRole: "ai-assistant"; size: 32; Layout.alignment: Qt.AlignHCenter }
             Label {
                 text: qsTr("Add a provider to use the agent")
-                font.bold: true
+                font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
@@ -454,10 +511,10 @@ FocusScope {
                 text: qsTr("Open Settings › AI")
                 highlighted: true
                 Layout.alignment: Qt.AlignHCenter
-                onClicked: panel.settingsRequested()
+                onClicked: panel.settingsRequested("ai")
             }
             Label {
-                text: qsTr("Nothing is sent or downloaded until you add one.")
+                text: qsTr("Nothing is sent until you add one.")
                 color: Theme.muted
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
@@ -471,8 +528,8 @@ FocusScope {
             visible: panel.agent.ready && panel.showingThreads
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.margins: 6
-            spacing: 6
+            Layout.margins: 8
+            spacing: 8
             TextField {
                 id: threadSearch
                 objectName: "agentThreadSearch"
@@ -510,7 +567,8 @@ FocusScope {
                 section.delegate: Label {
                     required property string section
                     topPadding: 8
-                    bottomPadding: 2
+                    bottomPadding: 4
+                    font: panel.labelFont
                     color: Theme.muted
                     text: section === "project" ? qsTr("This project")
                           : section === "today" ? qsTr("Today") : section === "yesterday" ? qsTr("Yesterday")
@@ -543,12 +601,13 @@ FocusScope {
                             Layout.fillWidth: true
                             Label {
                                 text: threadRow.modelData.title.length > 0 ? threadRow.modelData.title : qsTr("New thread")
-                                font.bold: true
+                                font.weight: Font.DemiBold
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
                             Label {
                                 color: Theme.muted
+                                font: panel.labelFont
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 text: [threadRow.modelData.files, threadRow.modelData.model,
@@ -577,11 +636,12 @@ FocusScope {
             Layout.leftMargin: 8
             Layout.rightMargin: 8
             Layout.topMargin: 4
-            spacing: 6
-            Icon { iconRole: "notice-info"; size: 13 }
+            spacing: 8
+            Icon { iconRole: "notice-info"; size: 14 }
             Label {
                 Layout.fillWidth: true
                 elide: Text.ElideRight
+                font: panel.labelFont
                 color: Theme.muted
                 text: qsTr("This project’s AGENTS.md instructions are on")
             }
@@ -664,23 +724,26 @@ FocusScope {
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
-            implicitHeight: queuedRow.implicitHeight + 8
-            radius: 4
+            implicitHeight: Theme.controlHeight + 8
+            radius: Theme.radius
             color: Theme.raised
             border.color: Theme.line
             RowLayout {
                 id: queuedRow
                 anchors.fill: parent
-                anchors.margins: 4
+                anchors.leftMargin: 8
+                anchors.rightMargin: 4
                 spacing: 4
                 Icon { iconRole: "history"; size: 14 }
                 Label {
                     Layout.fillWidth: true
                     elide: Text.ElideRight
+                    color: Theme.muted
                     text: qsTr("Queued · %1").arg(panel.hasThread ? panel.thread.queued : "")
                 }
                 Button {
                     objectName: "agentSteerNow"
+                    flat: true
                     text: qsTr("Steer now")
                     enabled: panel.running
                     onClicked: panel.agent.steer()
@@ -719,7 +782,8 @@ FocusScope {
                 to: 1
                 value: parent.used
                 palette.highlight: parent.hot ? Theme.warning : Theme.accent
-                Layout.preferredWidth: 48
+                Layout.preferredWidth: 64
+                Layout.preferredHeight: 4
             }
             Icon {
                 visible: parent.hot
@@ -731,7 +795,7 @@ FocusScope {
                 objectName: "agentTokens"
                 Layout.fillWidth: true
                 color: parent.hot ? Theme.warning : Theme.muted
-                font.bold: parent.hot
+                font: panel.labelFont
                 elide: Text.ElideRight
                 readonly property string note: !panel.hasThread ? ""
                     : panel.thread.compacting ? qsTr("compacting…")
@@ -746,6 +810,7 @@ FocusScope {
                 objectName: "agentCost"
                 readonly property bool over: panel.hasThread && panel.thread.cap > 0 && panel.thread.cost >= panel.thread.cap
                 color: over ? Theme.danger : Theme.muted
+                font: panel.labelFont
                 text: !panel.hasThread ? ""
                       : panel.thread.costUnknown && panel.thread.cost === 0 ? qsTr("cost not reported")
                       : panel.thread.cap > 0 ? qsTr("%1 of %2").arg(panel.money(panel.thread.cost), panel.money(panel.thread.cap))
@@ -758,7 +823,7 @@ FocusScope {
             visible: panel.agent.ready && panel.isChild && !panel.showingThreads
             Layout.fillWidth: true
             Layout.margins: 8
-            spacing: 6
+            spacing: 8
             Chip {
                 objectName: "agentChildMode"
                 text: qsTr("%1 · capped by the parent").arg(panel.modeName(panel.mode))
@@ -785,13 +850,14 @@ FocusScope {
             readonly property int chipRoom: Math.max(0, 3 - (hasActiveTab ? 1 : 0))
             readonly property int foldedFiles: Math.max(0, attached.length - chipRoom)
             readonly property int chipCount: (hasActiveTab ? 1 : 0) + Math.min(attached.length, chipRoom) + (foldedFiles > 0 ? 1 : 0)
-            readonly property real chipRowHeight: 22 + chips.spacing
+            readonly property real chipRowHeight: Theme.smallControlHeight + chips.spacing
             readonly property real heightWithoutChips: {
                 let rest = 0
                 for (const sibling of column.children) {
                     if (sibling === composerBox || !sibling.visible)
                         continue
-                    rest += (sibling.Layout.fillHeight ? sibling.Layout.minimumHeight : sibling.implicitHeight)
+                    rest += (sibling.Layout.fillHeight ? sibling.Layout.minimumHeight
+                                                       : Math.max(sibling.implicitHeight, sibling.Layout.minimumHeight))
                         + sibling.Layout.topMargin + sibling.Layout.bottomMargin
                 }
                 return rest + Layout.topMargin + Layout.bottomMargin + 2 * composerColumn.y + lineHeight + fieldPadding
@@ -811,8 +877,8 @@ FocusScope {
             visible: !panel.showingThreads && !panel.isChild
             Layout.fillWidth: true
             Layout.margins: 8
-            implicitHeight: composerColumn.implicitHeight + 12
-            radius: 2
+            implicitHeight: composerColumn.implicitHeight + 16
+            radius: Theme.popupRadius
             color: Theme.field
             border.color: composer.activeFocus ? Theme.accent : Theme.control
             border.width: 1
@@ -822,7 +888,7 @@ FocusScope {
                 objectName: "agentComposerFocusRing"
                 anchors.fill: parent
                 anchors.margins: -2
-                radius: 3
+                radius: Theme.popupRadius + 2
                 color: "transparent"
                 border.color: Theme.focus
                 visible: composer.activeFocus && [Qt.TabFocusReason, Qt.BacktabFocusReason, Qt.ShortcutFocusReason]
@@ -830,9 +896,9 @@ FocusScope {
             }
             ColumnLayout {
                 id: composerColumn
-                x: 6
-                y: 6
-                width: parent.width - 12
+                x: 8
+                y: 8
+                width: parent.width - 16
                 spacing: 4
                 Flow {
                     id: chips
@@ -868,14 +934,14 @@ FocusScope {
                         id: moreFiles
                         objectName: "agentMoreFiles"
                         visible: composerBox.foldedFiles > 0
-                        implicitHeight: 22
+                        implicitHeight: Theme.smallControlHeight
                         topPadding: 0
                         bottomPadding: 0
-                        font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+                        font: panel.labelFont
                         text: qsTr("+%n more", "", composerBox.foldedFiles)
                         Accessible.name: qsTr("%n more attached file(s)", "", composerBox.foldedFiles)
                         onClicked: attachMenu.openFor(false)
-                        background: Rectangle { radius: 3; color: Theme.raised; border.color: Theme.line }
+                        background: Rectangle { radius: Theme.radius; color: Theme.raised; border.color: Theme.line }
                     }
                 }
                 ScrollView {
@@ -930,7 +996,7 @@ FocusScope {
                         Accessible.description: modelText
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Model")
-                        onClicked: modelMenu.openAbove(this)
+                        onClicked: modelPicker.openFor(this)
                     }
                     ChooserButton {
                         id: modeButton
@@ -948,15 +1014,15 @@ FocusScope {
                         iconRole: stops ? "media-stop" : "ai-send"
                         text: stops ? qsTr("Stop") : qsTr("Send")
                         enabled: panel.running || composer.text.trim().length > 0
-                        implicitWidth: 28
-                        implicitHeight: 28
+                        implicitWidth: Theme.controlHeight
+                        implicitHeight: Theme.controlHeight
                         contentItem: Icon {
                             iconRole: sendButton.iconRole
                             color: sendButton.filled ? Theme.onAccent : sendButton.enabled ? IconTheme.normal : IconTheme.disabled
                             accentColor: sendButton.filled ? Theme.onAccent : sendButton.enabled ? IconTheme.accent : IconTheme.disabled
                         }
                         background: Rectangle {
-                            radius: 2
+                            radius: Theme.radius
                             color: sendButton.filled ? (sendButton.down ? Qt.darker(Theme.accent, 1.15) : Theme.accent)
                                  : sendButton.stops ? Theme.raised : "transparent"
                             border.color: sendButton.visualFocus ? Theme.focus : sendButton.stops ? Theme.control : "transparent"
@@ -975,7 +1041,7 @@ FocusScope {
             objectName: "agentRenameThread"
             iconRole: "edit"
             text: qsTr("Rename thread…")
-            onTriggered: renameLoader.active = true
+            onTriggered: panel.renameThread()
         }
         ShellMenuItem {
             objectName: "agentExportThread"
@@ -1117,63 +1183,32 @@ FocusScope {
         }
     }
 
-    PanelMenu {
-        id: modelMenu
-        objectName: "agentModelMenu"
-        Instantiator {
-            model: panel.agent.agents
-            delegate: ShellMenu {
-                id: agentModelMenu
-                required property var modelData
-                readonly property var listed: panel.agent.agentModelsRevision >= 0 ? panel.agent.agentModels(modelData.agent) : ({})
-                objectName: "agentModelMenu_" + modelData.agent
-                iconRole: "ai-assistant"
-                title: modelData.text
-                onAboutToShow: panel.agent.loadAgentModels(modelData.agent)
-                MenuRadioItem {
-                    objectName: panel.modelItemName(agentModelMenu.modelData.value)
-                    text: qsTr("Agent default")
-                    checked: panel.hasThread && panel.thread.model === agentModelMenu.modelData.value
-                    onTriggered: panel.chooseModel(agentModelMenu.modelData.value)
-                }
-                Repeater {
-                    model: agentModelMenu.listed.models ?? []
-                    delegate: MenuRadioItem {
-                        required property var modelData
-                        objectName: panel.modelItemName(modelData.value)
-                        text: modelData.text
-                        checked: panel.hasThread && panel.thread.model === modelData.value
-                        onTriggered: panel.chooseModel(modelData.value)
-                    }
-                }
-                ShellMenuItem {
-                    objectName: "agentModelsLoading_" + agentModelMenu.modelData.agent
-                    text: qsTr("Loading models…")
-                    enabled: false
-                    visible: agentModelMenu.listed.loading === true
-                    height: visible ? implicitHeight : 0
-                }
-            }
-            onObjectAdded: (index, object) => modelMenu.insertMenu(index, object)
-            onObjectRemoved: (index, object) => modelMenu.removeMenu(object)
+    ModelPicker {
+        id: modelPicker
+        objectName: "agentModelPicker"
+        within: panel
+        busy: panel.agent.agentModelsLoading
+        itemsFor: filter => panel.agent.pickerItems(panel.currentModel, filter)
+        function openFor(control) {
+            for (const a of panel.agent.agents)
+                panel.agent.loadAgentModels(a.agent)
+            openAt(control)
         }
-        Repeater {
-            model: panel.agent.models.filter(m => !m.agent)
-            delegate: MenuRadioItem {
-                required property var modelData
-                objectName: panel.modelItemName(modelData.value)
-                text: modelData.text
-                detailText: modelData.provider
-                checked: panel.hasThread && panel.thread.model === modelData.value
-                onTriggered: panel.chooseModel(modelData.value)
-            }
+        onChosen: value => {
+            panel.chooseModel(value)
+            composer.forceActiveFocus()
         }
-        MenuSeparator {}
-        ShellMenuItem {
-            iconRole: "settings"
-            objectName: "agentModelSettings"
-            text: qsTr("Settings › AI")
-            onTriggered: panel.settingsRequested()
+        onActionRequested: (action, key) => {
+            if (action === "retry")
+                panel.agent.retryAgentModels(key)
+            else
+                panel.settingsRequested(key)
+        }
+        Connections {
+            target: panel.agent
+            function onModelsChanged() { modelPicker.refresh() }
+            function onAgentModelsChanged() { modelPicker.refresh() }
+            function onThreadChanged() { modelPicker.refresh() }
         }
     }
 
@@ -1205,7 +1240,7 @@ FocusScope {
             iconRole: "settings"
             objectName: "agentModeDefault"
             text: qsTr("Default for new threads")
-            onTriggered: panel.settingsRequested()
+            onTriggered: panel.settingsRequested("ai")
         }
     }
 
@@ -1217,50 +1252,6 @@ FocusScope {
     LazyMessageBox {
         id: deleteQuestion
         name: "agentDeleteQuestion"
-    }
-
-    Loader {
-        id: renameLoader
-        active: false
-        sourceComponent: DialogWindow {
-            id: renameDialog
-            objectName: "agentRenameWindow"
-            title: qsTr("Rename thread")
-            modal: true
-            initialFocus: renameField
-            defaultButton: renameOk
-            onAccepted: if (renameOk.enabled) panel.agent.rename(panel.thread.id, renameField.text.trim())
-            onVisibleChanged: if (!visible) Qt.callLater(() => renameLoader.active = false)
-            Component.onCompleted: {
-                renameField.text = panel.thread.title
-                renameField.selectAll()
-                open()
-            }
-            Label {
-                text: qsTr("Name")
-            }
-            TextField {
-                id: renameField
-                objectName: "agentRenameField"
-                Accessible.name: qsTr("Thread name")
-                Layout.preferredWidth: 360
-            }
-            buttons: [
-                PrimaryButton {
-                    id: renameOk
-                    objectName: "agentRenameOk"
-                    text: qsTr("Rename")
-                    enabled: renameField.text.trim().length > 0 && renameField.text.trim() !== panel.thread.title
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: renameDialog.accept()
-                },
-                Button {
-                    text: qsTr("Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: renameDialog.reject()
-                }
-            ]
-        }
     }
 
     Component {
@@ -1278,15 +1269,15 @@ FocusScope {
             Label {
                 Layout.alignment: parent.item.brief ? Qt.AlignLeft : Qt.AlignRight
                 Layout.fillWidth: parent.item.brief === true
-                Layout.maximumWidth: parent.item.brief ? parent.width : parent.width * 0.85
+                Layout.maximumWidth: parent.item.brief ? parent.width : parent.width * 0.86
                 maximumLineCount: parent.item.results ? 12 : 100000
                 elide: Text.ElideRight
                 text: parent.item.results ? (parent.item.text ?? "").replace(/^[^\n]*\n+/, "") : parent.item.text ?? ""
                 wrapMode: Text.Wrap
                 padding: 8
                 background: Rectangle {
-                    radius: 6
-                    color: parent.parent.fromAgent ? Theme.raised : Theme.select
+                    radius: 8
+                    color: Theme.raised
                     border.color: parent.parent.fromAgent ? Theme.line : "transparent"
                 }
             }
@@ -1447,7 +1438,7 @@ FocusScope {
             Label {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                font.bold: true
+                font.weight: Font.DemiBold
                 textFormat: Text.PlainText
                 text: citationHover.citation.title ?? ""
             }
@@ -1604,7 +1595,7 @@ FocusScope {
                 Label {
                     Layout.fillWidth: true
                     elide: Text.ElideRight
-                    font.bold: true
+                    font.weight: Font.DemiBold
                     text: (parent.parent.parent.item.name ?? "") + (parent.parent.parent.item.title ? " · " + parent.parent.parent.item.title : "")
                 }
                 Chip { visible: parent.parent.parent.item.judged === true; text: qsTr("judge approved"); tint: Theme.success }
@@ -1626,7 +1617,7 @@ FocusScope {
                     wrapMode: Text.Wrap
                     text: (modelData.status === "completed" ? "☑  " : modelData.status === "in_progress" ? "▶  " : "☐  ") + modelData.content
                     font.strikeout: modelData.status === "completed"
-                    font.bold: modelData.status === "in_progress"
+                    font.weight: modelData.status === "in_progress" ? Font.DemiBold : Font.Normal
                     color: modelData.status === "completed" ? Theme.muted : Theme.text
                 }
             }
@@ -1798,13 +1789,13 @@ FocusScope {
             Layout.fillWidth: true
             Layout.maximumHeight: 12 * fontMetrics.lineSpacing + 8
             clip: true
-            font.family: "monospace"
+            font: panel.monoFont
             textFormat: Text.PlainText
             wrapMode: Text.WrapAnywhere
             padding: 4
             text: details.text
-            background: Rectangle { color: Theme.field; border.color: Theme.line }
-            FontMetrics { id: fontMetrics; font.family: "monospace" }
+            background: Rectangle { color: Theme.field; border.color: Theme.line; radius: Theme.radius }
+            FontMetrics { id: fontMetrics; font: panel.monoFont }
         }
     }
 
@@ -1878,8 +1869,7 @@ FocusScope {
                 Layout.fillWidth: true
                 wrapMode: Text.WrapAnywhere
                 textFormat: Text.PlainText
-                font.family: "monospace"
-                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.9)
+                font: panel.monoFont
                 color: Theme.muted
                 text: (ask.item.setting ?? "") + " → " + (ask.item.value ?? "")
             }
@@ -2001,7 +1991,7 @@ FocusScope {
                 implicitHeight: codeColumn.implicitHeight + 8
                 color: Theme.field
                 border.color: Theme.line
-                radius: 2
+                radius: Theme.radius
                 ColumnLayout {
                     id: codeColumn
                     x: 4
@@ -2018,13 +2008,13 @@ FocusScope {
                             Label {
                                 Layout.preferredWidth: 24
                                 horizontalAlignment: Text.AlignRight
-                                font.family: "monospace"
+                                font: panel.monoFont
                                 color: Theme.muted
                                 text: index + 1
                             }
                             Label {
                                 Layout.fillWidth: true
-                                font.family: "monospace"
+                                font: panel.monoFont
                                 textFormat: Text.PlainText
                                 elide: Text.ElideRight
                                 text: modelData
@@ -2047,7 +2037,7 @@ FocusScope {
                     readonly property bool installed: modelData.installed !== undefined
                     Layout.fillWidth: true
                     spacing: 6
-                    Icon { iconRole: parent.installed ? "karaoke-check" : "notice-warning"; size: 13 }
+                    Icon { iconRole: parent.installed ? "karaoke-check" : "notice-warning"; size: 14 }
                     Label {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
@@ -2185,7 +2175,7 @@ FocusScope {
                     required property var modelData
                     Layout.fillWidth: true
                     spacing: 6
-                    Icon { iconRole: parent.modelData.icon; size: 13 }
+                    Icon { iconRole: parent.modelData.icon; size: 14 }
                     Label {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
@@ -2213,7 +2203,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.leftMargin: 4
                     spacing: 6
-                    Icon { iconRole: "notice-info"; size: 13; Layout.alignment: Qt.AlignTop }
+                    Icon { iconRole: "notice-info"; size: 14; Layout.alignment: Qt.AlignTop }
                     Label {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
@@ -2239,13 +2229,13 @@ FocusScope {
                     readonly property var lines: modelData.text.replace(/\n$/, "").split("\n")
                     Layout.fillWidth: true
                     spacing: 2
-                    Label { font.family: "monospace"; color: Theme.muted; textFormat: Text.PlainText; text: file.modelData.path }
+                    Label { font: panel.monoFont; color: Theme.muted; textFormat: Text.PlainText; text: file.modelData.path }
                     Rectangle {
                         Layout.fillWidth: true
                         implicitHeight: fileLines.implicitHeight + 8
                         color: Theme.field
                         border.color: Theme.line
-                        radius: 2
+                        radius: Theme.radius
                         ColumnLayout {
                             id: fileLines
                             x: 4
@@ -2262,13 +2252,13 @@ FocusScope {
                                     Label {
                                         Layout.preferredWidth: 24
                                         horizontalAlignment: Text.AlignRight
-                                        font.family: "monospace"
+                                        font: panel.monoFont
                                         color: Theme.muted
                                         text: index + 1
                                     }
                                     Label {
                                         Layout.fillWidth: true
-                                        font.family: "monospace"
+                                        font: panel.monoFont
                                         textFormat: Text.PlainText
                                         elide: Text.ElideRight
                                         text: modelData
@@ -2409,7 +2399,7 @@ FocusScope {
                 visible: compaction.open
                 Layout.fillWidth: true
                 implicitHeight: summaryText.implicitHeight + 16
-                radius: 4
+                radius: Theme.radius
                 color: Theme.field
                 border.color: Theme.line
                 Label {
@@ -2535,7 +2525,7 @@ FocusScope {
                     visible: notice.kind === "dailyCap" || notice.kind === "noModel" || notice.kind === "noSidecar"
                              || notice.kind === "notOffered" || notice.searchFailed
                     text: qsTr("Open Settings › AI")
-                    onClicked: panel.settingsRequested()
+                    onClicked: panel.settingsRequested("ai")
                 }
             }
         }
@@ -2577,7 +2567,7 @@ FocusScope {
                     objectName: "agentTask_" + modelData.task
                     Layout.fillWidth: true
                     implicitHeight: kidColumn.implicitHeight + 8
-                    radius: 3
+                    radius: Theme.radius
                     color: "transparent"
                     border.color: activeFocus ? Theme.focus : modelData.status === "needs_you" ? Theme.warning : Theme.line
                     border.width: activeFocus ? 2 : 1
@@ -2598,7 +2588,7 @@ FocusScope {
                             Label {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
-                                font.bold: true
+                                font.weight: Font.DemiBold
                                 text: kid.modelData.title
                             }
                             Label {

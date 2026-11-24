@@ -163,6 +163,82 @@ std::vector<Dictionary> dictionaries(const Json *list)
     return out;
 }
 
+std::vector<ColourTheme> colourThemes(const Json *list)
+{
+    std::vector<ColourTheme> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "type"), text(item, "path")});
+    return out;
+}
+
+std::vector<IconTheme> iconThemes(const Json *list)
+{
+    std::vector<IconTheme> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "path")});
+    return out;
+}
+
+std::vector<OwnIcon> ownIcons(const Json *list)
+{
+    std::vector<OwnIcon> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "path")});
+    return out;
+}
+
+std::optional<ManifestProblem> unknownOwnIcon(const Json *contributes, const Manifest &m)
+{
+    constexpr std::string_view kOwn = "own:";
+    if (!contributes)
+        return std::nullopt;
+    for (const char *list : {"commands", "panels", "statusItems"})
+        if (const Json *items = contributes->find(list))
+            for (std::size_t i = 0; i < items->asArray().size(); ++i) {
+                const std::string icon = text(items->asArray()[i], "icon");
+                if (icon.starts_with(kOwn) &&
+                    std::ranges::find(m.icons, icon.substr(kOwn.size()), &OwnIcon::id) == m.icons.end())
+                    return ManifestProblem{Kind::Schema, "/contributes/" + std::string(list) + "/" + std::to_string(i) + "/icon",
+                                           "names no icon in contributes.icons", 0};
+            }
+    return std::nullopt;
+}
+
+bool holds(const Json *object, std::string_view key)
+{
+    const Json *value = object ? object->find(key) : nullptr;
+    return value && !(value->isArray() && value->asArray().empty()) && !(value->isObject() && value->asObject().empty());
+}
+
+std::optional<ManifestProblem> codeWithoutMain(const Json &json)
+{
+    if (json.find("main"))
+        return std::nullopt;
+    const Json *contributes = json.find("contributes");
+    const Json *permissions = json.find("permissions");
+    const bool programPackage = holds(contributes, "programs");
+    const std::string runsNone = programPackage ? "needs code, and a package of programs runs none"
+                                                : "needs code, and a data-only package runs none";
+    if (text(json, "tier") == "unrestricted")
+        return ManifestProblem{Kind::Schema, "/tier", "only a plugin with a Lua main can be unrestricted", 0};
+    for (const char *list : {"commands", "panels", "menus", "statusItems", "keybindings", "providers", "aiTools", "formats"})
+        if (holds(contributes, list))
+            return ManifestProblem{Kind::Schema, "/contributes/" + std::string(list), runsNone, 0};
+    for (const char *permission : {"background", "presence"})
+        if (holds(permissions, permission))
+            return ManifestProblem{Kind::Schema, "/permissions/" + std::string(permission), runsNone, 0};
+    if (programPackage)
+        return std::nullopt;
+    if (holds(&json, "permissions"))
+        return ManifestProblem{Kind::Schema, "/permissions", "a data-only package asks for no permissions", 0};
+    if (holds(contributes, "settings"))
+        return ManifestProblem{Kind::Schema, "/contributes/settings", "a data-only package has no settings", 0};
+    return std::nullopt;
+}
+
 std::vector<NodePort> nodePorts(const Json *list)
 {
     std::vector<NodePort> out;
@@ -198,6 +274,14 @@ std::vector<FormatContribution> formats(const Json *list)
             format.exports = exports && exports->asBool();
             out.push_back(std::move(format));
         }
+    return out;
+}
+
+std::vector<std::string> providerFields(const Json &provider)
+{
+    std::vector<std::string> out = strings(provider.find("fields"));
+    if (out.empty())
+        out.push_back("text");
     return out;
 }
 
@@ -280,6 +364,56 @@ std::vector<Program> programs(const Json *list)
         out.push_back(std::move(p));
     }
     return out;
+}
+
+std::vector<McpServer> mcpServers(const Json *list)
+{
+    std::vector<McpServer> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "description"), text(item, "program")});
+    return out;
+}
+
+std::vector<LanguageServer> languageServers(const Json *list)
+{
+    std::vector<LanguageServer> out;
+    if (!list)
+        return out;
+    for (const Json &item : list->asArray()) {
+        LanguageServer server{text(item, "id"), text(item, "title"), text(item, "program")};
+        server.scope = text(item, "scope") == "line" ? LanguageServer::Scope::Line : LanguageServer::Scope::Document;
+        server.fields = providerFields(item);
+        server.tags = text(item, "tags") == "keep" ? LanguageServer::Tags::Keep : LanguageServer::Tags::Blank;
+        if (const std::string language = text(item, "languageId"); !language.empty())
+            server.languageId = language;
+        if (const Json *options = item.find("initializationOptions"))
+            server.initializationOptions = *options;
+        out.push_back(std::move(server));
+    }
+    return out;
+}
+
+std::optional<ManifestProblem> badLanguageServer(const Manifest &m, std::size_t index)
+{
+    const std::string at = "/contributes/languageServers/" + std::to_string(index) + "/program";
+    const Program *program = m.program(m.languageServers[index].program);
+    if (!program)
+        return ManifestProblem{Kind::Schema, at, "names no program in contributes.programs", 0};
+    if (program->api)
+        return ManifestProblem{Kind::Schema, at, "a language server's program can't have \"api\": true", 0};
+    return std::nullopt;
+}
+
+std::optional<ManifestProblem> badMcpServer(const Manifest &m, std::size_t index)
+{
+    const std::string at = "/contributes/mcpServers/" + std::to_string(index) + "/program";
+    const Program *program = m.program(m.mcpServers[index].program);
+    if (!program)
+        return ManifestProblem{Kind::Schema, at, "names no program in contributes.programs", 0};
+    if (program->api)
+        return ManifestProblem{Kind::Schema, at, "an MCP server's program can't have \"api\": true", 0};
+    return std::nullopt;
 }
 
 std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
@@ -424,7 +558,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     m.name = text(json, "name");
     m.version = text(json, "version");
     m.api = json.find("api")->asInt();
-    m.main = text(json, "main");
+    if (const Json *main = json.find("main"); main && main->isObject())
+        m.mainProgram = text(*main, "program");
+    else
+        m.main = text(json, "main");
     m.tier = text(json, "tier") == "unrestricted" ? Tier::Unrestricted : Tier::Restricted;
     for (const Json &author : json.find("authors")->asArray())
         m.authors.push_back(author.asString());
@@ -454,11 +591,23 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                 m.settings.push_back({text(s, "id"), text(s, "title"), s, settingType(text(s, "type"))});
         m.nodes = nodes(contributes->find("nodes"));
         m.formats = formats(contributes->find("formats"));
+        if (const Json *providers = contributes->find("providers")) {
+            if (const Json *completion = providers->find("completion"))
+                m.completion = CompletionProvider{strings(completion->find("triggers")), providerFields(*completion)};
+            if (const Json *hover = providers->find("hover"))
+                m.hover = HoverProvider{providerFields(*hover)};
+        }
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.dictionaries = dictionaries(contributes->find("dictionaries"));
         m.graphs = contentFiles(contributes->find("graphs"));
+        m.layouts = contentFiles(contributes->find("layouts"));
+        m.themes = colourThemes(contributes->find("themes"));
+        m.iconThemes = iconThemes(contributes->find("iconThemes"));
+        m.icons = ownIcons(contributes->find("icons"));
         m.programs = programs(contributes->find("programs"));
+        m.mcpServers = mcpServers(contributes->find("mcpServers"));
+        m.languageServers = languageServers(contributes->find("languageServers"));
     }
 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
@@ -469,7 +618,13 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.styles, "/contributes/styles"),
                          repeated(m.karaokePresets, "/contributes/karaokePresets"),
                          repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language"),
-                         repeated(m.graphs, "/contributes/graphs")})
+                         repeated(m.graphs, "/contributes/graphs"),
+                         repeated(m.layouts, "/contributes/layouts"),
+                         repeated(m.mcpServers, "/contributes/mcpServers"),
+                         repeated(m.languageServers, "/contributes/languageServers"),
+                         repeated(m.themes, "/contributes/themes"), repeated(m.iconThemes, "/contributes/iconThemes"),
+                         repeated(m.icons, "/contributes/icons"), unknownOwnIcon(json.find("contributes"), m),
+                         codeWithoutMain(json)})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
@@ -487,6 +642,19 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (std::size_t i = 0; i < m.programs.size(); ++i)
         if (auto problem = badProgram(m, i))
             return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.mcpServers.size(); ++i)
+        if (auto problem = badMcpServer(m, i))
+            return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.languageServers.size(); ++i)
+        if (auto problem = badLanguageServer(m, i))
+            return std::unexpected(*problem);
+    if (!m.mainProgram.empty()) {
+        const Program *program = m.program(m.mainProgram);
+        if (!program)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "names no program in contributes.programs", 0});
+        if (!program->api)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "the main program needs \"api\": true", 0});
+    }
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
@@ -541,6 +709,9 @@ PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &n
             more.programs.push_back(program.id);
     }
     more.presence = next.permissions.presence && !current.permissions.presence;
+    for (const McpServer &server : next.mcpServers)
+        if (std::ranges::find(current.mcpServers, server.id, &McpServer::id) == current.mcpServers.end())
+            more.mcpServers.push_back(server.id);
     for (const std::string &host : next.permissions.networkHosts)
         if (std::ranges::find(current.permissions.networkHosts, host) == current.permissions.networkHosts.end())
             more.networkHosts.push_back(host);

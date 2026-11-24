@@ -5,9 +5,11 @@ File > Open folder… [GLOBAL_OPEN_FOLDER]
 File > Quick Open… [GLOBAL_QUICK_OPEN]
 File > Recently opened subtitles >
 File > Recently opened subtitles > None
+File > Reopen with encoding… [GLOBAL_REOPEN_WITH_ENCODING]
 File > -
 File > Import subtitles from MKV… [GRID_SUBS_FROM_MKV]
 File > Import lyrics… [GLOBAL_IMPORT_LYRICS]
+File > Import text… [GLOBAL_IMPORT_TEXT]
 File > -
 File > Save [GLOBAL_SAVE_SUBS]
 File > Save as… [GLOBAL_SAVE_SUBS_AS]
@@ -41,16 +43,7 @@ Edit > Redo [GLOBAL_REDO]
 Edit > Undo to last save [GLOBAL_UNDO_TO_LAST_SAVE]
 Edit > History [GLOBAL_HISTORY]
 Edit > -
-Edit > Review >
-Edit > Review > Keep AI change [GLOBAL_KEEP_AI_CHANGE]
-Edit > Review > Undo AI change [GLOBAL_UNDO_AI_CHANGE]
-Edit > Review > Next AI change [GLOBAL_NEXT_AI_CHANGE]
-Edit > Review > Previous AI change [GLOBAL_PREVIOUS_AI_CHANGE]
-Edit > Review > -
-Edit > Review > Keep all [GLOBAL_KEEP_ALL_AI_CHANGES]
-Edit > Review > Undo all [GLOBAL_UNDO_ALL_AI_CHANGES]
-Edit > Review > -
-Edit > Review > Show in Review panel [GLOBAL_SHOW_AI_REVIEW]
+Edit > Turn on AI…
 Edit > -
 Edit > Find… [GLOBAL_SEARCH]
 Edit > Replace… [GLOBAL_FIND_REPLACE]
@@ -250,13 +243,12 @@ View > Panels > Timing postprocessor >
 View > Panels > Find >
 View > Panels > Spellchecker >
 View > Panels > Styles >
-View > Panels > QC notes >
+View > Panels > Problems >
 View > Panels > Template editor >
 View > Panels > Automation >
 View > Panels > Explorer >
 View > Panels > Log >
 View > Panels > -
-View > Panels > Review >
 View > Panels > Agent >
 View > Panels > -
 View > Panels > Graph >
@@ -270,7 +262,11 @@ View > -
 View > Node effects [GLOBAL_NODE_EFFECTS]
 View > Full screen typesetting [GLOBAL_FULL_SCREEN_TYPESETTING]
 View > -
-View > Hide tags in the Grid [GLOBAL_HIDE_TAGS]
+View > Tags in the Grid >
+View > Tags in the Grid > Show [GLOBAL_GRID_TAGS_SHOW]
+View > Tags in the Grid > Replace with symbol [GLOBAL_GRID_TAGS_REPLACE]
+View > Tags in the Grid > Hide [GLOBAL_GRID_TAGS_HIDE]
+View > Mark lines on the current frame [GLOBAL_GRID_MARK_CURRENT_FRAME]
 View > Hide tags in the line editor [GLOBAL_EDITOR_HIDE_TAGS]
 Help
 Help > Getting started [GLOBAL_GETTING_STARTED]

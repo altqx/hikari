@@ -4,13 +4,19 @@
 #include "hikari/plugins/installer.h"
 #include "hikari/plugins/marketplace.h"
 
+#include <QHash>
 #include <QObject>
+#include <QSet>
 #include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <filesystem>
 #include <functional>
 #include <optional>
+
+class QFileSystemWatcher;
+class QTimer;
 
 namespace hikari::app {
 
@@ -18,7 +24,8 @@ class PluginSecrets;
 
 // The plugin manager's permission lines, as the install question lists them.
 QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions, bool qmlPanels = false,
-                            const std::vector<plugins::Program> &programs = {});
+                            const std::vector<plugins::Program> &programs = {},
+                            const std::vector<plugins::McpServer> &mcpServers = {});
 
 class PluginManager : public QObject {
     Q_OBJECT
@@ -44,11 +51,13 @@ public:
     void setOfficialAuthor(plugins::OfficialAuthor official);
     void setSecrets(PluginSecrets *secrets);
     std::optional<plugins::Manifest> manifest(const std::string &id) const;
-    // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file" or "marketplace"),
+    // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file", "marketplace" or "dev"),
     // unrestricted, official (signed by officialAuthor() under its handle), icon (a file URL, or empty), authors, homepage, permissions: [text], adds: [text], settings: [the
     // manifest's setting with its value], folders: [{id, title, path, writable}] remembered for it, autoUpdate,
     // previous (the version Roll back returns to, or ""), held (a newer version waiting for consent, or ""),
-    // revoked, revokedReason, lastGood (the version to offer instead of a revoked one, or "")}, by name.
+    // revoked, revokedReason, lastGood (the version to offer instead of a revoked one, or ""), path (a dev plugin's
+    // folder, else ""), folder (path as a file URL), overrides (the installed version a dev plugin stands in for, or ""), devProblem (why its last
+    // reload failed, or ""), devAsks (its files ask for more than the user said yes to)}, by name.
     QVariantList plugins() const { return m_rows; }
     // Why plugins.json cannot be read; "" when it can.
     QString problem() const { return m_problem; }
@@ -85,6 +94,8 @@ public:
     Q_INVOKABLE QString rollBack(const QString &id);
     // Takes back rollBack(): the version left returns and is no longer passed over.
     Q_INVOKABLE QString undoRollBack(const QString &id);
+    // review() for a folder run in place as a dev plugin. Adds {dev: true, path}.
+    Q_INVOKABLE QVariantMap reviewDev(const QUrl &folder);
     Q_INVOKABLE void cancelReview() { m_review.reset(); }
     // review() for a package that must have the id `id`.
     Q_INVOKABLE QVariantMap reviewUpdate(const QUrl &file, const QString &id);
@@ -107,15 +118,28 @@ signals:
     void settingChanged(const QString &id, const QString &setting, const QString &json);
     // `version` is the one now installed.
     void rolledBack(const QString &id, const QString &name, const QString &version);
+    // A dev plugin's files changed and the new ones were loaded.
+    void devReloaded(const QString &id);
+    // A dev plugin's files changed but weren't loaded: they break a rule, or ask for more than the user said yes to.
+    void devProblem(const QString &id, const QString &name, const QString &message);
 
 private:
     void refresh();
     QVariantMap describe(const plugins::InstallReview &review) const;
     QVariantMap reviewed(std::expected<plugins::InstallReview, plugins::InstallRefusal> result);
+    void watchDevFolders();
+    void devFilesChanged(const QString &path);
+    void reloadDev(const QString &id);
 
     std::optional<plugins::Installer> m_installer;
     PluginSecrets *m_secrets = nullptr;
     std::optional<plugins::InstallReview> m_review;
+    std::filesystem::path m_reviewedFolder;
+    QFileSystemWatcher *m_devWatcher = nullptr;
+    QHash<QString, QString> m_devFolders;
+    QHash<QString, QTimer *> m_devTimers;
+    QHash<QString, QString> m_devProblems;
+    QSet<QString> m_devAsks;
     plugins::OfficialAuthor m_official = plugins::OfficialAuthor::hikarisub();
     QVariantList m_rows;
     QString m_problem;

@@ -5,10 +5,11 @@
 // HikariSub spends answering it, is reported as still working; nothing stops it but forceStop.
 // After a stop or a crash the next command starts a new helper.
 
-#include "hikari/backends/helper_host.h"
+#include "hikari/backends/plugin_link.h"
 #include "hikari/backends/plugin_protocol.h"
 #include "hikari/backends/sandbox.h"
 
+#include <QDeadlineTimer>
 #include <QElapsedTimer>
 #include <QObject>
 #include <QTimer>
@@ -37,6 +38,7 @@ public:
     struct Limits {
         int stillWorkingMs = 10'000;
         std::size_t maxQueued = 64;
+        int answerMs = 1'000;
     };
 
     struct ServiceRequest {
@@ -53,6 +55,8 @@ public:
     using ServiceHandler = std::function<void(const ServiceRequest &, ServiceReply)>;
     // Asked at each start, so a restart sees the current settings and language.
     using LoadSource = std::function<plugin::LoadRequest()>;
+    // Makes what a start talks to, or says why it can't. Without one, a start runs helperPath.
+    using LinkFactory = std::function<std::expected<std::unique_ptr<PluginLink>, QString>()>;
 
     PluginProcess(QString helperPath, LoadSource load, QObject *parent = nullptr);
     PluginProcess(QString helperPath, LoadSource load, Limits limits, QObject *parent = nullptr);
@@ -61,6 +65,7 @@ public:
     void setServiceHandler(ServiceHandler handler) { m_services = std::move(handler); }
     // Every later helper starts confined to `profile`; where that can't be enforced it still runs.
     void setSandbox(std::optional<sandbox::Profile> profile) { m_sandbox = std::move(profile); }
+    void setLinkFactory(LinkFactory factory) { m_linkFactory = std::move(factory); }
     bool sandboxed() const { return m_sandbox.has_value(); }
     // The background permission: timers answer not_granted without it.
     void setBackground(bool background) { m_background = background; }
@@ -69,25 +74,36 @@ public:
     void start();
     // Queued behind running work; starts the helper again after a stop. False when the plugin
     // failed to load or the queue is full.
-    // `call` is the JSON {args, context} the handler gets.
-    bool run(const std::string &command, const std::string &call);
-    // What a format call gives: the file's bytes for an export, the JSON {lines, styles, info} for an import;
-    // else the error to show. Called once, also when the helper stops first.
+    // What a call gives: a command's result as JSON (null when its handler returns nothing), the file's bytes for an
+    // export, the JSON {lines, styles, info} for an import; else the error to show. Called once, also when the helper
+    // stops first.
     using FormatDone = std::function<void(std::expected<std::string, QString>)>;
+    // `call` is the JSON {args, context} the handler gets.
+    bool run(const std::string &command, const std::string &call, FormatDone done = {});
     // Queued and started as run is.
     bool exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson, FormatDone done);
     bool importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done);
+    // Asks the plugin's hikari.providers handler ("completion" or "hover"); done gets its JSON answer. An answer
+    // later than answerMs gives an error instead and is dropped, and the plugin keeps running. A newer request
+    // for the same provider replaces a queued one.
+    bool provide(const std::string &provider, std::string requestJson, FormatDone done);
     // Dropped unless the plugin runs. A queued event of the same name takes the newer data.
     bool push(const std::string &event, const std::string &json) { return deliver(event, json, event); }
     // As push, but a queued event takes the newer data only when both carry the same non-empty key.
     bool deliver(const std::string &event, const std::string &json, const std::string &coalesceKey);
     void forceStop();
+    // As forceStop without a stopped signal, and a program plugin is asked to shut down first.
+    void end();
     // The running command's job, after hikari.job.begin: hikari.job.cancelled answers true from now on.
     void cancelJob();
     bool inJob() const { return m_job; }
     // The running unit passed stillWorkingMs and isn't a job.
     bool stillWorking() const { return m_stillWorking; }
     bool inTimer() const { return m_running && m_running->kind == Unit::Kind::Timer; }
+    // The running unit answers the user: a command run with context.via other than api and ai, or a click in the
+    // plugin's own panel or dialog (a dialog's button too), or an accept, button or back of its own live quick pick or
+    // input box. A job keeps its command's answer.
+    bool answersUser() const;
     // What the running unit is: "load", "timer", or the command's or event's name; empty when idle.
     QString work() const;
     std::size_t timerCount() const { return m_timers.size(); }
@@ -120,24 +136,28 @@ signals:
 
 private:
     struct Unit {
-        enum class Kind { Load, Command, Event, Timer, Export, Import } kind = Kind::Command;
+        enum class Kind { Load, Command, Event, Timer, Export, Import, Provide } kind = Kind::Command;
         std::string name;
         std::string json;
         std::string key; // Event: the coalesce key; Export: the options; Import: the file name
         FormatDone done;
         std::int64_t timer = 0;
         bool last = false;
+        QDeadlineTimer deadline = QDeadlineTimer::Forever;
     };
     struct Timer {
         std::unique_ptr<QTimer> clock;
         bool repeat = false;
     };
+    static bool isUserClick(const Unit &unit);
+    static bool isPopupAnswer(const Unit &unit);
     bool enqueue(Unit unit);
     void failPending(const QString &message);
     void startHelper();
     void next();
     void onEvent(std::expected<helper::Event, helper::HostError> event);
     void onService(const helper::Event &event);
+    void serve(std::uint64_t request, std::uint64_t call, const std::vector<std::byte> &payload);
     void endUnit(helper::Outcome outcome, const std::vector<std::byte> &payload);
     void stopHelper(StopReason reason);
     void dropHelper(bool kill);
@@ -153,8 +173,9 @@ private:
     Limits m_limits;
     ServiceHandler m_services;
     std::optional<sandbox::Profile> m_sandbox;
+    LinkFactory m_linkFactory;
     std::unique_ptr<sandbox::Launcher> m_launcher;
-    std::unique_ptr<helper::HelperHost> m_host;
+    std::unique_ptr<PluginLink> m_host;
     State m_state = State::Idle;
     QString m_loadError;
     QByteArray m_lastDiagnostics;

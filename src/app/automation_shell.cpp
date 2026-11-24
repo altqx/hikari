@@ -16,6 +16,7 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <chrono>
 #include <numeric>
 #include <ranges>
 #include <string_view>
@@ -26,6 +27,8 @@ namespace hikari::app {
 namespace {
 
 using application::HostServiceReply;
+
+constexpr std::chrono::milliseconds kMacroCheckBudget{500};
 
 std::vector<std::string> buttonLabels(const application::DialogRequest &request)
 {
@@ -431,6 +434,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, [this] { m_router.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
+    connect(&m_manager, &backends::AutomationManager::checkFinished, this, &AutomationShell::takeChecks);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::dropBuiltinClashes,
@@ -1052,6 +1056,122 @@ void AutomationShell::menuOpened()
     for (const auto &script : m_manager.scripts())
         if (m_manager.modifiedSinceLoad(script.path))
             m_manager.reload(script.path);
+    startChecks();
+}
+
+void AutomationShell::startChecks()
+{
+    const auto target = m_workspace.editingTarget();
+    auto *s = target ? session(*target) : nullptr;
+    if (!s)
+        return;
+    const auto snapshot = application::macroSnapshotOf(s->document(), s->selection());
+    bool changed = false;
+    const auto scripts = m_manager.scripts();
+    for (auto it = m_checks.begin(); it != m_checks.end();) {
+        if (std::ranges::any_of(scripts, [&](const auto &script) { return script.path == it->first; })) {
+            ++it;
+        } else {
+            it = m_checks.erase(it);
+            changed = true;
+        }
+    }
+    for (const auto &script : scripts) {
+        const bool checkable = std::ranges::any_of(script.info.macros, [](const auto &m) { return m.hasValidate || m.hasIsActive; });
+        if (!checkable || script.state != application::ScriptStatus::State::Ready) {
+            changed = m_checks.erase(script.path) > 0 || changed;
+            continue;
+        }
+        MacroChecks &c = m_checks[script.path];
+        const bool same = c.serial == s->serial() && c.revision == s->revision() && c.generation == script.generation &&
+                          c.selected == snapshot.selected && c.active == snapshot.active;
+        if (same && (c.pending || c.done))
+            continue;
+        const bool inFlight = c.pending;
+        c = MacroChecks{.serial = s->serial(), .revision = s->revision(), .generation = script.generation,
+                        .selected = snapshot.selected, .active = snapshot.active};
+        if (inFlight) {
+            c.pending = c.rerun = true;
+            if (auto *host = m_manager.host(script.path))
+                host->stopCheck();
+        } else {
+            c.pending = m_manager.check(script.path, snapshot, kMacroCheckBudget);
+        }
+        changed = true;
+    }
+    if (changed) {
+        ++m_checksRevision;
+        emit checksChanged();
+    }
+}
+
+void AutomationShell::takeChecks(const QString &qpath)
+{
+    const auto it = m_checks.find(qpath.toStdString());
+    if (it == m_checks.end())
+        return;
+    MacroChecks &c = it->second;
+    c.pending = false;
+    if (c.rerun) {
+        c.rerun = false;
+        startChecks();
+        return;
+    }
+    const auto *host = m_manager.host(it->first);
+    if (host && host->lastChecks()) {
+        c.done = true;
+        for (const auto &check : *host->lastChecks())
+            c.byOrdinal[check.index] = check;
+    }
+    ++m_checksRevision;
+    emit checksChanged();
+}
+
+QVariantMap AutomationShell::macroCheck(const QString &script, int ordinal) const
+{
+    using Verdict = application::MacroCheck::Verdict;
+    const auto it = m_checks.find(script.toStdString());
+    const auto *host = it == m_checks.end() ? nullptr : m_manager.host(it->first);
+    if (!host || ordinal < 0 || static_cast<std::size_t>(ordinal) >= host->info().macros.size())
+        return {};
+    const auto &macro = host->info().macros[static_cast<std::size_t>(ordinal)];
+    if (!macro.hasValidate && !macro.hasIsActive)
+        return {};
+    if (it->second.pending)
+        return {{QStringLiteral("note"), QCoreApplication::translate("HikariSub.Automation", "Checking…")}};
+    const auto found = it->second.byOrdinal.find(ordinal);
+    if (found == it->second.byOrdinal.end())
+        return {};
+    const application::MacroCheck &check = found->second;
+    const QString help = QString::fromStdString(check.help);
+    QVariantMap out;
+    if (check.verdict == Verdict::Invalid)
+        out.insert(QStringLiteral("reason"),
+                   help.isEmpty() ? QCoreApplication::translate("HikariSub.Automation", "Can’t run on this selection") : help);
+    else if (check.verdict == Verdict::Failed)
+        out.insert(QStringLiteral("reason"),
+                   QCoreApplication::translate("HikariSub.Automation", "Its validation function stopped with an error"));
+    else if (check.verdict == Verdict::Valid && !help.isEmpty())
+        out.insert(QStringLiteral("help"), help);
+    if (check.active)
+        out.insert(QStringLiteral("active"), *check.active);
+    return out;
+}
+
+QVariantMap AutomationShell::commandCheck(const QString &command) const
+{
+    const std::string wanted = command.toStdString();
+    if (!wanted.starts_with("macro:"))
+        return {};
+    for (const auto &script : m_manager.scripts()) {
+        if (script.state != application::ScriptStatus::State::Ready && script.state != application::ScriptStatus::State::Running)
+            continue;
+        const std::string prefix = "macro:" + application::scriptFileName(script.path) + ":";
+        for (std::size_t i = 0; i < script.info.macros.size(); ++i)
+            if (wanted == prefix + std::to_string(i))
+                return macroCheck(QString::fromStdString(script.path), int(i));
+    }
+    return {};
 }
 
 void AutomationShell::runLastLoadedScript()

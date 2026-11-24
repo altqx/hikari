@@ -261,6 +261,12 @@ std::vector<core::LineId> ShellController::actionLines() const
     return out;
 }
 
+std::optional<int> ShellController::lineNumber(core::LineId id) const
+{
+    const auto row = m_lines.rowOf(id);
+    return row ? std::optional(*row + 1) : std::nullopt;
+}
+
 void ShellController::setReferenceSelection(const application::Selection &selection)
 {
     m_referenceLines.setSelection(selection, selection.anchor);

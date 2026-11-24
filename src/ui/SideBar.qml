@@ -178,18 +178,20 @@ Rectangle {
             xAxis.enabled: true
             yAxis.enabled: false
             property real startWidth
+            property real draggedWidth
             onActiveChanged: {
                 if (active)
-                    startWidth = bar.width
+                    startWidth = draggedWidth = bar.width
                 else
-                    bar.resized(Math.round(bar.dragWidth()), true)
+                    bar.resized(Math.round(draggedWidth), true)
             }
-            onTranslationChanged: if (active) bar.resized(Math.round(bar.dragWidth()), false)
+            onActiveTranslationChanged: {
+                if (!active)
+                    return
+                draggedWidth = startWidth + (bar.onLeft ? activeTranslation.x : -activeTranslation.x)
+                bar.resized(Math.round(draggedWidth), false)
+            }
         }
-    }
-
-    function dragWidth() {
-        return grip.startWidth + (bar.onLeft ? grip.translation.x : -grip.translation.x)
     }
 
     function stepIcon(index, step) {
