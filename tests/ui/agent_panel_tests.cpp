@@ -322,7 +322,8 @@ class AgentPanelTest : public QObject {
         if (!title.isEmpty() && !agent().current().isEmpty())
             agent().rename(agent().current(), title);
         const QSize size = window()->size();
-        window()->resize(1440, 1000);
+        const QStringList shotSize = qEnvironmentVariable("HIKARI_SURFACE_SHOT_SIZE", QStringLiteral("1440x1000")).split(QLatin1Char('x'));
+        window()->resize(shotSize.value(0).toInt(), shotSize.value(1).toInt());
         shell(QStringLiteral("notices.visible = false"));
         auto restore = qScopeGuard([this, size] {
             window()->resize(size);
@@ -2212,6 +2213,44 @@ private slots:
             item(QStringLiteral("agentComposer"))->setProperty("text", QString());
             QTest::qWait(100);
         }
+    }
+
+    void thePanelTakesQuietsTokensAtTheDefaultSizes_data()
+    {
+        QTest::addColumn<QSize>("size");
+        for (const QSize size : {QSize(1280, 800), QSize(1366, 768)})
+            QTest::addRow("%dx%d", size.width(), size.height()) << size;
+    }
+    void thePanelTakesQuietsTokensAtTheDefaultSizes()
+    {
+        QFETCH(QSize, size);
+        window()->resize(size);
+        QTRY_COMPARE(window()->size(), size);
+        openPanel();
+        QVERIFY(click(QStringLiteral("agentNewThread")));
+        QTRY_VERIFY(agent().thread().contains(QStringLiteral("id")));
+        const QList<qulonglong> tabs = openTabs({QStringLiteral("Sprite Fright - 01 - The Forest Path [Dialogue].ass")});
+        QCOMPARE(tabs.size(), 1);
+        agent().attach(tabs[0]);
+        QQuickItem *chip = nullptr;
+        QTRY_VERIFY((chip = item(QStringLiteral("agentChip_%1").arg(tabs[0]))));
+        item(QStringLiteral("agentComposer"))->setProperty("text", QStringLiteral("Check the honorifics"));
+        QVERIFY(QQuickTest::qWaitForPolish(window()));
+
+        QCOMPARE(item(QStringLiteral("agentHeader"))->height(), 30.0);
+        QCOMPARE(item(QStringLiteral("agentSend"))->height(), 24.0);
+        QCOMPARE(chip->height(), 22.0);
+        QCOMPARE(chip->property("radius").toReal(), 4.0);
+        QCOMPARE(item(QStringLiteral("agentComposerBox"))->property("radius").toReal(), 6.0);
+
+        const qreal body = QGuiApplication::font().pointSizeF();
+        const QFont title = item(QStringLiteral("agentTitle"))->property("font").value<QFont>();
+        QCOMPARE(title.pointSizeF(), std::max(body * 12 / 13, 8.0));
+        QCOMPARE(title.weight(), QFont::DemiBold);
+        QQuickItem *name = child(chip, QStringLiteral("fileChipName"));
+        QVERIFY(name);
+        QCOMPARE(name->property("font").value<QFont>().pointSizeF(), std::max(body * 12 / 13, 8.0));
+        QVERIFY(name->height() <= chip->height());
     }
 };
 
