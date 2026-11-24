@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <utility>
 
 namespace hikari::application {
 
@@ -40,6 +41,8 @@ enum : int {
     kDoSetAssComment = 1 << 20,
     kDoDelete = 1 << 21,
     kFieldOverlaps = 1 << 22,
+    kExactMatch = 1 << 23,
+    kIntersect = 1 << 24,
 };
 
 std::u8string replaceAll(std::u8string s, std::u8string_view from, std::u8string_view to)
@@ -126,7 +129,9 @@ SelectLinesSettings selectLinesFromOptions(int options)
     S s;
     s.with = !(options & kNotContains);
     s.matchCase = options & kMatchCase;
-    s.regex = options & kRegularExpressions;
+    s.match = options & kRegularExpressions ? S::Match::Regex
+              : options & kExactMatch       ? S::Match::Exact
+                                            : S::Match::Contains;
     // The first field bit wins; none leaves the first radio button (Text).
     s.field = options & kFieldText        ? S::Field::Text
               : options & kFieldStyle     ? S::Field::Style
@@ -140,6 +145,7 @@ SelectLinesSettings selectLinesFromOptions(int options)
     s.comments = options & kComments;
     s.mode = options & kAddToSelection ? S::Mode::AddToSelection
              : options & kDeselect     ? S::Mode::Deselect
+             : options & kIntersect    ? S::Mode::Intersect
                                        : S::Mode::Select;
     s.action = options & kDoCopy             ? S::Action::Copy
                : options & kDoCut            ? S::Action::Cut
@@ -154,11 +160,14 @@ SelectLinesSettings selectLinesFromOptions(int options)
 int selectLinesOptions(const SelectLinesSettings &s)
 {
     using F = SelectLinesSettings::Field;
+    using M = SelectLinesSettings::Match;
     int options = s.with ? kContains : kNotContains;
     if (s.matchCase)
         options |= kMatchCase;
-    if (s.regex)
+    if (s.match == M::Regex)
         options |= kRegularExpressions;
+    else if (s.match == M::Exact)
+        options |= kExactMatch;
     switch (s.field) {
     case F::Text: options |= kFieldText; break;
     case F::Style: options |= kFieldStyle; break;
@@ -172,7 +181,7 @@ int selectLinesOptions(const SelectLinesSettings &s)
         options |= kDialogues;
     if (s.comments)
         options |= kComments;
-    options |= kSelect << static_cast<int>(s.mode);
+    options |= s.mode == SelectLinesSettings::Mode::Intersect ? kIntersect : kSelect << static_cast<int>(s.mode);
     options |= kDoNothing << static_cast<int>(s.action);
     return options;
 }
@@ -218,11 +227,13 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     if (settings.mode == M::Select)
         selection.selected.clear();
 
+    const bool regex = settings.match == SelectLinesSettings::Match::Regex;
+    const bool exact = settings.match == SelectLinesSettings::Match::Exact;
     std::u16string find = core::toUtf16(settings.find);
-    if (!settings.matchCase && !settings.regex)
+    if (!settings.matchCase && !regex)
         find = lower(find);
     std::optional<core::LegacyRegex> re;
-    if (settings.regex) {
+    if (regex) {
         re.emplace(find, core::LegacyRegex::Advanced | (settings.matchCase ? 0 : core::LegacyRegex::IgnoreCase));
         if (!re->isValid()) {
             session.setSelection(selection);
@@ -231,6 +242,8 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
             return invalid;
         }
     }
+    const std::set<core::LineId> before = settings.mode == M::Intersect ? std::exchange(selection.selected, {})
+                                                                         : std::set<core::LineId>{};
 
     SelectLinesResult result;
     const bool byOverlap = settings.field == SelectLinesSettings::Field::Overlaps;
@@ -252,13 +265,16 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
             } else {
                 if (!settings.matchCase)
                     txt = lower(txt);
-                found = txt.find(find) != std::u16string::npos;
+                found = exact ? txt == find : txt.find(find) != std::u16string::npos;
             }
         } else if (find.empty() && txt.empty()) {
             found = true;
         }
         if (found == settings.with && ((settings.dialogues && !line->comment) || (settings.comments && line->comment))) {
-            if (settings.mode != M::Deselect) {
+            if (settings.mode == M::Intersect) {
+                if (before.contains(line->id))
+                    selection.selected.insert(line->id);
+            } else if (settings.mode != M::Deselect) {
                 selection.selected.insert(line->id);
                 ++result.count;
             } else if (selection.selected.erase(line->id)) {
@@ -268,6 +284,9 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
         if (selection.selected.contains(line->id))
             acted.push_back(line->id);
     }
+
+    if (settings.mode == M::Intersect)
+        result.count = static_cast<int>(before.size() - selection.selected.size());
 
     const A action = settings.action;
     if (action == A::Copy || action == A::Cut)

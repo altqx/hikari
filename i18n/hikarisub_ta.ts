@@ -7584,6 +7584,33 @@ Failed to copy %2 fonts.</source>
         <source>Filter the Grid</source>
         <translation>கட்டத்தை வடிகட்டு</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: காட்டு</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>கட்டத்தில் குறிச்சொற்கள்: மறை</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9568,6 +9595,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைச் சுழற்று</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>உரையை நீக்கு, குறிச்சொற்களைத் தக்கவை</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>வரிகளை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>வரிகளைக் கீழே நகர்த்து</translation>
     </message>
 </context>
 <context>
@@ -12731,14 +12786,6 @@ Failed to copy %2 fonts.</source>
         <translation>முதலில் ஒரு கோப்பைத் திறக்கவும்</translation>
     </message>
     <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>கட்டத்தில் குறிச்சொற்களை மறை</translation>
-    </message>
-    <message>
         <source>Shows or hides tags in the line editor</source>
         <translation>வரி திருத்தியில் குறிச்சொற்களைக் காட்டுகிறது அல்லது மறைக்கிறது</translation>
     </message>
@@ -12805,6 +12852,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களைக் காட்டுகிறது, மாற்றுகிறது அல்லது மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்கள்</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை உள்ளபடியே காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>கட்டத்தில் ஒவ்வொரு குறிச்சொல் தொகுதியையும் அமைப்புகள் › கட்டம் இல் அமைத்த அடையாளமாகக் காட்டுகிறது</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>அடையாளத்தால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்களை மறைக்கிறது</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>மறை</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>தற்போதைய வீடியோ சட்டகத்தில் தெரியும் வரிகளைக் கட்டத்தில் நிறமிடுகிறது</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
     </message>
 </context>
 <context>
@@ -18857,6 +18940,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>அதன் மேனிஃபெச்ட் இப்போது அடையாளம் “%1” என்கிறது. அதன் ஏற்றத்தை நீக்கி, கோப்புறையை மீண்டும் ஏற்றவும்.</translation>
     </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 நின்றது: %2</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
@@ -21371,6 +21458,26 @@ because it was edited.</source>
         <source>Overlapping lines</source>
         <translation>ஒன்றின்மேல் ஒன்று வரும் வரிகள்</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>கொண்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>துல்லியமான பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>தேர்வுடன் பொதுவானவற்றை மட்டும் வை</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>%1 வரிகள் தேர்விலிருந்து நீக்கப்பட்டன.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21635,7 +21742,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27093,7 +27200,7 @@ Styles deleted:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -27110,6 +27217,10 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>வீடியோ (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

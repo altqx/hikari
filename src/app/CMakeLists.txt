@@ -39,6 +39,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     problems_controller.cpp include/hikari/app/problems_controller.h
     reading_problems.cpp include/hikari/app/reading_problems.h
     language_providers.cpp include/hikari/app/language_providers.h
+    language_servers.cpp include/hikari/app/language_servers.h
     local_only_network.cpp include/hikari/app/local_only_network.h
     api_host.cpp include/hikari/app/api_host.h
     ai_karaoke.cpp include/hikari/app/ai_karaoke.h

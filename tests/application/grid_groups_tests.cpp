@@ -213,6 +213,59 @@ TEST_F(NestedTest, SelectingAGroupOpensItAndSelectsEverythingInside)
     EXPECT_EQ(shape(session), "a S[D] s1[o] C[o][D] c1[o][c]h c2[o][c]h s2[o] z ");
 }
 
+TEST_F(GroupsTest, MovingPassesAGroupAsAWholeAndAMemberMovesItsGroup)
+{
+    select({z}, z);
+    ASSERT_TRUE(moveLines(session, true));
+    EXPECT_EQ(shape(session), "a z G[D] m1[o] m2[o] ");
+    select({m1}, m1);
+    ASSERT_TRUE(moveLines(session, true));
+    EXPECT_EQ(shape(session), "a G[D] m1[o] m2[o] z ");
+    ASSERT_TRUE(moveLines(session, true));
+    EXPECT_EQ(shape(session), "G[D] m1[o] m2[o] a z ");
+    EXPECT_EQ(session.selection().selected, std::set<core::LineId>{m1});
+    EXPECT_EQ(session.selection().active, m1);
+    EXPECT_FALSE(canMoveLines(session, true));
+    select({a}, a);
+    ASSERT_TRUE(moveLines(session, true));
+    EXPECT_EQ(shape(session), "a G[D] m1[o] m2[o] z ");
+    EXPECT_TRUE(session.lastGroupBreak().empty());
+}
+
+TEST_F(GroupsTest, AClosedGroupMovesWithItsHiddenMembers)
+{
+    ASSERT_TRUE(toggleGroup(session, g));
+    select({g}, g);
+    ASSERT_TRUE(moveLines(session, false, [&](core::LineId id) { return id != m1 && id != m2; }));
+    EXPECT_EQ(shape(session), "a z G[D] m1[c]h m2[c]h ");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(shape(session), "a G[D] m1[c]h m2[c]h z ");
+}
+
+TEST_F(NestedTest, AnInnerGroupMovesAmongItsGroupsMembersAndStopsAtItsEdge)
+{
+    select({c1}, c1);
+    ASSERT_TRUE(moveLines(session, true));
+    EXPECT_EQ(shape(session), "a S[D] C[o][D] c1[o][o] c2[o][o] s1[o] s2[o] z ");
+    EXPECT_FALSE(canMoveLines(session, true));
+    EXPECT_FALSE(moveLines(session, true));
+    select({C}, C);
+    ASSERT_TRUE(moveLines(session, false));
+    ASSERT_TRUE(moveLines(session, false));
+    EXPECT_EQ(shape(session), "a S[D] s1[o] s2[o] C[o][D] c1[o][o] c2[o][o] z ");
+    EXPECT_FALSE(canMoveLines(session, false));
+}
+
+TEST_F(NestedTest, ASelectedOuterGroupTakesTheInnerOneAlong)
+{
+    ASSERT_TRUE(selectGroup(session, S));
+    ASSERT_TRUE(moveLines(session, false));
+    EXPECT_EQ(shape(session), "a z S[D] s1[o] C[o][D] c1[o][o] c2[o][o] s2[o] ");
+    select({s1, c1}, c1);
+    ASSERT_TRUE(moveLines(session, true));
+    EXPECT_EQ(shape(session), "a S[D] s1[o] C[o][D] c1[o][o] c2[o][o] s2[o] z ");
+}
+
 TEST_F(NestedTest, MakingAGroupInsideAGroupNestsIt)
 {
     select({s1}, s1);

@@ -151,6 +151,10 @@ void Application::followGridPress(std::optional<core::LineId> before, core::Line
 
 void Application::trackVideoFollow(WindowMedia &media)
 {
+    connect(media.video.get(), &ui::VideoController::textsChanged, this, [this, &media] {
+        if (&media == &activeMedia())
+            refreshFrameMarks();
+    });
     auto last = std::make_shared<VideoSession::State>(VideoSession::State::Closed);
     connect(media.video.get(), &ui::VideoController::changed, this, [this, &media, last] {
         auto &video = media.video->session();
@@ -217,17 +221,34 @@ bool Application::selectLineFromVideo()
     return applySelection(gridSelection().plain(session->selection(), *id));
 }
 
+std::vector<core::LineId> Application::linesVisibleOnVideo(application::EditSession &session,
+                                                          const application::ShownLine &shown)
+{
+    std::optional<core::LineRecord> editorLine;
+    if (const auto active = session.selection().active)
+        editorLine = session.draftLine() == active ? session.draftRecord() : committedLine(session, *active);
+    return application::linesShownOnVideo(session.document(), shown, editorLine, activeMedia().video->session().tellMs());
+}
+
+void Application::refreshFrameMarks()
+{
+    auto *session = targetSession();
+    const bool marking = session && markCurrentFrame() && activeMedia().video->hasVideo();
+    shell().setLinesOnFrame(marking ? linesVisibleOnVideo(*session, {}) : std::vector<core::LineId>());
+}
+
+void Application::setMarkCurrentFrame(bool on)
+{
+    m_settings->set("grid.markCurrentFrame", on);
+}
+
 bool Application::selectLinesVisibleOnVideo()
 {
     auto *session = targetSession();
     if (!session)
         return false;
-    const auto active = session->selection().active;
-    std::optional<core::LineRecord> editorLine;
-    if (active)
-        editorLine = session->draftLine() == active ? session->draftRecord() : committedLine(*session, *active);
     const application::ShownLine shown = m_gridFilter->ignoreInActions() ? application::ShownLine{} : shownLines();
-    const auto found = application::linesShownOnVideo(session->document(), shown, editorLine, activeMedia().video->session().tellMs());
+    const auto found = linesVisibleOnVideo(*session, shown);
     application::Selection next = session->selection();
     next.selected = std::set<core::LineId>(found.begin(), found.end());
     if (!found.empty())
