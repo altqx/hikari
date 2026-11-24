@@ -13,6 +13,7 @@ Rectangle {
     required property TitleBarMenus menus
     required property LayoutSwitcher switcher
     property Item tools: null
+    property DocumentTabBar tabs: null
     property list<Item> sideBarTools
     readonly property Window window: frame.window
     readonly property bool custom: frame.custom
@@ -20,9 +21,6 @@ Rectangle {
     readonly property bool maximized: window !== null
         && (window.visibility === Window.Maximized || window.visibility === Window.FullScreen)
     property string title: window ? window.title : ""
-
-    readonly property int titleGap: 32
-    readonly property int titleMinimum: 80
 
     readonly property bool keyboardMode: keyboardTarget !== null
     property Item keyboardTarget: null
@@ -39,6 +37,8 @@ Rectangle {
         switcher.parent = lead
         if (tools)
             tools.parent = lead
+        if (tabs)
+            tabs.parent = tabSlot
         for (const tool of sideBarTools)
             tool.parent = trail
         frame.titleBar = bar
@@ -51,6 +51,7 @@ Rectangle {
     Binding { target: bar.menus; property: "keyboardTarget"; value: bar.keyboardTarget }
     Binding { target: bar.menus; property: "windowActive"; value: bar.active || !bar.custom }
     Binding { target: bar.switcher; property: "keyboardCurrent"; value: bar.keyboardTarget === bar.switcher }
+    Binding { when: bar.tabs !== null; target: bar.tabs; property: "windowActive"; value: bar.active || !bar.custom }
     Rectangle {
         parent: bar.keyboardTarget ?? bar
         visible: bar.keyboardTarget !== null && (bar.keyboardTarget === bar.tools || bar.isSideBarTool(bar.keyboardTarget))
@@ -75,6 +76,7 @@ Rectangle {
 
     // MUST KILL: switcherGap copies Main.qml's Layout.leftMargin by hand
     readonly property int switcherGap: 8
+    readonly property int tabGap: 8
     readonly property int foldFrom: {
         const n = menus.count
         let total = 0
@@ -85,6 +87,7 @@ Rectangle {
             total += widths[i]
         }
         const room = buttonsStart - leadStart - 8 - switcher.implicitWidth - switcherGap - (tools ? tools.implicitWidth : 0)
+                     - (tabs && tabs.shown ? tabs.minimumWidth + 2 * tabGap : 0)
         if (total <= room)
             return n
         let used = more.implicitWidth
@@ -378,25 +381,17 @@ Rectangle {
         }
     }
 
-    Label {
-        id: titleLabel
-        objectName: "titleBarTitle"
-        readonly property real from: bar.leadStart + lead.width + bar.titleGap
-        readonly property real to: bar.buttonsStart - bar.titleGap
-        readonly property real room: to - from
-        readonly property bool centred: bar.width / 2 - implicitWidth / 2 >= from && bar.width / 2 + implicitWidth / 2 <= to
-        visible: bar.custom && room >= bar.titleMinimum
-        text: bar.title
-        elide: Text.ElideRight
-        maximumLineCount: 1
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        color: bar.active ? Theme.text : Theme.disabled
-        width: Math.min(implicitWidth, Math.max(0, room))
-        height: parent.height
-        x: bar.leadingOf(centred ? (bar.width - width) / 2 : from + (room - width) / 2, width)
-        Accessible.role: Accessible.StaticText
-        Accessible.name: text
+    Item {
+        id: tabSlot
+        objectName: "titleBarTabs"
+        anchors.left: lead.right
+        anchors.leftMargin: bar.tabGap
+        anchors.right: trail.left
+        anchors.rightMargin: bar.tabGap
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        Binding { when: bar.tabs !== null; target: bar.tabs; property: "width"; value: tabSlot.width }
+        Binding { when: bar.tabs !== null; target: bar.tabs; property: "height"; value: tabSlot.height }
     }
 
     Row {

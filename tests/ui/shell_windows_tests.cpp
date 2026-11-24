@@ -402,8 +402,8 @@ class ShellWindowsTest : public QObject {
     void sideBySide()
     {
         first()->setGeometry(0, 0, 790, 470);
-        second->setGeometry(490, 480, 790, 470);
-        QTRY_COMPARE(second->position(), QPoint(490, 480));
+        second->setGeometry(10, 480, 790, 470);
+        QTRY_COMPARE(second->position(), QPoint(10, 480));
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
     }
     static void dragTab(QQuickWindow *window, QPoint from, QPoint to)
@@ -1528,8 +1528,8 @@ private slots:
     void aTabDraggedSidewaysOntoTheBarOfAWindowBesideItMovesThere()
     {
         first()->setWindowStates(Qt::WindowNoState);
-        first()->setGeometry(-400, 60, 790, 470);
-        second->setGeometry(420, 60, 790, 470);
+        first()->setGeometry(-770, 60, 790, 470);
+        second->setGeometry(50, 60, 790, 470);
         QTRY_VERIFY(second->property("arrangementSettled").toBool());
         const auto third = openTab(0, "third");
         focus(0);

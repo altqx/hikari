@@ -1430,7 +1430,7 @@ private slots:
         }
     }
 
-    void documentTabsSitUnderTheMenuBar()
+    void documentTabsSitInTheTitleBarRow()
     {
         auto *root = engine->rootObjects().first();
         auto *menuBar = root->property("menuBar").value<QQuickItem *>();
@@ -1442,16 +1442,17 @@ private slots:
         QCOMPARE(footer->objectName(), QStringLiteral("statusBar"));
         QQuickItem *bar = visualItem("documentTabBar");
         QVERIFY(bar && bar->isVisible());
+        QVERIFY(menuBar->isAncestorOf(bar));
         const auto rows = header->childItems();
-        QCOMPARE(rows.value(0), bar);
         QQuickItem *layoutNotice = visualItem("layoutNotice");
         QQuickItem *updateBar = visualItem("updateReadyBar");
         QVERIFY(layoutNotice && !layoutNotice->isVisible() && updateBar && !updateBar->isVisible());
-        QCOMPARE(rows.indexOf(layoutNotice), 1);
-        QCOMPARE(rows.indexOf(updateBar), 2);
+        QCOMPARE(rows.indexOf(layoutNotice), 0);
+        QCOMPARE(rows.indexOf(updateBar), 1);
         const auto top = [](QQuickItem *i) { return qRound(i->mapToScene(QPointF()).y()); };
-        QTRY_COMPARE(top(bar), qRound(menuBar->height()));
-        QCOMPARE(top(bar) + qRound(bar->height()), top(content));
+        QTRY_COMPARE(top(bar), top(menuBar));
+        QCOMPARE(qRound(bar->height()), qRound(menuBar->height()));
+        QCOMPARE(top(menuBar) + qRound(menuBar->height()), top(content));
         QCOMPARE(top(footer), top(content) + qRound(content->height()));
 
         const auto tabCount = [&] { return int(application->tabs().size()); };
@@ -1481,10 +1482,7 @@ private slots:
         QTRY_VERIFY(!menu->property("visible").toBool());
         while (tabCount() < 30)
             application->addPage();
-        QQuickItem *flick = nullptr;
-        for (auto *child : bar->childItems())
-            if (child->inherits("QQuickFlickable"))
-                flick = child;
+        QQuickItem *flick = visualItem("documentTabScroll");
         QVERIFY(flick);
         QTRY_VERIFY(flick->property("contentWidth").toReal() > flick->width());
         flick->setProperty("contentX", 0);
@@ -1493,10 +1491,10 @@ private slots:
                           Qt::NoScrollPhase, false);
         QCoreApplication::sendEvent(window, &wheel);
         QTRY_VERIFY(flick->property("contentX").toReal() > 0);
-        QCOMPARE(top(bar), qRound(menuBar->height()));
+        QCOMPARE(top(bar), top(menuBar));
     }
 
-    void titleBarHoldsMenusSwitcherTitleAndWindowButtons()
+    void titleBarHoldsMenusSwitcherTabsAndWindowButtons()
     {
         using ui::MainWindowFrame;
         namespace wf = ui::windowframe;
@@ -1516,21 +1514,31 @@ private slots:
         QQuickItem *icon = visualItem("titleBarAppIcon");
         auto *menus = visualItem("appMenus");
         QQuickItem *switcher = visualItem("layoutSwitcher");
-        QQuickItem *title = visualItem("titleBarTitle");
+        QQuickItem *tabs = visualItem("titleBarTabs");
+        QQuickItem *tabBar = visualItem("documentTabBar");
+        QVERIFY(tabs && tabBar);
+        if (!tabBar->property("shown").toBool())
+            application->addPage();
+        QTRY_VERIFY(tabBar->property("shown").toBool());
+        QTRY_VERIFY(visualItem("documentTab0"));
+        QQuickItem *firstTab = visualItem("documentTab0");
+        QQuickItem *newTab = visualItem("newTabButton");
+        QTRY_COMPARE(qRound(firstTab->height()), qRound(tabs->height()));
         QQuickItem *minimize = visualItem("titleBarMinimize");
         QQuickItem *maximize = visualItem("titleBarMaximize");
         QQuickItem *close = visualItem("titleBarClose");
-        for (QQuickItem *i : {icon, menus, switcher, title, minimize, maximize, close}) {
+        for (QQuickItem *i : {icon, menus, switcher, tabs, firstTab, newTab, minimize, maximize, close}) {
             QVERIFY(i);
             QVERIFY2(i->isVisible() && bar->isAncestorOf(i), qPrintable(i->objectName()));
         }
-        QCOMPARE(title->property("text").toString(), window->title());
         QVERIFY(!visualItem("statusBar")->findChild<QQuickItem *>(QStringLiteral("layoutSwitcher")));
         const auto rect = [](QQuickItem *i) { return QRectF(i->mapToScene(QPointF()), i->size()); };
         QVERIFY(rect(icon).right() <= rect(menus).left());
         QVERIFY(rect(menus).right() < rect(switcher).left());
-        QVERIFY(rect(switcher).right() + 32 <= rect(title).left());
-        QVERIFY(rect(title).right() + 32 <= rect(minimize).left());
+        QVERIFY(rect(switcher).right() + 8 <= rect(tabs).left());
+        QVERIFY(rect(tabs).right() + 8 <= rect(minimize).left());
+        QVERIFY(rect(tabs).contains(rect(firstTab)) && rect(tabs).contains(rect(newTab)));
+        QVERIFY(rect(newTab).right() + 16 < rect(tabs).right());
         QCOMPARE(qRound(rect(close).right()), window->width());
         QCOMPARE(qRound(rect(minimize).width()), 46);
         const auto name = [](QObject *o) {
@@ -1555,8 +1563,11 @@ private slots:
         QCOMPARE(name(fileTitle), QStringLiteral("File"));
 
         const auto centre = [&](QQuickItem *i) { return rect(i).center(); };
-        QCOMPARE(frame->hitAt(centre(title)), MainWindowFrame::Caption);
-        QCOMPARE(frame->hitAt(QPointF(rect(switcher).right() + 8, 16)), MainWindowFrame::Caption);
+        const QPointF emptyTabRow(rect(tabs).right() - 8, rect(tabs).center().y());
+        QCOMPARE(frame->hitAt(emptyTabRow), MainWindowFrame::Caption);
+        QCOMPARE(frame->hitAt(QPointF(rect(tabs).left() - 4, 16)), MainWindowFrame::Caption);
+        QCOMPARE(frame->hitAt(centre(firstTab)), MainWindowFrame::Client);
+        QCOMPARE(frame->hitAt(centre(newTab)), MainWindowFrame::Client);
         QCOMPARE(frame->hitAt(centre(fileTitle)), MainWindowFrame::Client);
         QCOMPARE(frame->hitAt(centre(switcher)), MainWindowFrame::Client);
         QCOMPARE(frame->hitAt(centre(minimize)), MainWindowFrame::Client);
@@ -1566,7 +1577,7 @@ private slots:
         QCOMPARE(frame->hitAt(QPointF(window->width() / 2.0, bar->height() + 8)), MainWindowFrame::Client);
 
         QSignalSpy windowMenu(frame, &MainWindowFrame::windowMenuRequested);
-        QTest::mouseClick(window, Qt::RightButton, {}, centre(title).toPoint());
+        QTest::mouseClick(window, Qt::RightButton, {}, emptyTabRow.toPoint());
         QCOMPARE(windowMenu.count(), 1);
         QTest::mouseClick(window, Qt::LeftButton, {}, centre(icon).toPoint());
         QCOMPARE(windowMenu.count(), 2);
@@ -1575,7 +1586,7 @@ private slots:
         QVERIFY(edges);
         QCOMPARE(edges->isVisible(), drawnEdges);
         QCOMPARE(edges->size(), QSizeF(window->size()));
-        QTest::mouseDClick(window, Qt::LeftButton, {}, centre(title).toPoint());
+        QTest::mouseDClick(window, Qt::LeftButton, {}, emptyTabRow.toPoint());
         QTRY_COMPARE(window->visibility(), QWindow::Maximized);
         QTRY_COMPARE(maximize->property("text").toString(), QStringLiteral("Restore"));
         QCOMPARE(maximize->property("iconRole").toString(), QStringLiteral("window-restore"));
@@ -1600,6 +1611,8 @@ private slots:
         QCOMPARE(target(), visualItem("rightSideBarToggle"));
         QTest::keyClick(window, Qt::Key_Left);
         QCOMPARE(target(), visualItem("leftSideBarToggle"));
+        QTest::keyClick(window, Qt::Key_Left);
+        QCOMPARE(target(), visualItem("nodeEffectsToggle"));
         QTest::keyClick(window, Qt::Key_Left);
         QCOMPARE(target(), switcher);
         QVERIFY(switcher->property("keyboardCurrent").toBool());
@@ -1643,14 +1656,15 @@ private slots:
         QTRY_VERIFY(window->minimumWidth() <= 660);
         window->resize(660, window->height());
         QTRY_COMPARE(qRound(bar->width()), 660);
-        QTRY_VERIFY(!title->isVisible());
         QQuickItem *more = visualItem("titleBarMore");
         QTRY_VERIFY(more && more->isVisible());
         const int folded = bar->property("foldFrom").toInt();
         const int count = menus->property("count").toInt();
         QVERIFY(folded > 0 && folded < count);
         QTRY_VERIFY(rect(more).right() < rect(switcher).left());
-        QTRY_VERIFY(rect(switcher).right() <= rect(minimize).left());
+        QTRY_VERIFY(rect(switcher).right() + 8 <= rect(tabs).left());
+        QVERIFY(rect(tabs).width() >= tabBar->property("minimumWidth").toReal());
+        QVERIFY(rect(tabs).right() <= rect(minimize).left());
         QCOMPARE(name(more), QStringLiteral("More menus"));
         QVERIFY(QMetaObject::invokeMethod(more, "click"));
         auto *moreMenu = named("titleBarMoreMenu");
@@ -1668,16 +1682,15 @@ private slots:
         window->resize(wide, window->height());
         for (QObject *dock : wideDocks)
             QVERIFY(QMetaObject::invokeMethod(dock, "open"));
-        QTRY_VERIFY(title->isVisible());
         QTRY_VERIFY(!visualItem("titleBarMore")->isVisible());
 
         settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
         QTRY_VERIFY(!frame->custom());
         QVERIFY(!window->flags().testFlag(Qt::FramelessWindowHint));
         QTRY_COMPARE(qRound(bar->height()), 30);
-        for (QQuickItem *i : {icon, title, minimize, maximize, close})
+        for (QQuickItem *i : {icon, minimize, maximize, close})
             QVERIFY2(!i->isVisible(), qPrintable(i->objectName()));
-        QVERIFY(menus->isVisible() && switcher->isVisible());
+        QVERIFY(menus->isVisible() && switcher->isVisible() && firstTab->isVisible());
         QVERIFY(!edges->isVisible());
         QCOMPARE(frame->hitAt(centre(menus)), MainWindowFrame::Client);
         QCOMPARE(name(bar), QStringLiteral("Menus"));
@@ -1729,8 +1742,7 @@ private slots:
         auto *header = root->property("header").value<QQuickItem *>();
         QVERIFY(header && header->objectName() == QLatin1String("windowTop"));
         for (auto *row : header->childItems())
-            QVERIFY2(row->objectName() == QLatin1String("documentTabBar") || !row->isVisible(),
-                     qPrintable(row->objectName()));
+            QVERIFY2(!row->isVisible(), qPrintable(row->objectName()));
         QQuickItem *strip = visualItem("statusBar");
         QVERIFY(strip && strip->isVisible());
         QTRY_COMPARE(qRound(strip->mapToScene(QPointF(0, strip->height())).y()), qRound(window->contentItem()->height()));
@@ -33665,7 +33677,7 @@ private slots:
         auto *close = visualItem("documentTabClose0");
         QCOMPARE(icon(close), QStringLiteral("tab-close"));
         QCOMPARE(name(close), QStringLiteral("Close episode.ass"));
-        QCOMPARE(QSizeF(close->implicitWidth(), close->implicitHeight()), QSizeF(18, 18));
+        QCOMPARE(QSizeF(close->implicitWidth(), close->implicitHeight()), QSizeF(22, 22));
         QCOMPARE(icon(visualItem("newTabButton")), QStringLiteral("tab-new"));
         QCOMPARE(name(visualItem("newTabButton")), QStringLiteral("Open new tab"));
         QVERIFY(!visualItem("documentTabModified0")->isVisible());

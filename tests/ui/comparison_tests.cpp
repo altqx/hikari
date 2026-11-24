@@ -375,7 +375,10 @@ private slots:
 
     void rightClickOnATabComparesIt()
     {
-        click(findItem(window->contentItem(), QStringLiteral("documentTab1")), Qt::RightButton);
+        QQuickItem *tab = findItem(window->contentItem(), QStringLiteral("documentTab1"));
+        QVERIFY(tab);
+        QTRY_COMPARE(qRound(tab->height()), qRound(qobject_cast<QQuickItem *>(named("documentTabBar"))->height()));
+        click(tab, Qt::RightButton);
         QObject *tabMenu = named("documentTabMenu");
         QTRY_VERIFY(tabMenu->property("opened").toBool());
         QObject *menu = named("subtitleComparisonMenu");

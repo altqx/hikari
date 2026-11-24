@@ -2321,6 +2321,17 @@ ApplicationWindow {
         id: titleBar
         frame: windowFrame
         menus: appMenus
+        tabs: DocumentTabBar {
+            id: documentTabBar
+            app: root.app
+            review: root.review
+            shellWindow: root.shellWindow
+            onCloseRequested: index => root.closeTab(index)
+            onCloseTabsRequested: (index, toTheRight) => root.closeTabs(index, toTheRight)
+            onSaveRequested: id => root.saveSubtitles(id)
+            onSaveAllRequested: root.saveAllTabs()
+            onCloseAllRequested: tabCommands.confirmCloseAll()
+        }
         switcher: LayoutSwitcher {
             layouts: root.workspaceLayout
             lockAction: lockLayoutAction
@@ -5794,7 +5805,6 @@ ApplicationWindow {
         anchors.leftMargin: root.homeInset
         z: 1.5
         visible: root.windowHome
-        spaceAbove: documentTabBar.height
         onNewRequested: root.app.addPage()
         onOpenRequested: openAction.trigger()
         onOpenFolderRequested: openFolderAction.trigger()
@@ -9007,18 +9017,6 @@ ApplicationWindow {
     header: ColumnLayout {
         objectName: "windowTop"
         spacing: 0
-        DocumentTabBar {
-            id: documentTabBar
-            app: root.app
-            review: root.review
-            shellWindow: root.shellWindow
-            Layout.fillWidth: true
-            onCloseRequested: index => root.closeTab(index)
-            onCloseTabsRequested: (index, toTheRight) => root.closeTabs(index, toTheRight)
-            onSaveRequested: id => root.saveSubtitles(id)
-            onSaveAllRequested: root.saveAllTabs()
-            onCloseAllRequested: tabCommands.confirmCloseAll()
-        }
         Pane {
             id: layoutNotice
             objectName: "layoutNotice"
