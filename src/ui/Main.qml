@@ -478,7 +478,19 @@ ApplicationWindow {
     }
     function timingLayout() {
         videoDock.close()
-        if (!root.inSideBar(postprocessorDock))
+        dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock,
+                                  Qt.size(0, Math.round(dockingArea.height * 0.36)))
+        const audioShort = Math.round(dockingArea.height * 0.36) - root.workspaceLayout.panelSize(audioDock).height
+        if (audioShort !== 0)
+            Docking.resizeInLayout(root.engineName("Audio"), 0, 0, 0, audioShort)
+        editorColumn.ensurePolished()
+        const editorNow = root.workspaceLayout.panelSize(editorDock).height
+        const editorNatural = Math.max(170, Math.ceil(editorColumn.implicitHeight) + 8 + editorNow - editorPanel.height)
+        if (editorNow !== editorNatural)
+            Docking.resizeInLayout(root.engineName("Editor"), 0, 0, 0, editorNatural - editorNow)
+        if (root.inSideBar(postprocessorDock))
+            root.showInSideBar(postprocessorDock, false)
+        else
             postprocessorDock.open()
     }
     function karaokeLayout() {
