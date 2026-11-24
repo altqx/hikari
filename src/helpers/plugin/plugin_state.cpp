@@ -34,6 +34,7 @@ const char kEventsKey[] = "hikari.events";
 const char kTimersKey[] = "hikari.timers";
 const char kLoadedKey[] = "hikari.loaded";
 const char kExportersKey[] = "hikari.exporters";
+const char kProvidersKey[] = "hikari.providers";
 const char kImportersKey[] = "hikari.importers";
 constexpr std::size_t kMaxFormatBytes = 48u << 20;
 const char kArrayKey[] = "hikari.array";
@@ -579,6 +580,31 @@ int registerImporter(lua_State *L)
     return registerFormat(L, kImportersKey, Access::options(L).importers, "import");
 }
 
+int registerProvider(lua_State *L, const char *provider)
+{
+    luaL_checktype(L, 1, LUA_TFUNCTION);
+    if (std::ranges::find(Access::options(L).providers, provider) == Access::options(L).providers.end())
+        raise(L, std::string("hikari-plugin.json declares no contributes.providers.") + provider);
+    lua_getfield(L, LUA_REGISTRYINDEX, kProvidersKey);
+    lua_getfield(L, -1, provider);
+    if (!lua_isnil(L, -1))
+        raise(L, std::string("the ") + provider + " provider already has a handler");
+    lua_pop(L, 1);
+    lua_pushvalue(L, 1);
+    lua_setfield(L, -2, provider);
+    return 0;
+}
+
+int registerCompletion(lua_State *L)
+{
+    return registerProvider(L, "completion");
+}
+
+int registerHover(lua_State *L)
+{
+    return registerProvider(L, "hover");
+}
+
 int onEvent(lua_State *L)
 {
     const std::string name = luaL_checkstring(L, 1);
@@ -759,7 +785,7 @@ std::expected<void, std::string> PluginState::open()
 
     luaL_newmetatable(L, kArrayKey);
     lua_pop(L, 1);
-    for (const char *key : {kCommandsKey, kEventsKey, kTimersKey, kLoadedKey, kExportersKey, kImportersKey}) {
+    for (const char *key : {kCommandsKey, kEventsKey, kTimersKey, kLoadedKey, kExportersKey, kImportersKey, kProvidersKey}) {
         lua_newtable(L);
         lua_setfield(L, LUA_REGISTRYINDEX, key);
     }
@@ -799,6 +825,11 @@ std::expected<void, std::string> PluginState::open()
     setFunction(L, this, "exporter", registerExporter);
     setFunction(L, this, "importer", registerImporter);
     lua_setfield(L, -2, "formats");
+
+    lua_newtable(L);
+    setFunction(L, this, "completion", registerCompletion);
+    setFunction(L, this, "hover", registerHover);
+    lua_setfield(L, -2, "providers");
 
     lua_newtable(L);
     setFunction(L, this, "get", getSetting);
@@ -943,6 +974,21 @@ std::expected<Json, std::string> PluginState::importFile(const std::string &form
     if (!lua_istable(L, -1))
         out = std::unexpected(std::string("an importer must return {lines, styles, info}, not a ") + luaL_typename(L, -1));
     else
+        out = toJson(L, lua_gettop(L), 0);
+    lua_pop(L, 1);
+    return out;
+}
+
+std::expected<Json, std::string> PluginState::provide(const std::string &provider, const Json &request, Host &host)
+{
+    lua_State *L = m_lua;
+    if (!pushFormatHandler(kProvidersKey, provider))
+        return std::unexpected("the plugin has no " + provider + " provider: it must call hikari.providers." + provider);
+    pushJson(L, request);
+    if (auto ran = protectedCall(1, host, 1); !ran)
+        return std::unexpected(ran.error());
+    std::expected<Json, std::string> out = Json();
+    if (!lua_isnil(L, -1))
         out = toJson(L, lua_gettop(L), 0);
     lua_pop(L, 1);
     return out;

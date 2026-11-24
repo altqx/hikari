@@ -685,10 +685,24 @@ void install(Entry entry)
     Hub::get().refresh();
 }
 
+void fallBackFrom(const QString &id, Type type)
+{
+    SettingsStore *settings = Hub::get().settings;
+    if (!settings || codeFromName(id))
+        return;
+    if (settings->value(QString::fromLatin1(kThemeSetting)).toString() == id)
+        settings->setValue(QString::fromLatin1(kThemeSetting), codeName(kCodes[std::size_t(type)]));
+    for (std::size_t i = 0; i < kPairSettings.size(); ++i)
+        if (settings->value(QString::fromLatin1(kPairSettings[i])).toString() == id)
+            settings->setValue(QString::fromLatin1(kPairSettings[i]), codeName(kCodes[i]));
+}
+
 void uninstall(const QString &id)
 {
-    if (codeFromName(id))
+    const Entry *entry = find(id);
+    if (codeFromName(id) || !entry)
         return;
+    fallBackFrom(id, entry->file.type);
     std::erase_if(registry().entries, [&id](const Entry &e) { return e.id == id; });
     Hub::get().themeListChanged = true;
     Hub::get().refresh();

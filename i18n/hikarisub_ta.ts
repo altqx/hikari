@@ -4097,7 +4097,12 @@ Output device: %2</source>
     </message>
     <message>
         <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
-        <translation>கோப்பு UTF-8 உரையாக இல்லை. உரைத் திருத்தியில் அதை UTF-8 ஆகச் சேமித்து, பின் இறக்குமதி செய்யவும்.</translation>
+        <translation type="vanished">கோப்பு UTF-8 உரையாக இல்லை. உரைத் திருத்தியில் அதை UTF-8 ஆகச் சேமித்து, பின் இறக்குமதி செய்யவும்.</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>கோப்பு %1 உரையாக இல்லை. வேறு குறியாக்கத்தைத் தேர்ந்தெடுக்கவும்.</translation>
     </message>
     <message>
         <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
@@ -8739,6 +8744,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Place the next run</source>
         <translation>அடுத்த தொகுதியை வை</translation>
+    </message>
+    <message>
+        <source>Trigger completion</source>
+        <translation>தானியங்கு நிறைவைத் தொடங்கு</translation>
     </message>
     <message>
         <source>Split syllable at the cursor</source>
@@ -18718,6 +18727,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Icon theme: %1</source>
         <translation>படவுரு கருப்பொருள்: %1</translation>
+    </message>
+    <message>
+        <source>A theme can’t be used: %1</source>
+        <translation>கருப்பொருளைப் பயன்படுத்த முடியாது: %1</translation>
     </message>
 </context>
 <context>

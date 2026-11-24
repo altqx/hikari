@@ -751,7 +751,7 @@ class ShellTest : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
-    void widenForTheInspectorBar() { window->resize(2400, std::max(window->height(), 900)); }
+    void widenForTheInspectorBar() { window->resize(2560, std::max(window->height(), 900)); }
     bool timingBesideTheLineEditor()
     {
         auto *timing = item<QQuickItem>("timingDock");
@@ -9040,7 +9040,7 @@ private slots:
             if (QTest::currentTestFailed())
                 return false;
             const QSize least = docking->layoutMinimumSize(mainName) + rows;
-            if (least == least.boundedTo(window->screen()->availableGeometry().size())) {
+            if (least == least.boundedTo(window->screen()->availableGeometry().size().shrunkBy(window->frameMargins()))) {
                 ++fitted;
                 for (const char *name : panels) {
                     QQuickItem *panel = item(name);
@@ -34504,8 +34504,14 @@ private slots:
         QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("textImportDialog"))));
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto *controller = dialog->property("controller").value<QObject *>();
+        QCOMPARE(controller->property("encoding").toString(), QStringLiteral("UTF-16LE"));
+        QCOMPARE(dialogItem("textImportDialog", "textImportEncoding")->property("currentText").toString(), QStringLiteral("UTF-16 LE"));
+        QCOMPARE(controller->property("lineCount").toInt(), 1);
+        controller->setProperty("encoding", QStringLiteral("UTF-8"));
         QVERIFY(controller->property("problem").toString().contains(QStringLiteral("UTF-8")));
-        QVERIFY(!dialogItem("textImportDialog", "textImportImport")->isEnabled());
+        QTRY_VERIFY(!dialogItem("textImportDialog", "textImportImport")->isEnabled());
+        controller->setProperty("encoding", QStringLiteral("UTF-16LE"));
+        QCOMPARE(controller->property("preview").toList().value(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("A"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
 
@@ -34518,6 +34524,7 @@ private slots:
 
         open(writeText(dir, "pf4-lines.txt", "\xEF\xBB\xBF" "Ana - Hi: there\nPlain\n"));
         QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(controller->property("encoding").toString(), QStringLiteral("UTF-8"));
         controller->setProperty("actorSeparator", QStringLiteral(" - "));
         controller->setProperty("namesCarryOver", false);
         controller->setProperty("intoOpenFile", false);
