@@ -362,6 +362,53 @@ private slots:
         QVERIFY(target(a)->isDirty());
     }
 
+    void aLegacyEncodingIsSuggestedAndReopensAsUtf8()
+    {
+        const QByteArray japanese = QByteArray("\x82\xb1\x82\xf1\x82\xc9\x82\xbf\x82\xcd\x81\x41\x90\xa2\x8a\x45\x81\x42\x93\xfa\x96\x7b\x8c\xea\x82\xcc\x8e\x9a\x96\x8b\x82\xc5\x82\xb7\x81\x42").repeated(3);
+        {
+            app::Application a;
+            QVERIFY(a.openFile(writeFile(dir, "plain.ass", "日本語")));
+            QCOMPARE(a.encodingSuggestion(), QString());
+            QVERIFY(a.canReopenWithEncoding());
+        }
+        {
+            app::Application a;
+            const QString path = writeFile(dir, "legacy.ass", japanese.constData());
+            QVERIFY(a.openFile(path));
+            QCOMPARE(a.encodingSuggestion(), QStringLiteral("Shift-JIS"));
+            const QVariantList rows = a.reopenEncodings();
+            QCOMPARE(rows.size(), 17);
+            QCOMPARE(rows.first().toMap().value(QStringLiteral("label")).toString(), QStringLiteral("Shift-JIS"));
+            QCOMPARE(rows.at(1).toMap().value(QStringLiteral("name")).toString(), QStringLiteral("UTF-8"));
+            const std::string asRead = targetText(a);
+
+            QVERIFY(!a.reopenWithEncoding(QStringLiteral("UTF-8")));
+            QCOMPARE(targetText(a), asRead);
+            QVERIFY(!target(a)->isDirty());
+
+            QVERIFY(a.reopenWithEncoding(rows.first().toMap().value(QStringLiteral("name")).toString()));
+            const std::string utf8 = "こんにちは、世界。日本語の字幕です。";
+            QCOMPARE(targetText(a), utf8 + utf8 + utf8);
+            QVERIFY(target(a)->isDirty());
+            QCOMPARE(a.encodingSuggestion(), QString());
+            QVERIFY(a.saveAs(path));
+            a.waitForWrites();
+            QFile saved(path);
+            QVERIFY(saved.open(QIODevice::ReadOnly));
+            QVERIFY(saved.readAll().contains(QByteArray::fromStdString(utf8 + utf8 + utf8)));
+            QVERIFY(!target(a)->isDirty());
+        }
+        {
+            app::Application a;
+            QVERIFY(a.openFile(writeFile(dir, "dismissed.ass", japanese.constData())));
+            QCOMPARE(a.encodingSuggestion(), QStringLiteral("Shift-JIS"));
+            QSignalSpy changed(&a, &app::Application::encodingSuggestionChanged);
+            a.dismissEncodingSuggestion();
+            QCOMPARE(changed.count(), 1);
+            QCOMPARE(a.encodingSuggestion(), QString());
+        }
+    }
+
     void aRemovedFileMakesTheDocumentUnsavedOnce()
     {
         app::Application a;

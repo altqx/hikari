@@ -307,7 +307,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>เปลี่ยนชื่อ</translation>
+        <translation type="vanished">เปลี่ยนชื่อ</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -752,10 +752,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1436,7 +1432,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>เปิด</translation>
+        <translation type="vanished">เปิด</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -3483,6 +3479,22 @@ Output device: %2</source>
         <translation>เก็บฉบับของฉัน</translation>
     </message>
     <message>
+        <source>%1 looks like %2, not UTF-8. Reopening drops the changes you made here.</source>
+        <translation>%1 ดูเหมือนเป็น %2 ไม่ใช่ UTF-8 การเปิดใหม่จะทิ้งการเปลี่ยนแปลงที่คุณทำไว้ที่นี่</translation>
+    </message>
+    <message>
+        <source>%1 looks like %2, not UTF-8.</source>
+        <translation>%1 ดูเหมือนเป็น %2 ไม่ใช่ UTF-8</translation>
+    </message>
+    <message>
+        <source>Reopen as %1</source>
+        <translation>เปิดใหม่เป็น %1</translation>
+    </message>
+    <message>
+        <source>Other encoding…</source>
+        <translation>การเข้ารหัสอักขระอื่น…</translation>
+    </message>
+    <message>
         <source>Convert “%1” to ASS before saving it?</source>
         <translation>แปลง “%1” เป็น ASS ก่อนบันทึกหรือไม่</translation>
     </message>
@@ -3531,6 +3543,14 @@ Output device: %2</source>
         <translation>อ่าน %1 ไม่ได้</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation>นำเข้าข้อความ</translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation>ไฟล์ข้อความ (*.txt)</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>เปิดคำบรรยาย</translation>
     </message>
@@ -3549,6 +3569,22 @@ Output device: %2</source>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>วิดีโอที่ฝังคำบรรยาย (*.mkv *.ogm)</translation>
+    </message>
+    <message>
+        <source>Reopening drops the changes you made here. The file then saves as UTF-8.</source>
+        <translation>การเปิดใหม่จะทิ้งการเปลี่ยนแปลงที่คุณทำไว้ที่นี่ จากนั้นไฟล์จะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>The file then saves as UTF-8.</source>
+        <translation>จากนั้นไฟล์จะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>Detected</source>
+        <translation>ตรวจพบ</translation>
+    </message>
+    <message>
+        <source>Reopen</source>
+        <translation>เปิดใหม่</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -3641,6 +3677,10 @@ Output device: %2</source>
     <message>
         <source>Choose where to save the untitled document.</source>
         <translation>เลือกตำแหน่งที่จะบันทึกเอกสารที่ไม่มีชื่อ</translation>
+    </message>
+    <message>
+        <source>The file is not text in that encoding; nothing was changed.</source>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความในการเข้ารหัสอักขระนั้น ไม่มีสิ่งใดถูกเปลี่ยน</translation>
     </message>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
@@ -4008,6 +4048,57 @@ Output device: %2</source>
     <message>
         <source>it isn’t running.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>ไฟล์มีขนาดใหญ่กว่า %n MB</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation type="vanished">ไฟล์นี้ไม่ใช่ข้อความ UTF-8 ให้บันทึกเป็น UTF-8 ในโปรแกรมแก้ไขข้อความ แล้วจึงนำเข้า</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>ไฟล์นี้ไม่ใช่ข้อความ %1 เลือกการเข้ารหัสอักขระอื่น</translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation>นี่คือไฟล์ไทม์โค้ด ให้เปิดด้วย วิดีโอ › เปิดไทม์โค้ด… แทน</translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation>ไฟล์ไม่มีบรรทัดที่จะนำเข้า</translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation>ตัวคั่นผู้พูด</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>ไม่มี</translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation>เครื่องหมายความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation>เก็บบรรทัดว่างไว้เป็นบรรทัดความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation>บรรทัดที่ไม่มีผู้พูดใช้ผู้พูดของบรรทัดก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
+        <translation>ความคิดเห็น: %1</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ</translation>
     </message>
 </context>
 <context>
@@ -4681,12 +4772,20 @@ Output device: %2</source>
         <translation>ป้อนอัตราเฟรมระหว่าง 1 ถึง 1000</translation>
     </message>
     <message>
+        <source>Choose an encoding from the list.</source>
+        <translation>เลือกการเข้ารหัสอักขระจากรายการ</translation>
+    </message>
+    <message>
         <source>The style options can’t be saved in this file.</source>
         <translation>บันทึกตัวเลือกสไตล์ในไฟล์นี้ไม่ได้</translation>
     </message>
     <message>
         <source>YouTube timed text couldn’t be made from this file: %1</source>
         <translation>สร้างข้อความกำหนดเวลาของ YouTube จากไฟล์นี้ไม่ได้: %1</translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written in %1.</source>
+        <translation>ไม่สามารถเขียนไฟล์เป็น %1 ได้</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -5059,8 +5158,24 @@ Output device: %2</source>
         <translation>ลบ %1</translation>
     </message>
     <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>%1 ไม่สามารถเก็บอักขระทุกตัวของไฟล์นี้ได้</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>อักขระเหล่านี้จะเขียนเป็นอักขระแทนที่: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>เขียนต่อไป</translation>
+    </message>
+    <message>
         <source>Format</source>
         <translation>รูปแบบ</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>การเข้ารหัสอักขระ</translation>
     </message>
     <message>
         <source>Lines</source>
@@ -5646,6 +5761,10 @@ Output device: %2</source>
         <translation>ใส่ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ลงในไฟล์บีบอัด</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>ลิงก์ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ไว้ในโฟลเดอร์ ลิงก์จะใช้ไม่ได้หากย้ายหรือลบแบบอักษร</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>การเขียนไฟล์บีบอัดใหม่จะแทนที่ไฟล์นี้</translation>
     </message>
@@ -5678,8 +5797,16 @@ Output device: %2</source>
         <translation>คัดลอกไปยังโฟลเดอร์</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>ลิงก์ไปยังโฟลเดอร์</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>ไฟล์บีบอัด</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>แบบอักษรจากไฟล์ MKV จะถูกคัดลอก เพราะไม่มีไฟล์ให้ลิงก์</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5718,6 +5845,10 @@ Output device: %2</source>
         <translation>พร้อมเขียน %1</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>พร้อมลิงก์ไปยัง %1</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>พร้อมคัดลอกไปยัง %1</translation>
     </message>
@@ -5730,12 +5861,20 @@ Output device: %2</source>
         <translation>คัดลอกโดยระบุว่าไม่ครบ</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>ลิงก์โดยระบุว่าไม่ครบ</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>เขียนไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>คัดลอกแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>ลิงก์แบบอักษร</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -6026,6 +6165,22 @@ Output device: %2</source>
         <translation>ไม่สามารถบีบอัดแบบอักษร “%1” ได้</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>ลิงก์แบบอักษร “%1” แล้ว</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>ลิงก์แบบอักษร “%1” ไม่ได้ เปิดโหมดนักพัฒนา หรือใช้โฟลเดอร์บนไดรฟ์เดียวกับแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>ลิงก์แบบอักษร “%1” ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>เลือกโฟลเดอร์ที่ต้องการลิงก์แบบอักษร</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>ยังไม่ได้โหลดคำบรรยาย โปรดโหลดคำบรรยายหรือยกเลิกตัวเลือกนี้</translation>
     </message>
@@ -6121,12 +6276,24 @@ Output device: %2</source>
         <translation>คัดลอกแล้ว</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>คัดลอก %1 ที่ไม่มีไฟล์ให้ลิงก์</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>เสร็จสิ้น ลิงก์ %1</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>เสร็จสิ้น %1 %2</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>ไม่พบ %1</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>ไม่สามารถลิงก์ %1 ได้</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6151,6 +6318,10 @@ Output device: %2</source>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>ผลลัพธ์ถูกระบุว่าไม่ครบ (“%1”)</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>เสร็จสมบูรณ์ ลิงก์ %1</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6179,6 +6350,10 @@ Output device: %2</source>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>พร้อมเพิ่ม %1 ลงในไฟล์บีบอัด “%2”</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>พร้อมลิงก์ %1 ไปยัง “%2”</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -8493,6 +8668,10 @@ Failed to copy %2 fonts.</source>
         <translation>วางช่วงถัดไป</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>เรียกการเติมคำอัตโนมัติ</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>แบ่งพยางค์ที่เคอร์เซอร์</translation>
     </message>
@@ -8937,6 +9116,10 @@ Failed to copy %2 fonts.</source>
         <translation>นำเข้าเนื้อเพลง…</translation>
     </message>
     <message>
+        <source>Import text…</source>
+        <translation>นำเข้าข้อความ…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9111,6 +9294,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Previous subtitle boundary</source>
         <translation>ขอบเขตคำบรรยายก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding…</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -12168,6 +12355,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดไฟล์คำบรรยาย</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
+    </message>
+    <message>
         <source>Jump to</source>
         <translation>ข้ามไปยัง</translation>
     </message>
@@ -12230,6 +12421,22 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens %1</source>
         <translation>เปิด %1</translation>
+    </message>
+    <message>
+        <source>Reads the file again in the encoding you choose; it then saves as UTF-8</source>
+        <translation>อ่านไฟล์อีกครั้งด้วยการเข้ารหัสอักขระที่คุณเลือก จากนั้นจะบันทึกเป็น UTF-8</translation>
+    </message>
+    <message>
+        <source>Open a saved file first</source>
+        <translation>เปิดไฟล์ที่บันทึกไว้ก่อน</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation>แปลงไฟล์ข้อความธรรมดาเป็นบรรทัด ในไฟล์ที่เปิดอยู่หรือไฟล์ใหม่</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>นำเข้าข้อความ…</translation>
     </message>
     <message>
         <source>Saves the document</source>
@@ -12628,7 +12835,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>เปิด</translation>
+        <translation type="vanished">เปิด</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13165,7 +13372,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">ยกเลิก</translation>
+        <translation type="obsolete">ยกเลิก</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -18476,6 +18683,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin isn’t on.</source>
         <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
+    </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>ธีมสี: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>ธีมไอคอน: %1</translation>
     </message>
 </context>
 <context>
@@ -26503,6 +26718,18 @@ Styles deleted:
         <translation>วิดีโอ</translation>
     </message>
     <message>
+        <source>Video position</source>
+        <translation type="vanished">ตำแหน่งวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Video times</source>
+        <translation type="vanished">เวลาของวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
+        <translation type="vanished">เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
+    </message>
+    <message>
         <source>Previous file</source>
         <translation>ไฟล์ก่อนหน้า</translation>
     </message>
@@ -27602,6 +27829,10 @@ or codecs or a splitter may be missing</source>
         <translation>เปลี่ยนบรรทัดปัจจุบัน</translation>
     </message>
     <message>
+        <source>How this tool works</source>
+        <translation>วิธีใช้เครื่องมือนี้</translation>
+    </message>
+    <message>
         <source>On the frame</source>
         <translation>บนเฟรม</translation>
     </message>
@@ -28416,6 +28647,254 @@ or codecs or a splitter may be missing</source>
         <translation>คลิกเพื่อเพิ่มจุดเส้นทาง ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง กด Enter เพื่อนำไปใช้</translation>
     </message>
     <message>
+        <source>Ctrl-click writes it.</source>
+        <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
+        <translation>เฉพาะเมื่อคุณ Ctrl+คลิก</translation>
+    </message>
+    <message>
+        <source>Moves the positions, move points, clips, drawings and origins already in the lines.</source>
+        <extracomment>The visual tool guide: what the Position shifter writes</extracomment>
+        <translation>ย้ายตำแหน่ง จุดการเคลื่อนตำแหน่ง คลิป ภาพวาด และจุดศูนย์กลางที่มีอยู่แล้วในบรรทัด</translation>
+    </message>
+    <message>
+        <source>Any tag from its list.</source>
+        <extracomment>The visual tool guide: what the All tags tool writes</extracomment>
+        <translation>แท็กใดก็ได้จากรายการของเครื่องมือ</translation>
+    </message>
+    <message>
+        <source>And the border and shadow sizes.</source>
+        <extracomment>The visual tool guide: what Perspective writes besides its tags</extracomment>
+        <translation>รวมถึงขนาดขอบและเงา</translation>
+    </message>
+    <message>
+        <source>Copies of the line in clip strips, a mask drawing, or tags for each character or line.</source>
+        <extracomment>The visual tool guide: what the Gradient tool writes</extracomment>
+        <translation>สำเนาของบรรทัดในแถบคลิป ภาพวาดมาสก์ หรือแท็กสำหรับแต่ละอักขระหรือแต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>A line for each letter, with its own position and rotation, along the path.</source>
+        <extracomment>The visual tool guide: what Text on path writes</extracomment>
+        <translation>บรรทัดสำหรับตัวอักษรแต่ละตัวตามเส้นทาง โดยแต่ละบรรทัดมีตำแหน่งและการหมุนของตัวเอง</translation>
+    </message>
+    <message>
+        <source>A cross follows the pointer and shows its script coordinates.</source>
+        <translation>กากบาทจะตามตัวชี้และแสดงพิกัดสคริปต์ของตัวชี้</translation>
+    </message>
+    <message>
+        <source>Ctrl-click or middle-click puts the line there.</source>
+        <translation>Ctrl+คลิกหรือคลิกปุ่มกลางเพื่อวางบรรทัดที่นั่น</translation>
+    </message>
+    <message>
+        <source>Drag anywhere on the picture to move the line; you need not grab it.</source>
+        <translation>ลากที่ใดก็ได้บนภาพเพื่อย้ายบรรทัด โดยไม่ต้องจับที่บรรทัด</translation>
+    </message>
+    <message>
+        <source>Shift locks the drag to one axis.</source>
+        <translation>กด Shift เพื่อล็อกการลากไว้ที่แกนเดียว</translation>
+    </message>
+    <message>
+        <source>A right-click puts the line at the pointer.</source>
+        <translation>คลิกขวาเพื่อวางบรรทัดที่ตัวชี้</translation>
+    </message>
+    <message>
+        <source>Set position by rectangle places the line by a rectangle you draw.</source>
+        <translation>“กำหนดตำแหน่งด้วยสี่เหลี่ยม” จะวางบรรทัดตามสี่เหลี่ยมที่คุณวาด</translation>
+    </message>
+    <message>
+        <source>The left button sets the start point, the right button the end point.</source>
+        <translation>ปุ่มซ้ายกำหนดจุดเริ่มต้น ปุ่มขวากำหนดจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Start and End take their times in milliseconds from the line’s start.</source>
+        <translation>“เริ่มต้น” และ “สิ้นสุด” ใช้เวลาเป็นมิลลิวินาทีนับจากเวลาเริ่มต้นของบรรทัด</translation>
+    </message>
+    <message>
+        <source>Set movement using 2 points and the video position builds the move from a point on two frames.</source>
+        <translation>“กำหนดการเคลื่อนที่ด้วย 2 จุดและตำแหน่งวิดีโอ” จะสร้างการเคลื่อนตำแหน่งจากจุดบนสองเฟรม</translation>
+    </message>
+    <message>
+        <source>Left-drag scales the width, right-drag the height.</source>
+        <translation>ลากด้วยปุ่มซ้ายเพื่อปรับความกว้าง ลากด้วยปุ่มขวาเพื่อปรับความสูง</translation>
+    </message>
+    <message>
+        <source>Shift-drag or middle-drag scales both.</source>
+        <translation>ลากด้วยปุ่มกลางหรือ Shift+ลากเพื่อปรับขนาดทั้งสองแนว</translation>
+    </message>
+    <message>
+        <source>Set scale by rectangle scales the line to fit a rectangle you draw.</source>
+        <translation>“กำหนดขนาดด้วยสี่เหลี่ยม” จะปรับขนาดบรรทัดให้พอดีกับสี่เหลี่ยมที่คุณวาด</translation>
+    </message>
+    <message>
+        <source>Drag round the origin cross to turn the line.</source>
+        <translation>ลากรอบกากบาทจุดศูนย์กลางเพื่อหมุนบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drag the cross itself to move the origin.</source>
+        <translation>ลากตัวกากบาทเพื่อย้ายจุดศูนย์กลาง</translation>
+    </message>
+    <message>
+        <source>Set angle from 2 points takes the angle from two points you click along something in the picture.</source>
+        <translation>“กำหนดมุมจาก 2 จุด” จะหามุมจากสองจุดที่คุณคลิกตามแนวของสิ่งใดสิ่งหนึ่งในภาพ</translation>
+    </message>
+    <message>
+        <source>Left-drag turns the text round the vertical axis.</source>
+        <translation>ลากด้วยปุ่มซ้ายเพื่อหมุนข้อความรอบแกนแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Right-drag turns it round the horizontal axis; middle-drag does both.</source>
+        <translation>ลากด้วยปุ่มขวาเพื่อหมุนรอบแกนแนวนอน ลากด้วยปุ่มกลางเพื่อหมุนทั้งสองแกน</translation>
+    </message>
+    <message>
+        <source>Drag the origin cross to move the origin.</source>
+        <translation>ลากกากบาทจุดศูนย์กลางเพื่อย้ายจุดศูนย์กลาง</translation>
+    </message>
+    <message>
+        <source>Drag a rectangle on the picture.</source>
+        <translation>ลากสร้างสี่เหลี่ยมบนภาพ</translation>
+    </message>
+    <message>
+        <source>Drag its edges or corners to resize it, or inside it to move it.</source>
+        <translation>ลากขอบหรือมุมเพื่อปรับขนาด หรือลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Invert clip switches between showing what is inside and what is outside.</source>
+        <translation>“กลับด้านคลิป” จะสลับระหว่างแสดงส่วนที่อยู่ข้างในและส่วนที่อยู่ข้างนอก</translation>
+    </message>
+    <message>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
+        <translation>เลือกโหมด: ย้ายจุด เพิ่มเส้นตรง เส้นโค้ง Bézier หรือ B-spline เพิ่มจุดแยก หรือลบจุด</translation>
+    </message>
+    <message>
+        <source>Click to add points and drag them to reshape.</source>
+        <translation>คลิกเพื่อเพิ่มจุด แล้วลากจุดเพื่อปรับรูปร่าง</translation>
+    </message>
+    <message>
+        <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
+        <translation>Ctrl+คลิกเพื่อเลือกหลายจุด กด Alt ขณะลากเพื่อจัดให้ตรงกับค่า x หรือ y ของจุดอื่น</translation>
+    </message>
+    <message>
+        <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
+        <translation>หรือเลือกรูปร่างแล้วลากสร้างกรอบเพื่อวาด “แก้ไขรูปร่าง…” ใช้เพิ่มรูปร่างของคุณเอง</translation>
+    </message>
+    <message>
+        <source>Drag to move everything the Move toggles choose, by the same amount in every picked line.</source>
+        <translation>ลากเพื่อย้ายทุกอย่างที่ปุ่มสลับ “ย้าย” เลือกไว้ ไปเท่ากันในทุกบรรทัดที่ตรึงไว้</translation>
+    </message>
+    <message>
+        <source>Or type an amount in X and Y: each Enter shifts the lines by that much.</source>
+        <translation>หรือพิมพ์ระยะในช่อง X และ Y: กด Enter แต่ละครั้งจะเลื่อนบรรทัดไปตามระยะนั้น</translation>
+    </message>
+    <message>
+        <source>Choose a tag in the inspector.</source>
+        <translation>เลือกแท็กในตัวตรวจสอบ</translation>
+    </message>
+    <message>
+        <source>Drag sideways on the picture, or turn the wheel, to change its value. Shift for small steps.</source>
+        <translation>ลากไปด้านข้างบนภาพ หรือหมุนล้อเมาส์ เพื่อเปลี่ยนค่า กด Shift เพื่อปรับทีละน้อย</translation>
+    </message>
+    <message>
+        <source>Set, Add, Multiply and Gradient decide how the value goes across characters or lines.</source>
+        <translation>“กำหนดค่า” “เพิ่ม” “คูณ” และ “ไล่ระดับ” กำหนดว่าค่าจะเปลี่ยนไปอย่างไรตามอักขระหรือบรรทัด</translation>
+    </message>
+    <message>
+        <source>Drag a square corner to lay the text on a surface.</source>
+        <translation>ลากมุมสี่เหลี่ยมเพื่อวางข้อความบนพื้นผิว</translation>
+    </message>
+    <message>
+        <source>Drag inside the text to move it.</source>
+        <translation>ลากด้านในข้อความเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>While dragging a corner, Shift keeps it on an edge, Ctrl snaps it and Alt sizes about the centre.</source>
+        <translation>ขณะลากมุม กด Shift เพื่อให้มุมอยู่บนขอบ กด Ctrl เพื่อจัดให้ตรงตำแหน่ง และกด Alt เพื่อปรับขนาดรอบจุดกึ่งกลาง</translation>
+    </message>
+    <message>
+        <source>A double-click brings the nearest corner to the pointer.</source>
+        <translation>ดับเบิลคลิกเพื่อดึงมุมที่ใกล้ที่สุดมาที่ตัวชี้</translation>
+    </message>
+    <message>
+        <source>Choose a mode, then drag across the sign from where the gradient starts to where it ends.</source>
+        <translation>เลือกโหมด แล้วลากผ่านป้ายจากจุดเริ่มต้นถึงจุดสิ้นสุดของการไล่ระดับ</translation>
+    </message>
+    <message>
+        <source>Drag the ends and the other handles to adjust it; the preview follows.</source>
+        <translation>ลากปลายและจุดจับอื่น ๆ เพื่อปรับ ตัวอย่างจะเปลี่ยนตาม</translation>
+    </message>
+    <message>
+        <source>Enter applies the gradient as one step.</source>
+        <translation>กด Enter เพื่อนำการไล่ระดับไปใช้ในขั้นตอนเดียว</translation>
+    </message>
+    <message>
+        <source>Give the line a vector clip, or click on the picture to draw a path.</source>
+        <translation>ใส่คลิปเวกเตอร์ให้บรรทัด หรือคลิกบนภาพเพื่อวาดเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Drag the points to shape the path; the text follows it.</source>
+        <translation>ลากจุดเพื่อปรับรูปเส้นทาง ข้อความจะไปตามเส้นทาง</translation>
+    </message>
+    <message>
+        <source>Enter applies: each letter becomes its own line, and the original is kept as a comment.</source>
+        <translation>กด Enter เพื่อนำไปใช้: ตัวอักษรแต่ละตัวจะกลายเป็นบรรทัดของตัวเอง และบรรทัดต้นฉบับจะเก็บไว้เป็นความคิดเห็น</translation>
+    </message>
+    <message>
+        <source>Chooses this tool</source>
+        <extracomment>The visual tool guide&apos;s keys: what the tool&apos;s own key does</extracomment>
+        <translation>เลือกเครื่องมือนี้</translation>
+    </message>
+    <message>
+        <source>Arrow keys</source>
+        <extracomment>The visual tool guide&apos;s keys; the arrows work while the pointer is over the picture</extracomment>
+        <translation>ปุ่มลูกศร</translation>
+    </message>
+    <message>
+        <source>Change the scale by 1 %</source>
+        <translation>เปลี่ยนขนาดทีละ 1%</translation>
+    </message>
+    <message>
+        <source>Move the selected points by one pixel</source>
+        <translation>ย้ายจุดที่เลือกทีละหนึ่งพิกเซล</translation>
+    </message>
+    <message>
+        <source>Nudge by one pixel</source>
+        <translation>ขยับทีละหนึ่งพิกเซล</translation>
+    </message>
+    <message>
+        <source>Shift+Arrow keys</source>
+        <translation>Shift+ปุ่มลูกศร</translation>
+    </message>
+    <message>
+        <source>Nudge by a tenth of a pixel</source>
+        <translation>ขยับทีละหนึ่งในสิบพิกเซล</translation>
+    </message>
+    <message>
+        <source>Alt+Arrow keys</source>
+        <translation>Alt+ปุ่มลูกศร</translation>
+    </message>
+    <message>
+        <source>Nudge the end point</source>
+        <translation>ขยับจุดสิ้นสุด</translation>
+    </message>
+    <message>
+        <source>Wheel</source>
+        <translation>ล้อเมาส์</translation>
+    </message>
+    <message>
+        <source>Steps through the modes</source>
+        <translation>สลับไปทีละโหมด</translation>
+    </message>
+    <message>
+        <source>Changes the value</source>
+        <translation>เปลี่ยนค่า</translation>
+    </message>
+    <message>
+        <source>Applies</source>
+        <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Drops the preview</source>
+        <translation>ละทิ้งตัวอย่าง</translation>
+    </message>
+    <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
         <translation>สี่เหลี่ยมจัตุรัส</translation>
@@ -29149,6 +29628,14 @@ do not work on comments</source>
     <message>
         <source>Nothing would be left of the drawing</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes</source>
+        <translation>สิ่งที่เขียน</translation>
+    </message>
+    <message>
+        <source>More in the guide</source>
+        <translation>ดูเพิ่มเติมในคู่มือ</translation>
     </message>
 </context>
 <context>

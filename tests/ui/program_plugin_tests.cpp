@@ -44,7 +44,7 @@ class ProgramPluginTests : public QObject {
             load.locale = "pl";
             load.memoryLimit = 1;
             load.settings = R"({"name":"Ann"})";
-            load.commands = {"hello", "fail", "subscribe", "edit", "bad"};
+            load.commands = {"hello", "fail", "subscribe", "edit", "bad", "count"};
             return load;
         });
         process->setLinkFactory([this, background, limits]() -> std::expected<std::unique_ptr<backends::PluginLink>, QString> {
@@ -120,7 +120,7 @@ private slots:
         QSignalSpy finished(process.get(), &PluginProcess::finished);
         process->start();
         QVERIFY(loaded.wait(20000));
-        QCOMPARE(process->handledCommands().size(), std::size_t(5));
+        QCOMPARE(process->handledCommands().size(), std::size_t(6));
         const QJsonObject init = QJsonDocument::fromJson(logged(QStringLiteral("init ")).toUtf8()).object();
         const QJsonObject params = init.value(QStringLiteral("params")).toObject();
         QCOMPARE(params.value(QStringLiteral("protocol")).toInt(), 1);
@@ -169,6 +169,38 @@ private slots:
             QJsonDocument::fromJson(logged(QStringLiteral("import ")).toUtf8()).object().value(QStringLiteral("params")).toObject();
         QCOMPARE(imported.value(QStringLiteral("data")).toString(), QStringLiteral("AQI="));
         QCOMPARE(imported.value(QStringLiteral("name")).toString(), QStringLiteral("a.txt"));
+    }
+
+    void providersAskCompleteAndHoverOverJsonRpc()
+    {
+        auto process = plugin();
+        process->start();
+        std::vector<std::expected<std::string, QString>> results;
+        const auto keep = [&](std::expected<std::string, QString> result) { results.push_back(std::move(result)); };
+        const auto json = [](const QJsonObject &o) { return QJsonDocument(o).toJson(QJsonDocument::Compact).toStdString(); };
+        const QString slash(QChar(u'\\'));
+        QVERIFY(process->provide("completion",
+                                 json({{QStringLiteral("text"), QStringLiteral("{") + slash},
+                                       {QStringLiteral("offset"), 2},
+                                       {QStringLiteral("trigger"), slash}}),
+                                 keep));
+        QTRY_COMPARE_WITH_TIMEOUT(results.size(), std::size_t(1), 20000);
+        QVERIFY(process->provide("hover", json({{QStringLiteral("text"), QStringLiteral("{") + slash + QStringLiteral("fad}")}, {QStringLiteral("offset"), 3}}), keep));
+        QTRY_COMPARE_WITH_TIMEOUT(results.size(), std::size_t(2), 20000);
+        QVERIFY(process->provide("hover", json({{QStringLiteral("text"), QString()}}), keep));
+        QTRY_COMPARE_WITH_TIMEOUT(results.size(), std::size_t(3), 20000);
+        const QJsonArray items = QJsonDocument::fromJson(QByteArray::fromStdString(results[0].value())).array();
+        QCOMPARE(items.size(), 1);
+        QCOMPARE(items[0].toObject().value(QStringLiteral("label")).toString(), slash + QStringLiteral("fad"));
+        QCOMPARE(items[0].toObject().value(QStringLiteral("from")).toInt(), 1);
+        const QJsonObject hover = QJsonDocument::fromJson(QByteArray::fromStdString(results[1].value())).object();
+        QCOMPARE(hover.value(QStringLiteral("text")).toString(), QStringLiteral("Fade"));
+        QCOMPARE(hover.value(QStringLiteral("to")).toInt(), 4);
+        QCOMPARE(results[2].value(), std::string("null"));
+        const QJsonObject asked =
+            QJsonDocument::fromJson(logged(QStringLiteral("complete ")).toUtf8()).object().value(QStringLiteral("params")).toObject();
+        QCOMPARE(asked.value(QStringLiteral("trigger")).toString(), slash);
+        QCOMPARE(asked.value(QStringLiteral("offset")).toInt(), 2);
     }
 
     void errorsComeBackAsJsonRpcErrors()
@@ -275,6 +307,36 @@ private slots:
         process->start();
         QVERIFY(failed.wait(20000));
         QCOMPARE(process->state(), PluginProcess::State::LoadFailed);
+    }
+
+    void theTypeScriptSampleCountsWords()
+    {
+#ifndef HIKARI_WORD_COUNT
+        QSKIP("Only Linux builds with Bun compile the sample.");
+#else
+        if (!QFileInfo::exists(QStringLiteral(HIKARI_WORD_COUNT)))
+            QSKIP("hikari_word_count_sample_build hasn't compiled the sample.");
+        const QString sample = folder(QStringLiteral("package/bin/")) + QFileInfo(QStringLiteral(HIKARI_WORD_COUNT)).fileName();
+        QFile::remove(sample);
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_WORD_COUNT), sample));
+        QFile::setPermissions(sample, QFile::permissions(sample) | QFileDevice::ExeOwner);
+        m_manifest.programs.front().platforms.begin()->second = plugins::ProgramRun{
+            "bin/" + QFileInfo(sample).fileName().toStdString(), std::nullopt, {}, {}};
+        m_answer = [](const PluginProcess::ServiceRequest &request) {
+            return std::string(request.service == backends::plugin::Service::Call
+                                   ? R"({"result":{"revision":1,"lines":[{"id":1,"row":1,"text":"one two"},{"id":2,"row":2,"text":"three"}]}})"
+                                   : "");
+        };
+        auto process = plugin();
+        QSignalSpy finished(process.get(), &PluginProcess::finished);
+        process->start();
+        QVERIFY(process->run("count", R"({"args":{},"context":{"via":"menu"}})"));
+        QVERIFY(finished.wait(20000));
+        QCOMPARE(m_served.size(), std::size_t(2));
+        QCOMPARE(m_served[0].name, std::string("lines.list"));
+        QCOMPARE(m_served[1].service, backends::plugin::Service::Notify);
+        QCOMPARE(m_served[1].text, std::string("3 words in 2 lines"));
+#endif
     }
 
     void aMissingProgramFailsTheLoad()

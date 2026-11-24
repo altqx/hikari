@@ -79,6 +79,7 @@ ApplicationWindow {
     required property var alignToVideo
     required property var videoAnalysis
     required property var lyricsImport
+    required property var textImport
     required property var qcNotes
     required property var problems
     required property var fontCollector
@@ -2777,6 +2778,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_KEYFRAMES")) root.app.closeKeyframes()
         }
         Action {
+            id: reopenWithEncodingAction
+            text: qsTr("Reopen with encoding…")
+            enabled: root.app.canReopenWithEncoding
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_REOPEN_WITH_ENCODING")) root.chooseReopenEncoding()
+        }
+        Action {
             id: fullScreenTypesettingAction
             readonly property bool open: root.videoFullscreen.active
                                          && root.videoFullscreen.mode === VideoFullscreenController.Mode.Typesetting
@@ -3301,6 +3308,14 @@ ApplicationWindow {
                             height: visible ? implicitHeight : 0
                         }
                     }
+                    ShellMenuItem {
+                        command: "GLOBAL_REOPEN_WITH_ENCODING"
+                        help: qsTr("Reads the file again in the encoding you choose; it then saves as UTF-8")
+                        iconRole: "refresh"
+                        objectName: "reopenWithEncodingMenuItem"
+                        reason: reopenWithEncodingAction.enabled ? "" : qsTr("Open a saved file first")
+                        action: reopenWithEncodingAction
+                    }
                     MenuSeparator {}
                     ShellMenuItem {
                         command: "GRID_SUBS_FROM_MKV"
@@ -3318,6 +3333,14 @@ ApplicationWindow {
                         objectName: "importLyricsMenuItem"
                         text: qsTr("Import lyrics…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_LYRICS")) lyricsDialog.show()
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_IMPORT_TEXT"
+                        help: qsTr("Turns a plain text file into lines, in the open file or a new one")
+                        iconRole: "import"
+                        objectName: "importTextMenuItem"
+                        text: qsTr("Import text…")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_IMPORT_TEXT")) textDialog.show()
                     }
                     MenuSeparator {}
                     ShellMenuItem {
@@ -5311,6 +5334,47 @@ ApplicationWindow {
                   ? qsTranslate("HikariSub.QcNotes", "%1 · %2", "A problem's message, then its source").arg(field.hoveredProblem.message, field.hoveredProblem.source)
                   : ""
         }
+        HoverHandler {
+            id: providerHover
+            objectName: field.objectName + "ProviderHover"
+            onPointChanged: if (hovered) providerHoverTimer.restart()
+            onHoveredChanged: if (!hovered) {
+                providerHoverTimer.stop()
+                root.editor.tagList.clearHover()
+            }
+        }
+        function textAt(x, y) {
+            const at = field.positionAt(x, y)
+            const caret = field.positionToRectangle(at)
+            return Math.abs(caret.y + caret.height / 2 - y) > caret.height || at >= field.text.length ? -1 : at
+        }
+        Timer {
+            id: providerHoverTimer
+            interval: 500
+            onTriggered: {
+                const at = field.textAt(providerHover.point.position.x, providerHover.point.position.y)
+                if (at < 0)
+                    root.editor.tagList.clearHover()
+                else
+                    root.editor.tagList.hoverAt(field.role, field.text, at)
+            }
+        }
+        readonly property var providerHoverShown: {
+            const hover = root.editor.tagList.hover
+            if (!providerHover.hovered || hover.role !== field.role || field.hoveredProblem !== null)
+                return null
+            const at = field.textAt(providerHover.point.position.x, providerHover.point.position.y)
+            return at >= 0 && (hover.from === hover.to || (hover.from <= at && at < hover.to)) ? hover : null
+        }
+        ToolTip {
+            objectName: field.objectName + "ProviderTip"
+            visible: field.providerHoverShown !== null
+            x: providerHover.point.position.x
+            y: providerHover.point.position.y + 18
+            text: field.providerHoverShown
+                  ? qsTranslate("HikariSub.QcNotes", "%1 · %2", "A problem's message, then its source").arg(field.providerHoverShown.text, field.providerHoverShown.source)
+                  : ""
+        }
         Connections {
             target: root.problems
             function onChanged() { field.refreshMarks() }
@@ -6183,6 +6247,7 @@ ApplicationWindow {
                     settings: root.app.settings
                     Layout.minimumWidth: 0
                     tools: root.visualTools
+                    keyOf: symbol => root.boundKeys(symbol, 3)
                 }
                 Slider {
                     objectName: "videoSlider"
@@ -9347,6 +9412,30 @@ ApplicationWindow {
                 }
             }
         }
+        InlineBar {
+            id: encodingBar
+            objectName: "encodingBar"
+            readonly property var tab: root.currentTab()
+            visible: !root.windowHome && root.app.encodingSuggestion.length > 0
+            severity: tab.modified ? "warning" : "info"
+            text: tab.modified
+                  ? qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8. Reopening drops the changes you made here.")
+                        .arg(tab.title, root.app.encodingSuggestion)
+                  : qsTranslate("HikariSub.Documents", "%1 looks like %2, not UTF-8.").arg(tab.title, root.app.encodingSuggestion)
+            onClosed: root.app.dismissEncodingSuggestion()
+            Layout.fillWidth: true
+            IconTextButton {
+                iconRole: "refresh"
+                objectName: "encodingBarReopen"
+                text: qsTranslate("HikariSub.Documents", "Reopen as %1").arg(root.app.encodingSuggestion)
+                onClicked: root.app.reopenWithEncoding(root.app.reopenEncodings()[0].name)
+            }
+            Button {
+                objectName: "encodingBarChoose"
+                text: qsTranslate("HikariSub.Documents", "Other encoding…")
+                onClicked: root.chooseReopenEncoding()
+            }
+        }
         ColumnLayout {
             objectName: "unresolvedBars"
             visible: entryBars.count > 0
@@ -9942,6 +10031,41 @@ ApplicationWindow {
         lyricsImportLoader.active = true
         lyricsImportLoader.item.open()
     }
+    FileChooser {
+        id: textDialog
+        objectName: "textOpenDialog"
+        title: qsTranslate("HikariSub.Documents", "Import text")
+        nameFilters: [qsTranslate("HikariSub.Documents", "Text files (*.txt)"),
+                      qsTranslate("HikariSub.Documents", "All files (*)")]
+        onAccepted: {
+            root.rememberPickerFolder("text", selectedFile)
+            root.openTextImport(root.app.localPath(selectedFile))
+        }
+        function show() {
+            const folder = root.pickerFolder("text")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
+    }
+    Loader {
+        id: textImportLoader
+        active: false
+        sourceComponent: TextImportDialog {
+            controller: root.textImport
+            settings: root.app.settings
+            onChooseAnother: textDialog.show()
+        }
+    }
+    function openTextImport(path) {
+        if (!root.textImport.load(path)) {
+            root.notices.post("error", qsTranslate("HikariSub.Documents", "Import text"),
+                              qsTranslate("HikariSub.Documents", "Could not read %1.").arg(path))
+            return
+        }
+        textImportLoader.active = true
+        textImportLoader.item.open()
+    }
     Loader {
         id: dummyVideoLoader
         active: false
@@ -10353,6 +10477,29 @@ ApplicationWindow {
             root.rememberPickerFolder("audio", selectedFile)
             root.audio.openAudioUrl(selectedFile)
         }
+    }
+    ListChooser {
+        id: encodingChooser
+        objectName: "encodingChooser"
+        settings: root.app.settings
+    }
+    function chooseReopenEncoding() {
+        const encodings = root.app.reopenEncodings()
+        const suggested = root.app.encodingSuggestion
+        encodingChooser.choose({
+            title: qsTranslate("HikariSub.Documents", "Reopen with encoding"),
+            text: root.currentTab().modified
+                  ? qsTranslate("HikariSub.Documents", "Reopening drops the changes you made here. The file then saves as UTF-8.")
+                  : qsTranslate("HikariSub.Documents", "The file then saves as UTF-8."),
+            rows: encodings.map((row, index) => ({
+                text: row.label,
+                detail: index === 0 && suggested.length > 0 ? qsTranslate("HikariSub.Documents", "Detected") : ""
+            })),
+            acceptText: qsTranslate("HikariSub.Documents", "Reopen")
+        }, index => {
+            if (index >= 0)
+                root.app.reopenWithEncoding(encodings[index].name)
+        })
     }
     Connections {
         target: root.audio
@@ -11571,6 +11718,7 @@ ApplicationWindow {
         GLOBAL_OPEN_TIMECODES: openTimecodesAction, GLOBAL_SAVE_TIMECODES: saveTimecodesAction,
         GLOBAL_CLOSE_TIMECODES: closeTimecodesAction, GLOBAL_SAVE_KEYFRAMES: saveKeyframesAction,
         GLOBAL_CLOSE_KEYFRAMES: closeKeyframesAction,
+        GLOBAL_REOPEN_WITH_ENCODING: reopenWithEncodingAction,
         GLOBAL_FULL_SCREEN_TYPESETTING: fullScreenTypesettingAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction,
@@ -11796,6 +11944,7 @@ ApplicationWindow {
         case "GLOBAL_QUIT": root.beginClose("quit"); return true
         case "GLOBAL_CLOSE_WINDOW": Qt.callLater(root.close); return true
         case "GLOBAL_IMPORT_LYRICS": lyricsDialog.show(); return true
+        case "GLOBAL_IMPORT_TEXT": textDialog.show(); return true
         case "GLOBAL_IMPORT_LEGACY_SETTINGS": root.importLegacySettings(); return true
         case "GLOBAL_CONVERT_FOLDS_TO_GROUPS": if (editing) root.app.convertFoldsToGroups(); return true
         case "GLOBAL_INTERPOLATE_LINES": if (editing) root.openInterpolateLines(); return true
@@ -11914,6 +12063,9 @@ ApplicationWindow {
         case "EDITBOX_COMMIT": root.editor.applyChanges(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
+        case "EDITBOX_TRIGGER_COMPLETION":
+            root.editor.tagList.trigger(field.text, field.cursorPosition, field.role)
+            return true
         case "EDITBOX_START_DIFFERENCE":
         case "EDITBOX_END_DIFFERENCE":
             root.editor.insertTimeDifference(action === "EDITBOX_END_DIFFERENCE", edited.selectionStart, edited.selectionEnd)

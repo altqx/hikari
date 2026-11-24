@@ -239,6 +239,10 @@ QStringList contributionLines(const plugins::Manifest &manifest)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Panel: %1").arg(text(panel.title));
     for (const plugins::StatusItem &item : manifest.statusItems)
         lines << QCoreApplication::translate("HikariSub.Plugins", "Status bar item: %1").arg(text(item.title));
+    for (const plugins::ColourTheme &theme : manifest.themes)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Colour theme: %1").arg(text(theme.title));
+    for (const plugins::IconTheme &theme : manifest.iconThemes)
+        lines << QCoreApplication::translate("HikariSub.Plugins", "Icon theme: %1").arg(text(theme.title));
     for (const plugins::Keybinding &binding : manifest.keybindings) {
         const auto command = std::ranges::find(manifest.commands, binding.command, &plugins::Command::id);
         lines << QCoreApplication::translate("HikariSub.Plugins", "Shortcut: %1 for %2")
@@ -590,6 +594,8 @@ QVariantMap PluginManager::describe(const plugins::InstallReview &review) const
         {QStringLiteral("needsRetrust"), review.needsRetrust},
         {QStringLiteral("unrestricted"), m.tier == plugins::Tier::Unrestricted},
         {QStringLiteral("permissions"), permissionLines(m)},
+        {QStringLiteral("dataOnly"), m.dataOnly()},
+        {QStringLiteral("adds"), contributionLines(m)},
         {QStringLiteral("marketplace"), review.source == plugins::Source::Marketplace},
         {QStringLiteral("changes"), QVariantList()},
         {QStringLiteral("asksForMore"), false},

@@ -281,6 +281,7 @@ constexpr HotkeyAction kActions[] = {
         {"EDITBOX_PLACE_RUN_8", 3027},
         {"EDITBOX_PLACE_RUN_9", 3028},
         {"EDITBOX_PLACE_NEXT_RUN", 3029},
+        {"EDITBOX_TRIGGER_COMPLETION", 3126},
         // MUST KILL: ids 1005-1009 run as id + 10, so new audio ids start past 1027
         {"AUDIO_KARAOKE_SPLIT", 1028},
         {"AUDIO_KARAOKE_KF", 1029},
@@ -445,8 +446,6 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_SAVE_SELECTED_AUDIO", 5349},
         {"GLOBAL_SAVE_KEYFRAMES", 5350},
         {"GLOBAL_CLOSE_KEYFRAMES", 5351},
-        {"GLOBAL_QUICK_FIX", 5373},
-        {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
         {"GLOBAL_JUMP_TO", 5361},
         {"GLOBAL_VIDEO_ZOOM_50", 5362},
         {"GLOBAL_VIDEO_ZOOM_100", 5363},
@@ -457,6 +456,10 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS", 5368},
         {"GLOBAL_NEXT_SUBTITLE_BOUNDARY", 5369},
         {"GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY", 5370},
+        {"GLOBAL_REOPEN_WITH_ENCODING", 5371},
+        {"GLOBAL_QUICK_FIX", 5373},
+        {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
+        {"GLOBAL_IMPORT_TEXT", 5375},
 };
 
 struct NameRow {
@@ -528,6 +531,7 @@ constexpr NameRow kNames[] = {
         {3117, "18th tag button"},
         {3118, "19th tag button"},
         {3119, "20th tag button"},
+        {3126, "Trigger completion"},
         {4552, "Make times continuous with the next line"},
         {4551, "Make times continuous with the previous line"},
         {4554, "Copy columns"},
@@ -871,8 +875,6 @@ constexpr NameRow kNames[] = {
         {5349, "Save audio of selected lines…"},
         {5350, "Save keyframes…"},
         {5351, "Close keyframes"},
-        {5373, "Quick fix"},
-        {5374, "Full screen typesetting"},
         {5361, "Jump to"},
         {5362, "Zoom 50 %"},
         {5363, "Zoom 100 %"},
@@ -883,6 +885,10 @@ constexpr NameRow kNames[] = {
         {5368, "Zoom to 1:1 device pixels"},
         {5369, "Next subtitle boundary"},
         {5370, "Previous subtitle boundary"},
+        {5371, "Reopen with encoding…"},
+        {5373, "Quick fix"},
+        {5374, "Full screen typesetting"},
+        {5375, "Import text…"},
 };
 
 struct DefaultRow {
@@ -973,6 +979,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {3014, EditorHotkey, "Add line wrap", "Shift-Enter"},
         {3015, EditorHotkey, "Insert difference from the start", "Ctrl-,"},
         {3016, EditorHotkey, "Insert difference to the end", "Ctrl-."},
+        {3126, EditorHotkey, "Trigger completion", "Ctrl-Space"},
         {3017, EditorHotkey, "Next unconfirmed line", "Ctrl-D"},
         {3018, EditorHotkey, "Next untranslated line", "Ctrl-R"},
         {3019, EditorHotkey, "Mark as unconfirmed and go to the next line", "Alt-Down"},

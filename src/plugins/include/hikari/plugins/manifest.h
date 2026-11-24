@@ -111,6 +111,15 @@ struct FormatContribution {
     bool exports = false;
 };
 
+struct CompletionProvider {
+    std::vector<std::string> triggers;
+    std::vector<std::string> fields;
+};
+
+struct HoverProvider {
+    std::vector<std::string> fields;
+};
+
 struct ProgramDownload {
     std::string url;
     std::string sha256;
@@ -167,6 +176,24 @@ struct Dictionary {
     std::string dic;
 };
 
+struct ColourTheme {
+    std::string id;
+    std::string title;
+    std::string type; // as hikari-theme.schema.json names it: "light", "dark", "highContrastLight", "highContrastDark"
+    std::string path;
+};
+
+struct IconTheme {
+    std::string id;
+    std::string title;
+    std::string folder; // a package folder holding <role>.svg
+};
+
+struct OwnIcon {
+    std::string id;
+    std::string path;
+};
+
 struct Manifest {
     std::string id;
     std::string name;
@@ -192,6 +219,8 @@ struct Manifest {
     std::vector<Setting> settings;
     std::vector<NodeContribution> nodes;
     std::vector<FormatContribution> formats;
+    std::optional<CompletionProvider> completion;
+    std::optional<HoverProvider> hover;
     std::vector<Program> programs;
     std::vector<ContentFile> styles;
     std::vector<ContentFile> karaokePresets;
@@ -199,8 +228,12 @@ struct Manifest {
     std::vector<ContentFile> graphs;
     std::vector<ContentFile> layouts;
     std::vector<McpServer> mcpServers;
+    std::vector<ColourTheme> themes;
+    std::vector<IconTheme> iconThemes;
+    std::vector<OwnIcon> icons;
 
     bool hasQmlPanels() const;
+    bool dataOnly() const { return main.empty() && programs.empty(); }
     const Program *program(std::string_view id) const;
 };
 

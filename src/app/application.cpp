@@ -968,6 +968,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_analytics->pluginFeatureUsed(feature);
     };
     m_pluginRuntime = std::make_unique<PluginRuntime>(std::move(pluginWiring));
+    m_languageProviders = std::make_unique<LanguageProviders>(*m_pluginRuntime);
     m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
         return pluginSaveBytes(document, destination);
     });
@@ -1150,6 +1151,20 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return openProblem(path, application::StageFailure{application::OpenError::MalformedLyrics, problem});
         };
         m_lyricsImport = std::make_unique<LyricsImportController>(*m_settings, std::move(hooks));
+    }
+    {
+        TextImportController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.refresh = [this] {
+            editor().reloadFromSession();
+            refreshViews();
+        };
+        hooks.openNew = [this](core::LoadResult load, const QString &path) {
+            application::StagedOpen staged{{}, std::move(load), std::nullopt, 0, 0};
+            staged.imported = true;
+            (void)publish(std::move(staged), path, false);
+        };
+        m_textImport = std::make_unique<TextImportController>(*m_settings, std::move(hooks));
     }
     {
         QcNotesController::Hooks hooks;
@@ -2090,6 +2105,39 @@ void Application::makeViews(WindowViews &v, int shellWindow)
     v.shell->setReadingLimits(application::profileReadingLimits(m_settings->settings()));
     v.editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
+    const auto fieldOf = [](int role) { return role == 1 ? QStringLiteral("translation") : QStringLiteral("text"); };
+    v.editor->tagList()->setHover(
+        [this, fieldOf](int role) { return !m_pluginRuntime->providers("hover", fieldOf(role).toStdString()).empty(); },
+        [this, fieldOf](int role, const QString &text, int position, ui::TagListController::HoverAnswer answer) {
+            const auto target = m_workspace.editingTarget();
+            const auto *session = target ? m_files->session(*target) : nullptr;
+            const auto line = session ? session->selection().active : std::nullopt;
+            if (!line)
+                return answer(std::nullopt);
+            m_languageProviders->hover({target->value, line->value, fieldOf(role), text, position, {}},
+                                       [answer](std::optional<HoverText> hover) {
+                                           answer(hover ? std::optional(ui::ProviderHover{hover->text, hover->source, hover->from, hover->to})
+                                                        : std::nullopt);
+                                       });
+        });
+    v.editor->tagList()->setProviders(
+        [this, fieldOf](int role) { return m_languageProviders->triggers(fieldOf(role)); },
+        [this, fieldOf](int role, const QString &text, int caret, const QString &trigger, ui::TagListController::Rows answer) {
+            const auto target = m_workspace.editingTarget();
+            const auto *session = target ? m_files->session(*target) : nullptr;
+            const auto line = session ? session->selection().active : std::nullopt;
+            if (!line)
+                return answer({});
+            m_languageProviders->complete({target->value, line->value, fieldOf(role), text, caret, trigger},
+                                          [answer](std::vector<CompletionItem> items) {
+                                              std::vector<ui::ProviderRow> rows;
+                                              rows.reserve(items.size());
+                                              for (CompletionItem &item : items)
+                                                  rows.push_back({std::move(item.label), std::move(item.insert), std::move(item.detail),
+                                                                  std::move(item.source), item.from, item.to, item.snippet});
+                                              answer(std::move(rows));
+                                          });
+        });
     v.shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(v.shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this, &v] { m_settings->set("grid.hideColumns", v.shell->hiddenColumns()); });
@@ -2612,6 +2660,7 @@ void Application::protectReference()
 void Application::refreshViews()
 {
     noteLastUsedWindow();
+    emit encodingSuggestionChanged();
     noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
@@ -3709,20 +3758,29 @@ bool Application::acceptFileOnDisk(qulonglong id)
 
 bool Application::reloadTarget()
 {
+    return reloadTarget({}, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"));
+}
+
+bool Application::reloadTarget(const application::ToUtf8 &toUtf8, const QString &title)
+{
     const auto target = m_workspace.editingTarget();
     if (!target)
         return false;
-    auto staged = m_files->stageReload(*target);
+    auto staged = m_files->stageReload(*target, toUtf8);
     if (!staged) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
-                      QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
+        m_log->notice(ui::LogController::Error, title,
+                      staged.error().reason == application::OpenError::NotInEncoding
+                          ? QCoreApplication::translate("HikariSub.Documents",
+                                                        "The file is not text in that encoding; nothing was changed.")
+                          : QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
         return false;
     }
     if (!m_files->activate(std::move(*staged))) {
-        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
+        m_log->notice(ui::LogController::Error, title,
                       QCoreApplication::translate("HikariSub.Documents", "The subtitles changed while reloading; nothing was replaced."));
         return false;
     }
+    m_encodingSuggestions.erase(target->value);
     if (auto *session = m_files->session(*target))
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
@@ -7392,6 +7450,7 @@ QVariantMap Application::qmlProperties(int shellWindow)
             {QStringLiteral("alignToVideo"), QVariant::fromValue(static_cast<QObject *>(m_alignToVideo.get()))},
             {QStringLiteral("videoAnalysis"), QVariant::fromValue(static_cast<QObject *>(m_videoAnalysis.get()))},
             {QStringLiteral("lyricsImport"), QVariant::fromValue(static_cast<QObject *>(m_lyricsImport.get()))},
+            {QStringLiteral("textImport"), QVariant::fromValue(static_cast<QObject *>(m_textImport.get()))},
             {QStringLiteral("qcNotes"), QVariant::fromValue(static_cast<QObject *>(m_qcNotes.get()))},
             {QStringLiteral("problems"), QVariant::fromValue(static_cast<QObject *>(m_problemsList.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},

@@ -1,5 +1,6 @@
 #include "controls_style.h"
 #include "icon_theme.h"
+#include "settings_catalogue.h"
 #include "settings_store.h"
 #include "theme.h"
 
@@ -216,6 +217,11 @@ private slots:
                     }
                 }
         }
+        for (const QVariant &page : ui::SettingsCatalogue::pages()) {
+            const QString role = page.toMap().value(QStringLiteral("icon")).toString();
+            referenced.insert(role);
+            QVERIFY2(ui::icons::exists(role), qPrintable(QStringLiteral("settings_catalogue.cpp: ") + role));
+        }
         for (const char *role : {"media-play", "media-pause", "play-line", "media-stop", "frame-previous", "frame-next",
                                  "open-subtitles", "undo", "recent-subtitles", "convert", "audio-previous-line", "link",
                                  "commit", "tag-bold", "colour-shadow", "tag-font", "tab-close", "tab-new",
@@ -231,7 +237,7 @@ private slots:
                                  "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass",
                                  "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit",
                                  "window-minimize", "window-maximize", "window-restore", "window-close",
-                                 "settings-grid", "notices", "language", "audio-device", "restore-default"})
+                                 "settings-grid", "notices", "language", "restore-default"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]+\d+[a-z]? #\d+(, [A-Z]+\d+[a-z]? #\d+)*$)"));
         int pending = 0;
@@ -805,7 +811,7 @@ Rectangle {
             QStringLiteral("style-apply"),
             QStringLiteral("chevron-left"), QStringLiteral("chevron-right"),
             QStringLiteral("settings-grid"), QStringLiteral("notices"),
-            QStringLiteral("select-all"), QStringLiteral("tags-insert"), QStringLiteral("preview-text"),
+            QStringLiteral("select-all"), QStringLiteral("preview-text"),
             QStringLiteral("dialog-memory"), QStringLiteral("getting-started"), QStringLiteral("ai-send"),
             QStringLiteral("review-keep"), QStringLiteral("tab-close-right"), QStringLiteral("convert-folds"),
             QStringLiteral("explorer"), QStringLiteral("group-by-name"), QStringLiteral("gradient-by-line"),

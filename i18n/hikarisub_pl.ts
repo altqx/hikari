@@ -309,7 +309,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>Zmień nazwę</translation>
+        <translation type="vanished">Zmień nazwę</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -770,10 +770,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>Domyślny dla nowych wątków</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1462,7 +1458,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Otwórz</translation>
+        <translation type="vanished">Otwórz</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -3551,6 +3547,22 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zachowaj moje</translation>
     </message>
     <message>
+        <source>%1 looks like %2, not UTF-8. Reopening drops the changes you made here.</source>
+        <translation>%1 wygląda na %2, nie UTF-8. Ponowne otwarcie odrzuci zmiany wprowadzone tutaj.</translation>
+    </message>
+    <message>
+        <source>%1 looks like %2, not UTF-8.</source>
+        <translation>%1 wygląda na %2, nie UTF-8.</translation>
+    </message>
+    <message>
+        <source>Reopen as %1</source>
+        <translation>Otwórz ponownie jako %1</translation>
+    </message>
+    <message>
+        <source>Other encoding…</source>
+        <translation>Inne kodowanie…</translation>
+    </message>
+    <message>
         <source>Convert “%1” to ASS before saving it?</source>
         <translation>Przekonwertować „%1” do ASS przed zapisaniem?</translation>
     </message>
@@ -3599,6 +3611,14 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie można odczytać %1.</translation>
     </message>
     <message>
+        <source>Import text</source>
+        <translation>Importuj tekst</translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation>Pliki tekstowe (*.txt)</translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation>Otwórz napisy</translation>
     </message>
@@ -3617,6 +3637,22 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation>Wideo z osadzonymi napisami (*.mkv *.ogm)</translation>
+    </message>
+    <message>
+        <source>Reopening drops the changes you made here. The file then saves as UTF-8.</source>
+        <translation>Ponowne otwarcie odrzuci zmiany wprowadzone tutaj. Plik zostanie potem zapisany jako UTF-8.</translation>
+    </message>
+    <message>
+        <source>The file then saves as UTF-8.</source>
+        <translation>Plik zostanie potem zapisany jako UTF-8.</translation>
+    </message>
+    <message>
+        <source>Detected</source>
+        <translation>Wykryto</translation>
+    </message>
+    <message>
+        <source>Reopen</source>
+        <translation>Otwórz ponownie</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -3709,6 +3745,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Choose where to save the untitled document.</source>
         <translation>Wybierz, gdzie zapisać dokument bez nazwy.</translation>
+    </message>
+    <message>
+        <source>The file is not text in that encoding; nothing was changed.</source>
+        <translation>Plik nie jest tekstem w tym kodowaniu; nic nie zostało zmienione.</translation>
     </message>
     <message>
         <source>The frame rate in Settings › Conversion isn’t valid. Correct it and save again.</source>
@@ -4086,6 +4126,59 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>it isn’t running.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The file is larger than %n MB.</source>
+        <translation>
+            <numerusform>Plik jest większy niż %n MB.</numerusform>
+            <numerusform>Plik jest większy niż %n MB.</numerusform>
+            <numerusform>Plik jest większy niż %n MB.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The file isn’t UTF-8 text. Save it as UTF-8 in a text editor, then import it.</source>
+        <translation type="vanished">Plik nie jest tekstem w kodowaniu UTF-8. Zapisz go jako UTF-8 w edytorze tekstu, a potem zaimportuj.</translation>
+    </message>
+    <message>
+        <source>The file isn’t %1 text. Choose another encoding.</source>
+        <extracomment>%1 is an encoding&apos;s name, as in the Encoding list.</extracomment>
+        <translation>Plik nie jest tekstem w kodowaniu %1. Wybierz inne kodowanie.</translation>
+    </message>
+    <message>
+        <source>This is a timecodes file. Open it with Video › Open timecodes… instead.</source>
+        <translation>To jest plik kodów czasowych. Zamiast tego otwórz go za pomocą Wideo › Otwórz kody czasowe….</translation>
+    </message>
+    <message>
+        <source>The file has no lines to import.</source>
+        <translation>Plik nie zawiera linijek do zaimportowania.</translation>
+    </message>
+    <message>
+        <source>Actor separator</source>
+        <translation>Separator aktora</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation>Brak</translation>
+    </message>
+    <message>
+        <source>Comment starter</source>
+        <translation>Znacznik komentarza</translation>
+    </message>
+    <message>
+        <source>Keep blank lines as comment lines</source>
+        <translation>Zachowuj puste wiersze jako zakomentowane linijki</translation>
+    </message>
+    <message>
+        <source>A line without an actor keeps the last one</source>
+        <translation>Wiersz bez aktora przejmuje poprzedniego aktora</translation>
+    </message>
+    <message>
+        <source>Comment: %1</source>
+        <translation>Komentarz: %1</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding</source>
+        <translation>Otwórz ponownie z kodowaniem</translation>
     </message>
 </context>
 <context>
@@ -4761,12 +4854,20 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wpisz liczbę klatek na sekundę od 1 do 1000.</translation>
     </message>
     <message>
+        <source>Choose an encoding from the list.</source>
+        <translation>Wybierz kodowanie z listy.</translation>
+    </message>
+    <message>
         <source>The style options can’t be saved in this file.</source>
         <translation>Nie można zapisać opcji stylów w tym pliku.</translation>
     </message>
     <message>
         <source>YouTube timed text couldn’t be made from this file: %1</source>
         <translation>Nie można utworzyć napisów czasowych YouTube z tego pliku: %1</translation>
+    </message>
+    <message>
+        <source>The file couldn’t be written in %1.</source>
+        <translation>Nie udało się zapisać pliku w kodowaniu %1.</translation>
     </message>
     <message>
         <source>Couldn’t write %1: %2</source>
@@ -5149,8 +5250,24 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Usuń %1</translation>
     </message>
     <message>
+        <source>%1 can’t hold every character of this file</source>
+        <translation>%1 nie obsługuje wszystkich znaków tego pliku</translation>
+    </message>
+    <message>
+        <source>These are written as a substitute character: %1</source>
+        <translation>Te znaki zostaną zapisane jako znak zastępczy: %1</translation>
+    </message>
+    <message>
+        <source>Write anyway</source>
+        <translation>Zapisz mimo to</translation>
+    </message>
+    <message>
         <source>Format</source>
         <translation>Format</translation>
+    </message>
+    <message>
+        <source>Encoding</source>
+        <translation>Kodowanie</translation>
     </message>
     <message>
         <source>Lines</source>
@@ -5756,6 +5873,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Umieszcza w archiwum zip każdy plik czcionki używanej w napisach.</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>Tworzy w folderze dowiązanie do każdego pliku czcionki używanej w napisach. Dowiązania przestaną działać, jeśli czcionki zostaną przeniesione lub usunięte.</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>Zapisanie nowego archiwum zastąpi ten plik.</translation>
     </message>
@@ -5792,8 +5913,16 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Kopiuj do folderu</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>Dowiąż w folderze</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>Archiwum zip</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>Czcionki z pliku MKV są kopiowane: nie ma pliku, do którego można by się dowiązać.</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5832,6 +5961,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Gotowe do zapisu: %1</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>Gotowe do dowiązania w: %1</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>Gotowe do skopiowania do: %1</translation>
     </message>
@@ -5844,12 +5977,20 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Skopiuj, oznaczając jako niekompletne</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>Dowiąż, oznaczając jako niekompletne</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>Zapisz archiwum</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>Kopiuj czcionki</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>Dowiąż czcionki</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -6144,6 +6285,22 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie można spakować czcionki “%1”.</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>Dowiązano czcionkę “%1”.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>Nie można dowiązać czcionki “%1”: włącz tryb dewelopera lub użyj folderu na dysku z czcionką.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>Nie można dowiązać czcionki “%1”.</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>Wybierz folder, w którym mają zostać dowiązane czcionki</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>Brak wczytanych napisów. Wczytaj napisy albo odznacz tę opcję.</translation>
     </message>
@@ -6239,12 +6396,24 @@ Urządzenie wyjściowe: %2</translation>
         <translation>skopiowano</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>Skopiowano %1 bez pliku do dowiązania.</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>Zakończono, dowiązano %1.</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>Zakończono, %1 %2.</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>Nieznalezione %1.</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>Niedowiązane %1.</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6269,6 +6438,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>Wynik oznaczono jako niekompletny (“%1”).</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>Zakończono pomyślnie, dowiązano %1.</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6297,6 +6470,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>Do archiwum “%2” zostaną dodane %1.</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>W “%2” zostaną dowiązane %1.</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -8647,6 +8824,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wstaw następny fragment</translation>
     </message>
     <message>
+        <source>Trigger completion</source>
+        <translation>Wywołaj uzupełnianie</translation>
+    </message>
+    <message>
         <source>Split syllable at the cursor</source>
         <translation>Podziel sylabę w miejscu kursora</translation>
     </message>
@@ -9091,6 +9272,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Importuj tekst piosenki…</translation>
     </message>
     <message>
+        <source>Import text…</source>
+        <translation>Importuj tekst…</translation>
+    </message>
+    <message>
         <source>Keep AI change</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9265,6 +9450,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Previous subtitle boundary</source>
         <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
+        <source>Reopen with encoding…</source>
+        <translation>Otwórz ponownie z kodowaniem…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -12398,6 +12587,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwiera plik napisów</translation>
     </message>
     <message>
+        <source>Reopen with encoding…</source>
+        <translation>Otwórz ponownie z kodowaniem…</translation>
+    </message>
+    <message>
         <source>Jump to</source>
         <translation>Przejdź do</translation>
     </message>
@@ -12460,6 +12653,22 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Opens %1</source>
         <translation>Otwiera %1</translation>
+    </message>
+    <message>
+        <source>Reads the file again in the encoding you choose; it then saves as UTF-8</source>
+        <translation>Wczytuje plik ponownie w wybranym kodowaniu; potem zapisuje się jako UTF-8</translation>
+    </message>
+    <message>
+        <source>Open a saved file first</source>
+        <translation>Najpierw otwórz zapisany plik</translation>
+    </message>
+    <message>
+        <source>Turns a plain text file into lines, in the open file or a new one</source>
+        <translation>Zamienia zwykły plik tekstowy na linijki w otwartym pliku lub w nowym</translation>
+    </message>
+    <message>
+        <source>Import text…</source>
+        <translation>Importuj tekst…</translation>
     </message>
     <message>
         <source>Saves the document</source>
@@ -12858,7 +13067,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>Otwórz</translation>
+        <translation type="vanished">Otwórz</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13415,7 +13624,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation type="obsolete">Anuluj</translation>
     </message>
     <message>
         <source>Rename</source>
@@ -18754,6 +18963,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin isn’t on.</source>
         <translation>Wtyczka jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>Colour theme: %1</source>
+        <translation>Motyw kolorów: %1</translation>
+    </message>
+    <message>
+        <source>Icon theme: %1</source>
+        <translation>Motyw ikon: %1</translation>
     </message>
 </context>
 <context>
@@ -26981,6 +27198,18 @@ Usunięte style:
         <translation>Wideo</translation>
     </message>
     <message>
+        <source>Video position</source>
+        <translation type="vanished">Pozycja wideo</translation>
+    </message>
+    <message>
+        <source>Video times</source>
+        <translation type="vanished">Czasy wideo</translation>
+    </message>
+    <message>
+        <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
+        <translation type="vanished">Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
+    </message>
+    <message>
         <source>Previous file</source>
         <translation>Poprzedni plik</translation>
     </message>
@@ -28092,6 +28321,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Zmienia aktywną linijkę</translation>
     </message>
     <message>
+        <source>How this tool works</source>
+        <translation>Jak działa to narzędzie</translation>
+    </message>
+    <message>
         <source>On the frame</source>
         <translation>Na klatce</translation>
     </message>
@@ -28918,6 +29151,254 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Klikaj, aby dodać punkty ścieżki, i przeciągaj je, aby nadać ścieżce kształt. Tekst podąża za nią; Enter zatwierdza.</translation>
     </message>
     <message>
+        <source>Ctrl-click writes it.</source>
+        <extracomment>The visual tool guide: what the Position pointer writes</extracomment>
+        <translation>Tylko po Ctrl+kliknięciu.</translation>
+    </message>
+    <message>
+        <source>Moves the positions, move points, clips, drawings and origins already in the lines.</source>
+        <extracomment>The visual tool guide: what the Position shifter writes</extracomment>
+        <translation>Przesuwa pozycje, punkty ruchu, wycinki, rysunki i środki obrotu, które są już w linijkach.</translation>
+    </message>
+    <message>
+        <source>Any tag from its list.</source>
+        <extracomment>The visual tool guide: what the All tags tool writes</extracomment>
+        <translation>Dowolny tag ze swojej listy.</translation>
+    </message>
+    <message>
+        <source>And the border and shadow sizes.</source>
+        <extracomment>The visual tool guide: what Perspective writes besides its tags</extracomment>
+        <translation>Oraz rozmiary obramowania i cienia.</translation>
+    </message>
+    <message>
+        <source>Copies of the line in clip strips, a mask drawing, or tags for each character or line.</source>
+        <extracomment>The visual tool guide: what the Gradient tool writes</extracomment>
+        <translation>Kopie linijki w pasach wycinków, rysunek maski albo tagi dla każdego znaku lub linijki.</translation>
+    </message>
+    <message>
+        <source>A line for each letter, with its own position and rotation, along the path.</source>
+        <extracomment>The visual tool guide: what Text on path writes</extracomment>
+        <translation>Osobną linijkę dla każdej litery, z własną pozycją i obrotem, wzdłuż ścieżki.</translation>
+    </message>
+    <message>
+        <source>A cross follows the pointer and shows its script coordinates.</source>
+        <translation>Krzyżyk podąża za wskaźnikiem i pokazuje jego współrzędne w skrypcie.</translation>
+    </message>
+    <message>
+        <source>Ctrl-click or middle-click puts the line there.</source>
+        <translation>Ctrl+kliknięcie lub kliknięcie środkowym przyciskiem umieszcza tam linijkę.</translation>
+    </message>
+    <message>
+        <source>Drag anywhere on the picture to move the line; you need not grab it.</source>
+        <translation>Przeciągnij w dowolnym miejscu obrazu, aby przesunąć linijkę; nie trzeba jej chwytać.</translation>
+    </message>
+    <message>
+        <source>Shift locks the drag to one axis.</source>
+        <translation>Shift blokuje przeciąganie w jednej osi.</translation>
+    </message>
+    <message>
+        <source>A right-click puts the line at the pointer.</source>
+        <translation>Kliknięcie prawym przyciskiem umieszcza linijkę pod wskaźnikiem.</translation>
+    </message>
+    <message>
+        <source>Set position by rectangle places the line by a rectangle you draw.</source>
+        <translation>Ustaw pozycję według prostokąta umieszcza linijkę według narysowanego prostokąta.</translation>
+    </message>
+    <message>
+        <source>The left button sets the start point, the right button the end point.</source>
+        <translation>Lewy przycisk ustawia punkt początkowy, a prawy – punkt końcowy.</translation>
+    </message>
+    <message>
+        <source>Start and End take their times in milliseconds from the line’s start.</source>
+        <translation>Początek i Koniec przyjmują czasy w milisekundach od początku linijki.</translation>
+    </message>
+    <message>
+        <source>Set movement using 2 points and the video position builds the move from a point on two frames.</source>
+        <translation>Ustaw ruch za pomocą 2 punktów i pozycji wideo tworzy ruch z punktu wskazanego na dwóch klatkach.</translation>
+    </message>
+    <message>
+        <source>Left-drag scales the width, right-drag the height.</source>
+        <translation>Przeciąganie lewym przyciskiem skaluje szerokość, a prawym – wysokość.</translation>
+    </message>
+    <message>
+        <source>Shift-drag or middle-drag scales both.</source>
+        <translation>Przeciąganie środkowym przyciskiem lub Shift+przeciągnięcie skaluje w obu osiach.</translation>
+    </message>
+    <message>
+        <source>Set scale by rectangle scales the line to fit a rectangle you draw.</source>
+        <translation>Ustaw skalę według prostokąta skaluje linijkę tak, aby zmieściła się w narysowanym prostokącie.</translation>
+    </message>
+    <message>
+        <source>Drag round the origin cross to turn the line.</source>
+        <translation>Przeciągaj wokół krzyżyka środka obrotu, aby obrócić linijkę.</translation>
+    </message>
+    <message>
+        <source>Drag the cross itself to move the origin.</source>
+        <translation>Przeciągnij sam krzyżyk, aby przesunąć środek obrotu.</translation>
+    </message>
+    <message>
+        <source>Set angle from 2 points takes the angle from two points you click along something in the picture.</source>
+        <translation>Ustaw kąt z 2 punktów wyznacza kąt z dwóch punktów klikniętych wzdłuż czegoś na obrazie.</translation>
+    </message>
+    <message>
+        <source>Left-drag turns the text round the vertical axis.</source>
+        <translation>Przeciąganie lewym przyciskiem obraca tekst wokół osi pionowej.</translation>
+    </message>
+    <message>
+        <source>Right-drag turns it round the horizontal axis; middle-drag does both.</source>
+        <translation>Przeciąganie prawym przyciskiem obraca go wokół osi poziomej, a środkowym – wokół obu.</translation>
+    </message>
+    <message>
+        <source>Drag the origin cross to move the origin.</source>
+        <translation>Przeciągnij krzyżyk środka obrotu, aby przesunąć środek obrotu.</translation>
+    </message>
+    <message>
+        <source>Drag a rectangle on the picture.</source>
+        <translation>Przeciągnij, aby narysować prostokąt na obrazie.</translation>
+    </message>
+    <message>
+        <source>Drag its edges or corners to resize it, or inside it to move it.</source>
+        <translation>Przeciągaj jego krawędzie lub narożniki, aby zmienić rozmiar, albo wnętrze, aby go przesunąć.</translation>
+    </message>
+    <message>
+        <source>Invert clip switches between showing what is inside and what is outside.</source>
+        <translation>Odwróć wycinek przełącza między pokazywaniem tego, co w środku, a tego, co na zewnątrz.</translation>
+    </message>
+    <message>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
+        <translation>Wybierz tryb: przesuwanie punktów, dodawanie linii, krzywej Béziera lub krzywej B-sklejanej, dodawanie oddzielnego punktu albo usuwanie punktu.</translation>
+    </message>
+    <message>
+        <source>Click to add points and drag them to reshape.</source>
+        <translation>Klikaj, aby dodać punkty, i przeciągaj je, aby zmienić kształt.</translation>
+    </message>
+    <message>
+        <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
+        <translation>Ctrl+kliknięcie zaznacza kilka punktów. Alt podczas przeciągania przyciąga do współrzędnej x lub y innego punktu.</translation>
+    </message>
+    <message>
+        <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
+        <translation>Albo wybierz kształt i przeciągnij prostokąt, aby go narysować. Edytuj kształty… dodaje własne kształty.</translation>
+    </message>
+    <message>
+        <source>Drag to move everything the Move toggles choose, by the same amount in every picked line.</source>
+        <translation>Przeciągnij, aby przesunąć wszystko, co wybierają przełączniki Przenieś, o tę samą wartość w każdej wybranej linijce.</translation>
+    </message>
+    <message>
+        <source>Or type an amount in X and Y: each Enter shifts the lines by that much.</source>
+        <translation>Albo wpisz wartość w polach X i Y: każde naciśnięcie Enter przesuwa linijki o tyle.</translation>
+    </message>
+    <message>
+        <source>Choose a tag in the inspector.</source>
+        <translation>Wybierz tag na pasku inspektora.</translation>
+    </message>
+    <message>
+        <source>Drag sideways on the picture, or turn the wheel, to change its value. Shift for small steps.</source>
+        <translation>Przeciągaj na boki po obrazie lub obracaj kółko, aby zmienić jego wartość. Shift daje małe kroki.</translation>
+    </message>
+    <message>
+        <source>Set, Add, Multiply and Gradient decide how the value goes across characters or lines.</source>
+        <translation>Ustaw, Dodaj, Pomnóż i Gradient określają, jak wartość rozkłada się po znakach lub linijkach.</translation>
+    </message>
+    <message>
+        <source>Drag a square corner to lay the text on a surface.</source>
+        <translation>Przeciągnij narożnik kwadratu, aby położyć tekst na powierzchni.</translation>
+    </message>
+    <message>
+        <source>Drag inside the text to move it.</source>
+        <translation>Przeciągnij wnętrze tekstu, aby go przesunąć.</translation>
+    </message>
+    <message>
+        <source>While dragging a corner, Shift keeps it on an edge, Ctrl snaps it and Alt sizes about the centre.</source>
+        <translation>Podczas przeciągania narożnika Shift utrzymuje go na krawędzi, Ctrl go przyciąga, a Alt zmienia rozmiar względem środka.</translation>
+    </message>
+    <message>
+        <source>A double-click brings the nearest corner to the pointer.</source>
+        <translation>Dwukrotne kliknięcie przenosi najbliższy narożnik do wskaźnika.</translation>
+    </message>
+    <message>
+        <source>Choose a mode, then drag across the sign from where the gradient starts to where it ends.</source>
+        <translation>Wybierz tryb, a potem przeciągnij przez napis od miejsca, w którym gradient się zaczyna, do miejsca, w którym się kończy.</translation>
+    </message>
+    <message>
+        <source>Drag the ends and the other handles to adjust it; the preview follows.</source>
+        <translation>Przeciągaj końce i pozostałe uchwyty, aby go dopasować; podgląd podąża za zmianami.</translation>
+    </message>
+    <message>
+        <source>Enter applies the gradient as one step.</source>
+        <translation>Enter zatwierdza gradient jako jeden krok.</translation>
+    </message>
+    <message>
+        <source>Give the line a vector clip, or click on the picture to draw a path.</source>
+        <translation>Dodaj linijce wycinek wektorowy albo klikaj na obrazie, aby narysować ścieżkę.</translation>
+    </message>
+    <message>
+        <source>Drag the points to shape the path; the text follows it.</source>
+        <translation>Przeciągaj punkty, aby nadać ścieżce kształt; tekst podąża za nią.</translation>
+    </message>
+    <message>
+        <source>Enter applies: each letter becomes its own line, and the original is kept as a comment.</source>
+        <translation>Enter zatwierdza: każda litera staje się osobną linijką, a oryginał zostaje zachowany jako komentarz.</translation>
+    </message>
+    <message>
+        <source>Chooses this tool</source>
+        <extracomment>The visual tool guide&apos;s keys: what the tool&apos;s own key does</extracomment>
+        <translation>Wybiera to narzędzie</translation>
+    </message>
+    <message>
+        <source>Arrow keys</source>
+        <extracomment>The visual tool guide&apos;s keys; the arrows work while the pointer is over the picture</extracomment>
+        <translation>Strzałki</translation>
+    </message>
+    <message>
+        <source>Change the scale by 1 %</source>
+        <translation>Zmień skalę o 1%</translation>
+    </message>
+    <message>
+        <source>Move the selected points by one pixel</source>
+        <translation>Przesuń zaznaczone punkty o jeden piksel</translation>
+    </message>
+    <message>
+        <source>Nudge by one pixel</source>
+        <translation>Przesuń o jeden piksel</translation>
+    </message>
+    <message>
+        <source>Shift+Arrow keys</source>
+        <translation>Shift+strzałki</translation>
+    </message>
+    <message>
+        <source>Nudge by a tenth of a pixel</source>
+        <translation>Przesuń o jedną dziesiątą piksela</translation>
+    </message>
+    <message>
+        <source>Alt+Arrow keys</source>
+        <translation>Alt+strzałki</translation>
+    </message>
+    <message>
+        <source>Nudge the end point</source>
+        <translation>Przesuń punkt końcowy</translation>
+    </message>
+    <message>
+        <source>Wheel</source>
+        <translation>Kółko</translation>
+    </message>
+    <message>
+        <source>Steps through the modes</source>
+        <translation>Przełącza tryby</translation>
+    </message>
+    <message>
+        <source>Changes the value</source>
+        <translation>Zmienia wartość</translation>
+    </message>
+    <message>
+        <source>Applies</source>
+        <translation>Zatwierdza</translation>
+    </message>
+    <message>
+        <source>Drops the preview</source>
+        <translation>Odrzuca podgląd</translation>
+    </message>
+    <message>
         <source>square</source>
         <extracomment>The shape a visual tool draws for a handle on the frame</extracomment>
         <translation>kwadrat</translation>
@@ -29651,6 +30132,14 @@ nie działają na komentarzach</translation>
     <message>
         <source>Nothing would be left of the drawing</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writes</source>
+        <translation>Zapisuje</translation>
+    </message>
+    <message>
+        <source>More in the guide</source>
+        <translation>Więcej w podręczniku</translation>
     </message>
 </context>
 <context>

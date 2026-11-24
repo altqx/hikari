@@ -163,7 +163,7 @@ jobs:
           # The docs export the site's hotkeys, settings and API reference pages are made from.
           QT_QPA_PLATFORM=offscreen "$B/src/app/hikarisub" --export-docs out/docs
           (cd out/docs && cmake -E tar cf "$OLDPWD/out/dist/hikarisub-docs-$VERSION.zip" --format=zip -- \
-            meta.json commands.json settings.json guide-links.json api.json api.md)
+            meta.json commands.json settings.json guide-links.json api.json api.md hikari.lua hikari.d.ts)
           (cd out/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS)
           ls -la out/dist out/dist-old
 

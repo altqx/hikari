@@ -251,6 +251,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place run 8"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place run 9"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Place the next run"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Trigger completion"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split syllable at the cursor"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Switch long syllables between \\k and \\kf"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Position pointer"),
@@ -362,6 +363,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move tab to window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close window"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import lyrics…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Import text…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Exit"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Keep AI change"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Undo AI change"),
@@ -427,6 +429,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom to 1:1 device pixels"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next subtitle boundary"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous subtitle boundary"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Reopen with encoding…"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

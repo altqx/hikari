@@ -168,6 +168,15 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     return path;
 }
 
+QString writeText(const QTemporaryDir &dir, const char *name, const QByteArray &bytes)
+{
+    const QString path = dir.filePath(QLatin1String(name));
+    QFile f(path);
+    if (f.open(QIODevice::WriteOnly))
+        f.write(bytes);
+    return path;
+}
+
 struct MemoryAi {
     std::map<std::string, std::string> keys;
     application::ai::Config config;
@@ -7883,8 +7892,6 @@ private slots:
             {main, QStringLiteral(R"("sortAll_" + modelData.key)"), QStringLiteral("a sort key, under Sort all lines")},
             {main, QStringLiteral(R"("sortSelected_" + modelData.key)"),
              QStringLiteral("a sort key, under Sort selected lines")},
-            {QStringLiteral("MacroMenuEntries.qml"), QStringLiteral("entries.itemPrefix + (macro.id ?? macro.name)"),
-             QStringLiteral("a macro of the loaded scripts, or a plugin's command")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
             {QStringLiteral("AutomationDialog.qml"), QStringLiteral(R"("dialogDeletePreset_" + window.presetKey(modelData))"),
              QStringLiteral("a script dialog's preset, under Delete preset")},
@@ -12419,6 +12426,84 @@ private slots:
         QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("notmkv/Fonts"))));
         collector.setFromMkv(false);
         QVERIFY(!application->settingsStore()->boolean("fontCollector.fromMkv"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    void fontCollectorLinksIntoAFolder()
+    {
+        QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("linksource")));
+        const QString source = dir.filePath(QStringLiteral("linksource/arial.ttf"));
+        {
+            QFile f(source);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("arial bytes");
+        }
+        const QString subs = dir.filePath(QStringLiteral("link.ass"));
+        {
+            QFile f(subs);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, "
+                    "SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, "
+                    "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1\n"
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(subs));
+        auto fonts = std::make_unique<hikari::testing::FakeFonts>();
+        fonts->faces = {{"Arial", 400, false, QDir::fromNativeSeparators(source).toStdString()}};
+        auto &collector = application->fontCollector();
+        collector.setFontService(std::move(fonts));
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = named("fontCollectorDialog")) && dialog->property("visible").toBool());
+        QStringList segments;
+        for (const QVariant &choice : dialogItem("fontCollectorDialog", "fontCollectorAction")->property("choices").toList())
+            segments << choice.toMap().value(QStringLiteral("text")).toString();
+        QCOMPARE(segments, (QStringList{QStringLiteral("Check fonts"), QStringLiteral("Copy to a folder"),
+                                        QStringLiteral("Link to a folder"), QStringLiteral("Zip archive")}));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption3"), "click"));
+        QCOMPARE(application->settingsStore()->integer("fontCollector.action"), 3);
+        QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorActionHint")->property("text").toString(),
+                 QStringLiteral("Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted."));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"),
+                      QStringLiteral("Select the folder where you want to link fonts"));
+
+        const QString folder = QDir::toNativeSeparators(dir.filePath(QStringLiteral("linked")));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", folder);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        const QString target = folder + QDir::separator();
+        QVERIFY2(collector.logText().endsWith(QStringLiteral("Ready to link 1 font into “%1”.\n").arg(target)),
+                 qPrintable(collector.logText()));
+        QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorReviewText")->property("text").toString(),
+                 QStringLiteral("Ready to link into %1").arg(target));
+        auto *apply = dialogItem("fontCollectorDialog", "fontCollectorApply");
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Link fonts"));
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QVERIFY(collector.waitIdle());
+        const QString done = collector.logText();
+        QVERIFY2(done.contains(QStringLiteral("Linked font “arial.ttf”.\n")), qPrintable(done));
+        QVERIFY2(done.contains(QStringLiteral("\nCompleted successfully, linked 1 font.\n")), qPrintable(done));
+        const QString linked = QDir(folder).filePath(QStringLiteral("arial.ttf"));
+        QFile written(linked);
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QCOMPARE(written.readAll(), QByteArray("arial bytes"));
+#ifndef _WIN32
+        QVERIFY(QFileInfo(linked).isSymLink());
+#endif
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption3")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption0"), "click"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -31243,6 +31328,7 @@ private slots:
     {
         QTemporaryDir config;
         QVERIFY(config.isValid());
+        widenForTheInspectorBar();
         auto &tools = application->visualTools();
         const QString shapesFile = config.filePath(QStringLiteral("Config/shapes.toml"));
         tools.setShapesFile(ui::ListFile::make(shapesFile, {}, ui::kShapesFormat, nullptr));
@@ -31445,7 +31531,7 @@ private slots:
         QCOMPARE(editor->name(), QStringLiteral("box"));
         QCOMPARE(named("shapeNameErrorText")->property("text").toString(),
                  QStringLiteral("Another shape is named “circle”. Press Enter to replace it."));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "nameLeft"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesEditionPane"), "nameLeft"));
         QQuickWindow *box = nullptr;
         QTRY_VERIFY((box = messageBox("shapesMessages")) && box->isVisible());
         QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
@@ -34375,6 +34461,101 @@ private slots:
         QVERIFY(!dialogItem("lyricsImportDialog", "lyricsImportImport")->isEnabled());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("lyricsImportDialog", "lyricsImportCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    void importTextAddsLinesToTheOpenFileInOneStep()
+    {
+        QVERIFY(application->openFile(writeFile(dir, "pf4-open.ass",
+                                                "Dialogue: 0,0:00:30.00,0:00:31.00,Default,,0,0,0,,mine\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        const QString text = writeText(dir, "pf4-script.txt", "Ana: Hello\n\n#A note\n  still Ana\n");
+        auto *menuItem = item<QObject>("importTextMenuItem");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("command").toString(), QStringLiteral("GLOBAL_IMPORT_TEXT"));
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTextImport", Q_ARG(QVariant, text)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("textImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QVERIFY(controller->property("canImport").toBool());
+        QVERIFY(controller->property("intoOpenFile").toBool());
+        QCOMPARE(controller->property("style").toString(), QStringLiteral("Default"));
+        QCOMPARE(controller->property("lineCount").toInt(), 3);
+        const QVariantList preview = controller->property("preview").toList();
+        QCOMPARE(preview.size(), 3);
+        QCOMPARE(preview[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Ana"));
+        QVERIFY(preview[1].toMap().value(QStringLiteral("comment")).toBool());
+        auto *importButton = dialogItem("textImportDialog", "textImportImport");
+        QVERIFY(importButton);
+        QVERIFY(QMetaObject::invokeMethod(importButton, "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), 4u);
+        QCOMPARE(lines[1]->actor, std::u8string(u8"Ana"));
+        QCOMPARE(lines[1]->text, std::u8string(u8"Hello"));
+        QVERIFY(lines[2]->comment);
+        QCOMPARE(lines[3]->actor, std::u8string(u8"Ana"));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Import text"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines().size(), 1u);
+    }
+
+    void importTextOpensANewFileAndRemembersItsOptions()
+    {
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.reset(QStringLiteral("textImport.options")); });
+        const auto open = [&](const QString &path) {
+            QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTextImport", Q_ARG(QVariant, path)));
+        };
+        open(writeText(dir, "pf4-utf16.txt", QByteArray("\xff\xfe" "A\x00", 4)));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("textImportDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("controller").value<QObject *>();
+        QCOMPARE(controller->property("encoding").toString(), QStringLiteral("UTF-16LE"));
+        QCOMPARE(dialogItem("textImportDialog", "textImportEncoding")->property("currentText").toString(), QStringLiteral("UTF-16 LE"));
+        QCOMPARE(controller->property("lineCount").toInt(), 1);
+        controller->setProperty("encoding", QStringLiteral("UTF-8"));
+        QVERIFY(controller->property("problem").toString().contains(QStringLiteral("UTF-8")));
+        QTRY_VERIFY(!dialogItem("textImportDialog", "textImportImport")->isEnabled());
+        controller->setProperty("encoding", QStringLiteral("UTF-16LE"));
+        QCOMPARE(controller->property("preview").toList().value(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("A"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        open(writeText(dir, "pf4-timecodes.txt", "# timecode format v2\n0\n42\n"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(controller->property("problem").toString().contains(QStringLiteral("timecodes")));
+        QVERIFY(!controller->property("canImport").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        open(writeText(dir, "pf4-lines.txt", "\xEF\xBB\xBF" "Ana - Hi: there\nPlain\n"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(controller->property("encoding").toString(), QStringLiteral("UTF-8"));
+        controller->setProperty("actorSeparator", QStringLiteral(" - "));
+        controller->setProperty("namesCarryOver", false);
+        controller->setProperty("intoOpenFile", false);
+        const QVariantList preview = controller->property("preview").toList();
+        QCOMPARE(preview.size(), 2);
+        QCOMPARE(preview[0].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Hi: there"));
+        const QJsonObject remembered = QJsonDocument::fromJson(settings.text("textImport.options").toUtf8()).object();
+        QCOMPARE(remembered.value(QStringLiteral("actorSeparator")).toString(), QStringLiteral(" - "));
+        QCOMPARE(remembered.value(QStringLiteral("namesCarryOver")).toBool(true), false);
+        const auto documents = application->workspace().documents().size();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("textImportDialog", "textImportImport"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_COMPARE(application->workspace().documents().size(), documents + 1);
+        const auto target = *application->workspace().editingTarget();
+        QCOMPARE(QString::fromStdString(*application->workspace().title(target)), QStringLiteral("pf4-lines.ass"));
+        const auto lines = application->files().session(target)->document().lines();
+        QCOMPARE(lines.size(), 2u);
+        QCOMPARE(lines[0]->actor, std::u8string(u8"Ana"));
+        QCOMPARE(lines[0]->text, std::u8string(u8"Hi: there"));
+        QVERIFY(lines[1]->actor.empty());
+        QCOMPARE(lines[1]->start.value.microseconds(), 0);
     }
 
     void alignToVideoTimesTheLineToTheKeyPointsFrames()
@@ -39465,10 +39646,10 @@ private slots:
         if (!f.open(QIODevice::WriteOnly))
             return false;
         f.write(!script.isEmpty() ? script
-                : "[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n"
-                  "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-                  "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n"
-                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n");
+                : QByteArray("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n"
+                             "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n"));
         f.close();
         if (!application->openFile(subtitles))
             return false;
@@ -40687,8 +40868,8 @@ private slots:
                     return w;
             return nullptr;
         };
-        QTRY_VERIFY(shapesWindow());
-        QCOMPARE(shapesWindow()->transientParent(), fsWindow);
+        QTRY_VERIFY(fullscreenItem("shapesEditionPane") && fullscreenItem("shapesEditionPane")->isVisible());
+        QVERIFY(!shapesWindow());
         shapes->addShape();
         QVERIFY(shapes->canUndo());
         QTemporaryDir tagsConfig;
@@ -40706,8 +40887,9 @@ private slots:
                     return w;
             return nullptr;
         };
-        QTRY_VERIFY(tagsWindow());
-        QCOMPARE(tagsWindow()->transientParent(), fsWindow);
+        QTRY_VERIFY(fullscreenItem("tagsEditionPane") && fullscreenItem("tagsEditionPane")->isVisible());
+        QVERIFY(!fullscreenItem("shapesEditionPane"));
+        QVERIFY(!tagsWindow());
         tags->addTag();
         QVERIFY(tags->canUndo());
         QVERIFY(fs.leave());
@@ -40914,6 +41096,140 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(panel, "applyFromList", Q_ARG(QVariant, QStringLiteral("Sign"))));
         QTRY_COMPARE(u8(line(2)->style), QStringLiteral("Sign"));
         QCOMPARE(application->shell().activeLineNumber(), 3);
+    }
+
+    void videoFullscreenInspectorHostsToolDialogsAndTheGuide()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &tools = application->visualTools();
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
+        QTRY_VERIFY(fullscreenItem("fullscreenTypesetting") && fullscreenItem("fullscreenTypesetting")->isVisible());
+        auto *inspector = fullscreenItem("fullscreenInspector");
+        const auto inside = [&](QQuickItem *item, QQuickItem *area) {
+            for (; item; item = item->parentItem())
+                if (item == area)
+                    return true;
+            return false;
+        };
+        const auto hoverClick = [&](QQuickItem *target) {
+            QTest::mouseMove(target->window(), target->mapToScene(QPointF(target->width() / 2, target->height() / 2)).toPoint());
+            QTest::qWaitFor([&] { return target->property("hovered").toBool(); }, 1000);
+            clickWith(target, Qt::NoModifier);
+        };
+        const auto shot = [&](QQuickItem *area, const QString &name) {
+            const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+            if (out.isEmpty())
+                return;
+            QVERIFY(QDir().mkpath(out));
+            const QRectF r = area->mapRectToScene(QRectF(0, 0, area->width(), area->height()));
+            const QImage image = fsWindow->grabWindow();
+            const qreal dpr = image.devicePixelRatio();
+            QVERIFY(image.copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toRect())
+                        .save(QDir(out).filePath(name + QLatin1Char('-') + QString::number(int(area->width())) + ".png")));
+        };
+
+        tools.selectFamily(2);
+        QTRY_VERIFY(fullscreenItem("visualInspectorGuide") && fullscreenItem("visualInspectorGuide")->isVisible());
+        auto *guide = fullscreenItem("fullscreenToolBar")->findChild<QObject *>(QStringLiteral("visualToolGuide"));
+        QVERIFY(guide);
+        hoverClick(fullscreenItem("visualInspectorGuide"));
+        QTRY_VERIFY(guide->property("opened").toBool());
+        auto *guideItem = guide->property("contentItem").value<QQuickItem *>();
+        QCOMPARE(guide->property("title").toString(), tools.families().at(2).toMap().value(QStringLiteral("name")).toString());
+        QCOMPARE(findItem(guideItem, QStringLiteral("visualToolGuideWrites"))->property("text").toString(),
+                 QStringLiteral("\\move(x1,y1,x2,y2,t1,t2)"));
+        QVERIFY(!findItem(guideItem, QStringLiteral("visualToolGuideNote"))->isVisible());
+        const auto lineCount = [&] {
+            int n = 0;
+            for (auto *label : findItem(guideItem, QStringLiteral("visualToolGuideLines"))->childItems())
+                n += label->isVisible() && !label->property("text").toString().isEmpty();
+            return n;
+        };
+        QTRY_COMPARE(lineCount(), 3);
+        QVERIFY(guideItem->mapToScene(QPointF(guideItem->width(), 0)).x() <= inspector->mapToScene(QPointF()).x());
+        bool chooses = false;
+        for (auto *label : findItem(guideItem, QStringLiteral("visualToolGuideKeys"))->childItems())
+            chooses = chooses || label->property("text").toString() == QStringLiteral("Chooses this tool");
+        QVERIFY(chooses);
+        auto *more = findItem(guideItem, QStringLiteral("visualToolGuideMore"));
+        QVERIFY(more && more->isVisible());
+        QTRY_VERIFY(more->hasActiveFocus());
+        hikari::test::desktop::clear();
+        QTest::keyClick(fsWindow, Qt::Key_Space);
+        QTRY_COMPARE(hikari::test::desktop::opened(),
+                     QList<QUrl>{QUrl(QStringLiteral("https://hikarisub.org/en/docs/typesetting/visual-tools#using-each-tool"))});
+        QTRY_VERIFY(!guide->property("visible").toBool());
+        tools.selectFamily(12);
+        hoverClick(fullscreenItem("visualInspectorGuide"));
+        QTRY_VERIFY(guide->property("opened").toBool());
+        QVERIFY(findItem(guideItem, QStringLiteral("visualToolGuideNote"))->isVisible());
+        QVERIFY(!findItem(guideItem, QStringLiteral("visualToolGuideWrites"))->isVisible());
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QTRY_VERIFY(!guide->property("visible").toBool());
+        QVERIFY(fs.active());
+
+        QTemporaryDir config;
+        QVERIFY(config.isValid());
+        tools.setShapesFile(ui::ListFile::make(config.filePath(QStringLiteral("shapes.toml")), {}, ui::kShapesFormat, nullptr));
+        tools.setAllTagsFile(ui::ListFile::make(config.filePath(QStringLiteral("tags.toml")), {}, ui::kTagsFormat, nullptr));
+        tools.selectFamily(8);
+        QTRY_VERIFY(fullscreenItem("visualOption_shape"));
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 99));
+        QPointer<ui::ShapeEditor> shapes = tools.shapeEditor();
+        QVERIFY(shapes);
+        auto *host = fullscreenItem("fullscreenToolDialog");
+        QTRY_VERIFY(host->isVisible() && fullscreenItem("shapesEditionPane") && fullscreenItem("shapesEditionPane")->isVisible());
+        QVERIFY(!inspector->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenToolDialogName")->property("text").toString(), QStringLiteral("Edit shapes"));
+        QCOMPARE(host->width(), inspector->width());
+        for (const char *name : {"shapeList", "shapeName", "shapeMode", "shapePreview", "shapesPaneUndo"}) {
+            auto *part = fullscreenItem(name);
+            QVERIFY2(part && part->isVisible(), name);
+            QVERIFY2(part->mapToItem(host, QPointF(part->width(), 0)).x() <= host->width(), name);
+        }
+        QTRY_VERIFY(inside(fsWindow->activeFocusItem(), fullscreenItem("shapesEditionPane")));
+        shapes->addShape();
+        QVERIFY(shapes->canUndo());
+        QTest::keyClick(fsWindow, Qt::Key_Z, Qt::ControlModifier);
+        QTRY_VERIFY(!shapes->canUndo());
+        QVERIFY(!application->editor().hasDraft());
+        shot(host, QStringLiteral("fullscreen-edit-shapes"));
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QTRY_VERIFY(!tools.shapeEditor());
+        QTRY_VERIFY(inspector->isVisible() && !host->isVisible());
+        QTRY_VERIFY(inside(fsWindow->activeFocusItem(), inspector));
+        QVERIFY(fs.active());
+
+        tools.selectFamily(10);
+        QTRY_VERIFY(fullscreenItem("visualOption_tag"));
+        QVERIFY(tools.setOption(QStringLiteral("edit"), 1));
+        QTRY_VERIFY(tools.tagsEditor());
+        QTRY_VERIFY(fullscreenItem("tagsEditionPane") && fullscreenItem("tagsEditionPane")->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenToolDialogName")->property("text").toString(), QStringLiteral("Edit tags"));
+        for (const char *name : {"tagsName", "tagCode", "tagStripPreview", "tagsPaneUndo"}) {
+            auto *part = fullscreenItem(name);
+            QVERIFY2(part && part->isVisible(), name);
+            QVERIFY2(part->mapToItem(host, QPointF(part->width(), 0)).x() <= host->width(), name);
+        }
+        shot(host, QStringLiteral("fullscreen-edit-tags"));
+        hoverClick(fullscreenItem("fullscreenToolDialogClose"));
+        QTRY_VERIFY(!tools.tagsEditor());
+        QTRY_VERIFY(inspector->isVisible());
+
+        tools.selectFamily(2);
+        QVERIFY(fs.leave());
+        QTRY_VERIFY(!fsWindow->isVisible());
+        QTRY_VERIFY(item("visualToolGuideButton") && item("visualToolGuideButton")->isVisible());
+        QCOMPARE(item("visualToolGuideButton")->property("tip").toString(),
+                 QStringLiteral("Drag the start or end point; right-drag sets the end. The line travels between them."));
+        tools.selectFamily(0);
     }
 
     void videoFullscreenOnStartLastsOneOpen()
