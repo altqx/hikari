@@ -963,6 +963,25 @@ QVariantList PluginRuntime::marks(const QString &pluginId) const
     return out;
 }
 
+QVariantList PluginRuntime::stoppedLanguageServers(const QString &pluginId) const
+{
+    return m_stoppedLanguageServers ? m_stoppedLanguageServers(pluginId.toStdString()) : QVariantList{};
+}
+
+void PluginRuntime::startLanguageServerAgain(const QString &pluginId, const QString &serverId)
+{
+    if (m_startLanguageServerAgain)
+        m_startLanguageServerAgain(pluginId.toStdString(), serverId.toStdString());
+}
+
+void PluginRuntime::setLanguageServerStates(std::function<QVariantList(const std::string &)> stopped,
+                                            std::function<void(const std::string &, const std::string &)> startAgain)
+{
+    m_stoppedLanguageServers = std::move(stopped);
+    m_startLanguageServerAgain = std::move(startAgain);
+    languageServerStatesUpdated();
+}
+
 QVariantList PluginRuntime::programs(const QString &pluginId) const
 {
     QVariantList out;
