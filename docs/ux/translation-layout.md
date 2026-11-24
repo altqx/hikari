@@ -17,7 +17,7 @@ The Editing arrangement ([editing-layout.md](editing-layout.md)) with Translatio
 | Right side bar | Find, as the preset opens it |
 | Reference tray, under the Grid, when open | See [Reference tray](#reference-tray) |
 
-An untranslated Line's field shows the hint "Type the translation. Ctrl+Shift+V pastes the original."
+An untranslated Line's field shows the hint "Type the translation. Ctrl+Alt+J pastes the original.", with the keys Paste all is bound to. Paste all has no default key (Ctrl+Shift+V is the Grid's Paste columns), so without one the hint is "Type the translation."
 
 ## The question
 

@@ -1320,7 +1320,7 @@ private slots:
         QVERIFY(item("referencePanel")->isVisible());
         QCOMPARE(window->title(), QStringLiteral("episode.ass - HikariSub"));
         QCOMPARE(item<QObject>("gridDock")->property("title").toString(), QStringLiteral("Grid"));
-        QCOMPARE(item<QObject>("referenceDock")->property("title").toString(), QStringLiteral("Reference: original.ass"));
+        QCOMPARE(item<QObject>("referenceDock")->property("title").toString(), QStringLiteral("Reference · original.ass"));
         QVERIFY(!item("gridEmptyState")->isVisible());
         QVERIFY(!window->findChild<QObject *>(QStringLiteral("gridPanelTitle")));
         QVERIFY(!window->findChild<QObject *>(QStringLiteral("statusTargets")));
@@ -8815,7 +8815,7 @@ private slots:
             QCOMPARE(header->property("count").toInt(), 1);
         }
         QQuickItem *header = dockHeader(QStringLiteral("Reference"));
-        QCOMPARE(header->property("currentTitle").toString(), QStringLiteral("Reference: original.ass"));
+        QCOMPARE(header->property("currentTitle").toString(), QStringLiteral("Reference · original.ass"));
         auto *bar = item("referenceBar");
         QVERIFY(bar);
         QTRY_COMPARE(bar->parentItem(), findItem(header, QStringLiteral("dockToolbarSlot")));
@@ -8825,7 +8825,7 @@ private slots:
         QQuickItem *tab = header->property("currentTab").value<QQuickItem *>();
         QVERIFY(inHeader.left() >= tab->mapToItem(header, QPointF(tab->width(), 0)).x());
         const bool linked = application->shell().referenceLinked();
-        QTest::mouseClick(window, Qt::LeftButton, {}, centreOf(item("referenceLinked")));
+        QTest::mouseClick(window, Qt::LeftButton, {}, centreOf(visualItem(linked ? "referenceIndependent" : "referenceLinked")));
         QTRY_COMPARE(application->shell().referenceLinked(), !linked);
         std::function<void(QQuickItem *)> noClose = [&](QQuickItem *from) {
             for (QQuickItem *child : from->childItems()) {
@@ -8849,7 +8849,7 @@ private slots:
         QTRY_COMPARE(cursorAt(centreOf(tab)), Qt::SizeAllCursor);
         QTRY_COMPARE(cursorAt(statusPoint), Qt::SizeAllCursor);
         QTRY_COMPARE(cursorAt(centreOf(findItem(header, QStringLiteral("dockMenuButton")))), Qt::ArrowCursor);
-        QTRY_COMPARE(cursorAt(centreOf(item("referenceLinked"))), Qt::ArrowCursor);
+        QTRY_COMPARE(cursorAt(centreOf(visualItem("referenceLinked"))), Qt::ArrowCursor);
         QTRY_COMPARE(cursorAt(centreOf(item("referenceGrid"))), Qt::ArrowCursor);
         auto *menu = named("panelOptionsMenu");
         for (QQuickItem *target : {static_cast<QQuickItem *>(status), item("referenceNextMatch")}) {
@@ -18102,16 +18102,14 @@ private slots:
         });
         QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
 
-        auto *modeQuestion = windowNamed("translationModeQuestion");
+        auto *modeQuestion = item<QObject>("translationModeQuestion");
         QVERIFY(modeQuestion);
         themed([&](const QString &theme) {
-            QVERIFY(QMetaObject::invokeMethod(modeQuestion, "open"));
-            QTRY_VERIFY(modeQuestion->isVisible());
-            save(modeQuestion, QStringLiteral("translation-mode-on"), theme);
-            modeQuestion->setProperty("dropping", true);
-            modeQuestion->close();
-            modeQuestion->setProperty("dropping", false);
-            QTRY_VERIFY(!modeQuestion->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(modeQuestion, "ask", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("layoutSwitcher")))));
+            QTRY_VERIFY(modeQuestion->property("visible").toBool());
+            save(window, QStringLiteral("translation-mode-on"), theme);
+            QVERIFY(QMetaObject::invokeMethod(modeQuestion, "drop"));
+            QTRY_VERIFY(!modeQuestion->property("visible").toBool());
         });
         application->editor().discard();
         QVERIFY(application->openFile(writeTranslationFile("pu2-tl.ass")));
@@ -18166,8 +18164,9 @@ private slots:
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Tower"));
         const auto id = session->document().lines()[1]->id;
         QVERIFY(!session->document().lines()[1]->unconfirmed);
-        original->forceActiveFocus();
-        original->setProperty("cursorPosition", 5);
+        auto *translated = item("translationText");
+        translated->forceActiveFocus();
+        translated->setProperty("cursorPosition", 5);
         QTest::keyClick(window, 's');
         QTRY_VERIFY(session->draftLine().has_value());
         const auto steps = session->historySize();
@@ -18175,11 +18174,11 @@ private slots:
         QTRY_COMPARE(session->historySize(), steps + 2);
         QCOMPARE(session->history().back().name, std::string("Mark unconfirmed"));
         QVERIFY(session->document().lines()[1]->unconfirmed);
-        QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"Towers"));
+        QCOMPARE(session->document().lines()[1]->translation, std::u8string(u8"Wiezas"));
         QVERIFY(session->selection().active != id);
         QVERIFY(application->editor().undo());
         QVERIFY(!session->document().lines()[1]->unconfirmed);
-        QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"Towers"));
+        QCOMPARE(session->document().lines()[1]->translation, std::u8string(u8"Wiezas"));
     }
 
     void tagsFromOriginalAreCarriedToTheTranslation()

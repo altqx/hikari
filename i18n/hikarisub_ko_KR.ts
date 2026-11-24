@@ -4235,6 +4235,11 @@ Output device: %2</source>
         <translation>입력하는 동안 철자 검사</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>줄 편집기 · 번역문</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>줄 편집기</translation>
     </message>
@@ -19576,8 +19581,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>참조</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>참조 · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>참조: %1</translation>
+        <translation type="vanished">참조: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -19594,6 +19603,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Follow the editing line</source>
         <translation>편집 중인 줄 따라가기</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>독립</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>연동</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>참조 탐색</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -19614,6 +19635,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>참조 줄(보호됨, 읽기 전용)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>읽기 전용입니다. 독립: 따로 움직입니다. 연동: 편집 중인 줄을 시간에 맞춰 따라갑니다.</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -26182,6 +26207,19 @@ Styles deleted:
         <translation>원문: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>AI 번역</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>번역문을 입력하십시오. %1 키를 누르면 원문을 붙여 넣습니다.</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>번역문을 입력하십시오.</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>노래방 줄: 글자 앞의 태그는 가져오지만 노래방 타이밍은 가져오지 않습니다.</translation>
     </message>
@@ -26412,6 +26450,28 @@ Styles deleted:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>각 줄의 원문과 번역문을 표시하고 저장합니다</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>AI 번역이 중지되었습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI 번역 · %1/%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>공급자…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>닫기</translation>
     </message>
 </context>
 <context>

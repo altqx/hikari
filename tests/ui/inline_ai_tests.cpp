@@ -8,6 +8,7 @@
 #include "hikari/backends/ai_sidecar_host.h"
 
 #include "docking.h"
+#include "log_controller.h"
 #include "settings_store.h"
 
 #include <QDir>
@@ -132,12 +133,17 @@ private slots:
         QVERIFY(QDir(root.path()).mkpath(QString::fromLatin1(QTest::currentTestFunction())));
         ai::Config config;
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
-        provider.models = {{.id = "inline-upper", .name = "Upper", .price = ai::Price{.input = 0.5, .output = 0}}};
+        provider.models = {{.id = "inline-upper", .name = "Upper", .price = ai::Price{.input = 0.5, .output = 0}},
+                           {.id = "hang", .name = "Hang"},
+                           {.id = "fail", .name = "Fail"}};
         config.providers.push_back(provider);
         const QByteArray test = QTest::currentTestFunction();
         const bool cliOnly = test == QByteArrayLiteral("anAgentCliAloneLeavesTheActionsOff");
+        const std::string model = test == QByteArrayLiteral("aTranslationRunShowsItsProgressInTheOriginalTextPanel") ? "hang"
+                                  : test == QByteArrayLiteral("aFailedTranslationRunReportsInTheOriginalTextPanel") ? "fail"
+                                                                                                                       : "inline-upper";
         if (!cliOnly && test != QByteArrayLiteral("aProviderAddedWhileRunningIsInEveryModelListAtOnce"))
-            config.roles[ai::Role::Chat] = {"or", "inline-upper"};
+            config.roles[ai::Role::Chat] = {"or", model};
 
         const QString flags = at(QStringLiteral("local-bundle"));
         QFile bundle(flags);
@@ -459,6 +465,49 @@ private slots:
         QFile glossary(at(QStringLiteral("honya/GLOSSARY.md")));
         QVERIFY(glossary.open(QIODevice::ReadOnly));
         QCOMPARE(glossary.readAll(), QByteArray("# Glossary\n"));
+    }
+
+    void aTranslationRunShowsItsProgressInTheOriginalTextPanel()
+    {
+        setMode("auto");
+        QVERIFY(application->turnOnTranslationMode());
+        QTRY_VERIFY(shell(QStringLiteral("originalShown")).toBool());
+        selectAll();
+        QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("translate")},
+                                  {QStringLiteral("language"), QStringLiteral("French")}},
+                                 false));
+        QTRY_VERIFY(item(QStringLiteral("translationRunRow")));
+        QVERIFY(item(QStringLiteral("translationRunLine")));
+        QVERIFY(!item(QStringLiteral("inlineAiProgress")));
+        QCOMPARE(item(QStringLiteral("translationRunText"))->property("text").toString(), QStringLiteral("AI translation · 0 of 2 line(s)"));
+        QVERIFY(click(QStringLiteral("translationRunStop")));
+        QTRY_VERIFY(!item(QStringLiteral("translationRunRow")));
+        QTRY_VERIFY(item(QStringLiteral("translationRunNotice")));
+        QVERIFY(!item(QStringLiteral("translationRunProviders")));
+        QVERIFY(!item(QStringLiteral("inlineAiNotice")));
+        QVERIFY(click(QStringLiteral("translationRunDismiss")));
+        QTRY_VERIFY(!item(QStringLiteral("translationRunState")));
+    }
+
+    void aFailedTranslationRunReportsInTheOriginalTextPanel()
+    {
+        setMode("auto");
+        QVERIFY(application->turnOnTranslationMode());
+        QTRY_VERIFY(shell(QStringLiteral("originalShown")).toBool());
+        selectAll();
+        QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("translate")},
+                                  {QStringLiteral("language"), QStringLiteral("French")}},
+                                 false));
+        QTRY_VERIFY(item(QStringLiteral("translationRunProviders")));
+        QVERIFY(item(QStringLiteral("translationRunNoticeText"))->property("text").toString().startsWith(QStringLiteral("AI translation stopped. ")));
+        QVERIFY(!item(QStringLiteral("inlineAiNotice")));
+        QTRY_VERIFY(application->log().history().contains(QStringLiteral("AI translation stopped. ")));
+        QVERIFY(click(QStringLiteral("translationRunDetails")));
+        QTRY_VERIFY(shell(QStringLiteral("panelShown(logDock)")).toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(shell(QStringLiteral("originalDock")).value<QObject *>(), "close"));
+        QTRY_VERIFY(!shell(QStringLiteral("originalShown")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("inlineAiNotice")));
     }
 
     void translateSendsTheSourceLanguageOnlyWhenOneIsSet()

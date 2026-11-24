@@ -371,7 +371,7 @@ private slots:
         stop();
     }
 
-    void tagButtonsActOnTheFieldFocusedLast()
+    void tagButtonsActOnTheTranslationWhileTheOriginalIsInItsPanel()
     {
         start();
         openFile("tl.ass", true);
@@ -395,8 +395,94 @@ private slots:
         QTRY_COMPARE(QGuiApplication::focusWindow(), window());
         QTRY_VERIFY(translated->hasActiveFocus());
         QTest::mouseClick(window(), Qt::LeftButton, {}, bold->mapToScene(bold->boundingRect().center()).toPoint());
+        QTRY_VERIFY(translated->property("text").toString() != QStringLiteral("linia 1"));
+        QCOMPARE(original->property("text").toString(), QStringLiteral("line 1"));
+        stop();
+    }
+
+    void tagButtonsActOnTheOriginalFocusedLastInTheLineEditor()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(QMetaObject::invokeMethod(dock("originalDock"), "close"));
+        QTRY_VERIFY(!isOpen("originalDock"));
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        auto *bold = findItem(window()->contentItem(), "tag_b");
+        QTRY_VERIFY(original->isVisible() && bold && bold->isVisible());
+        QVERIFY(!original->property("readOnly").toBool());
+        original->forceActiveFocus(Qt::MouseFocusReason);
+        QTRY_VERIFY(original->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(bold, "clicked"));
         QTRY_VERIFY(original->property("text").toString() != QStringLiteral("line 1"));
         QCOMPARE(translated->property("text").toString(), QStringLiteral("linia 1"));
+        stop();
+    }
+
+    void theOriginalTextPanelShowsTheOriginalReadOnly()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QTRY_VERIFY(originalInPanel());
+        auto *original = item("lineText");
+        QVERIFY(original->property("readOnly").toBool());
+        auto *frame = item("originalFrame");
+        QCOMPARE(frame->property("color").value<QColor>(), ui::theme::current().roles.background);
+        QCOMPARE(frame->property("border").value<QObject *>()->property("color").value<QColor>(), ui::theme::current().roles.line);
+        QVERIFY(!original->property("background").value<QQuickItem *>()->isVisible());
+        original->forceActiveFocus(Qt::MouseFocusReason);
+        QTRY_VERIFY(original->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Z);
+        QTest::qWait(100);
+        QCOMPARE(original->property("text").toString(), QStringLiteral("line 1"));
+        QCOMPARE(dock("editorDock")->property("title").toString(), QStringLiteral("Line editor · Translated"));
+        QVERIFY(QMetaObject::invokeMethod(dock("originalDock"), "close"));
+        QTRY_VERIFY(!isOpen("originalDock"));
+        QVERIFY(!original->property("readOnly").toBool());
+        QVERIFY(original->property("background").value<QQuickItem *>()->isVisible());
+        QCOMPARE(dock("editorDock")->property("title").toString(), QStringLiteral("Line editor"));
+        stop();
+    }
+
+    void anUntranslatedLineNamesPasteAll()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        auto *translated = item("translationText");
+        QCOMPARE(translated->property("placeholderText").toString(), QStringLiteral("Type the translation."));
+        application->hotkeys().gestureMap(application::hotkeyIdOf("EDITBOX_PASTE_ALL_TO_TRANSLATION"), QStringLiteral("Paste all"),
+                                          QStringLiteral("Ctrl-Alt-J"), 2, QStringLiteral("cancel"));
+        QTRY_COMPARE(translated->property("placeholderText").toString(),
+                     QStringLiteral("Type the translation. Ctrl+Alt+J pastes the original."));
+        stop();
+    }
+
+    void theQuestionHangsFromTheLayoutSwitcher()
+    {
+        start();
+        openFile("a.ass", false);
+        applyPreset("Translation");
+        QTRY_VERIFY(asked());
+        QCOMPARE(question()->property("parent").value<QQuickItem *>(), item("layoutSwitcher"));
+        QCOMPARE(question()->property("width").toReal(), 360.0);
+        QTRY_VERIFY(item("translationModeTurnOn")->hasActiveFocus());
+        QCOMPARE(item("translationModeTurnOn")->height(), 24.0);
+        QCOMPARE(item("translationModeNotNow")->height(), 24.0);
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!asked());
+        QVERIFY(!translationMode());
+
+        application->addPage();
+        openFile("b.ass", false);
+        applyPreset("Translation");
+        QTRY_VERIFY(asked());
+        QTRY_VERIFY(item("translationModeTurnOn")->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Return);
+        QTRY_VERIFY(!asked());
+        QVERIFY(translationMode());
         stop();
     }
 
@@ -673,6 +759,8 @@ private slots:
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         openFile("tl.ass", true);
         QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(application->openReference(writeSubtitles(dir.filePath(QStringLiteral("ref.ass")))));
+        const QList<QSize> sizes{{1366, 768}, {1280, 800}};
         for (const auto code : ui::theme::kCodes) {
             const QString theme = ui::theme::codeName(code);
             settings.setValue(QStringLiteral("appearance.theme"), theme);
@@ -683,10 +771,16 @@ private slots:
                 QVERIFY(w->grabWindow().save(out + QStringLiteral("/translation-") + state + QLatin1Char('-') + theme
                                              + QStringLiteral(".png")));
             };
-            applyPreset("Translation");
-            QTRY_VERIFY(isOpen("originalDock"));
-            item("translationText")->forceActiveFocus();
-            shot(window(), QStringLiteral("preset"));
+            for (const QSize size : sizes) {
+                window()->resize(size);
+                QTRY_COMPARE(window()->size(), size);
+                const QString at = QStringLiteral("-%1x%2").arg(size.width()).arg(size.height());
+                applyPreset("Translation");
+                QTRY_VERIFY(isOpen("originalDock"));
+                QTRY_VERIFY(isOpen("referenceDock"));
+                item("translationText")->forceActiveFocus();
+                shot(window(), QStringLiteral("preset") + at);
+            }
             applyPreset("Editing");
             QTRY_VERIFY(isOpen("originalDock"));
             shot(window(), QStringLiteral("editing"));

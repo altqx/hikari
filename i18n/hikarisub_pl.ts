@@ -4315,6 +4315,11 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Sprawdzaj pisownię podczas pisania</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>Edytor linijki · Tekst tłumaczenia</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>Edytor linijki</translation>
     </message>
@@ -19902,8 +19907,12 @@ Linijki [Sekcja] je grupują.</translation>
         <translation>Dokument referencyjny</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>Dokument referencyjny · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>Dokument referencyjny: %1</translation>
+        <translation type="vanished">Dokument referencyjny: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -19920,6 +19929,18 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Follow the editing line</source>
         <translation>Podążaj za edytowaną linijką</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>Niezależna</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>Powiązana</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>Nawigacja dokumentu referencyjnego</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -19940,6 +19961,10 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>Tylko do odczytu. Niezależna: dokument przesuwa się samodzielnie; Powiązana podąża za edytowaną linijką według czasu.</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -26662,6 +26687,19 @@ Usunięte style:
         <translation>Tekst oryginalny: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>Tłumaczenie AI</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>Wpisz tłumaczenie. %1 wkleja tekst oryginalny.</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>Wpisz tłumaczenie.</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>Linijka karaoke: tagi przed tekstem są przenoszone, timing karaoke nie.</translation>
     </message>
@@ -26892,6 +26930,30 @@ Usunięte style:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>Wyświetla i zapisuje tekst oryginalny i tłumaczenie każdej linijki</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>Tłumaczenie AI zatrzymało się.</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>Tłumaczenie AI · %1 z %n linijki</numerusform>
+            <numerusform>Tłumaczenie AI · %1 z %n linijek</numerusform>
+            <numerusform>Tłumaczenie AI · %1 z %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>Dostawcy…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Odrzuć</translation>
     </message>
 </context>
 <context>

@@ -19,27 +19,31 @@ FocusScope {
     }
 
     readonly property Item toolbar: referenceBar
+    Label {
+        id: fontSource
+        visible: false
+    }
     RowLayout {
         id: referenceBar
         objectName: "referenceBar"
         // MUST KILL: referenceBar shows only once the dock header reparents it
         visible: parent !== tray
-        spacing: 2
-        IconToolButton {
-            objectName: "referenceLinked"
-            iconRole: "link"
-            text: qsTr("Follow the editing line")
-            checkable: true
-            checked: tray.shell.referenceLinked
-            onToggled: tray.app.setReferenceLinked(checked)
-            Accessible.checkable: true
-            Accessible.checked: checked
+        spacing: 4
+        SegmentedButtons {
+            objectName: "referenceNavigation"
+            implicitHeight: Theme.controlHeight
+            choices: [{ name: "referenceIndependent", text: qsTr("Independent"), tip: qsTr("Independent navigation") },
+                      { name: "referenceLinked", text: qsTr("Linked"), tip: qsTr("Follow the editing line") }]
+            currentIndex: tray.shell.referenceLinked ? 1 : 0
+            onActivated: index => tray.app.setReferenceLinked(index === 1)
+            Accessible.name: qsTr("Reference navigation")
         }
         Label {
             objectName: "referenceMatchStatus"
             Layout.fillWidth: true
             elide: Text.ElideRight
-            text: !tray.shell.referenceLinked ? qsTr("Independent navigation")
+            color: Theme.muted
+            text: !tray.shell.referenceLinked ? ""
                 : tray.shell.referenceNoMatch ? qsTr("No matching line")
                 : tray.shell.referenceMatchCount > 0
                   ? qsTr("Match %1 of %2").arg(tray.shell.referenceMatchIndex + 1, tray.shell.referenceMatchCount)
@@ -117,6 +121,19 @@ FocusScope {
                 tray.shellRoot.runGridHotkey(action)
                 event.accepted = true
             }
+        }
+        Label {
+            objectName: "referenceFooter"
+            text: qsTr("Read-only. Independent: it moves on its own; Linked follows the editing line by time.")
+            textFormat: Text.PlainText
+            font: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+            color: Theme.muted
+            elide: Text.ElideRight
+            leftPadding: 8
+            rightPadding: 8
+            Layout.fillWidth: true
+            Layout.preferredHeight: Theme.smallControlHeight
+            verticalAlignment: Text.AlignVCenter
         }
     }
 

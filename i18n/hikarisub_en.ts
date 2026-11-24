@@ -1788,6 +1788,16 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Translation</name>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI translation · %1 of %n line</numerusform>
+            <numerusform>AI translation · %1 of %n lines</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Video</name>
     <message numerus="yes">
         <source>%n frames (%1)</source>
