@@ -15098,6 +15098,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>“%1”(과)와 일치하는 설정이 없습니다.</translation>
     </message>
     <message>
+        <source>Backup copies kept</source>
+        <translation>보관할 백업 사본 수</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>복구 폴더에 보관하는 각 파일의 이전 저장본 수. 범위는 0부터 100까지</translation>
+    </message>
+    <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
         <translation>휠로 포인터를 중심으로 확대/축소합니다. 영상 확대는 끌 수 있는 틀을 표시합니다.</translation>
     </message>
@@ -21256,6 +21264,10 @@ because it was edited.</source>
         <translation>이전 버전</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>이전 저장본</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>이전 버전의 자동 저장 파일</translation>
     </message>
@@ -21280,8 +21292,12 @@ because it was edited.</source>
         <translation>삭제</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>각 항목은 저장되지 않은 새 사본으로 열리며 원본 파일은 변경되지 않습니다. 이전 저장본은 저장으로 바뀌기 전의 파일입니다. 이전 버전의 자동 저장 파일은 읽기 전용입니다.</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>각 항목은 저장되지 않은 새 사본으로 열리며 원본 파일은 변경되지 않습니다. 이전 버전의 자동 저장 파일은 읽기 전용입니다.</translation>
+        <translation type="vanished">각 항목은 저장되지 않은 새 사본으로 열리며 원본 파일은 변경되지 않습니다. 이전 버전의 자동 저장 파일은 읽기 전용입니다.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21468,6 +21484,10 @@ because it was edited.</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>%1(을)를 열 수 없습니다. 아무것도 변경되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (이전 저장본)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>

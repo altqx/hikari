@@ -15098,6 +15098,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไม่มีการตั้งค่าที่ตรงกับ “%1”</translation>
     </message>
     <message>
+        <source>Backup copies kept</source>
+        <translation>จำนวนสำเนาสำรองที่เก็บไว้</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>จำนวนการบันทึกก่อนหน้าของแต่ละไฟล์ที่เก็บไว้ในโฟลเดอร์กู้คืน ช่วง 0 ถึง 100</translation>
+    </message>
+    <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
         <translation>ล้อเมาส์ซูมรอบตัวชี้ ซูมวิดีโอจะแสดงกรอบให้ลาก</translation>
     </message>
@@ -21256,6 +21264,10 @@ because it was edited.</source>
         <translation>เวอร์ชันก่อนหน้า</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>การบันทึกก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้า</translation>
     </message>
@@ -21280,8 +21292,12 @@ because it was edited.</source>
         <translation>ลบ</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ การบันทึกก่อนหน้าคือไฟล์ในสภาพก่อนที่การบันทึกจะเขียนทับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
+        <translation type="vanished">แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21468,6 +21484,10 @@ because it was edited.</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>ไม่สามารถเปิด %1 ได้ ไม่มีสิ่งใดเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (การบันทึกก่อนหน้า)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
