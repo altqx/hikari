@@ -569,8 +569,15 @@ set_tests_properties(hikari_ui_explorer_panel_tests.offscreen PROPERTIES TIMEOUT
 hikari_add_qttest(hikari_ui_quick_open_tests SOURCES quick_open_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 hikari_add_qttest(hikari_ui_plugin_popups_tests OFFSCREEN_ONLY SOURCES plugin_popups_tests.cpp LIBRARIES hikari_composition)
-hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition
+hikari_add_qttest(hikari_ui_project_windows_tests SOURCES project_windows_tests.cpp LIBRARIES hikari_composition Qt6::QuickTest
     PARTS skills spelling=eachWindowSpellsWithItsProjectsDictionary trust=aNamedKeyNobodyHasAsksNoTrust)
+if(TARGET hikari_ui_project_windows_tests AND NOT WIN32)
+    add_test(NAME hikari_ui_project_windows_tests.screen1366
+        COMMAND $<TARGET_FILE:hikari_ui_project_windows_tests> styleCatalogueShowsItsNamesWithAProject)
+    set_tests_properties(hikari_ui_project_windows_tests.screen1366 PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=${CMAKE_CURRENT_SOURCE_DIR}/screen-1366x768.json;HIKARI_TEST_ARTIFACT_DIR=${CMAKE_CURRENT_BINARY_DIR}/artifacts/style-catalogue"
+        LABELS "qttest;offscreen" TIMEOUT 120)
+endif()
 target_include_directories(hikari_ui_project_windows_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_ui_project_windows_tests PRIVATE
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
