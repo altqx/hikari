@@ -607,6 +607,8 @@ icon("vector-bezier", "Add Bézier curve", ["VectorBezier.png"], [VISUAL],
      + accent(rect(1.5, 11.5, 3, 3, 0), rect(11.5, 1.5, 3, 3, 0)))
 icon("vector-bspline", "Add B-spline", ["VectorBspline.png"], [VISUAL],
      accent(stroke("M2.5 13.5l3-11 5 11 3-11")) + stroke("M2.5 13.5C4 6 5.5 5 8 8s4 2 5.5-5.5"))
+icon("vector-freehand", "Freehand", [], [VISUAL],
+     stroke("M1.5 12C3 8 4.5 6.5 6 8.5S8 12 9.5 9.5 11 5 12.5 3.5") + accent(dot(12.5, 3.5, 2)))
 icon("vector-point", "Add separate point", ["VectorMove.png"], [VISUAL],
      accent(frect(2, 9, 5, 5)) + stroke("M11.5 2.5v6M8.5 5.5h6"))
 icon("vector-delete", "Delete point", ["VectorDelete.png"], [VISUAL],

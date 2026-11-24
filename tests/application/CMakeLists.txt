@@ -210,6 +210,8 @@ hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
     HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-cases/inputs/clip-cases.txt"
     HIKARI_CLIP_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t4-clip-20261005/observations.jsonl")
+hikari_add_gtest(hikari_application_visual_vector_edit_tests SOURCES visual_vector_edit_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_visual_drawing_tests SOURCES visual_drawing_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)
 target_compile_definitions(hikari_application_visual_drawing_tests PRIVATE

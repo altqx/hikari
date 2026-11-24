@@ -116,7 +116,7 @@ target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)
 target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
 target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscreen_controller.h)
 list(APPEND hikari_ui_qml_files VideoFullscreen.qml FullscreenTypesetting.qml FullscreenLineBox.qml FullscreenToolDialog.qml FullscreenBarMenu.qml FullscreenStripButton.qml)
-list(APPEND hikari_ui_qml_files VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
+list(APPEND hikari_ui_qml_files VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml VectorSegmentMenu.qml
     VideoRenderCost.qml
     VideoTemplateBadge.qml
     VideoNodeBadge.qml

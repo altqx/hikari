@@ -36,6 +36,20 @@ Item {
             pointerMoved(x, y)
     }
 
+    function openSegmentMenu(x, y) {
+        if (view && view.zoomMode)
+            return false
+        const found = tools.segmentAt(x, y)
+        if (found.index === undefined)
+            return false
+        segmentMenu.openFor(found, overlayItem, Qt.point(x, y))
+        return true
+    }
+    VectorSegmentMenu {
+        id: segmentMenu
+        tools: overlayItem.tools
+    }
+
     function sync() {
         const dpr = overlayItem.Window.window ? overlayItem.Window.window.devicePixelRatio : Screen.devicePixelRatio
         tools.setViewport(width, height, panelHeight, dpr)
@@ -72,12 +86,20 @@ Item {
         onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
+        property bool segmentPress: false
         onPressed: mouse => {
             if (overlayItem.focusTarget)
                 overlayItem.focusTarget.forceActiveFocus()
-            overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+            segmentPress = mouse.button === Qt.RightButton && overlayItem.openSegmentMenu(mouse.x, mouse.y)
+            if (!segmentPress)
+                overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
-        onReleased: mouse => overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        onReleased: mouse => {
+            if (mouse.button === Qt.RightButton && segmentPress)
+                segmentPress = false
+            else
+                overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        }
         onDoubleClicked: mouse => overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         onWheel: wheel => {
             if (overlayItem.view && overlayItem.view.wheel(wheel.x, wheel.y, wheel.angleDelta.x / 120,

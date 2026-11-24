@@ -8765,6 +8765,10 @@ Failed to copy %2 fonts.</source>
         <translation>가로 세로 비율 변경…</translation>
     </message>
     <message>
+        <source>Vector clip: freehand</source>
+        <translation>벡터 클립: 자유 곡선</translation>
+    </message>
+    <message>
         <source>Import settings…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -27432,6 +27436,10 @@ or codecs or a splitter may be missing</source>
         <translation>원점</translation>
     </message>
     <message>
+        <source>Freehand</source>
+        <translation>자유 곡선</translation>
+    </message>
+    <message>
         <source>Plane</source>
         <translation>평면</translation>
     </message>
@@ -28272,6 +28280,11 @@ or codecs or a splitter may be missing</source>
         <translation>경로 따라 텍스트</translation>
     </message>
     <message>
+        <source>Freehand: hold and draw.</source>
+        <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
+        <translation>자유 곡선: 누른 채로 그리십시오.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>화면을 가리키면 위치를 읽습니다. Ctrl+클릭하면 줄을 그곳에 놓습니다.</translation>
     </message>
@@ -28443,15 +28456,27 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, add a separate point or delete one.</source>
-        <translation>점 이동, 직선·베지어 곡선·B-스플라인 추가, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
+        <translation type="vanished">점 이동, 직선·베지어 곡선·B-스플라인 추가, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
     </message>
     <message>
         <source>Click to add points and drag them to reshape.</source>
-        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오.</translation>
+        <translation type="vanished">클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오.</translation>
+    </message>
+    <message>
+        <source>Choose a mode: move points, add a line, a Bézier curve or a B-spline, draw freehand, add a separate point or delete one.</source>
+        <translation>점 이동, 직선·베지어 곡선·B-스플라인 추가, 자유 곡선 그리기, 별도 점 추가, 점 삭제 중에서 모드를 고르십시오.</translation>
+    </message>
+    <message>
+        <source>Click to add points and drag them to reshape. Right-click a segment to curve, straighten, split or delete it.</source>
+        <translation>클릭하여 점을 추가하고, 점을 끌어 모양을 바꾸십시오. 세그먼트를 오른쪽 클릭하면 곡선으로 만들거나, 직선으로 만들거나, 나누거나, 삭제할 수 있습니다.</translation>
     </message>
     <message>
         <source>Ctrl-click selects several points. Alt while dragging snaps to another point’s x or y.</source>
         <translation>Ctrl+클릭으로 여러 점을 선택합니다. 끄는 동안 Alt를 누르면 다른 점의 x 또는 y에 맞춰집니다.</translation>
+    </message>
+    <message>
+        <source>In Freehand, hold the button and draw. Smoothing sets how closely the curves follow the stroke.</source>
+        <translation>“자유 곡선” 모드에서는 버튼을 누른 채로 그리십시오. “매끄러움”은 곡선이 획을 얼마나 가깝게 따를지 정합니다.</translation>
     </message>
     <message>
         <source>Or pick a shape and drag a box to draw it. Edit shapes… adds your own.</source>
@@ -28692,6 +28717,14 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Add B-spline</source>
         <translation>B-스플라인 추가</translation>
+    </message>
+    <message>
+        <source>Smoothing</source>
+        <translation>매끄러움</translation>
+    </message>
+    <message>
+        <source>Curves</source>
+        <translation>곡선</translation>
     </message>
     <message>
         <source>Add Bézier curve</source>
@@ -29317,6 +29350,23 @@ do not work on comments</source>
     <message>
         <source>More in the guide</source>
         <translation>가이드에서 더 보기</translation>
+    </message>
+    <message>
+        <source>Make curve</source>
+        <extracomment>The menu of a vector clip&apos;s or drawing&apos;s segment</extracomment>
+        <translation>곡선으로 만들기</translation>
+    </message>
+    <message>
+        <source>Make straight</source>
+        <translation>직선으로 만들기</translation>
+    </message>
+    <message>
+        <source>Insert point here</source>
+        <translation>여기에 점 삽입</translation>
+    </message>
+    <message>
+        <source>Delete segment</source>
+        <translation>세그먼트 삭제</translation>
     </message>
 </context>
 <context>
