@@ -86,6 +86,7 @@ DialogWindow {
         language.text = o.language
         fps.text = Number(o.fps).toFixed(3).replace(/\.?0+$/, "")
         destination.text = suggestedPath()
+        beforeExport.load()
         open()
     }
     function extension(id) {
@@ -111,7 +112,8 @@ DialogWindow {
             srtAlignmentTags: srtAlignment.checked, vttPositions: vttPositions.checked, vttStyles: vttStyles.checked,
             vttKaraoke: vttKaraoke.checked, textTimes: textTimes.checked, textActors: textActors.checked,
             ttmlNetflix: ttmlNetflix.checked, ttmlFrames: ttmlFrames.checked, language: language.text.trim(),
-            fps: fpsNumber(), replace: replace, srv3Styles: srv3Rows
+            fps: fpsNumber(), replace: replace, srv3Styles: srv3Rows,
+            steps: beforeExport.visible ? beforeExport.choice() : []
         }
     }
     function srv3Set(index, key, value) {
@@ -134,6 +136,8 @@ DialogWindow {
         srv3Popover.openFor(swatch, srv3Colour, () => srv3Colour.begin(), { title: name, alpha: false, clear: true, focus: swatch })
     }
     function run(replace) {
+        beforeExport.progress = ""
+        beforeExport.outcome = []
         const result = app.exportTo(app.fileUrl(destination.text.trim()), format, choice(replace))
         if (result.pending) {
             problem = ""
@@ -154,6 +158,11 @@ DialogWindow {
                     { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }
                 ]
             }, id => { if (id === "replace") dialog.run(true) })
+            return
+        }
+        if (result.stepsFailed) {
+            problem = ""
+            beforeExport.outcome = result.steps
             return
         }
         if (!result.ok) {
@@ -580,6 +589,22 @@ DialogWindow {
             }
         }
 
+        RowLabel {
+            text: qsTr("Before export")
+            visible: beforeExport.visible
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 6
+        }
+        BeforeExportSteps {
+            id: beforeExport
+            app: dialog.app
+            host: dialog
+            colourPicker: dialog.colourPicker
+            videoFps: dialog.setup.videoFps ?? 0
+            exporting: dialog.exporting
+            visible: !dialog.format.startsWith("plugin:")
+            onExportWithout: dialog.run(false)
+        }
         Item { implicitWidth: 1; visible: dialog.problem.length > 0 }
         FieldError {
             objectName: "exportProblem"
@@ -600,6 +625,11 @@ DialogWindow {
             wrapMode: Text.Wrap
             text: dialog.reported ? qsTr("Exported %n line(s) to “%1”.", "", dialog.report.written)
                                         .arg(dialog.app.localPath(dialog.report.file).replace(/^.*[\\/]/, "")) : ""
+        }
+        Hint {
+            objectName: "exportRanBefore"
+            visible: text !== ""
+            text: dialog.reported ? beforeExport.ranText(dialog.report.steps) : ""
         }
         Hint {
             objectName: "exportSkipped"

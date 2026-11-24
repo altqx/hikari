@@ -71,7 +71,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 442u);
+    ASSERT_EQ(hotkeyActions().size(), 443u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -124,6 +124,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CLEAR_COMMAND_HISTORY"), 5345);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SAVE_KEYFRAMES"), 5350);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CLOSE_KEYFRAMES"), 5351);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_QUICK_FIX"), 5373);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_FULL_SCREEN_TYPESETTING"), 5374);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_SAVE_SELECTED_AUDIO"), 5349);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_JUMP_TO"), 5361);
@@ -332,7 +333,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"};
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u + 2u + 5u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u + 2u + 1u + 5u);
     EXPECT_EQ(audio.size(), 23u + 3u + 2u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P");
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -453,42 +454,44 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 417u);
+    ASSERT_EQ(list.rowCount(), 418u);
     EXPECT_EQ(list.row(0).text, "Global Full screen typesetting");
-    EXPECT_EQ(list.row(1).text, "Global Previous subtitle boundary");
-    EXPECT_EQ(list.row(2).text, "Global Next subtitle boundary");
-    EXPECT_EQ(list.row(3).text, "Global Zoom to 1:1 device pixels");
-    EXPECT_EQ(list.row(4).text, "Global Zoom to fit");
-    EXPECT_EQ(list.row(5).text, "Global Zoom out");
-    EXPECT_EQ(list.row(6).text, "Global Zoom in");
-    EXPECT_EQ(list.row(7).text, "Global Zoom 200 %");
-    EXPECT_EQ(list.row(8).text, "Global Zoom 100 %");
-    EXPECT_EQ(list.row(9).text, "Global Zoom 50 %");
-    EXPECT_EQ(list.row(10).text, "Global Jump to");
-    EXPECT_EQ(list.row(11).text, "Global Close keyframes");
-    EXPECT_EQ(list.row(12).text, "Global Save keyframes…");
-    EXPECT_EQ(list.row(13).text, "Global Save audio of selected lines…");
-    EXPECT_EQ(list.row(14).text, "Global Shorten and shift what follows");
-    EXPECT_EQ(list.row(15).text, "Global Lengthen and shift what follows");
-    EXPECT_EQ(list.row(16).text, "Global Snap to the scene");
-    EXPECT_EQ(list.row(17).text, "Global Clear command history");
-    EXPECT_EQ(list.row(18).text, "Global Command palette…");
-    EXPECT_EQ(list.row(19).text, "Global Quick Open…");
-    EXPECT_EQ(list.row(20).text, "Global Run the last macro again");
-    EXPECT_EQ(list.row(21).text, "Global Swap side bars");
-    EXPECT_EQ(list.row(24).text, "Global Typesetting graph…");
-    EXPECT_EQ(list.row(25).text, "Global Explorer");
-    EXPECT_EQ(list.row(26).text, "Global Position to margins");
-    EXPECT_EQ(list.row(1).accel, "Ctrl-Shift-Left");
-    EXPECT_EQ(list.row(2).accel, "Ctrl-Shift-Right");
-    EXPECT_EQ(list.row(3).accel, "");
-    EXPECT_EQ(list.row(5).accel, "Ctrl-Num -");
-    EXPECT_EQ(list.row(6).accel, "Ctrl-Num +");
-    EXPECT_EQ(list.row(10).accel, "Ctrl-G");
-    EXPECT_EQ(list.row(11).accel, "");
-    EXPECT_EQ(list.row(13).accel, "");
-    EXPECT_EQ(list.row(17).accel, "");
-    EXPECT_EQ(list.row(20).accel, "");
+    EXPECT_EQ(list.row(1).text, "Global Quick fix");
+    EXPECT_EQ(list.row(2).text, "Global Previous subtitle boundary");
+    EXPECT_EQ(list.row(3).text, "Global Next subtitle boundary");
+    EXPECT_EQ(list.row(4).text, "Global Zoom to 1:1 device pixels");
+    EXPECT_EQ(list.row(5).text, "Global Zoom to fit");
+    EXPECT_EQ(list.row(6).text, "Global Zoom out");
+    EXPECT_EQ(list.row(7).text, "Global Zoom in");
+    EXPECT_EQ(list.row(8).text, "Global Zoom 200 %");
+    EXPECT_EQ(list.row(9).text, "Global Zoom 100 %");
+    EXPECT_EQ(list.row(10).text, "Global Zoom 50 %");
+    EXPECT_EQ(list.row(11).text, "Global Jump to");
+    EXPECT_EQ(list.row(12).text, "Global Close keyframes");
+    EXPECT_EQ(list.row(13).text, "Global Save keyframes…");
+    EXPECT_EQ(list.row(14).text, "Global Save audio of selected lines…");
+    EXPECT_EQ(list.row(15).text, "Global Shorten and shift what follows");
+    EXPECT_EQ(list.row(16).text, "Global Lengthen and shift what follows");
+    EXPECT_EQ(list.row(17).text, "Global Snap to the scene");
+    EXPECT_EQ(list.row(18).text, "Global Clear command history");
+    EXPECT_EQ(list.row(19).text, "Global Command palette…");
+    EXPECT_EQ(list.row(20).text, "Global Quick Open…");
+    EXPECT_EQ(list.row(21).text, "Global Run the last macro again");
+    EXPECT_EQ(list.row(22).text, "Global Swap side bars");
+    EXPECT_EQ(list.row(25).text, "Global Typesetting graph…");
+    EXPECT_EQ(list.row(26).text, "Global Explorer");
+    EXPECT_EQ(list.row(27).text, "Global Position to margins");
+    EXPECT_EQ(list.row(1).accel, "Alt-Enter");
+    EXPECT_EQ(list.row(2).accel, "Ctrl-Shift-Left");
+    EXPECT_EQ(list.row(3).accel, "Ctrl-Shift-Right");
+    EXPECT_EQ(list.row(4).accel, "");
+    EXPECT_EQ(list.row(6).accel, "Ctrl-Num -");
+    EXPECT_EQ(list.row(7).accel, "Ctrl-Num +");
+    EXPECT_EQ(list.row(11).accel, "Ctrl-G");
+    EXPECT_EQ(list.row(12).accel, "");
+    EXPECT_EQ(list.row(14).accel, "");
+    EXPECT_EQ(list.row(18).accel, "");
+    EXPECT_EQ(list.row(21).accel, "");
     EXPECT_EQ(rowNamed(list, "Global Close tab").accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Load session from file…").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Save session to file…").accel, "");
@@ -563,7 +566,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 419u);
+    ASSERT_EQ(more.rowCount(), 420u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -577,13 +580,13 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 416u);
+    EXPECT_EQ(cut.rowCount(), 417u);
     EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 417u);
+    EXPECT_EQ(whole.rowCount(), 418u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -619,7 +622,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 122u);
+    EXPECT_EQ(count(1), 123u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 31u);
     list.filter(5);
@@ -629,12 +632,65 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 122u);
+    EXPECT_EQ(list.shown().size(), 123u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 121u);
+    EXPECT_EQ(list.shown().size(), 122u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 417u);
+    EXPECT_EQ(list.shown().size(), 418u);
+}
+
+TEST(Hotkeys, SourceAndConflictsFilters)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    auto live = defaultHotkeys();
+    std::vector<HotkeyId> global;
+    for (const auto &[key, hotkey] : live)
+        if (key.type == GlobalHotkey && !hotkey.accel.empty() && key.id < kFirstScriptHotkey)
+            global.push_back(key);
+    ASSERT_GE(global.size(), 2u);
+    const HotkeyId kept = global[0], moved = global[1];
+    live[moved].accel = live[kept].accel;
+    live[HotkeyId{kFirstScriptHotkey, GlobalHotkey}] = Hotkey{"Script macro.lua-0", "Ctrl-Alt-M"};
+    live[HotkeyId{kFirstScriptHotkey + 1, GlobalHotkey}] = Hotkey{"plugin.com.example.hello.greet", "Ctrl-Alt-H"};
+    list.build(live);
+    const auto rowOf = [&](const HotkeyId &key) {
+        for (std::size_t i = 0; i < list.rowCount(); ++i)
+            if (list.row(int(i)).key == key)
+                return int(i);
+        return -1;
+    };
+    const auto shows = [&](const HotkeyId &key) { return std::ranges::contains(list.shown(), rowOf(key)); };
+    const auto names = [&] {
+        std::vector<std::string> out;
+        for (const int i : list.shown())
+            out.push_back(list.row(i).name);
+        return out;
+    };
+
+    list.filterSource(1);
+    EXPECT_TRUE(shows(kept));
+    EXPECT_FALSE(shows(moved));
+    EXPECT_TRUE(list.filtered());
+    list.filterSource(2);
+    EXPECT_TRUE(shows(moved));
+    EXPECT_FALSE(shows(kept));
+    list.filterSource(3);
+    EXPECT_EQ(names(), std::vector<std::string>{"plugin.com.example.hello.greet"});
+    list.filterSource(4);
+    EXPECT_EQ(names(), std::vector<std::string>{"Script macro.lua-0"});
+    list.filterSource(0);
+    EXPECT_EQ(list.shown().size(), list.rowCount());
+
+    list.filterConflicts(true);
+    EXPECT_TRUE(list.conflictsOnly());
+    EXPECT_TRUE(shows(kept));
+    EXPECT_TRUE(shows(moved));
+    EXPECT_FALSE(shows(HotkeyId{kFirstScriptHotkey, GlobalHotkey}));
+    EXPECT_TRUE(std::ranges::contains(list.clashes(rowOf(kept)), rowOf(moved)));
+    list.filterConflicts(false);
+    EXPECT_EQ(list.shown().size(), list.rowCount());
 }
 
 TEST(Hotkeys, SearchNarrowsTheFilter)
@@ -862,17 +918,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 418u);
-    const auto &added = list.row(417);
+    ASSERT_EQ(list.rowCount(), 419u);
+    const auto &added = list.row(418);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 418u);
-    EXPECT_EQ(list.row(417).accel, "F6");
-    EXPECT_EQ(list.selection(), 417);
+    EXPECT_EQ(list.rowCount(), 419u);
+    EXPECT_EQ(list.row(418).accel, "F6");
+    EXPECT_EQ(list.selection(), 418);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -953,7 +1009,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 417u);
+    EXPECT_EQ(third.shown().size(), 418u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles…").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -1090,7 +1146,7 @@ TEST(Hotkeys, FilteredListShowsAndHidesBlocks)
     list.filter(1);
     ASSERT_TRUE(list.filtered());
     const auto shown = list.shown();
-    ASSERT_GT(shown.front(), 0);
+    ASSERT_EQ(shown.front(), 1);
     EXPECT_EQ(list.hiddenBlock(-1), 1);
     int position = -1;
     for (int i = 0; i + 1 < int(shown.size()); ++i)

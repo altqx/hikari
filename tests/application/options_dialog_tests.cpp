@@ -280,7 +280,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(bake.page, OptionsPage::Grid);
     ASSERT_NE(findSetting("grid.splitFramesBakeAnimations"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("grid.splitFramesBakeAnimations")->defaultValue), true);
-    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", false}, std::pair{"ai.autoUpdate", true},
+    for (std::size_t i = 0; const auto &[id, on] : {std::pair{"ai.off", true}, std::pair{"ai.autoUpdate", true},
                                                             std::pair{"ai.promptCaching", true}}) {
         const auto &binding = all[std::size(kLegacy) + 44 + i++];
         EXPECT_EQ(binding.setting, id);
@@ -413,9 +413,14 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(limit.max, max) << id;
         EXPECT_EQ(std::get<std::int64_t>(findSetting(id)->defaultValue), fallback) << id;
     }
+    const auto &reading = all[std::size(kLegacy) + 103];
+    EXPECT_EQ(reading.setting, "problems.reading");
+    EXPECT_EQ(reading.control, OptionsControl::Check);
+    EXPECT_EQ(reading.page, OptionsPage::Grid);
+    EXPECT_TRUE(std::get<bool>(findSetting("problems.reading")->defaultValue));
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 105);
-    const auto &hostApi = all[std::size(kLegacy) + 103];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 106);
+    const auto &hostApi = all[std::size(kLegacy) + 104];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -426,7 +431,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 103);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 104);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

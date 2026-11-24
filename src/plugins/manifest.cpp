@@ -282,6 +282,26 @@ std::vector<Program> programs(const Json *list)
     return out;
 }
 
+std::vector<McpServer> mcpServers(const Json *list)
+{
+    std::vector<McpServer> out;
+    if (list)
+        for (const Json &item : list->asArray())
+            out.push_back({text(item, "id"), text(item, "title"), text(item, "description"), text(item, "program")});
+    return out;
+}
+
+std::optional<ManifestProblem> badMcpServer(const Manifest &m, std::size_t index)
+{
+    const std::string at = "/contributes/mcpServers/" + std::to_string(index) + "/program";
+    const Program *program = m.program(m.mcpServers[index].program);
+    if (!program)
+        return ManifestProblem{Kind::Schema, at, "names no program in contributes.programs", 0};
+    if (program->api)
+        return ManifestProblem{Kind::Schema, at, "an MCP server's program can't have \"api\": true", 0};
+    return std::nullopt;
+}
+
 std::optional<ManifestProblem> badProgram(const Manifest &m, std::size_t index)
 {
     const Program &program = m.programs[index];
@@ -417,7 +437,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     m.name = text(json, "name");
     m.version = text(json, "version");
     m.api = json.find("api")->asInt();
-    m.main = text(json, "main");
+    if (const Json *main = json.find("main"); main && main->isObject())
+        m.mainProgram = text(*main, "program");
+    else
+        m.main = text(json, "main");
     m.tier = text(json, "tier") == "unrestricted" ? Tier::Unrestricted : Tier::Restricted;
     for (const Json &author : json.find("authors")->asArray())
         m.authors.push_back(author.asString());
@@ -450,7 +473,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.styles = contentFiles(contributes->find("styles"));
         m.karaokePresets = contentFiles(contributes->find("karaokePresets"));
         m.dictionaries = dictionaries(contributes->find("dictionaries"));
+        m.graphs = contentFiles(contributes->find("graphs"));
+        m.layouts = contentFiles(contributes->find("layouts"));
         m.programs = programs(contributes->find("programs"));
+        m.mcpServers = mcpServers(contributes->find("mcpServers"));
     }
 
     for (auto problem : {repeated(m.permissions.files, "/permissions/files"),
@@ -460,7 +486,10 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.formats, "/contributes/formats"), repeated(m.programs, "/contributes/programs"),
                          repeated(m.styles, "/contributes/styles"),
                          repeated(m.karaokePresets, "/contributes/karaokePresets"),
-                         repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language")})
+                         repeated(m.dictionaries, "/contributes/dictionaries", &Dictionary::language, "language"),
+                         repeated(m.graphs, "/contributes/graphs"),
+                         repeated(m.layouts, "/contributes/layouts"),
+                         repeated(m.mcpServers, "/contributes/mcpServers")})
         if (problem)
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.permissions.files.size(); ++i)
@@ -478,6 +507,16 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
     for (std::size_t i = 0; i < m.programs.size(); ++i)
         if (auto problem = badProgram(m, i))
             return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.mcpServers.size(); ++i)
+        if (auto problem = badMcpServer(m, i))
+            return std::unexpected(*problem);
+    if (!m.mainProgram.empty()) {
+        const Program *program = m.program(m.mainProgram);
+        if (!program)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "names no program in contributes.programs", 0});
+        if (!program->api)
+            return std::unexpected(ManifestProblem{Kind::Schema, "/main/program", "the main program needs \"api\": true", 0});
+    }
     if (m.api > apiVersion)
         return std::unexpected(ManifestProblem{Kind::NeedsNewerApi, "/api", "", m.api});
     return m;
@@ -532,6 +571,9 @@ PermissionIncrease permissionIncrease(const Manifest &current, const Manifest &n
             more.programs.push_back(program.id);
     }
     more.presence = next.permissions.presence && !current.permissions.presence;
+    for (const McpServer &server : next.mcpServers)
+        if (std::ranges::find(current.mcpServers, server.id, &McpServer::id) == current.mcpServers.end())
+            more.mcpServers.push_back(server.id);
     for (const std::string &host : next.permissions.networkHosts)
         if (std::ranges::find(current.permissions.networkHosts, host) == current.permissions.networkHosts.end())
             more.networkHosts.push_back(host);

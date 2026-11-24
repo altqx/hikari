@@ -3,6 +3,7 @@
 #include "hikari/application/ai_providers.h"
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_agent_cli.h"
+#include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 
 #include <QDateTime>
@@ -15,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -40,6 +42,10 @@ namespace hikari::app {
 /// `ai_auto_update: false` member of `policyFile`, or on Windows HKLM\SOFTWARE\Policies\HikariSub\AiAutoUpdate = 0.
 bool aiAutoUpdateOffByPolicy(const QString &environment, const QString &policyFile);
 
+/// The plugin MCP servers the user turned on, one {id, plugin, trusted, approved} row each in `ai.mcp.pluginServers`.
+std::vector<backends::ai::McpServerEntry> pluginMcpChoices(const QStringList &rows);
+QString pluginMcpChoiceRow(const backends::ai::McpServerEntry &server);
+
 /// Every AI object the app builds, behind "Turn off all AI features". With the switch on, none exists: no key
 /// store, config store or sidecar host, so nothing reads the keychain, downloads, starts or listens.
 class AiFeatures final : public QObject {
@@ -49,6 +55,7 @@ public:
     static constexpr const char *kCachingSetting = "ai.promptCaching";
     static constexpr const char *kWebSearchSetting = "ai.webSearch";
     static constexpr const char *kMcpServersSetting = "ai.mcp.servers";
+    static constexpr const char *kPluginMcpServersSetting = "ai.mcp.pluginServers";
     static constexpr const char *kSearchServiceSetting = "ai.searchService";
     static constexpr const char *kAutoUpdateSetting = "ai.autoUpdate";
     static constexpr const char *kCustomAgentsSetting = "ai.agents.custom";
@@ -119,6 +126,8 @@ public:
     };
     /// The keychain, providers.json and the sidecar under <userFolder>/ai.
     static Ports defaultPorts(const QString &userFolder, api::Api *api, const QString &appVersion);
+    /// Keeps AI on for a profile that never set `ai.off` but has the AI component or a provider. Reads no keychain.
+    static void settleOffDefault(ui::SettingsStore &settings, const Ports &ports);
 
     AiFeatures(ui::SettingsStore &settings, Ports ports, QObject *parent = nullptr);
     ~AiFeatures() override;
@@ -168,6 +177,14 @@ public:
     void applyWebSearch();
     /// The MCP servers the user added; null with AI off.
     backends::ai::McpClients *mcpClients();
+    /// The MCP servers of the plugins that are on, and how each starts; kept across AI being switched off and on.
+    void setPluginMcpServers(std::vector<backends::ai::McpServerEntry> servers);
+    void setPluginMcpStart(backends::ai::McpClients::PluginStart start);
+    const std::vector<backends::ai::McpServerEntry> &pluginMcpServers() const { return m_pluginMcpServers; }
+    /// Forgets the choices about the servers of plugins no longer installed.
+    void keepPluginMcpChoices(const std::set<std::string> &installed);
+    /// The servers the user added, then the plugin servers the user turned on, with their trust and approvals.
+    std::vector<backends::ai::McpServerEntry> mcpServers() const;
     /// While the user adds their first provider, its Test connection may start the sidecar too.
     void setDrafting(bool drafting);
     /// The host if one was built; never builds it.
@@ -215,8 +232,11 @@ signals:
     void agentsChanged();
     /// Comes before `agent`'s processes are killed, so its threads stop first.
     void agentEnding(QString agent);
+    void pluginMcpServersChanged();
 
 private:
+    std::vector<backends::ai::McpServerEntry> m_pluginMcpServers;
+    backends::ai::McpClients::PluginStart m_pluginMcpStart;
     std::function<std::optional<std::string>(const std::string &, const std::string &)> m_projectKeys;
     std::function<QStringList()> m_projectRoots;
     QStringList m_refusedInProjects;

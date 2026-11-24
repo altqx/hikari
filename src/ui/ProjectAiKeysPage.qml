@@ -5,7 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-ScrollView {
+Item {
     id: page
     objectName: "projectAiKeys"
     required property var app
@@ -14,7 +14,8 @@ ScrollView {
     property var names: ({})
     property var edited: ({})
     signal reloaded()
-    contentWidth: availableWidth
+    implicitHeight: keysColumn.implicitHeight
+    Layout.fillWidth: true
 
     function load() {
         state = app.projectAiKeys(shellWindow)
@@ -29,11 +30,18 @@ ScrollView {
         const pair = Object.assign({}, names[id] ?? {env: "", entry: ""}, {[field]: value})
         names = Object.assign({}, names, {[id]: pair})
         edited = Object.assign({}, edited, {[id]: pair})
+        typing.restart()
     }
     function useYours(id) {
         put(id, "env", "")
         put(id, "entry", "")
-        reloaded()
+        typing.stop()
+        apply()
+    }
+    Timer {
+        id: typing
+        interval: 500
+        onTriggered: page.apply()
     }
     function apply() {
         if (Object.keys(edited).length === 0)
@@ -55,9 +63,8 @@ ScrollView {
     }
 
     ColumnLayout {
-        x: 24
-        y: 20
-        width: parent.width - 48
+        id: keysColumn
+        width: parent.width
         spacing: 10
 
         InlineBar {

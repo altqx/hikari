@@ -33,6 +33,7 @@ public:
     void closeInput();
     void kill();
     bool running() const;
+    qint64 processId() const { return m_pid; }
 
 signals:
     void output(const QByteArray &bytes);

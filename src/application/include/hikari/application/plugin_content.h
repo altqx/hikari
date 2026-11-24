@@ -32,6 +32,8 @@ struct PluginContent {
     std::vector<PluginContentFile> styleCatalogues;
     std::vector<PluginContentFile> karaokePresets;
     std::vector<PluginDictionary> dictionaries;
+    std::vector<PluginContentFile> graphs;
+    std::vector<PluginContentFile> layouts;
 };
 
 void setPluginContent(PluginContent content);
@@ -42,5 +44,6 @@ std::optional<std::string> styleCatalogueProblem(std::span<const std::byte> byte
 std::optional<std::string> karaokePresetProblem(std::span<const std::byte> bytes);
 std::optional<std::string> dictionaryAffProblem(std::span<const std::byte> bytes);
 std::optional<std::string> dictionaryDicProblem(std::span<const std::byte> bytes);
+std::optional<std::string> graphProblem(std::span<const std::byte> bytes);
 
 }

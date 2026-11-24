@@ -100,6 +100,10 @@ public:
     // Runs the filter on the snapshot; `done` gets its result or what stopped it. False when it can't start.
     virtual bool run(const std::string &scriptFile, const std::string &filterName, const MacroSnapshot &snapshot,
                      const DialogRequest &settings, Done done) = 0;
+    using DialogDone = std::function<void(std::expected<DialogRequest, std::string>)>;
+    // The filter's config dialog for the snapshot. False when it can't start.
+    virtual bool configure(const std::string &scriptFile, const std::string &filterName, const MacroSnapshot &snapshot,
+                           DialogDone done) = 0;
 };
 
 struct ExportStepOutcome {
@@ -119,6 +123,8 @@ struct ExportStepsContext {
     // The loaded video's or timecodes' frame times; Transform frame rate's Variable output needs them.
     std::optional<AegisubFrameTimes> timecodes;
     ExportFilterPort *filters = nullptr;
+    // Called as each step starts: its index among the steps that are on, their count and its name.
+    std::function<void(std::size_t step, std::size_t count, const std::string &name)> started;
 };
 
 struct ExportStepsResult {
