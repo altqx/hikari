@@ -646,6 +646,43 @@ TEST(PluginManifest, AnUpdateAsksAgainForANewProgramOrOneThatGainsTheNetwork)
     EXPECT_TRUE(permissionIncrease(none, current).runPrograms);
 }
 
+TEST(PluginManifest, AnMcpServerNamesADeclaredProgramWithoutTheApi)
+{
+    Json json = minimal();
+    json["permissions"] = *Json::parse(R"({"programs": "Serves tools"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "core", "title": "Core", "api": true,
+        "platforms": {"linux-x64": {"path": "bin/core"}}}, {"id": "srv", "title": "Server", "platforms": {"linux-x64": {"path": "bin/srv"}}}],
+        "mcpServers": [{"id": "tools", "title": "Tools", "description": "Looks things up", "program": "srv"}]})");
+    const auto parsed = parse(json);
+    ASSERT_TRUE(parsed) << parsed.error().at << " " << parsed.error().detail;
+    ASSERT_EQ(parsed->mcpServers.size(), 1u);
+    EXPECT_EQ(parsed->mcpServers[0].id, "tools");
+    EXPECT_EQ(parsed->mcpServers[0].title, "Tools");
+    EXPECT_EQ(parsed->mcpServers[0].description, "Looks things up");
+    EXPECT_EQ(parsed->mcpServers[0].program, "srv");
+
+    Json &server = json["contributes"]["mcpServers"].asArray()[0];
+    server["program"] = Json(std::string("nope"));
+    EXPECT_EQ(problem(json).at, "/contributes/mcpServers/0/program");
+    server["program"] = Json(std::string("core"));
+    EXPECT_EQ(problem(json).detail, "an MCP server's program can't have \"api\": true");
+    server["program"] = Json(std::string("srv"));
+    json["contributes"]["mcpServers"].push(*Json::parse(R"({"id": "tools", "title": "Again", "program": "srv"})"));
+    EXPECT_EQ(problem(json).kind, ManifestProblem::Kind::DuplicateId);
+}
+
+TEST(PluginManifest, AnUpdateAsksAgainForANewMcpServer)
+{
+    Manifest current;
+    current.mcpServers = {McpServer{"a", "A", "", "p"}};
+    EXPECT_FALSE(permissionIncrease(current, current).any());
+    Manifest next = current;
+    next.mcpServers.push_back(McpServer{"b", "B", "", "p"});
+    EXPECT_EQ(permissionIncrease(current, next).mcpServers, std::vector<std::string>{"b"});
+    EXPECT_TRUE(permissionIncrease(current, next).any());
+    EXPECT_FALSE(permissionIncrease(next, current).any());
+}
+
 }
 
 namespace {

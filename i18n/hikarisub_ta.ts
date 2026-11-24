@@ -259,12 +259,32 @@
         <translation>பயன்முறையை மாற்று</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>தற்போதைய மாதிரி</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>முகவரின் இயல்புநிலை</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>சமீபத்தியவை</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>மாதிரிகளை ஏற்றுகிறது…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>மாதிரிகளை ஏற்ற முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>மீண்டும் முயல்க</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>அமைப்புகள் › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -739,10 +759,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>அமைப்புகள் › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>புதிய இழைகளுக்கான இயல்புநிலை</translation>
     </message>
@@ -906,6 +922,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>இதற்கு 30 வினாடிகளுக்கு மேல் ஆனது.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>முகவர் பட்டியலை அனுப்பவில்லை.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>%1 மூலம் உள்நுழை…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>%1 க்கான விசையைச் சேர்…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>முன்மொழிவு: %1</translation>
     </message>
@@ -1037,6 +1069,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>AI ஐ இயக்கு</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>மாதிரிகளைத் தேடு</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>பொருந்தும் மாதிரிகள் இல்லை</translation>
     </message>
 </context>
 <context>
@@ -2374,6 +2414,18 @@ Output device: %2</source>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>குறுநிரல் இயங்கும்போது ஆவணம் மாறியது; எதுவும் மாற்றப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>சரிபார்க்கிறது…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>இந்தத் தேர்வில் இயங்க முடியாது</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>அதன் சரிபார்ப்புச் செயல்பாடு ஒரு பிழையுடன் நின்றுவிட்டது</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -5649,6 +5701,10 @@ Output device: %2</source>
         <translation>வசன வரிகள் பயன்படுத்தும் ஒவ்வொரு எழுத்துருக் கோப்பையும் ஒரு zip காப்பகத்தில் வைக்கிறது.</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>வசன வரிகள் பயன்படுத்தும் ஒவ்வொரு எழுத்துருக் கோப்பையும் கோப்புறையில் இணைக்கிறது. எழுத்துருக்கள் நகர்த்தப்பட்டாலோ நீக்கப்பட்டாலோ இணைப்புகள் உடையும்.</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>புதிய காப்பகத்தை எழுதினால் அது மாற்றப்படும்.</translation>
     </message>
@@ -5683,8 +5739,16 @@ Output device: %2</source>
         <translation>கோப்புறைக்கு நகலெடு</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>கோப்புறையில் இணை</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>Zip காப்பகம்</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>MKV கோப்பின் எழுத்துருக்கள் நகலெடுக்கப்படும்: இணைக்கக் கோப்பு இல்லை.</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5723,6 +5787,10 @@ Output device: %2</source>
         <translation>%1 ஐ எழுதத் தயார்</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>%1 இல் இணைக்கத் தயார்</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>%1 க்கு நகலெடுக்கத் தயார்</translation>
     </message>
@@ -5735,12 +5803,20 @@ Output device: %2</source>
         <translation>முழுமையற்றது எனக் குறித்து நகலெடு</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>முழுமையற்றது எனக் குறித்து இணை</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>காப்பகத்தை எழுது</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>எழுத்துருக்களை நகலெடு</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>எழுத்துருக்களை இணை</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -6033,6 +6109,22 @@ Output device: %2</source>
         <translation>“%1” எழுத்துருவை zip இல் சுருக்க முடியாது.</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>“%1” எழுத்துரு இணைக்கப்பட்டது.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>“%1” எழுத்துருவை இணைக்க முடியவில்லை: டெவலப்பர் பயன்முறையை இயக்கவும், அல்லது எழுத்துருவின் இயக்ககத்தில் உள்ள கோப்புறையைப் பயன்படுத்தவும்.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>“%1” எழுத்துருவை இணைக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>நீங்கள் எழுத்துருக்களை இணைக்க விரும்பும் கோப்புறையைத் தேர்ந்தெடுக்கவும்</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>வசன வரிகள் எதுவும் ஏற்றப்படவில்லை. வசன வரிகள் ஏற்றவும் அல்லது இந்த விருப்பத்தை தேர்வுநீக்கவும்.</translation>
     </message>
@@ -6128,12 +6220,24 @@ Output device: %2</source>
         <translation>நகலெடுக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>இணைக்கக் கோப்பு இல்லாத %1 நகலெடுக்கப்பட்டன.</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>முடிந்தது, %1 இணைக்கப்பட்டன.</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>முடிந்தது, %1 %2.</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>%1 கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>%1 ஐ இணைக்க முடியாது.</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6158,6 +6262,10 @@ Output device: %2</source>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>வெளியீடு முழுமையற்றது எனக் குறிக்கப்பட்டுள்ளது (“%1”).</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>வெற்றிகரமாக முடிந்தது, %1 இணைக்கப்பட்டன.</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6186,6 +6294,10 @@ Output device: %2</source>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>%1 ஐ “%2” காப்பகத்தில் சேர்க்கத் தயார்.</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>%1 ஐ “%2” இல் இணைக்கத் தயார்.</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -17360,6 +17472,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml இல் வரி %1 இல் பிழை உள்ளது.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>செருகுநிரலிலிருந்து, அதன் சாண்ட்பாக்ஸில்</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>இயக்கத்தில்</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18443,6 +18563,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>இந்தச் செருகுநிரல் %1 என்ற நிரல்; அது இந்தக் கணினிக்குக் கிடைக்கவில்லை.</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>அமைப்புகள் › AI இல் MCP சேவையகங்களை வழங்குகிறது, நீங்கள் இயக்கும் வரை அவை முடக்கத்தில் இருக்கும்: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>செருகுநிரல் இயக்கத்தில் இல்லை.</translation>
     </message>
 </context>
 <context>

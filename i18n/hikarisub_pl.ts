@@ -260,12 +260,32 @@
         <translation>Zmień tryb</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>bieżący model</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>Domyślny model agenta</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>Ostatnie</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>Wczytywanie modeli…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>Nie udało się wczytać modeli</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>Spróbuj ponownie</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>Ustawienia › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -748,10 +768,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>Ustawienia › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>Domyślny dla nowych wątków</translation>
     </message>
@@ -916,6 +932,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>Trwało to dłużej niż 30 sekund.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>Agent nie przysłał listy.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>Zaloguj się przez %1…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>Dodaj klucz dla %1…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>Propozycja: %1</translation>
     </message>
@@ -1050,6 +1082,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>Włącz AI</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>Szukaj modeli</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>Brak pasujących modeli</translation>
     </message>
 </context>
 <context>
@@ -2394,6 +2434,18 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>Dokument zmienił się podczas działania makra; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>Sprawdzanie…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>Nie można uruchomić na tym zaznaczeniu</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>Funkcja walidacji zatrzymała się z błędem</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -5704,6 +5756,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Umieszcza w archiwum zip każdy plik czcionki używanej w napisach.</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>Tworzy w folderze dowiązanie do każdego pliku czcionki używanej w napisach. Dowiązania przestaną działać, jeśli czcionki zostaną przeniesione lub usunięte.</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>Zapisanie nowego archiwum zastąpi ten plik.</translation>
     </message>
@@ -5740,8 +5796,16 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Kopiuj do folderu</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>Dowiąż w folderze</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>Archiwum zip</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>Czcionki z pliku MKV są kopiowane: nie ma pliku, do którego można by się dowiązać.</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5780,6 +5844,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Gotowe do zapisu: %1</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>Gotowe do dowiązania w: %1</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>Gotowe do skopiowania do: %1</translation>
     </message>
@@ -5792,12 +5860,20 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Skopiuj, oznaczając jako niekompletne</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>Dowiąż, oznaczając jako niekompletne</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>Zapisz archiwum</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>Kopiuj czcionki</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>Dowiąż czcionki</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -6092,6 +6168,22 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Nie można spakować czcionki “%1”.</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>Dowiązano czcionkę “%1”.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>Nie można dowiązać czcionki “%1”: włącz tryb dewelopera lub użyj folderu na dysku z czcionką.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>Nie można dowiązać czcionki “%1”.</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>Wybierz folder, w którym mają zostać dowiązane czcionki</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>Brak wczytanych napisów. Wczytaj napisy albo odznacz tę opcję.</translation>
     </message>
@@ -6187,12 +6279,24 @@ Urządzenie wyjściowe: %2</translation>
         <translation>skopiowano</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>Skopiowano %1 bez pliku do dowiązania.</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>Zakończono, dowiązano %1.</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>Zakończono, %1 %2.</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>Nieznalezione %1.</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>Niedowiązane %1.</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6217,6 +6321,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>Wynik oznaczono jako niekompletny (“%1”).</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>Zakończono pomyślnie, dowiązano %1.</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6245,6 +6353,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>Do archiwum “%2” zostaną dodane %1.</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>W “%2” zostaną dowiązane %1.</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -17498,6 +17610,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml ma błąd w wierszu %1.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>Z wtyczki, w jej piaskownicy</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączone</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18582,6 +18702,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>Ta wtyczka to program %1, który jest niedostępny na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>Udostępnia serwery MCP w Ustawienia › AI, wyłączone, dopóki ich nie włączysz: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>Wtyczka jest wyłączona.</translation>
     </message>
 </context>
 <context>

@@ -306,9 +306,15 @@ public:
         std::string id;
         std::string name;
     };
-    using AgentModelsDone = std::function<void(std::optional<std::vector<AgentModel>>)>;
-    /// Starts `agent` through the sidecar and the broker to ask which models it offers, then stops it. Answers
-    /// nullopt when the agent isn't offered, refuses, fails or takes longer than `timeoutMs`.
+    struct AgentModelsFailure {
+        enum class Kind { Refused, NoComponent, Failed, TimedOut };
+        Kind kind = Kind::Failed;
+        /// Refused: the refusal ("sandbox", "channel"); Failed: the sidecar's message, which may be empty.
+        std::string detail;
+    };
+    using AgentModels = std::expected<std::vector<AgentModel>, AgentModelsFailure>;
+    using AgentModelsDone = std::function<void(AgentModels)>;
+    /// Starts `agent` through the sidecar and the broker to ask which models it offers, then stops it.
     void listAgentModels(const std::string &agent, AgentModelsDone done, int timeoutMs = 30'000);
 
     /// Starts a turn with `parts` (protocol Parts: text, and images for attachments), or queues it while one runs.

@@ -258,12 +258,32 @@
         <translation>เปลี่ยนโหมด</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>โมเดลปัจจุบัน</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>ค่าเริ่มต้นของเอเจนต์</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>ล่าสุด</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>กำลังโหลดโมเดล…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>โหลดโมเดลไม่ได้</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>ลองอีกครั้ง</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>การตั้งค่า › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -730,10 +750,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>การตั้งค่า › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>ค่าเริ่มต้นสำหรับเธรดใหม่</translation>
     </message>
@@ -896,6 +912,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>ใช้เวลานานกว่า 30 วินาที</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>เอเจนต์ไม่ได้ส่งรายการมา</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>ลงชื่อเข้าใช้ด้วย %1…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>เพิ่มคีย์สำหรับ %1…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>ข้อเสนอ: %1</translation>
     </message>
@@ -1024,6 +1056,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>เปิด AI</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>ค้นหาโมเดล</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>ไม่มีโมเดลที่ตรงกัน</translation>
     </message>
 </context>
 <context>
@@ -2354,6 +2394,18 @@ Output device: %2</source>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>เอกสารเปลี่ยนแปลงระหว่างที่แมโครทำงาน จึงไม่มีการเปลี่ยนแปลงใด ๆ</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>กำลังตรวจสอบ…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>เรียกใช้กับส่วนที่เลือกนี้ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>ฟังก์ชันตรวจสอบของแมโครหยุดทำงานเพราะเกิดข้อผิดพลาด</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -5594,6 +5646,10 @@ Output device: %2</source>
         <translation>ใส่ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ลงในไฟล์บีบอัด</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>ลิงก์ไฟล์แบบอักษรทุกไฟล์ที่คำบรรยายใช้ไว้ในโฟลเดอร์ ลิงก์จะใช้ไม่ได้หากย้ายหรือลบแบบอักษร</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>การเขียนไฟล์บีบอัดใหม่จะแทนที่ไฟล์นี้</translation>
     </message>
@@ -5626,8 +5682,16 @@ Output device: %2</source>
         <translation>คัดลอกไปยังโฟลเดอร์</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>ลิงก์ไปยังโฟลเดอร์</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>ไฟล์บีบอัด</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>แบบอักษรจากไฟล์ MKV จะถูกคัดลอก เพราะไม่มีไฟล์ให้ลิงก์</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5666,6 +5730,10 @@ Output device: %2</source>
         <translation>พร้อมเขียน %1</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>พร้อมลิงก์ไปยัง %1</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>พร้อมคัดลอกไปยัง %1</translation>
     </message>
@@ -5678,12 +5746,20 @@ Output device: %2</source>
         <translation>คัดลอกโดยระบุว่าไม่ครบ</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>ลิงก์โดยระบุว่าไม่ครบ</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>เขียนไฟล์บีบอัด</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>คัดลอกแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>ลิงก์แบบอักษร</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -5974,6 +6050,22 @@ Output device: %2</source>
         <translation>ไม่สามารถบีบอัดแบบอักษร “%1” ได้</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>ลิงก์แบบอักษร “%1” แล้ว</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>ลิงก์แบบอักษร “%1” ไม่ได้ เปิดโหมดนักพัฒนา หรือใช้โฟลเดอร์บนไดรฟ์เดียวกับแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>ลิงก์แบบอักษร “%1” ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>เลือกโฟลเดอร์ที่ต้องการลิงก์แบบอักษร</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>ยังไม่ได้โหลดคำบรรยาย โปรดโหลดคำบรรยายหรือยกเลิกตัวเลือกนี้</translation>
     </message>
@@ -6069,12 +6161,24 @@ Output device: %2</source>
         <translation>คัดลอกแล้ว</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>คัดลอก %1 ที่ไม่มีไฟล์ให้ลิงก์</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>เสร็จสิ้น ลิงก์ %1</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>เสร็จสิ้น %1 %2</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>ไม่พบ %1</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>ไม่สามารถลิงก์ %1 ได้</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6099,6 +6203,10 @@ Output device: %2</source>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>ผลลัพธ์ถูกระบุว่าไม่ครบ (“%1”)</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>เสร็จสมบูรณ์ ลิงก์ %1</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6127,6 +6235,10 @@ Output device: %2</source>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>พร้อมเพิ่ม %1 ลงในไฟล์บีบอัด “%2”</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>พร้อมลิงก์ %1 ไปยัง “%2”</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -17222,6 +17334,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml มีข้อผิดพลาดที่บรรทัด %1</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>มาจากปลั๊กอิน ทำงานในแซนด์บ็อกซ์ของปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18304,6 +18424,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>ปลั๊กอินนี้คือโปรแกรม %1 ซึ่งไม่พร้อมใช้งานบนคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>มีเซิร์ฟเวอร์ MCP ให้ใช้ในการตั้งค่า › AI ซึ่งปิดอยู่จนกว่าคุณจะเปิด: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>ปลั๊กอินไม่ได้เปิดอยู่</translation>
     </message>
 </context>
 <context>

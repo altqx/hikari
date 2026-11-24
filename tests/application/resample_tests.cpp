@@ -473,6 +473,8 @@ TEST(Resample, FittingEdgesAreAegisubsAddAndRemoveBorders)
     EXPECT_EQ(fittingEdges({1920, 1080}, {1920, 800}, true), (Edges{0, 0, -140, -140}));
     EXPECT_EQ(fittingEdges({1920, 1080}, {1440, 1080}, false), (Edges{0, 0, 180, 180}));
     EXPECT_EQ(fittingEdges({1920, 1080}, {1440, 1080}, true), (Edges{-240, -240, 0, 0}));
+    EXPECT_EQ(fittingEdges({640, 480}, {1280, 720}, false), (Edges{106, 106, 0, 0}));
+    EXPECT_EQ(fittingEdges({720, 480}, {1920, 1080}, true), (Edges{0, 0, -37, -37}));
     EXPECT_EQ(fittingEdges({1920, 1080}, {1920, 1088}, false), Edges{});
     EXPECT_EQ(fittingEdges({0, 1080}, {1920, 1080}, false), Edges{});
 }

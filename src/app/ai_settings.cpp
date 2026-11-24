@@ -4,6 +4,7 @@
 #include "hikari/app/ai_features.h"
 #include "hikari/app/ai_mcp.h"
 #include "hikari/app/ai_mcp_servers.h"
+#include "hikari/app/model_picker.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_requests.h"
@@ -299,6 +300,29 @@ QVariantList AiSettings::modelChoices() const
                                       {QStringLiteral("provider"), qs(p.name)},
                                       {QStringLiteral("vision"), ai::capabilitiesOf(p, m.id).vision}});
     return out;
+}
+
+bool AiSettings::lacksKey(const QString &providerId) const
+{
+    const auto it = m_status.find(providerId.toStdString());
+    return it != m_status.end() && it->second.state == QLatin1String("failed") && it->second.error == QLatin1String("key");
+}
+
+QVariantList AiSettings::rolePickerItems(const QString &role, const QString &current, const QString &filter) const
+{
+    const auto which = ai::roleFromId(role.toStdString());
+    ModelPickerRequest request{.current = current, .filter = filter};
+    if (which != ai::Role::Chat)
+        request.emptyChoice = QCoreApplication::translate("HikariSub.Options", "Same as chat");
+    if (const ai::Providers *providers = m_features.providers())
+        for (const ai::Provider &p : providers->config().providers) {
+            ModelPickerGroup group{.name = qs(p.name), .key = qs(p.id)};
+            for (const ai::Model &m : p.models)
+                if (which != ai::Role::Vision || ai::capabilitiesOf(p, m.id).vision)
+                    group.models.push_back({modelValue(p.id, m.id), qs(m.name.empty() ? m.id : m.name), qs(m.id), qs(p.name)});
+            request.groups.push_back(std::move(group));
+        }
+    return modelPickerItems(request);
 }
 
 QVariantMap AiSettings::roles() const
@@ -673,7 +697,7 @@ QVariantMap AiSettings::codex() const
             {QStringLiteral("path"), m_codex.path},
             {QStringLiteral("version"), m_codex.version},
             {QStringLiteral("canImport"), m_codex.canImport},
-            {QStringLiteral("signedIn"), m_codex.signedIn},
+            {QStringLiteral("signedIn"), m_codex.signedIn.value_or(false)},
             {QStringLiteral("email"), m_codex.email},
             {QStringLiteral("state"), m_codex.state},
             {QStringLiteral("userCode"), m_codex.userCode},

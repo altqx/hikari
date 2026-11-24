@@ -258,12 +258,32 @@
         <translation>모드 변경</translation>
     </message>
     <message>
+        <source>current model</source>
+        <translation>현재 모델</translation>
+    </message>
+    <message>
         <source>Agent default</source>
         <translation>에이전트 기본값</translation>
     </message>
     <message>
+        <source>Recent</source>
+        <translation>최근</translation>
+    </message>
+    <message>
         <source>Loading models…</source>
         <translation>모델을 불러오는 중…</translation>
+    </message>
+    <message>
+        <source>Couldn’t load models</source>
+        <translation>모델을 불러오지 못했습니다</translation>
+    </message>
+    <message>
+        <source>Try again</source>
+        <translation>다시 시도</translation>
+    </message>
+    <message>
+        <source>Settings › AI…</source>
+        <translation>설정 › AI…</translation>
     </message>
     <message>
         <source>You approve each subtitle edit before it’s made, and every other change. Reading never asks.</source>
@@ -730,10 +750,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings › AI</source>
-        <translation>설정 › AI</translation>
-    </message>
-    <message>
         <source>Default for new threads</source>
         <translation>새 스레드 기본값</translation>
     </message>
@@ -896,6 +912,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>It took longer than 30 seconds.</source>
+        <translation>30초 넘게 걸렸습니다.</translation>
+    </message>
+    <message>
+        <source>The agent sent no list.</source>
+        <translation>에이전트가 목록을 보내지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Sign in with %1…</source>
+        <translation>%1로 로그인…</translation>
+    </message>
+    <message>
+        <source>Add a key for %1…</source>
+        <translation>%1 키 추가…</translation>
+    </message>
+    <message>
         <source>Proposed: %1</source>
         <translation>제안: %1</translation>
     </message>
@@ -1024,6 +1056,14 @@
     <message>
         <source>Turn on AI</source>
         <translation>AI 켜기</translation>
+    </message>
+    <message>
+        <source>Search models</source>
+        <translation>모델 검색</translation>
+    </message>
+    <message>
+        <source>No matching models</source>
+        <translation>일치하는 모델 없음</translation>
     </message>
 </context>
 <context>
@@ -2354,6 +2394,18 @@ Output device: %2</source>
     <message>
         <source>The document changed while the macro ran; nothing was changed.</source>
         <translation>매크로가 실행되는 동안 문서가 변경되어 아무것도 변경되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Checking…</source>
+        <translation>확인 중…</translation>
+    </message>
+    <message>
+        <source>Can’t run on this selection</source>
+        <translation>선택한 줄에서 실행할 수 없습니다</translation>
+    </message>
+    <message>
+        <source>Its validation function stopped with an error</source>
+        <translation>유효성 검사 함수가 오류로 중지되었습니다</translation>
     </message>
     <message>
         <source>The last run’s macro is no longer loaded, so it can’t be repeated.</source>
@@ -5594,6 +5646,10 @@ Output device: %2</source>
         <translation>자막에 사용된 각 글꼴 파일을 zip 압축 파일에 넣습니다.</translation>
     </message>
     <message>
+        <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
+        <translation>자막에 사용된 각 글꼴 파일을 폴더에 링크합니다. 글꼴을 옮기거나 삭제하면 링크가 끊어집니다.</translation>
+    </message>
+    <message>
         <source>Writing the new archive replaces it.</source>
         <translation>새 압축 파일을 쓰면 기존 파일을 대체합니다.</translation>
     </message>
@@ -5626,8 +5682,16 @@ Output device: %2</source>
         <translation>폴더에 복사</translation>
     </message>
     <message>
+        <source>Link to a folder</source>
+        <translation>폴더에 링크</translation>
+    </message>
+    <message>
         <source>Zip archive</source>
         <translation>Zip 압축 파일</translation>
+    </message>
+    <message>
+        <source>Fonts from the MKV file are copied: there’s no file to link to.</source>
+        <translation>MKV 파일의 글꼴은 링크할 파일이 없어 복사됩니다.</translation>
     </message>
     <message>
         <source>Save to</source>
@@ -5666,6 +5730,10 @@ Output device: %2</source>
         <translation>%1에 쓸 준비 완료</translation>
     </message>
     <message>
+        <source>Ready to link into %1</source>
+        <translation>%1에 링크할 준비 완료</translation>
+    </message>
+    <message>
         <source>Ready to copy to %1</source>
         <translation>%1에 복사할 준비 완료</translation>
     </message>
@@ -5678,12 +5746,20 @@ Output device: %2</source>
         <translation>불완전함으로 표시하고 복사</translation>
     </message>
     <message>
+        <source>Link it, labelled incomplete</source>
+        <translation>불완전함으로 표시하고 링크</translation>
+    </message>
+    <message>
         <source>Write archive</source>
         <translation>압축 파일 쓰기</translation>
     </message>
     <message>
         <source>Copy fonts</source>
         <translation>글꼴 복사</translation>
+    </message>
+    <message>
+        <source>Link fonts</source>
+        <translation>글꼴 링크</translation>
     </message>
     <message>
         <source>Show folder</source>
@@ -5974,6 +6050,22 @@ Output device: %2</source>
         <translation>“%1” 글꼴을 압축할 수 없습니다.</translation>
     </message>
     <message>
+        <source>Linked font “%1”.</source>
+        <translation>“%1” 글꼴을 링크했습니다.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”: turn on Developer Mode, or use a folder on the font’s drive.</source>
+        <translation>“%1” 글꼴을 링크할 수 없습니다. 개발자 모드를 켜거나 글꼴과 같은 드라이브의 폴더를 사용하십시오.</translation>
+    </message>
+    <message>
+        <source>Couldn’t link font “%1”.</source>
+        <translation>“%1” 글꼴을 링크할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to link fonts</source>
+        <translation>글꼴을 링크할 폴더를 선택하십시오</translation>
+    </message>
+    <message>
         <source>No subtitles loaded. Load subtitles or deselect this option.</source>
         <translation>불러온 자막이 없습니다. 자막을 불러오거나 이 옵션을 선택 해제하십시오.</translation>
     </message>
@@ -6069,12 +6161,24 @@ Output device: %2</source>
         <translation>복사함</translation>
     </message>
     <message>
+        <source>Copied %1 that have no file to link to.</source>
+        <translation>링크할 파일이 없는 %1(을)를 복사했습니다.</translation>
+    </message>
+    <message>
+        <source>Finished, linked %1.</source>
+        <translation>완료, %1 링크함.</translation>
+    </message>
+    <message>
         <source>Finished, %1 %2.</source>
         <translation>완료, %1 %2.</translation>
     </message>
     <message>
         <source>Not found %1.</source>
         <translation>찾을 수 없음: %1.</translation>
+    </message>
+    <message>
+        <source>Cannot link %1.</source>
+        <translation>링크할 수 없음: %1.</translation>
     </message>
     <message>
         <source>Cannot copy %1.</source>
@@ -6099,6 +6203,10 @@ Output device: %2</source>
     <message>
         <source>The output is labelled incomplete (“%1”).</source>
         <translation>출력이 불완전함으로 표시되었습니다(“%1”).</translation>
+    </message>
+    <message>
+        <source>Completed successfully, linked %1.</source>
+        <translation>성공적으로 완료되었습니다. %1 링크함.</translation>
     </message>
     <message>
         <source>Completed successfully, %1 %2.</source>
@@ -6127,6 +6235,10 @@ Output device: %2</source>
     <message>
         <source>Ready to add %1 to the archive “%2”.</source>
         <translation>%1(을)를 압축 파일 “%2”에 추가할 준비가 되었습니다.</translation>
+    </message>
+    <message>
+        <source>Ready to link %1 into “%2”.</source>
+        <translation>%1(을)를 “%2”에 링크할 준비가 되었습니다.</translation>
     </message>
     <message>
         <source>Ready to copy %1 to “%2”.</source>
@@ -17222,6 +17334,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>settings.toml has an error on line %1.</source>
         <translation>settings.toml의 %1번째 줄에 오류가 있습니다.</translation>
     </message>
+    <message>
+        <source>From a plugin, in its sandbox</source>
+        <translation>플러그인 제공, 해당 플러그인의 샌드박스에서 실행</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>켬</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -18304,6 +18424,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The plugin is the program %1, which isn’t available for this computer.</source>
         <translation>이 플러그인은 프로그램 %1(이)며, 이 컴퓨터에서는 사용할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Offers MCP servers in Settings › AI, off until you turn them on: %1</source>
+        <translation>설정 › AI에 MCP 서버를 제공하며, 켜기 전까지는 꺼져 있습니다: %1</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation>%1 (%2)</translation>
+    </message>
+    <message>
+        <source>The plugin isn’t on.</source>
+        <translation>플러그인이 꺼져 있습니다.</translation>
     </message>
 </context>
 <context>

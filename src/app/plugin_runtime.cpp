@@ -160,6 +160,7 @@ struct PluginRuntime::Running {
             status.push_back({item});
     }
     bool held = false;
+    std::int64_t mcpRevision = 0;
 };
 
 namespace {
@@ -206,6 +207,8 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
         ++m_programsRevision;
         emit programsChanged();
         const auto it = m_plugins.find(pluginId.toStdString());
+        if (it != m_plugins.end())
+            renewMcpServers(*it->second);
         if (it != m_plugins.end() && !it->second->manifest.mainProgram.empty() && !it->second->held &&
             it->second->process->state() == PluginProcess::State::LoadFailed && m_downloads->missing(it->first, it->second->manifest).empty())
             it->second->process->start();
@@ -418,8 +421,10 @@ void PluginRuntime::sync()
                     wanted.emplace(id, std::move(*manifest));
                 }
             }
-        if (registry)
+        if (registry) {
             m_downloads->keepPlugins(installedIds);
+            m_installed = std::move(installedIds);
+        }
     }
     for (auto it = m_plugins.begin(); it != m_plugins.end();) {
         const auto keep = wanted.find(it->first);
@@ -438,6 +443,7 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id)) {
             Running &plugin = *m_plugins.emplace(id, launch(id, std::move(manifest))).first->second;
+            plugin.mcpRevision = ++m_mcpRevision;
             if (hasCode(plugin.manifest))
                 plugin.process->start();
         }
@@ -451,6 +457,50 @@ void PluginRuntime::sync()
     application::setPluginContent(std::move(content));
     m_ui->setPlugins(std::move(installed));
     relist();
+    emit mcpServersChanged();
+}
+
+void PluginRuntime::renewMcpServers(Running &plugin)
+{
+    if (plugin.manifest.mcpServers.empty())
+        return;
+    plugin.mcpRevision = ++m_mcpRevision;
+    emit mcpServersChanged();
+}
+
+std::vector<backends::ai::McpServerEntry> PluginRuntime::mcpServers() const
+{
+    std::vector<backends::ai::McpServerEntry> out;
+    for (const Running *plugin : byName())
+        for (const plugins::McpServer &server : plugin->manifest.mcpServers) {
+            backends::ai::McpServerEntry entry;
+            entry.id = backends::ai::pluginMcpServerId(plugin->id, server.id);
+            entry.name = QCoreApplication::translate("HikariSub.Plugins", "%1 (%2)")
+                             .arg(qs(server.title), qs(plugin->manifest.name))
+                             .toStdString();
+            entry.plugin = plugin->id;
+            entry.pluginServer = server.id;
+            entry.revision = plugin->mcpRevision;
+            out.push_back(std::move(entry));
+        }
+    return out;
+}
+
+std::expected<backends::ProgramProcess::Options, QString>
+PluginRuntime::mcpServerStart(const backends::ai::McpServerEntry &server) const
+{
+    const QString off = QCoreApplication::translate("HikariSub.Plugins", "The plugin isn’t on.");
+    const auto it = m_plugins.find(server.plugin);
+    if (it == m_plugins.end() || !m_wiring.programs)
+        return std::unexpected(off);
+    const std::vector<plugins::McpServer> &declared = it->second->manifest.mcpServers;
+    const auto found = std::ranges::find(declared, server.pluginServer, &plugins::McpServer::id);
+    if (found == declared.end())
+        return std::unexpected(off);
+    auto options = m_wiring.programs->options(server.plugin, found->program);
+    if (!options)
+        return std::unexpected(qs(options.error().message));
+    return std::move(*options);
 }
 
 std::vector<PluginRuntime::Format> PluginRuntime::formats() const
@@ -1178,6 +1228,7 @@ void PluginRuntime::settingChanged(const QString &pluginId, const QString &setti
     if (it == m_plugins.end() || !value)
         return;
     m_ui->settingsChanged(it->first);
+    renewMcpServers(*it->second);
     const api::Json data = api::Json::object({{"id", setting.toStdString()}, {"value", *value}});
     it->second->process->deliver("settings:changed", data.dump(), "settings:changed#" + setting.toStdString());
 }
