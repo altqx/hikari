@@ -4487,6 +4487,10 @@ private slots:
             auto &settings = *application->settingsStore();
             auto restoreTheme = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
             settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            app::attachStylePreview(*engine, application->styleManager());
+            const int key = application->styleManager().previewKey();
+            QVERIFY(QMetaObject::invokeMethod(manager, "updatePreview"));
+            QTRY_VERIFY(application->styleManager().previewKey() > key);
             auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
             for (const auto code : ui::theme::kCodes) {
                 const QString theme = ui::theme::codeName(code);
