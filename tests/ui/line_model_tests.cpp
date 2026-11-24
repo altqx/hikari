@@ -419,6 +419,40 @@ private slots:
         QCOMPARE(runs.at(1).at(1).toModelIndex().row(), 2);
     }
 
+    void linesOnFrameSignalOnlyTheRowsThatChange()
+    {
+        LineTableModel model;
+        model.setDocument(load(kLines));
+        const auto onFrame = [&](int row) { return model.index(row, 0).data(LineTableModel::OnFrameRole).toBool(); };
+        QVERIFY(!onFrame(0) && !onFrame(1) && !onFrame(2));
+        QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+        model.setLinesOnFrame({core::LineId{1}, core::LineId{3}});
+        QVERIFY(onFrame(0) && !onFrame(1) && onFrame(2));
+        QCOMPARE(changed.count(), 2);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 0);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 0);
+        QCOMPARE(changed.at(1).at(0).toModelIndex().row(), 2);
+        QCOMPARE(changed.at(0).at(2).value<QList<int>>(), QList<int>{LineTableModel::OnFrameRole});
+
+        changed.clear();
+        model.setLinesOnFrame({core::LineId{3}, core::LineId{1}});
+        QCOMPARE(changed.count(), 0);
+
+        model.setLinesOnFrame({core::LineId{3}, core::LineId{2}});
+        QVERIFY(!onFrame(0) && onFrame(1) && onFrame(2));
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 0);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 1);
+
+        changed.clear();
+        model.setLinesOnFrame({});
+        QVERIFY(!onFrame(0) && !onFrame(1) && !onFrame(2));
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(changed.at(0).at(0).toModelIndex().row(), 1);
+        QCOMPARE(changed.at(0).at(1).toModelIndex().row(), 2);
+        QCOMPARE(model.roleNames().value(LineTableModel::OnFrameRole), QByteArray("onFrame"));
+    }
+
     void marksAndSelectionDoNotRefilter()
     {
         LineTableModel model;
@@ -432,6 +466,7 @@ private slots:
         model.setSelection({core::LineId{3}, {core::LineId{1}, core::LineId{2}, core::LineId{3}}}, core::LineId{1});
         model.setRunMarks(true);
         model.setComparisonColours({QColor(1, 1, 1), QColor(2, 2, 2), QColor(3, 3, 3), QColor(4, 4, 4), QColor(5, 5, 5)});
+        model.setLinesOnFrame({core::LineId{1}, core::LineId{3}});
         QCOMPARE(asked, 0);
         model.setDraft(*model.recordAt(0));
         QVERIFY(asked > 0);
@@ -500,6 +535,7 @@ private slots:
 
     void hiddenTagsAreSwappedInTheTextColumn()
     {
+        using enum application::GridTagsMode;
         LineTableModel model;
         model.setDocument(load("[Events]\n"
                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Hello{\\i0} there\n"
@@ -508,21 +544,28 @@ private slots:
         const auto text = [&](int row) { return model.index(row, LineTableModel::TextColumn).data().toString(); };
         QCOMPARE(text(0), QStringLiteral("{\\i1}Hello{\\i0} there"));
         QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
-        model.setHideTags(true, QStringLiteral("\u2600"));
+        model.setTagsMode(ReplaceWithSymbol, QStringLiteral("\u2600"));
         QCOMPARE(changed.count(), 1);
         QCOMPARE(text(0), QStringLiteral("\u2600Hello\u2600 there"));
         QCOMPARE(text(1), QStringLiteral("\u2600c{d"));
         QCOMPARE(text(2), QStringLiteral("<i>kept</i>"));
-        model.setHideTags(true, QStringLiteral("[&]"));
+        model.setTagsMode(ReplaceWithSymbol, QStringLiteral("[&]"));
         QCOMPARE(text(0), QStringLiteral("[{\\i1}]Hello[{\\i0}] there"));
-        model.setHideTags(false, QStringLiteral("\u2600"));
+        model.setTagsMode(Hide, QStringLiteral("\u2600"));
+        QCOMPARE(text(0), QStringLiteral("Hello there"));
+        QCOMPARE(text(1), QStringLiteral("c{d"));
+        model.setTagsMode(ReplaceWithSymbol, QString());
+        QCOMPARE(text(0), QStringLiteral("Hello there"));
+        model.setTagsMode(Show, QStringLiteral("\u2600"));
         QCOMPARE(text(0), QStringLiteral("{\\i1}Hello{\\i0} there"));
         const char *srt = "1\n00:00:01,000 --> 00:00:02,000\n<i>Hi</i> {x}\n\n";
         std::vector<std::byte> bytes(std::strlen(srt));
         std::memcpy(bytes.data(), srt, bytes.size());
         model.setDocument(core::loadSrt(bytes).document);
-        model.setHideTags(true, QStringLiteral("*"));
+        model.setTagsMode(ReplaceWithSymbol, QStringLiteral("*"));
         QCOMPARE(text(0), QStringLiteral("*Hi* {x}"));
+        model.setTagsMode(Hide, QStringLiteral("*"));
+        QCOMPARE(text(0), QStringLiteral("Hi {x}"));
         model.setDocument(load("[Script Info]\nTLMode: Yes\n[Events]\n"
                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\b1}x\n"));
         QCOMPARE(text(0), QStringLiteral("{\\b1}x"));
@@ -540,9 +583,12 @@ private slots:
         model.setDocument(load("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}ab\n"));
         QCOMPARE(model.index(0, LineTableModel::TextColumn).data(LineTableModel::SpellMarksRole).toList().size(), 2);
         QCOMPARE(seenLength, -1);
-        model.setHideTags(true, QStringLiteral("ab"));
+        model.setTagsMode(application::GridTagsMode::ReplaceWithSymbol, QStringLiteral("ab"));
         model.index(0, LineTableModel::TextColumn).data(LineTableModel::SpellMarksRole);
         QCOMPARE(seenLength, 2);
+        model.setTagsMode(application::GridTagsMode::Hide, QStringLiteral("ab"));
+        model.index(0, LineTableModel::TextColumn).data(LineTableModel::SpellMarksRole);
+        QCOMPARE(seenLength, 0);
     }
 
     void lineStateAndLabelColours()
@@ -694,7 +740,7 @@ private slots:
         draft.text = u8"{\\b1}charlie";
         model.setDraft(draft);
         QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("{\\b1}charlie"));
-        model.setHideTags(true, QStringLiteral("*"));
+        model.setTagsMode(application::GridTagsMode::ReplaceWithSymbol, QStringLiteral("*"));
         QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("*charlie"));
     }
 

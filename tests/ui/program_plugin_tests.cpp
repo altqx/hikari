@@ -128,9 +128,13 @@ private slots:
         QCOMPARE(params.value(QStringLiteral("plugin")).toObject().value(QStringLiteral("id")).toString(), QStringLiteral("tester"));
         QCOMPARE(params.value(QStringLiteral("settings")).toObject().value(QStringLiteral("name")).toString(), QStringLiteral("Ann"));
 
-        QVERIFY(process->run("hello", R"({"args":{"n":2},"context":{"via":"palette"}})"));
+        std::optional<std::expected<std::string, QString>> result;
+        QVERIFY(process->run("hello", R"({"args":{"n":2},"context":{"via":"palette"}})",
+                             [&](std::expected<std::string, QString> r) { result = std::move(r); }));
         QVERIFY(finished.wait(20000));
         QCOMPARE(finished.first().first().toString(), QStringLiteral("hello"));
+        QVERIFY(result && result->has_value());
+        QCOMPARE(**result, std::string(R"({"ok":true})"));
         QCOMPARE(m_served.size(), std::size_t(2));
         QCOMPARE(m_served[0].service, backends::plugin::Service::Notify);
         QCOMPARE(m_served[0].level, backends::plugin::Level::Warning);
