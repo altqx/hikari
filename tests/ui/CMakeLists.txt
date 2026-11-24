@@ -469,6 +469,11 @@ hikari_add_qttest(hikari_ui_plugin_test_harness_tests OFFSCREEN_ONLY SOURCES plu
 target_compile_definitions(hikari_ui_plugin_test_harness_tests PRIVATE
     HIKARI_HARNESS_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness")
 add_dependencies(hikari_ui_plugin_test_harness_tests hikari_plugin_helper)
+add_test(NAME hikari_plugin_test_harness_cli
+    COMMAND hikarisub --test-plugin "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/plugin"
+            "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/pass.jsonl"
+            --document "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/episode.ass")
+set_tests_properties(hikari_plugin_test_harness_cli PROPERTIES LABELS "ui;plugins" TIMEOUT 120)
 hikari_add_qttest(hikari_ui_plugin_programs_tests SOURCES plugin_programs_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_programs_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)

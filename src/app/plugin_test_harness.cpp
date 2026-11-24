@@ -83,7 +83,6 @@ QByteArray comparable(QByteArray text)
     return text.replace("\r\n", "\n");
 }
 
-// The first line where the two texts differ, as "line <n>: <actual>, expected <expected>".
 std::string firstDifference(const QByteArray &expected, const QByteArray &actual)
 {
     const QList<QByteArray> want = expected.split('\n');
@@ -97,7 +96,6 @@ std::string firstDifference(const QByteArray &expected, const QByteArray &actual
     return "they differ";
 }
 
-// Runs the event loop until `done` is true or `ms` have passed; false on a timeout.
 template <typename Done>
 bool waitUntil(Done done, int ms)
 {
