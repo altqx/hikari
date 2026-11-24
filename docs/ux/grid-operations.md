@@ -95,3 +95,16 @@ The named G45 obligations transferred from [Painted-Grid accessibility and perfo
 - **Scroll bar:** each marked row draws a 2-pixel tick in the warning colour at its place in the vertical scroll bar.
 - **When:** at once on a seek, a step or a pause, and at most every 100 ms while playing (the video's status timer); after every edit, tab change and when the setting changes. With no video or the toggle off, nothing is computed and the marks are cleared.
 - **Toggle:** View › "Mark lines on the current frame" (5358, no default shortcut, as Aegisub has no command for it).
+
+## Commands
+
+The Aegisub keys come from Aegisub 3.5's `default_hotkey.json`; Import settings maps the Aegisub ids from a `hotkey.json` (`settings_import_aegisub.cpp`).
+
+| Command | Id | Aegisub id | Aegisub default | HikariSub default | Note |
+| --- | --- | --- | --- | --- | --- |
+| Move lines up / down | 4559, 4560 (Grid) | `grid/move/up`, `grid/move/down` | Alt+Up / Alt+Down | Alt+Up / Alt+Down | Each run of selected lines passes its neighbour; groups move as a unit; one undo step |
+| Delete text, keep tags | 5357 | `edit/clear/text` | none | none | Grid row after Delete text; `edit/clear` imports to Delete text (5157) |
+| Cycle tags in the Grid | 5029 (`GLOBAL_HIDE_TAGS`) | `grid/tag/cycle_hiding` | none | none | Q765; status message names the mode |
+| Tags in the Grid: Show / Replace with symbol / Hide | 5354, 5355, 5356 | `grid/tags/show`, `grid/tags/simplify`, `grid/tags/hide` | none | none | View › Tags in the Grid radio rows |
+| Mark lines on the current frame | 5358 | — (preference "Highlight Subtitles in Frame") | on | on | View toggle; `grid.markCurrentFrame` |
+| Select lines: Intersect; Contains / Exact / Regex | — | Select Lines dialog | — | — | Dialog choices, no command |
