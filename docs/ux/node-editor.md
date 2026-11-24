@@ -123,7 +123,14 @@ ne-8, Q814. The Source lines panel chooses the Lines a graph runs on, so the use
 
 ### Bypass
 
-ne-11. A bypassed node doesn't run. Each of its outputs passes on the first input of the same type, and an output with no such input is unwired for the nodes it feeds, so they read their own fields. The card is drawn at 50 % with a 1-unit dashed `line` edge and a “Bypassed” chip in its title row. The problems list shows a note in `muted`, not an error: “Bypassed · pop”; a note doesn't hold Apply back. Export as template lines exports a bypassed node as its pass-through.
+ne-11. A bypassed node doesn't run. Each of its outputs passes on the first input of the same type, and an output with no such input is unwired for the nodes it feeds, so they read their own fields. The card is drawn at 50 % with a 1-unit dashed `line` edge and a “Bypassed” chip in its title row. It doesn't hold Apply back. Export as template lines exports a bypassed node as its pass-through.
+
+Each bypassed node is also one problem in the shared Problems list ([#1227](https://github.com/altqx/hikari/issues/1227)):
+
+- **Severity:** `info` (“Information”), with an `accent` squiggle, an `accent` Grid mark and a row in the Problems list.
+- **Text:** “bypassed: passes scale through”, naming the input it passes on.
+- **Source:** a built-in problems source, `effects`, on the graph's Line. It re-syncs when the graph changes, as `src/app/reading_problems.cpp` does for reading problems.
+- **The mode's own marks stay:** the problems pill, the card's edge and the Node panel's Problems section work as now. The list entry is added to them.
 
 ### Collapse
 
@@ -226,9 +233,9 @@ Five PR-sized parts for two packs. Pack 1 builds parts 1 then 5; pack 2 builds p
 | 2. The Node panel and several nodes | 2 | The form controls, ranges and refusals, changed dots and ↺, Pick on the video, wired chips, “Mixed” and the shared actions, the panel restyle | `NodeInspector.qml`, new `NodeFieldEditor.qml` and `ScrubField.qml`, new `node_effects_controller_form.cpp`, `node_graph_editing.cpp/.h` (set a field on many nodes), new `tests/ui/node_form_tests.cpp` |
 | 3. Adding and the library | 2 | The one Add popup, chips, preview, Shift+Enter, snippets, library tiers, Manage library…, the save confirmations and toasts | `NodeAddPopup.qml`, `NodeLibraryMenu.qml`, new `NodeLibraryDialog.qml`, `node_graph_library.cpp/.h` (rename, tiers), new `node_effects_controller_library.cpp`, `node_graph_library` tests |
 | 4. Source lines | 2 | The picker, filters and keys, Use the Grid's selection, Sources on the mode bar, Apply on the ticked Lines, `sources` and `skip` in the format, the window arrangement, the mode bar, the problems pill and the preview badge | `NodeSourceLines.qml`, `NodeModeBar.qml`, `Main.qml` (`nodeEffectsLayout` and Typesetting graph…), `node_graph.cpp/.h` (the two keys), `node_effects.cpp` (runs on the choice), new `node_effects_controller_sources.cpp`, `node_effects_tests.cpp` |
-| 5. Bypass, collapse, frames and reroutes | 1 | The four features, their menu rows and keys from part 1, `bypass`, `collapsed`, `shown`, `via` and `frames` in the format, the bypass note, Values on the node | `NodeGraphCanvas.qml`, `NodeCanvasMenus.qml`, `node_graph.cpp/.h` (five keys), `node_effects.cpp` and `node_validation.cpp` (bypass), `node_graph_editing.cpp/.h`, `node_effects_controller_canvas.cpp`, `node-effects.md` (the format rows), `node_effects_tests.cpp` |
+| 5. Bypass, collapse, frames and reroutes | 1 | The four features, their menu rows and keys from part 1, `bypass`, `collapsed`, `shown`, `via` and `frames` in the format, the bypass problem, Values on the node | `NodeGraphCanvas.qml`, `NodeCanvasMenus.qml`, `node_graph.cpp/.h` (five keys), `node_effects.cpp` and `node_validation.cpp` (bypass), new `src/app/effects_problems.cpp/.h` (the `effects` problems source), `node_graph_editing.cpp/.h`, `node_effects_controller_canvas.cpp`, `node-effects.md` (the format rows), `node_effects_tests.cpp` |
 
-Parts 4 and 5 both add keys to `node_graph.cpp`'s reader and writer; whichever lands second takes the other's lines. The bypass note waits on PC's shared problems list ([#1227](https://github.com/altqx/hikari/issues/1227)) for its level.
+Parts 4 and 5 both add keys to `node_graph.cpp`'s reader and writer; whichever lands second takes the other's lines.
 
 ## Decisions
 
