@@ -12411,6 +12411,84 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    void fontCollectorLinksIntoAFolder()
+    {
+        QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("linksource")));
+        const QString source = dir.filePath(QStringLiteral("linksource/arial.ttf"));
+        {
+            QFile f(source);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("arial bytes");
+        }
+        const QString subs = dir.filePath(QStringLiteral("link.ass"));
+        {
+            QFile f(subs);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, "
+                    "SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, "
+                    "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1\n"
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(subs));
+        auto fonts = std::make_unique<hikari::testing::FakeFonts>();
+        fonts->faces = {{"Arial", 400, false, QDir::fromNativeSeparators(source).toStdString()}};
+        auto &collector = application->fontCollector();
+        collector.setFontService(std::move(fonts));
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = named("fontCollectorDialog")) && dialog->property("visible").toBool());
+        QStringList segments;
+        for (const QVariant &choice : dialogItem("fontCollectorDialog", "fontCollectorAction")->property("choices").toList())
+            segments << choice.toMap().value(QStringLiteral("text")).toString();
+        QCOMPARE(segments, (QStringList{QStringLiteral("Check fonts"), QStringLiteral("Copy to a folder"),
+                                        QStringLiteral("Link to a folder"), QStringLiteral("Zip archive")}));
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption3"), "click"));
+        QCOMPARE(application->settingsStore()->integer("fontCollector.action"), 3);
+        QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorActionHint")->property("text").toString(),
+                 QStringLiteral("Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted."));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"),
+                      QStringLiteral("Select the folder where you want to link fonts"));
+
+        const QString folder = QDir::toNativeSeparators(dir.filePath(QStringLiteral("linked")));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", folder);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        const QString target = folder + QDir::separator();
+        QVERIFY2(collector.logText().endsWith(QStringLiteral("Ready to link 1 font into “%1”.\n").arg(target)),
+                 qPrintable(collector.logText()));
+        QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorReviewText")->property("text").toString(),
+                 QStringLiteral("Ready to link into %1").arg(target));
+        auto *apply = dialogItem("fontCollectorDialog", "fontCollectorApply");
+        QCOMPARE(apply->property("text").toString(), QStringLiteral("Link fonts"));
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QVERIFY(collector.waitIdle());
+        const QString done = collector.logText();
+        QVERIFY2(done.contains(QStringLiteral("Linked font “arial.ttf”.\n")), qPrintable(done));
+        QVERIFY2(done.contains(QStringLiteral("\nCompleted successfully, linked 1 font.\n")), qPrintable(done));
+        const QString linked = QDir(folder).filePath(QStringLiteral("arial.ttf"));
+        QFile written(linked);
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QCOMPARE(written.readAll(), QByteArray("arial bytes"));
+#ifndef _WIN32
+        QVERIFY(QFileInfo(linked).isSymLink());
+#endif
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption3")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption0"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     void fontCollectorChecksStagesAndWrites()
     {
         const QString path = dir.filePath(QStringLiteral("collect.ass"));
