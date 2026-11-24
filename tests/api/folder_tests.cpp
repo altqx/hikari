@@ -1,6 +1,7 @@
 #include "fake_host.h"
 #include "hikari/api/api.h"
 #include "hikari/api/folder.h"
+#include "hikari/application/video_extensions.h"
 
 #include <gtest/gtest.h>
 
@@ -331,6 +332,9 @@ TEST_F(AiFolder, MediaIsNeverSentAsBytes)
     EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/take1.WAV"})"), "media");
     EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.y4m"})"), "media");
     EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "media");
+    for (const auto extension : hikari::application::kVideoExtensions)
+        EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.)" + std::string(extension) + R"("})"), "media")
+            << extension;
     m_caller.reviewed = false;
     EXPECT_EQ(reason("files.read", R"({"folder": "d1", "path": "raw/ep01.mkv", "encoding": "base64"})"), "ok");
 }

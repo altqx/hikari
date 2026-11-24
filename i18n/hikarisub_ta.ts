@@ -21619,7 +21619,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27016,7 +27016,7 @@ Styles deleted:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">வீடியோ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -27033,6 +27033,10 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>வீடியோ (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

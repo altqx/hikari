@@ -910,6 +910,8 @@ public:
     Q_INVOKABLE QVariantList recentKeyframes();
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
+    // "*.mkv *.mp4 …": every video extension, for open-dialog filters.
+    Q_INVOKABLE QString videoFilePatterns() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
     // Empty: loaded; else the message.
     Q_INVOKABLE QString openTimecodesFile(const QString &path);

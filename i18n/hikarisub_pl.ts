@@ -21803,7 +21803,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27256,7 +27256,7 @@ Usunięte style:
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -27273,6 +27273,10 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>Wideo (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
