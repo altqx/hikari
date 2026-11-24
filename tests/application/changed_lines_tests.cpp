@@ -188,6 +188,44 @@ TEST_F(ChangedLinesTest, DeleteTextNeedsAShownSelectedLine)
     EXPECT_EQ(line(c).text, u8"c");
 }
 
+TEST(DeleteTextKeepTags, KeepsOverrideAndCommentBlocksAndDrawingsInOneStep)
+{
+    EditSession tagged{load("[Events]\n"
+                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,"
+                            "{\\b1}Bold{\\i1} and{note} more\\Nnext{\\fs20}\n"
+                            "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,just text\\h\n"
+                            "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10{\\p0}gone\n"
+                            "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,keep {\\an8}\n")};
+    const core::LineId first{1}, plain{2}, drawing{3}, hidden{4};
+    tagged.setSelection(Selection{first, {first, plain, drawing, hidden}, first, {}});
+    const auto steps = tagged.historySize();
+    ASSERT_TRUE(deleteTextKeepTags(tagged, [&](core::LineId id) { return id != hidden; }));
+    EXPECT_EQ(tagged.historySize(), steps + 1);
+    EXPECT_EQ(tagged.history().back().name, "Deleting text, keeping tags");
+    const auto texts = [&] {
+        std::vector<std::u8string> out;
+        for (const auto *l : tagged.document().lines())
+            out.push_back(l->text);
+        return out;
+    };
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"{\\b1}{\\i1}{note}{\\fs20}", u8"",
+                                                   u8"{\\p1}m 0 0 l 10 10{\\p0}", u8"keep {\\an8}"}));
+    ASSERT_TRUE(tagged.undo());
+    EXPECT_EQ(texts()[0], u8"{\\b1}Bold{\\i1} and{note} more\\Nnext{\\fs20}");
+    EXPECT_EQ(texts()[2], u8"{\\p1}m 0 0 l 10 10{\\p0}gone");
+}
+
+TEST(DeleteTextKeepTags, AnUnclosedBraceIsTextAndNeedsAShownSelectedLine)
+{
+    EditSession broken{load("[Events]\n"
+                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\b1}a{b\n")};
+    const core::LineId only{1};
+    EXPECT_FALSE(deleteTextKeepTags(broken, [](core::LineId) { return false; }));
+    broken.setSelection(Selection{only, {only}, only, {}});
+    ASSERT_TRUE(deleteTextKeepTags(broken));
+    EXPECT_EQ(broken.document().lines()[0]->text, u8"{\\b1}");
+}
+
 TEST_F(ChangedLinesTest, SwappingMarksBothLines)
 {
     edit(c, u8"C");

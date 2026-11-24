@@ -1,6 +1,7 @@
 #include "operations.h"
 
 #include "hikari/api/folder.h"
+#include "hikari/application/video_extensions.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -85,15 +86,14 @@ std::optional<Error> excluded(const Context &context, const GrantedFolder &folde
 
 bool mediaFile(const std::string &path)
 {
-    static constexpr std::string_view kMedia[] = {
-        "avi", "mp4", "mkv",  "ogm", "wmv", "asf", "rmvb", "rm",  "3gp", "ts",   "m2ts", "m4v", "flv",  "webm", "mpg",
-        "mpeg", "mov", "y4m", "wav", "mp3", "flac", "ogg", "opus", "m4a", "aac", "ac3", "eac3", "dts", "wma", "mka", "aiff"};
+    static constexpr std::string_view kAudio[] = {"wav", "mp3", "flac", "ogg", "opus", "m4a", "aac",
+                                                  "ac3", "eac3", "dts", "wma", "mka", "aiff"};
     const std::size_t dot = path.find_last_of("./\\");
     if (dot == std::string::npos || path[dot] != '.')
         return false;
     std::string extension = path.substr(dot + 1);
     std::ranges::transform(extension, extension.begin(), [](char c) { return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c; });
-    return std::ranges::find(kMedia, extension) != std::end(kMedia);
+    return application::isVideoExtension(extension) || std::ranges::find(kAudio, extension) != std::end(kAudio);
 }
 
 // The file a call names: a granted `file`, or a `path` inside a granted `folder`, which grants it.

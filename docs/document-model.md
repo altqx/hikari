@@ -49,6 +49,11 @@ A subtitle file opens as it always has: its bytes are kept, and text that isn't 
 
 **File › Reopen with encoding…** (Global 5371) lists the detected encoding first, marked Detected, then UTF-8, UTF-16 LE and BE, Shift-JIS, GB18030, Big5, EUC-KR, Windows-1250, 1251, 1252, 1253, 1254 and 1257, ISO-8859-1, 2 and 15, and KOI8-R. Reopening reads the file through ICU into UTF-8, strictly (a byte the encoding doesn't have refuses it, and the Document stays as it was). The new Document starts modified: no byte-exact round trip is claimed, and the next save writes UTF-8. Reopening drops unsaved changes, which the bar and the list say first. The encoding unit is `src/backends/text_encoding.{h,cpp}`; Import lyrics uses its reader too.
 
+## Earlier saves
+A save that replaces a file keeps the file as it was in the Recovery folder, under `saves/`, not beside the file ([#1214](https://github.com/altqx/hikari/issues/1214)). This covers Save, Save as over an existing file, and writing over a change made outside HikariSub. A save that writes the same bytes, a new file or a failed write keeps nothing. **Settings › General › Saving › Backup copies kept** (`autosave.savedCopies`, 0 to 100, default 3) is how many copies each file keeps; 0 keeps none, and a lower number applies at that file's next save. The copies are never pruned by age.
+
+The Autosaves window lists them with the autosaves, tagged "Earlier save", one row per file with its copies newest first. **Open copy** opens one as a new unsaved Document titled "<name> (earlier save)"; Delete removes every copy of that file, and Delete older than… leaves them. `DocumentFiles::setSavedOver` reports the replaced bytes once a save is published; the copies are a second `RecoveryStore`.
+
 ## Interfaces and ownership
 
 Conceptual interfaces, not production declarations:

@@ -1,7 +1,9 @@
 #include "hikari/application/associated_files.h"
 
 #include "hikari/application/legacy_dir.h"
+#include "hikari/application/video_extensions.h"
 
+#include <algorithm>
 #include <array>
 #include <string_view>
 
@@ -10,8 +12,6 @@ namespace hikari::application {
 namespace {
 
 constexpr std::array<std::u16string_view, 5> kSubtitles{u"ass", u"txt", u"sub", u"srt", u"ssa"};
-constexpr std::array<std::u16string_view, 15> kVideos{u"avi", u"mp4", u"mkv",  u"ogm", u"wmv", u"asf", u"rmvb", u"rm",
-                                                      u"3gp", u"ts",  u"m2ts", u"m4v", u"flv", u"webm", u"y4m"};
 
 // The whole string when `c` is missing.
 std::u16string afterLast(const std::u16string &s, char16_t c)
@@ -25,6 +25,14 @@ std::u16string beforeLast(const std::u16string &s, char16_t c)
 {
     const auto at = s.rfind(c);
     return at == std::u16string::npos ? std::u16string() : s.substr(0, at);
+}
+
+bool isVideoExtensionU16(std::u16string_view extension)
+{
+    if (std::ranges::any_of(extension, [](char16_t c) { return c > 0x7f; }))
+        return false;
+    const std::string ascii(extension.begin(), extension.end());
+    return isVideoExtension(ascii);
 }
 
 bool startsWith(std::string_view s, std::string_view prefix)
@@ -42,15 +50,7 @@ std::optional<std::filesystem::path> findSameNamedFile(const std::filesystem::pa
         return std::nullopt;
     for (const auto &found : *files) {
         const std::u16string ext = afterLast(found.u16string(), u'.');
-        bool matches = false;
-        if (video) {
-            for (const auto e : kVideos)
-                matches = matches || ext == e;
-        } else {
-            for (const auto e : kSubtitles)
-                matches = matches || ext == e;
-        }
-        if (matches)
+        if (video ? isVideoExtensionU16(ext) : std::ranges::find(kSubtitles, ext) != kSubtitles.end())
             return found;
     }
     return std::nullopt;

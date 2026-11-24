@@ -507,6 +507,39 @@ TEST_F(Files, SaveAsMovesTheAssociationOnlyAfterSuccess)
     EXPECT_EQ(writes.association(doc)->value, "/b.ass");
 }
 
+TEST_F(Files, APublishedSaveReportsTheFileItReplaced)
+{
+    std::vector<std::pair<std::string, std::string>> replaced;
+    service.setSavedOver([&](const DestinationKey &destination, std::vector<std::byte> previous) {
+        replaced.emplace_back(destination.value, text(previous));
+    });
+    const auto doc = open("/a.ass");
+    EditSession &s = *service.session(doc);
+    ASSERT_TRUE(s.editDraftText(line(doc, 0), u8"failed"));
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Failed);
+    EXPECT_TRUE(replaced.empty());
+
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    ASSERT_EQ(replaced.size(), 1u);
+    EXPECT_EQ(replaced[0], std::pair(std::string("/a.ass"), kAss));
+
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(replaced.size(), 1u);
+
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc, DestinationKey{"/new.ass"})));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(replaced.size(), 1u);
+
+    disk.files["/b.ass"] = bytesOf("theirs");
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc, DestinationKey{"/b.ass"})));
+    finish(WriteOutcome::DurabilityUncertain);
+    ASSERT_EQ(replaced.size(), 2u);
+    EXPECT_EQ(replaced[1], std::pair(std::string("/b.ass"), std::string("theirs")));
+}
+
 TEST_F(Files, SaveAsOntoAnotherOpenDocumentIsBlocked)
 {
     disk.files["/b.ass"] = bytesOf(kAss);

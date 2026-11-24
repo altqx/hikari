@@ -61,7 +61,7 @@ public:
 
     std::vector<std::string> handledCommands() const;
     // `call` is {args, context}; a missing one reaches the handler as an empty table.
-    std::expected<void, std::string> run(const std::string &command, const api::Json &call, Host &host);
+    std::expected<api::Json, std::string> run(const std::string &command, const api::Json &call, Host &host);
     // Runs every handler for `event`; the error is the first handler's.
     std::expected<void, std::string> dispatch(const std::string &event, const api::Json &data, Host &host);
     // Runs the timer's callback; `last` forgets it afterwards. An unknown id does nothing.
