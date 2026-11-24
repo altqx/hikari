@@ -1032,16 +1032,27 @@ end)
 
 **Save a copy as a theme plugin…** (Q681). In the dev tools, this writes the theme being shown, built-in or a plugin's, as a new plugin folder: a `hikari-plugin.json` with one `contributes.themes` entry and the theme file with every key set, worked-out colours included. The folder is then loaded as a dev plugin.
 
-**The test harness.** `hikarisub --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>]` runs headless, prints each failed step, and exits with 0 when every step passed and 1 otherwise. Each line of the script is one step:
+**The test harness.** `hikarisub --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>] [--timeout <ms>] [--json]` runs a plugin's tests headless, with the offscreen platform, on Linux and Windows.
 
-- `{"run": "<command>", "args": {…}, "expect": …}`
-- `{"event": "<name>", "data": {…}}`
-- `{"call": "<operation>", "params": {…}, "expect": …}`
-- `{"complete": {…}, "expect": …}`
-- `{"export": "<format>", "expectFile": "<path>"}`
-- `{"expectDocument": "<fixture.ass>"}`
+- **Where it runs.** In a temporary user folder that is removed when it ends, with the fixture Document copied there. It never reads or writes the real user folder, settings, keychain or marketplace cache.
+- **The plugin.** It loads the folder as a dev plugin, granted every permission its manifest asks for without asking, and prints that list first. So the network is open only to the hosts the manifest names.
+- **Exit code.** 0 when every step passed, 1 when one failed, 2 when the tests couldn't run: a bad command line or script line, a missing folder or fixture, or a plugin that doesn't load.
+- **Output.** One line for each failed step: `<tests.jsonl>:<line>: <step>: <why>`, with what came back and what was expected. `--json` prints one JSON report instead: `{ok, plugin, granted, steps, failed: [{line, step, message}]}`, or `{ok: false, error}` when the tests couldn't run.
+- **Timeouts.** Each step gets `--timeout` milliseconds, 10000 by default. A step that takes longer fails, and the plugin is force-stopped; the next step starts it again.
 
-It builds on `tests/api/scripts/`. Dialogs answer from `{"answer": {…}}` steps.
+Each line of the script is one step. `expect` matches as the API scripts in `tests/api/scripts/` do: an object by the keys it names, an array item by item, anything else by equality. Paths are relative to the script.
+
+| Step | What it does |
+| --- | --- |
+| `{"run": "<command>", "args": {…}, "expect": …}` | Runs one of the plugin's commands with `context.via = "palette"`, and checks what its handler returns. |
+| `{"event": "<name>", "data": {…}}` | Sends the plugin an event it listens for, and waits for its handlers. |
+| `{"call": "<operation>", "params": {…}, "expect": …}` | Calls a Hikari API operation as the plugin. |
+| `{"complete": {…}, "expect": …}`, `{"hover": {…}, "expect": …}` | Asks the plugin's provider. The request is `{document, line, field, text, offset, trigger}`, and the step's object sets any of them; the editing target's first Line, `"text"`, `""`, `0` and `null` otherwise. |
+| `{"export": "<format>", "expectFile": "<path>"}` | Exports the Document with one of the plugin's formats and compares the file byte for byte. |
+| `{"expectDocument": "<fixture.ass>"}` | Compares the Document, saved as ASS, with the fixture, line endings and a BOM aside. |
+| `{"answer": {…}}` | Answers the next dialog, quick pick or input box: `{"button", "values"}` for a dialog, `{"pick": [ids]}`, `{"text"}`, `{"button"}` or `{"back": true}` for a quick pick or input box, or `{"dismiss": true}`. A prompt with no answer waiting is dismissed and fails its step. |
+
+`run`, `call`, `complete` and `hover` may expect an error instead with `"error": "<text>"`: the step passes when it fails with that text in its message, or with that error code for `call`.
 
 **Type hints.** `hikarisub --export-docs <dir>` also writes `hikari.lua`, LuaLS `---@meta` annotations for the `hikari` global and every operation, and `hikari.d.ts`, TypeScript types for every operation, event and protocol message, both generated from `api.json`. [docs/types/](types/) holds both for this version.
 

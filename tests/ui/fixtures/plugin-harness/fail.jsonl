@@ -1,0 +1,4 @@
+{"run": "greet", "args": {"name": "Ana"}, "expect": {"hello": "Bo"}}
+{"call": "lines.list", "params": {}, "expect": {"total": 3}}
+{"run": "ask"}
+{"expectDocument": "shouted.ass"}
