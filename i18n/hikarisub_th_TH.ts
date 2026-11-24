@@ -22388,7 +22388,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>บันทึกสไตล์</translation>
+        <translation type="vanished">บันทึกสไตล์</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -22642,7 +22642,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n บรรทัด</numerusform>
         </translation>
     </message>
@@ -22728,7 +22728,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>เพิ่มไปยังไฟล์</translation>
+        <translation type="vanished">เพิ่มไปยังไฟล์</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -22736,7 +22736,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>เพิ่มไปยังแคตตาล็อก</translation>
+        <translation type="vanished">เพิ่มไปยังแคตตาล็อก</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -22876,11 +22876,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>ข้อความตัวอย่าง</translation>
+        <translation type="vanished">ข้อความตัวอย่าง</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>ไฟล์นี้ไม่มีสไตล์ สร้างด้วย + หรือคัดลอกจากแคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>คัดลอกไปยังแคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>คัดลอกไปยังไฟล์นี้</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -22897,6 +22909,42 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>ย้ายไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>ยังไม่ได้เลือกสไตล์</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>จากแคตตาล็อก…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n สไตล์</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>ใช้ใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>ย้อนกลับสไตล์</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>ข้อความตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>ไม่ได้ติดตั้งฟอนต์</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>ไม่ได้ติดตั้งฟอนต์: แสดงด้วย %1</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23000,7 +23048,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>ย้อนกลับ</translation>
+        <translation type="vanished">ย้อนกลับ</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23075,11 +23123,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>สไตล์</translation>
+        <translation type="vanished">สไตล์</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>บรรทัด</translation>
+        <translation type="vanished">บรรทัด</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23095,7 +23143,13 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>บรรทัด: %1</translation>
+        <translation type="vanished">บรรทัด: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23103,7 +23157,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>สไตล์ของบรรทัดปัจจุบัน</translation>
+        <translation type="vanished">สไตล์ของบรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>

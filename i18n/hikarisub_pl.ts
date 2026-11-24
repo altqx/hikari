@@ -22782,7 +22782,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Save style</source>
-        <translation>Zapisz styl</translation>
+        <translation type="vanished">Zapisz styl</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -23042,7 +23042,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n linijka</numerusform>
             <numerusform>%1, %n linijki</numerusform>
             <numerusform>%1, %n linijek</numerusform>
@@ -23130,7 +23130,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>Dodaj do pliku</translation>
+        <translation type="vanished">Dodaj do pliku</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23138,7 +23138,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>Dodaj do katalogu</translation>
+        <translation type="vanished">Dodaj do katalogu</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23282,11 +23282,23 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>Tekst podglądu</translation>
+        <translation type="vanished">Tekst podglądu</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>Ten plik nie ma stylów. Utwórz styl przyciskiem + albo skopiuj go z katalogu.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>Kopiuj do katalogu</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>Kopiuj do tego pliku</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23303,6 +23315,46 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Move to yours</source>
         <translation>Przenieś do Twoich</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>Nie wybrano stylu</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>Z katalogu…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n styl</numerusform>
+            <numerusform>%n style</numerusform>
+            <numerusform>%n stylów</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>Używa go %n linijka</numerusform>
+            <numerusform>Używają go %n linijki</numerusform>
+            <numerusform>Używa go %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>Cofnij zmiany stylu</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>Próbka tekstu</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>Czcionka nie jest zainstalowana</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>Czcionka nie jest zainstalowana: wyświetlana jako %1</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23406,7 +23458,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation>Cofnij zmiany</translation>
+        <translation type="vanished">Cofnij zmiany</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23481,11 +23533,11 @@ Usunięte style:
     </message>
     <message>
         <source>Style</source>
-        <translation>Styl</translation>
+        <translation type="vanished">Styl</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>Linijki</translation>
+        <translation type="vanished">Linijki</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23501,7 +23553,15 @@ Usunięte style:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>Linijki: %1</translation>
+        <translation type="vanished">Linijki: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n linijka</numerusform>
+            <numerusform>%n linijki</numerusform>
+            <numerusform>%n linijek</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23509,7 +23569,7 @@ Usunięte style:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>Styl bieżącej linijki</translation>
+        <translation type="vanished">Styl bieżącej linijki</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>

@@ -139,6 +139,7 @@
 #include <memory>
 #include <optional>
 #include <future>
+#include <atomic>
 #include <chrono>
 #include <thread>
 
@@ -4393,6 +4394,39 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         catalogs.waitResolved();
+    }
+
+    void fontChecksAndThePickerAreBothAnswered()
+    {
+        auto *service = usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        std::atomic<int> entered = 0;
+        std::atomic<bool> released = false;
+        service->onResolve = [&] {
+            ++entered;
+            while (!released)
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        };
+        QSignalSpy resolved(&catalogs, &app::FontCatalogsController::resolutionReady);
+        QSignalSpy checked(&catalogs, &app::FontCatalogsController::familiesChecked);
+        const int first = catalogs.resolveFamily(QStringLiteral("Arial"), false, false);
+        QTRY_COMPARE(entered.load(), 1);
+        const int check = catalogs.checkFamilies({QStringLiteral("Arial"), QStringLiteral("Not Installed")});
+        const int second = catalogs.resolveFamily(QStringLiteral("Impact"), false, false);
+        released = true;
+        QTRY_COMPARE(resolved.count(), 2);
+        QCOMPARE(resolved.at(0).at(0).toInt(), first);
+        QCOMPARE(resolved.at(1).at(0).toInt(), second);
+        QTRY_VERIFY(std::any_of(checked.begin(), checked.end(), [&](const QList<QVariant> &a) { return a.at(0).toInt() == check; }));
+        const auto answer = std::find_if(checked.begin(), checked.end(), [&](const QList<QVariant> &a) { return a.at(0).toInt() == check; })
+                                ->at(1).toMap();
+        const auto arial = answer.value(QStringLiteral("Arial")).toMap();
+        QCOMPARE(arial.value(QStringLiteral("installed")).toBool(), true);
+        const auto missing = answer.value(QStringLiteral("Not Installed")).toMap();
+        QCOMPARE(missing.value(QStringLiteral("installed")).toBool(), false);
+        QCOMPARE(missing.value(QStringLiteral("shownIn")).toString(), QStringLiteral("DejaVu Sans"));
+        catalogs.waitResolved();
+        service->onResolve = nullptr;
     }
 
     void fontPopupsResolveThePreviewTextsCharacters()
@@ -33804,6 +33838,7 @@ private slots:
                     "Style: Sign - Title,DejaVu Serif,72,&H0080D0FF,&H000000FF,&H00203040,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,8,40,40,40,1\n"
                     "Style: OP Romaji,DejaVu Sans,52,&H00FFE0FF,&H000000FF,&H00602060,&H80000000,0,0,0,0,100,100,0,0,1,3,1,8,40,40,40,1\n"
                     "Style: Credits,DejaVu Sans,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,0,1,40,40,40,1\n"
+                    "Style: Karaoke,Hikari Missing Sans,48,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,0,8,40,40,40,1\n"
                     "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
                     "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,second\n"
@@ -33877,6 +33912,13 @@ private slots:
             shot(manager, QStringLiteral("menu-") + theme);
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
             QTRY_VERIFY(!menu->property("visible").toBool());
+            pick({8});
+            QTRY_VERIFY(field("styleFontMissing")->isVisible());
+            QTRY_VERIFY(findItem(content, QStringLiteral("assMissing8"))->isVisible());
+            shot(manager, QStringLiteral("missing-") + theme);
+            pick({});
+            QTRY_VERIFY(field("styleNoneChosen")->isVisible());
+            shot(manager, QStringLiteral("none-") + theme);
         }
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
         application->editor().discard();

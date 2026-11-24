@@ -1490,10 +1490,17 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%1, %n line(s)</source>
+        <source>%n styles</source>
         <translation>
-            <numerusform>%1, %n line</numerusform>
-            <numerusform>%1, %n lines</numerusform>
+            <numerusform>%n style</numerusform>
+            <numerusform>%n styles</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>%n line uses it</numerusform>
+            <numerusform>%n lines use it</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1508,6 +1515,13 @@
         <translation>
             <numerusform>Rename it in the %n line that uses it</numerusform>
             <numerusform>Rename it in the %n lines that use it</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n line</numerusform>
+            <numerusform>%n lines</numerusform>
         </translation>
     </message>
 </context>
