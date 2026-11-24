@@ -4752,6 +4752,58 @@ Output device: %2</source>
         <translation>겹치는 줄과 병합됨</translation>
     </message>
     <message>
+        <source>Drawing</source>
+        <translation>도형</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>클립</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation>변환</translation>
+    </message>
+    <message>
+        <source>Movement</source>
+        <translation>이동</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>페이드</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>회전</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>외곽선</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>색상</translation>
+    </message>
+    <message>
+        <source>Formatting</source>
+        <translation>서식</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>위치</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation>효과</translation>
+    </message>
+    <message>
+        <source>Merged</source>
+        <translation>병합됨</translation>
+    </message>
+    <message>
         <source>There is nothing to export.</source>
         <translation>내보낼 내용이 없습니다.</translation>
     </message>
@@ -4860,6 +4912,10 @@ Output device: %2</source>
         <translation>%1의 현재 단어 그림자 색</translation>
     </message>
     <message>
+        <source>Exporting</source>
+        <translation>내보내는 중</translation>
+    </message>
+    <message>
         <source>Untitled</source>
         <translation>새 자막</translation>
     </message>
@@ -4952,6 +5008,10 @@ Output device: %2</source>
     <message>
         <source>Didn’t run</source>
         <translation>실행 안 됨</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>중지됨</translation>
     </message>
     <message>
         <source>Variable needs a video or timecodes file</source>
@@ -5206,6 +5266,10 @@ Output device: %2</source>
         <translation>%1 파일 (*.%2)</translation>
     </message>
     <message>
+        <source>plain text</source>
+        <translation>일반 텍스트</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
     </message>
@@ -5333,10 +5397,50 @@ Output device: %2</source>
         <source>Before export</source>
         <translation>내보내기 전</translation>
     </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>창을 닫아도 계속 진행됩니다.</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>중지</translation>
+    </message>
+    <message>
+        <source>Stopped. Nothing was written.</source>
+        <translation>중지했습니다. 아무것도 쓰지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Choose another folder…</source>
+        <translation>다른 폴더 선택…</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
+    <message>
+        <source>Choose a line to select it in the Grid.</source>
+        <translation>줄을 선택하면 자막 목록에서 선택됩니다.</translation>
+    </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>“%1”에 %n줄을 내보냈습니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved. %n line(s) lost something %1 can’t carry.</source>
+        <translation>
+            <numerusform>저장했습니다. %n줄에서 %1 형식에 담을 수 없는 내용이 빠졌습니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Copy list</source>
+        <translation>목록 복사</translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved %1 · %n line(s) · nothing lost</source>
+        <translation>
+            <numerusform>%1 저장됨 · %n줄 · 손실 없음</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5359,11 +5463,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>What the format could not keep. Choose a line to show it.</source>
-        <translation>이 형식이 유지하지 못한 내용입니다. 줄을 고르면 해당 줄을 보여 줍니다.</translation>
+        <translation type="vanished">이 형식이 유지하지 못한 내용입니다. 줄을 고르면 해당 줄을 보여 줍니다.</translation>
     </message>
     <message>
         <source>Nothing was dropped or approximated</source>
-        <translation>빠지거나 근사된 내용이 없습니다</translation>
+        <translation type="vanished">빠지거나 근사된 내용이 없습니다</translation>
     </message>
     <message>
         <source>Export report</source>
@@ -5371,11 +5475,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Line</source>
-        <translation>줄</translation>
+        <translation type="vanished">줄</translation>
     </message>
     <message>
         <source>Dropped or approximated</source>
-        <translation>빠지거나 근사됨</translation>
+        <translation type="vanished">빠지거나 근사됨</translation>
     </message>
     <message>
         <source>Line %1: %2</source>
@@ -5384,6 +5488,10 @@ Output device: %2</source>
     <message>
         <source>Export</source>
         <translation>내보내기</translation>
+    </message>
+    <message>
+        <source>Show the file</source>
+        <translation>파일 보기</translation>
     </message>
     <message>
         <source>Close</source>
@@ -5396,6 +5504,14 @@ Output device: %2</source>
     <message>
         <source>%1 isn’t running, so it can’t export.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>숨김</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>열기</translation>
     </message>
 </context>
 <context>
@@ -5730,7 +5846,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>글꼴 수집기</translation>
+        <translation type="vanished">글꼴 수집기</translation>
     </message>
     <message>
         <source>Select the folder where you want to copy fonts</source>
@@ -5742,11 +5858,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Select a folder</source>
-        <translation>폴더 선택</translation>
+        <translation type="vanished">폴더 선택</translation>
     </message>
     <message>
         <source>Font collector log</source>
-        <translation>글꼴 수집기 로그</translation>
+        <translation type="vanished">글꼴 수집기 로그</translation>
     </message>
     <message>
         <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
@@ -5763,6 +5879,10 @@ Output device: %2</source>
     <message>
         <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
         <translation>자막에 사용된 각 글꼴 파일을 폴더에 링크합니다. 글꼴을 옮기거나 삭제하면 링크가 끊어집니다.</translation>
+    </message>
+    <message>
+        <source>Collect fonts</source>
+        <translation>글꼴 모으기</translation>
     </message>
     <message>
         <source>Writing the new archive replaces it.</source>
@@ -5783,6 +5903,108 @@ Output device: %2</source>
     <message>
         <source>Keep existing</source>
         <translation>기존 파일 유지</translation>
+    </message>
+    <message>
+        <source>Bold Italic</source>
+        <translation type="vanished">굵은 기울임</translation>
+    </message>
+    <message>
+        <source>Regular</source>
+        <translation>보통</translation>
+    </message>
+    <message>
+        <source>Weight %1</source>
+        <translation>두께 %1</translation>
+    </message>
+    <message>
+        <source>Not on this computer</source>
+        <translation>이 컴퓨터에 없음</translation>
+    </message>
+    <message>
+        <source>Couldn’t link: turn on Developer Mode, or use a folder on the font’s drive</source>
+        <translation>링크할 수 없음: 개발자 모드를 켜거나 글꼴이 있는 드라이브의 폴더를 사용하세요</translation>
+    </message>
+    <message>
+        <source>Couldn’t link</source>
+        <translation>링크할 수 없음</translation>
+    </message>
+    <message>
+        <source>simulated bold and italic</source>
+        <translation>가상 굵게·기울임</translation>
+    </message>
+    <message>
+        <source>simulated bold</source>
+        <translation>가상 굵게</translation>
+    </message>
+    <message>
+        <source>simulated italic</source>
+        <translation>가상 기울임</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font(s)</source>
+        <translation>
+            <numerusform>글꼴 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n missing</source>
+        <translation>
+            <numerusform>%n개 없음</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made bold by the renderer</source>
+        <translation>
+            <numerusform>렌더러가 굵게 만든 글꼴 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made italic by the renderer</source>
+        <translation>
+            <numerusform>렌더러가 기울인 글꼴 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Zip archive adds %n file(s).</source>
+        <translation>
+            <numerusform>Zip 압축 파일에 파일 %n개를 추가합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Link to a folder links %1 and copies %2 that have no file to link to.</source>
+        <translation>폴더에 링크는 %1을(를) 링크하고, 링크할 파일이 없는 %2을(를) 복사합니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>파일 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Link to a folder links %n file(s).</source>
+        <translation>
+            <numerusform>폴더에 링크는 파일 %n개를 링크합니다.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy to a folder copies %n file(s).</source>
+        <translation>
+            <numerusform>폴더에 복사는 파일 %n개를 복사합니다.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Collecting fonts</source>
+        <translation>글꼴 모으는 중</translation>
+    </message>
+    <message numerus="yes">
+        <source>Checking · %1 of %n font(s)</source>
+        <translation>
+            <numerusform>확인 중 · 글꼴 %n개 중 %1번째</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Checking fonts</source>
+        <translation>글꼴 확인 중</translation>
     </message>
     <message>
         <source>Action</source>
@@ -5821,6 +6043,10 @@ Output device: %2</source>
         <translation>폴더 선택</translation>
     </message>
     <message>
+        <source>Browse…</source>
+        <translation>찾아보기…</translation>
+    </message>
+    <message>
         <source>Write beside the subtitles, in a “Fonts” folder</source>
         <translation>자막 옆 “Fonts” 폴더에 쓰기</translation>
     </message>
@@ -5834,7 +6060,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Start lists the fonts the subtitles use.</source>
-        <translation>시작하면 자막에 사용된 글꼴을 나열합니다.</translation>
+        <translation type="vanished">시작하면 자막에 사용된 글꼴을 나열합니다.</translation>
     </message>
     <message>
         <source>Some fonts were not found, so the collection is incomplete.</source>
@@ -5881,12 +6107,40 @@ Output device: %2</source>
         <translation>폴더 열기</translation>
     </message>
     <message>
+        <source>More ways to start</source>
+        <translation>다른 시작 방법</translation>
+    </message>
+    <message>
         <source>Start on all tabs</source>
         <translation>모든 탭에서 시작</translation>
     </message>
     <message>
         <source>Start</source>
         <translation>시작</translation>
+    </message>
+    <message>
+        <source>Bold italic</source>
+        <translation>굵은 기울임</translation>
+    </message>
+    <message>
+        <source>Font and style</source>
+        <translation>글꼴 및 스타일</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>파일</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>줄</translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use, and whether this computer has each one.</source>
+        <translation>시작하면 자막에 쓰인 글꼴과 각 글꼴이 이 컴퓨터에 있는지 보여 줍니다.</translation>
+    </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>창을 닫아도 계속 진행됩니다.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -6175,6 +6429,10 @@ Output device: %2</source>
     <message>
         <source>Couldn’t link font “%1”.</source>
         <translation>“%1” 글꼴을 링크할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Styles: %1</source>
+        <translation>스타일: %1</translation>
     </message>
     <message>
         <source>Select the folder where you want to link fonts</source>
@@ -8277,7 +8535,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>글꼴 수집기</translation>
+        <translation type="vanished">글꼴 수집기</translation>
     </message>
     <message>
         <source>User guide</source>
@@ -8870,6 +9128,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Play 500 ms after the end</source>
         <translation>종료 후 0.5초 재생</translation>
+    </message>
+    <message>
+        <source>Collect fonts…</source>
+        <translation>글꼴 모으기…</translation>
     </message>
     <message>
         <source>Open subtitles…</source>
@@ -12208,7 +12470,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Font collector</source>
-        <translation>글꼴 수집기[&amp;F]</translation>
+        <translation type="vanished">글꼴 수집기[&amp;F]</translation>
     </message>
     <message>
         <source>R&amp;esample subtitles…</source>
@@ -12317,6 +12579,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens a subtitle file</source>
         <translation>자막 파일을 엽니다</translation>
+    </message>
+    <message>
+        <source>Collect &amp;fonts…</source>
+        <translation>글꼴 모으기…[&amp;F]</translation>
     </message>
     <message>
         <source>Reopen with encoding…</source>

@@ -195,6 +195,42 @@ TEST(FontCollectorReview, CheckModeCountsFamiliesAndWarnsAsLegacy)
     EXPECT_TRUE(collector.result(*review).complete);
 }
 
+TEST(FontCollectorReview, EachUsedFaceIsListedWithItsStatusFileAndLines)
+{
+    auto fonts = arialAndTimes();
+    FontCollector collector(fonts);
+    std::vector<std::pair<std::size_t, std::size_t>> progress;
+    const auto review = collector.prepare(
+        {tab(0, script({"Default,Arial,0,0", "Fake,Times,1,0", "Gone,Nowhere,0,0", "Unused,Times,0,1"},
+                       {"Default,Hello", "Default,again", "Fake,c", "Gone,x"}))},
+        CollectorAction::Check, nullptr, {},
+        [&](const collector::Face &, std::size_t done, std::size_t total) { progress.emplace_back(done, total); });
+    ASSERT_TRUE(review);
+    using Status = collector::Face::Status;
+    ASSERT_EQ(review->faces.size(), 3u);
+    const auto &arial = review->faces[0];
+    EXPECT_EQ(arial.family, u"Arial");
+    EXPECT_EQ(arial.status, Status::Found);
+    EXPECT_EQ(arial.file, u"arial.ttf");
+    EXPECT_EQ(arial.lines, 2);
+    EXPECT_EQ(arial.firstUse, (std::pair{0, 0}));
+    const auto &times = review->faces[1];
+    EXPECT_EQ(times.family, u"Times");
+    EXPECT_EQ(times.bold, 700);
+    EXPECT_EQ(times.status, Status::Simulated);
+    EXPECT_TRUE(times.simulatedBold);
+    EXPECT_FALSE(times.simulatedItalic);
+    EXPECT_EQ(times.file, u"times.ttf");
+    EXPECT_EQ(times.firstUse, (std::pair{0, 2}));
+    const auto &nowhere = review->faces[2];
+    EXPECT_EQ(nowhere.family, u"Nowhere");
+    EXPECT_EQ(nowhere.status, Status::Missing);
+    EXPECT_TRUE(nowhere.file.empty());
+    EXPECT_EQ(nowhere.lines, 1);
+    EXPECT_EQ(nowhere.firstUse, (std::pair{0, 3}));
+    EXPECT_EQ(progress, (std::vector<std::pair<std::size_t, std::size_t>>{{1, 2}, {2, 2}}));
+}
+
 TEST(FontCollectorReview, FallbackGlyphsAreReportedAndIncomplete)
 {
     auto fonts = arialAndTimes();

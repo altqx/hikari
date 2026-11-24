@@ -708,6 +708,18 @@ private slots:
         QCOMPARE(ui::theme::current().roles.accent, hex(0x9CDBC9));
     }
 
+    void tintFillsAreTheRoleAtTheirAlphaExceptInHighContrast()
+    {
+        ui::theme::State dark;
+        dark.roles = roles(Code::Dark);
+        QCOMPARE(ui::theme::tintFill(dark, dark.roles.danger, 0.18F).rgba(), QRgb(0x2EFFADAD));
+        QCOMPARE(ui::theme::tintFill(dark, dark.roles.success, 0.14F).rgba(), QRgb(0x244DBA4D));
+        ui::theme::State black;
+        black.type = ui::theme::Type::HighContrastDark;
+        black.roles = roles(Code::HighContrastBlack, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
+        QCOMPARE(ui::theme::tintFill(black, black.roles.danger, 0.18F), black.roles.panel);
+    }
+
     void themeSingletonExposesTheRoles()
     {
         QQmlEngine engine;
@@ -718,6 +730,8 @@ import Hikari.Ui
 QtObject {
     property color accent: Theme.accent
     property color panel: Theme.panel
+    property color successFill: Theme.successFill
+    property color dangerFill: Theme.dangerFill
     property string code: Theme.code
     property bool dark: Theme.dark
     property bool highContrast: Theme.highContrast
@@ -746,11 +760,15 @@ QtObject {
         QCOMPARE(picks[0].toMap().value(QStringLiteral("defaultColour")).toString(), QStringLiteral("#0037B3"));
         QCOMPARE(object->property("lightRoles").toMap().value(QStringLiteral("accent")).value<QColor>(),
                  ui::theme::accent(false, QStringLiteral("purple")).accent);
+        QCOMPARE(object->property("successFill").value<QColor>().rgba(), QRgb(0x244DBA4D));
+        QCOMPARE(object->property("dangerFill").value<QColor>().rgba(), QRgb(0x2EFFADAD));
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
         ui::theme::preview({{QStringLiteral("appearance.theme"), QStringLiteral("highContrastBlack")},
                             {QStringLiteral("appearance.followSystem"), false}});
         QCOMPARE(object->property("accent").value<QColor>(), hex(0xFFFF00));
         QCOMPARE(object->property("panel").value<QColor>(), hex(0x080808));
+        QCOMPARE(object->property("successFill").value<QColor>(), hex(0x080808));
+        QCOMPARE(object->property("dangerFill").value<QColor>(), hex(0x080808));
         QVERIFY(object->property("highContrast").toBool());
     }
 

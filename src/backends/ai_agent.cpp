@@ -370,7 +370,7 @@ RiskCheck alwaysAsk(const std::string &operation, const Json &params,
     if (setting == "fontCollector.directory") {
         const Json *value = params.find("value");
         if (outside(value && value->isString() ? std::optional(value->asString()) : std::nullopt))
-            return {Risk::Files, "It makes the Font collector copy fonts outside the subtitles' folders and your user folder."};
+            return {Risk::Files, "It makes Collect fonts copy fonts outside the subtitles' folders and your user folder."};
         return {};
     }
     if (RiskCheck check = named(kRiskySettings, setting); check.risk != Risk::None)

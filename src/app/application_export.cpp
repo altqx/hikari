@@ -203,6 +203,41 @@ QString lossText(ExportLoss loss, ExportFormat format)
     return {};
 }
 
+QString lossKind(ExportLoss loss)
+{
+    switch (loss) {
+    case ExportLoss::Drawing:
+        return QCoreApplication::translate("HikariSub.Export", "Drawing");
+    case ExportLoss::Clip:
+        return QCoreApplication::translate("HikariSub.Export", "Clip");
+    case ExportLoss::Transform:
+        return QCoreApplication::translate("HikariSub.Export", "Transform");
+    case ExportLoss::Movement:
+        return QCoreApplication::translate("HikariSub.Export", "Movement");
+    case ExportLoss::Fade:
+        return QCoreApplication::translate("HikariSub.Export", "Fade");
+    case ExportLoss::Rotation:
+        return QCoreApplication::translate("HikariSub.Export", "Rotation");
+    case ExportLoss::Font:
+        return QCoreApplication::translate("HikariSub.Export", "Font");
+    case ExportLoss::Outline:
+        return QCoreApplication::translate("HikariSub.Export", "Outline");
+    case ExportLoss::Colour:
+        return QCoreApplication::translate("HikariSub.Export", "Colour");
+    case ExportLoss::Formatting:
+        return QCoreApplication::translate("HikariSub.Export", "Formatting");
+    case ExportLoss::Position:
+        return QCoreApplication::translate("HikariSub.Export", "Position");
+    case ExportLoss::Karaoke:
+        return QCoreApplication::translate("HikariSub.Export", "Karaoke");
+    case ExportLoss::Effect:
+        return QCoreApplication::translate("HikariSub.Export", "Effect");
+    case ExportLoss::Merged:
+        return QCoreApplication::translate("HikariSub.Export", "Merged");
+    }
+    return {};
+}
+
 constexpr ExportLoss kLossOrder[] = {
     ExportLoss::Drawing,  ExportLoss::Clip,    ExportLoss::Transform,  ExportLoss::Movement, ExportLoss::Fade,
     ExportLoss::Rotation, ExportLoss::Font,    ExportLoss::Outline,    ExportLoss::Colour,   ExportLoss::Formatting,
@@ -342,6 +377,8 @@ QString stateText(application::ExportStepOutcome::State state)
         return QStringLiteral("notRun");
     case State::Skipped:
         return QStringLiteral("skipped");
+    case State::Stopped:
+        return QStringLiteral("stopped");
     }
     return {};
 }
@@ -582,8 +619,13 @@ QVariantMap Application::writeExport(application::DocumentId target, const Expor
     QSaveFile out(write.path);
     if (!out.open(QIODevice::WriteOnly) ||
         out.write(reinterpret_cast<const char *>(bytes.data()), qint64(bytes.size())) != qint64(bytes.size()) ||
-        !out.commit())
-        return problem(QCoreApplication::translate("HikariSub.Export", "Couldn’t write %1: %2").arg(QFileInfo(write.path).fileName(), out.errorString()));
+        !out.commit()) {
+        QVariantMap failed = problem(QCoreApplication::translate("HikariSub.Export", "Couldn’t write %1: %2")
+                                         .arg(QFileInfo(write.path).fileName(), out.errorString()));
+        failed.insert(QStringLiteral("writeFailed"), true);
+        failed.insert(QStringLiteral("details"), QDir::toNativeSeparators(write.path) + u'\n' + out.errorString());
+        return failed;
+    }
 
     int srv3Styles = 0;
     if (auto *editable = m_files->session(target); editable && write.srv3Changed) {
@@ -627,6 +669,19 @@ QVariantMap Application::writeExport(application::DocumentId target, const Expor
                              {QStringLiteral("number"), rows[note.line.value]},
                              {QStringLiteral("losses"), losses.join(QStringLiteral("; "))}};
     }
+    QVariantList lost;
+    for (const ExportLoss loss : kLossOrder) {
+        const auto count = std::ranges::count_if(result.notes, [loss](const auto &note) { return note.has(loss); });
+        if (count == 0)
+            continue;
+        const QString group = QStringLiteral("%1 · %2").arg(lossKind(loss)).arg(count);
+        for (const auto &note : result.notes)
+            if (note.has(loss))
+                lost << QVariantMap{{QStringLiteral("group"), group},
+                                    {QStringLiteral("line"), QVariant::fromValue<qulonglong>(note.line.value)},
+                                    {QStringLiteral("number"), rows[note.line.value]},
+                                    {QStringLiteral("text"), lossText(loss, write.format)}};
+    }
     return {{QStringLiteral("ok"), true},
             {QStringLiteral("file"), QUrl::fromLocalFile(write.path)},
             {QStringLiteral("document"), QVariant::fromValue<qulonglong>(target.value)},
@@ -634,7 +689,8 @@ QVariantMap Application::writeExport(application::DocumentId target, const Expor
             {QStringLiteral("comments"), result.commentsSkipped},
             {QStringLiteral("empty"), result.emptySkipped},
             {QStringLiteral("srv3Styles"), srv3Styles},
-            {QStringLiteral("notes"), notes}};
+            {QStringLiteral("notes"), notes},
+            {QStringLiteral("lost"), lost}};
 }
 
 QVariantMap Application::exportAfterSteps(application::DocumentId target, std::shared_ptr<ExportWrite> write,
@@ -651,9 +707,12 @@ QVariantMap Application::exportAfterSteps(application::DocumentId target, std::s
                            answer](application::ExportStepsResult result) {
         if (!self)
             return;
+        self->m_stopExport = {};
         QVariantMap out;
         if (result.failed) {
             out = {{QStringLiteral("ok"), false}, {QStringLiteral("stepsFailed"), true}};
+        } else if (result.stopped) {
+            out = {{QStringLiteral("ok"), false}, {QStringLiteral("stopped"), true}};
         } else {
             if (write->options.lines)
                 for (const auto *line : result.document.lines())
@@ -674,11 +733,18 @@ QVariantMap Application::exportAfterSteps(application::DocumentId target, std::s
         if (self)
             emit self->exportStepStarted(QString::fromStdString(name), int(step) + 1, int(count));
     };
-    application::runExportSteps(document, recipe, available, context, finished);
+    auto stop = application::runExportSteps(document, recipe, available, context, finished);
     *returned = true;
     if (*answer)
         return **answer;
+    m_stopExport = std::move(stop);
     return {{QStringLiteral("ok"), false}, {QStringLiteral("pending"), true}};
+}
+
+void Application::stopExport()
+{
+    if (m_stopExport)
+        m_stopExport();
 }
 
 QVariantMap Application::exportSteps() const

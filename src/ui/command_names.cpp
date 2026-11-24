@@ -139,7 +139,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Shift times…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Close audio"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Replace…"),
-    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Font collector"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Collect fonts…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "User guide"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Credits"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Hide tags in the Grid"),

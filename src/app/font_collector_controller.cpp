@@ -155,6 +155,22 @@ QString noteText(const Note &n)
     return {};
 }
 
+QString faceNotes(const Block &block)
+{
+    QStringList lines;
+    if (!block.styles.empty()) {
+        QStringList styles;
+        for (const auto &[style, tabs] : block.styles)
+            styles << qs(style);
+        lines << QCoreApplication::translate("HikariSub.Fonts", "Styles: %1").arg(styles.join(QStringLiteral(", ")));
+    }
+    for (const auto *notes : {&block.infos, &block.warnings})
+        for (const auto &note : *notes)
+            if (note.kind != Note::Kind::FoundFile && note.kind != Note::Kind::UnusedStyle)
+                lines << noteText(note);
+    return lines.join(QLatin1Char('\n'));
+}
+
 std::shared_ptr<const std::vector<std::byte>> readFontFile(const std::u16string &path)
 {
     QFile f(QString::fromUtf16(path.data(), qsizetype(path.size())));
@@ -225,6 +241,49 @@ QString FontCollectorController::logText() const
     return out;
 }
 
+QVariantList FontCollectorController::rows() const
+{
+    using Status = application::collector::Face::Status;
+    QVariantList out;
+    for (const auto &face : m_faces) {
+        const QString file = qs(face.file);
+        const QString status = face.status == Status::Missing     ? QStringLiteral("missing")
+                               : m_notLinked.contains(file)       ? QStringLiteral("notLinked")
+                               : face.status == Status::Simulated ? QStringLiteral("simulated")
+                                                                  : QStringLiteral("found");
+        out << QVariantMap{{QStringLiteral("family"), qs(face.family)},
+                           {QStringLiteral("bold"), face.bold},
+                           {QStringLiteral("italic"), face.italic},
+                           {QStringLiteral("status"), status},
+                           {QStringLiteral("file"), file},
+                           {QStringLiteral("simulatedBold"), face.simulatedBold},
+                           {QStringLiteral("simulatedItalic"), face.simulatedItalic},
+                           {QStringLiteral("lines"), face.lines},
+                           {QStringLiteral("notes"), m_familyNotes.value(qs(face.family))}};
+    }
+    return out;
+}
+
+void FontCollectorController::clearRows()
+{
+    m_faces.clear();
+    m_notLinked.clear();
+    m_familyNotes.clear();
+    m_facesToCheck = 0;
+    m_filesToWrite = 0;
+    m_filesCopiedInstead = 0;
+    emit rowsChanged();
+}
+
+void FontCollectorController::chooseRow(int index)
+{
+    if (index < 0 || index >= int(m_faces.size()) || !m_hooks.goToLine)
+        return;
+    const auto [tab, line] = m_faces[std::size_t(index)].firstUse;
+    if (tab >= 0 && line >= 0)
+        m_hooks.goToLine(tab, line);
+}
+
 void FontCollectorController::setStage(Stage stage)
 {
     m_stage = stage;
@@ -255,6 +314,7 @@ void FontCollectorController::open()
     m_fromMkv = m_settings.boolean("fontCollector.fromMkv");
     m_fromMkvEnabled = application::fontsFromMkvEnabled(currentVideo().toStdU16String());
     clearLog();
+    clearRows();
     m_review.reset();
     m_canSaveFolder = false;
     m_copyPath.clear();
@@ -316,6 +376,7 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         return {};
     clearLog();
     emit logChanged();
+    clearRows();
     m_review.reset();
     const auto tabs = m_hooks.tabs ? m_hooks.tabs() : std::vector<Tab>{};
     const int current = m_hooks.currentTab ? m_hooks.currentTab() : -1;
@@ -440,8 +501,19 @@ void FontCollectorController::runPrepare()
     if (m_hooks.folderFonts)
         for (auto &font : m_hooks.folderFonts())
             folderFonts.push_back({std::move(font.family), std::move(font.bytes)});
-    m_worker = std::thread([this, documents = std::move(documents), action, folderFonts = std::move(folderFonts)]() mutable {
-        auto review = m_collector->prepare(documents, action, &m_cancel, std::move(folderFonts));
+    const std::uint64_t run = ++m_prepareRun;
+    const auto faceDone = [this, run](const application::collector::Face &face, std::size_t, std::size_t total) {
+        QMetaObject::invokeMethod(this, [this, run, face, total] {
+            if (run != m_prepareRun || m_stage != Working)
+                return;
+            m_faces.push_back(face);
+            m_facesToCheck = int(total);
+            emit rowsChanged();
+        }, Qt::QueuedConnection);
+    };
+    m_worker = std::thread([this, documents = std::move(documents), action, folderFonts = std::move(folderFonts),
+                            faceDone]() mutable {
+        auto review = m_collector->prepare(documents, action, &m_cancel, std::move(folderFonts), faceDone);
         QMetaObject::invokeMethod(this, [this, review = std::move(review)]() mutable { prepared(std::move(review)); },
                                   Qt::QueuedConnection);
     });
@@ -630,6 +702,17 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
         return;
     }
     m_review = std::move(*review);
+    m_faces = m_review->faces;
+    m_familyNotes.clear();
+    for (const auto *blocks : {&m_review->found, &m_review->notFound})
+        for (const auto &[family, block] : *blocks)
+            m_familyNotes[qs(family)] = faceNotes(block);
+    m_facesToCheck = int(m_faces.size());
+    m_filesToWrite = int(m_review->files.size());
+    m_filesCopiedInstead = m_runAction == CollectorAction::LinkToFolder
+                               ? int(std::ranges::count_if(m_review->files, [](const auto &file) { return file.path.empty(); }))
+                               : 0;
+    emit rowsChanged();
     if (m_review->retrieveFailed) {
         send(QCoreApplication::translate("HikariSub.Fonts",
                                          "Cannot retrieve the font file sizes and names; copying will be cancelled.") +
@@ -764,6 +847,12 @@ void FontCollectorController::applied(CollectorResult result)
             send(QCoreApplication::translate("HikariSub.Fonts", "Cannot create folder."), kWarning);
         send(QCoreApplication::translate("HikariSub.Fonts", "Path is not available"), kWarning);
     } else {
+        for (const auto *blocks : {&result.found, &result.notFound})
+            for (const auto &[family, block] : *blocks)
+                for (const auto &note : block.warnings)
+                    if (note.kind == Note::Kind::CannotLink)
+                        m_notLinked << qs(note.a);
+        emit rowsChanged();
         logBlocks(result.found, result.notFound);
         logKept();
         logRenderer(review);
@@ -875,9 +964,16 @@ void FontCollectorController::mkvPrepared(bool cancelled)
         logMkvTab(i);
         for (const auto &font : m_mkvTabs[i].fonts) {
             send(QCoreApplication::translate("HikariSub.Fonts", "Font named “%1”.").arg(qs(font.name)) + u'\n', kNormal);
+            application::collector::Face face;
+            face.family = font.name;
+            face.file = font.name;
+            m_faces.push_back(face);
             ++count;
         }
     }
+    m_facesToCheck = int(m_faces.size());
+    m_filesToWrite = count;
+    emit rowsChanged();
     if (m_runAction == CollectorAction::Check) {
         m_mkvTabs.clear();
         logFinished();

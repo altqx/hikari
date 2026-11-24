@@ -52,7 +52,14 @@ bool LuaExportFilters::start(const std::string &scriptFile, const std::string &f
         QObject::disconnect(*connection);
         return false;
     }
+    m_running = host;
     return true;
+}
+
+void LuaExportFilters::stop()
+{
+    if (m_running)
+        m_running->cancel();
 }
 
 bool LuaExportFilters::run(const std::string &scriptFile, const std::string &filterName,

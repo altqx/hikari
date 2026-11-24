@@ -115,7 +115,7 @@ so a user moving from HikariSub legacy sees the same words.
 | User folder | โฟลเดอร์ผู้ใช้ | |
 | Legacy (HikariSub legacy, its settings) | รุ่นเดิม | Import legacy settings: นำเข้าการตั้งค่ารุ่นเดิม |
 | Lead-in, Lead-out | ช่วงนำ, ช่วงต่อท้าย | |
-| Font collector | ตัวรวบรวมแบบอักษร | |
+| Collect fonts | รวบรวมแบบอักษร | The command and window; กำลังรวบรวมแบบอักษร while it runs |
 | Archive (zip) | ไฟล์บีบอัด | no Latin "zip" |
 | Renderer | ตัวแสดงผล | |
 | Crash, freeze | การขัดข้อง, การค้าง | crash reports |

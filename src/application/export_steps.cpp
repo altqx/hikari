@@ -280,13 +280,22 @@ struct StepsRun : std::enable_shared_from_this<StepsRun> {
     std::function<void(ExportStepsResult)> done;
     std::vector<ExportStepOutcome> outcomes;
     std::size_t next = 0;
+    bool stopping = false;
+    bool filterRunning = false;
 
     void finish(bool failed)
     {
         for (std::size_t k = next; k < steps.size(); ++k)
             outcomes.push_back({steps[k].id, nameOf(steps[k].id), State::NotRun});
         auto callback = std::move(done);
-        callback({std::move(document), std::move(outcomes), failed});
+        callback({std::move(document), std::move(outcomes), failed, stopping && !failed});
+    }
+
+    void stop()
+    {
+        stopping = true;
+        if (filterRunning && context.filters)
+            context.filters->stop();
     }
 
     std::string nameOf(const std::string &id) const
@@ -309,7 +318,7 @@ struct StepsRun : std::enable_shared_from_this<StepsRun> {
 
     void advance()
     {
-        if (next >= steps.size())
+        if (next >= steps.size() || stopping)
             return finish(false);
         const ExportStep &step = steps[next];
         ExportStepOutcome outcome{step.id, nameOf(step.id), State::Done};
@@ -371,9 +380,15 @@ struct StepsRun : std::enable_shared_from_this<StepsRun> {
         }
         auto self = shared_from_this();
         const bool karaoke = step.id == kKaraokeTemplateStep;
+        filterRunning = true;
         const bool started = context.filters->run(
             script, filter, *snapshot, settingsDialog(step.settings),
             [self, session, snapshot = *snapshot, outcome, karaoke](std::expected<MacroResult, std::string> result) mutable {
+                self->filterRunning = false;
+                if (!result && self->stopping) {
+                    outcome.state = State::Stopped;
+                    return self->record(std::move(outcome));
+                }
                 if (!result) {
                     outcome.state = State::Failed;
                     outcome.problem = Problem::ScriptError;
@@ -392,6 +407,7 @@ struct StepsRun : std::enable_shared_from_this<StepsRun> {
                 self->record(std::move(outcome));
             });
         if (!started) {
+            filterRunning = false;
             outcome.state = State::Failed;
             outcome.problem = Problem::Busy;
             record(std::move(outcome));
@@ -579,8 +595,9 @@ DialogRequest settingsDialog(const ExportStepSettings &settings)
     return request;
 }
 
-void runExportSteps(core::Document document, const ExportRecipe &recipe, const std::vector<AvailableStep> &available,
-                    const ExportStepsContext &context, std::function<void(ExportStepsResult)> done)
+StopExportSteps runExportSteps(core::Document document, const ExportRecipe &recipe,
+                               const std::vector<AvailableStep> &available, const ExportStepsContext &context,
+                               std::function<void(ExportStepsResult)> done)
 {
     auto run = std::make_shared<StepsRun>();
     run->document = std::move(document);
@@ -591,6 +608,10 @@ void runExportSteps(core::Document document, const ExportRecipe &recipe, const s
     run->context = context;
     run->done = std::move(done);
     run->advance();
+    return [weak = std::weak_ptr<StepsRun>(run)] {
+        if (const auto run = weak.lock())
+            run->stop();
+    };
 }
 
 }

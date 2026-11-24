@@ -4834,6 +4834,58 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Scalono z nakładającymi się linijkami</translation>
     </message>
     <message>
+        <source>Drawing</source>
+        <translation>Rysunek</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>Wycinek</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation>Transformacja</translation>
+    </message>
+    <message>
+        <source>Movement</source>
+        <translation>Ruch</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>Zanikanie</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>Obrót</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Czcionka</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>Obwódka</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>Kolor</translation>
+    </message>
+    <message>
+        <source>Formatting</source>
+        <translation>Formatowanie</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>Pozycja</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation>Efekt</translation>
+    </message>
+    <message>
+        <source>Merged</source>
+        <translation>Scalone</translation>
+    </message>
+    <message>
         <source>There is nothing to export.</source>
         <translation>Nie ma nic do wyeksportowania.</translation>
     </message>
@@ -4942,6 +4994,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Kolor cienia bieżącego słowa dla %1</translation>
     </message>
     <message>
+        <source>Exporting</source>
+        <translation>Eksportowanie</translation>
+    </message>
+    <message>
         <source>Untitled</source>
         <translation>Bez nazwy</translation>
     </message>
@@ -5040,6 +5096,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Didn’t run</source>
         <translation>Nie uruchomiono</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>Zatrzymano</translation>
     </message>
     <message>
         <source>Variable needs a video or timecodes file</source>
@@ -5298,6 +5358,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Pliki %1 (*.%2)</translation>
     </message>
     <message>
+        <source>plain text</source>
+        <translation>zwykły tekst</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
     </message>
@@ -5425,12 +5489,56 @@ Urządzenie wyjściowe: %2</translation>
         <source>Before export</source>
         <translation>Przed eksportem</translation>
     </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>Zamknięcie okna nie przerywa pracy.</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>Zatrzymaj</translation>
+    </message>
+    <message>
+        <source>Stopped. Nothing was written.</source>
+        <translation>Zatrzymano. Nic nie zostało zapisane.</translation>
+    </message>
+    <message>
+        <source>Choose another folder…</source>
+        <translation>Wybierz inny folder…</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Choose a line to select it in the Grid.</source>
+        <translation>Wybierz linijkę, aby zaznaczyć ją na liście napisów.</translation>
+    </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>Wyeksportowano %n linijkę do „%1”.</numerusform>
             <numerusform>Wyeksportowano %n linijki do „%1”.</numerusform>
             <numerusform>Wyeksportowano %n linijek do „%1”.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved. %n line(s) lost something %1 can’t carry.</source>
+        <translation>
+            <numerusform>Zapisano. %n linijka straciła coś, czego %1 nie obsługuje.</numerusform>
+            <numerusform>Zapisano. %n linijki straciły coś, czego %1 nie obsługuje.</numerusform>
+            <numerusform>Zapisano. %n linijek straciło coś, czego %1 nie obsługuje.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Copy list</source>
+        <translation>Kopiuj listę</translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved %1 · %n line(s) · nothing lost</source>
+        <translation>
+            <numerusform>Zapisano %1 · %n linijka · nic nie utracono</numerusform>
+            <numerusform>Zapisano %1 · %n linijki · nic nie utracono</numerusform>
+            <numerusform>Zapisano %1 · %n linijek · nic nie utracono</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5459,11 +5567,11 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>What the format could not keep. Choose a line to show it.</source>
-        <translation>Czego format nie mógł zachować. Wybierz linijkę, aby ją pokazać.</translation>
+        <translation type="vanished">Czego format nie mógł zachować. Wybierz linijkę, aby ją pokazać.</translation>
     </message>
     <message>
         <source>Nothing was dropped or approximated</source>
-        <translation>Nic nie zostało pominięte ani przybliżone</translation>
+        <translation type="vanished">Nic nie zostało pominięte ani przybliżone</translation>
     </message>
     <message>
         <source>Export report</source>
@@ -5471,11 +5579,11 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Line</source>
-        <translation>Linijka</translation>
+        <translation type="vanished">Linijka</translation>
     </message>
     <message>
         <source>Dropped or approximated</source>
-        <translation>Pominięte lub przybliżone</translation>
+        <translation type="vanished">Pominięte lub przybliżone</translation>
     </message>
     <message>
         <source>Line %1: %2</source>
@@ -5484,6 +5592,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Export</source>
         <translation>Eksportuj</translation>
+    </message>
+    <message>
+        <source>Show the file</source>
+        <translation>Pokaż plik</translation>
     </message>
     <message>
         <source>Close</source>
@@ -5496,6 +5608,14 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>%1 isn’t running, so it can’t export.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>Otwórz</translation>
     </message>
 </context>
 <context>
@@ -5842,7 +5962,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>Kolekcjoner czcionek</translation>
+        <translation type="vanished">Kolekcjoner czcionek</translation>
     </message>
     <message>
         <source>Select the folder where you want to copy fonts</source>
@@ -5854,11 +5974,11 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Select a folder</source>
-        <translation>Wybierz folder</translation>
+        <translation type="vanished">Wybierz folder</translation>
     </message>
     <message>
         <source>Font collector log</source>
-        <translation>Dziennik kolekcjonera czcionek</translation>
+        <translation type="vanished">Dziennik kolekcjonera czcionek</translation>
     </message>
     <message>
         <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
@@ -5875,6 +5995,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
         <translation>Tworzy w folderze dowiązanie do każdego pliku czcionki używanej w napisach. Dowiązania przestaną działać, jeśli czcionki zostaną przeniesione lub usunięte.</translation>
+    </message>
+    <message>
+        <source>Collect fonts</source>
+        <translation>Zbierz czcionki</translation>
     </message>
     <message>
         <source>Writing the new archive replaces it.</source>
@@ -5899,6 +6023,126 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Keep existing</source>
         <translation>Zachowaj istniejące</translation>
+    </message>
+    <message>
+        <source>Bold Italic</source>
+        <translation type="vanished">Pogrubiona kursywa</translation>
+    </message>
+    <message>
+        <source>Regular</source>
+        <translation>Zwykła</translation>
+    </message>
+    <message>
+        <source>Weight %1</source>
+        <translation>Grubość %1</translation>
+    </message>
+    <message>
+        <source>Not on this computer</source>
+        <translation>Brak na tym komputerze</translation>
+    </message>
+    <message>
+        <source>Couldn’t link: turn on Developer Mode, or use a folder on the font’s drive</source>
+        <translation>Nie można dowiązać: włącz tryb dewelopera lub użyj folderu na dysku z czcionką</translation>
+    </message>
+    <message>
+        <source>Couldn’t link</source>
+        <translation>Nie można dowiązać</translation>
+    </message>
+    <message>
+        <source>simulated bold and italic</source>
+        <translation>symulowane pogrubienie i kursywa</translation>
+    </message>
+    <message>
+        <source>simulated bold</source>
+        <translation>symulowane pogrubienie</translation>
+    </message>
+    <message>
+        <source>simulated italic</source>
+        <translation>symulowana kursywa</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font(s)</source>
+        <translation>
+            <numerusform>%n czcionka</numerusform>
+            <numerusform>%n czcionki</numerusform>
+            <numerusform>%n czcionek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n missing</source>
+        <translation>
+            <numerusform>%n brakująca</numerusform>
+            <numerusform>%n brakujące</numerusform>
+            <numerusform>%n brakujących</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made bold by the renderer</source>
+        <translation>
+            <numerusform>%n pogrubiona przez renderer</numerusform>
+            <numerusform>%n pogrubione przez renderer</numerusform>
+            <numerusform>%n pogrubionych przez renderer</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made italic by the renderer</source>
+        <translation>
+            <numerusform>%n pochylona przez renderer</numerusform>
+            <numerusform>%n pochylone przez renderer</numerusform>
+            <numerusform>%n pochylonych przez renderer</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Zip archive adds %n file(s).</source>
+        <translation>
+            <numerusform>Archiwum zip doda %n plik.</numerusform>
+            <numerusform>Archiwum zip doda %n pliki.</numerusform>
+            <numerusform>Archiwum zip doda %n plików.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Link to a folder links %1 and copies %2 that have no file to link to.</source>
+        <translation>Dowiązanie w folderze dowiąże %1 i skopiuje %2 bez pliku do dowiązania.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n plik</numerusform>
+            <numerusform>%n pliki</numerusform>
+            <numerusform>%n plików</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Link to a folder links %n file(s).</source>
+        <translation>
+            <numerusform>Dowiązanie w folderze dowiąże %n plik.</numerusform>
+            <numerusform>Dowiązanie w folderze dowiąże %n pliki.</numerusform>
+            <numerusform>Dowiązanie w folderze dowiąże %n plików.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy to a folder copies %n file(s).</source>
+        <translation>
+            <numerusform>Kopiowanie do folderu skopiuje %n plik.</numerusform>
+            <numerusform>Kopiowanie do folderu skopiuje %n pliki.</numerusform>
+            <numerusform>Kopiowanie do folderu skopiuje %n plików.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Collecting fonts</source>
+        <translation>Zbieranie czcionek</translation>
+    </message>
+    <message numerus="yes">
+        <source>Checking · %1 of %n font(s)</source>
+        <translation>
+            <numerusform>Sprawdzanie · %1 z %n czcionki</numerusform>
+            <numerusform>Sprawdzanie · %1 z %n czcionek</numerusform>
+            <numerusform>Sprawdzanie · %1 z %n czcionek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Checking fonts</source>
+        <translation>Sprawdzanie czcionek</translation>
     </message>
     <message>
         <source>Action</source>
@@ -5937,6 +6181,10 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Wybierz folder</translation>
     </message>
     <message>
+        <source>Browse…</source>
+        <translation>Przeglądaj…</translation>
+    </message>
+    <message>
         <source>Write beside the subtitles, in a “Fonts” folder</source>
         <translation>Zapisz obok napisów, w folderze “Fonts”</translation>
     </message>
@@ -5950,7 +6198,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>Start lists the fonts the subtitles use.</source>
-        <translation>Po rozpoczęciu zostanie wyświetlona lista czcionek używanych w napisach.</translation>
+        <translation type="vanished">Po rozpoczęciu zostanie wyświetlona lista czcionek używanych w napisach.</translation>
     </message>
     <message>
         <source>Some fonts were not found, so the collection is incomplete.</source>
@@ -5997,12 +6245,40 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Pokaż folder</translation>
     </message>
     <message>
+        <source>More ways to start</source>
+        <translation>Więcej sposobów rozpoczęcia</translation>
+    </message>
+    <message>
         <source>Start on all tabs</source>
         <translation>Rozpocznij na wszystkich zakładkach</translation>
     </message>
     <message>
         <source>Start</source>
         <translation>Rozpocznij</translation>
+    </message>
+    <message>
+        <source>Bold italic</source>
+        <translation>Pogrubiona kursywa</translation>
+    </message>
+    <message>
+        <source>Font and style</source>
+        <translation>Czcionka i styl</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>Plik</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>Linijki</translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use, and whether this computer has each one.</source>
+        <translation>Rozpocznij wyświetli czcionki używane w napisach i sprawdzi, czy każda z nich jest na tym komputerze.</translation>
+    </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>Zamknięcie okna nie przerywa pracy.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -6295,6 +6571,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Couldn’t link font “%1”.</source>
         <translation>Nie można dowiązać czcionki “%1”.</translation>
+    </message>
+    <message>
+        <source>Styles: %1</source>
+        <translation>Style: %1</translation>
     </message>
     <message>
         <source>Select the folder where you want to link fonts</source>
@@ -8433,7 +8713,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>Kolekcjoner czcionek</translation>
+        <translation type="vanished">Kolekcjoner czcionek</translation>
     </message>
     <message>
         <source>User guide</source>
@@ -9026,6 +9306,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Play 500 ms after the end</source>
         <translation>Odtwórz 500 ms po końcu</translation>
+    </message>
+    <message>
+        <source>Collect fonts…</source>
+        <translation>Zbierz czcionki…</translation>
     </message>
     <message>
         <source>Open subtitles…</source>
@@ -12440,7 +12724,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>&amp;Font collector</source>
-        <translation>&amp;Kolekcjoner czcionek</translation>
+        <translation type="vanished">&amp;Kolekcjoner czcionek</translation>
     </message>
     <message>
         <source>R&amp;esample subtitles…</source>
@@ -12549,6 +12833,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Opens a subtitle file</source>
         <translation>Otwiera plik napisów</translation>
+    </message>
+    <message>
+        <source>Collect &amp;fonts…</source>
+        <translation>&amp;Zbierz czcionki…</translation>
     </message>
     <message>
         <source>Reopen with encoding…</source>

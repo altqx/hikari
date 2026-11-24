@@ -37,7 +37,7 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 | A22 | ui/AllTagsEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | inline error under the field (PU5-inline-errors) | Edit tags |
 | A23 | ui/ShapesEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | inline error under the field (PU5-inline-errors) | Edit shapes |
 | A24 | ui/FontCatalogWindow.qml info | Info | Enter a name for the new catalog | warning | yes | message box | Manage font catalogs (PU3: gone; New and Rename say an empty name inline in their popovers) |
-| A25 | ui/FontCollectorDialog.qml message | none | Start refusals | warning / error | yes | message box | Font collector |
+| A25 | ui/FontCollectorDialog.qml message | none | Start refusals | warning / error | yes | message box | Collect fonts |
 | A26 | ui/SettingsDialog.qml warningDialog | Warning | The selected %1 for conversion does not exist… | warning | yes | toast | Settings |
 | A27 | ui/SelectLinesDialog.qml result | Select (Close + OK) | %1 lines selected. … | info | yes | toast | Select lines |
 | A28 | ui/SearchTool.qml question, kind 0 | Confirmation / Find and Replace | Could not find… / Replaced %1 times. | info | yes (shared) | toast | Find / Replace all |
@@ -48,8 +48,8 @@ notices were already windows of their own (DG1); UpdateMessage.qml is gone. A11 
 error text under Details.
 
 PU6 ([#308](https://github.com/altqx/hikari/issues/308)) moved the questions of its popups the same way: the
-Font collector's "The zip file already exists, delete it?" (Yes / No, titled "Confirmation") is a message box
-titled "Font collector" with Replace / Cancel (PU6-font-collector-replace), and "Incompatible resolution"
+Collect fonts' "The zip file already exists, delete it?" (Yes / No, titled "Confirmation") is a message box
+titled "Collect fonts" with Replace / Cancel (PU6-font-collector-replace), and "Incompatible resolution"
 (Change / Do not change / Disable warning) a message box titled "Open video" with its choices as buttons and
 "Don't ask again" (PU6-resolution-question). A3 and A4 come from the Spellchecker panel (PU6-spellchecker-panel).
 

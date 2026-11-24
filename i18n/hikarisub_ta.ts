@@ -4793,6 +4793,58 @@ Output device: %2</source>
         <translation>ஒன்றின்மேல் வரும் வரிகளுடன் ஒன்றிணைக்கப்பட்டது</translation>
     </message>
     <message>
+        <source>Drawing</source>
+        <translation>வரைபடம்</translation>
+    </message>
+    <message>
+        <source>Clip</source>
+        <translation>கிளிப்</translation>
+    </message>
+    <message>
+        <source>Transform</source>
+        <translation>உருமாற்றம்</translation>
+    </message>
+    <message>
+        <source>Movement</source>
+        <translation>நகர்வு</translation>
+    </message>
+    <message>
+        <source>Fade</source>
+        <translation>மங்குதல்</translation>
+    </message>
+    <message>
+        <source>Rotation</source>
+        <translation>சுழற்சி</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Outline</source>
+        <translation>வெளிக்கோடு</translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation>வண்ணம்</translation>
+    </message>
+    <message>
+        <source>Formatting</source>
+        <translation>வடிவமைப்பு</translation>
+    </message>
+    <message>
+        <source>Position</source>
+        <translation>நிலை</translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation>விளைவு</translation>
+    </message>
+    <message>
+        <source>Merged</source>
+        <translation>இணைக்கப்பட்டது</translation>
+    </message>
+    <message>
         <source>There is nothing to export.</source>
         <translation>ஏற்றுமதி செய்ய எதுவும் இல்லை.</translation>
     </message>
@@ -4901,6 +4953,10 @@ Output device: %2</source>
         <translation>%1 க்கான தற்போதைய சொல் நிழல் நிறம்</translation>
     </message>
     <message>
+        <source>Exporting</source>
+        <translation>ஏற்றுமதி செய்கிறது</translation>
+    </message>
+    <message>
         <source>Untitled</source>
         <translation>தலைப்பிடப்படாத</translation>
     </message>
@@ -4996,6 +5052,10 @@ Output device: %2</source>
     <message>
         <source>Didn’t run</source>
         <translation>இயங்கவில்லை</translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation>நிறுத்தப்பட்டது</translation>
     </message>
     <message>
         <source>Variable needs a video or timecodes file</source>
@@ -5252,6 +5312,10 @@ Output device: %2</source>
         <translation>%1 கோப்புகள் (*.%2)</translation>
     </message>
     <message>
+        <source>plain text</source>
+        <translation>எளிய உரை</translation>
+    </message>
+    <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
     </message>
@@ -5379,11 +5443,53 @@ Output device: %2</source>
         <source>Before export</source>
         <translation>ஏற்றுமதிக்கு முன்</translation>
     </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>சாளரத்தை மூடினாலும் இது தொடரும்.</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation>நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Stopped. Nothing was written.</source>
+        <translation>நிறுத்தப்பட்டது. எதுவும் எழுதப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Choose another folder…</source>
+        <translation>வேறு கோப்புறையைத் தேர்வுசெய்…</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>சரி</translation>
+    </message>
+    <message>
+        <source>Choose a line to select it in the Grid.</source>
+        <translation>கட்டத்தில் தேர்ந்தெடுக்க ஒரு வரியைத் தேர்வுசெய்யவும்.</translation>
+    </message>
     <message numerus="yes">
         <source>Exported %n line(s) to “%1”.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%n வரி “%1” க்கு ஏற்றுமதி செய்யப்பட்டது.</numerusform>
             <numerusform>%n வரிகள் “%1” க்கு ஏற்றுமதி செய்யப்பட்டன.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved. %n line(s) lost something %1 can’t carry.</source>
+        <translation>
+            <numerusform>சேமிக்கப்பட்டது. %1 கொள்ள முடியாத ஒன்றை %n வரி இழந்தது.</numerusform>
+            <numerusform>சேமிக்கப்பட்டது. %1 கொள்ள முடியாத ஒன்றை %n வரிகள் இழந்தன.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Copy list</source>
+        <translation>பட்டியலை நகலெடு</translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved %1 · %n line(s) · nothing lost</source>
+        <translation>
+            <numerusform>%1 சேமிக்கப்பட்டது · %n வரி · எதுவும் இழக்கப்படவில்லை</numerusform>
+            <numerusform>%1 சேமிக்கப்பட்டது · %n வரிகள் · எதுவும் இழக்கப்படவில்லை</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -5409,11 +5515,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>What the format could not keep. Choose a line to show it.</source>
-        <translation>இந்த வடிவம் வைத்திருக்க முடியாதவை. ஒரு வரியைக் காட்ட அதைத் தேர்ந்தெடு.</translation>
+        <translation type="vanished">இந்த வடிவம் வைத்திருக்க முடியாதவை. ஒரு வரியைக் காட்ட அதைத் தேர்ந்தெடு.</translation>
     </message>
     <message>
         <source>Nothing was dropped or approximated</source>
-        <translation>எதுவும் விடுபடவோ தோராயமாக்கப்படவோ இல்லை</translation>
+        <translation type="vanished">எதுவும் விடுபடவோ தோராயமாக்கப்படவோ இல்லை</translation>
     </message>
     <message>
         <source>Export report</source>
@@ -5421,11 +5527,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Line</source>
-        <translation>வரி</translation>
+        <translation type="vanished">வரி</translation>
     </message>
     <message>
         <source>Dropped or approximated</source>
-        <translation>விடுபட்டவை அல்லது தோராயமானவை</translation>
+        <translation type="vanished">விடுபட்டவை அல்லது தோராயமானவை</translation>
     </message>
     <message>
         <source>Line %1: %2</source>
@@ -5434,6 +5540,10 @@ Output device: %2</source>
     <message>
         <source>Export</source>
         <translation>ஏற்றுமதி செய்</translation>
+    </message>
+    <message>
+        <source>Show the file</source>
+        <translation>கோப்பைக் காட்டு</translation>
     </message>
     <message>
         <source>Close</source>
@@ -5446,6 +5556,14 @@ Output device: %2</source>
     <message>
         <source>%1 isn’t running, so it can’t export.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>மறை</translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation>திற</translation>
     </message>
 </context>
 <context>
@@ -5786,7 +5904,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>எழுத்துருக்கள் சேகரிப்பான்</translation>
+        <translation type="vanished">எழுத்துருக்கள் சேகரிப்பான்</translation>
     </message>
     <message>
         <source>Select the folder where you want to copy fonts</source>
@@ -5798,11 +5916,11 @@ Output device: %2</source>
     </message>
     <message>
         <source>Select a folder</source>
-        <translation>ஒரு கோப்புறையைத் தேர்ந்தெடுக்கவும்</translation>
+        <translation type="vanished">ஒரு கோப்புறையைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Font collector log</source>
-        <translation>எழுத்துரு சேகரிப்பான் பதிவு</translation>
+        <translation type="vanished">எழுத்துரு சேகரிப்பான் பதிவு</translation>
     </message>
     <message>
         <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
@@ -5819,6 +5937,10 @@ Output device: %2</source>
     <message>
         <source>Links each font file the subtitles use into the folder. The links break if the fonts move or are deleted.</source>
         <translation>வசன வரிகள் பயன்படுத்தும் ஒவ்வொரு எழுத்துருக் கோப்பையும் கோப்புறையில் இணைக்கிறது. எழுத்துருக்கள் நகர்த்தப்பட்டாலோ நீக்கப்பட்டாலோ இணைப்புகள் உடையும்.</translation>
+    </message>
+    <message>
+        <source>Collect fonts</source>
+        <translation>எழுத்துருக்களைச் சேகரி</translation>
     </message>
     <message>
         <source>Writing the new archive replaces it.</source>
@@ -5841,6 +5963,117 @@ Output device: %2</source>
     <message>
         <source>Keep existing</source>
         <translation>இருப்பதை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Bold Italic</source>
+        <translation type="vanished">தடிமன் சாய்வு</translation>
+    </message>
+    <message>
+        <source>Regular</source>
+        <translation>இயல்பு</translation>
+    </message>
+    <message>
+        <source>Weight %1</source>
+        <translation>தடிமன் அளவு %1</translation>
+    </message>
+    <message>
+        <source>Not on this computer</source>
+        <translation>இந்தக் கணினியில் இல்லை</translation>
+    </message>
+    <message>
+        <source>Couldn’t link: turn on Developer Mode, or use a folder on the font’s drive</source>
+        <translation>இணைக்க முடியவில்லை: Developer Mode-ஐ இயக்கவும், அல்லது எழுத்துரு உள்ள இயக்ககத்தில் ஒரு கோப்புறையைப் பயன்படுத்தவும்</translation>
+    </message>
+    <message>
+        <source>Couldn’t link</source>
+        <translation>இணைக்க முடியவில்லை</translation>
+    </message>
+    <message>
+        <source>simulated bold and italic</source>
+        <translation>உருவகிக்கப்பட்ட தடிமன், சாய்வு</translation>
+    </message>
+    <message>
+        <source>simulated bold</source>
+        <translation>உருவகிக்கப்பட்ட தடிமன்</translation>
+    </message>
+    <message>
+        <source>simulated italic</source>
+        <translation>உருவகிக்கப்பட்ட சாய்வு</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font(s)</source>
+        <translation>
+            <numerusform>%n எழுத்துரு</numerusform>
+            <numerusform>%n எழுத்துருக்கள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n missing</source>
+        <translation>
+            <numerusform>%n இல்லை</numerusform>
+            <numerusform>%n இல்லை</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made bold by the renderer</source>
+        <translation>
+            <numerusform>%n ரெண்டரரால் தடிமனாக்கப்பட்டது</numerusform>
+            <numerusform>%n ரெண்டரரால் தடிமனாக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made italic by the renderer</source>
+        <translation>
+            <numerusform>%n ரெண்டரரால் சாய்வாக்கப்பட்டது</numerusform>
+            <numerusform>%n ரெண்டரரால் சாய்வாக்கப்பட்டன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Zip archive adds %n file(s).</source>
+        <translation>
+            <numerusform>Zip காப்பகம் %n கோப்பைச் சேர்க்கும்.</numerusform>
+            <numerusform>Zip காப்பகம் %n கோப்புகளைச் சேர்க்கும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Link to a folder links %1 and copies %2 that have no file to link to.</source>
+        <translation>கோப்புறையில் இணை %1 ஐ இணைக்கும், இணைக்கக் கோப்பு இல்லாத %2 ஐ நகலெடுக்கும்.</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n கோப்பு</numerusform>
+            <numerusform>%n கோப்புகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Link to a folder links %n file(s).</source>
+        <translation>
+            <numerusform>கோப்புறையில் இணை %n கோப்பை இணைக்கும்.</numerusform>
+            <numerusform>கோப்புறையில் இணை %n கோப்புகளை இணைக்கும்.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy to a folder copies %n file(s).</source>
+        <translation>
+            <numerusform>கோப்புறைக்கு நகலெடு %n கோப்பை நகலெடுக்கும்.</numerusform>
+            <numerusform>கோப்புறைக்கு நகலெடு %n கோப்புகளை நகலெடுக்கும்.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Collecting fonts</source>
+        <translation>எழுத்துருக்களைச் சேகரிக்கிறது</translation>
+    </message>
+    <message numerus="yes">
+        <source>Checking · %1 of %n font(s)</source>
+        <translation>
+            <numerusform>சரிபார்க்கிறது · %n எழுத்துருவில் %1</numerusform>
+            <numerusform>சரிபார்க்கிறது · %n எழுத்துருக்களில் %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Checking fonts</source>
+        <translation>எழுத்துருக்களைச் சரிபார்க்கிறது</translation>
     </message>
     <message>
         <source>Action</source>
@@ -5879,6 +6112,10 @@ Output device: %2</source>
         <translation>கோப்புறையைத் தேர்வுசெய்</translation>
     </message>
     <message>
+        <source>Browse…</source>
+        <translation>உலாவு…</translation>
+    </message>
+    <message>
         <source>Write beside the subtitles, in a “Fonts” folder</source>
         <translation>வசன வரிகளின் அருகில், “எழுத்துருக்கள்” கோப்புறையில் எழுது</translation>
     </message>
@@ -5892,7 +6129,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Start lists the fonts the subtitles use.</source>
-        <translation>தொடங்கு, வசன வரிகள் பயன்படுத்தும் எழுத்துருக்களைப் பட்டியலிடும்.</translation>
+        <translation type="vanished">தொடங்கு, வசன வரிகள் பயன்படுத்தும் எழுத்துருக்களைப் பட்டியலிடும்.</translation>
     </message>
     <message>
         <source>Some fonts were not found, so the collection is incomplete.</source>
@@ -5939,12 +6176,40 @@ Output device: %2</source>
         <translation>கோப்புறையைக் காட்டு</translation>
     </message>
     <message>
+        <source>More ways to start</source>
+        <translation>தொடங்க வேறு வழிகள்</translation>
+    </message>
+    <message>
         <source>Start on all tabs</source>
         <translation>எல்லாத் தாவல்களிலும் தொடங்கு</translation>
     </message>
     <message>
         <source>Start</source>
         <translation>தொடங்கு</translation>
+    </message>
+    <message>
+        <source>Bold italic</source>
+        <translation>தடிமன் சாய்வு</translation>
+    </message>
+    <message>
+        <source>Font and style</source>
+        <translation>எழுத்துருவும் பாணியும்</translation>
+    </message>
+    <message>
+        <source>File</source>
+        <translation>கோப்பு</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation>வரிகள்</translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use, and whether this computer has each one.</source>
+        <translation>தொடங்கு, வசனங்கள் பயன்படுத்தும் எழுத்துருக்களையும் ஒவ்வொன்றும் இந்தக் கணினியில் உள்ளதா என்பதையும் பட்டியலிடும்.</translation>
+    </message>
+    <message>
+        <source>Closing the window keeps it going.</source>
+        <translation>சாளரத்தை மூடினாலும் இது தொடரும்.</translation>
     </message>
     <message>
         <source>Stop</source>
@@ -6235,6 +6500,10 @@ Output device: %2</source>
     <message>
         <source>Couldn’t link font “%1”.</source>
         <translation>“%1” எழுத்துருவை இணைக்க முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>Styles: %1</source>
+        <translation>பாணிகள்: %1</translation>
     </message>
     <message>
         <source>Select the folder where you want to link fonts</source>
@@ -8355,7 +8624,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Font collector</source>
-        <translation>எழுத்துருக்கள் சேகரிப்பான்</translation>
+        <translation type="vanished">எழுத்துருக்கள் சேகரிப்பான்</translation>
     </message>
     <message>
         <source>User guide</source>
@@ -8948,6 +9217,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Play 500 ms after the end</source>
         <translation>முடிவுக்கு 500 ms பின் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Collect fonts…</source>
+        <translation>எழுத்துருக்களைச் சேகரி…</translation>
     </message>
     <message>
         <source>Open subtitles…</source>
@@ -12324,7 +12597,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>&amp;Font collector</source>
-        <translation>எழுத்துருக்கள் சேகரிப்பான் (&amp;f)</translation>
+        <translation type="vanished">எழுத்துருக்கள் சேகரிப்பான் (&amp;f)</translation>
     </message>
     <message>
         <source>R&amp;esample subtitles…</source>
@@ -12433,6 +12706,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Opens a subtitle file</source>
         <translation>வசனக் கோப்பைத் திறக்கிறது</translation>
+    </message>
+    <message>
+        <source>Collect &amp;fonts…</source>
+        <translation>எழுத்துருக்களைச் சேகரி… (&amp;f)</translation>
     </message>
     <message>
         <source>Reopen with encoding…</source>

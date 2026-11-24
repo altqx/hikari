@@ -14,6 +14,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -79,12 +80,26 @@ struct Variant {
 // Lower-cased family, then bold and italic as written.
 std::u16string variantKey(const std::u16string &family, int bold, int italic);
 
+struct Face {
+    enum class Status { Found, Missing, Simulated };
+    std::u16string family;
+    int bold = 400;
+    bool italic = false;
+    Status status = Status::Found;
+    std::u16string file; // the file the renderer read; empty when missing
+    bool simulatedBold = false, simulatedItalic = false;
+    int lines = 0;
+    std::pair<int, int> firstUse{-1, -1}; // (tab, line), both 0-based
+};
+
 struct Scan {
     std::map<std::u16string, Block> found;
     std::map<std::u16string, Block> notFound;
     std::map<std::u16string, Variant> variants; // keyed by variantKey
     std::map<std::u16string, std::set<char32_t>> chars;
     std::vector<std::u16string> families; // in first-use order
+    std::map<std::u16string, std::set<std::pair<int, int>>> uses;       // variantKey -> (tab, line)
+    std::map<std::u16string, std::set<std::pair<int, int>>> familyUses; // family -> (tab, line)
 };
 
 // `found`: the renderer found the family.
@@ -132,6 +147,7 @@ struct CollectorReview {
     bool allGlyphs = true;
     std::vector<CollectedFile> files;
     std::vector<RendererFile> rendererFiles;
+    std::vector<collector::Face> faces; // found and simulated in variant order, then the missing families
 
     std::string provider;
     std::vector<std::string> missingFamilies;
@@ -200,9 +216,12 @@ public:
 
     // The copy modes list the provider's font files on the first run only. `cancel` ends it
     // with Cancelled. `folderFonts` (name: the full path) come before the system's, as in rendering.
+    // `faceDone` is called on the calling thread as each used face is resolved.
+    using FaceDone = std::function<void(const collector::Face &face, std::size_t done, std::size_t total)>;
     std::expected<CollectorReview, FontError> prepare(const std::vector<CollectorDocument> &documents,
                                                       CollectorAction action, const std::atomic<bool> *cancel = nullptr,
-                                                      std::vector<FontAttachment> folderFonts = {});
+                                                      std::vector<FontAttachment> folderFonts = {},
+                                                      const FaceDone &faceDone = {});
 
     // For the copy modes. An incomplete review writes only with `acknowledgedIncomplete`, and
     // then labels the output; otherwise nothing is written and the result is `refused`.

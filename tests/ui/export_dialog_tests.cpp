@@ -32,6 +32,13 @@ constexpr char kSubtitles[] =
     "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\clip(0,0,10,10)}second\n"
     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\fad(100,100)\\frz10}third\n";
 
+constexpr char kPlain[] =
+    "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n"
+    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,second\n"
+    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,third\n";
+
 constexpr char kYouTube[] =
     "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n"
     "[V4+ Styles]\n"
@@ -195,7 +202,7 @@ private slots:
         QCOMPARE(contents(out), QByteArray("WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n<i>first</i>\n"
                                            "\n00:00:02.000 --> 00:00:03.000\nsecond\n"
                                            "\n00:00:03.000 --> 00:00:04.000\nthird\n"));
-        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Exported 3 lines to “episode.vtt”."));
+        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Saved. 2 lines lost something WebVTT can’t carry."));
         QCOMPARE(part("exportSkipped")->property("text").toString(), QStringLiteral("1 comment line skipped."));
         QCOMPARE(session()->revision(), revision);
         QCOMPARE(session()->document().format(), core::SubtitleFormat::Ass);
@@ -216,8 +223,14 @@ private slots:
         QCOMPARE(notes[1].toMap().value(QStringLiteral("number")).toInt(), 4);
         QCOMPARE(notes[1].toMap().value(QStringLiteral("losses")).toString(),
                  QStringLiteral("Fade removed; Rotation or shearing removed"));
+        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Saved. 2 lines lost something SRT can’t carry."));
+        QStringList groups;
+        for (const QVariant &row : dialog()->property("report").toMap().value(QStringLiteral("lost")).toList())
+            groups << row.toMap().value(QStringLiteral("group")).toString() + QLatin1Char(':') +
+                          row.toMap().value(QStringLiteral("number")).toString();
+        QCOMPARE(groups, (QStringList{QStringLiteral("Clip · 1:3"), QStringLiteral("Fade · 1:4"), QStringLiteral("Rotation · 1:4")}));
         auto *list = part("exportNotes");
-        QTRY_COMPARE(list->property("count").toInt(), 2);
+        QTRY_COMPARE(list->property("count").toInt(), 3);
         QQuickItem *row = nullptr;
         QTRY_VERIFY((row = [&]() -> QQuickItem * {
             for (QQuickItem *child : list->property("contentItem").value<QQuickItem *>()->childItems())
@@ -292,7 +305,8 @@ private slots:
         QCOMPARE(dialog()->property("format").toString(), QStringLiteral("microdvd"));
         QCOMPARE(part("exportFps")->property("text").toString(), QStringLiteral("25"));
         QVERIFY(part<QObject>("exportMerge")->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(part("exportClose"), "click"));
+        QVERIFY(!part("exportClose")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(part("exportCancel"), "click"));
 
         QVERIFY(!open("new.ass").isEmpty());
         openDialog();
@@ -425,7 +439,7 @@ private slots:
         const auto expected = core::exportDocument(session()->document(), core::ExportFormat::Srv3, {}).bytes;
         QCOMPARE(contents(out), QByteArray(reinterpret_cast<const char *>(expected.data()), qsizetype(expected.size())));
         QVERIFY(contents(out).startsWith("\xEF\xBB\xBF<?xml version=\"1.0\" encoding=\"utf-8\"?><timedtext format=\"3\">"));
-        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Exported 3 lines to “youtube.ytt”."));
+        QCOMPARE(part("exportSummary")->property("text").toString(), QStringLiteral("Saved. 2 lines lost something srv3 can’t carry."));
         const QVariantList notes = dialog()->property("report").toMap().value(QStringLiteral("notes")).toList();
         QCOMPARE(notes.size(), 2);
         QCOMPARE(notes[0].toMap().value(QStringLiteral("losses")).toString(), QStringLiteral("Clip removed"));
@@ -543,6 +557,40 @@ private slots:
         run();
         QTRY_VERIFY(part("exportProblem")->isVisible());
         QVERIFY(!dialog()->property("reported").toBool());
+    }
+
+    void aWriteThatFailsOffersAnotherFolder()
+    {
+        QVERIFY(!open("unwritable.ass").isEmpty());
+        openDialog();
+        const QString out = dir.filePath(QStringLiteral("no-such-folder/unwritable.srt"));
+        choose("srt", out);
+        run();
+        QTRY_VERIFY(part("exportWriteFailed")->isVisible());
+        QVERIFY(!part("exportProblem")->isVisible());
+        QVERIFY(part("exportWriteFailedText")->property("text").toString().startsWith(QStringLiteral("Couldn’t write unwritable.srt: ")));
+        QVERIFY(dialog()->property("problemDetails").toString().startsWith(QDir::toNativeSeparators(out) + u'\n'));
+        QVERIFY(part("exportChooseFolder")->isVisible());
+        QVERIFY(part("exportRun")->isVisible());
+        QVERIFY(!dialog()->property("reported").toBool());
+    }
+
+    void nothingLostIsOneSuccessLine()
+    {
+        QVERIFY(!open("plain.ass", kPlain).isEmpty());
+        openDialog();
+        choose("srt", dir.filePath(QStringLiteral("plain.srt")));
+        run();
+        QTRY_VERIFY(dialog()->property("reported").toBool());
+        QVERIFY(part("exportNothingLost")->isVisible());
+        QVERIFY(!part("exportLostPanel")->isVisible());
+        QCOMPARE(part("exportNothingLostText")->property("text").toString(),
+                 QStringLiteral("Saved plain.srt · 3 lines · nothing lost"));
+        QCOMPARE(part("exportNothingLost")->height(), 30.0);
+        QVERIFY(part("exportShowFile")->isVisible());
+        QVERIFY(!part("exportRun")->isVisible());
+        QVERIFY(QString::fromLatin1(part<QObject>("exportClose")->metaObject()->className()).startsWith(QLatin1String("PrimaryButton")));
+        QVERIFY(!part("exportCancel")->isVisible());
     }
 
     void beforeExportStartsWithNoStepsAndRunsTheOnesTurnedOn()

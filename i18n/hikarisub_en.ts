@@ -309,10 +309,17 @@
 <context>
     <name>HikariSub.Export</name>
     <message numerus="yes">
-        <source>Exported %n line(s) to “%1”.</source>
+        <source>Saved. %n line(s) lost something %1 can’t carry.</source>
         <translation>
-            <numerusform>Exported %n line to “%1”.</numerusform>
-            <numerusform>Exported %n lines to “%1”.</numerusform>
+            <numerusform>Saved. %n line lost something %1 can’t carry.</numerusform>
+            <numerusform>Saved. %n lines lost something %1 can’t carry.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Saved %1 · %n line(s) · nothing lost</source>
+        <translation>
+            <numerusform>Saved %1 · %n line · nothing lost</numerusform>
+            <numerusform>Saved %1 · %n lines · nothing lost</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -456,6 +463,69 @@
         <translation>
             <numerusform>and %n more</numerusform>
             <numerusform>and %n more</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n font(s)</source>
+        <translation>
+            <numerusform>%n font</numerusform>
+            <numerusform>%n fonts</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n missing</source>
+        <translation>
+            <numerusform>%n missing</numerusform>
+            <numerusform>%n missing</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made bold by the renderer</source>
+        <translation>
+            <numerusform>%n made bold by the renderer</numerusform>
+            <numerusform>%n made bold by the renderer</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n made italic by the renderer</source>
+        <translation>
+            <numerusform>%n made italic by the renderer</numerusform>
+            <numerusform>%n made italic by the renderer</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Zip archive adds %n file(s).</source>
+        <translation>
+            <numerusform>Zip archive adds %n file.</numerusform>
+            <numerusform>Zip archive adds %n files.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s)</source>
+        <translation>
+            <numerusform>%n file</numerusform>
+            <numerusform>%n files</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Link to a folder links %n file(s).</source>
+        <translation>
+            <numerusform>Link to a folder links %n file.</numerusform>
+            <numerusform>Link to a folder links %n files.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy to a folder copies %n file(s).</source>
+        <translation>
+            <numerusform>Copy to a folder copies %n file.</numerusform>
+            <numerusform>Copy to a folder copies %n files.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Checking · %1 of %n font(s)</source>
+        <translation>
+            <numerusform>Checking · %1 of %n font</numerusform>
+            <numerusform>Checking · %1 of %n fonts</numerusform>
         </translation>
     </message>
 </context>

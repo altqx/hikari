@@ -2715,7 +2715,7 @@ ApplicationWindow {
         }
         Action {
             id: fontCollectorAction
-            text: qsTr("&Font collector")
+            text: qsTr("Collect &fonts…")
             enabled: root.shell.hasEditingTarget && root.shell.assColumns
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
         }
@@ -9397,9 +9397,40 @@ ApplicationWindow {
             }
         }
         PluginJobCards {
+            id: pluginJobCards
             width: parent ? parent.width : implicitWidth
             y: automationProgress.shown ? automationProgress.implicitHeight + 8 : 0
             runtime: root.app.pluginRuntime
+        }
+        RunCard {
+            id: exportRunCard
+            objectName: "exportRunCard"
+            readonly property var window: exportLoader.item
+            x: parent ? parent.width - width : 0
+            y: pluginJobCards.y + (pluginJobCards.shown ? pluginJobCards.implicitHeight + 8 : 0)
+            width: implicitWidth
+            iconRole: "export"
+            title: window ? window.runTitle : ""
+            doing: window ? window.doingText : ""
+            progress: window ? window.runProgress : -1
+            canStop: window !== null && window.canStop
+            running: window !== null && window.exporting && !window.visible
+            onStopRequested: root.app.stopExport()
+            onOpenRequested: root.openExportDialog()
+        }
+        RunCard {
+            objectName: "fontsRunCard"
+            readonly property var window: fontCollectorLoader.item
+            x: parent ? parent.width - width : 0
+            y: exportRunCard.y + (exportRunCard.shown ? exportRunCard.implicitHeight + 8 : 0)
+            width: implicitWidth
+            iconRole: "font-collector"
+            title: window ? window.runTitle : ""
+            doing: window ? window.doingText : ""
+            progress: window ? window.runProgress : -1
+            running: window !== null && window.working && !window.visible
+            onStopRequested: root.fontCollector.cancel()
+            onOpenRequested: root.openFontCollector()
         }
     }
     readonly property alias notices: notices

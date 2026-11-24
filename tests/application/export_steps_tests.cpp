@@ -5,8 +5,11 @@
 
 #include <algorithm>
 #include <cstring>
+#include <functional>
 #include <map>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -87,6 +90,20 @@ public:
         const auto it = loaded.find(script + "/" + filter);
         if (it->second.empty())
             return done(std::unexpected(std::string("sign blur broke on line 1"))), true;
+        if (hold) {
+            held = [done, snapshot, prefix = it->second](bool cancelled) {
+                if (cancelled)
+                    return done(std::unexpected(std::string("cancelled")));
+                app::MacroResult result;
+                result.info = snapshot.info;
+                result.styles = snapshot.styles;
+                result.dialogues = snapshot.dialogues;
+                for (auto &d : result.dialogues)
+                    d.text = prefix + d.text;
+                done(std::move(result));
+            };
+            return true;
+        }
         app::MacroResult result;
         result.info = snapshot.info;
         result.styles = snapshot.styles;
@@ -105,6 +122,21 @@ public:
     {
         return false;
     }
+    void stop() override
+    {
+        ++stops;
+        if (endOnStop)
+            finishHeld(true);
+    }
+    void finishHeld(bool cancelled)
+    {
+        if (auto finish = std::exchange(held, {}))
+            finish(cancelled);
+    }
+    bool hold = false;      // run() keeps `done` until finishHeld()
+    bool endOnStop = true;  // stop() ends a held run as cancelled
+    std::function<void(bool cancelled)> held;
+    int stops = 0;
     std::map<std::string, std::string> loaded; // empty value: the run fails
     bool refuse = false;
     std::vector<std::string> ran;
@@ -252,6 +284,54 @@ TEST(ExportSteps, AFailingStepStopsTheRunAndTheRestDontRun)
     EXPECT_EQ(result->steps[1].state, Outcome::State::NotRun);
     EXPECT_EQ(result->steps[2].state, Outcome::State::NotRun);
     EXPECT_EQ(field(result->document, &core::LineRecord::style), (std::vector<std::string>{"Missing"}));
+}
+
+TEST(ExportSteps, StoppingARunningLuaStepEndsItAndRunsNoMore)
+{
+    FakeFilters filters;
+    filters.loaded = {{"sign-fx.lua/Sign blur pass", "x"}};
+    filters.hold = true;
+    const auto available = app::availableSteps({script("/p/sign-fx.lua", {{"Sign blur pass", "", 500, false}})});
+    std::optional<app::ExportStepsResult> result;
+    const auto stop = app::runExportSteps(
+        documentWith("Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,a\n"),
+        {{{"lua:sign-fx.lua/Sign blur pass", true, {}}, {"fix-styles", true, {}}}}, available, {.filters = &filters},
+        [&](app::ExportStepsResult r) { result = std::move(r); });
+    ASSERT_FALSE(result);
+    stop();
+    EXPECT_EQ(filters.stops, 1);
+    ASSERT_TRUE(result);
+    EXPECT_TRUE(result->stopped);
+    EXPECT_FALSE(result->failed);
+    ASSERT_EQ(result->steps.size(), 2u);
+    EXPECT_EQ(result->steps[0].state, Outcome::State::Stopped);
+    EXPECT_TRUE(result->steps[0].error.empty());
+    EXPECT_EQ(result->steps[1].state, Outcome::State::NotRun);
+    EXPECT_EQ(field(result->document, &core::LineRecord::style), (std::vector<std::string>{"Missing"}));
+}
+
+TEST(ExportSteps, StoppingBetweenStepsRunsNoLaterStep)
+{
+    FakeFilters filters;
+    filters.loaded = {{"sign-fx.lua/Sign blur pass", "x"}};
+    filters.hold = true;
+    filters.endOnStop = false;
+    const auto available = app::availableSteps({script("/p/sign-fx.lua", {{"Sign blur pass", "", 500, false}})});
+    std::optional<app::ExportStepsResult> result;
+    const auto stop = app::runExportSteps(
+        documentWith("Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,a\n"),
+        {{{"lua:sign-fx.lua/Sign blur pass", true, {}}, {"fix-styles", true, {}}}}, available, {.filters = &filters},
+        [&](app::ExportStepsResult r) { result = std::move(r); });
+    stop();
+    ASSERT_FALSE(result);
+    filters.finishHeld(false);
+    ASSERT_TRUE(result);
+    EXPECT_TRUE(result->stopped);
+    EXPECT_EQ(result->steps[0].state, Outcome::State::Done);
+    EXPECT_EQ(result->steps[1].state, Outcome::State::NotRun);
+    EXPECT_EQ(field(result->document, &core::LineRecord::style), (std::vector<std::string>{"Missing"}));
+    stop();
+    EXPECT_EQ(filters.stops, 1);
 }
 
 TEST(ExportSteps, AScriptThatCantStartFailsAsBusy)
