@@ -32,6 +32,13 @@ constexpr char kSubtitles[] =
     "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\clip(0,0,10,10)}second\n"
     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\fad(100,100)\\frz10}third\n";
 
+constexpr char kPlain[] =
+    "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n"
+    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,second\n"
+    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,third\n";
+
 constexpr char kYouTube[] =
     "[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n"
     "[V4+ Styles]\n"
@@ -570,15 +577,15 @@ private slots:
 
     void nothingLostIsOneSuccessLine()
     {
-        QVERIFY(!open("plain.ass").isEmpty());
+        QVERIFY(!open("plain.ass", kPlain).isEmpty());
         openDialog();
-        choose("text", dir.filePath(QStringLiteral("plain.txt")));
+        choose("srt", dir.filePath(QStringLiteral("plain.srt")));
         run();
         QTRY_VERIFY(dialog()->property("reported").toBool());
         QVERIFY(part("exportNothingLost")->isVisible());
         QVERIFY(!part("exportLostPanel")->isVisible());
         QCOMPARE(part("exportNothingLostText")->property("text").toString(),
-                 QStringLiteral("Saved plain.txt · 3 lines · nothing lost"));
+                 QStringLiteral("Saved plain.srt · 3 lines · nothing lost"));
         QCOMPARE(part("exportNothingLost")->height(), 30.0);
         QVERIFY(part("exportShowFile")->isVisible());
         QVERIFY(!part("exportRun")->isVisible());
