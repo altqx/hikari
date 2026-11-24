@@ -308,7 +308,7 @@
     </message>
     <message>
         <source>Rename</source>
-        <translation>மறுபெயரிடு</translation>
+        <translation type="vanished">மறுபெயரிடு</translation>
     </message>
     <message>
         <source>Brief, written by the agent</source>
@@ -761,10 +761,6 @@
     <message>
         <source>Default for new threads</source>
         <translation>புதிய இழைகளுக்கான இயல்புநிலை</translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Details</source>
@@ -1449,7 +1445,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>திற</translation>
+        <translation type="vanished">திற</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -12842,7 +12838,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open</source>
-        <translation>திற</translation>
+        <translation type="vanished">திற</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -13389,7 +13385,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">ரத்துசெய்</translation>
+        <translation type="obsolete">ரத்துசெய்</translation>
     </message>
     <message>
         <source>Rename</source>
