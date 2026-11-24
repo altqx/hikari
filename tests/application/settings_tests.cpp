@@ -302,6 +302,7 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
     }
     EXPECT_EQ(settings.text("appearance.titleBar"), "auto");
     EXPECT_EQ(settings.text("appearance.aiSideBar"), "start");
+    EXPECT_EQ(settings.text("appearance.iconTheme"), "hikarisub");
     std::size_t count = 0;
     for (const auto &s : settingDefinitions())
         if (s.id.starts_with("appearance.")) {
@@ -309,7 +310,7 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
             EXPECT_TRUE(s.legacyKey.empty()) << s.id;
             EXPECT_EQ(s.scope, SettingScope::Profile) << s.id;
         }
-    EXPECT_EQ(count, 10u);
+    EXPECT_EQ(count, 11u);
 }
 
 TEST(SettingsRegistry, FoldingKeepsAnEntryAlreadyInTheList)
