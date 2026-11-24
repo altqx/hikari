@@ -288,7 +288,7 @@ void RecoveryStore::discard(const std::string &key)
     fs::remove_all(m_root / key, ec);
 }
 
-std::vector<RecoveryBundle> RecoveryStore::leftovers(const std::function<bool(const std::string &)> &sessionEnded) const
+std::vector<RecoveryBundle> RecoveryStore::bundles() const
 {
     std::vector<RecoveryBundle> out;
     std::error_code ec;
@@ -299,7 +299,7 @@ std::vector<RecoveryBundle> RecoveryStore::leftovers(const std::function<bool(co
             continue;
         std::string session;
         const auto generations = manifest(entry.path(), &session);
-        if (!generations || generations->empty() || session == m_session || !sessionEnded(session))
+        if (!generations || generations->empty())
             continue;
         for (auto it = generations->rbegin(); it != generations->rend(); ++it)
             if (auto content = contentOf(entry.path() / std::to_string(*it))) {
@@ -308,6 +308,13 @@ std::vector<RecoveryBundle> RecoveryStore::leftovers(const std::function<bool(co
             }
     }
     std::sort(out.begin(), out.end(), [](const auto &a, const auto &b) { return a.latest.writtenMs > b.latest.writtenMs; });
+    return out;
+}
+
+std::vector<RecoveryBundle> RecoveryStore::leftovers(const std::function<bool(const std::string &)> &sessionEnded) const
+{
+    auto out = bundles();
+    std::erase_if(out, [&](const RecoveryBundle &bundle) { return bundle.session == m_session || !sessionEnded(bundle.session); });
     return out;
 }
 

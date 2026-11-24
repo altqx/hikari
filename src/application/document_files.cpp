@@ -301,18 +301,17 @@ std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, boo
         return std::unexpected(SaveRefusal::UnknownDocument);
     if (entry->generation != plan.generation || entry->session->revision() != plan.revision)
         return std::unexpected(SaveRefusal::StalePlan);
-    if (!plan.saveAs && !overwriteExternalChange) {
-        const auto current = m_reader.read(plan.destination);
-        if (!current || *current != entry->knownBytes)
-            return std::unexpected(SaveRefusal::ExternalChange);
-    }
+    auto current = m_reader.read(plan.destination);
+    if (!plan.saveAs && !overwriteExternalChange && (!current || *current != entry->knownBytes))
+        return std::unexpected(SaveRefusal::ExternalChange);
     auto permit = m_writes.requestPermit(plan.document, plan.destination, plan.revision);
     if (!permit)
         return std::unexpected(permit.error() == PermitRefusal::DestinationOwnedByOtherDocument
                                    ? SaveRefusal::Collision
                                    : SaveRefusal::WriteInProgress);
     m_pending.emplace(*permit, Pending{plan.document, plan.generation, plan.content, plan.destination, plan.bytes,
-                                       plan.saveAs, plan.activeLine, plan.layout});
+                                       plan.saveAs, plan.activeLine, plan.layout,
+                                       current ? std::optional(std::move(*current)) : std::nullopt});
     entry->lastSave = SaveStatus{*permit, std::nullopt};
     if (plan.deferred) {
         (*plan.deferred)([this, permit = *permit](std::optional<std::vector<std::byte>> bytes) { writeDeferred(permit, std::move(bytes)); });
@@ -358,13 +357,15 @@ void DocumentFiles::onWriteResult(const WriteResult &result)
         return;
     Pending pending = std::move(it->second);
     m_pending.erase(it);
+    const bool published =
+        result.outcome == WriteOutcome::Written || result.outcome == WriteOutcome::DurabilityUncertain;
+    if (published && m_savedOver && pending.previous && *pending.previous != pending.bytes)
+        m_savedOver(pending.destination, std::move(*pending.previous));
     Entry *entry = find(pending.document);
     if (!entry || entry->generation != pending.generation)
         return;
     if (entry->lastSave && entry->lastSave->permit == result.permit)
         entry->lastSave->outcome = result.outcome;
-    const bool published =
-        result.outcome == WriteOutcome::Written || result.outcome == WriteOutcome::DurabilityUncertain;
     if (!published)
         return;
     entry->session->markSaved(pending.content);

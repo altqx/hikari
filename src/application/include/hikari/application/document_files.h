@@ -136,6 +136,8 @@ struct SaveStatus {
 using LyricsDecoder = std::function<std::optional<std::vector<std::byte>>(std::span<const std::byte>)>;
 // A file's bytes as UTF-8, or nullopt when they are not text in the encoding it reads.
 using ToUtf8 = std::function<std::optional<std::vector<std::byte>>(std::span<const std::byte>)>;
+// What a published save replaced at `destination`: the file as it was just before the write.
+using SavedOver = std::function<void(const DestinationKey &destination, std::vector<std::byte> previous)>;
 
 class DocumentFiles {
 public:
@@ -143,6 +145,8 @@ public:
 
     // Without one, lyrics files must be UTF-8.
     void setLyricsDecoder(LyricsDecoder decoder) { m_lyricsDecoder = std::move(decoder); }
+    // Told once per published save that replaced a file with different bytes.
+    void setSavedOver(SavedOver savedOver) { m_savedOver = std::move(savedOver); }
 
     std::expected<StagedOpen, StageFailure> stageOpen(const DestinationKey &destination);
     // With `toUtf8`, the file is read through it and the replacement is converted.
@@ -207,6 +211,7 @@ private:
         bool saveAs = false;
         std::optional<std::u8string> activeLine;
         std::optional<std::u8string> layout;
+        std::optional<std::vector<std::byte>> previous;
     };
     std::expected<StagedOpen, StageFailure> stage(const DestinationKey &destination, const ToUtf8 &toUtf8 = {});
     Entry *find(DocumentId document);
@@ -214,6 +219,7 @@ private:
 
     FileReadPort &m_reader;
     LyricsDecoder m_lyricsDecoder;
+    SavedOver m_savedOver;
     WriteCoordinator &m_writes;
     std::map<DocumentId, Entry> m_documents;
     std::map<PermitId, Pending> m_pending;

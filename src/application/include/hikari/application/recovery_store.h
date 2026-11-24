@@ -41,6 +41,8 @@ public:
     // when it could not be written and verified.
     bool write(const std::string &key, const RecoveryContent &content);
     void discard(const std::string &key);
+    // Every bundle, newest first.
+    std::vector<RecoveryBundle> bundles() const;
     // Bundles left by other sessions for which `sessionEnded` is true.
     std::vector<RecoveryBundle> leftovers(const std::function<bool(const std::string &session)> &sessionEnded) const;
     std::optional<RecoveryContent> read(const std::string &key, std::uint64_t generation) const;

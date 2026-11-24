@@ -15333,6 +15333,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Żadne ustawienie nie pasuje do “%1”.</translation>
     </message>
     <message>
+        <source>Backup copies kept</source>
+        <translation>Zachowywane kopie zapasowe</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>Wcześniejsze zapisy każdego pliku zachowywane w folderze odzyskiwania. Zakres od 0 do 100</translation>
+    </message>
+    <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
         <translation>Kółko powiększa wokół wskaźnika. Powiększ wideo pokazuje ramkę do przeciągania.</translation>
     </message>
@@ -21496,6 +21504,10 @@ ponieważ została zmieniona.</translation>
         <translation>Poprzednia wersja</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>Wcześniejszy zapis</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>Autozapis poprzedniej wersji</translation>
     </message>
@@ -21520,8 +21532,12 @@ ponieważ została zmieniona.</translation>
         <translation>Usuń</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Wcześniejsze zapisy to plik w postaci sprzed zastąpienia go przez zapis. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+        <translation type="vanished">Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21710,6 +21726,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (wcześniejszy zapis)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>

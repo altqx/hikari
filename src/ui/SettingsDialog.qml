@@ -1190,6 +1190,14 @@ DialogWindow {
                                 name: qsTr("Autosave every"); tip: qsTr("Seconds from a change to its autosave. Range from 5 to 3600")
                             }
                         }
+                        SettingsRow {
+                            host: dialog
+                            setting: "autosave.savedCopies"
+                            SettingNumber {
+                                setting: "autosave.savedCopies"; from: 0; to: 100; name: qsTr("Backup copies kept")
+                                tip: qsTr("Earlier saves of each file kept in the Recovery folder. Range from 0 to 100")
+                            }
+                        }
                     }
                     Section {
                         key: "general.notices"
