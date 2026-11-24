@@ -402,6 +402,15 @@ ColumnLayout {
                     onFinished: editor.commit()
                 }
             }
+            IconToolButton {
+                objectName: "nodePick_" + editor.name
+                iconRole: "tool-crosshair"
+                text: qsTr("Pick on the video")
+                checkable: true
+                checked: editor.controller.pickingPoint === editor.name
+                enabled: editor.editable
+                onClicked: checked ? editor.controller.pickPoint(editor.name) : editor.controller.cancelPick()
+            }
         }
     }
     Component {

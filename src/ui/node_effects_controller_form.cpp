@@ -279,4 +279,29 @@ QString NodeEffectsController::nodeNameRefusal(const QString &from, const QStrin
     return {};
 }
 
+void NodeEffectsController::pickPoint(const QString &field)
+{
+    const std::optional<NodeGraph> v = view();
+    const FieldSpec *f = v ? fieldOf(chosenNodes(*v, m_selection), field) : nullptr;
+    const QString next = f && f->kind == FieldKind::Point && m_editable ? field : QString();
+    if (std::exchange(m_pickingPoint, next) != next)
+        emit pickingPointChanged();
+}
+
+bool NodeEffectsController::pointPicked(double x, double y)
+{
+    const QString field = m_pickingPoint;
+    cancelPick();
+    if (field.isEmpty() || !setSelectedField(field, QVariantList{x, y}))
+        return false;
+    commit();
+    return true;
+}
+
+void NodeEffectsController::cancelPick()
+{
+    if (!std::exchange(m_pickingPoint, QString()).isEmpty())
+        emit pickingPointChanged();
+}
+
 }

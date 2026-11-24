@@ -83,6 +83,8 @@ class NodeEffectsController : public QObject {
     Q_PROPERTY(bool exportKaraOK READ exportKaraOK NOTIFY exportFormatChanged)
     // The Node panel's form for the selection: one node, or several of one type.
     Q_PROPERTY(QVariantMap form READ form NOTIFY inspectorChanged)
+    // The Point field the next click on the video sets, or empty.
+    Q_PROPERTY(QString pickingPoint READ pickingPoint NOTIFY pickingPointChanged)
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
@@ -218,6 +220,11 @@ public:
     // Takes the field off every selected node, so each node's default applies.
     Q_INVOKABLE void resetSelectedField(const QString &field);
     Q_INVOKABLE QString nodeNameRefusal(const QString &from, const QString &to) const;
+    QString pickingPoint() const { return m_pickingPoint; }
+    // Pick on the video: the next pointPicked, in script coordinates, sets `field` on the selection.
+    Q_INVOKABLE void pickPoint(const QString &field);
+    Q_INVOKABLE bool pointPicked(double x, double y);
+    Q_INVOKABLE void cancelPick();
 
 signals:
     void changed();
@@ -231,6 +238,7 @@ signals:
     void documentEdited();
     void videoChanged();
     void textsChanged();
+    void pickingPointChanged();
 
 private:
     application::EditSession *session() const;
@@ -292,6 +300,7 @@ private:
     double m_previewSeconds = 0;
     application::NodeEffectCache m_cache;
     QVariantMap m_lastApply;
+    QString m_pickingPoint;
 };
 
 }

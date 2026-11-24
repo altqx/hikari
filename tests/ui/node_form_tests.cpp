@@ -188,6 +188,22 @@ private slots:
         QVERIFY(formField(controller(), QStringLiteral("min")).value(QStringLiteral("from")).toString().isEmpty());
     }
 
+    void aPointIsPickedOnTheVideoOnce()
+    {
+        const QString tag = controller().addNode(QStringLiteral("tags.tag"), 0, 0);
+        controller().setSelection({tag});
+        controller().pickPoint(QStringLiteral("value"));
+        QVERIFY(controller().pickingPoint().isEmpty());
+        controller().pickPoint(QStringLiteral("point"));
+        QCOMPARE(controller().pickingPoint(), QStringLiteral("point"));
+        const std::size_t before = m_session->historySize();
+        QVERIFY(controller().pointPicked(640, 360));
+        QVERIFY(controller().pickingPoint().isEmpty());
+        QCOMPARE(stored(controller(), tag, QStringLiteral("point")).toList(), (QVariantList{640.0, 360.0}));
+        QCOMPARE(m_session->historySize(), before + 1);
+        QVERIFY(!controller().pointPicked(1, 2));
+    }
+
     void aRefusedNodeNameSaysWhy()
     {
         const QString a = controller().addNode(QStringLiteral("tags.fade"), 0, 0);

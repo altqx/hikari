@@ -201,6 +201,7 @@ Pane {
                     Connections {
                         target: root.controller
                         function onSelectionChanged() {
+                            root.controller.cancelPick()
                             nameField.refusal = ""
                             nameField.text = Qt.binding(() => root.node.id ?? "")
                         }
