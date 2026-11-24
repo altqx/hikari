@@ -15598,7 +15598,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
+        <translation type="vanished">กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16632,7 +16632,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
+        <translation type="vanished">กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -16982,7 +16982,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+        <translation type="vanished">การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17311,10 +17311,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
     </message>
@@ -17447,6 +17443,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่ ซึ่งจะได้มาเมื่อ HikariSub เริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
     </message>
     <message>
         <source>MCP servers</source>

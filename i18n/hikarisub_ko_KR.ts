@@ -15598,7 +15598,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>먼저 적용 또는 취소를 누르십시오. 가져온 항목은 즉시 추가됩니다.</translation>
+        <translation type="vanished">먼저 적용 또는 취소를 누르십시오. 가져온 항목은 즉시 추가됩니다.</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16632,7 +16632,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>AI를 다시 켜려면 확인 또는 적용을 누르세요.</translation>
+        <translation type="vanished">AI를 다시 켜려면 확인 또는 적용을 누르세요.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -16982,7 +16982,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
+        <translation type="vanished">JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17311,10 +17311,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>요청은 추가한 공급자와 %1에만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
     </message>
@@ -17447,6 +17443,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>JSON 설정에는 주소가 필요하며, HikariSub가 127.0.0.1에서 수신을 시작하면 주소가 채워집니다.</translation>
     </message>
     <message>
         <source>MCP servers</source>

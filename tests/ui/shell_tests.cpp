@@ -20557,7 +20557,7 @@ private slots:
                  QStringLiteral("Copied. Paste it into the agent’s settings."));
 
         QVERIFY(QMetaObject::invokeMethod(http, "click"));
-        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("press OK or Apply")));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("once HikariSub listens")));
         QTRY_VERIFY(mcp->server()->httpPort() != 0);
         const quint16 port = mcp->server()->httpPort();
         QTRY_COMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1:%1").arg(port));

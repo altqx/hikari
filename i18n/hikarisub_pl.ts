@@ -15854,7 +15854,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
+        <translation type="vanished">Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16904,7 +16904,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
+        <translation type="vanished">Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -17256,7 +17256,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
+        <translation type="vanished">Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17587,10 +17587,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
     </message>
@@ -17725,6 +17721,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>Konfiguracja JSON wymaga adresu, który pojawi się, gdy HikariSub zacznie nasłuchiwać na 127.0.0.1.</translation>
     </message>
     <message>
         <source>MCP servers</source>
