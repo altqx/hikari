@@ -686,9 +686,6 @@ icon("move-right", "Move right", [], [EDITOR], stroke("M2.5 7.5h11M9 3l4.5 4.5L9
 icon("copy-to-storage", "Copy style from ASS to storage", [], [STYLEDLG],
      rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 11.5, 12, 3, 1)
      + accent(stroke("M7.5 10v-4M5 8.5l2.5-2.5L10 8.5")))
-icon("copy-to-ass", "Copy style from storage to ASS", [], [STYLEDLG],
-     rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 11.5, 12, 3, 1)
-     + accent(stroke("M7.5 6v4M5 7.5L7.5 10 10 7.5")))
 icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [STYLEDLG],
      rect(1.5, 1.5, 12, 3, 1) + rect(1.5, 12.5, 10, 2, 1) + stroke("M3.5 10.5h9a1 1 0 0 1 1 1v1")
      + accent(stroke("M7.5 6v3M5 6.5L7.5 9 10 6.5")))

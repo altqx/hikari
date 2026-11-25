@@ -234,7 +234,7 @@ private slots:
                                  "show-in-folder", "compare", "reference", "extract-subtitles",
                                  "close-video", "frame-snapshot", "zoom-reset", "volume", "match-previous",
                                  "match-next", "unload", "run-script", "settings-video", "settings-audio",
-                                 "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass",
+                                 "appearance", "hotkeys", "copy-to-storage", "copy-to-all-ass",
                                  "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit",
                                  "window-minimize", "window-maximize", "window-restore", "window-close",
                                  "settings-grid", "notices", "language", "restore-default"})

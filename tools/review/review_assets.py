@@ -17,7 +17,7 @@ try:
 except ImportError:
     sys.exit("review_assets.py needs Pillow (python-pillow, or pip install pillow)")
 
-K1_ROLES = ["copy-to-storage", "copy-to-ass", "copy-to-all-ass", "panel-menu"]
+K1_ROLES = ["copy-to-storage", "copy-to-all-ass", "panel-menu"]
 # MUST KILL: copies icon_tests contactSheets' grid at 100 %
 K1_COLUMNS = 8
 K1_CELL_WIDTH = 168
@@ -156,11 +156,11 @@ def k1_sheet(build, work, out):
     return [{
         "id": "k1-four-icons",
         "card": "K1",
-        "title": "K1: the four new icons",
+        "title": "K1: the new icons",
         "file": os.path.basename(target),
-        "note": "copy-to-storage, copy-to-ass, copy-to-all-ass and panel-menu, drawn by the application's Icon "
+        "note": "copy-to-storage, copy-to-all-ass and panel-menu, drawn by the application's Icon "
                 "item at 16 and 32 px in Light and Dark at 100, 150 and 200 % (offscreen, Linux). Each strip is "
-                "the four cells of the icon test's contact sheet, with the role names at the sheet's 11 px; the "
+                "the cells of the icon test's contact sheet, with the role names at the sheet's 11 px; the "
                 "theme and scale captions are added by the review script. Approve or reject each icon.",
     }]
 
