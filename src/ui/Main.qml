@@ -8280,12 +8280,16 @@ ApplicationWindow {
                             ShellMenuItem { command: "GRID_JOIN_LINES"; iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
                             ShellMenuItem { command: "GRID_JOIN_TO_FIRST_LINE"; iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
                             ShellMenuItem { command: "GRID_JOIN_TO_LAST_LINE"; iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
+                            ShellMenuItem { command: "GLOBAL_JOIN_AS_KARAOKE"; iconRole: "karaoke"; objectName: "joinAsKaraoke"; text: qsTranslate("HikariSub.Grid", "As karaoke"); onTriggered: if (!root.gridGesture(this, "GLOBAL_JOIN_AS_KARAOKE")) root.app.joinLines("karaoke") }
                         }
                         ShellMenu {
                             objectName: "gridSplitMenu"
                             iconRole: "split-lines"
                             title: qsTranslate("HikariSub.Grid", "Split")
-                            onAboutToShow: bakeAnimationsItem.checked = root.app.settings.value("grid.splitFramesBakeAnimations")
+                            onAboutToShow: {
+                                bakeAnimationsItem.checked = root.app.settings.value("grid.splitFramesBakeAnimations")
+                                karaokeKeepLayoutItem.checked = root.app.settings.value("grid.splitKaraokeKeepLayout")
+                            }
                             ShellMenuItem {
                                 command: "GRID_SPLIT_BY_VIDEO_TIME"
                                 iconRole: "split-at-video"
@@ -8337,6 +8341,20 @@ ApplicationWindow {
                                 objectName: "splitAtTagBlocks"
                                 text: qsTranslate("HikariSub.Grid", "At tag blocks")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_AT_TAG_BLOCKS")) root.app.splitLines("tagBlocks")
+                            }
+                            ShellMenuItem {
+                                command: "GLOBAL_SPLIT_BY_KARAOKE"
+                                iconRole: "karaoke-split"
+                                objectName: "splitByKaraoke"
+                                text: qsTranslate("HikariSub.Grid", "By karaoke syllables")
+                                onTriggered: if (!root.gridGesture(this, "GLOBAL_SPLIT_BY_KARAOKE")) root.app.splitLines("karaoke")
+                            }
+                            ShellMenuItem {
+                                id: karaokeKeepLayoutItem
+                                objectName: "splitKaraokeKeepLayout"
+                                text: qsTranslate("HikariSub.Grid", "Keep layout")
+                                checkable: true
+                                onTriggered: root.app.settings.setValue("grid.splitKaraokeKeepLayout", checked)
                             }
                             MenuSeparator {}
                             ShellMenuItem {
@@ -11884,6 +11902,8 @@ ApplicationWindow {
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
         case "GLOBAL_REMOVE_TEXT_KEEP_TAGS": if (editing) root.app.deleteTextKeepTags(); return true
+        case "GLOBAL_SPLIT_BY_KARAOKE": if (editing) root.app.splitLines("karaoke"); return true
+        case "GLOBAL_JOIN_AS_KARAOKE": if (editing) root.app.joinLines("karaoke"); return true
         case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true

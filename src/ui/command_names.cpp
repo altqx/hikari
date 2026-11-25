@@ -427,6 +427,8 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Hide tags in the Grid"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Delete text, keep tags"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Mark lines on the current frame"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Split by karaoke syllables"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Join as karaoke"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move lines up"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move lines down"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Full screen typesetting"),

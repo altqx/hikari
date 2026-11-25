@@ -298,6 +298,17 @@ TEST(SettingsImport, AegisubSplitAtCursorGoesToTheLineEditor)
     EXPECT_EQ(rowOf(plan, "aegisub:Default:edit/line/split/after:Ctrl-Shift-D").reason, "HikariSub has no such command");
 }
 
+TEST(SettingsImport, AegisubKaraokeSplitAndJoinGoToTheGrid)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Default": {"edit/line/split/by_karaoke": ["Ctrl-K"]},
+        "Subtitle Grid": {"edit/line/join/as_karaoke": ["Ctrl-Shift-K"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_SPLIT_BY_KARAOKE:G").value, SettingValue(std::string("Ctrl-K")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_JOIN_AS_KARAOKE:S").value, SettingValue(std::string("Ctrl-Shift-K")));
+}
+
 TEST(SettingsImport, AegisubCommandsAndKeysHikariSubLacksAreListed)
 {
     const Plan plan = buildPlan({aegisub(R"({
@@ -567,7 +578,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 432);
+    EXPECT_EQ(bound, 434);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)

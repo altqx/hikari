@@ -350,6 +350,34 @@ std::u8string joined(const std::vector<const core::LineRecord *> &parts, bool tr
     return out;
 }
 
+std::int64_t centisecondsOf(core::DocumentTime t)
+{
+    return t.microseconds() / (10 * kUsPerMs);
+}
+
+std::u8string asKaraoke(const std::vector<const core::LineRecord *> &parts, core::DocumentTime start, bool translation)
+{
+    if (translation && std::ranges::all_of(parts, [](const auto *l) { return l->translation.empty(); }))
+        return {};
+    auto syllable = [](std::int64_t centiseconds) {
+        const std::string tag = "{\\k" + std::to_string(centiseconds) + "}";
+        return std::u8string(tag.begin(), tag.end());
+    };
+    std::u8string out;
+    std::int64_t at = centisecondsOf(start);
+    for (const auto *l : parts) {
+        const std::int64_t from = centisecondsOf(l->start.value);
+        if (from > at) {
+            out += syllable(from - at);
+            at = from;
+        }
+        const std::int64_t duration = std::max<std::int64_t>(0, centisecondsOf(l->end.value) - from);
+        out += syllable(duration) + (translation ? l->translation : l->text);
+        at += duration;
+    }
+    return out;
+}
+
 }
 
 std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kind, const LineVisible &visible)
@@ -388,8 +416,9 @@ std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kin
         }
         result.start.value = start;
         result.end.value = end;
-        result.text = joined(parts, false);
-        result.translation = joined(parts, true);
+        const bool karaoke = kind == JoinKind::AsKaraoke;
+        result.text = karaoke ? asKaraoke(parts, start, false) : joined(parts, false);
+        result.translation = karaoke ? asKaraoke(parts, start, true) : joined(parts, true);
     }
     std::set<core::LineId> touches;
     for (const auto *l : parts)
@@ -398,6 +427,7 @@ std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kin
                        : kind == JoinKind::WithNext   ? "Joining line with the next line"
                        : kind == JoinKind::KeepFirst  ? "Joining lines and keeping the first"
                        : kind == JoinKind::KeepLast   ? "Joining lines and keeping the last"
+                       : kind == JoinKind::AsKaraoke  ? "Joining lines as karaoke"
                                                       : "Joining lines";
     const auto ran = session.run(Command{name, session.revision(), touches, [&](core::Document &d) {
                                              if (!d.editLine(survivor, [&](core::LineRecord &l) {

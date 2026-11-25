@@ -74,6 +74,13 @@ enum class SplitText { Characters, Words, Wraps, TagBlocks };
 using WordSegments = std::function<std::vector<std::pair<std::size_t, bool>>(std::u16string_view)>;
 std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText kind, TextMeasurePort &measure,
                                                 const WordSegments &words, const LineVisible &visible = {});
+// Each shown selected Line with two or more karaoke syllables (Aegisub's: text before the first
+// \k is one when it has text, the last is fitted to the Line's end) becomes one Line per syllable
+// timed to it, carrying every tag in effect for it and no karaoke tags; the first keeps the Line.
+// With `layout`, each is placed where it sat in the Line, as the tag-block split measures it. One
+// step; the new Lines are selected. Refused when no Line has two syllables.
+std::expected<void, CommandRefusal> splitByKaraoke(EditSession &session, TextMeasurePort *layout,
+                                                   const LineVisible &visible = {});
 // The width splitByText measures for raw `text` in `style`, inline \fscx \fscy \fsp \fs \fn \b \i applied.
 double taggedTextWidth(TextMeasurePort &measure, const core::StyleValues &style, std::u16string_view text);
 

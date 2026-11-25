@@ -214,6 +214,41 @@ TEST_F(GridCommandsTest, JoinKeepFirstAndKeepLast)
     EXPECT_EQ(session.history().back().name, "Joining lines and keeping the last");
 }
 
+TEST_F(GridCommandsTest, JoinAsKaraokeMakesASyllablePerLineAndPerGap)
+{
+    select({a, b, c}, b);
+    const auto steps = session.historySize();
+    ASSERT_TRUE(joinLines(session, JoinKind::AsKaraoke));
+    ASSERT_EQ(texts(), (std::vector<std::u8string>{u8"{\\k100}a{\\k300}{\\k100}b{\\k50}{\\k150}c"}));
+    EXPECT_EQ(line(0).id, a);
+    EXPECT_EQ(ms(line(0).start.value), 1000);
+    EXPECT_EQ(ms(line(0).end.value), 8000);
+    EXPECT_EQ(session.selection().active, a);
+    EXPECT_EQ(session.selection().selected, std::set<core::LineId>{a});
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Joining lines as karaoke");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"c"}));
+    select({a}, a);
+    EXPECT_FALSE(joinLines(session, JoinKind::AsKaraoke));
+}
+
+TEST_F(GridCommandsTest, JoinAsKaraokeChainsOverlapsAndKeepsKaraokeTags)
+{
+    EditSession s{load("[Events]\n"
+                       "Dialogue: 0,0:00:05.00,0:00:07.00,Default,,0,0,0,,{\\k50}x{\\kf150}y\n"
+                       "Dialogue: 0,0:00:06.50,0:00:08.00,Default,,0,0,0,,z\n"
+                       "Dialogue: 0,0:00:04.00,0:00:04.50,Default,,0,0,0,,w\n")};
+    s.setSelection(Selection{core::LineId{1}, {core::LineId{1}, core::LineId{2}, core::LineId{3}}, {}, {}});
+    ASSERT_TRUE(joinLines(s, JoinKind::AsKaraoke));
+    ASSERT_EQ(s.document().lines().size(), 1u);
+    const auto &joined = *s.document().lines()[0];
+    EXPECT_EQ(joined.text, u8"{\\k100}{\\k200}{\\k50}x{\\kf150}y{\\k150}z{\\k50}w");
+    EXPECT_EQ(ms(joined.start.value), 4000);
+    EXPECT_EQ(ms(joined.end.value), 8000);
+    EXPECT_TRUE(joined.translation.empty());
+}
+
 TEST_F(GridCommandsTest, MergeWithThePreviousOrNextShownLine)
 {
     select({b}, b);

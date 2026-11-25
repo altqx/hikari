@@ -35,6 +35,7 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 4 | Join lines | GRID_JOIN_LINES | | join-lines |
 | 5 | Join lines and keep first | GRID_JOIN_TO_FIRST_LINE | | join-keep-first |
 | 6 | Join lines and keep last | GRID_JOIN_TO_LAST_LINE | | join-keep-last |
+| 6.1 | Join as karaoke (PG #1213) | GLOBAL_JOIN_AS_KARAOKE | | karaoke |
 | 7 | Make times continuous with the previous line | GRID_MAKE_CONTINOUS_PREVIOUS_LINE | | continuous-previous |
 | 8 | Make times continuous with the next line | GRID_MAKE_CONTINOUS_NEXT_LINE | | continuous-next |
 | 9 | Split lines ▸ | | | split-lines |
@@ -44,6 +45,8 @@ Opens on a right press anywhere in the grid viewport except a group description 
 | 9.4 | Split lines into characters | GRID_SPLIT_BY_CHARS | | split-characters |
 | 9.5 | Split lines into words | GRID_SPLIT_BY_WORDS | | split-words |
 | 9.6 | Split lines by wraps | GRID_SPLIT_BY_WRAPS | | split-wraps |
+| 9.7 | Split by karaoke syllables (PG #1213) | GLOBAL_SPLIT_BY_KARAOKE | | karaoke-split |
+| 9.8 | [ ] Keep layout | | `grid.splitKaraokeKeepLayout`, off by default | |
 | 9a | Interpolate across lines… (AU22) | GLOBAL_INTERPOLATE_LINES | 3 or more lines selected; opens a window | interpolate-lines |
 | 10 | Select all lines visible on video | GRID_SELECT_VISIBLE_LINES | | select-visible |
 | 10.1 | Snap to the scene (PT #1212) | GLOBAL_SNAP_TO_SCENE | video loaded | snap-to-scene |

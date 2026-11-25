@@ -540,3 +540,98 @@ TEST(SplitAtCursor, OneUndoStepAndTheSelectionStays)
     ASSERT_EQ(session.document().lines().size(), 2u);
     EXPECT_EQ(session.document().lines()[0]->text, u8"ab cd");
 }
+
+namespace {
+
+struct Piece {
+    std::u8string text;
+    std::int64_t start = 0, end = 0;
+    friend bool operator==(const Piece &, const Piece &) = default;
+    friend void PrintTo(const Piece &p, std::ostream *os)
+    {
+        *os << std::string(p.text.begin(), p.text.end()) << " " << p.start << "-" << p.end;
+    }
+};
+
+std::vector<Piece> karaokePieces(std::string_view dialogue, bool keepLayout = false)
+{
+    EditSession session{load(std::string(kTextScript) + std::string(dialogue))};
+    const auto a = session.document().lines()[0]->id;
+    session.setSelection(Selection{a, {a}, a, {}});
+    FakeMeasure measure;
+    EXPECT_TRUE(splitByKaraoke(session, keepLayout ? &measure : nullptr));
+    std::vector<Piece> out;
+    for (const auto *l : session.document().lines())
+        out.push_back({l->text, ms(l->start.value), ms(l->end.value)});
+    return out;
+}
+
+}
+
+TEST(SplitByKaraoke, OneLinePerSyllableTimedToIt)
+{
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k20}ab{\\kf30}cd{\\K50}ef\n"),
+              (std::vector<Piece>{{u8"ab", 1000, 1200}, {u8"cd", 1200, 1500}, {u8"ef", 1500, 2000}}));
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k20}ab{\\k30}cd\n"),
+              (std::vector<Piece>{{u8"ab", 1000, 1200}, {u8"cd", 1200, 2000}}));
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k60}ab{\\k60}cd{\\k10}ef\n"),
+              (std::vector<Piece>{{u8"ab", 1000, 1600}, {u8"cd", 1600, 2000}, {u8"ef", 2000, 2000}}));
+}
+
+TEST(SplitByKaraoke, TextBeforeTheFirstTagIsASyllableAndEmptyOnesBetweenTagsGo)
+{
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ab{\\k20}cd\n"),
+              (std::vector<Piece>{{u8"ab", 1000, 1000}, {u8"cd", 1000, 2000}}));
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k20}a{\\k0}{\\k30}b{\\k40}\n"),
+              (std::vector<Piece>{{u8"a", 1000, 1200}, {u8"b", 1200, 1500}, {u8"", 1500, 2000}}));
+}
+
+TEST(SplitByKaraoke, EachLineCarriesTheTagsInEffect)
+{
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,"
+                            "{\\pos(10,20)\\b1\\k20}ab{\\i1\\k30}c{\\u1}d{\\k50}ef\n"),
+              (std::vector<Piece>{{u8"{\\pos(10,20)\\b1}ab", 0, 200},
+                                  {u8"{\\pos(10,20)\\b1\\i1}c{\\u1}d", 200, 500},
+                                  {u8"{\\pos(10,20)\\b1\\i1\\u1}ef", 500, 1000}}));
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\b1}{\\k20}ab{\\r\\k30}cd\n"),
+              (std::vector<Piece>{{u8"{\\b1}ab", 0, 200}, {u8"{\\b1\\r}cd", 200, 1000}}));
+}
+
+TEST(SplitByKaraoke, KeepLayoutPlacesEachWhereItSat)
+{
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\k20}ab{\\k30}cd\n", true),
+              (std::vector<Piece>{{u8"{\\pos(310,470)\\an2}ab", 0, 200}, {u8"{\\pos(330,470)\\an2}cd", 200, 1000}}));
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\an7\\pos(100,50)\\k20}ab {\\k30}cd\n",
+                            true),
+              (std::vector<Piece>{{u8"{\\an7\\pos(100,50)}ab", 0, 200}, {u8"{\\an7\\pos(130,50)}cd", 200, 1000}}));
+    EXPECT_EQ(karaokePieces("Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\k20}ab\\N{\\k30}cdef\n", true),
+              (std::vector<Piece>{{u8"{\\pos(320,450)\\an2}ab", 0, 200}, {u8"{\\pos(320,470)\\an2}cdef", 200, 1000}}));
+}
+
+TEST(SplitByKaraoke, OneStepSelectsTheNewLinesAndSkipsLinesWithOneSyllable)
+{
+    EditSession session{load(std::string(kTextScript) + "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\k20}ab\n"
+                                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k20}a{\\k20}b\n"
+                                                        "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,cd\n")};
+    const auto lines = session.document().lines();
+    const auto a = lines[0]->id, b = lines[1]->id, c = lines[2]->id;
+    session.setSelection(Selection{a, {a, c}, a, {}});
+    EXPECT_FALSE(splitByKaraoke(session, nullptr));
+    session.setSelection(Selection{b, {a, b, c}, b, {}});
+    const auto steps = session.historySize();
+    ASSERT_TRUE(splitByKaraoke(session, nullptr));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Splitting lines by karaoke");
+    const auto after = session.document().lines();
+    ASSERT_EQ(after.size(), 4u);
+    EXPECT_EQ(after[0]->id, a);
+    EXPECT_EQ(after[1]->id, b);
+    EXPECT_EQ(after[1]->text, u8"a");
+    EXPECT_EQ(after[2]->text, u8"b");
+    EXPECT_EQ(after[3]->id, c);
+    EXPECT_EQ(session.selection().active, std::optional(b));
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{b, after[2]->id}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.document().lines().size(), 3u);
+    EXPECT_EQ(session.document().lines()[1]->text, u8"{\\k20}a{\\k20}b");
+}

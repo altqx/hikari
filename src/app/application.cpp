@@ -4770,6 +4770,12 @@ bool Application::splitLines(const QString &kind)
                                                                                        : application::FrameAnimations::Keep;
         return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, animations, shown); });
     }
+    if (kind == QLatin1String("karaoke")) {
+        holdMeasuredFonts();
+        ui::QtTextMeasurePort measure;
+        auto *layout = m_settings->boolean("grid.splitKaraokeKeepLayout") ? &measure : nullptr;
+        return runFilter([&](application::EditSession &s) { return application::splitByKaraoke(s, layout, shown); });
+    }
     const auto text = kind == QLatin1String("chars")   ? application::SplitText::Characters
                       : kind == QLatin1String("words") ? application::SplitText::Words
                       : kind == QLatin1String("wraps") ? application::SplitText::Wraps
@@ -7233,6 +7239,7 @@ bool Application::joinLines(const QString &kind)
                        : kind == QLatin1String("next")   ? JoinKind::WithNext
                        : kind == QLatin1String("first")  ? JoinKind::KeepFirst
                        : kind == QLatin1String("last")   ? JoinKind::KeepLast
+                       : kind == QLatin1String("karaoke") ? JoinKind::AsKaraoke
                                                          : JoinKind::Join;
     const bool done = application::joinLines(*session, k).has_value();
     editor().reloadFromSession();

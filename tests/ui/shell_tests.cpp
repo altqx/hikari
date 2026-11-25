@@ -11293,6 +11293,59 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    void splitByKaraokeAndJoinAsKaraokeFromTheGridMenu()
+    {
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(writeFile(dir, "karaoke-split.ass",
+                                                "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\k20}ab{\\k30}cd\n"
+                                                "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,x\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *settings = application->settingsStore();
+        auto *byKaraoke = named("splitByKaraoke");
+        auto *keepLayout = named("splitKaraokeKeepLayout");
+        auto *asKaraoke = named("joinAsKaraoke");
+        QVERIFY(byKaraoke && keepLayout && asKaraoke);
+        QCOMPARE(byKaraoke->property("command").toString(), QStringLiteral("GLOBAL_SPLIT_BY_KARAOKE"));
+        QCOMPARE(byKaraoke->property("text").toString(), QStringLiteral("By karaoke syllables"));
+        QCOMPARE(keepLayout->property("text").toString(), QStringLiteral("Keep layout"));
+        QCOMPARE(asKaraoke->property("command").toString(), QStringLiteral("GLOBAL_JOIN_AS_KARAOKE"));
+        QCOMPARE(asKaraoke->property("text").toString(), QStringLiteral("As karaoke"));
+        const auto first = session->document().lines()[0]->id;
+        session->setSelection(application::Selection{first, {first}, first, {}});
+
+        settings->set("grid.splitKaraokeKeepLayout", false);
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(byKaraoke, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Splitting lines by karaoke"));
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("ab"));
+        QCOMPARE(text(session->document().lines()[1]), QStringLiteral("cd"));
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 200'000);
+        QCOMPARE(session->selection().selected.size(), std::size_t(2));
+
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(2));
+        session->setSelection(application::Selection{first, {first}, first, {}});
+        settings->set("grid.splitKaraokeKeepLayout", true);
+        QVERIFY(QMetaObject::invokeMethod(byKaraoke, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        QVERIFY(text(session->document().lines()[1]).startsWith(QStringLiteral("{\\pos(")));
+        settings->set("grid.splitKaraokeKeepLayout", false);
+
+        std::set<core::LineId> all;
+        for (const auto *line : session->document().lines())
+            all.insert(line->id);
+        session->setSelection(application::Selection{first, all, first, {}});
+        QVERIFY(QMetaObject::invokeMethod(asKaraoke, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(1));
+        QCOMPARE(session->history().back().name, std::string("Joining lines as karaoke"));
+        const QString joined = text(session->document().lines()[0]);
+        QVERIFY(joined.startsWith(QStringLiteral("{\\k20}")));
+        QVERIFY(joined.endsWith(QStringLiteral("{\\k100}{\\k100}x")));
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 3'000'000);
+    }
+
     void motionDataScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -20117,6 +20170,7 @@ private slots:
               {"grid.maxLines", nullptr},
               {"problems.reading", "Show reading-limit problems"},
               {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
+              {"grid.splitKaraokeKeepLayout", "Keep the layout when splitting by karaoke syllables"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr},
               {"grid.tagsSwapCharacter", nullptr}}},
