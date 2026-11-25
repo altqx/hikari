@@ -34,6 +34,8 @@ struct FieldSpec {
     std::string summary;
     std::vector<std::string> choices;
     std::optional<double> minimum, maximum;
+    // What the number counts in, as the Node panel writes it after the value: "px", "°"; empty for none.
+    std::string unit;
 };
 
 struct NodeSpec {
