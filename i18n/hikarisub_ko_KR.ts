@@ -10205,9 +10205,9 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Line %1 failed: %2</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <source>Line %1 failed: %2.</source>
+        <translation>
+            <numerusform>%1번 줄이 실패했습니다: %2.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

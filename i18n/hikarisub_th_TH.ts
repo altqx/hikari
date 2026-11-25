@@ -10205,9 +10205,9 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Line %1 failed: %2</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
+        <source>Line %1 failed: %2.</source>
+        <translation>
+            <numerusform>บรรทัด %1 ล้มเหลว: %2</numerusform>
         </translation>
     </message>
     <message numerus="yes">

@@ -10395,11 +10395,11 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Line %1 failed: %2</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <source>Line %1 failed: %2.</source>
+        <translation>
+            <numerusform>Linijka %1 nie powiodła się: %2.</numerusform>
+            <numerusform>Linijki %1 nie powiodły się: %2.</numerusform>
+            <numerusform>Linijki %1 nie powiodły się: %2.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
