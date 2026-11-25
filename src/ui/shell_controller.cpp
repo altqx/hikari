@@ -63,6 +63,14 @@ void ShellController::refresh(const core::Document *target, const core::Document
                               const std::vector<application::LineComparison> *referenceComparison)
 {
     m_lines.setDocument(target ? *target : core::Document{}, targetComparison);
+    m_translatedLines = 0;
+    m_translatableLines = 0;
+    if (target)
+        for (const core::LineRecord *line : target->lines())
+            if (!line->comment) {
+                ++m_translatableLines;
+                m_translatedLines += line->translation.empty() ? 0 : 1;
+            }
     const auto format = target ? target->format() : core::SubtitleFormat::Ass;
     m_assFormat = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText;
     m_endColumn = format != core::SubtitleFormat::TMPlayer;

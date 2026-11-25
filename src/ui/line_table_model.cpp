@@ -611,6 +611,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case HiddenBlockRowRole: return run.blockRow;
         case CpsSeverityRole: return 0.0;
         case CommentRole:
+        case UntranslatedRole:
         case BadWrapsRole:
         case DraftRole:
         case UnplacedRunsRole: return false;
@@ -702,6 +703,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return m_qcCurrent == line.id;
     case OnFrameRole:
         return m_onFrame.contains(line.id.value);
+    case UntranslatedRole:
+        return m_translationMode && !m_showOriginal && !line.comment && line.translation.empty();
     case RowMarkColoursRole:
     case RowMarkNotesRole: {
         const auto it = m_rowMarks.find(line.id.value);
@@ -946,7 +949,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {QcCurrentRole, "qcCurrent"},
                   {RowMarkColoursRole, "rowMarkColours"},
                   {RowMarkNotesRole, "rowMarkNotes"},
-                  {OnFrameRole, "onFrame"}});
+                  {OnFrameRole, "onFrame"},
+                  {UntranslatedRole, "untranslated"}});
     return roles;
 }
 

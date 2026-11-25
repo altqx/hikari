@@ -204,7 +204,7 @@ QtObject {
         case 8:
         case 13: return [h(qsTr("Point"), "square"), h(qsTr("Curve handle"), "circle")]
         case 9: return [h(qsTr("Position and move start"), "square"), h(qsTr("Move end"), "circle"),
-                        h(qsTr("Origin"), "cross"), h(qsTr("Clip and drawing"), "outline")]
+                        h(qsTr("Origin"), "cross"), h(qsTr("Clip"), "outline"), h(qsTr("Drawing"), "outline")]
         case 10: return [h(qsTr("Changed line"), "outline")]
         case 11: return [h(qsTr("Corners"), "square"), h(qsTr("Plane corners"), "circle"), h(qsTr("Origin"), "cross")]
         case 12: return [h(qsTr("Start and end"), "square"), h(qsTr("Skew"), "square"), h(qsTr("P1, P2 and P3"), "square")]

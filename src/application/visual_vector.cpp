@@ -918,11 +918,13 @@ std::optional<int> VectorEditor::strokeCurves() const
 void VectorEditor::drawRect(Overlay &out, const VectorFrame &frame, int i) const
 {
     pointSquare(out, frame.toView(points[i]), points[i].selected, 3.0f * frame.unit);
+    out.named.push_back({{frame.toView(points[i])}, 5 * frame.unit, 0});
 }
 
 void VectorEditor::drawCircle(Overlay &out, const VectorFrame &frame, int i) const
 {
     pointCircle(out, frame.toView(points[i]), points[i].selected, 3.0f * frame.unit);
+    out.named.push_back({{frame.toView(points[i])}, 5 * frame.unit, 1});
 }
 
 void VectorEditor::drawLine(Overlay &out, const VectorFrame &frame, int i) const

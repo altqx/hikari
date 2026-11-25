@@ -4415,6 +4415,11 @@ Output device: %2</source>
         <translation>தட்டச்சு செய்யும்போது எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>வரி திருத்தி · மொழிபெயர்த்த உரை</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>வரி திருத்தி</translation>
     </message>
@@ -7301,6 +7306,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>No lines match the filter</source>
         <translation>வடிப்பியுடன் பொருந்தும் வரிகள் இல்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%n வரியில் %1 மொழிபெயர்க்கப்பட்டது</numerusform>
+            <numerusform>%n வரிகளில் %1 மொழிபெயர்க்கப்பட்டன</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -13385,11 +13398,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not wired</source>
-        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13400,20 +13408,62 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Choose a colour</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>%n nodes selected.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Select a node to see its fields.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n %1 nodes</source>
+        <translation>
+            <numerusform>%n %1 கணு</numerusform>
+            <numerusform>%n %1 கணுக்கள்</numerusform>
+        </translation>
+    </message>
     <message>
         <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a value to change it · Shift for fine steps</source>
+        <translation>மதிப்பை மாற்ற அதை இழுக்கவும் · நுண்ணிய படிகளுக்கு Shift</translation>
+    </message>
+    <message>
+        <source>Wired</source>
+        <translation>இணைக்கப்பட்டவை</translation>
+    </message>
+    <message>
+        <source>On line %1</source>
+        <extracomment>The Node panel&apos;s heading for the values from the last preview run on a line</extracomment>
+        <translation>வரி %1 இல்</translation>
+    </message>
+    <message>
+        <source>from the last run · %1 a line</source>
+        <translation>கடைசி இயக்கத்திலிருந்து · ஒரு வரிக்கு %1</translation>
+    </message>
+    <message>
+        <source>→ %1</source>
+        <extracomment>An output&apos;s wires in the Node panel: &quot;→ fade › tags, emit › tags&quot;</extracomment>
+        <translation>→ %1</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>தேர்வு</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>குழுவாக்கு</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Values from the last run show for one node at a time.</source>
+        <translation>கடைசி இயக்கத்தின் மதிப்புகள் ஒரு நேரத்தில் ஒரு கணுவுக்கு மட்டுமே காட்டப்படும்.</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>சிக்கல்கள்</translation>
     </message>
     <message>
         <source>Name</source>
@@ -13424,9 +13474,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mixed</source>
+        <translation>கலவை</translation>
+    </message>
+    <message>
+        <source>Changed from the default</source>
+        <extracomment>Read out by screen readers for a Node panel field whose value isn&apos;t the node&apos;s default</extracomment>
+        <translation>இயல்புநிலையிலிருந்து மாற்றப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>இயல்புநிலைக்கு மீட்டமை</translation>
+    </message>
+    <message>
         <source>+ graph seed %1</source>
         <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to “%1”</source>
+        <extracomment>Selects and centres the node a wired input comes from</extracomment>
+        <translation>“%1” க்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>இயல்புநிலை</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <extracomment>The axis after a point&apos;s coordinate in the Node panel</extracomment>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>y</source>
+        <translation>y</translation>
+    </message>
+    <message>
+        <source>Pick on the video</source>
+        <translation>வீடியோவில் தேர்ந்தெடு</translation>
     </message>
     <message>
         <source>Lua code</source>
@@ -13445,8 +13530,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>At least %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a smaller value: &quot;At least 1&quot;</extracomment>
+        <translation>குறைந்தது %1</translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a larger value: &quot;At most 400&quot;</extracomment>
+        <translation>அதிகபட்சம் %1</translation>
+    </message>
+    <message>
+        <source>Between %1 and %2</source>
+        <extracomment>A refused value in the Node panel: &quot;Between 10 and 400&quot;</extracomment>
+        <translation>%1 முதல் %2 வரை</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <extracomment>A unit after a number in the Node panel: pixels</extracomment>
+        <translation>px</translation>
+    </message>
+    <message>
         <source>ms</source>
+        <extracomment>The unit after a time in the Node panel: milliseconds</extracomment>
         <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>Enter a number</source>
+        <translation>ஓர் எண்ணை உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Enter X and Y as numbers</source>
+        <translation>X, Y ஐ எண்களாக உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Enter a colour as #RRGGBB</source>
+        <translation>வண்ணத்தை #RRGGBB ஆக உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Enter a name</source>
+        <translation>ஒரு பெயரை உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Use only letters, digits, _ and -</source>
+        <translation>எழுத்துகள், இலக்கங்கள், _ மற்றும் - ஆகியவற்றை மட்டும் பயன்படுத்தவும்</translation>
+    </message>
+    <message>
+        <source>Another node is called “%1”.</source>
+        <extracomment>A refused node name: “fade” is the name another node has</extracomment>
+        <translation>“%1” என்ற பெயரில் வேறொரு கணு ஏற்கெனவே உள்ளது.</translation>
     </message>
     <message>
         <source>New seed</source>
@@ -13461,20 +13592,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>to %1</source>
-        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On line %1, from the last run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13491,19 +13609,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished">நேரமிடல்</translation>
+        <translation type="obsolete">நேரமிடல்</translation>
     </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Last run %1 on line %2</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>1 line</source>
@@ -13980,6 +14094,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For selected lines</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step down</source>
+        <translation>ஒரு படி குறை</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>ஒரு படி கூட்டு</translation>
     </message>
 </context>
 <context>
@@ -20262,8 +20384,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>மேற்கோள்</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>மேற்கோள் · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>மேற்கோள்: %1</translation>
+        <translation type="vanished">மேற்கோள்: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -20280,6 +20406,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Follow the editing line</source>
         <translation>திருத்தப்படும் வரியைப் பின்தொடர்</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>சுயாதீனம்</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>இணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>மேற்கோள் வழிசெலுத்தல்</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -20300,6 +20438,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>மேற்கோள் வரிகள் (பாதுகாக்கப்பட்டவை, படிக்க மட்டும்)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>படிக்க மட்டும். சுயாதீனம்: அது தானாக நகரும்; இணைக்கப்பட்டது திருத்தப்படும் வரியை நேரப்படி பின்தொடரும்.</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -27049,6 +27191,19 @@ Styles deleted:
         <translation>அசல் உரை: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>AI மொழிபெயர்ப்பு</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>மொழிபெயர்ப்பைத் தட்டச்சு செய்யவும். %1 அசல் உரையை ஒட்டும்.</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>மொழிபெயர்ப்பைத் தட்டச்சு செய்யவும்.</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>கரோக்கி வரி: அதன் உரைக்கு முன் உள்ள குறிச்சொற்கள் கொண்டுசெல்லப்படும், கரோக்கி நேரமிடல் கொண்டுசெல்லப்படாது.</translation>
     </message>
@@ -27279,6 +27434,29 @@ Styles deleted:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>ஒவ்வொரு வரியின் அசல் உரையையும் மொழிபெயர்ப்பையும் காட்டிச் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>AI மொழிபெயர்ப்பு நின்றுவிட்டது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI மொழிபெயர்ப்பு · %n வரியில் %1</numerusform>
+            <numerusform>AI மொழிபெயர்ப்பு · %n வரிகளில் %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>வழங்குநர்கள்…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>நிராகரி</translation>
     </message>
 </context>
 <context>
@@ -29764,8 +29942,8 @@ or codecs or a splitter may be missing</source>
         <translation>நகர்வு முடிவு</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>கிளிப்பும் வரைபடமும்</translation>
+        <source>Clip</source>
+        <translation>கிளிப்</translation>
     </message>
     <message>
         <source>Changed line</source>

@@ -111,6 +111,22 @@ TEST(NodeGraphEditing, RemovingOrRenamingANodeTakesItsWiresAlong)
     EXPECT_FALSE(withNodeRenamed(graph, "k", "has space"));
 }
 
+TEST(NodeGraphEditing, AFieldIsSetOnSeveralNodesOrTakenOffThem)
+{
+    NodeGraph graph;
+    graph.nodes.push_back({"fade", "tags.fade"});
+    graph.nodes.push_back({"fade2", "tags.fade"});
+    graph.nodes.push_back({"fade3", "tags.fade"});
+    const std::vector<std::string> two{"fade", "fade3"};
+    const NodeGraph set = withFieldOnNodes(graph, two, "fade_in", json::Json(150));
+    EXPECT_EQ(nodeField(set.nodes[0], "fade_in").asNumber(), 150);
+    EXPECT_EQ(set.nodes[1].fields.find("fade_in"), nullptr);
+    EXPECT_EQ(nodeField(set.nodes[2], "fade_in").asNumber(), 150);
+    const NodeGraph reset = withFieldOnNodes(set, two, "fade_in", std::nullopt);
+    EXPECT_EQ(reset.nodes[0].fields.find("fade_in"), nullptr);
+    EXPECT_EQ(reset.nodes[2].fields.find("fade_in"), nullptr);
+}
+
 TEST(NodeGraphEditing, NewNodesGetAFreeIdFromTheirType)
 {
     NodeGraph graph;

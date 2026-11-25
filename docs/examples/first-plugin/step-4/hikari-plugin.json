@@ -1,0 +1,36 @@
+{
+  "$schema": "../../../schemas/hikari-plugin.schema.json",
+  "id": "com.example.first-plugin",
+  "name": "First plugin",
+  "version": "0.4.0",
+  "api": 1,
+  "main": "main.lua",
+  "authors": ["Your name"],
+  "license": "MIT",
+  "contributes": {
+    "commands": [
+      {"id": "count", "title": "Count lines"},
+      {"id": "unbreak", "title": "Join line breaks in the selected lines"}
+    ],
+    "panels": [{"id": "summary", "title": "Summary", "area": "right"}],
+    "aiTools": [
+      {
+        "command": "count",
+        "description": "Counts the lines of the open subtitle file.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": false},
+        "result": {
+          "type": "object",
+          "properties": {"lineCount": {"type": "integer"}},
+          "required": ["lineCount"]
+        },
+        "mark": "read"
+      },
+      {
+        "command": "unbreak",
+        "description": "Joins the line breaks in the selected lines.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": false},
+        "mark": "write"
+      }
+    ]
+  }
+}

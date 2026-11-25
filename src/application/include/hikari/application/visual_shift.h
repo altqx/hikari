@@ -62,7 +62,7 @@ private:
     float inX(float x) const { return ((x / m_coeffW) - m_zoomMove.x) * m_zoomScale.x; }
     float inY(float y) const { return ((y / m_coeffH) - m_zoomMove.y) * m_zoomScale.y; }
     PointF vectorPoint(const transform::ClipPoint &point, PointF drawingPos) const;
-    void drawShape(Overlay &out, const std::vector<transform::ClipPoint> &points, PointF drawingPos) const;
+    void drawShape(Overlay &out, const std::vector<transform::ClipPoint> &points, PointF drawingPos, int name) const;
 
     std::array<bool, 6> m_toggled{true, false, false, false, false, false};
     double m_shiftX = 0, m_shiftY = 0;

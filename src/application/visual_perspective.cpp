@@ -2388,11 +2388,16 @@ Overlay PerspectiveTool::overlay(const VisualHost &host) const
         drawCircle(out, org, m_drag == Drag::Org);
     out.lines.push_back({{org.x - 6.f, org.y}, {org.x + 6.f, org.y}, 2.f, kOrgColour});
     out.lines.push_back({{org.x, org.y - 6.f}, {org.x, org.y + 6.f}, 2.f, kOrgColour});
-    for (int i = 0; i < 4; ++i)
+    out.named.push_back({{org}, 8 * out.unit, 2});
+    for (int i = 0; i < 4; ++i) {
         drawRect(out, inner[static_cast<std::size_t>(i)], m_selected == i);
+        out.named.push_back({{inner[static_cast<std::size_t>(i)]}, 7 * out.unit, 0});
+    }
     if (m_plane)
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 4; ++i) {
             drawCircle(out, o[static_cast<std::size_t>(i)], m_selected == i + 4);
+            out.named.push_back({{o[static_cast<std::size_t>(i)]}, 8 * out.unit, 1});
+        }
     return out;
 }
 

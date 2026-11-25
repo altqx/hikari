@@ -8,6 +8,7 @@
 #include "hikari/backends/ai_sidecar_host.h"
 
 #include "docking.h"
+#include "log_controller.h"
 #include "settings_store.h"
 
 #include <QDir>
@@ -125,6 +126,35 @@ class InlineAiTest : public QObject {
         QVERIFY(ok);
     }
     void selectAll() { QVERIFY(QMetaObject::invokeMethod(application.get(), "selectAllLines")); }
+    void translationRunShots(const QString &out, const QString &state, const QString &shown)
+    {
+        QVERIFY(QDir().mkpath(out));
+        setMode("auto");
+        QVERIFY(application->turnOnTranslationMode());
+        shell(QStringLiteral("applyPreset('Translation')"));
+        QTRY_VERIFY(shell(QStringLiteral("originalShown")).toBool());
+        selectAll();
+        QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("translate")},
+                                  {QStringLiteral("language"), QStringLiteral("French")}},
+                                 false));
+        QTRY_VERIFY(item(shown));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const QSize size : {QSize(1366, 768), QSize(1280, 800)}) {
+            window()->resize(size);
+            QTRY_COMPARE(window()->size(), size);
+            for (const char *theme : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(theme));
+                QTest::qWait(300);
+                QVERIFY(window()->grabWindow().save(QStringLiteral("%1/translation-run-%2-%3x%4-%5.png")
+                                                        .arg(out, state)
+                                                        .arg(size.width())
+                                                        .arg(size.height())
+                                                        .arg(QLatin1String(theme))));
+            }
+        }
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+    }
 
 private slots:
     void init()
@@ -132,12 +162,19 @@ private slots:
         QVERIFY(QDir(root.path()).mkpath(QString::fromLatin1(QTest::currentTestFunction())));
         ai::Config config;
         ai::Provider provider = ai::presetProvider(ai::Preset::OpenRouter, "or", "OpenRouter");
-        provider.models = {{.id = "inline-upper", .name = "Upper", .price = ai::Price{.input = 0.5, .output = 0}}};
+        provider.models = {{.id = "inline-upper", .name = "Upper", .price = ai::Price{.input = 0.5, .output = 0}},
+                           {.id = "hang", .name = "Hang"},
+                           {.id = "fail", .name = "Fail"}};
         config.providers.push_back(provider);
         const QByteArray test = QTest::currentTestFunction();
         const bool cliOnly = test == QByteArrayLiteral("anAgentCliAloneLeavesTheActionsOff");
+        const bool hang = test == QByteArrayLiteral("aTranslationRunShowsItsProgressInTheOriginalTextPanel") ||
+                          test == QByteArrayLiteral("translationRunningScreenshots");
+        const bool fail = test == QByteArrayLiteral("aFailedTranslationRunReportsInTheOriginalTextPanel") ||
+                          test == QByteArrayLiteral("translationFailedScreenshots");
+        const std::string model = hang ? "hang" : fail ? "fail" : "inline-upper";
         if (!cliOnly && test != QByteArrayLiteral("aProviderAddedWhileRunningIsInEveryModelListAtOnce"))
-            config.roles[ai::Role::Chat] = {"or", "inline-upper"};
+            config.roles[ai::Role::Chat] = {"or", model};
 
         const QString flags = at(QStringLiteral("local-bundle"));
         QFile bundle(flags);
@@ -167,6 +204,9 @@ private slots:
         options.playbackAudio = false;
         options.aiPorts = std::move(ports);
         application = std::make_unique<app::Application>(options);
+        // MUST KILL: spell check off so its no-dictionary toast stays out of the screenshots
+        if (test.endsWith("Screenshots"))
+            application->applySettings({{QStringLiteral("editor.spellchecker"), false}});
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
         engine->setInitialProperties(application->qmlProperties());
@@ -266,6 +306,24 @@ private slots:
             shell(QStringLiteral("gridAiHotkeyMenu.close()"));
             QTRY_VERIFY(!shell(QStringLiteral("gridAiHotkeyMenu.visible")).toBool());
         }
+    }
+
+    void translationRunningScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        translationRunShots(out, QStringLiteral("running"), QStringLiteral("translationRunRow"));
+        if (!QTest::currentTestFailed())
+            QVERIFY(click(QStringLiteral("translationRunStop")));
+    }
+
+    void translationFailedScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        translationRunShots(out, QStringLiteral("failed"), QStringLiteral("translationRunProviders"));
     }
 
     void anAgentCliAloneLeavesTheActionsOff()
@@ -459,6 +517,50 @@ private slots:
         QFile glossary(at(QStringLiteral("honya/GLOSSARY.md")));
         QVERIFY(glossary.open(QIODevice::ReadOnly));
         QCOMPARE(glossary.readAll(), QByteArray("# Glossary\n"));
+    }
+
+    void aTranslationRunShowsItsProgressInTheOriginalTextPanel()
+    {
+        setMode("auto");
+        QVERIFY(application->turnOnTranslationMode());
+        QTRY_VERIFY(shell(QStringLiteral("originalShown")).toBool());
+        selectAll();
+        QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("translate")},
+                                  {QStringLiteral("language"), QStringLiteral("French")}},
+                                 false));
+        QTRY_VERIFY(item(QStringLiteral("translationRunRow")));
+        QVERIFY(item(QStringLiteral("translationRunLine")));
+        QVERIFY(!item(QStringLiteral("inlineAiProgress")));
+        QCOMPARE(item(QStringLiteral("translationRunText"))->property("text").toString(), QStringLiteral("AI translation · 0 of 2 line(s)"));
+        QVERIFY(click(QStringLiteral("translationRunStop")));
+        QTRY_VERIFY(!item(QStringLiteral("translationRunRow")));
+        QTRY_VERIFY(item(QStringLiteral("translationRunNotice")));
+        QVERIFY(!item(QStringLiteral("translationRunProviders")));
+        QVERIFY(!item(QStringLiteral("inlineAiNotice")));
+        QVERIFY(click(QStringLiteral("translationRunDismiss")));
+        QTRY_VERIFY(!item(QStringLiteral("translationRunState")));
+    }
+
+    void aFailedTranslationRunReportsInTheOriginalTextPanel()
+    {
+        setMode("auto");
+        QVERIFY(application->turnOnTranslationMode());
+        QTRY_VERIFY(shell(QStringLiteral("originalShown")).toBool());
+        selectAll();
+        QVERIFY(inlineAi().start({{QStringLiteral("action"), QStringLiteral("translate")},
+                                  {QStringLiteral("language"), QStringLiteral("French")}},
+                                 false));
+        QTRY_VERIFY(item(QStringLiteral("translationRunProviders")));
+        QVERIFY(item(QStringLiteral("translationRunNoticeText"))->property("text").toString().startsWith(QStringLiteral("AI translation stopped. ")));
+        QCOMPARE(item(QStringLiteral("translationRunNoticeIcon"))->property("iconRole").toString(), QStringLiteral("notice-error"));
+        QVERIFY(!item(QStringLiteral("inlineAiNotice")));
+        QTRY_VERIFY(application->log().history().contains(QStringLiteral("AI translation stopped. ")));
+        QVERIFY(click(QStringLiteral("translationRunDetails")));
+        QTRY_VERIFY(shell(QStringLiteral("panelShown(logDock)")).toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(shell(QStringLiteral("originalDock")).value<QObject *>(), "close"));
+        QTRY_VERIFY(!shell(QStringLiteral("originalShown")).toBool());
+        QTRY_VERIFY(item(QStringLiteral("inlineAiNotice")));
     }
 
     void translateSendsTheSourceLanguageOnlyWhenOneIsSet()

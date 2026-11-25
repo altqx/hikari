@@ -296,6 +296,35 @@ TEST(VisualFamilies, TheToolsThatNudgeTakeTheArrows)
     }
 }
 
+TEST(VisualNamedHandles, ADotBeatsAPathThenTheNearestWins)
+{
+    Overlay overlay;
+    overlay.named.push_back({{{0, 0}, {100, 0}, {100, 100}, {0, 100}}, 4, 3, true});
+    overlay.named.push_back({{{100, 0}}, 7, 0});
+    overlay.named.push_back({{{40, 50}}, 7, 2});
+    overlay.named.push_back({{{52, 50}}, 7, 1});
+
+    EXPECT_EQ(namedHandleAt(overlay, {102, 3}), 0) << "the dot, though the outline is nearer";
+    EXPECT_EQ(namedHandleAt(overlay, {50, 2}), 3);
+    EXPECT_EQ(namedHandleAt(overlay, {2, 50}), 3) << "the closing edge of a closed path";
+    EXPECT_EQ(namedHandleAt(overlay, {45, 50}), 2);
+    EXPECT_EQ(namedHandleAt(overlay, {47, 50}), 1) << "two dots: the nearest";
+    EXPECT_EQ(namedHandleAt(overlay, {70, 50}), std::nullopt);
+    EXPECT_EQ(namedHandleAt(overlay, {100, 120}), std::nullopt);
+
+    overlay.named[0].closed = false;
+    EXPECT_EQ(namedHandleAt(overlay, {2, 50}), std::nullopt);
+}
+
+TEST(VisualNamedHandles, ALaterHandleWinsATie)
+{
+    Overlay overlay;
+    overlay.named.push_back({{{50, 0}}, 6, 2});
+    overlay.named.push_back({{{50, 0}}, 6, 0});
+    EXPECT_EQ(namedHandleAt(overlay, {52, 1}), 0);
+    EXPECT_EQ(namedHandleAt(Overlay{}, {50, 0}), std::nullopt);
+}
+
 TEST(VisualView, SourceAspectFollowsProviderFFMS2)
 {
     EXPECT_EQ(sourceAspectRatio({720, 480, 32, 27}), 480.f / 853.f);

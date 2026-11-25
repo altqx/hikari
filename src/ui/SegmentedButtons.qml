@@ -12,7 +12,7 @@ Rectangle {
     signal activated(int index)
 
     implicitWidth: row.implicitWidth + 2
-    implicitHeight: Math.max(Theme.controlHeight, row.implicitHeight + 2)
+    implicitHeight: wrapsLabels ? Math.max(Theme.controlHeight, row.implicitHeight + 2) : Theme.controlHeight
     radius: Theme.radius
     color: "transparent"
     border.width: 1

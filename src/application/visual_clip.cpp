@@ -651,6 +651,7 @@ Overlay RectangleClipTool::overlay(const VisualHost &host) const
     out.polygons.push_back(std::move(mask));
     for (int i = 0; i < 4; ++i)
         out.lines.push_back({v2[i], v2[i + 1], 1, kOutline});
+    out.named.push_back({{v2[0], v2[1], v2[2], v2[3]}, 4 * out.unit, 0, true});
     return out;
 }
 

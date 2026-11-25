@@ -132,6 +132,8 @@ public:
     Q_INVOKABLE bool runHotkey(const QString &action);
     Q_INVOKABLE QString copyCoordinates(qreal x, qreal y);
     Q_INVOKABLE QString copyCoordinatesAtCursor(QQuickItem *area);
+    // {x, y} in script coordinates, as Copy coordinates reads them; empty without video.
+    Q_INVOKABLE QVariantMap scriptPointAt(qreal x, qreal y) const;
     Q_INVOKABLE bool setValue(const QString &name, const QString &text);
     Q_INVOKABLE bool scrubValue(const QString &name, const QString &text);
     Q_INVOKABLE void pickBatch();
@@ -143,6 +145,8 @@ public:
     Q_INVOKABLE bool setOption(const QString &name, int value);
     // The segment under a right-click at (x, y): {index, curve}, or an empty map.
     Q_INVOKABLE QVariantMap segmentAt(qreal x, qreal y) const;
+    // The row of the named handle under (x, y) in VisualToolTexts.handles(activeFamily), or -1.
+    Q_INVOKABLE int handleAt(qreal x, qreal y) const;
     Q_INVOKABLE bool editSegment(int index, bool curve, SegmentEditKind edit, qreal x, qreal y);
     Q_INVOKABLE void previewOption(const QString &name, int index);
 
@@ -216,6 +220,7 @@ private:
     application::visual::LineWarning currentWarning() const;
     void updatePreview();
     void refreshOptions();
+    void followSmoothing();
     void openShapeEditor();
     void saveShapes() const;
     void openTagsEditor();

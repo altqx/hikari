@@ -833,6 +833,9 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
     out.lines.push_back({v4[0], v4[1], 2, out.handles.border});
     out.lines.push_back({v4[2], v4[3], 2, out.handles.border});
     out.lines.push_back({v4[4], v4[5], 2, out.handles.border});
+    out.named.push_back({{m_from, m_to}, 4 * out.unit, 2});
+    out.named.push_back({{m_from, {m_to.x, m_from.y}}, 4 * out.unit, 0});
+    out.named.push_back({{m_from, {m_from.x, m_to.y}}, 4 * out.unit, 1});
     return out;
 }
 

@@ -1,7 +1,7 @@
 qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_grid.cpp line_grid.h line_grid_accessible.cpp line_grid_accessible.h
     shell_controller.cpp shell_controller.h line_editor_controller.cpp line_editor_controller.h
     automation_dialog_controller.cpp automation_dialog_controller.h script_dialog_memory.cpp script_dialog_memory.h video_presenter.cpp video_presenter.h
-    automation_manager_controller.cpp automation_manager_controller.h template_editor_controller.cpp template_editor_controller.h node_effects_controller.cpp node_effects_controller.h node_catalogue_text.cpp node_catalogue_text.h
+    automation_manager_controller.cpp automation_manager_controller.h template_editor_controller.cpp template_editor_controller.h node_effects_controller.cpp node_effects_controller.h node_effects_controller_form.cpp node_field_values.cpp node_field_values.h node_catalogue_text.cpp node_catalogue_text.h
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
     automation_runs.cpp automation_runs.h log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
@@ -30,7 +30,7 @@ list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml Inp
 list(APPEND hikari_ui_qml_files ChangeAlignmentMenu.qml AlignDistributeMenu.qml PhantomMenu.qml CycleValuesPage.qml)
 list(APPEND hikari_ui_qml_files TagListPopup.qml EditorTagList.qml)
 list(APPEND hikari_ui_qml_files TagButton.qml TagButtonEditor.qml)
-list(APPEND hikari_ui_qml_files NodeGraphCanvas.qml NodePort.qml NodeAddPopup.qml NodeInspector.qml
+list(APPEND hikari_ui_qml_files NodeGraphCanvas.qml NodePort.qml NodeAddPopup.qml NodeInspector.qml NodeFieldEditor.qml ScrubField.qml
     NodeSourceLines.qml NodeModeBar.qml NodePresetMenu.qml NodeLibraryMenu.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application hikari_themes Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 find_package(Qt6 ${HIKARI_QT_VERSION} EXACT REQUIRED COMPONENTS ShaderTools)
@@ -75,7 +75,7 @@ list(APPEND hikari_ui_qml_files FilterChip.qml FontResolutionNote.qml FontWindow
 list(APPEND hikari_ui_qml_files MatroskaSubtitles.qml)
 list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AgentPanelOff.qml ModelPicker.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
-list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualToolGuide.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
+list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualToolGuide.qml VisualOverlay.qml VisualHandleTip.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 list(APPEND hikari_ui_qml_files VisualToolOption.qml VisualToolDialogs.qml)
 list(APPEND hikari_ui_qml_files ShapesEditionPane.qml ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
 list(APPEND hikari_ui_qml_files AllTagsEditionPane.qml AllTagsEditionDialog.qml EditionUndoRedo.qml)
@@ -129,7 +129,7 @@ list(APPEND hikari_ui_qml_files AudioOutputMenu.qml MenuRadioItem.qml MenuHeadin
 list(APPEND hikari_ui_qml_files LineBreaksMenu.qml ChangeCaseMenu.qml)
 list(APPEND hikari_ui_qml_files AudioSliderRow.qml)
 list(APPEND hikari_ui_qml_files AudioTapBar.qml TapCalibrationWindow.qml Keycap.qml KeycapSentence.qml)
-list(APPEND hikari_ui_qml_files TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml
+list(APPEND hikari_ui_qml_files TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml TranslationRunState.qml
     TranslationModeOffConfirm.qml)
 target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
 list(APPEND hikari_ui_qml_files ScreenDropperView.qml)

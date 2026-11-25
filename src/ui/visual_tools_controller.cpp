@@ -86,6 +86,8 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
             emit changed();
         if (id == QStringLiteral("video.handleSize"))
             toolChanged();
+        if (id == QStringLiteral("video.vectorClipSmoothing") || id == QStringLiteral("video.drawingSmoothing"))
+            followSmoothing();
     });
 }
 
@@ -111,6 +113,19 @@ std::optional<int> VisualToolsController::freehandSmoothing(Family family) const
 void VisualToolsController::setFreehandSmoothing(Family family, int smoothing)
 {
     m_settings.set(smoothingSetting(family), smoothing);
+}
+
+void VisualToolsController::followSmoothing()
+{
+    auto *t = tool();
+    if (!t || m_gesture || (m_family != Family::VectorClip && m_family != Family::Drawing))
+        return;
+    const std::u16string text = QString::number(*freehandSmoothing(m_family)).toStdU16String();
+    for (const ToolValue &value : t->values(*this))
+        if (value.name == "smoothing" && value.text != text) {
+            (void)t->setValue(value.name, text, *this);
+            return;
+        }
 }
 
 VisualToolsController::~VisualToolsController() = default;
@@ -982,6 +997,15 @@ QString VisualToolsController::copyCoordinates(qreal x, qreal y)
     return m_copied;
 }
 
+QVariantMap VisualToolsController::scriptPointAt(qreal x, qreal y) const
+{
+    if (!m_view.hasVideo())
+        return {};
+    const CrossCoefficients coeff = crossCoefficients(m_view);
+    const PointF script = crossScriptPoint(m_view, coeff.x, coeff.y, m_view.toDevice(x), m_view.toDevice(y));
+    return {{QStringLiteral("x"), double(script.x)}, {QStringLiteral("y"), double(script.y)}};
+}
+
 QString VisualToolsController::copyCoordinatesAtCursor(QQuickItem *area)
 {
     if (m_lastPointer)
@@ -1039,6 +1063,16 @@ QVariantMap VisualToolsController::segmentAt(qreal x, qreal y) const
     if (!segment)
         return {};
     return {{QStringLiteral("index"), segment->index}, {QStringLiteral("curve"), segment->curve}};
+}
+
+int VisualToolsController::handleAt(qreal x, qreal y) const
+{
+    const auto *t = tool();
+    if (!t || !m_view.hasVideo() || m_view.zoomMode() || m_gesture
+        || (t->warnsOutsideLine() && currentWarning() != LineWarning::None))
+        return -1;
+    const PointF at{static_cast<float>(m_view.toDevice(x)), static_cast<float>(m_view.toDevice(y))};
+    return application::visual::namedHandleAt(t->overlay(*this), at).value_or(-1);
 }
 
 bool VisualToolsController::editSegment(int index, bool curve, SegmentEditKind edit, qreal x, qreal y)

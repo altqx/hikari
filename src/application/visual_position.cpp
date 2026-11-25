@@ -698,6 +698,7 @@ Overlay PositionTool::overlay(const VisualHost &host) const
                 conv = calcMovePosition(conv, pos.move->data(), time);
             drawCross(out, conv);
             drawRect(out, conv);
+            out.named.push_back({{conv}, 7 * out.unit, 0});
             nothingToShow = false;
         }
     }
@@ -1314,6 +1315,12 @@ Overlay MoveTool::overlay(const VisualHost &host) const
     drawCross(out, dist, out.handles.border);
     drawRect(out, m_from);
     drawCircle(out, m_to);
+    if (!m_hasLineToMove) {
+        out.named.push_back({{m_from, m_to}, 4 * out.unit, 2});
+        out.named.push_back({{dist}, 8 * out.unit, 3});
+        out.named.push_back({{m_from}, 7 * out.unit, 0});
+        out.named.push_back({{m_to}, 8 * out.unit, 1});
+    }
     return out;
 }
 
