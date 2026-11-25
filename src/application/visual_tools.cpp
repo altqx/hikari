@@ -1,6 +1,8 @@
 #include "hikari/application/visual_tools.h"
 
 #include "hikari/application/hotkeys.h"
+#include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
@@ -319,6 +321,7 @@ std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
     command.apply = [staged = m_staged, stagedExtra = m_stagedExtra, replacements = m_replacements,
                      added](core::Document &document) {
         added->clear();
+        stampScriptResolution(document, scriptResolution(document));
         for (const auto &[id, texts] : replacements)
             if (!replaceLine(document, id, texts, added.get()))
                 return false;

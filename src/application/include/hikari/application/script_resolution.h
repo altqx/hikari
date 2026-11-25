@@ -24,6 +24,19 @@ bool lacksScriptResolution(Resolution written);
 // 1280x720 when both are missing, a 16:9 partner when one is; writes nothing.
 Resolution legacyScriptResolution(Resolution written);
 
+// What libass and VSFilter render at: 384x288 when both are missing, a 4:3 partner when one is
+// (1280 and 1024 pair up).
+Resolution playersScriptResolution(Resolution written);
+
+// The size generated Lines are laid out at, and stamped into the Document with them: the written
+// keys; the players' default when a Dialogue Line exists, so no Line moves; else the suggestion.
+Resolution layoutResolution(const core::Document &document, std::optional<Resolution> video);
+Resolution layoutResolution(const std::vector<MacroInfoLine> &info, bool hasDialogue, std::optional<Resolution> video);
+
+// Writes both keys only when one is missing; call it inside the Command that adds the Lines,
+// so one Undo takes both back. False for a non-ASS Document or nothing to write.
+bool stampScriptResolution(core::Document &document, Resolution resolution);
+
 // The video's size for both keys, even when one is written; else legacyScriptResolution.
 Resolution suggestedScriptResolution(Resolution written, std::optional<Resolution> video);
 
