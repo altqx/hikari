@@ -107,6 +107,7 @@ Subtitles > -
 Subtitles > Style manager [GLOBAL_OPEN_STYLE_MANAGER]
 Subtitles > Script properties [GLOBAL_OPEN_ASS_PROPERTIES]
 Subtitles > Font collector [GLOBAL_OPEN_FONT_COLLECTOR]
+Subtitles > Attachments… [GLOBAL_OPEN_ATTACHMENTS]
 Subtitles > Resample subtitles… [GLOBAL_OPEN_SUBS_RESAMPLE]
 Subtitles > Set FPS >
 Subtitles > Set FPS > Set new FPS… [GRID_SET_NEW_FPS]

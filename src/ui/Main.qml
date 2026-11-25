@@ -2732,6 +2732,12 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
         }
         Action {
+            id: attachmentsAction
+            text: qsTranslate("HikariSub.Attachments", "Attachments…")
+            enabled: root.shell.hasEditingTarget && root.shell.assColumns
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ATTACHMENTS")) attachmentsWindow.show()
+        }
+        Action {
             id: resampleAction
             text: qsTr("R&esample subtitles…")
             enabled: root.shell.hasEditingTarget
@@ -3943,6 +3949,13 @@ ApplicationWindow {
                     objectName: "fontCollectorMenuItem"
                     iconRole: "font-collector"
                     action: fontCollectorAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_OPEN_ATTACHMENTS"
+                    help: qsTranslate("HikariSub.Attachments", "Lists the fonts and graphics attached to the subtitles")
+                    objectName: "attachmentsMenuItem"
+                    iconRole: "attach"
+                    action: attachmentsAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_SUBS_RESAMPLE"
@@ -11539,6 +11552,12 @@ ApplicationWindow {
                 && !(root.crashReports.canSend && root.app.settings.value("privacy.alwaysSendCrashReports") === true))
             Qt.callLater(() => crashReportWindow.showReport("start"))
     }
+    Attachments {
+        id: attachmentsWindow
+        objectName: "attachments"
+        app: root.app
+        settings: root.app.settings
+    }
     Autosaves {
         id: autosaves
         objectName: "autosaves"
@@ -11818,7 +11837,7 @@ ApplicationWindow {
         GLOBAL_CLOSE_PAGE: closeAction,
         GLOBAL_OPEN_SPELLCHECKER: checkSpellingAction, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesAction,
         GLOBAL_OPEN_STYLE_MANAGER: styleManagerAction, GLOBAL_OPEN_SUBS_RESAMPLE: resampleAction,
-        GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction,
+        GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorAction, GLOBAL_OPEN_ATTACHMENTS: attachmentsAction,
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesAction, GLOBAL_SHOW_TIMING_POSTPROCESSOR: showPostprocessorAction,
         GLOBAL_SHOW_QC_NOTES: showQcNotesAction, GLOBAL_SHOW_EXPLORER: showExplorerAction,
         GLOBAL_SNAP_TO_SCENE: snapToSceneAction,
