@@ -6650,7 +6650,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation>Krok %1 z %2</translation>
+        <translation type="vanished">Krok %1 z %2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
@@ -6686,7 +6686,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation>Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
+        <translation type="vanished">Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
     </message>
     <message>
         <source>Later: Settings › General › Import settings…</source>
@@ -6722,7 +6722,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation>Wybierz motyw. To okno zmienia się wraz z wyborem.</translation>
+        <translation type="vanished">Wybierz motyw. To okno zmienia się wraz z wyborem.</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
@@ -6742,7 +6742,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation>Włącz wysoki kontrast</translation>
+        <translation type="vanished">Włącz wysoki kontrast</translation>
     </message>
     <message>
         <source>Title bar</source>
@@ -6766,11 +6766,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation>Czym zajmujesz się najczęściej?</translation>
+        <translation type="vanished">Czym zajmujesz się najczęściej?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation>Wybierz jedną opcję, aby ustawić układ, z którym otworzy się pierwsza zakładka. Bez wyboru zostanie układ Edycja, w którym jest wszystkiego po trochu.</translation>
+        <translation type="vanished">Wybierz jedną opcję, aby ustawić układ, z którym otworzy się pierwsza zakładka. Bez wyboru zostanie układ Edycja, w którym jest wszystkiego po trochu.</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
@@ -6849,6 +6849,110 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Edycja</translation>
     </message>
     <message>
+        <source>Welcome</source>
+        <translation>Witaj</translation>
+    </message>
+    <message>
+        <source>Bring over</source>
+        <translation>Przeniesienie</translation>
+    </message>
+    <message>
+        <source>How you work</source>
+        <translation>Sposób pracy</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>Gotowe</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation>Pełny ekran</translation>
+    </message>
+    <message>
+        <source>%1’s settings were found on this computer. Nothing in them is changed.</source>
+        <translation>Na tym komputerze znaleziono ustawienia programu %1. Nic w nich nie zostanie zmienione.</translation>
+    </message>
+    <message>
+        <source>Settings from %1 and %2 were found on this computer. Nothing in them is changed.</source>
+        <translation>Na tym komputerze znaleziono ustawienia programów %1 i %2. Nic w nich nie zostanie zmienione.</translation>
+    </message>
+    <message>
+        <source>Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed.</source>
+        <translation>Na tym komputerze znaleziono ustawienia programów %1, %2 i %3. Nic w nich nie zostanie zmienione.</translation>
+    </message>
+    <message>
+        <source>HikariSub (built in)</source>
+        <translation>HikariSub (wbudowane)</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>Kroki</translation>
+    </message>
+    <message>
+        <source>Step %1 of %2, %3</source>
+        <translation>Krok %1 z %2, %3</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>bieżący</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>ukończony</translation>
+    </message>
+    <message>
+        <source>Skip setup keeps HikariSub’s defaults.</source>
+        <translation>Pominięcie konfiguracji zachowuje domyślne ustawienia HikariSub.</translation>
+    </message>
+    <message>
+        <source>This window changes as you choose.</source>
+        <translation>To okno zmienia się wraz z Twoim wyborem.</translation>
+    </message>
+    <message>
+        <source>High contrast</source>
+        <translation>Wysoki kontrast</translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation>Wbudowane</translation>
+    </message>
+    <message>
+        <source>From plugins</source>
+        <translation>Z wtyczek</translation>
+    </message>
+    <message>
+        <source>More themes…</source>
+        <translation>Więcej motywów…</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>Katalog wtyczek</translation>
+    </message>
+    <message>
+        <source>Icons</source>
+        <translation>Ikony</translation>
+    </message>
+    <message>
+        <source>How do you mostly work?</source>
+        <translation>Jak najczęściej pracujesz?</translation>
+    </message>
+    <message>
+        <source>This sets the layout your first tab opens with. Leave it on Editing for a bit of everything.</source>
+        <translation>To ustawia układ, z jakim otworzy się pierwsza karta. Zostaw Edycję, by mieć wszystkiego po trochu.</translation>
+    </message>
+    <message>
+        <source>Video, audio, the line editor and the grid.</source>
+        <translation>Wideo, audio, edytor linii i siatka.</translation>
+    </message>
+    <message>
+        <source>Just the picture and a line box. View › Full screen typesetting any time.</source>
+        <translation>Tylko obraz i pole linii. Widok › Typesetting na pełnym ekranie w każdej chwili.</translation>
+    </message>
+    <message>
         <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>Później: Ustawienia › Ogólne › Zapisywanie i Ustawienia › Pisownia i gramatyka</translation>
     </message>
@@ -6901,8 +7005,36 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ona już widziała ostatni odicnek.</translation>
     </message>
     <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation>Najwyżej raz dziennie, przy uruchomieniu HikariSub.</translation>
+    </message>
+    <message>
         <source>Updates and privacy</source>
         <translation>Aktualizacje i prywatność</translation>
+    </message>
+    <message>
+        <source>HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on.</source>
+        <translation>HikariSub może pomóc w tłumaczeniu, przeglądzie i z agentem, który edytuje razem z Tobą. AI pozostaje wyłączone, dopóki go nie włączysz.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › AI</source>
+        <translation>Później: Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>Keep AI off</source>
+        <translation>Pozostaw AI wyłączone</translation>
+    </message>
+    <message>
+        <source>No AI menus, panels or downloads. Nothing about your subtitles leaves this computer.</source>
+        <translation>Bez menu, paneli i pobrań AI. Nic o Twoich napisach nie opuszcza tego komputera.</translation>
+    </message>
+    <message>
+        <source>Turn AI on</source>
+        <translation>Włącz AI</translation>
+    </message>
+    <message>
+        <source>HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI.</source>
+        <translation>HikariSub pobierze składnik AI raz, po Zakończ. Dostawcę dodasz lub do agenta zalogujesz się w Ustawienia › AI.</translation>
     </message>
     <message>
         <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
@@ -6934,7 +7066,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation>Najwyżej raz dziennie, przy uruchomieniu HikariSub. Korzysta z tego także sekcja Co nowego na stronie głównej.</translation>
+        <translation type="vanished">Najwyżej raz dziennie, przy uruchomieniu HikariSub. Korzysta z tego także sekcja Co nowego na stronie głównej.</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -6949,6 +7081,70 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Co jest wysyłane</translation>
     </message>
     <message>
+        <source>Your Discord status shows the mode you’re in. Never folders, your subtitles or the video.</source>
+        <translation>Twój status w Discordzie pokazuje tryb, w którym pracujesz. Nigdy foldery, napisy ani wideo.</translation>
+    </message>
+    <message>
+        <source>You’re set</source>
+        <translation>Wszystko gotowe</translation>
+    </message>
+    <message>
+        <source>Finish saves these choices. Everything is in Settings.</source>
+        <translation>Zakończ zapisuje te wybory. Wszystko znajdziesz w Ustawieniach.</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Język</translation>
+    </message>
+    <message>
+        <source>%1 accent</source>
+        <translation>akcent: %1</translation>
+    </message>
+    <message>
+        <source>%1 icons</source>
+        <translation>ikony: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub icons</source>
+        <translation>ikony HikariSub</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>Układ</translation>
+    </message>
+    <message>
+        <source>Full screen, once a video is open</source>
+        <translation>Pełny ekran po otwarciu wideo</translation>
+    </message>
+    <message>
+        <source>On, downloads after Finish</source>
+        <translation>Włączone, pobranie po Zakończ</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączone</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Aktualizacje</translation>
+    </message>
+    <message>
+        <source>Stable only, automatically</source>
+        <translation>Tylko stabilne, automatycznie</translation>
+    </message>
+    <message>
+        <source>Stable only, not automatically</source>
+        <translation>Tylko stabilne, nie automatycznie</translation>
+    </message>
+    <message>
+        <source>Pre-releases, automatically</source>
+        <translation>Wersje wstępne, automatycznie</translation>
+    </message>
+    <message>
+        <source>Pre-releases, not automatically</source>
+        <translation>Wersje wstępne, nie automatycznie</translation>
+    </message>
+    <message>
         <source>Your files</source>
         <translation>Twoje pliki</translation>
     </message>
@@ -6958,15 +7154,31 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation>Później: Ustawienia › Ogólne</translation>
+        <translation type="vanished">Później: Ustawienia › Ogólne</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation>Twój folder</translation>
+        <translation type="vanished">Twój folder</translation>
     </message>
     <message>
         <source>Open folder</source>
         <translation>Otwórz folder</translation>
+    </message>
+    <message>
+        <source>Good to know</source>
+        <translation>Warto wiedzieć</translation>
+    </message>
+    <message>
+        <source>Open anything, or run any command</source>
+        <translation>Otwórz cokolwiek lub uruchom dowolne polecenie</translation>
+    </message>
+    <message>
+        <source>Formats, presets and themes from the marketplace</source>
+        <translation>Formaty, ustawienia i motywy z katalogu wtyczek</translation>
+    </message>
+    <message>
+        <source>Automation › Plugins</source>
+        <translation>Automatyzacja › Wtyczki</translation>
     </message>
     <message>
         <source>Back</source>

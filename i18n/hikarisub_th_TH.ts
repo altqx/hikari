@@ -6526,7 +6526,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation>ขั้นตอนที่ %1 จาก %2</translation>
+        <translation type="vanished">ขั้นตอนที่ %1 จาก %2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
@@ -6562,7 +6562,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation>มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
+        <translation type="vanished">มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
     </message>
     <message>
         <source>Later: Settings › General › Import settings…</source>
@@ -6598,7 +6598,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation>เลือกธีม หน้าต่างนี้จะเปลี่ยนตามที่คุณเลือก</translation>
+        <translation type="vanished">เลือกธีม หน้าต่างนี้จะเปลี่ยนตามที่คุณเลือก</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
@@ -6618,7 +6618,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation>เปิดใช้คอนทราสต์สูง</translation>
+        <translation type="vanished">เปิดใช้คอนทราสต์สูง</translation>
     </message>
     <message>
         <source>Title bar</source>
@@ -6642,11 +6642,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation>คุณทำงานด้านใดเป็นส่วนใหญ่?</translation>
+        <translation type="vanished">คุณทำงานด้านใดเป็นส่วนใหญ่?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation>เลือกหนึ่งรายการเพื่อกำหนดเค้าโครงที่แท็บแรกจะใช้เมื่อเปิด หากไม่เลือกจะใช้เค้าโครง “แก้ไข” ซึ่งมีทุกอย่างอยู่บ้าง</translation>
+        <translation type="vanished">เลือกหนึ่งรายการเพื่อกำหนดเค้าโครงที่แท็บแรกจะใช้เมื่อเปิด หากไม่เลือกจะใช้เค้าโครง “แก้ไข” ซึ่งมีทุกอย่างอยู่บ้าง</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
@@ -6725,6 +6725,110 @@ Failed to copy %2 fonts.</source>
         <translation>แก้ไข</translation>
     </message>
     <message>
+        <source>Welcome</source>
+        <translation>ยินดีต้อนรับ</translation>
+    </message>
+    <message>
+        <source>Bring over</source>
+        <translation>นำเข้า</translation>
+    </message>
+    <message>
+        <source>How you work</source>
+        <translation>วิธีทำงานของคุณ</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>พร้อม</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation>เต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>%1’s settings were found on this computer. Nothing in them is changed.</source>
+        <translation>พบการตั้งค่าของ %1 ในคอมพิวเตอร์เครื่องนี้ จะไม่มีการเปลี่ยนแปลงสิ่งใดในนั้น</translation>
+    </message>
+    <message>
+        <source>Settings from %1 and %2 were found on this computer. Nothing in them is changed.</source>
+        <translation>พบการตั้งค่าจาก %1 และ %2 ในคอมพิวเตอร์เครื่องนี้ จะไม่มีการเปลี่ยนแปลงสิ่งใดในนั้น</translation>
+    </message>
+    <message>
+        <source>Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed.</source>
+        <translation>พบการตั้งค่าจาก %1, %2 และ %3 ในคอมพิวเตอร์เครื่องนี้ จะไม่มีการเปลี่ยนแปลงสิ่งใดในนั้น</translation>
+    </message>
+    <message>
+        <source>HikariSub (built in)</source>
+        <translation>HikariSub (ในตัว)</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>ขั้น</translation>
+    </message>
+    <message>
+        <source>Step %1 of %2, %3</source>
+        <translation>ขั้นที่ %1 จาก %2, %3</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>ปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Skip setup keeps HikariSub’s defaults.</source>
+        <translation>ข้ามการตั้งค่าจะใช้ค่าเริ่มต้นของ HikariSub</translation>
+    </message>
+    <message>
+        <source>This window changes as you choose.</source>
+        <translation>หน้าต่างนี้จะเปลี่ยนไปตามที่คุณเลือก</translation>
+    </message>
+    <message>
+        <source>High contrast</source>
+        <translation>คอนทราสต์สูง</translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation>ในตัว</translation>
+    </message>
+    <message>
+        <source>From plugins</source>
+        <translation>จากปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>More themes…</source>
+        <translation>ธีมเพิ่มเติม…</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>มาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Icons</source>
+        <translation>ไอคอน</translation>
+    </message>
+    <message>
+        <source>How do you mostly work?</source>
+        <translation>คุณทำงานแบบไหนเป็นส่วนใหญ่?</translation>
+    </message>
+    <message>
+        <source>This sets the layout your first tab opens with. Leave it on Editing for a bit of everything.</source>
+        <translation>ตั้งเค้าโครงที่แท็บแรกจะเปิดขึ้นมา ปล่อยไว้ที่แก้ไขหากต้องการทุกอย่างนิดหน่อย</translation>
+    </message>
+    <message>
+        <source>Video, audio, the line editor and the grid.</source>
+        <translation>วิดีโอ เสียง ตัวแก้ไขบรรทัด และตาราง</translation>
+    </message>
+    <message>
+        <source>Just the picture and a line box. View › Full screen typesetting any time.</source>
+        <translation>มีแค่ภาพและช่องบรรทัด มุมมอง › ไทป์เซ็ตเต็มหน้าจอ ได้ทุกเมื่อ</translation>
+    </message>
+    <message>
         <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>ภายหลัง: การตั้งค่า › ทั่วไป › การบันทึก และ การตั้งค่า › การสะกดและไวยากรณ์</translation>
     </message>
@@ -6777,8 +6881,36 @@ Failed to copy %2 fonts.</source>
         <translation>She has seen teh last episode already.</translation>
     </message>
     <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation>อย่างมากวันละครั้ง เมื่อ HikariSub เริ่มทำงาน</translation>
+    </message>
+    <message>
         <source>Updates and privacy</source>
         <translation>การอัปเดตและความเป็นส่วนตัว</translation>
+    </message>
+    <message>
+        <source>HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on.</source>
+        <translation>HikariSub ช่วยเรื่องการแปล การตรวจทาน และมีเอเจนต์ที่แก้ไขไปพร้อมกับคุณ ปิดไว้จนกว่าคุณจะเปิด</translation>
+    </message>
+    <message>
+        <source>Later: Settings › AI</source>
+        <translation>ภายหลัง: การตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>Keep AI off</source>
+        <translation>ปิด AI ไว้</translation>
+    </message>
+    <message>
+        <source>No AI menus, panels or downloads. Nothing about your subtitles leaves this computer.</source>
+        <translation>ไม่มีเมนู แผง หรือการดาวน์โหลด AI ไม่มีข้อมูลใดเกี่ยวกับซับไตเติลของคุณออกจากคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Turn AI on</source>
+        <translation>เปิด AI</translation>
+    </message>
+    <message>
+        <source>HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI.</source>
+        <translation>HikariSub จะดาวน์โหลดส่วนประกอบ AI ครั้งเดียวหลังเสร็จสิ้น คุณเพิ่มผู้ให้บริการหรือลงชื่อเข้าใช้เอเจนต์ได้ใน การตั้งค่า › AI</translation>
     </message>
     <message>
         <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
@@ -6810,7 +6942,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation>ไม่เกินวันละครั้ง เมื่อ HikariSub เริ่มทำงาน “มีอะไรใหม่” ในหน้าแรกก็ต้องใช้ตัวเลือกนี้ด้วย</translation>
+        <translation type="vanished">ไม่เกินวันละครั้ง เมื่อ HikariSub เริ่มทำงาน “มีอะไรใหม่” ในหน้าแรกก็ต้องใช้ตัวเลือกนี้ด้วย</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -6825,6 +6957,70 @@ Failed to copy %2 fonts.</source>
         <translation>สิ่งที่ส่ง</translation>
     </message>
     <message>
+        <source>Your Discord status shows the mode you’re in. Never folders, your subtitles or the video.</source>
+        <translation>สถานะ Discord ของคุณแสดงโหมดที่คุณใช้อยู่ ไม่แสดงโฟลเดอร์ ซับไตเติล หรือวิดีโอเลย</translation>
+    </message>
+    <message>
+        <source>You’re set</source>
+        <translation>พร้อมแล้ว</translation>
+    </message>
+    <message>
+        <source>Finish saves these choices. Everything is in Settings.</source>
+        <translation>เสร็จสิ้นจะบันทึกตัวเลือกเหล่านี้ ทุกอย่างอยู่ในการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>ภาษา</translation>
+    </message>
+    <message>
+        <source>%1 accent</source>
+        <translation>สีเน้น %1</translation>
+    </message>
+    <message>
+        <source>%1 icons</source>
+        <translation>ไอคอน %1</translation>
+    </message>
+    <message>
+        <source>HikariSub icons</source>
+        <translation>ไอคอน HikariSub</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>เค้าโครง</translation>
+    </message>
+    <message>
+        <source>Full screen, once a video is open</source>
+        <translation>เต็มหน้าจอ เมื่อเปิดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>On, downloads after Finish</source>
+        <translation>เปิด ดาวน์โหลดหลังเสร็จสิ้น</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>อัปเดต</translation>
+    </message>
+    <message>
+        <source>Stable only, automatically</source>
+        <translation>เฉพาะเวอร์ชันเสถียร อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Stable only, not automatically</source>
+        <translation>เฉพาะเวอร์ชันเสถียร ไม่อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Pre-releases, automatically</source>
+        <translation>รุ่นทดสอบก่อนเผยแพร่ อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Pre-releases, not automatically</source>
+        <translation>รุ่นทดสอบก่อนเผยแพร่ ไม่อัตโนมัติ</translation>
+    </message>
+    <message>
         <source>Your files</source>
         <translation>ไฟล์ของคุณ</translation>
     </message>
@@ -6834,15 +7030,31 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation>ภายหลัง: การตั้งค่า › ทั่วไป</translation>
+        <translation type="vanished">ภายหลัง: การตั้งค่า › ทั่วไป</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation>โฟลเดอร์ของคุณ</translation>
+        <translation type="vanished">โฟลเดอร์ของคุณ</translation>
     </message>
     <message>
         <source>Open folder</source>
         <translation>เปิดโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Good to know</source>
+        <translation>ควรรู้</translation>
+    </message>
+    <message>
+        <source>Open anything, or run any command</source>
+        <translation>เปิดอะไรก็ได้ หรือเรียกคำสั่งใดก็ได้</translation>
+    </message>
+    <message>
+        <source>Formats, presets and themes from the marketplace</source>
+        <translation>รูปแบบ พรีเซ็ต และธีมจากมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Automation › Plugins</source>
+        <translation>สคริปต์อัตโนมัติ › ปลั๊กอิน</translation>
     </message>
     <message>
         <source>Back</source>
