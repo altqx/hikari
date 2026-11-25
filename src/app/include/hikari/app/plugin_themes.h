@@ -2,12 +2,15 @@
 
 #include "hikari/plugins/manifest.h"
 #include "icon_theme.h"
+#include "theme.h"
 #include "hikari/themes/theme.h"
 
 #include <QString>
 #include <QStringList>
 
+#include <expected>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -42,5 +45,10 @@ void addPluginIcons(PluginIcons &into, const std::string &id, const plugins::Man
                     const std::filesystem::path &root);
 // Makes exactly these icon themes choosable and these own icons drawable.
 void syncPluginIcons(PluginIcons icons);
+
+// Writes `theme`, completed, as a new data-only plugin folder under `parent` whose id `taken` says is free (Q681).
+std::expected<std::filesystem::path, QString> writeThemePlugin(const ui::theme::Entry &theme,
+                                                               const std::filesystem::path &parent,
+                                                               const std::function<bool(const std::string &id)> &taken);
 
 }

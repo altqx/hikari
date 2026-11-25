@@ -427,6 +427,16 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move lines up"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move lines down"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Full screen typesetting"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Jump to"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom 50 %"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom 100 %"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom 200 %"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom in"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom out"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom to fit"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom to 1:1 device pixels"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next subtitle boundary"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous subtitle boundary"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Reopen with encoding…"),
 };
 

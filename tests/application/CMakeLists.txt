@@ -239,6 +239,8 @@ hikari_add_gtest(hikari_application_center_times_tests SOURCES center_times_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_jump_target_tests SOURCES jump_target_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_subtitle_boundary_tests SOURCES subtitle_boundary_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_align_to_video_tests SOURCES align_to_video_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_video_analysis_tests SOURCES video_analysis_tests.cpp
