@@ -7934,6 +7934,7 @@ ApplicationWindow {
                                 role: 1
                                 tabPrevious: root.originalShown ? lineText : null
                                 placeholderText: {
+                                    // MUST KILL: menus, Quick open and this hint each turn the hotkeys' "Ctrl-" into "Ctrl+" themselves
                                     const keys = root.boundKeys("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2).replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+")
                                     //: %1 is the keys of Paste all, which copies the Original text into the translation.
                                     return keys.length ? qsTranslate("HikariSub.Translation", "Type the translation. %1 pastes the original.").arg(keys)
@@ -8545,14 +8546,31 @@ ApplicationWindow {
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true
                 }
-                GridFilterField {
-                    id: gridFilterField
-                    shell: root.shell
-                    onLeave: toFirstLine => {
-                        const first = toFirstLine ? root.shell.firstShownLine() : undefined
-                        if (first !== undefined)
-                            root.app.selectLine(first)
-                        root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                RowLayout {
+                    id: gridHeaderTools
+                    objectName: "gridHeaderTools"
+                    spacing: 8
+                    GridFilterField {
+                        shell: root.shell
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: implicitWidth
+                        Layout.minimumWidth: 120
+                        onLeave: toFirstLine => {
+                            const first = toFirstLine ? root.shell.firstShownLine() : undefined
+                            if (first !== undefined)
+                                root.app.selectLine(first)
+                            root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                        }
+                    }
+                    Label {
+                        objectName: "gridTranslationProgress"
+                        visible: root.translationMode && root.shell.hasEditingTarget
+                        //: %1 is the translated lines; %n all the lines that aren't comments.
+                        text: qsTranslate("HikariSub.Grid", "%1 of %n line(s) translated", "", root.shell.translatableLines)
+                              .arg(root.shell.translatedLines)
+                        textFormat: Text.PlainText
+                        color: Theme.muted
+                        font.features: { "tnum": 1 }
                     }
                 }
             }
@@ -9052,7 +9070,7 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader(root.engineName("Grid"), true, gridFilterField)
+            Docking.setPanelHeader(root.engineName("Grid"), true, gridHeaderTools)
             Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
             Docking.setPanelHeader(root.engineName("Search"), true, null)
             Docking.setPanelHeader(root.engineName("Log"), true, null)

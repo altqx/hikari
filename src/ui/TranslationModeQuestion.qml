@@ -54,18 +54,12 @@ Popover {
             objectName: "translationModeNotNow"
             text: qsTr("Not now")
             flat: true
-            implicitHeight: Theme.controlHeight
-            topPadding: 0
-            bottomPadding: 0
             onClicked: question.reject()
         }
         PrimaryButton {
             id: turnOn
             objectName: "translationModeTurnOn"
             text: qsTr("Turn on")
-            implicitHeight: Theme.controlHeight
-            topPadding: 0
-            bottomPadding: 0
             onClicked: question.accept()
         }
     }

@@ -45,7 +45,7 @@ Q719. AI translation reports in the Original text panel, as [Editing's panel sta
 | State | Shown under the Original text header |
 | --- | --- |
 | Running | A 2-unit `accent` progress line and "AI translation · 24 of 60 lines" with **Stop** (quiet) |
-| Failed | The `notice-warning` glyph in `danger`, one line with the reason ("AI translation stopped: the provider refused the key."), the next step (**Providers…**) and **Details** (the Log entry) |
+| Failed | The glyph of its severity, `notice-error` in `danger` (a warning, such as lines to review, takes `notice-warning` in `warning`), one line with the reason ("AI translation stopped: the provider refused the key."), the next step (**Providers…**) and **Details** (the Log entry) |
 
 Video and Audio keep Editing's empty, busy and error states.
 

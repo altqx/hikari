@@ -8,6 +8,7 @@
 
 #include <QCoreApplication>
 #include <QCursor>
+#include <QFontDatabase>
 #include <QAbstractProxyModel>
 #include <QAccessible>
 #include <QFontMetricsF>
@@ -1193,6 +1194,8 @@ void LineGrid::paint(QPainter *painter)
     const QVariantList labelColours =
         m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::LabelColoursRole).toList() : QVariantList();
     const bool numberShown = columns > 0 && modelColumn(0) == LineTableModel::NumberColumn;
+    QFont monoFont = QFontDatabase::systemFont(QFontDatabase::FixedFont);
+    monoFont.setPointSizeF(std::max(painter->font().pointSizeF() * 12 / 13, 8.0));
     painter->save();
     painter->setClipRect(QRectF(0, m_geometry.headerHeight, viewWidth, m_viewport.height() - m_geometry.headerHeight));
     for (int row = first; row < first + count; ++row) {
@@ -1274,6 +1277,17 @@ void LineGrid::paint(QPainter *painter)
                 foldIndent + (mc == LineTableModel::TextColumn
                                   ? kGroupIndent * idx.data(LineTableModel::GroupDepthRole).toInt()
                                   : 0) + (mc == LineTableModel::NumberColumn ? numberIndent() : 0);
+            const bool untranslated =
+                mc == LineTableModel::TextColumn && idx.data(LineTableModel::UntranslatedRole).toBool();
+            const bool quiet = m_mutedNumberAndStart &&
+                               (mc == LineTableModel::NumberColumn || mc == LineTableModel::StartColumn);
+            if (untranslated || quiet) {
+                painter->save();
+                QFont font = quiet ? monoFont : painter->font();
+                font.setItalic(untranslated);
+                painter->setFont(font);
+                painter->setPen(commentInk(roles, compared.value_or(background)));
+            }
             if (mc == LineTableModel::TextColumn) {
                 drawReviewMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                 idx.data(LineTableModel::ReviewMarksRole).toList());
@@ -1302,6 +1316,8 @@ void LineGrid::paint(QPainter *painter)
             painter->drawText(QRectF(x + 4 + indent, top, room, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, room));
             if (onLabel || count)
+                painter->restore();
+            if (untranslated || quiet)
                 painter->restore();
             if (mc == LineTableModel::TextColumn && idx.data(LineTableModel::UnplacedRunsRole).toBool()) {
                 const double right = x + widths[c] - 1;

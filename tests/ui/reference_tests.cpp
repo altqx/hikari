@@ -259,6 +259,7 @@ private slots:
         QVERIFY(application->showPreview());
         auto *grid = qobject_cast<ui::LineGrid *>(item("referenceGrid"));
         QVERIFY(grid);
+        QVERIFY(grid->mutedNumberAndStart());
         QTRY_COMPARE(grid->model()->rowCount(), 5);
         const QModelIndex first = grid->model()->index(0, 0);
         QVERIFY(first.data(ui::LineTableModel::CommentRole).toBool());

@@ -7108,6 +7108,13 @@ Failed to copy %2 fonts.</source>
         <source>No lines match the filter</source>
         <translation>ไม่มีบรรทัดที่ตรงกับตัวกรอง</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>แปลแล้ว %1 จาก %n บรรทัด</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Line group description</source>
         <translation>คำอธิบายกลุ่มบรรทัด</translation>

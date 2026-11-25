@@ -31,7 +31,6 @@ FocusScope {
         spacing: 4
         SegmentedButtons {
             objectName: "referenceNavigation"
-            implicitHeight: Theme.controlHeight
             choices: [{ name: "referenceIndependent", text: qsTr("Independent"), tip: qsTr("Independent navigation") },
                       { name: "referenceLinked", text: qsTr("Linked"), tip: qsTr("Follow the editing line") }]
             currentIndex: tray.shell.referenceLinked ? 1 : 0
@@ -83,6 +82,7 @@ FocusScope {
             Layout.fillWidth: true
             Layout.fillHeight: true
             focus: true
+            mutedNumberAndStart: true
             Accessible.role: Accessible.Table
             accessibleName: qsTr("Reference lines (protected, read-only)")
             model: tray.shell.referenceLines

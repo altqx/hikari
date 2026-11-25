@@ -3,6 +3,8 @@
 
 #include "docking.h"
 #include "line_editor_controller.h"
+#include "line_table_model.h"
+#include "shell_controller.h"
 #include "theme.h"
 #include "workspace_layout.h"
 
@@ -460,6 +462,48 @@ private slots:
         stop();
     }
 
+    void theGridShowsUntranslatedLinesAndTheProgress()
+    {
+        start();
+        QFile f(dir.filePath(QStringLiteral("half.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Mur\n"
+                "Comment: 0,0:00:02.00,0:00:03.00,TLMode Original,,0,0,0,,Door\n"
+                "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
+        QTRY_VERIFY(isOpen("originalDock"));
+        const QAbstractItemModel *lines = application->shell().lines();
+        QTRY_COMPARE(lines->rowCount(), 2);
+        QCOMPARE(lines->index(0, ui::LineTableModel::TextColumn).data().toString(), QStringLiteral("Mur"));
+        QVERIFY(!lines->index(0, 0).data(ui::LineTableModel::UntranslatedRole).toBool());
+        QCOMPARE(lines->index(1, ui::LineTableModel::TextColumn).data().toString(), QStringLiteral("Door"));
+        QVERIFY(lines->index(1, 0).data(ui::LineTableModel::UntranslatedRole).toBool());
+
+        auto *progress = item("gridTranslationProgress");
+        QVERIFY(progress);
+        QTRY_VERIFY(progress->isVisible());
+        QCOMPARE(progress->property("text").toString(), QStringLiteral("1 of 2 line(s) translated"));
+        QCOMPARE(progress->property("color").value<QColor>(), ui::theme::current().roles.muted);
+
+        application->selectLine(lines->index(1, 0).data(ui::LineTableModel::LineIdRole).toULongLong());
+        auto *translated = item("translationText");
+        translated->forceActiveFocus();
+        for (const char key : {'P', 'o', 'r', 't', 'e'})
+            QTest::keyClick(window(), key);
+        QCOMPARE(progress->property("text").toString(), QStringLiteral("1 of 2 line(s) translated"));
+        QVERIFY(application->editor().commit());
+        QTRY_COMPARE(progress->property("text").toString(), QStringLiteral("2 of 2 line(s) translated"));
+        QTRY_VERIFY(!lines->index(1, 0).data(ui::LineTableModel::UntranslatedRole).toBool());
+
+        QVERIFY(application->turnOffTranslationMode());
+        QTRY_VERIFY(!progress->isVisible());
+        stop();
+    }
+
     void theQuestionHangsFromTheLayoutSwitcher()
     {
         start();
@@ -757,8 +801,24 @@ private slots:
         start();
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
-        openFile("tl.ass", true);
+        QFile f(dir.filePath(QStringLiteral("tl.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,line 1\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,linia 1\n"
+                "Comment: 0,0:00:02.00,0:00:03.00,TLMode Original,,0,0,0,,line 2\n"
+                "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,\n"
+                "Comment: 0,0:00:03.00,0:00:04.00,TLMode Original,,0,0,0,,line 3\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,linia 3\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
         QTRY_VERIFY(isOpen("originalDock"));
+        application->hotkeys().gestureMap(application::hotkeyIdOf("EDITBOX_PASTE_ALL_TO_TRANSLATION"), QStringLiteral("Paste all"),
+                                          QStringLiteral("Ctrl-Alt-J"), 2, QStringLiteral("cancel"));
+        const QAbstractItemModel *lines = application->shell().lines();
+        QTRY_COMPARE(lines->rowCount(), 3);
+        application->selectLine(lines->index(1, 0).data(ui::LineTableModel::LineIdRole).toULongLong());
         QVERIFY(application->openReference(writeSubtitles(dir.filePath(QStringLiteral("ref.ass")))));
         const QList<QSize> sizes{{1366, 768}, {1280, 800}};
         for (const auto code : ui::theme::kCodes) {
@@ -780,6 +840,9 @@ private slots:
                 QTRY_VERIFY(isOpen("referenceDock"));
                 item("translationText")->forceActiveFocus();
                 shot(window(), QStringLiteral("preset") + at);
+                application->setReferenceLinked(true);
+                shot(window(), QStringLiteral("preset-linked") + at);
+                application->setReferenceLinked(false);
             }
             applyPreset("Editing");
             QTRY_VERIFY(isOpen("originalDock"));
@@ -798,14 +861,22 @@ private slots:
             settings.setValue(QStringLiteral("appearance.theme"), theme);
             auto *controls = window()->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
-            application->addPage();
-            openFile(qPrintable(QStringLiteral("plain-%1.ass").arg(theme)), false);
-            applyPreset("Editing");
-            applyPreset("Translation");
-            QTRY_VERIFY(asked());
-            QTest::qWait(300);
-            QVERIFY(window()->grabWindow().save(out + QStringLiteral("/translation-question-") + theme + QStringLiteral(".png")));
-            answer(false);
+            for (const QSize size : sizes) {
+                window()->resize(size);
+                QTRY_COMPARE(window()->size(), size);
+                application->addPage();
+                openFile(qPrintable(QStringLiteral("plain-%1-%2.ass").arg(theme).arg(size.width())), false);
+                applyPreset("Editing");
+                applyPreset("Translation");
+                QTRY_VERIFY(asked());
+                QTest::qWait(300);
+                QVERIFY(window()->grabWindow().save(QStringLiteral("%1/translation-question-%2x%3-%4.png")
+                                                        .arg(out)
+                                                        .arg(size.width())
+                                                        .arg(size.height())
+                                                        .arg(theme)));
+                answer(false);
+            }
         }
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         stop();

@@ -46,7 +46,7 @@ ColumnLayout {
         spacing: 8
         Layout.fillWidth: true
         Layout.leftMargin: 8
-        Layout.rightMargin: 4
+        Layout.rightMargin: 8
         Layout.preferredHeight: Theme.headerHeight
         Label {
             objectName: "translationRunText"
@@ -61,9 +61,6 @@ ColumnLayout {
             objectName: "translationRunStop"
             text: qsTranslate("HikariSub.InlineAi", "Stop")
             flat: true
-            implicitHeight: Theme.controlHeight
-            topPadding: 0
-            bottomPadding: 0
             onClicked: runState.bar.controller.stop()
         }
     }
@@ -73,11 +70,12 @@ ColumnLayout {
         spacing: 8
         Layout.fillWidth: true
         Layout.leftMargin: 8
-        Layout.rightMargin: 4
+        Layout.rightMargin: 8
         Layout.topMargin: 4
         Layout.bottomMargin: 4
         Icon {
-            iconRole: runState.failed || runState.bar.warns ? "notice-warning" : "notice-info"
+            objectName: "translationRunNoticeIcon"
+            iconRole: runState.failed ? "notice-error" : runState.bar.warns ? "notice-warning" : "notice-info"
             color: runState.failed ? Theme.danger : runState.bar.warns ? Theme.warning : Theme.muted
             Layout.alignment: Qt.AlignTop
             Layout.topMargin: 4
@@ -95,9 +93,6 @@ ColumnLayout {
             visible: runState.failed
             text: qsTr("Providers…")
             flat: true
-            implicitHeight: Theme.controlHeight
-            topPadding: 0
-            bottomPadding: 0
             Layout.alignment: Qt.AlignTop
             onClicked: runState.providersRequested()
         }
@@ -106,9 +101,6 @@ ColumnLayout {
             visible: runState.failed
             text: qsTr("Details")
             flat: true
-            implicitHeight: Theme.controlHeight
-            topPadding: 0
-            bottomPadding: 0
             Layout.alignment: Qt.AlignTop
             onClicked: runState.detailsRequested()
         }

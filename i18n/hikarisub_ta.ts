@@ -7172,6 +7172,14 @@ Failed to copy %2 fonts.</source>
         <source>No lines match the filter</source>
         <translation>வடிப்பியுடன் பொருந்தும் வரிகள் இல்லை</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%n வரியில் %1 மொழிபெயர்க்கப்பட்டது</numerusform>
+            <numerusform>%n வரிகளில் %1 மொழிபெயர்க்கப்பட்டன</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Line group description</source>
         <translation>வரிக் குழு விளக்கம்</translation>

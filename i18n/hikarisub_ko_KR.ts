@@ -7108,6 +7108,13 @@ Failed to copy %2 fonts.</source>
         <source>No lines match the filter</source>
         <translation>필터와 일치하는 줄 없음</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%1/%n줄 번역됨</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Line group description</source>
         <translation>줄 그룹 설명</translation>

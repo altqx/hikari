@@ -7236,6 +7236,15 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>No lines match the filter</source>
         <translation>Brak linijek pasujących do filtra</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>Przetłumaczono %1 z %n linijki</numerusform>
+            <numerusform>Przetłumaczono %1 z %n linijek</numerusform>
+            <numerusform>Przetłumaczono %1 z %n linijek</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Line group description</source>
         <translation>Opis grupy linijek</translation>

@@ -59,6 +59,7 @@ class LineGrid : public QQuickPaintedItem {
     Q_PROPERTY(QRectF hoverToolTipCell READ hoverToolTipCell NOTIFY hoverToolTipChanged)
     // Each shown row on the current video frame, as (row + 0.5) / rows.
     Q_PROPERTY(QList<qreal> onFrameTicks READ onFrameTicks NOTIFY onFrameTicksChanged)
+    Q_PROPERTY(bool mutedNumberAndStart READ mutedNumberAndStart WRITE setMutedNumberAndStart NOTIFY mutedNumberAndStartChanged)
 
 public:
     explicit LineGrid(QQuickItem *parent = nullptr);
@@ -119,6 +120,15 @@ public:
     QString hoverToolTip() const { return m_hoverToolTip; }
     QRectF hoverToolTipCell() const { return m_hoverToolTipCell; }
     QList<qreal> onFrameTicks() const { return m_onFrameTicks; }
+    bool mutedNumberAndStart() const { return m_mutedNumberAndStart; }
+    void setMutedNumberAndStart(bool on)
+    {
+        if (on == m_mutedNumberAndStart)
+            return;
+        m_mutedNumberAndStart = on;
+        emit mutedNumberAndStartChanged();
+        update();
+    }
     int columnAt(qreal x) const;
 
 signals:
@@ -146,6 +156,7 @@ signals:
     void accessibleNameChanged();
     void hoverToolTipChanged();
     void onFrameTicksChanged();
+    void mutedNumberAndStartChanged();
 
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
@@ -220,6 +231,7 @@ private:
     void updateColumns();
     void updateOnFrameTicks();
     QList<qreal> m_onFrameTicks;
+    bool m_mutedNumberAndStart = false;
     std::optional<core::LineId> m_dragLine;
     std::optional<core::LineId> m_announcedActive;
     int m_announcedSelected = 0;

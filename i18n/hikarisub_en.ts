@@ -511,6 +511,14 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%1 of %n line translated</numerusform>
+            <numerusform>%1 of %n lines translated</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>This file has %n Aegisub folds.</source>
         <translation>
             <numerusform>This file has %n Aegisub fold.</numerusform>
