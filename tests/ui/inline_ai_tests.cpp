@@ -204,6 +204,9 @@ private slots:
         options.playbackAudio = false;
         options.aiPorts = std::move(ports);
         application = std::make_unique<app::Application>(options);
+        // MUST KILL: spell check off so its no-dictionary toast stays out of the screenshots
+        if (test.endsWith("Screenshots"))
+            application->applySettings({{QStringLiteral("editor.spellchecker"), false}});
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
         engine->setInitialProperties(application->qmlProperties());
