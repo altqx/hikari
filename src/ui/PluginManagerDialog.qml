@@ -173,6 +173,7 @@ DialogWindow {
     }
     function reviewFile(url) { reviewPackage(url, "") }
     function reviewDev(folderUrl) { confirm(manager.reviewDev(folderUrl)) }
+    function saveThemeCopy(parentUrl) { confirm(manager.saveThemeCopy(parentUrl)) }
     function reviewPackage(url, updating) {
         confirm(updating ? manager.reviewUpdate(url, updating) : manager.review(url))
     }
@@ -338,6 +339,13 @@ DialogWindow {
                 text: qsTr("Install dev plugin…")
                 enabled: dialog.manager && dialog.manager.available
                 onClicked: devPicker.open()
+            }
+            IconToolButton {
+                objectName: "pluginSaveThemeCopy"
+                iconRole: "theme"
+                text: qsTr("Save a copy as a theme plugin…")
+                enabled: dialog.manager && dialog.manager.available
+                onClicked: themeCopyPicker.open()
             }
             IconToolButton {
                 objectName: "pluginCheckUpdates"
@@ -1441,5 +1449,11 @@ DialogWindow {
         objectName: "pluginDevPicker"
         title: qsTr("Choose a plugin folder")
         onAccepted: dialog.reviewDev(selectedFolder)
+    }
+    FolderChooser {
+        id: themeCopyPicker
+        objectName: "pluginThemeCopyPicker"
+        title: qsTr("Choose where to save the theme plugin")
+        onAccepted: dialog.saveThemeCopy(selectedFolder)
     }
 }

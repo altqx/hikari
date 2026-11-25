@@ -19084,6 +19084,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 stopped: %2</source>
         <translation>%1 zatrzymał się: %2</translation>
     </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>Zapisz kopię jako wtyczkę motywu…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>Wybierz, gdzie zapisać wtyczkę motywu</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 (kopia)</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>Nie można zapisać wtyczki motywu w %1.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>

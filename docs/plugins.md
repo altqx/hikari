@@ -1030,7 +1030,10 @@ end)
 - **Permissions.** A dev plugin gets the install question once. A reload that asks for more than the user said yes to waits for them: its details offer Review…, which asks again.
 - **Errors.** A reload that breaks a rule keeps the last good files running. Why shows in its details and the Log panel; a plugin that doesn't start shows as any plugin's does.
 
-**Save a copy as a theme plugin…** (Q681). In the dev tools, this writes the theme being shown, built-in or a plugin's, as a new plugin folder: a `hikari-plugin.json` with one `contributes.themes` entry and the theme file with every key set, worked-out colours included. The folder is then loaded as a dev plugin.
+**Save a copy as a theme plugin…** (Q681). In the plugin manager's tool strip, this writes the theme being shown, built-in or a plugin's, as a new plugin folder in the folder you pick, then loads it as a dev plugin.
+
+- **The folder.** `<theme>-copy/` holds a `hikari-plugin.json` with the id `local.<theme>-copy`, version `1.0.0` and one `contributes.themes` entry titled "<title> copy", and `themes/<theme>.json`. When that folder or id is taken, `-2`, `-3` and so on are added.
+- **The theme file.** Every key is set, worked-out colours included, and each accent choice has its `onAccent`. A colour worked out from a role in `userColours` or from the accent choice stays left out, so it keeps following the user's pick: the content colours worked out from `accent` when the theme has accent choices, and in the high-contrast themes also `focus`, `hover`, `pressed`, `control`, `onAccent` and the default line editor colour.
 
 **The test harness.** `hikarisub --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>] [--timeout <ms>] [--json]` runs a plugin's tests headless, with the offscreen platform, on Linux and Windows.
 

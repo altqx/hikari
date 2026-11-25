@@ -18804,6 +18804,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 stopped: %2</source>
         <translation>%1이(가) 멈췄습니다: %2</translation>
     </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>테마 플러그인으로 사본 저장…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>테마 플러그인을 저장할 위치 선택</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 사본</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>테마 플러그인을 %1에 쓸 수 없습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
