@@ -28,6 +28,17 @@ Colour role(const Resolved &r, Role role)
     return at(r.roles, role);
 }
 
+// Roles and content as one comparable text.
+std::string looks(const Resolved &r)
+{
+    ThemeFile shown{r.type, {}, {}, {}, r.content};
+    for (std::size_t i = 0; i < kRoleCount; ++i)
+        shown.roles[i] = r.roles[i];
+    return write(shown);
+}
+
+const std::array<const char *, 4> kBuiltins{"light", "dark", "highContrastWhite", "highContrastBlack"};
+
 // A minimal valid dark theme; `roles` and `extra` are spliced in.
 std::string minimal(std::string_view type = "dark", std::string_view roles = "", std::string_view extra = "")
 {
@@ -221,5 +232,52 @@ TEST(ThemeVectors, LoadReportsEachVectorsFirstProblem)
         EXPECT_TRUE(parse(theme)) << name;
         EXPECT_EQ(loaded.error().path, expected.find("path")->asString()) << name;
         EXPECT_EQ(loaded.error().message, expected.find("message")->asString()) << name;
+    }
+}
+
+TEST(ThemeWriter, WhatItWritesParsesBackTheSame)
+{
+    for (const char *name : kBuiltins) {
+        const ThemeFile file = *load(read(name));
+        const auto back = load(write(file));
+        ASSERT_TRUE(back) << name << ": " << back.error().path << " " << back.error().message;
+        EXPECT_EQ(write(*back), write(file)) << name;
+    }
+    const ThemeFile sparse = *parse(minimal("dark", R"(, "control": "#757E89")"));
+    EXPECT_EQ(write(*parse(write(sparse))), write(sparse));
+    EXPECT_EQ(write(sparse).find("\"focus\""), std::string::npos);
+    const ThemeFile full = complete(sparse);
+    EXPECT_TRUE(full.content.grid.comparisonSelection && full.content.audio.waveformSelected && full.roles[std::size_t(Role::Focus)]);
+    EXPECT_EQ(looks(resolve(full)), looks(resolve(sparse)));
+}
+
+TEST(ThemeWriter, CompleteSetsEveryKeyThatFollowsNoChoiceAndLooksTheSame)
+{
+    for (const char *name : {"light", "dark"}) {
+        const ThemeFile file = *load(read(name));
+        const ThemeFile full = complete(file);
+        for (std::size_t i = 0; i < kRoleCount; ++i)
+            EXPECT_TRUE(full.roles[i]) << name << " " << kRoleNames[i];
+        for (const AccentChoice &choice : full.accents) {
+            EXPECT_TRUE(choice.onAccent) << name << " " << choice.id;
+            EXPECT_EQ(looks(resolve(full, {choice.id, {}})), looks(resolve(file, {choice.id, {}}))) << choice.id;
+        }
+        EXPECT_TRUE(full.content.syntax[0]) << name;
+        EXPECT_FALSE(full.content.audio.waveformSelected) << name;
+        EXPECT_EQ(looks(resolve(full)), looks(resolve(file))) << name;
+        EXPECT_TRUE(load(write(full))) << name;
+    }
+}
+
+TEST(ThemeWriter, CompleteLeavesOutWhatFollowsAUserColour)
+{
+    const Picks picks{"", {{Role::Accent, 0xFF00FFFFu}, {Role::Text, 0xFFFFFF00u}, {Role::Line, 0xFF808080u}}};
+    for (const char *name : {"highContrastWhite", "highContrastBlack"}) {
+        const ThemeFile file = *load(read(name));
+        const ThemeFile full = complete(file);
+        EXPECT_EQ(looks(resolve(full, picks)), looks(resolve(file, picks))) << name;
+        EXPECT_EQ(looks(resolve(full)), looks(resolve(file))) << name;
+        EXPECT_TRUE(full.roles[std::size_t(Role::Background)]) << name;
+        EXPECT_FALSE(full.roles[std::size_t(Role::Hover)]) << name;
     }
 }
