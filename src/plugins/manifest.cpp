@@ -375,6 +375,31 @@ std::vector<McpServer> mcpServers(const Json *list)
     return out;
 }
 
+std::vector<AiTool> aiTools(const Json *list)
+{
+    std::vector<AiTool> out;
+    if (list)
+        for (const Json &item : list->asArray()) {
+            const Json *result = item.find("result");
+            out.push_back({text(item, "command"), text(item, "description"), *item.find("parameters"),
+                           result ? *result : Json(), text(item, "mark") == "read"});
+        }
+    return out;
+}
+
+std::optional<ManifestProblem> badAiTool(const Manifest &m, std::size_t index)
+{
+    const AiTool &tool = m.aiTools[index];
+    const std::string at = "/contributes/aiTools/" + std::to_string(index);
+    if (std::ranges::find(m.commands, tool.command, &Command::id) == m.commands.end())
+        return ManifestProblem{Kind::UnknownCommand, at + "/command", tool.command, 0};
+    if (auto why = api::checkSchema(tool.parameters, Json::object()))
+        return ManifestProblem{Kind::Schema, at + "/parameters", *why, 0};
+    if (auto why = tool.result.isNull() ? std::nullopt : api::checkSchema(tool.result, Json::object()))
+        return ManifestProblem{Kind::Schema, at + "/result", *why, 0};
+    return std::nullopt;
+}
+
 std::vector<LanguageServer> languageServers(const Json *list)
 {
     std::vector<LanguageServer> out;
@@ -600,6 +625,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
         m.icons = ownIcons(contributes->find("icons"));
         m.programs = programs(contributes->find("programs"));
         m.mcpServers = mcpServers(contributes->find("mcpServers"));
+        m.aiTools = aiTools(contributes->find("aiTools"));
         m.languageServers = languageServers(contributes->find("languageServers"));
     }
 
@@ -614,6 +640,7 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
                          repeated(m.graphs, "/contributes/graphs"),
                          repeated(m.layouts, "/contributes/layouts"),
                          repeated(m.mcpServers, "/contributes/mcpServers"),
+                         repeated(m.aiTools, "/contributes/aiTools", &AiTool::command, "command"),
                          repeated(m.languageServers, "/contributes/languageServers"),
                          repeated(m.themes, "/contributes/themes"), repeated(m.iconThemes, "/contributes/iconThemes"),
                          repeated(m.icons, "/contributes/icons"), unknownOwnIcon(json.find("contributes"), m),
@@ -637,6 +664,9 @@ std::expected<Manifest, ManifestProblem> parseManifest(std::string_view source, 
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.mcpServers.size(); ++i)
         if (auto problem = badMcpServer(m, i))
+            return std::unexpected(*problem);
+    for (std::size_t i = 0; i < m.aiTools.size(); ++i)
+        if (auto problem = badAiTool(m, i))
             return std::unexpected(*problem);
     for (std::size_t i = 0; i < m.languageServers.size(); ++i)
         if (auto problem = badLanguageServer(m, i))

@@ -1063,6 +1063,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1”의 크기는 %2MB로 10MB를 넘습니다.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>“%1”의 라이선스는 다른 파일에 포함하는 것을 제한합니다.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>첨부 파일의 합계가 %1MB로 50MB를 넘게 됩니다.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>첨부 파일</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>“%1”을(를) 읽을 수 없어 아무것도 첨부하지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>첨부 파일…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>자막에 첨부된 글꼴과 그림을 보여 줍니다</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>글꼴 첨부</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>그림 첨부</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>그래도 첨부할까요?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>첨부</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>추출</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>%1을(를) 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>“%1”이(가) 이미 있습니다. 바꿀까요?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>바꾸기</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>이름</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>유형</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>크기</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>이 자막에는 첨부 파일이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>첨부 파일은 ASS 자막에만 넣을 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>그림</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>첨부된 글꼴은 이 자막을 그리는 데 쓰이며 파일과 함께 전달됩니다. 추출하면 사본을 쓰며 자막은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>글꼴 첨부…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>그림 첨부…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>추출…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>글꼴 파일 (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>그림 (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>폴더로 추출</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -9499,8 +9634,52 @@ Failed to copy %2 fonts.</source>
         <translation>전체 화면 식자</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>확대/축소 50%</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>확대/축소 100%</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>확대/축소 200%</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>맞춤 확대/축소</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>1:1 장치 픽셀로 확대/축소</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>다음 자막 경계</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>이전 자막 경계</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>인코딩을 지정해 다시 열기…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>첨부 파일…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -12590,6 +12769,46 @@ Failed to copy %2 fonts.</source>
         <translation>인코딩을 지정해 다시 열기…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>확대/축소 50%</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>확대/축소 100%</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>확대/축소 200%</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>패널에 맞추기</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>1:1 장치 픽셀</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>다음 자막 경계</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>이전 자막 경계</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>영상 파일을 엽니다</translation>
     </message>
@@ -12782,6 +13001,14 @@ Failed to copy %2 fonts.</source>
         <translation>영상 열기…[&amp;O]</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>이전 파일</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>다음 파일</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>키 프레임 파일을 엽니다</translation>
     </message>
@@ -12806,6 +13033,18 @@ Failed to copy %2 fonts.</source>
         <translation>다음 프레임으로 이동합니다</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>영상을 바로 앞의 줄 시작 또는 끝으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>영상을 바로 다음의 줄 시작 또는 끝으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>표시할 시간이나 프레임을 입력합니다</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>선택한 줄의 시작 시간을 영상 프레임 시간으로 설정합니다</translation>
     </message>
@@ -12824,6 +13063,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>가로 세로 비율 변경…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>확대/축소 수준</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -13392,8 +13635,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>파일의 Lua를 신뢰할 때까지 아무것도 실행되지 않습니다. 위 알림에서 미리 보기를 선택하십시오.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13576,7 +13819,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · 여기에 원본 줄 없음</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>이 파일을 신뢰할 때까지 %1 꺼짐</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · 문제를 고치면 표시됨</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · %2번 줄 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -18400,6 +18663,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>업데이트 자동 설치</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1에서 온 도구 표시 신뢰</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>읽기만 하는 도구는 그 후 묻지 않고 실행됩니다. 그 전까지는 추가한 모든 도구가 변경처럼 먼저 묻습니다.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>시작되지 않았습니다.</translation>
     </message>
@@ -19015,6 +19286,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 stopped: %2</source>
         <translation>%1이(가) 멈췄습니다: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>테마 플러그인으로 사본 저장…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>테마 플러그인을 저장할 위치 선택</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 사본</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>테마 플러그인을 %1에 쓸 수 없습니다.</translation>
     </message>
 </context>
 <context>
@@ -22832,7 +23120,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>스타일 저장</translation>
+        <translation type="vanished">스타일 저장</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -23086,7 +23374,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n줄</numerusform>
         </translation>
     </message>
@@ -23172,7 +23460,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>파일에 추가</translation>
+        <translation type="vanished">파일에 추가</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23180,7 +23468,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>목록에 추가</translation>
+        <translation type="vanished">목록에 추가</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23320,11 +23608,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>미리 보기 텍스트</translation>
+        <translation type="vanished">미리 보기 텍스트</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>적용</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>이 파일에 스타일이 없습니다. +로 만들거나 목록에서 복사하세요.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>목록으로 복사</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>이 파일로 복사</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23341,6 +23641,42 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>내 항목으로 이동</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>선택한 스타일 없음</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>목록에서…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>스타일 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>%n줄에서 사용</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>스타일 원래대로</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>텍스트 견본</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>글꼴이 설치되지 않음</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>글꼴이 설치되지 않음: %1(으)로 표시</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23444,7 +23780,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>원래대로</translation>
+        <translation type="vanished">원래대로</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23519,11 +23855,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>스타일</translation>
+        <translation type="vanished">스타일</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>줄</translation>
+        <translation type="vanished">줄</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23539,7 +23875,13 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>줄: %1</translation>
+        <translation type="vanished">줄: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23547,7 +23889,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>현재 줄의 스타일</translation>
+        <translation type="vanished">현재 줄의 스타일</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
@@ -27089,15 +27431,15 @@ Styles deleted:
     </message>
     <message>
         <source>Video position</source>
-        <translation>영상 위치</translation>
+        <translation type="vanished">영상 위치</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>영상 시간</translation>
+        <translation type="vanished">영상 시간</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>프레임 시간; 프레임 번호; 줄 시작 프레임부터의 프레임 수; 줄 시작과 끝으로부터의 밀리초</translation>
+        <translation type="vanished">프레임 시간; 프레임 번호; 줄 시작 프레임부터의 프레임 수; 줄 시작과 끝으로부터의 밀리초</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -27124,6 +27466,15 @@ Styles deleted:
         <translation>멈춤</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%2번 줄 시작에서 %1프레임 · 시작에서 %3ms · 끝에서 %4ms</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>다음 파일</translation>
     </message>
@@ -27146,6 +27497,11 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>프레임 %1 / %2</translation>
     </message>
     <message>
         <source>Video (%1)</source>
@@ -27279,6 +27635,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>확대/축소 및 이동 초기화</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>확대/축소 수준</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -28027,6 +28387,48 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>시간이나 프레임이 아닙니다: %1. %2 또는 프레임 번호를 입력해 보십시오.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>영상 시간, %1, 편집 가능</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>맞춤</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1%</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>영상 확대/축소, %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>영상 확대/축소</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50%</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100%</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200%</translation>
     </message>
 </context>
 <context>

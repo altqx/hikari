@@ -770,6 +770,41 @@ TEST(PluginManifest, AnMcpServerNamesADeclaredProgramWithoutTheApi)
     EXPECT_EQ(problem(json).kind, ManifestProblem::Kind::DuplicateId);
 }
 
+TEST(PluginManifest, AnAiToolNamesADeclaredCommandOnceWithSchemasInTheSubset)
+{
+    Json json = minimal();
+    json["contributes"] = *Json::parse(R"({"commands": [{"id": "count", "title": "Count"}, {"id": "fix", "title": "Fix"}],
+        "aiTools": [{"command": "count", "description": "Counts words", "mark": "read",
+            "parameters": {"type": "object", "properties": {"line": {"type": "integer"}}, "additionalProperties": false},
+            "result": {"type": "object", "properties": {"words": {"type": "integer"}}}},
+            {"command": "fix", "description": "Fixes", "mark": "write",
+            "parameters": {"type": "object", "additionalProperties": false}}]})");
+    const auto parsed = parse(json);
+    ASSERT_TRUE(parsed) << parsed.error().at << " " << parsed.error().detail;
+    ASSERT_EQ(parsed->aiTools.size(), 2u);
+    EXPECT_EQ(parsed->aiTools[0].command, "count");
+    EXPECT_EQ(parsed->aiTools[0].description, "Counts words");
+    EXPECT_TRUE(parsed->aiTools[0].read);
+    EXPECT_EQ(parsed->aiTools[0].parameters.find("properties")->find("line")->find("type")->asString(), "integer");
+    EXPECT_TRUE(parsed->aiTools[0].result.isObject());
+    EXPECT_FALSE(parsed->aiTools[1].read);
+    EXPECT_TRUE(parsed->aiTools[1].result.isNull());
+
+    Json &tool = json["contributes"]["aiTools"].asArray()[1];
+    tool["command"] = Json(std::string("nope"));
+    EXPECT_EQ(problem(json).kind, Kind::UnknownCommand);
+    tool["command"] = Json(std::string("count"));
+    EXPECT_EQ(problem(json).kind, Kind::DuplicateId);
+    tool["command"] = Json(std::string("fix"));
+    tool["parameters"] = *Json::parse(R"({"type": "object", "additionalProperties": true})");
+    EXPECT_EQ(problem(json).kind, Kind::Schema);
+    tool["parameters"] = *Json::parse(R"({"type": "object", "additionalProperties": false, "if": {}})");
+    EXPECT_EQ(problem(json).at, "/contributes/aiTools/1/parameters");
+    tool["parameters"] = *Json::parse(R"({"type": "object", "additionalProperties": false})");
+    tool["result"] = *Json::parse(R"({"type": "thing"})");
+    EXPECT_EQ(problem(json).at, "/contributes/aiTools/1/result");
+}
+
 TEST(PluginManifest, ALanguageServerNamesADeclaredProgramWithoutTheApiAndKeepsItsDefaults)
 {
     Json json = minimal();

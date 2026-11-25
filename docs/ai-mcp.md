@@ -72,6 +72,8 @@ Replies are `application/json`, never SSE. A notification gets 202. The sidecar 
 
 **Tools.** `tools/list` gives every tool, the searchable groups' too, in one page. `tools/call` runs a tool through the connection's own `ToolSet` and answers its `CallToolResult`. An unknown tool name gets -32602.
 
+**Plugins' tools.** `tools/list` also gives the `read` [AI tools](plugins.md#ai-tools-and-mcp-servers) of each plugin whose marks the user trusts, with `readOnlyHint`, and no `write` tool, since every write but `document.apply` is refused here. A call goes to Qt as `_hikari/pluginTools.call` without a session; Qt runs only a trusted `read` tool, as the plugin ([#1228](https://github.com/altqx/hikari/issues/1228)).
+
 **Resources.** Each is JSON (`application/json`):
 
 | URI | Holds |

@@ -184,6 +184,10 @@ public:
     // that need glyphs, empty for the preview text's default.
     Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts = false,
                                   const QString &text = QString());
+    // Returns the request id that familiesChecked(requestId, byFamily) answers, byFamily
+    // {family: {installed, shownIn}}; shownIn is empty when nothing draws it. Never cancels a
+    // resolveFamily request; a newer check drops a waiting one.
+    Q_INVOKABLE int checkFamilies(const QStringList &families);
 
     std::vector<application::FontLease> externalFontLeases() const;
     // Every font file in `folder`; nullopt when the folder can't be opened.
@@ -209,6 +213,7 @@ signals:
     void sampleChanged();
     void previewAtScreenSizeChanged();
     void resolutionReady(int requestId, const QVariantMap &result);
+    void familiesChecked(int requestId, const QVariantMap &byFamily);
 
 private:
     void ensureLoaded();
@@ -229,9 +234,11 @@ private:
         int request = 0;
         std::shared_ptr<application::FontServicePort> service;
         application::FontEnvironment environment;
-        application::FontRequest want;
+        std::vector<application::FontRequest> wants;
     };
     void resolverLoop();
+    void wakeResolver();
+    application::FontEnvironment documentEnvironment(bool documentFonts) const;
     void stopResolver();
     application::FontFamilies &familiesFor(int shellWindow);
     struct WindowFamilies {
@@ -268,9 +275,11 @@ private:
     std::mutex m_resolveMutex;
     std::condition_variable m_resolveWake;
     std::optional<ResolveJob> m_resolveJob;
+    std::optional<ResolveJob> m_checkJob;
     bool m_resolverStop = false;
     int m_resolveRequest = 0;
     int m_resolveAnswered = 0;
+    int m_checkRequest = 0;
     bool m_windowMade = false;
     bool m_unsaved = false;
     std::shared_ptr<ui::ListFile> m_file;
