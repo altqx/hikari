@@ -4,6 +4,7 @@
 
 #include "hikari/application/hotkeys.h"
 #include "hikari/backends/ai_mcp_clients.h"
+#include "hikari/backends/ai_plugin_tools.h"
 #include "hikari/backends/ai_requests.h"
 
 #include <QDateTime>
@@ -131,6 +132,8 @@ std::string askArea(const std::string &operation)
 {
     if (operation == kMcpCallOperation)
         return "mcp";
+    if (operation == kPluginToolOperation)
+        return "plugin";
     const std::string family = operation.substr(0, operation.find('.'));
     if (family == "settings")
         return "setting";
@@ -421,6 +424,8 @@ std::string allowanceKey(const std::string &operation, const Json &params)
         return operation + ":" + stringAt(params, "command");
     if (operation == kMcpCallOperation)
         return operation + ":" + stringAt(params, "server") + "/" + stringAt(params, "tool");
+    if (operation == kPluginToolOperation)
+        return operation + ":" + stringAt(params, "plugin") + "/" + stringAt(params, "command");
     return operation;
 }
 
@@ -1511,10 +1516,11 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
         return admit(std::unexpected(api::Error{std::string(api::errors::kNotGranted), "No agent thread has that id.", {}}));
     if (t->task) {
         std::optional<std::string> outside;
-        if (operation == kMcpCallOperation) {
+        if (operation == kMcpCallOperation || operation == kPluginToolOperation) {
             const Json *readOnly = params.find("readOnly");
             if (!readOnly || !readOnly->isBool() || !readOnly->asBool())
-                outside = "A sub-agent may only read through MCP tools.";
+                outside = operation == kMcpCallOperation ? "A sub-agent may only read through MCP tools."
+                                                         : "A sub-agent may only use a plugin's trusted read tools.";
         } else if (const api::Operation *o = api::Api::registry().find(operation); o && o->access == api::Access::Write) {
             outside = t->task->scope ? outsideScope(*t->task->scope, operation, params,
                                                     m_wiring.editingTarget ? m_wiring.editingTarget() : std::nullopt)
@@ -1525,6 +1531,8 @@ void AgentThreads::gate(const std::string &session, const std::string &operation
     }
     if (operation == kMcpCallOperation)
         return gateMcp(*t, params, std::move(admit), std::move(onWithdraw));
+    if (operation == kPluginToolOperation)
+        return gatePluginTool(*t, params, std::move(admit), std::move(onWithdraw));
     const api::Operation *op = api::Api::registry().find(operation);
     if (!op || op->access != api::Access::Write)
         return admitCall(*t, operation, params, false, std::move(admit));
@@ -1586,6 +1594,30 @@ void AgentThreads::gateMcp(AgentThread &thread, const Json &params, AiSidecarHos
         return openAsk(thread, Decision::AlwaysAsk, operation, params,
                        "Its MCP server doesn't promise that it only reads or changes nothing it can't undo.",
                        std::move(admit), std::move(onWithdraw));
+    }
+}
+
+void AgentThreads::gatePluginTool(AgentThread &thread, const Json &params, AiSidecarHost::Admit admit,
+                                  std::function<void(std::function<void()>)> onWithdraw)
+{
+    const std::string operation(kPluginToolOperation);
+    const Json *readOnly = params.find("readOnly");
+    if (readOnly && readOnly->isBool() && readOnly->asBool())
+        return admitCall(thread, operation, params, false, std::move(admit));
+    if (const auto run = m_runs.find(thread.id); run == m_runs.end() || !run->second->stoppedFor.empty())
+        return admit(std::unexpected(api::Error{std::string(api::errors::kRefused),
+                                                "This turn has stopped; make no more changes.", {}}));
+    switch (decide(thread.mode, operation, false, thread.allowed.contains(allowanceKey(operation, params)))) {
+    case Decision::Run:
+        return admitCall(thread, operation, params, false, std::move(admit));
+    case Decision::Judge:
+        return judge(thread, operation, params, std::move(admit), std::move(onWithdraw));
+    case Decision::Ask:
+    case Decision::AlwaysAsk:
+    case Decision::Propose:
+    case Decision::Script:
+    case Decision::Install:
+        return openAsk(thread, Decision::Ask, operation, params, {}, std::move(admit), std::move(onWithdraw));
     }
 }
 
@@ -1668,6 +1700,8 @@ void AgentThreads::openAsk(AgentThread &thread, Decision kind, const std::string
                               {"type", std::string(type)},
                               {"tool", operation == kMcpCallOperation
                                            ? stringAt(params, "serverName") + ": " + stringAt(params, "tool")
+                                       : operation == kPluginToolOperation
+                                           ? stringAt(params, "pluginName") + ": " + stringAt(params, "command")
                                            : toolName(operation)},
                               {"operation", operation},
                               {"params", Json(clipped(params.dump(), kOutputChars))},

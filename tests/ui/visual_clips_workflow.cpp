@@ -50,7 +50,7 @@ protected:
     {
         bool shown = false;
         for (int i = 0; i < 200 && !shown; ++i) {
-            shown = prop("mainWindow/videoStatus", "text").rfind("Frame", 0) == 0;
+            shown = prop("mainWindow/videoStatus", "text").rfind("frame ", 0) == 0;
             if (!shown)
                 wait(100ms);
         }

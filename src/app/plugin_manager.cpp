@@ -1,6 +1,7 @@
 #include "hikari/app/plugin_manager.h"
 
 #include "hikari/app/plugin_content.h"
+#include "hikari/app/plugin_themes.h"
 
 #include "hikari/api/api.h"
 #include "plugin_variant.h"
@@ -488,6 +489,8 @@ void PluginManager::refresh()
                     {QStringLiteral("settings"), manifest ? settingRows(*manifest, entry.settings) : QVariantList()},
                     {QStringLiteral("folders"), manifest ? folderRows(*manifest, entry.grants) : QVariantList()},
                     {QStringLiteral("autoUpdate"), entry.autoUpdate},
+                    {QStringLiteral("aiTools"), manifest && !manifest->aiTools.empty()},
+                    {QStringLiteral("trustToolMarks"), entry.trustToolMarks},
                     {QStringLiteral("previous"), text(entry.previous)},
                     {QStringLiteral("held"), text(entry.held)},
                     {QStringLiteral("revoked"), entry.revoked.has_value()},
@@ -721,6 +724,22 @@ QVariantMap PluginManager::reviewDev(const QUrl &folder)
     return reviewed(m_installer->reviewDev(m_reviewedFolder));
 }
 
+QVariantMap PluginManager::saveThemeCopy(const QUrl &parent)
+{
+    m_review.reset();
+    if (!m_installer)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), noUserFolder()}};
+    const ui::theme::Entry *shown = ui::theme::find(ui::theme::current().id);
+    if (!shown)
+        shown = &ui::theme::entries().front();
+    const auto installed = m_installer->registry();
+    const auto folder = writeThemePlugin(*shown, path(parent.isLocalFile() ? parent.toLocalFile() : parent.toString()),
+                                         [&installed](const std::string &id) { return installed && installed->contains(id); });
+    if (!folder)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), folder.error()}};
+    return reviewDev(QUrl::fromLocalFile(QString::fromStdU16String(folder->u16string())));
+}
+
 void PluginManager::watchDevFolders()
 {
     QHash<QString, QString> folders;
@@ -820,6 +839,11 @@ QString PluginManager::edit(const QString &id, const std::function<void(plugins:
 QString PluginManager::setAutoUpdate(const QString &id, bool on)
 {
     return edit(id, [on](plugins::InstalledPlugin &plugin) { plugin.autoUpdate = on; });
+}
+
+QString PluginManager::setTrustToolMarks(const QString &id, bool on)
+{
+    return edit(id, [on](plugins::InstalledPlugin &plugin) { plugin.trustToolMarks = on; });
 }
 
 QString PluginManager::rollBack(const QString &id)

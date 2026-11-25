@@ -116,6 +116,16 @@ public:
     void toggleZoom(int zoomPercentOption);
     // The whole frame, unpanned; the zoom mode stays as it was.
     void resetZoom();
+    // Zoom levels about the window's centre (docs/ux/video-controls.md#zoom-readout). Aegisub35:
+    // `percent` / 100 logical pixels per video pixel, as displayScale. Legacy: a crop zoom of
+    // `percent` / 100, the whole frame at 100 or under.
+    void zoomToPercent(double percent);
+    // One video pixel per device pixel.
+    void zoomToDevicePixels();
+    // Aegisub35: one wheel notch; Legacy: one wheel step of the crop zoom.
+    void zoomStep(int direction);
+    // The readout's number: displayScale under Aegisub35, the crop zoom under Legacy.
+    int readoutPercent() const;
     // Zoom mode: zoomDrag moves with the left button held (pan or an edge).
     void zoomPress(int x, int y);
     void zoomDrag(int x, int y);
@@ -164,6 +174,8 @@ private:
     void zoom();
     void clampPan();
     PointD pictureCentre() const;
+    void zoomCropAboutItsCentre(float crop);
+    void zoomContentAboutTheWindowCentre(double zoom);
 
     bool m_open = false;
     int m_clientWidth = 0, m_clientHeight = 0, m_panelHeight = 0;

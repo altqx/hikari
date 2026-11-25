@@ -19,7 +19,7 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 | A4 | same | Warning | The edited line cannot be committed. (and Replace refusals) | error | yes | message box; a toast since PU6 (the Spellchecker a panel) | Replace / Replace all |
 | A5 | ui/Main.qml cleanStylesMessage | Status of deleted styles | Styles used / Styles deleted lists | info | yes | toast + Details | Delete unused styles |
 | A6 | ui/StyleManager.qml message (Clear) | Status of deleted styles | same | info | yes | toast + Details | Delete unused styles |
-| A7 | same (createStyle, commit) | none (stale) | The document has no styles to edit. / Style named "%1" already exists. | error | yes | message box | New style / Save style |
+| A7 | same (createStyle, commit) | none (stale) | The document has no styles to edit. / Style named "%1" already exists. | error | yes | message box; under the Name field since #1205 area 10 (Q737) | New style / Save style |
 | A8 | ui/Main.qml playerNotice (Windows) | Warning | The file is not a valid video file… | warning | yes | toast + Details | Open video |
 | A9 | ui/VisualToolDialogs.qml noticeBox | Warning | Double "m" was blocked because of Vsfilter bug | warning | yes | toast | the tool's name |
 | A10 | ui/AutomationNotices.qml notice | Info | This subtitle file does not have any scripts added | info | yes | toast | Run the last loaded script |

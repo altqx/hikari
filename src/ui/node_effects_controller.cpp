@@ -424,6 +424,7 @@ void NodeEffectsController::setShown(bool shown)
     else
         refresh();
     emit changed();
+    emit previewChanged();
     schedulePreview();
 }
 
@@ -431,7 +432,7 @@ void NodeEffectsController::refresh()
 {
     const auto *s = session();
     if (s != m_seenSession) {
-        commit();
+        dropPending();
         m_seenSession = s;
         m_seenRevision = 0;
         m_current.reset();
@@ -442,12 +443,80 @@ void NodeEffectsController::refresh()
         m_sourceSelection.clear();
         m_preview.reset();
         m_cache.clear();
+        m_seenActive.reset();
         emit selectionChanged();
     }
-    if (s && s->revision() == m_seenRevision && !m_graphs.empty() == m_current.has_value())
+    if (m_pending && pendingOverwritten())
+        dropPending();
+    if (s && s->revision() == m_seenRevision && !m_graphs.empty() == m_current.has_value()) {
+        if (followActiveLine()) {
+            emit changed();
+            emit previewChanged();
+            schedulePreview();
+        }
         return;
+    }
     m_seenRevision = s ? s->revision() : 0;
     reload();
+}
+
+std::optional<std::u8string> NodeEffectsController::graphLineText() const
+{
+    const core::Document *doc = document();
+    if (doc && m_current)
+        for (const core::LineRecord *l : doc->lines())
+            if (l->id == *m_current)
+                return l->text;
+    return std::nullopt;
+}
+
+bool NodeEffectsController::pendingOverwritten() const
+{
+    const auto *s = session();
+    return !s || s->serial() != m_pendingSession || graphLineText() != m_pendingBase;
+}
+
+void NodeEffectsController::dropPending()
+{
+    m_commitTimer.stop();
+    m_pending = false;
+    m_pendingBase.reset();
+}
+
+std::optional<core::LineId> NodeEffectsController::activeSource() const
+{
+    const auto *s = session();
+    const std::optional<core::LineId> active = s ? s->selection().active : std::nullopt;
+    const application::DocumentGraph *g = currentGraph();
+    if (!active || !g)
+        return std::nullopt;
+    if (std::ranges::find(m_sources, *active) != m_sources.end())
+        return active;
+    if (!typesetting())
+        return std::nullopt;
+    for (const core::LineRecord *l : s->document().lines()) {
+        if (l->id != *active)
+            continue;
+        if (application::isGeneratedBy(*l, g->name) && l->generatedFrom.value != 0 &&
+            std::ranges::find(m_sources, l->generatedFrom) != m_sources.end())
+            return l->generatedFrom;
+        if (m_sources.empty() && application::isTypesettingSource(*l))
+            return active;
+    }
+    return std::nullopt;
+}
+
+bool NodeEffectsController::followActiveLine()
+{
+    const auto *s = session();
+    const std::optional<core::LineId> active = s ? s->selection().active : std::nullopt;
+    if (active == std::exchange(m_seenActive, active))
+        return false;
+    const std::optional<core::LineId> source = activeSource();
+    if (!source || source == m_source)
+        return false;
+    m_source = source;
+    return true;
 }
 
 void NodeEffectsController::reload()
@@ -502,7 +571,7 @@ void NodeEffectsController::updateSources()
         for (const core::LineRecord *l : doc->lines()) {
             if (application::isGeneratedBy(*l, g->name)) {
                 const auto owner = l->generatedFrom.value != 0 ? std::optional(l->generatedFrom) : last;
-                if (m_targets.contains(l->id) && owner && std::ranges::find(m_sources, *owner) == m_sources.end())
+                if (owner && std::ranges::find(m_sources, *owner) == m_sources.end())
                     m_sources.push_back(*owner);
                 continue;
             }
@@ -520,7 +589,8 @@ void NodeEffectsController::updateSources()
                 m_sources.push_back(l->id);
     }
     if (!m_source || std::ranges::find(m_sources, *m_source) == m_sources.end())
-        m_source = m_sources.empty() ? std::nullopt : std::optional(m_sources.front());
+        m_source = m_sources.empty() ? activeSource() : std::optional(m_sources.front());
+    followActiveLine();
     std::erase_if(m_sourceSelection, [&](core::LineId id) { return std::ranges::find(m_sources, id) == m_sources.end(); });
     if (m_selectEveryTarget && typesetting() && !m_sources.empty()) {
         m_selectEveryTarget = false;
@@ -539,6 +609,7 @@ void NodeEffectsController::setTargetLines(std::set<core::LineId> lines)
 {
     m_targets = std::move(lines);
     m_sourceSelection.clear();
+    m_seenActive.reset();
     refresh();
     if (!typesetting())
         for (const application::DocumentGraph &g : m_graphs)
@@ -573,6 +644,7 @@ void NodeEffectsController::setCurrent(qulonglong id)
     m_current = core::LineId{id};
     m_path.clear();
     m_selection.clear();
+    m_seenActive.reset();
     emit selectionChanged();
     reload();
     selectEveryTarget();
@@ -962,6 +1034,7 @@ void NodeEffectsController::setSource(qulonglong id)
         return;
     m_source = core::LineId{id};
     emit changed();
+    emit previewChanged();
     schedulePreview();
 }
 
@@ -1018,7 +1091,7 @@ int NodeEffectsController::sourceEndMs() const
 QVariantList NodeEffectsController::previewLines() const
 {
     QVariantList out;
-    if (!m_preview)
+    if (!m_preview || !trusted())
         return out;
     for (const core::LineRecord &l : m_preview->lines)
         out << QVariantMap{{QStringLiteral("layer"), qint64(l.layer.value)},
@@ -1041,7 +1114,22 @@ void NodeEffectsController::setPreviewOnVideo(bool on)
 
 bool NodeEffectsController::videoPreview() const
 {
-    return m_shown && m_previewOnVideo && m_preview && m_source;
+    return m_shown && m_previewOnVideo && m_preview && m_source && trusted();
+}
+
+QString NodeEffectsController::previewBlocked() const
+{
+    if (!m_shown || !m_previewOnVideo || !m_graph)
+        return {};
+    if (!m_source)
+        return QStringLiteral("noSource");
+    if (!trusted())
+        return QStringLiteral("untrusted");
+    if (!m_preview && (!m_runProblems.empty() || !application::validateGraph(*m_graph).empty()))
+        return QStringLiteral("problems");
+    if (m_sources.empty())
+        return QStringLiteral("noSource");
+    return {};
 }
 
 std::optional<core::Document> NodeEffectsController::videoDocument(const core::Document &doc) const
@@ -1062,6 +1150,8 @@ std::optional<core::Document> NodeEffectsController::videoDocument(const core::D
             return l.generatedFrom == *m_source;
         return l.start.value.microseconds() / 1000 < to && l.end.value.microseconds() / 1000 > from;
     });
+    for (const core::LineId id : m_preview->applied)
+        out.editLine(id, [](core::LineRecord &line) { line.comment = true; });
     for (const auto &fields : m_preview->styles)
         out.appendStyle(fields);
     for (core::LineRecord l : m_preview->lines)
@@ -1154,10 +1244,9 @@ void NodeEffectsController::runPreview()
         m_preview.reset();
         m_trace = {};
         m_runProblems.clear();
-        if (had) {
-            emit previewChanged();
+        emit previewChanged();
+        if (had)
             emit videoChanged();
-        }
         return;
     }
     application::NodeEffectOptions o = options();
@@ -1186,6 +1275,11 @@ void NodeEffectsController::edit(const NodeGraph &root)
 {
     if (!m_editable || m_newerFormat)
         return;
+    if (!m_pending) {
+        const auto *s = session();
+        m_pendingSession = s ? s->serial() : 0;
+        m_pendingBase = graphLineText();
+    }
     m_graph = root;
     m_pending = true;
     m_commitTimer.start();
@@ -1206,9 +1300,16 @@ void NodeEffectsController::editView(const NodeGraph &v)
 void NodeEffectsController::commit()
 {
     m_commitTimer.stop();
-    if (!std::exchange(m_pending, false))
+    if (!m_pending)
         return;
+    const bool overwritten = pendingOverwritten();
+    dropPending();
     auto *s = session();
+    if (overwritten) {
+        m_seenRevision = 0;
+        refresh();
+        return;
+    }
     if (!s || !m_current || !m_graph)
         return;
     if (editKeepingTrust([&] { return application::editGraph(*s, *m_current, *m_graph).has_value(); }))
@@ -1694,8 +1795,7 @@ bool NodeEffectsController::deleteGraph()
     if (!m_current)
         return false;
     const core::LineId line = *m_current;
-    m_pending = false;
-    m_commitTimer.stop();
+    dropPending();
     return runGraphCommand([&](application::EditSession &s) { return application::deleteGraph(s, line).has_value(); });
 }
 

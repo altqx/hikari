@@ -1,5 +1,7 @@
 #include "hikari/app/language_providers.h"
 
+#include "hikari/app/language_servers.h"
+
 #include <QPointer>
 
 #include <cmath>
@@ -109,7 +111,16 @@ QStringList LanguageProviders::triggers(const QString &field) const
         for (const std::string &trigger : provider.triggers)
             if (const QString t = QString::fromStdString(trigger); !out.contains(t))
                 out.push_back(t);
+    if (m_servers)
+        for (const QString &t : m_servers->triggers(field))
+            if (!out.contains(t))
+                out.push_back(t);
     return out;
+}
+
+bool LanguageProviders::hovers(const QString &field) const
+{
+    return !m_runtime.providers("hover", field.toStdString()).empty() || (m_servers && m_servers->hovers(field));
 }
 
 void LanguageProviders::complete(const Request &request, Completions done)
@@ -121,7 +132,7 @@ void LanguageProviders::complete(const Request &request, Completions done)
     };
     const std::uint64_t generation = ++m_completion;
     const auto providers = m_runtime.providers("completion", request.field.toStdString());
-    auto gather = std::make_shared<Gather>(Gather{std::vector<std::vector<CompletionItem>>(providers.size()), 0, std::move(done)});
+    auto gather = std::make_shared<Gather>(Gather{std::vector<std::vector<CompletionItem>>(providers.size() + 1), 0, std::move(done)});
     const auto finish = [this, generation, gather] {
         if (generation != m_completion)
             return;
@@ -134,6 +145,7 @@ void LanguageProviders::complete(const Request &request, Completions done)
     };
     const api::Json json = requestJson(request);
     const int length = static_cast<int>(request.text.size());
+    ++gather->waiting;
     for (std::size_t i = 0; i < providers.size(); ++i) {
         const QString source = providers[i].pluginName;
         auto answered = [self = QPointer(this), gather, finish, i, length, offset = request.offset,
@@ -147,7 +159,15 @@ void LanguageProviders::complete(const Request &request, Completions done)
         if (!m_runtime.provide(providers[i].plugin, "completion", json, answered))
             --gather->waiting;
     }
-    if (gather->waiting == 0)
+    if (m_servers) {
+        ++gather->waiting;
+        m_servers->complete(request, [self = QPointer(this), gather, finish](std::vector<CompletionItem> items) {
+            gather->answers.back() = std::move(items);
+            if (--gather->waiting == 0 && self)
+                finish();
+        });
+    }
+    if (--gather->waiting == 0)
         finish();
 }
 
@@ -160,7 +180,7 @@ void LanguageProviders::hover(const Request &request, Hover done)
     };
     const std::uint64_t generation = ++m_hover;
     const auto providers = m_runtime.providers("hover", request.field.toStdString());
-    auto gather = std::make_shared<Gather>(Gather{std::vector<std::optional<HoverText>>(providers.size()), 0, std::move(done)});
+    auto gather = std::make_shared<Gather>(Gather{std::vector<std::optional<HoverText>>(providers.size() + 1), 0, std::move(done)});
     const auto finish = [this, generation, gather] {
         if (generation != m_hover)
             return;
@@ -171,6 +191,7 @@ void LanguageProviders::hover(const Request &request, Hover done)
     };
     const api::Json json = requestJson(request);
     const int length = static_cast<int>(request.text.size());
+    ++gather->waiting;
     for (std::size_t i = 0; i < providers.size(); ++i) {
         const QString source = providers[i].pluginName;
         auto answered = [self = QPointer(this), gather, finish, i, length, source](std::expected<std::string, QString> answer) {
@@ -183,7 +204,15 @@ void LanguageProviders::hover(const Request &request, Hover done)
         if (!m_runtime.provide(providers[i].plugin, "hover", json, answered))
             --gather->waiting;
     }
-    if (gather->waiting == 0)
+    if (m_servers) {
+        ++gather->waiting;
+        m_servers->hover(request, [self = QPointer(this), gather, finish](std::optional<HoverText> hover) {
+            gather->answers.back() = std::move(hover);
+            if (--gather->waiting == 0 && self)
+                finish();
+        });
+    }
+    if (--gather->waiting == 0)
         finish();
 }
 
