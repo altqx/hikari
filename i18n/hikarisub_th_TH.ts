@@ -15245,6 +15245,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เลื่อนไปยังบรรทัดที่มองเห็นหลังออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>The symbol that stands for each tag block when tags are replaced.</source>
+        <translation>สัญลักษณ์ที่ใช้แทนบล็อกแท็กแต่ละบล็อกเมื่อแทนที่แท็ก</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>ทำเครื่องหมายบรรทัดในเฟรมปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Tints the lines that show on the current video frame.</source>
+        <translation>แต้มสีบรรทัดที่แสดงในเฟรมวิดีโอปัจจุบัน</translation>
+    </message>
+    <message>
         <source>Styles for new files</source>
         <translation>สไตล์สำหรับไฟล์ใหม่</translation>
     </message>
@@ -15577,6 +15589,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
         <translation>จำนวนการบันทึกก่อนหน้าของแต่ละไฟล์ที่เก็บไว้ในโฟลเดอร์กู้คืน ช่วง 0 ถึง 100</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>แทนที่ด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>ซ่อน</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>แท็กในตาราง</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -16295,6 +16323,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม</translation>
     </message>
     <message>
+        <source>Vector clip smoothing</source>
+        <translation>การปรับให้เรียบของคลิปเวกเตอร์</translation>
+    </message>
+    <message>
+        <source>How closely a freehand stroke is followed. Range from 0 to 100</source>
+        <translation>เส้นที่วาดมือเปล่าจะตามการลากใกล้แค่ไหน ช่วงตั้งแต่ 0 ถึง 100</translation>
+    </message>
+    <message>
+        <source>Drawing smoothing</source>
+        <translation>การปรับให้เรียบของภาพวาด</translation>
+    </message>
+    <message>
         <source>No plugin has settings.</source>
         <translation>ไม่มีปลั๊กอินที่มีการตั้งค่า</translation>
     </message>
@@ -16319,6 +16359,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Enter a number.</source>
         <translation>ป้อนตัวเลข</translation>
+    </message>
+    <message>
+        <source>%1, item %2</source>
+        <translation>%1 รายการที่ %2</translation>
+    </message>
+    <message>
+        <source>Remove item %1</source>
+        <translation>ลบรายการที่ %1</translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation>ยังไม่ได้ตั้งค่า</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -17990,6 +18042,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
         <translation>แทนที่ไอคอนในอินเทอร์เฟซของ HikariSub ไอคอนที่ธีมไม่มีจะแสดงเป็นไอคอนของ HikariSub เอง</translation>
     </message>
+    <message>
+        <source>This window has no trusted project to keep it in.</source>
+        <translation>หน้าต่างนี้ไม่มีโปรเจกต์ที่เชื่อถือให้เก็บค่านี้</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”.</source>
+        <translation>โปรเจกต์ตั้งค่า “%1” ไม่ได้</translation>
+    </message>
+    <message>
+        <source>project.toml can’t be written.</source>
+        <translation>เขียน project.toml ไม่ได้</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -19218,6 +19282,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can’t write the theme plugin to %1.</source>
         <translation>เขียนปลั๊กอินธีมไปที่ %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>“%1” takes text</source>
+        <translation>“%1” รับข้อความ</translation>
+    </message>
+    <message>
+        <source>No system keychain to keep it in</source>
+        <translation>ไม่มีพวงกุญแจของระบบให้เก็บค่านี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>เก็บ “%1” ในพวงกุญแจของระบบไม่ได้</translation>
     </message>
 </context>
 <context>

@@ -33,6 +33,7 @@
 #include "hikari/app/automation_shell.h"
 #include "hikari/app/lua_export_filters.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_secrets.h"
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/language_providers.h"
@@ -285,6 +286,7 @@ public:
         DiscordPresence::Config presence;
         // Unset: the keychain and <userFolder>/ai.
         std::optional<AiFeatures::Ports> aiPorts;
+        std::function<std::unique_ptr<application::ai::KeyStore>()> pluginKeychain;
         /// False: the default AI ports never look for, ask or start the Claude Code and Codex CLIs.
         bool externalAgents = true;
         StarPrompt::Config starPrompt;
@@ -367,6 +369,12 @@ public:
     Q_INVOKABLE QStringList projectWaitsForTrust(int shellWindow) const;
     // Writes each value that differs from the window's to project.toml and removes `cleared` from it; false when a write failed.
     Q_INVOKABLE bool applyProjectSettings(int shellWindow, const QVariantMap &values, const QStringList &cleared);
+    // The Project tab's plugin pages: the plugin manager's rows of the plugins that are on, each with only its projectable
+    // settings, and each setting with `project`: the Project's value, missing when it has none.
+    Q_INVOKABLE QVariantList projectPluginSettings(int shellWindow) const;
+    // Sets a plugin setting in project.toml; "null" removes it. Why it was refused, or "".
+    Q_INVOKABLE QString setProjectPluginSetting(int shellWindow, const QString &plugin, const QString &setting,
+                                                const QString &json);
     // The Project is untrusted and holds scripts (.hikari/automation/), a [plugins] table or AI keys it names.
     Q_INVOKABLE bool projectNeedsTrust(int shellWindow) const;
     // Why projectNeedsTrust: "scripts" (scripts or plugin settings) and "keys".
@@ -1556,6 +1564,7 @@ private:
     std::unique_ptr<AgentController> m_agent;
     std::unique_ptr<SkillsSettings> m_skillsSettings;
     std::unique_ptr<InlineAiController> m_inlineAi;
+    std::unique_ptr<PluginSecrets> m_pluginSecrets;
     std::unique_ptr<PluginManager> m_pluginManager;
     std::unique_ptr<PluginMarketplace> m_pluginMarketplace;
     std::unique_ptr<PluginPrograms> m_pluginPrograms;

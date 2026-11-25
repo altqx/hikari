@@ -279,6 +279,41 @@ bool ProjectFile::storeNode(std::string_view id, const toml::table *value)
     return true;
 }
 
+bool ProjectFile::setPluginSetting(const std::string &plugin, const std::string &setting, const toml::node *value)
+{
+    if (!m_writable)
+        return false;
+    const auto file = pathOf(path(Shared));
+    const auto bytes = application::readOwnedFile(file);
+    if (!bytes && !value)
+        return true;
+    const std::string text = withCurrentExportFormat(bytes ? *bytes : formatTomlFile({}, kVersion));
+    auto patched = patchTomlPath(text, {"plugins", plugin, setting}, value);
+    if (!patched) {
+        auto parsed = parseTomlFile(text, kVersion);
+        auto *table = std::get_if<toml::table>(&parsed);
+        if (!table)
+            return false;
+        auto *plugins = (*table)["plugins"].as_table();
+        if (!plugins)
+            plugins = table->insert_or_assign("plugins", toml::table()).first->second.as_table();
+        auto *own = (*plugins)[plugin].as_table();
+        if (!own)
+            own = plugins->insert_or_assign(plugin, toml::table()).first->second.as_table();
+        if (value)
+            value->visit([&](const auto &node) { own->insert_or_assign(setting, node); });
+        else
+            own->erase(setting);
+        patched = formatTomlFile(*table, kVersion);
+    }
+    QDir().mkpath(m_root + QStringLiteral("/.hikari"));
+    if (!application::writeFileAtomically(file, *patched))
+        return false;
+    if (auto parsed = parseTomlFile(*patched, kVersion); auto *table = std::get_if<toml::table>(&parsed))
+        m_tables[Shared] = std::move(*table);
+    return true;
+}
+
 ProjectFile::PluginTable ProjectFile::plugins() const
 {
     PluginTable out;

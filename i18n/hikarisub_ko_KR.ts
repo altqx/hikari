@@ -15249,6 +15249,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>전체 화면 종료 후 보이는 줄 찾기</translation>
     </message>
     <message>
+        <source>The symbol that stands for each tag block when tags are replaced.</source>
+        <translation>태그를 바꿀 때 각 태그 블록을 대신하는 기호입니다.</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
+    </message>
+    <message>
+        <source>Tints the lines that show on the current video frame.</source>
+        <translation>현재 비디오 프레임에 보이는 줄에 색을 입힙니다.</translation>
+    </message>
+    <message>
         <source>Styles for new files</source>
         <translation>새 파일의 스타일</translation>
     </message>
@@ -15581,6 +15593,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
         <translation>복구 폴더에 보관하는 각 파일의 이전 저장본 수. 범위는 0부터 100까지</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>표시</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>숨기기</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>자막 목록의 태그</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -16299,6 +16327,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>이전 버전 단축키 가져오기</translation>
     </message>
     <message>
+        <source>Vector clip smoothing</source>
+        <translation>벡터 클립 매끄러움</translation>
+    </message>
+    <message>
+        <source>How closely a freehand stroke is followed. Range from 0 to 100</source>
+        <translation>자유 곡선이 획을 얼마나 가깝게 따를지 정합니다. 0부터 100까지</translation>
+    </message>
+    <message>
+        <source>Drawing smoothing</source>
+        <translation>도형 매끄러움</translation>
+    </message>
+    <message>
         <source>No plugin has settings.</source>
         <translation>설정이 있는 플러그인이 없습니다.</translation>
     </message>
@@ -16323,6 +16363,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Enter a number.</source>
         <translation>숫자를 입력하십시오.</translation>
+    </message>
+    <message>
+        <source>%1, item %2</source>
+        <translation>%1, 항목 %2</translation>
+    </message>
+    <message>
+        <source>Remove item %1</source>
+        <translation>항목 %1 제거</translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation>설정 안 됨</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -17994,6 +18046,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
         <translation>HikariSub의 인터페이스 아이콘을 바꿉니다. 테마에 없는 아이콘은 HikariSub의 기본 아이콘으로 표시됩니다.</translation>
     </message>
+    <message>
+        <source>This window has no trusted project to keep it in.</source>
+        <translation>이 창에는 이 값을 둘 신뢰하는 프로젝트가 없습니다.</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”.</source>
+        <translation>프로젝트에서는 “%1”(을)를 설정할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>project.toml can’t be written.</source>
+        <translation>project.toml에 쓸 수 없습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -19222,6 +19286,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can’t write the theme plugin to %1.</source>
         <translation>테마 플러그인을 %1에 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” takes text</source>
+        <translation>“%1”에는 텍스트가 필요합니다</translation>
+    </message>
+    <message>
+        <source>No system keychain to keep it in</source>
+        <translation>저장할 시스템 키체인이 없습니다</translation>
+    </message>
+    <message>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>시스템 키체인에 “%1”(을)를 저장하지 못했습니다</translation>
     </message>
 </context>
 <context>

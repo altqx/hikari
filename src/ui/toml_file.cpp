@@ -251,16 +251,32 @@ std::size_t valueEnd(std::string_view t, std::size_t i)
     return depth == 0 ? last : npos;
 }
 
-std::string joined(const std::vector<std::string> &segments)
+using KeyPath = std::vector<std::string>;
+
+std::string keyText(const KeyPath &path)
 {
     std::string out;
-    for (const auto &segment : segments)
-        out += (out.empty() ? "" : ".") + segment;
+    for (const auto &segment : path) {
+        const bool bare = !segment.empty() && std::ranges::all_of(segment, bareKeyChar);
+        out += (out.empty() ? "" : ".") + (bare ? segment : formatToml(toml::value<std::string>(segment)));
+    }
     return out;
 }
 
+const toml::node *nodeAt(const toml::table &root, const KeyPath &path)
+{
+    const toml::node *node = &root;
+    for (const auto &segment : path) {
+        const auto *table = node->as_table();
+        node = table ? table->get(segment) : nullptr;
+        if (!node)
+            return nullptr;
+    }
+    return node;
+}
+
 struct TomlEntry {
-    std::string id;
+    KeyPath path;
     std::size_t lineBegin;
     std::size_t valueBegin;
     std::size_t valueEnd;
@@ -268,7 +284,7 @@ struct TomlEntry {
 };
 
 struct TomlTable {
-    std::string name;
+    KeyPath path;
     std::size_t end; // after its header or its last entry
 };
 
@@ -280,7 +296,7 @@ struct TomlLayout {
 std::optional<TomlLayout> scanToml(std::string_view t)
 {
     TomlLayout layout;
-    layout.tables.push_back({"", 0});
+    layout.tables.push_back({{}, 0});
     std::optional<std::size_t> table = 0;
     for (std::size_t i = 0; i < t.size();) {
         const auto lineBegin = i;
@@ -301,7 +317,7 @@ std::optional<TomlLayout> scanToml(std::string_view t)
             i = afterLine(t, i);
             table.reset();
             if (!array) {
-                layout.tables.push_back({joined(key), i});
+                layout.tables.push_back({key, i});
                 table = layout.tables.size() - 1;
             }
             continue;
@@ -317,8 +333,9 @@ std::optional<TomlLayout> scanToml(std::string_view t)
         if (!table)
             continue;
         auto &owner = layout.tables[*table];
-        layout.entries.push_back(
-            {owner.name.empty() ? joined(key) : owner.name + "." + joined(key), lineBegin, valueBegin, end, i});
+        KeyPath path = owner.path;
+        path.insert(path.end(), key.begin(), key.end());
+        layout.entries.push_back({std::move(path), lineBegin, valueBegin, end, i});
         owner.end = i;
     }
     return layout;
@@ -336,44 +353,48 @@ std::string valueText(const SettingValue &value)
 
 namespace {
 
-std::optional<std::string> patchToml(std::string_view text, std::string_view id,
-                                     const std::optional<std::string> &value,
+std::optional<std::string> patchToml(std::string_view text, const KeyPath &path, const std::optional<std::string> &value,
                                      const std::function<bool(const toml::node *)> &holds)
 {
     const auto layout = scanToml(text);
-    if (!layout)
+    if (!layout || path.size() < 2)
         return std::nullopt;
     const std::string newline = text.find("\r\n") != npos ? "\r\n" : "\n";
     std::string out(text);
-    const auto entry = std::ranges::find(layout->entries, id, &TomlEntry::id);
+    const auto entry = std::ranges::find(layout->entries, path, &TomlEntry::path);
     if (entry != layout->entries.end()) {
         if (value)
             out.replace(entry->valueBegin, entry->valueEnd - entry->valueBegin, *value);
         else
             out.erase(entry->lineBegin, entry->lineEnd - entry->lineBegin);
     } else if (value) {
-        const auto dot = id.rfind('.');
-        if (dot == npos)
-            return std::nullopt;
-        const std::string parent(id.substr(0, dot));
-        const std::string line = std::string(id.substr(dot + 1)) + " = " + *value + newline;
-        const auto table = std::ranges::find(layout->tables, parent, &TomlTable::name);
+        const KeyPath parent(path.begin(), path.end() - 1);
+        const std::string line = keyText({path.back()}) + " = " + *value + newline;
+        const auto table = std::ranges::find(layout->tables, parent, &TomlTable::path);
         if (table != layout->tables.end()) {
             const bool ended = table->end == 0 || text.substr(0, table->end).ends_with('\n');
             out.insert(table->end, (ended ? "" : newline) + line);
         } else {
             if (!out.empty() && !out.ends_with('\n'))
                 out += newline;
-            out += (out.empty() ? "" : newline) + "[" + parent + "]" + newline + line;
+            out += (out.empty() ? "" : newline) + "[" + keyText(parent) + "]" + newline + line;
         }
     }
     try {
         const toml::table parsed = toml::parse(out);
-        if (!holds(tomlNode(parsed, id)))
+        if (!holds(nodeAt(parsed, path)))
             return std::nullopt;
     } catch (const toml::parse_error &) {
         return std::nullopt;
     }
+    return out;
+}
+
+KeyPath pathOf(std::string_view id)
+{
+    KeyPath out;
+    for (const auto segment : idSegments(id))
+        out.emplace_back(segment);
     return out;
 }
 
@@ -382,14 +403,19 @@ std::optional<std::string> patchToml(std::string_view text, std::string_view id,
 std::optional<std::string> patchTomlSetting(std::string_view text, std::string_view id,
                                             const std::optional<SettingValue> &value)
 {
-    return patchToml(text, id, value ? std::optional(valueText(*value)) : std::nullopt, [&](const toml::node *node) {
+    return patchToml(text, pathOf(id), value ? std::optional(valueText(*value)) : std::nullopt, [&](const toml::node *node) {
         return value ? node && fromToml(*node) == value : node == nullptr;
     });
 }
 
 std::optional<std::string> patchTomlNode(std::string_view text, std::string_view id, const toml::node *value)
 {
-    return patchToml(text, id, value ? std::optional(formatToml(*value)) : std::nullopt, [&](const toml::node *node) {
+    return patchTomlPath(text, pathOf(id), value);
+}
+
+std::optional<std::string> patchTomlPath(std::string_view text, const std::vector<std::string> &path, const toml::node *value)
+{
+    return patchToml(text, path, value ? std::optional(formatToml(*value)) : std::nullopt, [&](const toml::node *node) {
         return value ? node && formatToml(*node) == formatToml(*value) : node == nullptr;
     });
 }

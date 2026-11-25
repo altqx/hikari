@@ -274,7 +274,7 @@ TEST_F(PluginInstaller, SetGrantRemembersAndForgetsOnlyFoldersTheManifestAsksFor
 
 constexpr std::string_view kSettings =
     R"(, "contributes": {"settings": [{"id": "count", "title": "Count", "type": "integer", "default": 3, "minimum": 1, "maximum": 10},)"
-    R"( {"id": "mode", "title": "Mode", "type": "choice", "options": ["fast", "slow"], "default": "fast"},)"
+    R"( {"id": "mode", "title": "Mode", "type": "choice", "options": [{"value": "fast", "title": "Fast"}, {"value": "slow", "title": "Slow"}], "default": "fast"},)"
     R"( {"id": "loud", "title": "Loud", "type": "boolean", "default": false}]})";
 
 TEST_F(PluginInstaller, SetSettingChecksTheValueAgainstTheInstalledManifest)
@@ -288,7 +288,8 @@ TEST_F(PluginInstaller, SetSettingChecksTheValueAgainstTheInstalledManifest)
     EXPECT_EQ(installer.setSetting("com.example.hello", "count", Json("7")).error(), "“count” takes a whole number");
     EXPECT_EQ(installer.setSetting("com.example.hello", "count", Json(0)).error(), "“count” must be at least 1");
     EXPECT_EQ(installer.setSetting("com.example.hello", "count", Json(11)).error(), "“count” must be at most 10");
-    EXPECT_EQ(installer.setSetting("com.example.hello", "mode", Json("medium")).error(), "“mode” must be one of: fast, slow");
+    EXPECT_EQ(installer.setSetting("com.example.hello", "mode", Json("medium")).error(), "“mode” must be one of: Fast, Slow");
+    EXPECT_EQ(installer.setSetting("com.example.hello", "mode", Json("Slow")).error(), "“mode” must be one of: Fast, Slow");
     EXPECT_EQ(installer.setSetting("com.example.hello", "loud", Json(1)).error(), "“loud” takes true or false");
     EXPECT_EQ(installer.setSetting("com.example.hello", "other", Json(1)).error(),
               "“other” isn't a setting of com.example.hello");
@@ -308,7 +309,7 @@ TEST_F(PluginInstaller, SettingsSurviveAnUpdateWhileTheyStillFit)
     ASSERT_TRUE(installer.setSetting("com.example.hello", "loud", Json(true)));
     const std::string_view narrower =
         R"(, "contributes": {"settings": [{"id": "count", "title": "Count", "type": "integer", "default": 3, "maximum": 5},)"
-        R"( {"id": "mode", "title": "Mode", "type": "choice", "options": ["fast", "slow"], "default": "fast"}]})";
+        R"( {"id": "mode", "title": "Mode", "type": "choice", "options": [{"value": "fast", "title": "Fast"}, {"value": "slow", "title": "Slow"}], "default": "fast"}]})";
     ASSERT_TRUE(installer.install(reviewed(plugin("1.1.0", nullptr, narrower)), false));
     EXPECT_EQ(installed().settings, Json::object({{"mode", "slow"}}));
     EXPECT_EQ(settingValues(*installer.installedManifest("com.example.hello"), installed().settings),

@@ -942,7 +942,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hideAiCommands();
         refreshViews();
     });
+    m_pluginSecrets = std::make_unique<PluginSecrets>(options.pluginKeychain ? options.pluginKeychain() : systemKeyStore(m_userFolder));
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
+    m_pluginManager->setSecrets(m_pluginSecrets.get());
     m_pluginMarketplace = std::make_unique<PluginMarketplace>(
         *m_pluginManager, m_settings.get(), options.marketplace,
         options.plugins.registry.isEmpty() ? QString()
@@ -954,6 +956,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
     pluginWiring.project = [this] { return activeProject(); };
     pluginWiring.sandbox = true;
+    pluginWiring.secrets = m_pluginSecrets.get();
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);
     };

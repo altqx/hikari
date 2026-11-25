@@ -13,6 +13,7 @@ using namespace hikari;
 using application::SettingValue;
 using hikari::ui::ProjectCredentials;
 using hikari::ui::ProjectFile;
+using hikari::ui::patchTomlPath;
 using hikari::ui::patchTomlSetting;
 
 namespace {
@@ -114,6 +115,54 @@ private slots:
         const std::string text = "version = 1\neditor = { spellchecker = true }\n";
         QVERIFY(!patchTomlSetting(text, "editor.spellchecker", SettingValue(false)));
         QVERIFY(!patchTomlSetting(text, "editor.dictionaryLanguage", SettingValue(std::string("x"))));
+    }
+
+    void aPluginIdWithDotsIsOneQuotedKey()
+    {
+        const std::string text = "version = 1\n[plugins.\"com.example.kf\"]\nsize = 12 # team size\nname = \"team\"\n";
+        const toml::value<std::int64_t> twenty(20);
+        const auto patched = patchTomlPath(text, {"plugins", "com.example.kf", "size"}, &twenty);
+        QVERIFY(patched);
+        QCOMPARE(*patched, std::string("version = 1\n[plugins.\"com.example.kf\"]\nsize = 20 # team size\nname = \"team\"\n"));
+
+        const auto removed = patchTomlPath(*patched, {"plugins", "com.example.kf", "name"}, nullptr);
+        QVERIFY(removed);
+        QCOMPARE(*removed, std::string("version = 1\n[plugins.\"com.example.kf\"]\nsize = 20 # team size\n"));
+
+        const toml::value<bool> on(true);
+        const auto added = patchTomlPath(text, {"plugins", "com.example.qc", "strict"}, &on);
+        QVERIFY(added);
+        QCOMPARE(added->substr(text.size()), std::string("\n[plugins.\"com.example.qc\"]\nstrict = true\n"));
+    }
+
+    void pluginSettingsAreWrittenToTheSharedFile()
+    {
+        QTemporaryDir root;
+        const QByteArray local = "version = 1\n[plugins.\"com.example.kf\"]\nsize = 30\n";
+        writeAll(root.filePath(QStringLiteral(".hikari/project.local.toml")), local);
+        ProjectFile project(root.path());
+        toml::array hosts;
+        hosts.push_back("a.example");
+        hosts.push_back("b.example");
+        QVERIFY(project.setPluginSetting("com.example.kf", "hosts", &hosts));
+        const toml::value<std::int64_t> twelve(12);
+        QVERIFY(project.setPluginSetting("com.example.kf", "size", &twelve));
+        QCOMPARE(readAll(project.path(ProjectFile::Local)), local);
+        QCOMPARE(compact(project.plugins().settingsJson.at("com.example.kf")),
+                 std::string(R"({"hosts":["a.example","b.example"],"size":30})"));
+
+        QVERIFY(project.setPluginSetting("com.example.kf", "hosts", nullptr));
+        QCOMPARE(compact(ProjectFile(root.path()).plugins().settingsJson.at("com.example.kf")), std::string(R"({"size":30})"));
+    }
+
+    void anInlinePluginTableFallsBackToAFullWrite()
+    {
+        QTemporaryDir root;
+        writeAll(root.filePath(QStringLiteral(".hikari/project.toml")), "version = 1\nplugins = { \"com.example.kf\" = { size = 1 } }\n");
+        ProjectFile project(root.path());
+        const toml::value<std::int64_t> two(2);
+        QVERIFY(project.setPluginSetting("com.example.kf", "size", &two));
+        QCOMPARE(compact(ProjectFile(root.path()).plugins().settingsJson.at("com.example.kf")), std::string(R"({"size":2})"));
     }
 
     void theLocalFileWinsOverTheSharedOne()

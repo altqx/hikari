@@ -986,20 +986,23 @@ end)
 **Types:**
 
 - **`string`** gains `multiline`, a box of several lines.
-- **`choice`**'s options become `{value, title}` (Q641): `value` is what is saved and what `hikari.settings.get` returns, a lowercase id that is never shown, and `title` is what the drop-down shows. `default` names a value. A translated or renamed title then never changes the saved value. The schema file still holds today's list of titles until #1230 changes the schema, `manifest.cpp`'s default check and their tests together. #1230 also moves the official plugins' manifests over.
+- **`choice`**'s options become `{value, title}` (Q641): `value` is what is saved and what `hikari.settings.get` returns, a lowercase id that is never shown, and `title` is what the drop-down shows. `default` names a value. A translated or renamed title then never changes the saved value. A value that isn't one of the options is refused with "“<id>” must be one of: <titles>".
 - **`list`** is an array of strings, edited as rows with Add and Remove, with `default` and `maxItems` (256 at most).
 - **`secret`** has no default.
   - **Where it's kept.** In the system keychain under the service `HikariSub` as `plugin/<plugin id>/<setting id>`: QtKeychain on Linux, and the DPAPI key store on Windows, as for AI provider keys ([AI providers](ai-providers.md)). Never in `plugins.json` or a Project.
   - **Projectable.** Never: `projectable` is always `false`.
   - **The field** shows dots, with Show and Clear. `hikari.settings.get` returns the text, or `nil` when unset. Uninstalling the plugin removes it.
   - **No keychain.** On a system with no keychain, setting one fails with "No system keychain to keep it in".
-  - **Until #1230** wires the keychain, `hikari.settings.get` returns `nil` for a secret and `hikari.settings.set` refuses it with "“<id>” is kept in the system keychain". A value in `plugins.json` or a Project is never read, and an update that turns a setting into a secret drops its kept value.
+  - **Read once.** HikariSub reads a plugin's secrets from the keychain when it starts. Until a secret is read, `hikari.settings.get` returns `nil`, and `plugin_settings.changed` follows once it is. If the keychain later refuses a change, the old value comes back with a second `plugin_settings.changed`.
+  - **Who sets it.** The user in Settings, and the plugin itself with `hikari.settings.set` (text, or `nil` to clear it). The [Hikari API](api.md#settingslist-and-settingsget-grown) leaves secrets out of `settings.list` and refuses them to every other caller. A value in `plugins.json` or a Project is never read, and an update that turns a setting into a secret drops its kept value.
 
 **Ids and links** (Q644). A plugin setting's id outside the plugin is `plugin.<plugin id>.<setting id>`. The link `hikarisub://settings/<id>` opens the Settings window at a setting, HikariSub's own (`hikarisub://settings/appearance.theme`) or a plugin's. `?scope=project` opens it on the Project tab.
 
 - **The only form.** The id fits `^[A-Za-z0-9_.-]{1,200}$`, and `scope=project` is the only parameter. Like the [install link](#installing-from-the-website), HikariSub ignores anything else and notes it in the `hikari.links` log.
 - **What it does.** It only opens the window and shows the setting, never changes one. An id Settings doesn't know opens the window with the id in its search. A Project scope without a trusted Project opens the Project tab with its "Trust this folder" note.
 - **From a plugin**, [`settings.open`](api.md#settingsopen) does the same.
+
+**On the Project tab.** Each enabled plugin's projectable settings show on the Project tab and are kept in `.hikari/project.toml` under `[plugins."<plugin id>"]`. Reset removes the Project's value, so Yours applies again. A plugin always reads the active window's Project over Yours.
 
 **Changes.** A change from Settings, the plugin manager or a Project sends `plugin_settings.changed` to the plugin.
 
