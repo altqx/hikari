@@ -7870,6 +7870,10 @@ Failed to copy %2 fonts.</source>
         <translation>소리 단축키</translation>
     </message>
     <message>
+        <source>Node graph shortcut</source>
+        <translation>노드 그래프 단축키</translation>
+    </message>
+    <message>
         <source>Press the keys</source>
         <translation>키를 누르십시오</translation>
     </message>
@@ -9482,6 +9486,74 @@ Failed to copy %2 fonts.</source>
         <translation>첨부 파일…</translation>
     </message>
     <message>
+        <source>Add node…</source>
+        <translation>노드 추가…</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>모두 선택</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>그룹으로 묶기</translation>
+    </message>
+    <message>
+        <source>Go into the group</source>
+        <translation>그룹 안으로 들어가기</translation>
+    </message>
+    <message>
+        <source>Go out of the group</source>
+        <translation>그룹 밖으로 나가기</translation>
+    </message>
+    <message>
+        <source>Fit the graph</source>
+        <translation>그래프 맞춤</translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation>선택 항목 맞춤</translation>
+    </message>
+    <message>
+        <source>Zoom to 100 %</source>
+        <translation>100%로 확대/축소</translation>
+    </message>
+    <message>
+        <source>Select the nearest node left</source>
+        <translation>왼쪽의 가장 가까운 노드 선택</translation>
+    </message>
+    <message>
+        <source>Select the nearest node right</source>
+        <translation>오른쪽의 가장 가까운 노드 선택</translation>
+    </message>
+    <message>
+        <source>Select the nearest node up</source>
+        <translation>위쪽의 가장 가까운 노드 선택</translation>
+    </message>
+    <message>
+        <source>Select the nearest node down</source>
+        <translation>아래쪽의 가장 가까운 노드 선택</translation>
+    </message>
+    <message>
+        <source>Move the selection left</source>
+        <translation>선택 항목을 왼쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Move the selection right</source>
+        <translation>선택 항목을 오른쪽으로 이동</translation>
+    </message>
+    <message>
+        <source>Move the selection up</source>
+        <translation>선택 항목을 위로 이동</translation>
+    </message>
+    <message>
+        <source>Move the selection down</source>
+        <translation>선택 항목을 아래로 이동</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>전역</translation>
     </message>
@@ -9500,6 +9572,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Audio</source>
         <translation>소리</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>노드 그래프</translation>
     </message>
     <message>
         <source>Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).</source>
@@ -16297,6 +16373,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Import legacy shortcuts</source>
         <translation>이전 버전 단축키 가져오기</translation>
+    </message>
+    <message>
+        <source>Node graph shortcuts</source>
+        <translation>노드 그래프 단축키</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>노드 그래프</translation>
     </message>
     <message>
         <source>No plugin has settings.</source>

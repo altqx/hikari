@@ -17757,6 +17757,85 @@ private slots:
         QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
     }
 
+    void nodeGraphKeysActOnTheCanvasAheadOfGlobalKeys()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_E, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+        auto &effects = application->nodeEffects();
+        if (!effects.hasGraph())
+            QVERIFY(effects.newGraph());
+        const QString a = effects.addNode(QStringLiteral("math.random"), 0, 0);
+        const QString b = effects.addNode(QStringLiteral("math.random"), 200, 0);
+        effects.commit();
+        auto *canvas = item("nodeCanvas");
+        QTRY_VERIFY(canvas->isVisible());
+        canvas->forceActiveFocus();
+        QTRY_VERIFY(canvas->hasActiveFocus());
+        effects.setSelection({a, b});
+        press(Qt::Key_G, Qt::ControlModifier);
+        QTRY_VERIFY(std::ranges::none_of(effects.nodes(), [&](const QVariant &n) {
+            return n.toMap().value(QStringLiteral("id")).toString() == a;
+        }));
+        QCOMPARE(QGuiApplication::focusWindow(), window);
+        QVERIFY(canvas->hasActiveFocus());
+        press(Qt::Key_Return);
+        QTRY_COMPARE(effects.path().size(), qsizetype(1));
+        press(Qt::Key_Backspace);
+        QTRY_VERIFY(effects.path().isEmpty());
+
+        auto &h = application->hotkeys();
+        h.beginOptions();
+        QVERIFY(hotkeyPosition(QStringLiteral("Node graph Group")) > hotkeyPosition(QStringLiteral("Audio Tap to time")));
+        QCOMPARE(hotkeyRow(QStringLiteral("Node graph Group")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-G"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Node effects")).value(QStringLiteral("accel")).toString(),
+                 QStringLiteral("Ctrl-Shift-E"));
+        h.commitOptions();
+        QVERIFY(QMetaObject::invokeMethod(item("nodeLeave"), "clicked"));
+        QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
+    }
+
+    void nodeGraphShortcutsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_NODE_KEYS_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_NODE_KEYS_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light")); });
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            auto *window = qobject_cast<QQuickWindow *>(openSettings());
+            QVERIFY(window);
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            showSettingsPage("hotkeys");
+            auto *filter = dialogItem("settingsDialog", "hotkeyFilter");
+            const int nodeGraph = filter->property("modes").toList().indexOf(QVariant(9));
+            QVERIFY(nodeGraph > 0);
+            filter->setProperty("currentIndex", nodeGraph);
+            QVERIFY(QMetaObject::invokeMethod(filter, "activated", Q_ARG(int, nodeGraph)));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/ne1a-node-graph-%1.png").arg(code)));
+            filter->setProperty("currentIndex", 0);
+            QVERIFY(QMetaObject::invokeMethod(filter, "activated", Q_ARG(int, 0)));
+            auto *search = dialogItem("settingsDialog", "hotkeySearch");
+            search->setProperty("text", QStringLiteral("node"));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/ne1a-search-node-%1.png").arg(code)));
+            search->setProperty("text", QString());
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
+            QTRY_VERIFY(!window->isVisible());
+        }
+    }
+
     void applyingIntoAFileWithoutPlayResLeavesEveryLineWhereItWas()
     {
         restartWithoutSound();
@@ -25852,7 +25931,7 @@ private slots:
         auto &h = application->hotkeys();
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Ignore filtering in some actions")));
-        h.optionsMap(QStringLiteral("Ctrl-Shift-G"), 1, QStringLiteral("cancel"));
+        h.optionsMap(QStringLiteral("Ctrl-Shift-Y"), 1, QStringLiteral("cancel"));
         h.commitOptions();
         auto &filter = application->gridFilter();
         auto &settings = *application->settingsStore();
@@ -25865,12 +25944,12 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!settings.boolean("grid.ignoreFiltering"));
         QVERIFY(filter.ignoreInActions());
-        QCOMPARE(h.accelOf(QStringLiteral("GRID_FILTER_IGNORE_IN_ACTIONS"), 1), QStringLiteral("Ctrl-Shift-G"));
+        QCOMPARE(h.accelOf(QStringLiteral("GRID_FILTER_IGNORE_IN_ACTIONS"), 1), QStringLiteral("Ctrl-Shift-Y"));
         item<QQuickItem>("editingGrid")->forceActiveFocus();
-        press(Qt::Key_G, Qt::ControlModifier | Qt::ShiftModifier);
+        press(Qt::Key_Y, Qt::ControlModifier | Qt::ShiftModifier);
         QVERIFY(filter.ignoreInActions());
         QVERIFY(settings.boolean("grid.ignoreFiltering"));
-        press(Qt::Key_G, Qt::ControlModifier | Qt::ShiftModifier);
+        press(Qt::Key_Y, Qt::ControlModifier | Qt::ShiftModifier);
         QVERIFY(!filter.ignoreInActions());
         QVERIFY(!settings.boolean("grid.ignoreFiltering"));
     }
@@ -25945,12 +26024,12 @@ private slots:
         QCOMPARE(table().value(QStringLiteral("GLOBAL_TOGGLE_LEFT_SIDE_BAR")), QStringLiteral("Ctrl+Alt+B"));
         QCOMPARE(table().value(QStringLiteral("GLOBAL_QUICK_FIX")), QStringLiteral("Alt+Return"));
         QVERIFY(!table().contains(QStringLiteral("GLOBAL_KEEP_AI_CHANGE")));
-        QCOMPARE(table().size(), 43);
+        QCOMPARE(table().size(), 45);
         application->settingsStore()->set(app::AiFeatures::kOffSetting, false);
         QCOMPARE(table().value(QStringLiteral("GLOBAL_KEEP_AI_CHANGE")), QStringLiteral("Ctrl+Shift+Return"));
-        QCOMPARE(table().size(), 47);
+        QCOMPARE(table().size(), 49);
         application->settingsStore()->reset(QString::fromLatin1(app::AiFeatures::kOffSetting));
-        QCOMPARE(table().size(), 43);
+        QCOMPARE(table().size(), 45);
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
         h.optionsMap(QStringLiteral("Ctrl-Alt-D"), 0, QStringLiteral("cancel"));

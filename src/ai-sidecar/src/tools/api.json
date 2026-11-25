@@ -1369,7 +1369,8 @@
               "subtitles",
               "editor",
               "video",
-              "audio"
+              "audio",
+              "node graph"
             ]
           },
           "query": {
@@ -1401,7 +1402,8 @@
                     "subtitles",
                     "editor",
                     "video",
-                    "audio"
+                    "audio",
+                    "node graph"
                   ]
                 },
                 "enabled": {

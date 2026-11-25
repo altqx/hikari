@@ -104,8 +104,8 @@ private slots:
             QCOMPARE(h.holdersOf(QStringLiteral("Ctrl-S"), -1), QStringList{QStringLiteral("Save")});
             QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+S")), QStringLiteral("Save"));
             QCOMPARE(h.globalHolder(QStringLiteral("Ctrl+Shift+J")), QString());
-            QVERIFY(map(h, kEdgeblur, "Ctrl-Shift-E").isEmpty());
-            macros.replaceCommitted({{kEdgeblur, "Ctrl+Shift+E"}, {"Script gone.lua-0", "F8"}});
+            QVERIFY(map(h, kEdgeblur, "Ctrl-Shift-Y").isEmpty());
+            macros.replaceCommitted({{kEdgeblur, "Ctrl+Shift+Y"}, {"Script gone.lua-0", "F8"}});
             macros.save();
             macros.install();
             QCOMPARE(macros.shortcuts().size(), qsizetype(1));
@@ -120,7 +120,7 @@ private slots:
         QVERIFY(again.openFile(path));
         QVERIFY(loadScripts(again));
         QCOMPARE(macros.shortcuts().size(), qsizetype(1));
-        QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
+        QCOMPARE(keysOf(macros, kEdgeblur), QStringLiteral("Ctrl+Shift+Y"));
         const QVariantMap gone = missing(macros, "Script gone.lua-0");
         QCOMPARE(gone.value(QStringLiteral("keys")).toString(), QStringLiteral("F8"));
         QCOMPARE(gone.value(QStringLiteral("problem")).toString(), QStringLiteral("No loaded script has this macro"));
@@ -138,7 +138,7 @@ private slots:
                 goneNote = r.value(QStringLiteral("note")).toString();
         }
         QVERIFY2(shown.contains(QStringLiteral("Shell fixture > Wait for cancel = ")), qPrintable(shown.join('\n')));
-        QVERIFY2(shown.contains(QStringLiteral("Add edgeblur > Add edgeblur = Ctrl-Shift-E")), qPrintable(shown.join('\n')));
+        QVERIFY2(shown.contains(QStringLiteral("Add edgeblur > Add edgeblur = Ctrl-Shift-Y")), qPrintable(shown.join('\n')));
         QCOMPARE(goneNote, QStringLiteral("No loaded script has this macro"));
         int waitRow = -1;
         for (int i = 0; i < h.rows().size(); ++i)
@@ -396,7 +396,7 @@ private slots:
 
     void legacyImportAddsOnlyWhatIsFree()
     {
-        // MUST KILL: relies on the Ctrl+Shift+E binding the previous test left in the shared settings
+        // MUST KILL: relies on the Ctrl+Shift+Y binding the previous test left in the shared settings
         app::Application a(options());
         QVERIFY(loadScripts(a));
         auto &hotkeys = a.automationHotkeys();
@@ -407,7 +407,7 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("[HikariSub 0.8.0.1200]\r\n"
                     "Script macro-1-edgeblur.lua-0=Ctrl-Alt-B\r\n"
-                    "Script shell-fixture.lua-0=Shift-Ctrl-E\r\n"
+                    "Script shell-fixture.lua-0=Shift-Ctrl-Y\r\n"
                     "Script shell-fixture.lua-1=Alt-Ctrl-W\r\n");
         }
         QSignalSpy committed(&hotkeys, &app::AutomationHotkeysController::committed);
@@ -417,9 +417,9 @@ private slots:
         QCOMPARE(result.value(QStringLiteral("kept")).toInt(), 1);
         QCOMPARE(result.value(QStringLiteral("skipped")).toInt(), 1);
         QCOMPARE(result.value(QStringLiteral("skippedNames")).toStringList(),
-                 QStringList{QStringLiteral("Script shell-fixture.lua-0 (Ctrl+Shift+E)")});
+                 QStringList{QStringLiteral("Script shell-fixture.lua-0 (Ctrl+Shift+Y)")});
         QCOMPARE(committed.size(), 1);
-        QCOMPARE(keysOf(hotkeys, kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
+        QCOMPARE(keysOf(hotkeys, kEdgeblur), QStringLiteral("Ctrl+Shift+Y"));
         QCOMPARE(keysOf(hotkeys, kWait), QStringLiteral("Ctrl+Alt+W"));
         QCOMPARE(keysOf(hotkeys, kPrefix), QString());
         QCOMPARE(hotkeys.shortcuts().size(), qsizetype(2));

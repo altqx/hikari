@@ -2273,10 +2273,10 @@ DialogWindow {
                                     objectName: "hotkeyFilter"
                                     Layout.preferredWidth: 200
                                     // MUST KILL: the area modes are HotkeyList's filter ints without 1, which Source replaced
-                                    readonly property var modes: [0, 2, 3, 4, 5, 6, 7, 8]
+                                    readonly property var modes: [0, 2, 3, 4, 5, 6, 9, 7, 8]
                                     model: [qsTr("All"), qsTr("Global shortcuts"), qsTr("Grid shortcuts"),
                                             qsTr("Line editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio shortcuts"),
-                                            qsTr("Automation shortcuts"), qsTr("Plugin shortcuts")]
+                                            qsTr("Node graph shortcuts"), qsTr("Automation shortcuts"), qsTr("Plugin shortcuts")]
                                     ToolTip.text: qsTr("Filtering mode")
                                     ToolTip.visible: hovered
                                     Accessible.name: qsTr("Choose filtering")
@@ -2326,10 +2326,10 @@ DialogWindow {
                                 readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
                                 ScrollBar.vertical: ScrollBar {}
                                 Accessible.name: qsTr("Shortcuts")
-                                // MUST KILL: contexts is indexed by a magic window int, 5 standing for Automation
+                                // MUST KILL: contexts is indexed by a magic window int, 6 standing for Automation
                                 readonly property var contexts: [qsTr("Global"), qsTr("Grid"), qsTr("Line editor"),
-                                                                 qsTr("Video"), qsTr("Audio"), qsTr("Automation")]
-                                function contextOf(row) { return row.script !== undefined ? 5 : row.context }
+                                                                 qsTr("Video"), qsTr("Audio"), qsTr("Node graph"), qsTr("Automation")]
+                                function contextOf(row) { return row.script !== undefined ? 6 : row.context }
                                 readonly property bool gutter: dialog.hotkeys ? dialog.hotkeys.listFiltered && hotkeySearch.text.length === 0
                                                                               : false
                                 component BlockBox: Label {

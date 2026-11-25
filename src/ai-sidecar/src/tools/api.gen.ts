@@ -387,7 +387,7 @@ export type ApiVersionResult = {
 
 /** The commands of menus, toolbars and shortcuts, with their enabled state and keys. */
 export type CommandsListParams = {
-    window?: "global" | "subtitles" | "editor" | "video" | "audio";
+    window?: "global" | "subtitles" | "editor" | "video" | "audio" | "node graph";
     /** A case-insensitive part of the command id or its name. */
     query?: string;
 };
@@ -398,7 +398,7 @@ export type CommandsListResult = {
         command: string;
         /** The English name the shortcut editor shows. */
         name: string;
-        window: "global" | "subtitles" | "editor" | "video" | "audio";
+        window: "global" | "subtitles" | "editor" | "video" | "audio" | "node graph";
         enabled: boolean;
         disabledReason?: string;
         keys: string[];

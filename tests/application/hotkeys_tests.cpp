@@ -71,7 +71,7 @@ constexpr ToolCommand kToolCommands[] = {
 TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
-    ASSERT_EQ(hotkeyActions().size(), 455u);
+    ASSERT_EQ(hotkeyActions().size(), 474u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
@@ -82,6 +82,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
         const bool editor = std::string_view(a.symbol).starts_with("EDITBOX_");
         const bool audio = a.id >= 1028 && a.id <= 1035;
         EXPECT_EQ(hotkeyType(a.id), editor                         ? EditorHotkey
+                                    : a.id >= kNodeGraphFirst      ? NodeGraphHotkey
                                     : a.id >= 2021 && a.id <= 2045 ? VideoHotkey
                                     : audio                        ? AudioHotkey
                                                                    : GlobalHotkey)
@@ -346,7 +347,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"};
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u + 2u + 2u + 1u + 1u + 5u);
+    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u + 12u + 9u + 1u + 1u + 4u - 4u + 1u + 1u + 2u + 2u + 1u + 1u + 5u + 2u + 19u);
     EXPECT_EQ(audio.size(), 23u + 3u + 2u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P");
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -467,7 +468,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     HotkeyList list(copy);
     auto live = defaultHotkeys();
     list.build(live);
-    ASSERT_EQ(list.rowCount(), 430u);
+    ASSERT_EQ(list.rowCount(), 449u);
     EXPECT_EQ(list.row(0).text, "Global Import text…");
     EXPECT_EQ(list.row(1).text, "Global Full screen typesetting");
     EXPECT_EQ(list.row(2).text, "Global Quick fix");
@@ -573,7 +574,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(rowNamed(list, "Global Timing assistant").accel, "");
     EXPECT_EQ(rowNamed(list, "Global Accept the timing assistant’s suggestion").accel, "");
     EXPECT_EQ(rowNamed(list, "Subtitles Hide line wraps").key.id, 4513);
-    EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Apply changes alt");
+    EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Node graph Add node…");
     EXPECT_EQ(rowNamed(list, "Global Exit").accel, "");
     EXPECT_EQ(list.selection(), 0);
     EXPECT_FALSE(list.modified());
@@ -591,7 +592,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 432u);
+    ASSERT_EQ(more.rowCount(), 451u);
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -602,16 +603,16 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     EXPECT_EQ(more.row(copied).accel, "F7");
 
     auto fewer = defaultHotkeys();
-    fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
+    fewer.erase(HotkeyId{hotkeyIdOf("NODE_GRAPH_ADD_NODE"), NodeGraphHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 429u);
-    EXPECT_EQ(cut.find("Audio Apply changes alt"), -1);
+    EXPECT_EQ(cut.rowCount(), 448u);
+    EXPECT_EQ(cut.find("Node graph Add node…"), -1);
     auto odd = fewer;
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 430u);
+    EXPECT_EQ(whole.rowCount(), 449u);
 }
 
 TEST(Hotkeys, AutomationAndPluginsFiltersSplitTheScriptRows)
@@ -647,7 +648,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 126u);
+    EXPECT_EQ(count(1), 147u);
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 31u);
     list.filter(5);
@@ -657,12 +658,12 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 126u);
+    EXPECT_EQ(list.shown().size(), 147u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 125u);
+    EXPECT_EQ(list.shown().size(), 146u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 430u);
+    EXPECT_EQ(list.shown().size(), 449u);
 }
 
 TEST(Hotkeys, SourceAndConflictsFilters)
@@ -943,17 +944,17 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S");
-    ASSERT_EQ(list.rowCount(), 431u);
-    const auto &added = list.row(430);
+    ASSERT_EQ(list.rowCount(), 450u);
+    const auto &added = list.row(449);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
     EXPECT_EQ(list.selection(), -1);
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 431u);
-    EXPECT_EQ(list.row(430).accel, "F6");
-    EXPECT_EQ(list.selection(), 430);
+    EXPECT_EQ(list.rowCount(), 450u);
+    EXPECT_EQ(list.row(449).accel, "F6");
+    EXPECT_EQ(list.selection(), 449);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -1034,7 +1035,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 430u);
+    EXPECT_EQ(third.shown().size(), 449u);
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles…").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -1336,4 +1337,54 @@ TEST(Hotkeys, RetiredBlankAudioBindingsAreDropped)
     HotkeyMap defaults;
     loadDefaultHotkeys(defaults, false);
     EXPECT_FALSE(defaults.contains(HotkeyId{blank, GlobalHotkey}));
+}
+
+TEST(Hotkeys, TheNodeGraphHasItsOwnWindowAndKeys)
+{
+    EXPECT_EQ(hotkeyType(6001), NodeGraphHotkey);
+    EXPECT_EQ(hotkeyType(6999), NodeGraphHotkey);
+    EXPECT_EQ(hotkeyType(7000), GlobalHotkey);
+    EXPECT_EQ(hotkeyWindowName(NodeGraphHotkey), "Node graph");
+    EXPECT_EQ(hotkeyIdOf("NODE_GRAPH_GROUP"), 6011);
+    EXPECT_EQ(defaultHotkey(HotkeyId{6011, NodeGraphHotkey}), "Ctrl-G");
+    EXPECT_EQ(defaultHotkey(HotkeyId{6020, NodeGraphHotkey}), "Left");
+    EXPECT_EQ(defaultHotkey(HotkeyId{6018, NodeGraphHotkey}), "Ctrl-=");
+    EXPECT_EQ(defaultHotkey(HotkeyId{6019, NodeGraphHotkey}), "Ctrl--");
+    EXPECT_EQ(qtKeysOfAccel("Ctrl--"), "Ctrl+-");
+    EXPECT_EQ(defaultHotkey(HotkeyId{5244, GlobalHotkey}), "Ctrl-Shift-E");
+    EXPECT_EQ(defaultHotkey(HotkeyId{5338, GlobalHotkey}), "Ctrl-Shift-G");
+}
+
+TEST(Hotkeys, NodeGraphKeysAreSavedWithTheirLetterAndReadBack)
+{
+    HotkeyMap map;
+    map[HotkeyId{6011, NodeGraphHotkey}] = Hotkey{"Group", "Ctrl-Shift-J"};
+    const auto main = hotkeyLines(map, false);
+    ASSERT_EQ(main, std::vector<std::string>{"NODE_GRAPH_GROUP N=Ctrl-Shift-J"});
+    EXPECT_TRUE(hotkeyLines(map, true).empty());
+    HotkeyMap read;
+    readHotkeyLines(read, main);
+    ASSERT_EQ(read.size(), 1u);
+    EXPECT_EQ(read.begin()->first, (HotkeyId{6011, NodeGraphHotkey}));
+    EXPECT_EQ(read.begin()->second.accel, "Ctrl-Shift-J");
+}
+
+TEST(Hotkeys, NodeGraphRowsFollowTheAudioRowsAndHaveTheirOwnFilter)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    const auto live = defaultHotkeys();
+    list.build(live);
+    std::vector<int> types;
+    for (std::size_t i = 0; i < list.rowCount(); ++i)
+        if (types.empty() || types.back() != list.row(int(i)).key.type)
+            types.push_back(list.row(int(i)).key.type);
+    EXPECT_EQ(types, (std::vector<int>{GlobalHotkey, GridHotkey, EditorHotkey, VideoHotkey, AudioHotkey, NodeGraphHotkey}));
+    list.filter(9);
+    const auto shown = list.shown();
+    ASSERT_EQ(shown.size(), 19u);
+    EXPECT_EQ(list.row(shown.front()).text, "Node graph Move the selection down");
+    EXPECT_EQ(list.row(shown.back()).text, "Node graph Add node…");
+    for (const int i : shown)
+        EXPECT_EQ(list.row(i).key.type, NodeGraphHotkey);
 }

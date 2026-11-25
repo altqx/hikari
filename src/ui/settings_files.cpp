@@ -320,7 +320,7 @@ std::optional<std::string> tagButtonOf(const toml::table &slot)
                          slot["name"].value_or(std::string()), slot["icon"].value_or(std::string()));
 }
 
-constexpr std::string_view kWindowTables[application::kHotkeyWindows] = {"global", "grid", "editor", "video", "audio"};
+constexpr std::string_view kWindowTables[application::kHotkeyWindows] = {"global", "grid", "editor", "video", "audio", "nodeGraph"};
 constexpr std::string_view kAutomationTable = "automation";
 
 std::string hotkeyText(const std::string &accel)

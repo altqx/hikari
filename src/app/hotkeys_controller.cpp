@@ -370,7 +370,7 @@ void HotkeysController::split(const HotkeyMap &combined)
 
 QVariantMap HotkeysController::keys() const
 {
-    static constexpr const char *windows[] = {"global", "grid", "editor", "video", "audio"};
+    static constexpr const char *windows[] = {"global", "grid", "editor", "video", "audio", "nodeGraph"};
     QVariantMap perWindow[application::kHotkeyWindows];
     for (const auto &[key, hotkey] : m_installed) {
         if (key.type < 0 || key.type >= application::kHotkeyWindows || key.id >= application::kFirstScriptHotkey)

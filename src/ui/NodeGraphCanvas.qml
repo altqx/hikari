@@ -9,6 +9,8 @@ Pane {
     id: root
     objectName: "nodeGraphPanel"
     required property NodeEffectsController controller
+    property QtObject hotkeys: null
+    readonly property Item keyTarget: viewport
     padding: 0
     implicitWidth: 640
     implicitHeight: 480
@@ -167,7 +169,57 @@ Pane {
         panY = point.y - world.y * z
     }
     function fit() {
-        const nodes = controller.nodes
+        fitNodes(controller.nodes)
+    }
+    function frameSelection() {
+        const chosen = controller.nodes.filter(n => controller.selection.indexOf(n.id) >= 0)
+        fitNodes(chosen.length > 0 ? chosen : controller.nodes)
+    }
+    function zoomBy(factor) {
+        zoomAt(Qt.point(viewport.width / 2, viewport.height / 2), zoom * factor)
+    }
+    // MUST KILL: actionFor's first argument is a magic int hotkey window (5 Node graph)
+    function action(event) {
+        return hotkeys ? hotkeys.actionFor(5, event.key, event.modifiers) : ""
+    }
+    function runHotkey(symbol) {
+        if (!controller.hasGraph)
+            return false
+        const edits = ["NODE_GRAPH_ADD_NODE", "NODE_GRAPH_DELETE", "NODE_GRAPH_GROUP", "NODE_GRAPH_MOVE_LEFT",
+                       "NODE_GRAPH_MOVE_RIGHT", "NODE_GRAPH_MOVE_UP", "NODE_GRAPH_MOVE_DOWN"]
+        if (edits.indexOf(symbol) >= 0 && !editable)
+            return false
+        switch (symbol) {
+        case "NODE_GRAPH_ADD_NODE": addPopup.openAt(null, null, ""); break
+        case "NODE_GRAPH_SELECT_ALL": controller.selection = controller.nodes.map(n => n.id); break
+        case "NODE_GRAPH_DELETE": controller.removeSelected(); break
+        case "NODE_GRAPH_GROUP": controller.groupSelection(); break
+        case "NODE_GRAPH_ENTER_GROUP": {
+            const n = nodeById(controller.selected)
+            if (!n || !n.group)
+                return false
+            controller.enterGroup(n.id)
+            break
+        }
+        case "NODE_GRAPH_LEAVE_GROUP": controller.leaveGroup(); break
+        case "NODE_GRAPH_FIT": fit(); break
+        case "NODE_GRAPH_FRAME_SELECTION": frameSelection(); break
+        case "NODE_GRAPH_ZOOM_100": zoomAt(Qt.point(viewport.width / 2, viewport.height / 2), 1); break
+        case "NODE_GRAPH_ZOOM_IN": zoomBy(1.25); break
+        case "NODE_GRAPH_ZOOM_OUT": zoomBy(1 / 1.25); break
+        case "NODE_GRAPH_SELECT_LEFT": step(-1, 0); break
+        case "NODE_GRAPH_SELECT_RIGHT": step(1, 0); break
+        case "NODE_GRAPH_SELECT_UP": step(0, -1); break
+        case "NODE_GRAPH_SELECT_DOWN": step(0, 1); break
+        case "NODE_GRAPH_MOVE_LEFT": nudge(-1, 0); break
+        case "NODE_GRAPH_MOVE_RIGHT": nudge(1, 0); break
+        case "NODE_GRAPH_MOVE_UP": nudge(0, -1); break
+        case "NODE_GRAPH_MOVE_DOWN": nudge(0, 1); break
+        default: return false
+        }
+        return true
+    }
+    function fitNodes(nodes) {
         if (nodes.length === 0 || viewport.width <= 0) {
             zoom = 1
             panX = 40
@@ -703,34 +755,22 @@ Pane {
             }
         }
 
+        Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.pending !== null)
+                                                          || root.action(event) !== ""
         Keys.onPressed: event => {
-            const ctrl = event.modifiers & Qt.ControlModifier
-            const dirs = { [Qt.Key_Left]: [-1, 0], [Qt.Key_Right]: [1, 0], [Qt.Key_Up]: [0, -1], [Qt.Key_Down]: [0, 1] }
-            if (dirs[event.key] !== undefined) {
-                const d = dirs[event.key]
-                if (ctrl)
-                    root.nudge(d[0], d[1])
-                else
-                    root.step(d[0], d[1])
-            } else if (event.key === Qt.Key_Delete && root.editable) {
-                root.controller.removeSelected()
-            } else if (event.key === Qt.Key_G && ctrl && root.editable) {
-                root.controller.groupSelection()
-            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                const n = root.nodeById(root.controller.selected)
-                if (n && n.group)
-                    root.controller.enterGroup(n.id)
-            } else if (event.key === Qt.Key_Backspace) {
-                root.controller.leaveGroup()
+            const symbol = root.action(event)
+            if (symbol !== "") {
+                if (root.runHotkey(symbol))
+                    event.accepted = true
             } else if (event.key === Qt.Key_Escape && root.pending) {
                 root.pending = null
                 root.target = null
-            } else if (!ctrl && root.editable && event.text.length === 1 && /\S/.test(event.text)) {
+                event.accepted = true
+            } else if (!(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)) && root.editable && event.text.length === 1
+                       && /\S/.test(event.text)) {
                 addPopup.openAt(null, null, event.text)
-            } else {
-                return
+                event.accepted = true
             }
-            event.accepted = true
         }
     }
 

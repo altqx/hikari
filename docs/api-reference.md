@@ -314,7 +314,7 @@ The commands of menus, toolbars and shortcuts, with their enabled state and keys
 
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
-| `window` | one of `global`, `subtitles`, `editor`, `video` or `audio` |  |  |
+| `window` | one of `global`, `subtitles`, `editor`, `video`, `audio` or `node graph` |  |  |
 | `query` | string |  | A case-insensitive part of the command id or its name. |
 
 **Result**
@@ -324,7 +324,7 @@ The commands of menus, toolbars and shortcuts, with their enabled state and keys
 | `commands` | array of objects | yes |  |
 | `commands[].command` | string | yes | The stable command id, e.g. GLOBAL_SAVE_SUBS. |
 | `commands[].name` | string | yes | The English name the shortcut editor shows. |
-| `commands[].window` | one of `global`, `subtitles`, `editor`, `video` or `audio` | yes |  |
+| `commands[].window` | one of `global`, `subtitles`, `editor`, `video`, `audio` or `node graph` | yes |  |
 | `commands[].enabled` | boolean | yes |  |
 | `commands[].disabledReason` | string |  |  |
 | `commands[].keys` | array of string | yes |  |

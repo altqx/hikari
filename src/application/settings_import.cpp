@@ -12,7 +12,7 @@ namespace hikari::application::settings_import {
 
 namespace {
 
-constexpr std::string_view kWindowLetters = "GSEVA";
+constexpr std::string_view kWindowLetters = "GSEVAN";
 constexpr std::string_view kCrashMarker = "___Program Crashed___";
 // Only its presence matters: the converter's header line counts as a record.
 constexpr std::string_view kConverterProgname = "HikariSub";
@@ -1274,7 +1274,7 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         const auto symbol = hotkeySymbol(id);
         if (record->window < 0) {
             row.disposition = Disposition::Unresolved;
-            because("no window letter G, S, E, V or A: legacy could not keep it (O2-window-letter)");
+            because("no window letter G, S, E, V, A or N: legacy could not keep it (O2-window-letter)");
             add(std::move(row));
             continue;
         }

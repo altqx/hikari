@@ -26,7 +26,7 @@ Item {
     readonly property DialogWindow compactWindow: compactLoader.item
     readonly property string title: qsTr("Keys for “%1”").arg(name)
     readonly property var windowNames: [qsTr("Global shortcut"), qsTr("Grid shortcut"), qsTr("Line editor shortcut"),
-                                        qsTr("Video shortcut"), qsTr("Audio shortcut")]
+                                        qsTr("Video shortcut"), qsTr("Audio shortcut"), qsTr("Node graph shortcut")]
     visible: false
 
     function capture(actionName, win, windows, callback, options) {

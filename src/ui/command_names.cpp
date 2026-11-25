@@ -439,6 +439,23 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous subtitle boundary"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Reopen with encoding…"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Attachments…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Add node…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Select all"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Delete"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Group"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Go into the group"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Go out of the group"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Fit the graph"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Frame the selection"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Zoom to 100 %"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Select the nearest node left"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Select the nearest node right"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Select the nearest node up"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Select the nearest node down"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move the selection left"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move the selection right"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move the selection up"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Move the selection down"),
 };
 
 constexpr const char *kHotkeyWindows[] = {
@@ -447,6 +464,7 @@ constexpr const char *kHotkeyWindows[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Editor"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Video"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Audio"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Node graph"),
 };
 
 constexpr const char *kHotkeyRefusals[] = {

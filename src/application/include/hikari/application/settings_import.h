@@ -90,7 +90,7 @@ struct HotkeyRecord {
     std::string text;        // the trimmed line
     bool script = false;     // "Script <file>-<k>=<accel>"
     std::string label;       // the symbol, number or script name
-    int window = -1;         // "GSEVA".find(letter), -1 when not one
+    int window = -1;         // "GSEVAN".find(letter), -1 when not one
     std::string accel;       // the binding, "" for a blank record
     std::string renamedFrom; // the old name, if renamed
 };
