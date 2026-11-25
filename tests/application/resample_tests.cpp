@@ -146,11 +146,43 @@ TEST(Resample, TheTranslationIsWhatChanges)
     EXPECT_EQ(std::string(tl.begin(), tl.end()), "{\\pos(2,2)}t");
 }
 
-TEST(Resample, ScriptResolutionDefaults)
+TEST(Resample, AMissingResolutionIsWhatPlayersRender)
 {
-    EXPECT_EQ(scriptResolution(load("[Script Info]\nTitle: x\n")), (Resolution{1280, 720}));
-    EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResY: 480\n")), (Resolution{853, 480}));
-    EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResX: 1920\n")), (Resolution{1920, 1080}));
+    EXPECT_EQ(scriptResolution(load("[Script Info]\nTitle: x\n")), (Resolution{384, 288}));
+    EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResY: 480\n")), (Resolution{640, 480}));
+    EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResX: 1920\n")), (Resolution{1920, 1440}));
+    EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResX: 1280\n")), (Resolution{1280, 1024}));
+    EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResY: 1024\n")), (Resolution{1280, 1024}));
+    EXPECT_EQ(scriptResolution(load("[Script Info]\nPlayResX: 640\nPlayResY: 360\n")), (Resolution{640, 360}));
+}
+
+TEST(ScriptResolution, GeneratedLinesAreLaidOutWhereNoExistingLineMoves)
+{
+    const std::string events = "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+    const auto shown = load("[Script Info]\nTitle: x\n\n" + events + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+    const auto commented = load("[Script Info]\nTitle: x\n\n" + events + "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+    const auto written = load("[Script Info]\nPlayResX: 640\nPlayResY: 360\n\n" + events +
+                              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+    const Resolution video{1920, 1080};
+    EXPECT_EQ(layoutResolution(shown, video), (Resolution{384, 288}));
+    EXPECT_EQ(layoutResolution(commented, video), video);
+    EXPECT_EQ(layoutResolution(commented, std::nullopt), (Resolution{1280, 720}));
+    EXPECT_EQ(layoutResolution(written, video), (Resolution{640, 360}));
+    const std::vector<MacroInfoLine> half{{"PlayResY", "480"}};
+    EXPECT_EQ(layoutResolution(half, true, video), (Resolution{640, 480}));
+    EXPECT_EQ(layoutResolution(half, false, std::nullopt), (Resolution{853, 480}));
+}
+
+TEST(ScriptResolution, AStampWritesOnlyMissingKeys)
+{
+    auto bare = load("[Script Info]\nTitle: x\n");
+    EXPECT_TRUE(stampScriptResolution(bare, {384, 288}));
+    EXPECT_EQ(writtenScriptResolution(bare), (Resolution{384, 288}));
+    EXPECT_FALSE(stampScriptResolution(bare, {1920, 1080}));
+    EXPECT_EQ(writtenScriptResolution(bare), (Resolution{384, 288}));
+    auto half = load("[Script Info]\nPlayResY: 480\n");
+    EXPECT_TRUE(stampScriptResolution(half, scriptResolution(half)));
+    EXPECT_EQ(writtenScriptResolution(half), (Resolution{640, 480}));
 }
 
 TEST(ScriptResolution, MissingValuesAreFoundWithoutWriting)

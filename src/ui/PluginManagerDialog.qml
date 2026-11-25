@@ -60,6 +60,12 @@ DialogWindow {
     }
     property string chosenListingId: ""
     readonly property var chosenListing: listings.find(l => l.id === chosenListingId) ?? null
+    function showMarket(wanted) {
+        search = ""
+        category = market && market.categories.includes(wanted) ? wanted : ""
+        open()
+        showView(marketAvailable ? "market" : "installed")
+    }
     function showView(next) {
         view = next
         if (next === "market") {

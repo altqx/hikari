@@ -1,4 +1,5 @@
 #include "hikari/application/position_commands.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
 
@@ -240,4 +241,19 @@ TEST_F(Session, CycleSkipsHiddenLines)
                       [&](core::LineId id) { return id != hidden; }));
     EXPECT_EQ(text(0), "{\\pos(100,100)\\bord0}a");
     EXPECT_EQ(text(1), "{\\pos(300,200)}b");
+}
+
+TEST(PositionCommands, APositionWrittenIntoAFileWithoutPlayResWritesThePlayersSizeInTheSameStep)
+{
+    EditSession session(load("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(100,100)}a\n"));
+    const core::LineId id = session.document().lines().front()->id;
+    session.setSelection({id, {id}, id, std::nullopt});
+    const auto steps = session.historySize();
+    ASSERT_TRUE(changeAlignment(session, 7, geometry()));
+    EXPECT_EQ(writtenScriptResolution(session.document()), (Resolution{384, 288}));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    ASSERT_TRUE(session.undo());
+    EXPECT_TRUE(lacksScriptResolution(writtenScriptResolution(session.document())));
 }

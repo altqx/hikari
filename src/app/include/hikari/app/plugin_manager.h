@@ -20,6 +20,8 @@ class QTimer;
 
 namespace hikari::app {
 
+class PluginSecrets;
+
 // The plugin manager's permission lines, as the install question lists them.
 QStringList permissionLines(bool unrestricted, const plugins::Permissions &permissions, bool qmlPanels = false,
                             const std::vector<plugins::Program> &programs = {},
@@ -47,6 +49,8 @@ public:
     const QString &registryFile() const { return m_registryFile; }
     const plugins::OfficialAuthor &officialAuthor() const { return m_official; }
     void setOfficialAuthor(plugins::OfficialAuthor official);
+    void setSecrets(PluginSecrets *secrets);
+    std::optional<plugins::Manifest> manifest(const std::string &id) const;
     // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file", "marketplace" or "dev"),
     // unrestricted, official (signed by officialAuthor() under its handle), icon (a file URL, or empty), authors, homepage, permissions: [text], adds: [text], settings: [the
     // manifest's setting with its value], folders: [{id, title, path, writable}] remembered for it, autoUpdate, aiTools (it
@@ -132,6 +136,7 @@ private:
     void reloadDev(const QString &id);
 
     std::optional<plugins::Installer> m_installer;
+    PluginSecrets *m_secrets = nullptr;
     std::optional<plugins::InstallReview> m_review;
     std::filesystem::path m_reviewedFolder;
     QFileSystemWatcher *m_devWatcher = nullptr;

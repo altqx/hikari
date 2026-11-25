@@ -563,6 +563,30 @@ private slots:
         QTRY_VERIFY(item(QStringLiteral("inlineAiNotice")));
     }
 
+    void aFailedLineEndsAsASentenceBeforeTheNextPart_data()
+    {
+        QTest::addColumn<QString>("detail");
+        QTest::newRow("no stop") << QStringLiteral("the provider refused the key");
+        QTest::newRow("full stop") << QStringLiteral("the provider refused the key.");
+        QTest::newRow("exclamation and space") << QStringLiteral("the provider refused the key! ");
+    }
+    void aFailedLineEndsAsASentenceBeforeTheNextPart()
+    {
+        QFETCH(QString, detail);
+        auto *bar = window()->findChild<QQuickItem *>(QStringLiteral("inlineAiBar"));
+        QVERIFY(bar);
+        const QVariantMap notice{
+            {QStringLiteral("end"), QStringLiteral("done")},
+            {QStringLiteral("failed"),
+             QVariantList{QVariantMap{{QStringLiteral("row"), 3},
+                                      {QStringLiteral("why"), QStringLiteral("failed")},
+                                      {QStringLiteral("detail"), detail}}}},
+            {QStringLiteral("modelsWaitForTrust"), true}};
+        QVariant text;
+        QVERIFY(QMetaObject::invokeMethod(bar, "noticeText", Q_RETURN_ARG(QVariant, text), Q_ARG(QVariant, notice)));
+        QCOMPARE(text.toString(), QStringLiteral("Line 3 failed: the provider refused the key. This project’s translator and reviewer models "
+                                                 "are used once you trust its folder; your own ran instead."));
+    }
     void translateSendsTheSourceLanguageOnlyWhenOneIsSet()
     {
         setMode("auto");

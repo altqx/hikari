@@ -160,6 +160,8 @@ struct State {
 };
 const State &current();
 bool currentIs(Code code);
+// `ink` at `alpha`, or the panel in high contrast, where what is tinted takes a 1-unit ring of `ink` instead.
+QColor tintFill(const State &state, QColor ink, float alpha);
 void onChanged(QObject *context, std::function<void()> slot);
 void useSettings(SettingsStore *settings);
 void preview(const QVariantMap &values);
@@ -199,6 +201,8 @@ class Theme : public QObject {
     Q_PROPERTY(QColor control READ control NOTIFY changed FINAL)
     Q_PROPERTY(QColor hover READ hover NOTIFY changed FINAL)
     Q_PROPERTY(QColor pressed READ pressed NOTIFY changed FINAL)
+    Q_PROPERTY(QColor dangerFill READ dangerFill NOTIFY changed FINAL)
+    Q_PROPERTY(QColor successFill READ successFill NOTIFY changed FINAL)
     Q_PROPERTY(int radius READ radius CONSTANT FINAL)
     Q_PROPERTY(int popupRadius READ popupRadius CONSTANT FINAL)
     Q_PROPERTY(int controlHeight READ controlHeight CONSTANT FINAL)
@@ -242,6 +246,8 @@ public:
     QColor control() const { return roles().control; }
     QColor hover() const { return roles().hover; }
     QColor pressed() const { return roles().pressed; }
+    QColor dangerFill() const { return theme::tintFill(theme::current(), roles().danger, 0.18F); }
+    QColor successFill() const { return theme::tintFill(theme::current(), roles().success, 0.14F); }
     QColor spellcheck() const { return theme::current().content.spellcheck; }
     QColor grammar() const { return theme::current().content.grammar; }
     int radius() const { return 4; }

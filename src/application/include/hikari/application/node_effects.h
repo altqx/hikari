@@ -131,6 +131,8 @@ struct NodeEffectRun {
     std::vector<std::vector<std::u8string>> styles;
     std::vector<NodeEffectProblem> problems;
     std::vector<EmitReport> emits;
+    // Set when the Document has no PlayRes: the size the Lines were laid out at, which Apply writes with them.
+    std::optional<Resolution> resolution;
     double seconds = 0;
     bool ok() const { return problems.empty(); }
 };

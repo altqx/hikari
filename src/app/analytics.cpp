@@ -94,7 +94,7 @@ const QStringList kLanguages{QStringLiteral("en"), QStringLiteral("ko_KR"), QStr
                              QStringLiteral("th_TH")};
 const QStringList kPages{QStringLiteral("language"), QStringLiteral("import"), QStringLiteral("look"),
                          QStringLiteral("layout"),   QStringLiteral("media"),  QStringLiteral("editing"),
-                         QStringLiteral("updates"),  QStringLiteral("files")};
+                         QStringLiteral("ai"),       QStringLiteral("updates")};
 const QString kUuid = QStringLiteral("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
 const QString kVersion = QStringLiteral("^[0-9]{1,4}\\.[0-9]{1,4}\\.[0-9]{1,4}([-+][0-9A-Za-z.]{1,24})?$");
 

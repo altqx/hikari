@@ -37,6 +37,9 @@ ColumnLayout {
     function rows(list) {
         return list.join(", ")
     }
+    function withoutStop(detail) {
+        return detail.replace(/[\s.!?。]+$/u, "")
+    }
     function noticeText(n) {
         const parts = []
         if (n.end === "noModel")
@@ -54,8 +57,8 @@ ColumnLayout {
         if (empty.length > 0)
             parts.push(qsTr("Not changed, because the answer was empty: line %1.", "", empty.length).arg(rows(empty)))
         if (errors.length > 0)
-            parts.push(qsTr("Line %1 failed: %2", "", errors.length)
-                           .arg(rows(errors.map(f => f.row)), errors[0].detail || ""))
+            parts.push(qsTr("Line %1 failed: %2.", "", errors.length)
+                           .arg(rows(errors.map(f => f.row)), withoutStop(errors[0].detail || "")))
         if ((n.same || []).length > 0)
             parts.push(qsTr("Came back the same: line %1.", "", n.same.length).arg(rows(n.same)))
         if ((n.edited || []).length > 0)

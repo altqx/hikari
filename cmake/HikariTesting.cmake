@@ -69,6 +69,15 @@ function(_hikari_check_xvfb_suites)
 endfunction()
 cmake_language(DEFER DIRECTORY "${CMAKE_SOURCE_DIR}" CALL _hikari_check_xvfb_suites)
 
+# hikari_qttest_output(<var> <test name>): on Windows, the QtTest -o arguments that print results to ctest and keep them as qttest-<test name>.txt.
+function(hikari_qttest_output var test)
+    set(output)
+    if(WIN32)
+        set(output -o "${CMAKE_BINARY_DIR}/qttest-${test}.txt,txt" -o "-,txt")
+    endif()
+    set(${var} ${output} PARENT_SCOPE)
+endfunction()
+
 # 120 s: UI suites take 40-51 s on the shared Windows MSVC runners.
 function(_hikari_add_qt_modes name label)
     cmake_parse_arguments(mode "OFFSCREEN_ONLY" "" "" ${ARGN})
@@ -85,8 +94,9 @@ function(_hikari_add_qt_modes name label)
             # glibc arenas keep llvmpipe's freed render-thread memory: https://github.com/altqx/hikari/issues/1055
             set(environment QT_QPA_PLATFORM=xcb MALLOC_ARENA_MAX=2)
         endif()
-        if(WIN32 AND label STREQUAL "qttest")
-            list(APPEND command -o "${CMAKE_BINARY_DIR}/qttest-${name}.${platform}.txt,txt" -o "-,txt")
+        if(label STREQUAL "qttest")
+            hikari_qttest_output(output ${name}.${platform})
+            list(APPEND command ${output})
         endif()
         add_test(NAME ${name}.${platform} COMMAND ${command})
         set_tests_properties(${name}.${platform} PROPERTIES

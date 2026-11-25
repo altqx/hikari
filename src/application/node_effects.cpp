@@ -3,6 +3,7 @@
 #include "hikari/application/karaoke_layout.h"
 #include "hikari/application/karaoke_templates.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/application/typesetting_line.h"
 
@@ -1525,6 +1526,8 @@ NodeEffectRun runNodeEffect(const core::Document &document, std::u8string_view n
 
     karaoke_layout::ExtentsCache extents(*options.measure);
     karaoke_layout::Layout layout(document, extents, options.video);
+    if (lacksScriptResolution(writtenScriptResolution(document)))
+        run.resolution = layoutResolution(document, options.video);
     std::size_t info = 0, styles = 0;
     for (const auto &section : document.sections())
         for (const auto &record : section.records) {
@@ -1708,12 +1711,8 @@ bool applyTypesetting(core::Document &document, const NodeEffectRun &run)
     return true;
 }
 
-}
-
-bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const NodeEffectRun *owners)
+bool applyRunLines(core::Document &document, const NodeEffectRun &run, const NodeEffectRun *owners)
 {
-    if (!run.ran)
-        return false;
     if (run.typesetting)
         return applyTypesetting(document, run);
     std::map<core::LineId, core::LineId> ownerOf;
@@ -1759,6 +1758,17 @@ bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const N
                 line.comment = true;
                 line.effect = u8"karaoke";
             });
+    return true;
+}
+
+}
+
+bool applyNodeEffect(core::Document &document, const NodeEffectRun &run, const NodeEffectRun *owners)
+{
+    if (!run.ran || !applyRunLines(document, run, owners))
+        return false;
+    if (run.resolution && !run.lines.empty())
+        stampScriptResolution(document, *run.resolution);
     return true;
 }
 

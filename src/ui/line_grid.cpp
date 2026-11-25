@@ -1104,6 +1104,18 @@ void LineGrid::drawComparisonMarks(QPainter *painter, const QRectF &cell, const 
     painter->restore();
 }
 
+namespace {
+
+QString misspelledWord(const QString &text, int start, int end)
+{
+    QString word = text.mid(start, end - start + 1);
+    while (!word.isEmpty() && word.back().isSpace() && word.back().unicode() < 127)
+        word.chop(1);
+    return word;
+}
+
+}
+
 void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const
 {
     if (marks.size() < 2)
@@ -1119,11 +1131,8 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
     painter->setBrush(Qt::NoBrush);
     for (qsizetype s = 0; s + 1 < marks.size(); s += 2) {
         const int start = marks[s].toInt(), end = marks[s + 1].toInt();
-        QString error = text.mid(start, end - start + 1);
-        while (!error.isEmpty() && error.back().isSpace() && error.back().unicode() < 127)
-            error.chop(1);
         const double left = cell.x() + (start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0);
-        const double right = std::min(left + metrics.horizontalAdvance(error), cell.right());
+        const double right = std::min(left + metrics.horizontalAdvance(misspelledWord(text, start, end)), cell.right());
         if (left >= right)
             continue;
         QPainterPath wave(QPointF(left, y));
@@ -1132,6 +1141,29 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
             wave.lineTo(std::min(x + 3, right), up ? y - 2.5 : y);
         painter->drawPath(wave);
     }
+    painter->restore();
+}
+
+void LineGrid::drawCurrentSpellMark(QPainter *painter, const QRectF &cell, QString text, const QVariantList &mark) const
+{
+    if (mark.size() < 2)
+        return;
+    text.replace(QLatin1Char('\t'), QLatin1Char(' '));
+    const QFontMetricsF metrics(painter->font());
+    const int start = mark[0].toInt(), end = mark[1].toInt();
+    const double left = cell.x() + (start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0);
+    const double right = std::min(left + metrics.horizontalAdvance(misspelledWord(text, start, end)), cell.right());
+    if (left >= right)
+        return;
+    const auto &state = theme::current();
+    const bool ringed = themes::isHighContrast(state.type);
+    const double top = cell.top() + (cell.height() - metrics.height()) / 2;
+    painter->save();
+    painter->setClipRect(cell, Qt::IntersectClip);
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setPen(ringed ? QPen(state.roles.danger, 1) : QPen(Qt::NoPen));
+    painter->setBrush(theme::tintFill(state, state.roles.danger, 0.18F));
+    painter->drawRoundedRect(QRectF(left - 1, top, right - left + 2, metrics.height()).adjusted(0.5, 0.5, -0.5, -0.5), 2, 2);
     painter->restore();
 }
 
@@ -1293,6 +1325,8 @@ void LineGrid::paint(QPainter *painter)
                                 idx.data(LineTableModel::ReviewMarksRole).toList());
                 drawSpellMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                idx.data(LineTableModel::SpellMarksRole).toList());
+                drawCurrentSpellMark(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
+                                     idx.data(LineTableModel::CurrentSpellMarkRole).toList());
                 if (comparison == 2 && !comparisonColours.isEmpty())
                     drawComparisonMarks(painter, QRectF(x + 4 + indent, top, widths[c] - 8 - indent, rh), text,
                                         idx.data(LineTableModel::ComparisonMarksRole).toList(),

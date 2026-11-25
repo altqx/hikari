@@ -86,6 +86,27 @@ private slots:
         QCOMPARE(first.value(QStringLiteral("step")).toString(), QStringLiteral("run"));
     }
 
+    void anExpectedFileMatchesWhateverItsLineEndings()
+    {
+        QTemporaryDir dir;
+        const auto write = [&](const QString &name, const QByteArray &text) {
+            QFile file(dir.filePath(name));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write(text);
+        };
+        write(QStringLiteral("crlf.cue"), "0|1000|first\r\n1000|2000|second\r\n");
+        write(QStringLiteral("other.cue"), "0|1000|first\r\n1000|2000|third\r\n");
+        write(QStringLiteral("cues.jsonl"), R"({"export": "cues", "expectFile": "crlf.cue"})" "\n"
+                                            R"({"export": "cues", "expectFile": "other.cue"})" "\n");
+        PluginTestArguments a = fixture(QString());
+        a.script = dir.filePath(QStringLiteral("cues.jsonl")).toStdString();
+        const Run r = run(a);
+        QCOMPARE(r.code, 1);
+        QVERIFY2(!r.output.contains(QStringLiteral("cues.jsonl:1:")), qPrintable(r.output));
+        QVERIFY2(r.output.contains(QStringLiteral("cues.jsonl:2: export: the file differs from other.cue: line 2: \"1000|2000|second\", expected \"1000|2000|third\"\n")),
+                 qPrintable(r.output));
+    }
+
     void aStuckStepTimesOut()
     {
         QTemporaryDir dir;

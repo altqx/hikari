@@ -13,9 +13,9 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 
 | # | Where (id) | Today's title | Text | Sev | List | New kind | New title |
 |---|---|---|---|---|---|---|---|
-| A1 | ui/Main.qml spellingNotice | Spellchecker | No dictionary files were found… / Failed to initialize spell checker. | warning / error | yes | toast | Spellchecker |
+| A1 | ui/Main.qml spellingNotice | Spellchecker | No dictionary files were found… / Failed to initialize spell checker. | warning / error | yes | the Spellchecker panel's No dictionary state and a Log entry ([spellchecker.md](spellchecker.md#panel-states), Q743) | Spellchecker |
 | A2 | same | Spellchecker | Error. Word "%1" was not added. | error | yes | toast | Add word to dictionary |
-| A3 | ui/SpellCheckerDialog.qml message | Warning | No spelling errors were found | info | yes | toast | Spellchecker |
+| A3 | ui/SpellCheckerDialog.qml message | Warning | No spelling errors were found | info | yes | the Spellchecker panel's Done state ([spellchecker.md](spellchecker.md#panel-states), Q744) | Spellchecker |
 | A4 | same | Warning | The edited line cannot be committed. (and Replace refusals) | error | yes | message box; a toast since PU6 (the Spellchecker a panel) | Replace / Replace all |
 | A5 | ui/Main.qml cleanStylesMessage | Status of deleted styles | Styles used / Styles deleted lists | info | yes | toast + Details | Delete unused styles |
 | A6 | ui/StyleManager.qml message (Clear) | Status of deleted styles | same | info | yes | toast + Details | Delete unused styles |

@@ -3,6 +3,7 @@ context	source	rule	reason
 HikariSub.Fonts	Catalogues are saved automatically to fonts.toml in the “catalogs” folder of your user folder.	spelling	the folder on disk is named catalogs
 HikariSub.Fonts	fonts.toml in the “catalogs” folder of your user folder could not be written. Saving is tried again on exit.	spelling	the folder on disk is named catalogs
 HikariSub.GettingStarted	I said I’d be there by nine.	title-case	sample subtitle the Getting started preview renders; “I’d” is the pronoun
+HikariSub.GettingStarted	On, downloads after Finish	title-case	names the Finish button
 HikariSub.MainWindow	Opens the Find panel	title-case	Find is the panel’s name
 HikariSub.Reports	Nothing is sent until you press Send report	title-case	names the Send report button
 HikariSub.Search	, 	whitespace	list separator between quoted names; each language joins them its own way

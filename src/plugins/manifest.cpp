@@ -485,6 +485,16 @@ SettingType settingType(std::string_view type)
     return found == std::end(kTypes) ? SettingType::String : found->second;
 }
 
+const Json *findOption(const Setting &setting, const Json &value)
+{
+    const Json *options = setting.definition.find("options");
+    if (!options)
+        return nullptr;
+    const auto &list = options->asArray();
+    const auto found = std::ranges::find_if(list, [&](const Json &option) { return *option.find("value") == value; });
+    return found == list.end() ? nullptr : &*found;
+}
+
 std::size_t listLimit(const Setting &setting)
 {
     const Json *limit = setting.definition.find("maxItems");
@@ -501,11 +511,8 @@ std::optional<ManifestProblem> badDefault(const Setting &setting, std::size_t in
     const std::string at = "/contributes/settings/" + std::to_string(index) + "/default";
     if (setting.type == SettingType::List && value.asArray().size() > listLimit(setting))
         return ManifestProblem{Kind::BadDefault, at, "more than maxItems", 0};
-    if (const Json *options = d.find("options")) {
-        const auto &list = options->asArray();
-        if (std::find(list.begin(), list.end(), value) == list.end())
-            return ManifestProblem{Kind::BadDefault, at, "not one of the options", 0};
-    }
+    if (d.find("options") && !findOption(setting, value))
+        return ManifestProblem{Kind::BadDefault, at, "not one of the options", 0};
     if (const Json *m = d.find("minimum"); m && value.asNumber() < m->asNumber())
         return ManifestProblem{Kind::BadDefault, at, "below the minimum", 0};
     if (const Json *m = d.find("maximum"); m && value.asNumber() > m->asNumber())
@@ -818,14 +825,11 @@ std::optional<std::string> settingRefusal(const Setting &setting, const Json &va
             return name + " takes at most " + std::to_string(listLimit(setting)) + " items";
         break;
     }
-    if (const Json *options = d.find("options")) {
-        const auto &list = options->asArray();
-        if (std::find(list.begin(), list.end(), value) == list.end()) {
-            std::string choices;
-            for (const Json &option : list)
-                choices += (choices.empty() ? "" : ", ") + option.asString();
-            return name + " must be one of: " + choices;
-        }
+    if (const Json *options = d.find("options"); options && !findOption(setting, value)) {
+        std::string titles;
+        for (const Json &option : options->asArray())
+            titles += (titles.empty() ? "" : ", ") + option.find("title")->asString();
+        return name + " must be one of: " + titles;
     }
     if (const Json *m = d.find("minimum"); m && value.asNumber() < m->asNumber())
         return name + " must be at least " + m->dump();

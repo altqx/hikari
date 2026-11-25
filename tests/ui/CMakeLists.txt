@@ -306,9 +306,10 @@ target_link_libraries(hikari_ui_docking_qualification_tests PRIVATE Qt6::GuiPriv
 foreach(scale 125 150 175 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
+    hikari_qttest_output(output hikari_ui_docking_qualification_tests.scale${scale})
     add_test(NAME hikari_ui_docking_qualification_tests.scale${scale}
         COMMAND $<TARGET_FILE:hikari_ui_docking_qualification_tests> floatingHeaderDocksByItsTitle
-            wholeFloatingHeaderDocks floatingHeaderHasNoSystemMoveArea)
+            wholeFloatingHeaderDocks floatingHeaderHasNoSystemMoveArea ${output})
     set_tests_properties(hikari_ui_docking_qualification_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
@@ -462,6 +463,7 @@ hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_test
 hikari_add_qttest(hikari_ui_plugin_manager_tests SOURCES plugin_manager_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_manager_tests PRIVATE
     HIKARI_PLUGIN_FIXTURES="${PROJECT_SOURCE_DIR}/tests/plugins/fixtures")
+hikari_add_qttest(hikari_ui_plugin_secrets_tests SOURCES plugin_secrets_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_plugin_marketplace_tests SOURCES plugin_marketplace_tests.cpp
     ${PROJECT_SOURCE_DIR}/tests/plugins/test_signer.cpp LIBRARIES hikari_composition Hikari::sodium)
 target_include_directories(hikari_ui_plugin_marketplace_tests PRIVATE ${PROJECT_SOURCE_DIR}/tests/plugins)
@@ -575,18 +577,22 @@ endforeach()
 foreach(screen screen-2560x1440.json screen-1280x800.json)
     configure_file(${screen} ${CMAKE_CURRENT_BINARY_DIR}/${screen} COPYONLY)
 endforeach()
+hikari_qttest_output(side_bars_screen2560_output hikari_ui_side_bars_shell_tests.screen2560)
+hikari_qttest_output(side_bars_screen1280_output hikari_ui_side_bars_shell_tests.screen1280)
 add_test(NAME hikari_ui_side_bars_shell_tests.screen2560
     COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> theShippedMiddleKeepsItsAudioAndEditorControls
             swapPutsTheAiSideBarOnTheOtherEdge f6GoesFromTheLeftSideBarThroughTheMiddleToTheRight
-            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle draggingTheInnerEdgeResizesTheSideBar)
+            aNarrowWindowShrinksTheSideBarsBeforeTheMiddle draggingTheInnerEdgeResizesTheSideBar
+            ${side_bars_screen2560_output})
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen2560 PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=screen-2560x1440.json" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    LABELS "qttest;offscreen" TIMEOUT 300)
+    LABELS "qttest;offscreen" TIMEOUT 300 RESOURCE_LOCK hikari_ui_side_bars_shell_tests)
 add_test(NAME hikari_ui_side_bars_shell_tests.screen1280
-    COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> aScreenTooNarrowForBothShowsOneSideBarAtATime)
+    COMMAND $<TARGET_FILE:hikari_ui_side_bars_shell_tests> aScreenTooNarrowForBothShowsOneSideBarAtATime
+            ${side_bars_screen1280_output})
 set_tests_properties(hikari_ui_side_bars_shell_tests.screen1280 PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen:configfile=screen-1280x800.json" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    LABELS "qttest;offscreen" TIMEOUT 300)
+    LABELS "qttest;offscreen" TIMEOUT 300 RESOURCE_LOCK hikari_ui_side_bars_shell_tests)
 hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_user_folder_tests SOURCES user_folder_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition
@@ -682,13 +688,15 @@ hikari_add_qttest(hikari_ui_qml_engine_tests SOURCES qml_engine_tests.cpp LIBRAR
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
+    hikari_qttest_output(output hikari_ui_icon_tests.scale${scale})
     add_test(NAME hikari_ui_icon_tests.scale${scale}
         COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheThemeLive mirroredIconsPaintFlipped
-            imageSourcedControlsDrawTheSet)
+            imageSourcedControlsDrawTheSet ${output})
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
-add_test(NAME hikari_ui_icon_tests.pages COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets)
+hikari_qttest_output(output hikari_ui_icon_tests.pages)
+add_test(NAME hikari_ui_icon_tests.pages COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets ${output})
 set_tests_properties(hikari_ui_icon_tests.pages PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen;HIKARI_ICON_SHEET_PAGE_ROWS=3;HIKARI_ICON_SHEET_DIR=${CMAKE_BINARY_DIR}/icon-sheet-pages"
     LABELS "qttest;offscreen" TIMEOUT 120)
