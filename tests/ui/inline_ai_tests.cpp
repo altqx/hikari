@@ -581,10 +581,11 @@ private slots:
              QVariantList{QVariantMap{{QStringLiteral("row"), 3},
                                       {QStringLiteral("why"), QStringLiteral("failed")},
                                       {QStringLiteral("detail"), detail}}}},
-            {QStringLiteral("skipped"), 1}};
+            {QStringLiteral("modelsWaitForTrust"), true}};
         QVariant text;
         QVERIFY(QMetaObject::invokeMethod(bar, "noticeText", Q_RETURN_ARG(QVariant, text), Q_ARG(QVariant, notice)));
-        QCOMPARE(text.toString(), QStringLiteral("Line 3 failed: the provider refused the key. 1 line wasn’t sent."));
+        QCOMPARE(text.toString(), QStringLiteral("Line 3 failed: the provider refused the key. This project’s translator and reviewer models "
+                                                 "are used once you trust its folder; your own ran instead."));
     }
     void translateSendsTheSourceLanguageOnlyWhenOneIsSet()
     {
