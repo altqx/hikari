@@ -7642,6 +7642,33 @@ Failed to copy %2 fonts.</source>
         <source>Filter the Grid</source>
         <translation>자막 목록 필터</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>줄 위로 이동</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>줄 아래로 이동</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>글자 삭제, 태그 유지</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 표시</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>자막 목록의 태그: 숨기기</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9395,6 +9422,46 @@ Failed to copy %2 fonts.</source>
         <translation>전체 화면 식자</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>확대/축소 50%</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>확대/축소 100%</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>확대/축소 200%</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>맞춤 확대/축소</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>1:1 장치 픽셀로 확대/축소</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>다음 자막 경계</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>이전 자막 경계</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>인코딩을 지정해 다시 열기…</translation>
     </message>
@@ -9629,6 +9696,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>자막 목록에서 태그 표시 방식 순환</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>자막 목록에서 태그 표시</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>자막 목록에서 태그를 기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>글자 삭제, 태그 유지</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>줄 위로 이동</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>줄 아래로 이동</translation>
     </message>
 </context>
 <context>
@@ -12462,6 +12557,46 @@ Failed to copy %2 fonts.</source>
         <translation>인코딩을 지정해 다시 열기…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>확대/축소 50%</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>확대/축소 100%</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>확대/축소 200%</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>확대</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>축소</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>패널에 맞추기</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>1:1 장치 픽셀</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>다음 자막 경계</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>이전 자막 경계</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>영상 파일을 엽니다</translation>
     </message>
@@ -12654,6 +12789,14 @@ Failed to copy %2 fonts.</source>
         <translation>영상 열기…[&amp;O]</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>이전 파일</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>다음 파일</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>키 프레임 파일을 엽니다</translation>
     </message>
@@ -12678,6 +12821,18 @@ Failed to copy %2 fonts.</source>
         <translation>다음 프레임으로 이동합니다</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>영상을 바로 앞의 줄 시작 또는 끝으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>영상을 바로 다음의 줄 시작 또는 끝으로 이동합니다</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>표시할 시간이나 프레임을 입력합니다</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>선택한 줄의 시작 시간을 영상 프레임 시간으로 설정합니다</translation>
     </message>
@@ -12696,6 +12851,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>가로 세로 비율 변경…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>확대/축소 수준</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -12752,14 +12911,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open a file first</source>
         <translation>먼저 파일을 여세요</translation>
-    </message>
-    <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>자막 목록에서 태그를 표시하거나 숨깁니다</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>자막 목록에서 태그 숨기기</translation>
     </message>
     <message>
         <source>Shows or hides tags in the line editor</source>
@@ -12828,6 +12979,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>자막 목록에서 태그를 표시하거나, 기호로 바꾸거나, 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>자막 목록의 태그</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>자막 목록에서 태그를 그대로 표시합니다</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>자막 목록의 각 태그 블록을 설정 › 자막 목록에서 지정한 기호로 표시합니다</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>자막 목록에서 태그를 숨깁니다</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>숨기기</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>현재 영상 프레임에 표시되는 줄을 자막 목록에서 색으로 강조합니다</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
     </message>
 </context>
 <context>
@@ -15654,7 +15841,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>먼저 적용 또는 취소를 누르십시오. 가져온 항목은 즉시 추가됩니다.</translation>
+        <translation type="vanished">먼저 적용 또는 취소를 누르십시오. 가져온 항목은 즉시 추가됩니다.</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16688,7 +16875,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>AI를 다시 켜려면 확인 또는 적용을 누르세요.</translation>
+        <translation type="vanished">AI를 다시 켜려면 확인 또는 적용을 누르세요.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -17038,7 +17225,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
+        <translation type="vanished">JSON 설정에는 주소가 필요합니다. 확인 또는 적용을 눌러 127.0.0.1에서 수신을 시작하세요.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17367,10 +17554,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>요청은 추가한 공급자와 %1에만 갑니다. AI 구성 요소는 샌드박스에서 실행되며 HikariSub를 통해서만 네트워크에 연결합니다.</translation>
     </message>
@@ -17503,6 +17686,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>JSON 설정에는 주소가 필요하며, HikariSub가 127.0.0.1에서 수신을 시작하면 주소가 채워집니다.</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -18855,6 +19042,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>이제 매니페스트에 지정된 ID가 “%1”입니다. 불러오기를 해제하고 폴더를 다시 불러오십시오.</translation>
+    </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1이(가) 멈췄습니다: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>테마 플러그인으로 사본 저장…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>테마 플러그인을 저장할 위치 선택</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 사본</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>테마 플러그인을 %1에 쓸 수 없습니다.</translation>
     </message>
 </context>
 <context>
@@ -21327,6 +21535,26 @@ because it was edited.</source>
         <source>Overlapping lines</source>
         <translation>겹치는 줄</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>부분 일치</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>정확히 일치</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>일치 방식</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>선택과 교차</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>선택 항목에서 %1개 줄을 제외했습니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21590,7 +21818,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -25647,8 +25875,8 @@ Styles deleted:
         <translation>%1ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>뒤로</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -25726,13 +25954,27 @@ Styles deleted:
         <source>Open keyframes…</source>
         <translation>키 프레임 열기…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n줄 변경</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>변경 사항 보기</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>키프</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>변경 사항</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>타이밍 도우미</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -26895,15 +27137,15 @@ Styles deleted:
     </message>
     <message>
         <source>Video position</source>
-        <translation>영상 위치</translation>
+        <translation type="vanished">영상 위치</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>영상 시간</translation>
+        <translation type="vanished">영상 시간</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>프레임 시간; 프레임 번호; 줄 시작 프레임부터의 프레임 수; 줄 시작과 끝으로부터의 밀리초</translation>
+        <translation type="vanished">프레임 시간; 프레임 번호; 줄 시작 프레임부터의 프레임 수; 줄 시작과 끝으로부터의 밀리초</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -26930,12 +27172,21 @@ Styles deleted:
         <translation>멈춤</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>위치로 이동</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%2번 줄 시작에서 %1프레임 · 시작에서 %3ms · 끝에서 %4ms</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>다음 파일</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">영상 (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -26952,6 +27203,15 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>프레임 %1 / %2</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>영상 (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27081,6 +27341,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>확대/축소 및 이동 초기화</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>확대/축소 수준</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -27829,6 +28093,48 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>시간이나 프레임이 아닙니다: %1. %2 또는 프레임 번호를 입력해 보십시오.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>영상 시간, %1, 편집 가능</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>맞춤</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1%</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>영상 확대/축소, %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>영상 확대/축소</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50%</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100%</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200%</translation>
     </message>
 </context>
 <context>

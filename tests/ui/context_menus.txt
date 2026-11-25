@@ -100,6 +100,8 @@ Grid > Split > At tag blocks [GRID_SPLIT_AT_TAG_BLOCKS]
 Grid > Split > -
 Grid > Split > Every N frames or seconds… [GRID_SPLIT_EVERY_N]
 Grid > Swap lines [GRID_SWAP_LINES]
+Grid > Move lines up [GRID_MOVE_UP]
+Grid > Move lines down [GRID_MOVE_DOWN]
 Grid > Make times continuous >
 Grid > Make times continuous > With the previous line [GRID_MAKE_CONTINOUS_PREVIOUS_LINE]
 Grid > Make times continuous > With the next line [GRID_MAKE_CONTINOUS_NEXT_LINE]
@@ -178,6 +180,7 @@ Grid > Translation matching… [GRID_TRANSLATION_DIALOG]
 Grid > Add QC note… [GLOBAL_ADD_QC_NOTE]
 Grid > -
 Grid > Delete text [GLOBAL_REMOVE_TEXT]
+Grid > Delete text, keep tags [GLOBAL_REMOVE_TEXT_KEEP_TAGS]
 Grid > Delete 1 line(s) [GLOBAL_REMOVE_LINES]
 Grid header
 Grid header > Layer [GRID_HIDE_LAYER]
@@ -206,6 +209,9 @@ Video
 Video > Copy video position [VIDEO_COPY_COORDS]
 Video > Play [VIDEO_PLAY_PAUSE]
 Video > Stop [VIDEO_STOP]
+Video > Previous file [VIDEO_PREVIOUS_FILE]
+Video > Next file [VIDEO_NEXT_FILE]
+Video > Jump to [GLOBAL_JUMP_TO]
 Video > Full screen [VIDEO_FULL_SCREEN]
 Video > Full screen on >
 Video > Open editor
@@ -236,12 +242,24 @@ Video > Full screen bar > Full-screen settings…
 Video > Change aspect ratio… [VIDEO_ASPECT_RATIO]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Video > Filters >
+Video > Zoom level >
+Video > Zoom level > Fit to panel [GLOBAL_VIDEO_ZOOM_FIT]
+Video > Zoom level > Zoom 50 % [GLOBAL_VIDEO_ZOOM_50]
+Video > Zoom level > Zoom 100 % [GLOBAL_VIDEO_ZOOM_100]
+Video > Zoom level > Zoom 200 % [GLOBAL_VIDEO_ZOOM_200]
+Video > Zoom level > 1:1 device pixels [GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS]
+Video > Zoom level > -
+Video > Zoom level > Zoom in [GLOBAL_VIDEO_ZOOM_IN]
+Video > Zoom level > Zoom out [GLOBAL_VIDEO_ZOOM_OUT]
 Video > -
 Video > Unload video [VIDEO_DELETE_FILE]
 Full-screen video
 Full-screen video > Copy video position [VIDEO_COPY_COORDS]
 Full-screen video > Play [VIDEO_PLAY_PAUSE]
 Full-screen video > Stop [VIDEO_STOP]
+Full-screen video > Previous file [VIDEO_PREVIOUS_FILE]
+Full-screen video > Next file [VIDEO_NEXT_FILE]
+Full-screen video > Jump to [GLOBAL_JUMP_TO]
 Full-screen video > Full screen [VIDEO_FULL_SCREEN]
 Full-screen video > Full screen on >
 Full-screen video > Open editor
@@ -272,6 +290,15 @@ Full-screen video > Full screen bar > Full-screen settings…
 Full-screen video > Change aspect ratio… [VIDEO_ASPECT_RATIO]
 Full-screen video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
 Full-screen video > Filters >
+Full-screen video > Zoom level >
+Full-screen video > Zoom level > Fit to panel [GLOBAL_VIDEO_ZOOM_FIT]
+Full-screen video > Zoom level > Zoom 50 % [GLOBAL_VIDEO_ZOOM_50]
+Full-screen video > Zoom level > Zoom 100 % [GLOBAL_VIDEO_ZOOM_100]
+Full-screen video > Zoom level > Zoom 200 % [GLOBAL_VIDEO_ZOOM_200]
+Full-screen video > Zoom level > 1:1 device pixels [GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS]
+Full-screen video > Zoom level > -
+Full-screen video > Zoom level > Zoom in [GLOBAL_VIDEO_ZOOM_IN]
+Full-screen video > Zoom level > Zoom out [GLOBAL_VIDEO_ZOOM_OUT]
 Full-screen video > -
 Full-screen video > Unload video [VIDEO_DELETE_FILE]
 Grid panel options

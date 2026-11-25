@@ -11,6 +11,7 @@ hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LI
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate Qt6::QuickTest ZLIB::ZLIB Hikari::sodium
     PARTS documents
+          documents2=gridGesturesSelectRanges
           panels=panelsFloatDockHideAndKeepTheirState
           panels2=saveAsOffersAssForADocumentOfAnotherFormat
           panels3=spellCheckerWindowAndEditorMarks
@@ -34,7 +35,7 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder
           video=videoRecentListsAndDialogFolders
           video2=videoFullscreenLineBoxEditsStepsAndChoosesStyles
     PART_TIMEOUT 600)
-foreach(part documents visual visual2)
+foreach(part documents documents2 visual visual2)
     foreach(mode offscreen xvfb)
         if(TEST hikari_ui_shell_tests.${part}.${mode})
             set_property(TEST hikari_ui_shell_tests.${part}.${mode} APPEND PROPERTY
@@ -468,12 +469,24 @@ target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper hikari_plugin_test_program)
 target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
+hikari_add_qttest(hikari_ui_plugin_test_harness_tests OFFSCREEN_ONLY SOURCES plugin_test_harness_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_plugin_test_harness_tests PRIVATE
+    HIKARI_HARNESS_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness")
+add_dependencies(hikari_ui_plugin_test_harness_tests hikari_plugin_helper)
+add_test(NAME hikari_plugin_test_harness_cli
+    COMMAND hikarisub --test-plugin "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/plugin"
+            "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/pass.jsonl"
+            --document "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/episode.ass")
+set_tests_properties(hikari_plugin_test_harness_cli PROPERTIES LABELS "ui;plugins" TIMEOUT 120)
 hikari_add_qttest(hikari_ui_plugin_programs_tests SOURCES plugin_programs_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_programs_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)
 hikari_add_qttest(hikari_ui_program_plugin_tests SOURCES program_plugin_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_program_plugin_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_program_plugin_tests hikari_plugin_test_program)
+hikari_add_qttest(hikari_ui_language_servers_tests OFFSCREEN_ONLY SOURCES language_servers_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_language_servers_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
+add_dependencies(hikari_ui_language_servers_tests hikari_plugin_test_program)
 if(HIKARI_BUN)
     set(_hikari_word_count_dir "${PROJECT_SOURCE_DIR}/docs/examples/word-count")
     set(_hikari_sidecar_modules "${PROJECT_SOURCE_DIR}/src/ai-sidecar/node_modules")

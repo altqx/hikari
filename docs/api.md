@@ -598,7 +598,7 @@ Several `program.output` events of one process are delivered in order and never 
 
 The version is a running number. Every release that grows the API bumps it, and each operation records the version it arrived in (`since`). Changes are add-only: an operation's name, mark and existing parameters and results stay; new optional parameters and result fields may be added. A removal is deprecated for at least one version first. A plugin declares the lowest version it needs.
 
-`tests/api/reference-v1.json` is the frozen version 1 reference. A test fails when the API breaks it: an operation, event or `$defs` entry disappears, a read/write mark changes, a parameter becomes required, a result field stops being given, or a schema changes beyond adding optional properties or, in parameters, adding alternatives. Freezing a new version writes its reference with `HIKARI_API_WRITE_REFERENCE=<path> hikari_api_tests --gtest_filter=ApiReference.*`.
+`tests/api/reference-v1.json` is the frozen version 1 reference. A test fails when the API breaks it: an operation, event or `$defs` entry disappears, a read/write mark changes, a parameter becomes required, a result field stops being given, or a schema changes beyond adding optional properties or, in parameters, adding alternatives. Freezing a new version writes its reference with `HIKARI_API_WRITE_REFERENCE=<path> hikari_api_tests --gtest_filter=ApiReference.*`. Until version 1 is released, every PR that changes the API reruns that command on `tests/api/reference-v1.json` at its main merge and commits the result, whose diff must be additions only; a conflict in that file is resolved by taking main's copy and regenerating.
 
 ## Reference
 

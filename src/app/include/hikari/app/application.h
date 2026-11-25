@@ -36,6 +36,7 @@
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/plugin_runtime.h"
 #include "hikari/app/language_providers.h"
+#include "hikari/app/language_servers.h"
 #include "hikari/app/user_folder.h"
 #include "hikari/app/automation_reset_notice.h"
 #include "hikari/app/project_windows.h"
@@ -148,6 +149,7 @@ signals:
     // Also when a save failed or another review took the quit review's place.
     void quitCancelled();
     void saveWithVideoNameChanged();
+    void markCurrentFrameChanged();
     void askForBadResolutionChanged();
     // The video's size differs from the target's PlayRes:
     // {subsWidth, subsHeight, videoWidth, videoHeight}.
@@ -505,6 +507,9 @@ public:
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
+    Q_PROPERTY(bool markCurrentFrame READ markCurrentFrame WRITE setMarkCurrentFrame NOTIFY markCurrentFrameChanged)
+    bool markCurrentFrame() const { return m_settings->boolean("grid.markCurrentFrame"); }
+    void setMarkCurrentFrame(bool on);
     Q_INVOKABLE void openWebsite();
     // kind: "panel" or "window" (guide_links.h); anything else opens the guide's home.
     Q_INVOKABLE void openUserGuide(const QString &kind, const QString &id);
@@ -535,15 +540,20 @@ public:
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
     Q_INVOKABLE bool deleteText();
+    Q_INVOKABLE bool deleteTextKeepTags();
     // AU20 text commands on the shown selection, one undo step each. command: "balancedBreak",
     // "breakLeft", "breakRight", "removeBreaks", "wrapAtBreaksOnly", "lowercase", "uppercase",
     // "titleCase", "sentenceCase", "fullWidth", "halfWidth", "swapAlternatives".
     Q_INVOKABLE bool textCommand(const QString &command);
     Q_INVOKABLE bool selectionWrapsAtBreaksOnly() const;
-    Q_INVOKABLE void toggleHideTags();
+    // mode: 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
+    Q_INVOKABLE void setGridTagsMode(int mode);
+    Q_INVOKABLE void cycleGridTagsMode();
     // kind: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
+    Q_INVOKABLE bool moveLines(bool up);
+    Q_INVOKABLE bool canMoveLines(bool up) const;
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
     Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
     Q_INVOKABLE bool setFpsFromVideo();
@@ -911,9 +921,9 @@ public:
     Q_INVOKABLE QString sampleFrame(int renderer, int width, int height);
     // device: an index into the opening's list.
     Q_INVOKABLE void playTestSound(int device);
-    // The controls' state at the defaults; nothing is stored until OK or Apply.
+    // The controls' state at the defaults; nothing is stored until applySettings.
     Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
-    // page: an OptionsPage id ("general", "appearance", ...); stored only at OK or Apply.
+    // page: an OptionsPage id ("general", "appearance", ...); stored only by applySettings.
     Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
     // The conversion catalog's Styles.
     Q_INVOKABLE QStringList settingsStyles() const;
@@ -932,6 +942,8 @@ public:
     Q_INVOKABLE QVariantList recentKeyframes();
     Q_INVOKABLE QString openKeyframesFile(const QString &path);
     Q_INVOKABLE QUrl videoDialogFolder() const;
+    // "*.mkv *.mp4 …": every video extension, for open-dialog filters.
+    Q_INVOKABLE QString videoFilePatterns() const;
     Q_INVOKABLE QUrl keyframesDialogFolder() const;
     // Empty: loaded; else the message.
     Q_INVOKABLE QString openTimecodesFile(const QString &path);
@@ -1084,6 +1096,7 @@ public:
     Q_PROPERTY(hikari::app::PluginRuntime *pluginRuntime READ pluginRuntime CONSTANT)
     PluginRuntime *pluginRuntime() const { return m_pluginRuntime.get(); }
     LanguageProviders *languageProviders() const { return m_languageProviders.get(); }
+    LanguageServers *languageServers() const { return m_languageServers.get(); }
     QVariantMap qmlProperties(int shellWindow = 0);
     // A further shell window on the engine of the first (ADR 0025); MW2 gives it the user-facing moves.
     QQuickWindow *openShellWindow(QQmlEngine &engine);
@@ -1277,6 +1290,7 @@ signals:
 
 private:
     struct WindowMedia;
+    application::GridTagsMode gridTagsMode() const;
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     static QString openProblem(const QString &path, const application::StageFailure &failure);
@@ -1547,6 +1561,7 @@ private:
     std::unique_ptr<PluginPrograms> m_pluginPrograms;
     std::unique_ptr<PluginRuntime> m_pluginRuntime;
     std::unique_ptr<LanguageProviders> m_languageProviders;
+    std::unique_ptr<LanguageServers> m_languageServers;
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<Analytics> m_analytics;
     std::unique_ptr<CrashReports> m_crashReports;
@@ -1725,6 +1740,8 @@ private:
     QTimer *m_editRefresh = nullptr;
     std::optional<core::LineId> m_leftEditedLine;
     void trackVideoFollow(WindowMedia &media);
+    std::vector<core::LineId> linesVisibleOnVideo(application::EditSession &session, const application::ShownLine &shown);
+    void refreshFrameMarks();
     void followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left);
     void followEditOn(const application::FollowedLine &line);
     void followShownLine(bool rowChanged, LineChangeOrigin origin);

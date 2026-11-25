@@ -96,6 +96,11 @@ int VideoViewController::zoomPercent() const
     return static_cast<int>(m_tools.videoView().zoomPercent() * 100);
 }
 
+int VideoViewController::readoutPercent() const
+{
+    return m_tools.videoView().readoutPercent();
+}
+
 QRectF VideoViewController::zoomFrame() const
 {
     const auto &view = m_tools.videoView();
@@ -158,6 +163,33 @@ bool VideoViewController::resetZoom()
     if (!m_video.hasVideo() || !m_tools.videoView().hasVideo())
         return false;
     m_tools.videoView().resetZoom();
+    viewChanged();
+    return true;
+}
+
+bool VideoViewController::zoomTo(int percent)
+{
+    if (!m_video.hasVideo() || !m_tools.videoView().hasVideo() || percent <= 0)
+        return false;
+    m_tools.videoView().zoomToPercent(percent);
+    viewChanged();
+    return true;
+}
+
+bool VideoViewController::zoomToDevicePixels()
+{
+    if (!m_video.hasVideo() || !m_tools.videoView().hasVideo())
+        return false;
+    m_tools.videoView().zoomToDevicePixels();
+    viewChanged();
+    return true;
+}
+
+bool VideoViewController::zoomStep(int direction)
+{
+    if (!m_video.hasVideo() || !m_tools.videoView().hasVideo() || direction == 0)
+        return false;
+    m_tools.videoView().zoomStep(direction);
     viewChanged();
     return true;
 }

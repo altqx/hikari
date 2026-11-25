@@ -141,6 +141,55 @@ TEST(VideoZoom, DisplayScaleIsLogicalPixelsPerVideoPixel)
     EXPECT_DOUBLE_EQ(VideoView{}.displayScale(), 1.0);
 }
 
+TEST(VideoZoomLevels, PercentIsLogicalPixelsPerVideoPixelUnderAegisub35)
+{
+    VideoView v = fit16x9();
+    v.setZoomModel(visual::ZoomModel::Aegisub35);
+    EXPECT_EQ(v.readoutPercent(), 50);
+    v.zoomToPercent(200);
+    EXPECT_NEAR(v.displayScale(), 2.0, 1e-9);
+    EXPECT_EQ(v.readoutPercent(), 200);
+    v.zoomToPercent(100);
+    EXPECT_NEAR(v.contentZoom(), 2.0, 1e-9);
+    v.zoomToPercent(50);
+    EXPECT_NEAR(v.contentZoom(), 1.0, 1e-9);
+}
+
+TEST(VideoZoomLevels, DevicePixelsFollowTheRatio)
+{
+    VideoView v = fit16x9();
+    v.setZoomModel(visual::ZoomModel::Aegisub35);
+    v.setDevicePixelRatio(2);
+    v.zoomToDevicePixels();
+    EXPECT_NEAR(v.displayScale(), 0.5, 1e-9);
+    EXPECT_EQ(v.readoutPercent(), 50);
+}
+
+TEST(VideoZoomLevels, StepsAreOneWheelNotchAboutTheCentre)
+{
+    VideoView v = fit16x9();
+    v.setZoomModel(visual::ZoomModel::Aegisub35);
+    v.zoomStep(1);
+    EXPECT_DOUBLE_EQ(v.contentZoom(), 1.125);
+    v.zoomStep(-1);
+    EXPECT_DOUBLE_EQ(v.contentZoom(), 1.125 * 0.875);
+}
+
+TEST(VideoZoomLevels, LegacyLevelsAreTheCropZoom)
+{
+    VideoView v = fit16x9();
+    v.zoomToPercent(200);
+    EXPECT_FLOAT_EQ(v.zoomPercent(), 2.f);
+    EXPECT_EQ(v.readoutPercent(), 200);
+    v.zoomToPercent(50);
+    EXPECT_FLOAT_EQ(v.zoomPercent(), 1.f);
+    EXPECT_EQ(v.sourceRect(), (IntRect{0, 0, 1280, 720}));
+    v.zoomStep(1);
+    EXPECT_NEAR(v.zoomPercent(), 1.1f, 1e-4);
+    v.zoomToDevicePixels();
+    EXPECT_NEAR(v.displayScale(), 1.0, 0.01);
+}
+
 TEST(VideoAspect, SliderValuesAndLabels)
 {
     EXPECT_EQ(aspectSliderValue(0.5625f), 393750);

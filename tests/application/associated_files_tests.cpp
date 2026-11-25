@@ -1,4 +1,5 @@
 #include "hikari/application/associated_files.h"
+#include "hikari/application/video_extensions.h"
 #include "hikari/core/ass_load.h"
 
 #include <gtest/gtest.h>
@@ -52,6 +53,18 @@ protected:
     fs::path folder;
 };
 
+}
+
+TEST_F(SameNamedFile, FindsEveryVideoExtension)
+{
+    const auto subs = touch("ep.ass");
+    for (const auto extension : kVideoExtensions) {
+        const auto video = touch("ep." + std::string(extension));
+        const auto found = findSameNamedFile(subs, true);
+        ASSERT_TRUE(found) << extension;
+        EXPECT_EQ(found->filename(), video.filename());
+        fs::remove(video);
+    }
 }
 
 TEST_F(SameNamedFile, FindsTheVideoBesideTheSubtitles)

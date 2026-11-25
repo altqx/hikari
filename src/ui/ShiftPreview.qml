@@ -9,6 +9,7 @@ ColumnLayout {
     required property string tool
     property var plan: ({})
     property string message
+    property bool showsFooter: true
     readonly property bool postprocessor: tool === "postprocessor"
     readonly property int changed: plan.changed || 0
     readonly property string problem: plan.problem || ""
@@ -168,6 +169,7 @@ ColumnLayout {
         Accessible.role: Accessible.AlertMessage
     }
     RowLayout {
+        visible: preview.showsFooter
         spacing: 8
         Layout.fillWidth: true
         Layout.margins: 8
@@ -178,7 +180,7 @@ ColumnLayout {
             Layout.fillWidth: true
         }
         PrimaryButton {
-            objectName: preview.tool + "Apply"
+            objectName: preview.showsFooter ? preview.tool + "Apply" : ""
             text: preview.applyText
             enabled: preview.problem === "" && preview.changed > 0
             onClicked: preview.apply()
