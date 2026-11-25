@@ -4718,6 +4718,26 @@ Output device: %2</source>
         <source>Characters per second. Keep it at %1 or under.</source>
         <translation>நொடிக்கு எழுத்துகள். அதை %1 அல்லது அதற்குக் குறைவாக வைக்கவும்.</translation>
     </message>
+    <message>
+        <source>Split here</source>
+        <translation>இங்கே பிரி</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>நேரங்களை மதிப்பிடு</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>நேரங்களை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>வீடியோ சட்டகத்தில்</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>பிரிக்க எதுவும் இல்லை: இரு பாதிகளிலும் உரை தேவை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Explorer</name>
@@ -7971,6 +7991,18 @@ Failed to copy %2 fonts.</source>
         <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
         <translation>கட்டத்தில் குறிச்சொற்கள்: மறை</translation>
     </message>
+    <message>
+        <source>As karaoke</source>
+        <translation>கரோக்கியாக</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>கரோக்கி அசைகளின்படி</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>தளவமைப்பை வைத்திரு</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -10027,6 +10059,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Move lines down</source>
         <translation>வரிகளைக் கீழே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>கர்சரில் பிரி, நேரங்களை மதிப்பிடு</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>கர்சரில் பிரி, நேரங்களை வைத்திரு</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>கர்சரில் பிரி, வீடியோ சட்டகத்தில்</translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>கரோக்கி அசைகளின்படி பிரி</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>கரோக்கியாக இணை</translation>
     </message>
 </context>
 <context>
@@ -18409,6 +18461,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>project.toml can’t be written.</source>
         <translation>project.toml இல் எழுத முடியாது.</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>கரோக்கி அசைகளின்படி பிரிக்கும்போது தளவமைப்பை வைத்திரு</translation>
     </message>
 </context>
 <context>

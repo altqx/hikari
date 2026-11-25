@@ -4815,6 +4815,12 @@ bool Application::splitLines(const QString &kind)
                                                                                        : application::FrameAnimations::Keep;
         return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, animations, shown); });
     }
+    if (kind == QLatin1String("karaoke")) {
+        holdMeasuredFonts();
+        ui::QtTextMeasurePort measure;
+        auto *layout = m_settings->boolean("grid.splitKaraokeKeepLayout") ? &measure : nullptr;
+        return runFilter([&](application::EditSession &s) { return application::splitByKaraoke(s, layout, shown); });
+    }
     const auto text = kind == QLatin1String("chars")   ? application::SplitText::Characters
                       : kind == QLatin1String("words") ? application::SplitText::Words
                       : kind == QLatin1String("wraps") ? application::SplitText::Wraps
@@ -7237,6 +7243,73 @@ void Application::cycleGridTagsMode()
     });
 }
 
+std::optional<std::pair<core::LineRecord, std::size_t>> Application::lineAtCursor(int role, int position) const
+{
+    const auto *session = targetSession();
+    if (!session || role != 0 || position < 0 || !editor().editable() || !session->selection().active)
+        return std::nullopt;
+    const core::LineId active = *session->selection().active;
+    std::optional<core::LineRecord> line = session->draftLine() == active ? session->draftRecord() : std::nullopt;
+    if (!line)
+        for (const auto *l : session->document().lines())
+            if (l->id == active)
+                line = *l;
+    if (!line)
+        return std::nullopt;
+    const auto raw = core::toUtf16(line->text);
+    const auto shown = static_cast<std::size_t>(position);
+    const std::size_t cursor = editor().showTags() ? std::min(shown, raw.size()) : core::rawOffset(core::project(raw), shown, true);
+    return std::pair{std::move(*line), cursor};
+}
+
+bool Application::canSplitAtCursor(int role, int position) const
+{
+    const auto at = lineAtCursor(role, position);
+    return at && application::splitTextAt(core::toUtf16(at->first.text), at->second).has_value();
+}
+
+bool Application::splitAtCursor(const QString &times, int role, int position)
+{
+    const auto kind = times == QLatin1String("estimate") ? application::SplitTimes::Estimate
+                      : times == QLatin1String("keep")   ? application::SplitTimes::Keep
+                      : times == QLatin1String("video")  ? application::SplitTimes::Video
+                                                         : std::optional<application::SplitTimes>();
+    const auto at = lineAtCursor(role, position);
+    if (!kind || !at)
+        return false;
+    editor().commit();
+    const auto *session = targetSession();
+    const bool pending = session && session->draftLine() == at->first.id;
+    const auto &video = activeMedia().video->session();
+    const auto frame = video.reportedFrame();
+    const auto shownStart = frame ? video.frameStart(*frame) : std::nullopt;
+    if (*kind == application::SplitTimes::Video && !shownStart)
+        return false;
+    const std::int64_t videoMs = shownStart ? shownStart->microseconds() / 1000 : 0;
+    const auto timebase = video.legacyTimebase();
+    std::optional<application::CommandRefusal> refused;
+    const bool done = runFilter([&](application::EditSession &s) -> std::expected<void, application::CommandRefusal> {
+        if (pending)
+            return std::unexpected(*(refused = application::CommandRefusal::InvalidDraft));
+        auto ran = application::splitAtCursor(s, at->first.id, at->second, *kind, timebase, videoMs);
+        if (!ran)
+            refused = ran.error();
+        return ran;
+    });
+    if (refused) {
+        const QString shown = *refused == application::CommandRefusal::Invalid
+                                  //: Status bar when Split at the cursor would leave a half with no text
+                                  ? QCoreApplication::translate("HikariSub.Editor", "Nothing to split: both halves need text.")
+                                  : refusalText(*refused);
+        shell().setStatusText(shown);
+        QTimer::singleShot(5000, Qt::PreciseTimer, this, [this, shown] {
+            if (shell().statusText() == shown)
+                shell().setStatusText(QString());
+        });
+    }
+    return done;
+}
+
 bool Application::deleteText()
 {
     auto *session = targetSession();
@@ -7301,6 +7374,7 @@ bool Application::joinLines(const QString &kind)
                        : kind == QLatin1String("next")   ? JoinKind::WithNext
                        : kind == QLatin1String("first")  ? JoinKind::KeepFirst
                        : kind == QLatin1String("last")   ? JoinKind::KeepLast
+                       : kind == QLatin1String("karaoke") ? JoinKind::AsKaraoke
                                                          : JoinKind::Join;
     const bool done = application::joinLines(*session, k).has_value();
     editor().reloadFromSession();

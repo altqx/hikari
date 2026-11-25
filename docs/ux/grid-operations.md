@@ -100,13 +100,42 @@ The named G45 obligations transferred from [Painted-Grid accessibility and perfo
 - **When:** at once on a seek, a step or a pause, and at most every 100 ms while playing (the video's status timer); after every edit, tab change and when the setting changes. With no video or the toggle off, nothing is computed and the marks are cleared.
 - **Toggle:** View › "Mark lines on the current frame" (5358, no default shortcut, as Aegisub has no command for it), and the same row in Settings › Grid › Display.
 
+## Split at the cursor
+
+[#1213](https://github.com/altqx/hikari/issues/1213), Aegisub 3.5's `split_lines`. Line editor right click › **Split here** › Estimate times / Keep times / At the video frame, and 3120–3122.
+
+- **Where:** the active Line's Original text at the caret (the selection's start). The draft is applied first. A caret inside a tag block, `\N`, `\n` or `\h` moves past it.
+- **Text:** the Line keeps the text before the caret, right-trimmed (spaces and `\N` `\n` `\h`); a copy after it gets the text after, left-trimmed, starting with one block of every tag in effect at the caret: the Line's first block (with its `\pos`, `\move`, `\org`, `\fad`, `\clip`) plus the later blocks before the caret, as **Split lines at tag blocks** carries them (`\r` resets and redundant tags dropped; only karaoke tags right after the caret stay). The first Line keeps its LineId; the selection and active Line stay, as in Aegisub.
+- **Times:** Estimate gives each half its share of the duration by visible characters (graphemes outside tag blocks and drawings; `\h` is one, `\N` and `\n` none), to the nearest centisecond. Keep leaves both halves the Line's times. At the video frame uses the end time of the shown frame, clamped to the Line's first and last frame.
+- **Refused:** when either half has no visible text but spaces; the status bar says "Nothing to split: both halves need text." A refusal adds no undo step; a split is one undo step, "Splitting lines".
+
+## Split by karaoke syllables
+
+[#1213](https://github.com/altqx/hikari/issues/1213), Aegisub 3.5's `edit/line/split/by_karaoke`. Grid right click › Split › **By karaoke syllables**, and 5359.
+
+- **Syllables:** as Aegisub reads them: each `\k`, `\K`, `\kf` or `\ko` starts one at its tag block; text before the first one is a syllable of no duration; an empty syllable of no duration between two tags merges into the next; the last one is stretched to the Line's end, and syllables past the end are cut there. A Line with fewer than two syllables stays as it is.
+- **Lines:** each shown selected Line becomes one Line per syllable, from the syllable's start to its end, in place; the first keeps the LineId. The text is the syllable's, with the Line's first block (its `\pos`, `\move`, `\org`, `\fad`, `\clip`) and every tag in effect before it merged in front, as **Split lines at tag blocks** carries them, without karaoke tags. Aegisub keeps only the tags inside the syllable.
+- **Keep layout** (the checkable row under it, `grid.splitKaraokeKeepLayout`, off by default; also Settings › Grid › Splitting): each Line also gets the `\pos` (or `\move`) and `\an` where its syllable sat, measured as Split lines at tag blocks measures a tag block, and loses spaces and `\N` at its ends.
+- **Selection:** the new Lines; the active Line stays when it was split, else the first new Line is active. One undo step, "Splitting lines by karaoke"; refused when no Line splits, and a refusal adds no undo step.
+
+## Join as karaoke
+
+[#1213](https://github.com/altqx/hikari/issues/1213), Aegisub 3.5's `edit/line/join/as_karaoke`. Grid right click › Join › **As karaoke**, and 5360.
+
+- **Lines:** 2 to 500 shown selected Lines, as Keep first; the first keeps its LineId and fields, from the earliest start to the latest end. The others are deleted (J56).
+- **Text:** in Grid order, each Line's text after `{\kN}`, N its duration in centiseconds. A gap after the syllables so far adds an empty `{\kN}` syllable first (Aegisub adds none, so its later syllables run early). An overlapping Line's syllable starts after the one before, keeping its whole duration, as in Aegisub. Karaoke tags already in a text stay after the new one, as in Aegisub. A translation is joined the same way when any Line has one.
+- One undo step, "Joining lines as karaoke"; the joined Line is selected.
+
 ## Commands
 
 The Aegisub keys come from Aegisub 3.5's `default_hotkey.json`; Import settings maps the Aegisub ids from a `hotkey.json` (`settings_import_aegisub.cpp`).
 
 | Command | Id | Aegisub id | Aegisub default | HikariSub default | Note |
 | --- | --- | --- | --- | --- | --- |
+| Split at the cursor: estimate / keep / at the video frame | 3120, 3121, 3122 (Editor) | `edit/line/split/estimate`, `edit/line/split/preserve`, `edit/line/split/video` | none | Ctrl+Alt+Enter / none / none | Line editor right click › Split here. `edit/line/split/before` and `after` stay unmapped: they split every selected Line and handle a frame outside it, which Split at video time (4521) does not. Differs from Aegisub: the second half carries every tag in effect at the caret, and a refusal adds no undo step |
 | Move lines up / down | 4559, 4560 (Grid) | `grid/move/up`, `grid/move/down` | Alt+Up / Alt+Down | Alt+Up / Alt+Down | Each run of selected lines passes its neighbour; groups move as a unit; one undo step |
+| Split by karaoke syllables | 5359 | `edit/line/split/by_karaoke` | none | none | Grid Split submenu, with the Keep layout check (`grid.splitKaraokeKeepLayout`). Differs from Aegisub: each Line carries every tag in effect before its syllable (Aegisub keeps only the syllable's own), and a refusal adds no undo step |
+| Join as karaoke | 5360 | `edit/line/join/as_karaoke` | none | none | Grid Join submenu. Differs from Aegisub: a gap becomes an empty `{\kN}` syllable (Aegisub adds none, so later syllables run early) |
 | Delete text, keep tags | 5357 | `edit/clear/text` | none | none | Grid row after Delete text; `edit/clear` imports to Delete text (5157) |
 | Cycle tags in the Grid | 5029 (`GLOBAL_HIDE_TAGS`) | `grid/tag/cycle_hiding` | none | none | Q765; status message names the mode |
 | Tags in the Grid: Show / Replace with symbol / Hide | 5354, 5355, 5356 | `grid/tags/show`, `grid/tags/simplify`, `grid/tags/hide` | none | none | View › Tags in the Grid radio rows |

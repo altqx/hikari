@@ -284,6 +284,31 @@ TEST(SettingsImport, AegisubContextsPickThePanel)
     EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_NEXT:A").value, SettingValue(std::string("Num 2")));
 }
 
+TEST(SettingsImport, AegisubSplitAtCursorGoesToTheLineEditor)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Default": {"edit/line/split/estimate": ["Ctrl-F5"], "edit/line/split/video": ["Ctrl-F7"],
+                    "edit/line/split/after": ["Ctrl-Shift-D"]},
+        "Subtitle Edit Box": {"edit/line/split/preserve": ["Ctrl-F6"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "shortcut:EDITBOX_SPLIT_AT_CURSOR_ESTIMATE:E").value, SettingValue(std::string("Ctrl-F5")));
+    EXPECT_EQ(rowOf(plan, "shortcut:EDITBOX_SPLIT_AT_CURSOR_KEEP:E").value, SettingValue(std::string("Ctrl-F6")));
+    EXPECT_EQ(rowOf(plan, "shortcut:EDITBOX_SPLIT_AT_CURSOR_VIDEO:E").value, SettingValue(std::string("Ctrl-F7")));
+    EXPECT_EQ(rowOf(plan, "aegisub:Default:edit/line/split/after:Ctrl-Shift-D").reason, "HikariSub has no such command");
+}
+
+TEST(SettingsImport, AegisubKaraokeSplitAndJoinGoToTheGrid)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Default": {"edit/line/split/by_karaoke": ["Ctrl-K"]},
+        "Subtitle Grid": {"edit/line/join/as_karaoke": ["Ctrl-Shift-K"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_SPLIT_BY_KARAOKE:G").value, SettingValue(std::string("Ctrl-K")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_JOIN_AS_KARAOKE:S").value, SettingValue(std::string("Ctrl-Shift-K")));
+}
+
 TEST(SettingsImport, AegisubVideoControlsImportToTheirCommands)
 {
     const Plan plan = buildPlan({aegisub(R"({
@@ -572,7 +597,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 440);
+    EXPECT_EQ(bound, 445);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)

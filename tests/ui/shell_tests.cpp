@@ -11531,6 +11531,59 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    void splitByKaraokeAndJoinAsKaraokeFromTheGridMenu()
+    {
+        application->setAskForBadResolution(false);
+        QVERIFY(application->openFile(writeFile(dir, "karaoke-split.ass",
+                                                "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\k20}ab{\\k30}cd\n"
+                                                "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,x\n")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *settings = application->settingsStore();
+        auto *byKaraoke = named("splitByKaraoke");
+        auto *keepLayout = named("splitKaraokeKeepLayout");
+        auto *asKaraoke = named("joinAsKaraoke");
+        QVERIFY(byKaraoke && keepLayout && asKaraoke);
+        QCOMPARE(byKaraoke->property("command").toString(), QStringLiteral("GLOBAL_SPLIT_BY_KARAOKE"));
+        QCOMPARE(byKaraoke->property("text").toString(), QStringLiteral("By karaoke syllables"));
+        QCOMPARE(keepLayout->property("text").toString(), QStringLiteral("Keep layout"));
+        QCOMPARE(asKaraoke->property("command").toString(), QStringLiteral("GLOBAL_JOIN_AS_KARAOKE"));
+        QCOMPARE(asKaraoke->property("text").toString(), QStringLiteral("As karaoke"));
+        const auto first = session->document().lines()[0]->id;
+        session->setSelection(application::Selection{first, {first}, first, {}});
+
+        settings->set("grid.splitKaraokeKeepLayout", false);
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(byKaraoke, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Splitting lines by karaoke"));
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("ab"));
+        QCOMPARE(text(session->document().lines()[1]), QStringLiteral("cd"));
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 200'000);
+        QCOMPARE(session->selection().selected.size(), std::size_t(2));
+
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(2));
+        session->setSelection(application::Selection{first, {first}, first, {}});
+        settings->set("grid.splitKaraokeKeepLayout", true);
+        QVERIFY(QMetaObject::invokeMethod(byKaraoke, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        QVERIFY(text(session->document().lines()[1]).startsWith(QStringLiteral("{\\pos(")));
+        settings->set("grid.splitKaraokeKeepLayout", false);
+
+        std::set<core::LineId> all;
+        for (const auto *line : session->document().lines())
+            all.insert(line->id);
+        session->setSelection(application::Selection{first, all, first, {}});
+        QVERIFY(QMetaObject::invokeMethod(asKaraoke, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(1));
+        QCOMPARE(session->history().back().name, std::string("Joining lines as karaoke"));
+        const QString joined = text(session->document().lines()[0]);
+        QVERIFY(joined.startsWith(QStringLiteral("{\\k20}")));
+        QVERIFY(joined.endsWith(QStringLiteral("{\\k100}{\\k100}x")));
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 3'000'000);
+    }
+
     void motionDataScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -20431,6 +20484,56 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("editor.softLineBreak"), false);
     }
 
+    void splitHereSplitsTheLineAtTheCaret()
+    {
+        application->editor().setShowTags(true);
+        QVERIFY(application->openFile(writeStyled("split-here.ass",
+                                                  "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\b1}one {\\i1}two\n"
+                                                  "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,three four\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\b1}one {\\i1}two"));
+        auto *session = targetSession();
+        auto *splitHere = text->findChild<QObject *>(QStringLiteral("lineTextSplitHereMenu"));
+        auto *estimate = text->findChild<QObject *>(QStringLiteral("lineTextSplitEstimate"));
+        QVERIFY(splitHere && estimate);
+
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 2);
+        QVERIFY(QMetaObject::invokeMethod(splitHere, "aboutToShow"));
+        QVERIFY(!estimate->property("enabled").toBool());
+        text->setProperty("cursorPosition", 9);
+        QVERIFY(QMetaObject::invokeMethod(splitHere, "aboutToShow"));
+        QVERIFY(estimate->property("enabled").toBool());
+        QVERIFY(!text->findChild<QObject *>(QStringLiteral("lineTextSplitVideo"))->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(estimate, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        auto lines = session->document().lines();
+        QCOMPARE(lines[0]->text, std::u8string(u8"{\\b1}one"));
+        QCOMPARE(lines[1]->text, std::u8string(u8"{\\b1\\i1}two"));
+        QCOMPARE(lines[0]->end.value.microseconds(), 500'000);
+        QCOMPARE(lines[1]->start.value.microseconds(), 500'000);
+        QCOMPARE(session->history().back().name, std::string("Splitting lines"));
+        QCOMPARE(*session->selection().active, lines[0]->id);
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("three four"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        press(Qt::Key_Return, Qt::ControlModifier | Qt::AltModifier);
+        QCOMPARE(session->document().lines().size(), std::size_t(3));
+        QCOMPARE(application->shell().statusText(), QStringLiteral("Nothing to split: both halves need text."));
+        text->setProperty("cursorPosition", 6);
+        press(Qt::Key_Return, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(4));
+        lines = session->document().lines();
+        QCOMPARE(lines[2]->text, std::u8string(u8"three"));
+        QCOMPARE(lines[3]->text, std::u8string(u8"four"));
+        QCOMPARE(lines[2]->end.value.microseconds(), 2'560'000);
+    }
+
     void enterOnTheLastMicroDvdLineCountsFrames()
     {
         for (const bool withRate : {true, false}) {
@@ -20727,6 +20830,7 @@ private slots:
               {"grid.maxLines", nullptr},
               {"problems.reading", "Show reading-limit problems"},
               {"grid.splitFramesBakeAnimations", "Bake animations when splitting into frames"},
+              {"grid.splitKaraokeKeepLayout", "Keep the layout when splitting by karaoke syllables"},
               {"grid.insertStartOffset", nullptr},
               {"grid.insertEndOffset", nullptr}}},
             {"settingsPageVideo",

@@ -206,6 +206,7 @@ constexpr OptionsBinding kBindings[] = {
     {"grid.markCurrentFrame", Check, Grid},
     {"video.vectorClipSmoothing", Number, Video, 0, 100},
     {"video.drawingSmoothing", Number, Video, 0, 100},
+    {"grid.splitKaraokeKeepLayout", Check, Grid},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow

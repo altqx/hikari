@@ -4759,6 +4759,26 @@ Urządzenie wyjściowe: %2</translation>
         <source>Characters per second. Keep it at %1 or under.</source>
         <translation>Znaki na sekundę. Wartość powinna wynosić %1 lub mniej.</translation>
     </message>
+    <message>
+        <source>Split here</source>
+        <translation>Podziel tutaj</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>Oszacuj czasy</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>Zachowaj czasy</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>Na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>Nie ma nic do podzielenia: obie części muszą zawierać tekst.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Explorer</name>
@@ -8049,6 +8069,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
         <translation>Tagi na liście napisów: Ukryj</translation>
     </message>
+    <message>
+        <source>As karaoke</source>
+        <translation>Jako karaoke</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>Według sylab karaoke</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>Zachowaj układ</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -10106,6 +10138,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Move lines down</source>
         <translation>Przenieś linijki w dół</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>Podziel w miejscu kursora, szacując czasy</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>Podziel w miejscu kursora, zachowując czasy</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>Podziel w miejscu kursora, na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>Podziel według sylab karaoke</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>Złącz jako karaoke</translation>
     </message>
 </context>
 <context>
@@ -18549,6 +18601,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>project.toml can’t be written.</source>
         <translation>Nie można zapisać project.toml.</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>Zachowuj układ przy dzieleniu według sylab karaoke</translation>
     </message>
 </context>
 <context>

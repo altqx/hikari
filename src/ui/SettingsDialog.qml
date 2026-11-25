@@ -1732,6 +1732,7 @@ DialogWindow {
                     Section {
                         key: "grid.splitting"
                         SettingCheck { setting: "grid.splitFramesBakeAnimations" }
+                        SettingCheck { setting: "grid.splitKaraokeKeepLayout" }
                     }
                     Section {
                         key: "grid.newLines"

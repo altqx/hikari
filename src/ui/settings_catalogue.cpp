@@ -162,6 +162,7 @@ constexpr Row kRows[] = {
     {"grid.maxLines", "grid.counting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Lines")}, {QT_TRANSLATE_NOOP("HikariSub.Options", "A subtitle file can set its own limits in Script properties.")}},
     {"problems.reading", "grid.counting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Show reading-limit problems")}, {}},
     {"grid.splitFramesBakeAnimations", "grid.splitting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Bake animations when splitting into frames")}, {}},
+    {"grid.splitKaraokeKeepLayout", "grid.splitting", {QT_TRANSLATE_NOOP("HikariSub.Options", "Keep the layout when splitting by karaoke syllables")}, {}},
     {"grid.insertStartOffset", "grid.newLines", {QT_TRANSLATE_NOOP("HikariSub.Options", "Start frame offset")}, {}},
     {"grid.insertEndOffset", "grid.newLines", {QT_TRANSLATE_NOOP("HikariSub.Options", "End frame offset")}, {}},
     {"grid.tagsMode", "grid.display", {QT_TRANSLATE_NOOP("HikariSub.Options", "Tags in the Grid")}, {}},

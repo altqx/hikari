@@ -4677,6 +4677,26 @@ Output device: %2</source>
         <source>Characters per second. Keep it at %1 or under.</source>
         <translation>초당 문자 수입니다. %1 이하로 유지해야 합니다.</translation>
     </message>
+    <message>
+        <source>Split here</source>
+        <translation>여기서 분할</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>시간 추정</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>시간 유지</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>영상 프레임에서</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>분할할 수 없습니다: 두 부분 모두 글자가 있어야 합니다.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Explorer</name>
@@ -7893,6 +7913,18 @@ Failed to copy %2 fonts.</source>
         <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
         <translation>자막 목록의 태그: 숨기기</translation>
     </message>
+    <message>
+        <source>As karaoke</source>
+        <translation>노래방 줄로</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>노래방 음절 단위로</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>레이아웃 유지</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9948,6 +9980,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Move lines down</source>
         <translation>줄 아래로 이동</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>커서 위치에서 분할, 시간 추정</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>커서 위치에서 분할, 시간 유지</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>커서 위치에서 분할, 영상 프레임에서</translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>노래방 음절 단위로 분할</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>노래방 줄로 병합</translation>
     </message>
 </context>
 <context>
@@ -18269,6 +18321,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>project.toml can’t be written.</source>
         <translation>project.toml에 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>노래방 음절 단위로 분할할 때 레이아웃 유지</translation>
     </message>
 </context>
 <context>

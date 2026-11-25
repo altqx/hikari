@@ -436,9 +436,14 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
         EXPECT_EQ(smoothing.min, 0) << id;
         EXPECT_EQ(smoothing.max, 100) << id;
     }
+    const auto &keepLayout = all[std::size(kLegacy) + 109];
+    EXPECT_EQ(keepLayout.setting, "grid.splitKaraokeKeepLayout");
+    EXPECT_EQ(keepLayout.control, OptionsControl::Check);
+    EXPECT_EQ(keepLayout.page, OptionsPage::Grid);
+    EXPECT_FALSE(std::get<bool>(findSetting("grid.splitKaraokeKeepLayout")->defaultValue));
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 111);
-    const auto &hostApi = all[std::size(kLegacy) + 109];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 112);
+    const auto &hostApi = all[std::size(kLegacy) + 110];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -449,7 +454,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 109);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 110);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr);
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr);
     const auto bindings = all.first(std::size(kLegacy));

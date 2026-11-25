@@ -557,7 +557,7 @@ public:
     // mode: 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
     Q_INVOKABLE void setGridTagsMode(int mode);
     Q_INVOKABLE void cycleGridTagsMode();
-    // kind: "join", "previous", "next", "first", "last".
+    // kind: "join", "previous", "next", "first", "last", "karaoke".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
     Q_INVOKABLE bool moveLines(bool up);
@@ -591,10 +591,15 @@ public:
     ui::FileWriteQueue &recoveryWrites() { return m_recoveryWrites; }
     bool autosavePending(application::DocumentId document) const;
     int autosaveIntervalMs() const;
-    // kind: "videoTime", "frames", "chars", "words", "wraps" or "tagBlocks".
+    // kind: "videoTime", "frames", "chars", "words", "wraps", "tagBlocks" or "karaoke".
     Q_INVOKABLE bool splitLines(const QString &kind);
     // Each selected Line in pieces of `count` frames, or seconds; frames need video.
     Q_INVOKABLE bool splitEvery(int count, bool seconds);
+    // The active Line split at the Line editor's caret (`position` in the Original text field, role 0,
+    // as it shows); times: "estimate", "keep" or "video". Commits the draft first; a refusal goes to the
+    // status bar.
+    Q_INVOKABLE bool splitAtCursor(const QString &times, int role, int position);
+    Q_INVOKABLE bool canSplitAtCursor(int role, int position) const;
     Q_INVOKABLE bool canPasteTranslation() const;
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
@@ -1357,6 +1362,7 @@ private:
                                                        const std::set<core::LineId> &selection) const;
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
+    std::optional<std::pair<core::LineRecord, std::size_t>> lineAtCursor(int role, int position) const;
     application::LineVisible shownLines() const;
     QString exportKey(application::DocumentId document) const;
     application::LineVisible actionLines(const application::EditSession &session) const;

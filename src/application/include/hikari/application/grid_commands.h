@@ -49,6 +49,10 @@ enum class JoinKind {
     WithNext,     // the active Line and the shown one after it
     KeepFirst,    // 2 to 500 selected: the first Line, ending where the last ends
     KeepLast,     // the same with the last Line's text
+    // 2 to 500 selected, as Join's times; each Line's text becomes a {\kN} syllable of its
+    // duration, after a {\kN} empty syllable for a gap before it. An overlapping Line's
+    // syllable starts where the one before ends. Karaoke tags already in a text stay.
+    AsKaraoke,
 };
 // The first participating Line survives with its LineId; only the other participating Lines
 // are deleted, so unselected Lines between them survive.

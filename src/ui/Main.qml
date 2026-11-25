@@ -5750,6 +5750,44 @@ ApplicationWindow {
                 prefix: field.objectName
                 enabled: !field.readOnly && root.editor.hasLine
             }
+            ShellMenu {
+                id: splitHereMenu
+                property bool canSplit: false
+                objectName: field.objectName + "SplitHereMenu"
+                iconRole: "split-lines"
+                title: qsTranslate("HikariSub.Editor", "Split here")
+                shown: field.role === 0
+                enabled: !field.readOnly && root.editor.hasLine
+                onAboutToShow: canSplit = root.app.canSplitAtCursor(field.role, field.selectionStart)
+                function run(symbol, times) {
+                    if (!root.hotkeyGesture(symbol))
+                        root.app.splitAtCursor(times, field.role, field.selectionStart)
+                }
+                ShellMenuItem {
+                    command: "EDITBOX_SPLIT_AT_CURSOR_ESTIMATE"
+                    iconRole: "split-characters"
+                    objectName: field.objectName + "SplitEstimate"
+                    text: qsTranslate("HikariSub.Editor", "Estimate times")
+                    enabled: splitHereMenu.canSplit
+                    onTriggered: splitHereMenu.run(command, "estimate")
+                }
+                ShellMenuItem {
+                    command: "EDITBOX_SPLIT_AT_CURSOR_KEEP"
+                    iconRole: "split-lines"
+                    objectName: field.objectName + "SplitKeep"
+                    text: qsTranslate("HikariSub.Editor", "Keep times")
+                    enabled: splitHereMenu.canSplit
+                    onTriggered: splitHereMenu.run(command, "keep")
+                }
+                ShellMenuItem {
+                    command: "EDITBOX_SPLIT_AT_CURSOR_VIDEO"
+                    iconRole: "split-at-video"
+                    objectName: field.objectName + "SplitVideo"
+                    text: qsTranslate("HikariSub.Editor", "At the video frame")
+                    enabled: splitHereMenu.canSplit && root.video.hasVideo
+                    onTriggered: splitHereMenu.run(command, "video")
+                }
+            }
             ChangeCaseMenu {
                 shellRoot: root
                 prefix: field.objectName
@@ -8544,12 +8582,16 @@ ApplicationWindow {
                             ShellMenuItem { command: "GRID_JOIN_LINES"; iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
                             ShellMenuItem { command: "GRID_JOIN_TO_FIRST_LINE"; iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
                             ShellMenuItem { command: "GRID_JOIN_TO_LAST_LINE"; iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
+                            ShellMenuItem { command: "GLOBAL_JOIN_AS_KARAOKE"; iconRole: "karaoke"; objectName: "joinAsKaraoke"; text: qsTranslate("HikariSub.Grid", "As karaoke"); onTriggered: if (!root.gridGesture(this, "GLOBAL_JOIN_AS_KARAOKE")) root.app.joinLines("karaoke") }
                         }
                         ShellMenu {
                             objectName: "gridSplitMenu"
                             iconRole: "split-lines"
                             title: qsTranslate("HikariSub.Grid", "Split")
-                            onAboutToShow: bakeAnimationsItem.checked = root.app.settings.value("grid.splitFramesBakeAnimations")
+                            onAboutToShow: {
+                                bakeAnimationsItem.checked = root.app.settings.value("grid.splitFramesBakeAnimations")
+                                karaokeKeepLayoutItem.checked = root.app.settings.value("grid.splitKaraokeKeepLayout")
+                            }
                             ShellMenuItem {
                                 command: "GRID_SPLIT_BY_VIDEO_TIME"
                                 iconRole: "split-at-video"
@@ -8601,6 +8643,20 @@ ApplicationWindow {
                                 objectName: "splitAtTagBlocks"
                                 text: qsTranslate("HikariSub.Grid", "At tag blocks")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_AT_TAG_BLOCKS")) root.app.splitLines("tagBlocks")
+                            }
+                            ShellMenuItem {
+                                command: "GLOBAL_SPLIT_BY_KARAOKE"
+                                iconRole: "karaoke-split"
+                                objectName: "splitByKaraoke"
+                                text: qsTranslate("HikariSub.Grid", "By karaoke syllables")
+                                onTriggered: if (!root.gridGesture(this, "GLOBAL_SPLIT_BY_KARAOKE")) root.app.splitLines("karaoke")
+                            }
+                            ShellMenuItem {
+                                id: karaokeKeepLayoutItem
+                                objectName: "splitKaraokeKeepLayout"
+                                text: qsTranslate("HikariSub.Grid", "Keep layout")
+                                checkable: true
+                                onTriggered: root.app.settings.setValue("grid.splitKaraokeKeepLayout", checked)
                             }
                             MenuSeparator {}
                             ShellMenuItem {
@@ -12225,6 +12281,8 @@ ApplicationWindow {
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
         case "GLOBAL_REMOVE_TEXT_KEEP_TAGS": if (editing) root.app.deleteTextKeepTags(); return true
+        case "GLOBAL_SPLIT_BY_KARAOKE": if (editing) root.app.splitLines("karaoke"); return true
+        case "GLOBAL_JOIN_AS_KARAOKE": if (editing) root.app.joinLines("karaoke"); return true
         case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true
@@ -12276,6 +12334,9 @@ ApplicationWindow {
         case "EDITBOX_COMMIT_GO_NEXT_LINE": root.app.commitAndAdvance(); return true
         case "EDITBOX_COMMIT": root.editor.applyChanges(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
+        case "EDITBOX_SPLIT_AT_CURSOR_ESTIMATE": root.app.splitAtCursor("estimate", field.role, field.selectionStart); return true
+        case "EDITBOX_SPLIT_AT_CURSOR_KEEP": root.app.splitAtCursor("keep", field.role, field.selectionStart); return true
+        case "EDITBOX_SPLIT_AT_CURSOR_VIDEO": if (root.video.hasVideo) root.app.splitAtCursor("video", field.role, field.selectionStart); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
         case "EDITBOX_TRIGGER_COMPLETION":
             root.editor.tagList.trigger(field.text, field.cursorPosition, field.role)

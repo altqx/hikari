@@ -343,6 +343,7 @@ std::vector<SettingDefinition> &definitions()
         {"audio.kanjiTimerSuggest", "", Bool, Profile, Mapped, false, true},
         {"editor.softLineBreak", "", Bool, Profile, Mapped, false, false},
         {"grid.splitFramesBakeAnimations", "", Bool, Profile, Mapped, false, true},
+        {"grid.splitKaraokeKeepLayout", "", Bool, Profile, Mapped, false, false},
         {"grid.alignToVideoFrame", "", Bool, Profile, Mapped, false, false},
         // core::column Tags bits, kept apart from the legacy column choices.
         {"grid.copyColumnTags", "", Int, Profile, Mapped, false, std::int64_t{0}},

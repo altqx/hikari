@@ -4677,6 +4677,26 @@ Output device: %2</source>
         <source>Characters per second. Keep it at %1 or under.</source>
         <translation>อักขระต่อวินาที ควรไม่เกิน %1</translation>
     </message>
+    <message>
+        <source>Split here</source>
+        <translation>แบ่งตรงนี้</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>ประมาณเวลา</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>คงเวลาเดิม</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>ที่เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>ไม่มีอะไรต้องแบ่ง: ทั้งสองส่วนต้องมีข้อความ</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Explorer</name>
@@ -7893,6 +7913,18 @@ Failed to copy %2 fonts.</source>
         <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
         <translation>แท็กในตาราง: ซ่อน</translation>
     </message>
+    <message>
+        <source>As karaoke</source>
+        <translation>เป็นคาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>ตามพยางค์คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>คงเค้าโครง</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9948,6 +9980,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Move lines down</source>
         <translation>ย้ายบรรทัดลง</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>แบ่งที่เคอร์เซอร์ โดยประมาณเวลา</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>แบ่งที่เคอร์เซอร์ โดยคงเวลาเดิม</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>แบ่งที่เคอร์เซอร์ ที่เฟรมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>แบ่งตามพยางค์คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>ต่อเป็นคาราโอเกะ</translation>
     </message>
 </context>
 <context>
@@ -18265,6 +18317,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>project.toml can’t be written.</source>
         <translation>เขียน project.toml ไม่ได้</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>คงเค้าโครงเมื่อแบ่งตามพยางค์คาราโอเกะ</translation>
     </message>
 </context>
 <context>
