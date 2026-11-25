@@ -126,6 +126,8 @@ Video > Recently opened videos > None
 Video > Open dummy video… [GLOBAL_OPEN_DUMMY_VIDEO]
 Video > Reload video [GLOBAL_RELOAD_VIDEO]
 Video > Unload video
+Video > Previous file [VIDEO_PREVIOUS_FILE]
+Video > Next file [VIDEO_NEXT_FILE]
 Video > -
 Video > Open keyframes… [GLOBAL_OPEN_KEYFRAMES]
 Video > Recently opened keyframes >
@@ -145,6 +147,9 @@ Video > Go to previous keyframe [GLOBAL_GO_TO_PREVIOUS_KEYFRAME]
 Video > Go to next keyframe [GLOBAL_GO_TO_NEXT_KEYFRAME]
 Video > Go to start time of line [GLOBAL_SET_VIDEO_AT_START_TIME]
 Video > Go to end time of line [GLOBAL_SET_VIDEO_AT_END_TIME]
+Video > Previous subtitle boundary [GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY]
+Video > Next subtitle boundary [GLOBAL_NEXT_SUBTITLE_BOUNDARY]
+Video > Jump to [GLOBAL_JUMP_TO]
 Video > -
 Video > Set start time from video [GLOBAL_SET_START_TIME]
 Video > Set end time from video [GLOBAL_SET_END_TIME]
@@ -176,6 +181,15 @@ Video > Audio track >
 Video > Chapters >
 Video > Zoom video [GLOBAL_VIDEO_ZOOM]
 Video > Reset zoom and pan [GLOBAL_RESET_VIDEO_ZOOM]
+Video > Zoom level >
+Video > Zoom level > Fit to panel [GLOBAL_VIDEO_ZOOM_FIT]
+Video > Zoom level > Zoom 50 % [GLOBAL_VIDEO_ZOOM_50]
+Video > Zoom level > Zoom 100 % [GLOBAL_VIDEO_ZOOM_100]
+Video > Zoom level > Zoom 200 % [GLOBAL_VIDEO_ZOOM_200]
+Video > Zoom level > 1:1 device pixels [GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS]
+Video > Zoom level > -
+Video > Zoom level > Zoom in [GLOBAL_VIDEO_ZOOM_IN]
+Video > Zoom level > Zoom out [GLOBAL_VIDEO_ZOOM_OUT]
 Video > Render cost [GLOBAL_VIDEO_RENDER_COST]
 Video > Video details [GLOBAL_VIDEO_DETAILS]
 Audio

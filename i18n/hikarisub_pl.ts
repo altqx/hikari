@@ -9443,6 +9443,46 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Typesetting na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>Powiększenie 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>Powiększenie 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Powiększ</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Pomniejsz</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>Dopasuj powiększenie do panelu</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>Powiększ do pikseli urządzenia 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>Następna granica napisu</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>Otwórz ponownie z kodowaniem…</translation>
     </message>
@@ -12610,6 +12650,46 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz ponownie z kodowaniem…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>Powiększenie 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>Powiększenie 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Powiększ</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Pomniejsz</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>Dopasuj do panelu</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>Piksele urządzenia 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>Następna granica napisu</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>Otwiera plik wideo</translation>
     </message>
@@ -12802,6 +12882,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Otwórz wideo…</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>Poprzedni plik</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>Następny plik</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>Otwiera plik klatek kluczowych</translation>
     </message>
@@ -12826,6 +12914,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przechodzi o jedną klatkę w przód</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>Przewija wideo do poprzedniego początku lub końca linijki</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>Przewija wideo do następnego początku lub końca linijki</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>Pozwala wpisać czas lub klatkę do pokazania</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>Ustawia początek zaznaczonych linijek na czas klatki wideo</translation>
     </message>
@@ -12844,6 +12944,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Change aspect ratio…</source>
         <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>Poziom powiększenia</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -27376,15 +27480,15 @@ Usunięte style:
     </message>
     <message>
         <source>Video position</source>
-        <translation>Pozycja wideo</translation>
+        <translation type="vanished">Pozycja wideo</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>Czasy wideo</translation>
+        <translation type="vanished">Czasy wideo</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
+        <translation type="vanished">Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -27411,6 +27515,15 @@ Usunięte style:
         <translation>Zatrzymaj</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%1 klatek od początku linijki %2 · %3 ms od jej początku · %4 ms od jej końca</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>Następny plik</translation>
     </message>
@@ -27433,6 +27546,11 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>klatka %1 / %2</translation>
     </message>
     <message>
         <source>Video (%1)</source>
@@ -27566,6 +27684,10 @@ Usunięte style:
     <message>
         <source>Reset zoom and pan</source>
         <translation>Resetuj powiększenie i przesunięcie</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>Poziom powiększenia</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -28324,6 +28446,48 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>To nie jest czas ani klatka: %1. Spróbuj %2 lub numeru klatki.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>Czas wideo, %1, edytowalny</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>Dopasowanie</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>Powiększenie wideo, %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>Powiększenie wideo</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>

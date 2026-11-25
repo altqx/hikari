@@ -111,6 +111,17 @@ namespace hikari::app {
 
 namespace {
 
+std::optional<std::pair<core::DocumentTime, core::DocumentTime>> activeLineTimes(const application::EditSession &session)
+{
+    const auto active = session.selection().active;
+    if (!active)
+        return std::nullopt;
+    for (const auto *line : session.document().lines())
+        if (line->id == *active)
+            return std::pair(line->start.value, line->end.value);
+    return std::nullopt;
+}
+
 void keepShellWindowWhole(QQuickWindow &window)
 {
     if (!window.isVisible() || window.windowStates() != Qt::WindowNoState)
@@ -2091,6 +2102,8 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
         shell().setSelection(session->selection());
         editor().selectionChanged();
+        if (target == activeMedia().videoDocument)
+            activeMedia().video->setActiveLineTimes(activeLineTimes(*session));
         followEditingLine();
         v.templateEditor->refresh();
     });
@@ -3012,12 +3025,7 @@ void Application::refreshVideo()
         m_directShow->setColorSpace(activeMedia().video->session().matrix());
 #endif
     const auto active = session->selection().active;
-    std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;
-    if (active)
-        for (const auto *line : session->document().lines())
-            if (line->id == *active)
-                lineTimes = std::pair(line->start.value, line->end.value);
-    activeMedia().video->setActiveLineTimes(lineTimes);
+    activeMedia().video->setActiveLineTimes(activeLineTimes(*session));
     bool rowChanged = false;
     if (active && active != activeMedia().videoLine) {
         rowChanged = activeMedia().videoLine.has_value();

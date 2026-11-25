@@ -9365,6 +9365,46 @@ Failed to copy %2 fonts.</source>
         <translation>முழுத் திரை டைப்செட்டிங்</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>தாவிச் செல்</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>பெரிதாக்கம் 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>பெரிதாக்கம் 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>பெரிதாக்கம் 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>சிறிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>பொருந்தும்படி பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>1:1 சாதனப் படப்புள்ளிகளுக்குப் பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>அடுத்த வசன எல்லை</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>முந்தைய வசன எல்லை</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
     </message>
@@ -12494,6 +12534,46 @@ Failed to copy %2 fonts.</source>
         <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>தாவிச் செல்</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>பெரிதாக்கம் 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>பெரிதாக்கம் 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>பெரிதாக்கம் 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>சிறிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>பலகத்துக்குப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>1:1 சாதனப் படப்புள்ளிகள்</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>அடுத்த வசன எல்லை</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>முந்தைய வசன எல்லை</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>வீடியோ கோப்பைத் திறக்கிறது</translation>
     </message>
@@ -12686,6 +12766,14 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைத் திற… (&amp;o)</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>முந்தைய கோப்பு</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>அடுத்த கோப்பு</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>கீஃப்ரேம் கோப்பைத் திறக்கிறது</translation>
     </message>
@@ -12710,6 +12798,18 @@ Failed to copy %2 fonts.</source>
         <translation>ஒரு சட்டகம் முன்னோக்கிச் செல்கிறது</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>வீடியோவை ஒரு வரியின் முந்தைய தொடக்கத்துக்கோ முடிவுக்கோ நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>வீடியோவை ஒரு வரியின் அடுத்த தொடக்கத்துக்கோ முடிவுக்கோ நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>காட்ட வேண்டிய நேரத்தையோ சட்டகத்தையோ தட்டச்சு செய்கிறது</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>தேர்ந்தெடுத்த வரிகளின் தொடக்கத்தை வீடியோ சட்டகத்தின் நேரத்துக்கு அமைக்கிறது</translation>
     </message>
@@ -12728,6 +12828,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>பெரிதாக்கம்</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -27135,15 +27239,15 @@ Styles deleted:
     </message>
     <message>
         <source>Video position</source>
-        <translation>வீடியோ நிலை</translation>
+        <translation type="vanished">வீடியோ நிலை</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>வீடியோ நேரங்கள்</translation>
+        <translation type="vanished">வீடியோ நேரங்கள்</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>சட்டக நேரம்; சட்டக எண்; வரியின் தொடக்கச் சட்டகத்திலிருந்து சட்டகங்கள்; வரியின் தொடக்கம் மற்றும் முடிவிலிருந்து மில்லிவினாடிகள்</translation>
+        <translation type="vanished">சட்டக நேரம்; சட்டக எண்; வரியின் தொடக்கச் சட்டகத்திலிருந்து சட்டகங்கள்; வரியின் தொடக்கம் மற்றும் முடிவிலிருந்து மில்லிவினாடிகள்</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -27170,6 +27274,15 @@ Styles deleted:
         <translation>நிறுத்து</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>தாவிச் செல்</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>வரி %2 இன் தொடக்கத்திலிருந்து %1 சட்டகங்கள் · அதன் தொடக்கத்திலிருந்து %3 ms · அதன் முடிவிலிருந்து %4 ms</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>அடுத்த கோப்பு</translation>
     </message>
@@ -27192,6 +27305,11 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>சட்டகம் %1 / %2</translation>
     </message>
     <message>
         <source>Video (%1)</source>
@@ -27325,6 +27443,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>பெரிதாக்கம்</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -28078,6 +28200,48 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>நேரமோ சட்டகமோ அல்ல: %1. %2 அல்லது ஒரு சட்டக எண்ணை முயலவும்.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>வீடியோ நேரம், %1, திருத்தக்கூடியது</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>வீடியோ பெரிதாக்கம், %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>வீடியோ பெரிதாக்கம்</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>
