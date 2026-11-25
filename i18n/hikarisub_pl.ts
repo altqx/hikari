@@ -1089,6 +1089,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>„%1” ma %2 MB, ponad 10 MB.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>Licencja „%1” ogranicza osadzanie go w innych plikach.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>Załączniki zajęłyby łącznie %1 MB, ponad 50 MB.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>Załączniki</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>Nie udało się odczytać „%1”; nic nie zostało załączone.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>Załączniki…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>Wyświetla czcionki i grafiki załączone do napisów</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>Załącz czcionki</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>Załącz grafiki</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>Załączyć je mimo to?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Załącz</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>Wyodrębnij</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>Nie udało się zapisać %1.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>„%1” już istnieje. Zastąpić?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Zastąp</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nazwa</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>Typ</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>Rozmiar</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>Te napisy nie mają załączników.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>Załączniki mogą mieć tylko napisy ASS.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Czcionka</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>Grafika</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>Załączone czcionki służą do rysowania tych napisów i są przenoszone razem z plikiem. Wyodrębnianie zapisuje kopię; napisy się nie zmieniają.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>Załącz czcionkę…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>Załącz grafikę…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>Wyodrębnij…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>Pliki czcionek (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>Grafiki (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>Wyodrębnij do folderu</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -9485,6 +9620,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Reopen with encoding…</source>
         <translation>Otwórz ponownie z kodowaniem…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>Załączniki…</translation>
     </message>
     <message>
         <source>Global</source>

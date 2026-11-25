@@ -1076,6 +1076,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1” %2 MB அளவு, 10 MB-ஐ விட அதிகம்.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>“%1”-இன் உரிமம் அதைப் பிற கோப்புகளில் உட்பொதிப்பதைக் கட்டுப்படுத்துகிறது.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>இணைப்புகளின் மொத்த அளவு %1 MB ஆகும், 50 MB-ஐ விட அதிகம்.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>இணைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>“%1”-ஐப் படிக்க முடியவில்லை; எதுவும் இணைக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>இணைப்புகள்…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>வசனங்களுடன் இணைக்கப்பட்ட எழுத்துருக்களையும் படங்களையும் பட்டியலிடுகிறது</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>எழுத்துருக்களை இணை</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>படங்களை இணை</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>இருந்தாலும் இணைக்கவா?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>இணை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>பிரித்தெடு</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>%1-ஐ எழுத முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>“%1” ஏற்கெனவே உள்ளது. அதை மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>பெயர்</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>வகை</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>அளவு</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>இந்த வசனங்களில் இணைப்புகள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>ASS வசனங்கள் மட்டுமே இணைப்புகளைக் கொண்டிருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>படம்</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>இணைக்கப்பட்ட எழுத்துருக்கள் இந்த வசனங்களை வரையப் பயன்படுகின்றன, கோப்புடனே செல்கின்றன. பிரித்தெடுத்தல் ஒரு நகலை எழுதும்; வசனங்கள் மாறாது.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>எழுத்துருவை இணை…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>படத்தை இணை…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>பிரித்தெடு…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>எழுத்துருக் கோப்புகள் (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லாக் கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>படங்கள் (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>கோப்புறைக்குப் பிரித்தெடு</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -9407,6 +9542,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reopen with encoding…</source>
         <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>இணைப்புகள்…</translation>
     </message>
     <message>
         <source>Global</source>
