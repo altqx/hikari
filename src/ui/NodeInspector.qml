@@ -39,8 +39,8 @@ Pane {
     }
     readonly property real labelWidth: {
         let widest = 0
-        for (const f of root.fields.concat(root.wired))
-            widest = Math.max(widest, labelMetrics.advanceWidth(root.label(f.name)))
+        for (let i = 0; i < labelProbes.count; ++i)
+            widest = Math.max(widest, labelProbes.itemAt(i)?.implicitWidth ?? 0)
         return Math.ceil(Math.min(widest, 110)) + root.changedMarkWidth
     }
     readonly property real changedMarkWidth: 6 + 4
@@ -72,9 +72,16 @@ Pane {
     }
 
     Label { id: fontSource; visible: false }
-    FontMetrics {
-        id: labelMetrics
-        font: root.labelFont
+    Repeater {
+        id: labelProbes
+        model: root.fields.concat(root.wired).map(f => root.label(f.name))
+        Label {
+            required property string modelData
+            visible: false
+            text: modelData
+            font: root.labelFont
+            textFormat: Text.PlainText
+        }
     }
 
     component Section: RowLayout {
