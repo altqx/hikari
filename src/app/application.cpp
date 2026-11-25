@@ -2311,6 +2311,7 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
     });
     editor->setTemplater(&m_automation->templater());
     editor->setHostState([this] { return m_automation->hostState(); });
+    v.editor->addBeforeHistoryMove([editor] { editor->commit(); });
     connect(v.media->video.get(), &ui::VideoController::changed, editor, [this, editor] {
         if (!activeMedia().video->playing())
             editor->hostChanged();

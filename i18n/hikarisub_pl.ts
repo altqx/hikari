@@ -2544,7 +2544,7 @@ Urządzenie wyjściowe: %2</translation>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
-        <translation>Makro zostało anulowane; ustawiono tylko rozdzielczość skryptu.</translation>
+        <translation type="vanished">Makro zostało anulowane; ustawiono tylko rozdzielczość skryptu.</translation>
     </message>
     <message>
         <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
@@ -4469,6 +4469,11 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Check spelling as you type</source>
         <translation>Sprawdzaj pisownię podczas pisania</translation>
+    </message>
+    <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>Edytor linijki · Tekst tłumaczenia</translation>
     </message>
     <message>
         <source>Line editor</source>
@@ -7397,6 +7402,15 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>No lines match the filter</source>
         <translation>Brak linijek pasujących do filtra</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>Przetłumaczono %1 z %n linijki</numerusform>
+            <numerusform>Przetłumaczono %1 z %n linijek</numerusform>
+            <numerusform>Przetłumaczono %1 z %n linijek</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -13556,11 +13570,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not wired</source>
-        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13571,21 +13580,63 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Choose a colour</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>%n nodes selected.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Select a node to see its fields.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n %1 nodes</source>
+        <translation>
+            <numerusform>%n węzeł typu %1</numerusform>
+            <numerusform>%n węzły typu %1</numerusform>
+            <numerusform>%n węzłów typu %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a value to change it · Shift for fine steps</source>
+        <translation>Przeciągnij wartość, aby ją zmienić · Shift daje małe kroki</translation>
+    </message>
+    <message>
+        <source>Wired</source>
+        <translation>Podłączone</translation>
+    </message>
+    <message>
+        <source>On line %1</source>
+        <extracomment>The Node panel&apos;s heading for the values from the last preview run on a line</extracomment>
+        <translation>Na linijce %1</translation>
+    </message>
+    <message>
+        <source>from the last run · %1 a line</source>
+        <translation>z ostatniego uruchomienia · %1 na linijkę</translation>
+    </message>
+    <message>
+        <source>→ %1</source>
+        <extracomment>An output&apos;s wires in the Node panel: &quot;→ fade › tags, emit › tags&quot;</extracomment>
+        <translation>→ %1</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>Zaznaczenie</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>Grupuj</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Values from the last run show for one node at a time.</source>
+        <translation>Wartości z ostatniego uruchomienia są widoczne tylko dla jednego węzła naraz.</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>Problemy</translation>
     </message>
     <message>
         <source>Name</source>
@@ -13596,9 +13647,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mixed</source>
+        <translation>Różne</translation>
+    </message>
+    <message>
+        <source>Changed from the default</source>
+        <extracomment>Read out by screen readers for a Node panel field whose value isn&apos;t the node&apos;s default</extracomment>
+        <translation>Zmieniono względem wartości domyślnej</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>Przywróć domyślne</translation>
+    </message>
+    <message>
         <source>+ graph seed %1</source>
         <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to “%1”</source>
+        <extracomment>Selects and centres the node a wired input comes from</extracomment>
+        <translation>Przejdź do “%1”</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Domyślne</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <extracomment>The axis after a point&apos;s coordinate in the Node panel</extracomment>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>y</source>
+        <translation>y</translation>
+    </message>
+    <message>
+        <source>Pick on the video</source>
+        <translation>Wskaż na wideo</translation>
     </message>
     <message>
         <source>Lua code</source>
@@ -13617,8 +13703,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>At least %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a smaller value: &quot;At least 1&quot;</extracomment>
+        <translation>Co najmniej %1</translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a larger value: &quot;At most 400&quot;</extracomment>
+        <translation>Najwyżej %1</translation>
+    </message>
+    <message>
+        <source>Between %1 and %2</source>
+        <extracomment>A refused value in the Node panel: &quot;Between 10 and 400&quot;</extracomment>
+        <translation>Od %1 do %2</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <extracomment>A unit after a number in the Node panel: pixels</extracomment>
+        <translation>px</translation>
+    </message>
+    <message>
         <source>ms</source>
+        <extracomment>The unit after a time in the Node panel: milliseconds</extracomment>
         <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>Enter a number</source>
+        <translation>Wpisz liczbę</translation>
+    </message>
+    <message>
+        <source>Enter X and Y as numbers</source>
+        <translation>Wpisz X i Y jako liczby</translation>
+    </message>
+    <message>
+        <source>Enter a colour as #RRGGBB</source>
+        <translation>Wpisz kolor w formacie #RRGGBB</translation>
+    </message>
+    <message>
+        <source>Enter a name</source>
+        <translation>Wpisz nazwę</translation>
+    </message>
+    <message>
+        <source>Use only letters, digits, _ and -</source>
+        <translation>Używaj tylko liter, cyfr, _ i -</translation>
+    </message>
+    <message>
+        <source>Another node is called “%1”.</source>
+        <extracomment>A refused node name: “fade” is the name another node has</extracomment>
+        <translation>Inny węzeł ma już nazwę “%1”.</translation>
     </message>
     <message>
         <source>New seed</source>
@@ -13633,20 +13765,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>to %1</source>
-        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On line %1, from the last run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13663,20 +13782,16 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished">Timing</translation>
+        <translation type="obsolete">Timing</translation>
     </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Last run %1 on line %2</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>1 line</source>
@@ -13705,6 +13820,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Preview on line %1</source>
         <translation type="unfinished">Podgląd na linijce %1</translation>
+    </message>
+    <message>
+        <source>Set to %1×%2</source>
+        <extracomment>Writes the PlayRes the preview uses into a file that has none; %1×%2 is the size</extracomment>
+        <translation>Ustaw %1×%2</translation>
     </message>
     <message>
         <source>Kept from the last run that worked</source>
@@ -13929,6 +14049,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>%1 · popraw problemy, aby go zobaczyć</translation>
     </message>
     <message>
+        <source>%1 · no script resolution · Apply sets %2×%3</source>
+        <extracomment>Over the video: the file has no PlayRes, and Apply writes this size with the lines; %1 is &quot;Preview&quot;, %2×%3 the size</extracomment>
+        <translation>%1 · brak rozdzielczości skryptu · Zastosuj ustawi %2×%3</translation>
+    </message>
+    <message>
         <source>%1 · line %2 · %3</source>
         <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
         <translation>%1 · linijka %2 · %3</translation>
@@ -14148,6 +14273,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For selected lines</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step down</source>
+        <translation>Zmniejsz</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>Zwiększ</translation>
     </message>
 </context>
 <context>
@@ -20471,8 +20604,12 @@ Linijki [Sekcja] je grupują.</translation>
         <translation>Dokument referencyjny</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>Dokument referencyjny · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>Dokument referencyjny: %1</translation>
+        <translation type="vanished">Dokument referencyjny: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -20489,6 +20626,18 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Follow the editing line</source>
         <translation>Podążaj za edytowaną linijką</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>Niezależna</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>Powiązana</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>Nawigacja dokumentu referencyjnego</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -20509,6 +20658,10 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>Tylko do odczytu. Niezależna: dokument przesuwa się samodzielnie; Powiązana podąża za edytowaną linijką według czasu.</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -23893,6 +24046,10 @@ ponieważ została zmieniona.</translation>
         <translation>Przenieś do Twoich</translation>
     </message>
     <message>
+        <source>Finding fonts</source>
+        <translation>Wyszukiwanie czcionek</translation>
+    </message>
+    <message>
         <source>No style chosen</source>
         <translation>Nie wybrano stylu</translation>
     </message>
@@ -23914,6 +24071,14 @@ ponieważ została zmieniona.</translation>
             <numerusform>Używa go %n linijka</numerusform>
             <numerusform>Używają go %n linijki</numerusform>
             <numerusform>Używa go %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1&#xa0;%</numerusform>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1&#xa0;%</numerusform>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1&#xa0;%</numerusform>
         </translation>
     </message>
     <message>
@@ -27339,6 +27504,19 @@ Usunięte style:
         <translation>Tekst oryginalny: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>Tłumaczenie AI</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>Wpisz tłumaczenie. %1 wkleja tekst oryginalny.</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>Wpisz tłumaczenie.</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>Linijka karaoke: tagi przed tekstem są przenoszone, timing karaoke nie.</translation>
     </message>
@@ -27569,6 +27747,30 @@ Usunięte style:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>Wyświetla i zapisuje tekst oryginalny i tłumaczenie każdej linijki</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>Tłumaczenie AI zatrzymało się.</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>Tłumaczenie AI · %1 z %n linijki</numerusform>
+            <numerusform>Tłumaczenie AI · %1 z %n linijek</numerusform>
+            <numerusform>Tłumaczenie AI · %1 z %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>Dostawcy…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Odrzuć</translation>
     </message>
 </context>
 <context>
@@ -30066,8 +30268,40 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Koniec ruchu</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>Wycinek i rysunek</translation>
+        <source>Clip</source>
+        <translation>Wycinek</translation>
+    </message>
+    <message>
+        <source>Target rectangle</source>
+        <translation>Prostokąt docelowy</translation>
+    </message>
+    <message>
+        <source>Original rectangle</source>
+        <translation>Prostokąt oryginalny</translation>
+    </message>
+    <message>
+        <source>First point</source>
+        <translation>Pierwszy punkt</translation>
+    </message>
+    <message>
+        <source>Second point</source>
+        <translation>Drugi punkt</translation>
+    </message>
+    <message>
+        <source>Shape rectangle</source>
+        <translation>Prostokąt kształtu</translation>
+    </message>
+    <message>
+        <source>Slider knob</source>
+        <translation>Gałka suwaka</translation>
+    </message>
+    <message>
+        <source>Slider track</source>
+        <translation>Tor suwaka</translation>
+    </message>
+    <message>
+        <source>Helper cross</source>
+        <translation>Krzyż pomocniczy</translation>
     </message>
     <message>
         <source>Changed line</source>

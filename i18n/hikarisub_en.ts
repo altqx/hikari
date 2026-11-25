@@ -511,6 +511,14 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%1 of %n line translated</numerusform>
+            <numerusform>%1 of %n lines translated</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>This file has %n Aegisub folds.</source>
         <translation>
             <numerusform>This file has %n Aegisub fold.</numerusform>
@@ -883,15 +891,15 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n nodes selected.</source>
+        <source>%n %1 nodes</source>
         <translation>
-            <numerusform>%n node selected.</numerusform>
-            <numerusform>%n nodes selected.</numerusform>
+            <numerusform>%n %1 node</numerusform>
+            <numerusform>%n %1 nodes</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation>
             <numerusform>Wrote %n line in %1 on the last run</numerusform>
             <numerusform>Wrote %n lines in %1 on the last run</numerusform>
@@ -1504,6 +1512,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>Finding fonts · reading %n font file · %1&#xa0;%</numerusform>
+            <numerusform>Finding fonts · reading %n font files · %1&#xa0;%</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n styles: the preview shows %1</source>
         <translation>
             <numerusform>%n style: the preview shows %1</numerusform>
@@ -1805,6 +1820,16 @@
         <translation>
             <numerusform>Fits position, scale and rotation over the %n selected line (degree %1, error %2 px).</numerusform>
             <numerusform>Fits position, scale and rotation over the %n selected lines (degree %1, error %2 px).</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Translation</name>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI translation · %1 of %n line</numerusform>
+            <numerusform>AI translation · %1 of %n lines</numerusform>
         </translation>
     </message>
 </context>

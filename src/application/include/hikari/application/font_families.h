@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -30,6 +31,8 @@ public:
 
     void setEnvironment(FontEnvironment environment) { m_environment = std::move(environment); }
     const FontEnvironment &environment() const { return m_environment; }
+    // Once set, listings take the system's faces from here instead of the service.
+    void setSystemFaces(std::shared_ptr<const std::vector<SystemFace>> faces) { m_systemFaces = std::move(faces); }
 
     // Enumerated when the list is empty.
     const std::vector<std::u16string> &fonts();
@@ -43,10 +46,13 @@ public:
     std::vector<std::string> unreadableExternalFonts();
 
 private:
+    std::vector<SystemFace> pickerFaces() const;
+
     FontServicePort &m_fonts;
     FontNameLower m_lower;
     FontListPlatform m_platform;
     FontEnvironment m_environment;
+    std::shared_ptr<const std::vector<SystemFace>> m_systemFaces;
     std::vector<std::u16string> m_all;
     std::optional<std::vector<std::u16string>> m_filtered;
     std::u16string m_filter;

@@ -36,6 +36,8 @@ class ShellController : public QObject {
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
     Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
+    Q_PROPERTY(int translatedLines READ translatedLines NOTIFY targetsChanged)
+    Q_PROPERTY(int translatableLines READ translatableLines NOTIFY targetsChanged)
     // 0 Show, 1 Replace with symbol, 2 Hide (application::GridTagsMode).
     Q_PROPERTY(int tagsMode READ tagsMode NOTIFY tagsModeChanged)
     Q_PROPERTY(QString gridFilterText READ gridFilterText WRITE setGridFilterText NOTIFY gridFilterChanged)
@@ -127,6 +129,8 @@ public:
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
     bool filtered() const { return m_lines.headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool(); }
+    int translatedLines() const { return m_translatedLines; }
+    int translatableLines() const { return m_translatableLines; }
     int tagsMode() const { return int(m_lines.tagsMode()); }
     void setTagsMode(application::GridTagsMode mode, const QString &swap)
     {
@@ -235,6 +239,8 @@ private:
     qint64 m_progressStart = 0;
     std::function<qint64()> m_progressClock;
     qint64 progressNow() const;
+    int m_translatedLines = 0;
+    int m_translatableLines = 0;
     bool m_assFormat = true;
     bool m_endColumn = true;
     bool m_referenceLinked = false;

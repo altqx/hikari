@@ -598,6 +598,7 @@ Overlay GradientTool::overlay(const VisualHost &host) const
             continue;
         const PointF at = toView(v, *p);
         transform::drawRect(out, at, m_grabbed == i, 5);
+        out.named.push_back({{at}, 7 * out.unit, m_spec.mode == Mode::Wedge ? 2 : i == 2 ? 1 : 0});
         if (m_spec.mode != Mode::Wedge)
             continue;
         const std::u16string label = u"P" + number(i + 1);

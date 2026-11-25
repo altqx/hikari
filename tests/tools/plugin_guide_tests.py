@@ -41,7 +41,7 @@ class PluginGuide(unittest.TestCase):
 
     def test_every_step_is_a_whole_plugin(self):
         steps = sorted(p.name for p in EXAMPLE.iterdir() if p.is_dir())
-        self.assertEqual(steps, ["step-1", "step-2", "step-3"])
+        self.assertEqual(steps, ["step-1", "step-2", "step-3", "step-4"])
         for number, step in enumerate(steps, start=1):
             manifest = json.loads((EXAMPLE / step / "hikari-plugin.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["version"], f"0.{number}.0")

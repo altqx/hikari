@@ -1,6 +1,7 @@
 #include "hikari/application/interpolate.h"
 
 #include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/tag_lerp.h"
 #include "hikari/application/visual_script.h"
 
@@ -736,6 +737,7 @@ std::expected<void, CommandRefusal> applyPlan(EditSession &session, const Run &r
     for (const auto &[id, _] : changes)
         touched.insert(id);
     return session.run(Command{"Interpolate across Lines", session.revision(), touched, [&](core::Document &d) {
+        stampScriptResolution(d, scriptResolution(d));
         for (const auto &[id, text] : changes)
             if (!d.editLine(id, [&](core::LineRecord &l) { l.text = text; }))
                 return false;

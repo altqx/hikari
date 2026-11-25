@@ -1,8 +1,8 @@
 # Write your first plugin
 
-This guide makes a small plugin in three steps: a command, then a panel, then an edit to the subtitles. Then it shows how to run it from its folder while you work, and explains the manifest, permissions and tiers, and how to sign and publish a plugin.
+This guide makes a small plugin in four steps: a command, then a panel, then an edit to the subtitles, then AI tools. Then it shows how to run it from its folder while you work, and explains the manifest, permissions and tiers, and how to sign and publish a plugin.
 
-[Plugins](plugins.md) is the full contract, and the [Hikari API reference](api-reference.md) lists every operation and event. Each step below is a complete plugin in [`examples/first-plugin`](examples/first-plugin/), and a test runs all three.
+[Plugins](plugins.md) is the full contract, and the [Hikari API reference](api-reference.md) lists every operation and event. Each step below is a complete plugin in [`examples/first-plugin`](examples/first-plugin/), and a test runs all four.
 
 ## Before you start
 
@@ -166,6 +166,55 @@ end)
 
 Every widget that sends events needs an `id`. Each event says which widget sent it, in `event.widget`.
 
+## Step 4: AI tools
+
+The AI agent can run your commands as tools. Give each command it may run an entry in `contributes.aiTools`:
+
+```json step-4/hikari-plugin.json
+    "aiTools": [
+      {
+        "command": "count",
+        "description": "Counts the lines of the open subtitle file.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": false},
+        "result": {
+          "type": "object",
+          "properties": {"lineCount": {"type": "integer"}},
+          "required": ["lineCount"]
+        },
+        "mark": "read"
+      },
+      {
+        "command": "unbreak",
+        "description": "Joins the line breaks in the selected lines.",
+        "parameters": {"type": "object", "properties": {}, "additionalProperties": false},
+        "mark": "write"
+      }
+    ]
+```
+
+- **`command`** names a command from `contributes.commands`. The AI sees the plugin's name, then `description`.
+- **`parameters`** is a JSON Schema for what the AI passes. Its root is an object with `additionalProperties: false`, and the handler gets it as `args`.
+- **`result`**, when given, is a JSON Schema for what the handler returns. HikariSub checks the answer against it before the AI sees it.
+- **`mark`** is `read` for a tool that only reads, and `write` for one that changes something.
+
+The handler's return value is the tool's answer. `context.via` is `ai` when the AI runs it, so the count skips its toast then:
+
+```lua step-4/main.lua
+hikari.commands.register("count", function(args, context)
+    local info = hikari.call("documents.get", {})
+    if context.via ~= "ai" then
+        hikari.notify(info.title .. " has " .. info.lineCount .. " lines.")
+    end
+    return { lineCount = info.lineCount }
+end)
+```
+
+- **Asking.** Until the user turns on **Trust tool marks from First plugin** in the plugin's details, every tool counts as a change: it asks or runs by the thread's mode. After that, a `read` tool runs without asking.
+- **A read is held to it.** While a `read` tool runs, the plugin's edits, network requests, file writes and setting changes are refused with the reason `read_tool`.
+- **Your grants.** The tool runs as your plugin, with its permissions, never with more.
+
+See [AI tools and MCP servers](plugins.md#ai-tools-and-mcp-servers).
+
 ## Work on it in place
 
 Packing a zip after every change is slow. Instead, load the folder as a dev plugin:
@@ -192,7 +241,7 @@ hikarisub --test-plugin first-plugin tests.jsonl --document episode.ass
 ```
 
 - **The run.** It loads your folder as a dev plugin in a throwaway user folder, so your own settings and plugins are never touched. It gives the plugin every permission the manifest asks for, without asking, and lists them first.
-- **What a command returns** is checked with `expect`, as in `{"run": "greet", "expect": {"hello": "Ana"}}`.
+- **What a command returns** is checked with `expect`, as in `{"run": "count", "expect": {"lineCount": 2}}`. That's also what an AI tool answers.
 - **The result.** It prints a line for each failed step, with its line in `tests.jsonl`, and exits with 0 when all passed, 1 when one failed, and 2 when the tests couldn't run. `--json` prints a report for other tools instead.
 - **Prompts.** A command that asks the user gets its answer from the `answer` step before it.
 - **A stuck step.** Each step has 10 seconds, or `--timeout <ms>`.
