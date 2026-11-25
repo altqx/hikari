@@ -4563,20 +4563,24 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(manager));
         const QVariantMap values = application->styleManager().beginEdit(false, 0);
         QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
-        auto *finding = findItem(manager->contentItem(), QStringLiteral("styleFindingFonts"));
-        auto *text = findItem(manager->contentItem(), QStringLiteral("styleFindingFontsText"));
+        auto *text = findItem(manager->contentItem(), QStringLiteral("styleFindingFonts"));
         auto *done = findItem(manager->contentItem(), QStringLiteral("styleFindingFontsDone"));
         auto *line = findItem(manager->contentItem(), QStringLiteral("styleFindingFontsLine"));
-        QVERIFY(finding && text && done && line);
-        QVERIFY(!finding->isVisible());
+        auto *preview = findItem(manager->contentItem(), QStringLiteral("stylePreview"));
+        QVERIFY(text && done && line && preview);
+        QTRY_VERIFY(preview->isVisible() && preview->height() > 0);
+        QCOMPARE(text->property("text").toString(), QString());
+        QVERIFY(!line->isVisible());
+        const QPointF previewAt = preview->mapToScene(QPointF(0, 0));
 
         catalogs.refreshFonts();
-        QTRY_VERIFY(finding->isVisible());
+        QTRY_VERIFY(line->isVisible());
         QCOMPARE(text->property("text").toString(), QStringLiteral("Finding fonts"));
         QVERIFY(!done->isVisible());
         allowed = 2;
-        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("Finding fonts · reading 2 font file(s) · 40 %"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("Finding fonts · reading 2 font file(s) · 40\u00a0%"));
         QVERIFY(done->isVisible());
+        QCOMPARE(preview->mapToScene(QPointF(0, 0)), previewAt);
         QCOMPARE(done->width(), line->width() * 0.4);
         if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
             QVERIFY(QDir().mkpath(out));
@@ -4607,7 +4611,8 @@ private slots:
         QVERIFY(catalogs.scanning());
 
         allowed = 1000;
-        QTRY_VERIFY(!finding->isVisible());
+        QTRY_VERIFY(!line->isVisible());
+        QCOMPARE(text->property("text").toString(), QString());
         QVERIFY(!catalogs.scanning());
         QVERIFY(QMetaObject::invokeMethod(manager, "commit", Q_ARG(QVariant, false)));
         QCOMPARE(application->styleManager().beginEdit(false, 0).value(QStringLiteral("fontname")).toString(),

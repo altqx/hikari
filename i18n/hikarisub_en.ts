@@ -1490,13 +1490,6 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Finding fonts · reading %n font file(s) · %1 %</source>
-        <translation>
-            <numerusform>Finding fonts · reading %n font file · %1 %</numerusform>
-            <numerusform>Finding fonts · reading %n font files · %1 %</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
         <source>%n styles</source>
         <translation>
             <numerusform>%n style</numerusform>
@@ -1508,6 +1501,13 @@
         <translation>
             <numerusform>%n line uses it</numerusform>
             <numerusform>%n lines use it</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>Finding fonts · reading %n font file · %1&#xa0;%</numerusform>
+            <numerusform>Finding fonts · reading %n font files · %1&#xa0;%</numerusform>
         </translation>
     </message>
     <message numerus="yes">

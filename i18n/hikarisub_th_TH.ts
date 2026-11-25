@@ -23146,12 +23146,6 @@ because it was edited.</source>
         <source>Finding fonts</source>
         <translation>กำลังค้นหาแบบอักษร</translation>
     </message>
-    <message numerus="yes">
-        <source>Finding fonts · reading %n font file(s) · %1 %</source>
-        <translation>
-            <numerusform>กำลังค้นหาแบบอักษร · กำลังอ่านไฟล์แบบอักษร %n ไฟล์ · %1 %</numerusform>
-        </translation>
-    </message>
     <message>
         <source>No style chosen</source>
         <translation>ยังไม่ได้เลือกสไตล์</translation>
@@ -23170,6 +23164,12 @@ because it was edited.</source>
         <source>%n line(s) use it</source>
         <translation>
             <numerusform>ใช้ใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>กำลังค้นหาแบบอักษร · กำลังอ่านไฟล์แบบอักษร %n ไฟล์ · %1&#xa0;%</numerusform>
         </translation>
     </message>
     <message>
