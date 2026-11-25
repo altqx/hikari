@@ -18312,6 +18312,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>업데이트 자동 설치</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1에서 온 도구 표시 신뢰</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>읽기만 하는 도구는 그 후 묻지 않고 실행됩니다. 그 전까지는 추가한 모든 도구가 변경처럼 먼저 묻습니다.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>시작되지 않았습니다.</translation>
     </message>

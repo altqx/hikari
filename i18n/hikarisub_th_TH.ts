@@ -18312,6 +18312,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ติดตั้งอัปเดตโดยอัตโนมัติ</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>เชื่อถือเครื่องหมายเครื่องมือจาก %1</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>จากนั้นเครื่องมือของปลั๊กอินที่อ่านอย่างเดียวจะทำงานโดยไม่ต้องถาม ก่อนหน้านั้น เครื่องมือทุกตัวที่ปลั๊กอินเพิ่มจะถามก่อน เหมือนการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>ไม่ได้เริ่มทำงาน</translation>
     </message>

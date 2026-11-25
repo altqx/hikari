@@ -18451,6 +18451,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>புதுப்பிப்புகளைத் தானாக நிறுவு</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1 இலிருந்து வரும் கருவிக் குறிகளை நம்பு</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>படிக்க மட்டும் செய்யும் அதன் கருவிகள் அதன் பிறகு கேட்காமல் இயங்கும். அதுவரை அது சேர்க்கும் ஒவ்வொரு கருவியும் ஒரு மாற்றத்தைப் போலவே முதலில் கேட்கும்.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>அது தொடங்கவில்லை.</translation>
     </message>

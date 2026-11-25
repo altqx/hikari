@@ -18590,6 +18590,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Instaluj aktualizacje automatycznie</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>Ufaj oznaczeniom narzędzi od %1</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>Jej narzędzia, które tylko odczytują, działają wtedy bez pytania. Do tego czasu każde dodane przez nią narzędzie najpierw pyta, tak jak zmiana.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>Nie uruchomiła się.</translation>
     </message>

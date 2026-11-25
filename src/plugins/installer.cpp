@@ -359,6 +359,7 @@ std::expected<void, std::string> Installer::install(const InstallReview &review,
         entry.installed = old.installed;
         entry.enabled = old.enabled || old.revoked.has_value();
         entry.autoUpdate = old.autoUpdate;
+        entry.trustToolMarks = old.trustToolMarks;
         entry.skip = old.skip == manifest.version ? std::string() : old.skip;
         entry.previous = otherVersion ? old.version : old.previous;
         entry.held = compareVersions(old.held, manifest.version) > 0 ? old.held : std::string();

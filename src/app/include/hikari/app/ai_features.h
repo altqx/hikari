@@ -4,6 +4,7 @@
 #include "hikari/backends/ai_agent_broker.h"
 #include "hikari/backends/ai_agent_cli.h"
 #include "hikari/backends/ai_mcp_clients.h"
+#include "hikari/backends/ai_plugin_tools.h"
 #include "hikari/backends/ai_sidecar_updater.h"
 
 #include <QDateTime>
@@ -181,6 +182,10 @@ public:
     void setPluginMcpServers(std::vector<backends::ai::McpServerEntry> servers);
     void setPluginMcpStart(backends::ai::McpClients::PluginStart start);
     const std::vector<backends::ai::McpServerEntry> &pluginMcpServers() const { return m_pluginMcpServers; }
+    /// The AI tools of the plugins that run, and how one runs; kept across AI being switched off and on.
+    void setPluginTools(std::vector<backends::ai::PluginToolEntry> tools);
+    void setPluginToolRun(backends::ai::PluginTools::Run run);
+    const std::vector<backends::ai::PluginToolEntry> &pluginTools() const { return m_pluginTools; }
     /// Forgets the choices about the servers of plugins no longer installed.
     void keepPluginMcpChoices(const std::set<std::string> &installed);
     /// The servers the user added, then the plugin servers the user turned on, with their trust and approvals.
@@ -237,6 +242,8 @@ signals:
 private:
     std::vector<backends::ai::McpServerEntry> m_pluginMcpServers;
     backends::ai::McpClients::PluginStart m_pluginMcpStart;
+    std::vector<backends::ai::PluginToolEntry> m_pluginTools;
+    backends::ai::PluginTools::Run m_pluginToolRun;
     std::function<std::optional<std::string>(const std::string &, const std::string &)> m_projectKeys;
     std::function<QStringList()> m_projectRoots;
     QStringList m_refusedInProjects;

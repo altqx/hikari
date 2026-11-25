@@ -1775,6 +1775,63 @@ end)
         return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
     }
 
+    void aReadAiToolReadsButCantChangeAnythingAndItsHandlerAnswers()
+    {
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        const QString id = QStringLiteral("com.example.words");
+        const QString folder = folders().plugins + QStringLiteral("/") + id;
+        write(folder + QStringLiteral("/hikari-plugin.json"), R"({"id": "com.example.words", "name": "Words",
+            "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"], "contributes": {
+            "commands": [{"id": "count", "title": "Count"}],
+            "settings": [{"id": "seen", "title": "Seen", "type": "integer", "default": 0}],
+            "aiTools": [{"command": "count", "description": "Counts the lines", "mark": "read",
+                "parameters": {"type": "object", "properties": {"line": {"type": "integer"}}, "additionalProperties": false}}]}})");
+        write(folder + QStringLiteral("/main.lua"), R"~(
+hikari.commands.register("count", function(args, context)
+    local listed = hikari.call("lines.list", {fields = {"text"}})
+    local _, refused = hikari.call("document.apply", {revision = 0, edits = {}})
+    local kept, why = pcall(hikari.settings.set, "seen", 1)
+    return {lines = #listed.lines, line = args.line, via = context.via, code = refused and refused.code or "none",
+            reason = refused and refused.data and refused.data.reason, settingKept = kept, settingWhy = why}
+end)
+)~");
+        m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")},
+                                     {QStringLiteral("enabled"), true},
+                                     {QStringLiteral("trustToolMarks"), true}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const auto tools = runtime.aiTools();
+        QCOMPARE(tools.size(), std::size_t(1));
+        QCOMPARE(tools[0].name, backends::ai::pluginToolName("com.example.words", "count"));
+        QCOMPARE(tools[0].pluginName, std::string("Words"));
+        QVERIFY(tools[0].readOnly());
+
+        std::optional<std::expected<api::Json, api::Error>> answer;
+        runtime.runAiTool(tools[0], *api::Json::parse(R"({"line": 2})"), [&](auto result) { answer = std::move(result); });
+        QTRY_VERIFY(answer.has_value());
+        QVERIFY2(answer->has_value(), answer->has_value() ? "" : answer->error().message.c_str());
+        const api::Json &result = **answer;
+        QCOMPARE(result.find("lines")->asInt(), 2);
+        QCOMPARE(result.find("line")->asInt(), 2);
+        QCOMPARE(result.find("via")->asString(), std::string("ai"));
+        QCOMPARE(result.find("code")->asString(), std::string("refused"));
+        QCOMPARE(result.find("reason")->asString(), std::string("read_tool"));
+        QVERIFY(!result.find("settingKept")->asBool());
+        QVERIFY(result.find("settingWhy")->asString().find("read AI tool") != std::string::npos);
+
+        backends::ai::PluginToolEntry untrusted = tools[0];
+        untrusted.trusted = false;
+        answer.reset();
+        runtime.runAiTool(untrusted, api::Json::object(), [&](auto result) { answer = std::move(result); });
+        QTRY_VERIFY(answer.has_value());
+        QVERIFY(answer->has_value());
+        QVERIFY((**answer).find("settingKept")->asBool());
+        QVERIFY((**answer).find("code")->asString() != "refused");
+    }
+
     void providersAnswerInInstallOrderWithoutItemsThatBreakTheContract()
     {
         const auto install = [&](const QString &id, const QString &name, const QJsonObject &providers, const char *lua) {

@@ -199,7 +199,7 @@ hikarisub --test-plugin first-plugin tests.jsonl --document episode.ass
 
 [The test harness](plugins.md#developer-tools) lists every step.
 
-**In your CI.** The harness needs no display, so it runs on any Linux or Windows runner with HikariSub installed. On Linux, run the command as above, from the AppImage or the installed package. On Windows, install it silently with `/S`, which installs it for the current user. `hikarisub.exe` is a windowed program, so pipe its output to let PowerShell wait for it and keep what it prints:
+**In your CI.** The harness needs no display, so it runs on any Linux or Windows runner with HikariSub installed. On Linux, run the command as above, from the AppImage or the installed package. On Windows, install it silently for the current user with `/S /CURRENTUSER`. `hikarisub.exe` is a windowed program, so pipe its output to let PowerShell wait for it and keep what it prints:
 
 ```powershell
 & "$env:LOCALAPPDATA\Programs\HikariSub\hikarisub.exe" --test-plugin first-plugin tests.jsonl --document episode.ass | Write-Output
