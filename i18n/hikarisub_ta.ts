@@ -22938,7 +22938,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>பாணியைச் சேமி</translation>
+        <translation type="vanished">பாணியைச் சேமி</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -23195,7 +23195,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n வரி</numerusform>
             <numerusform>%1, %n வரிகள்</numerusform>
         </translation>
@@ -23282,7 +23282,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>கோப்பில் சேர்</translation>
+        <translation type="vanished">கோப்பில் சேர்</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23290,7 +23290,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>பட்டியலில் சேர்</translation>
+        <translation type="vanished">பட்டியலில் சேர்</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23432,11 +23432,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>முன்னோட்ட உரை</translation>
+        <translation type="vanished">முன்னோட்ட உரை</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>இந்தக் கோப்பில் பாணிகள் இல்லை. + மூலம் ஒன்றை உருவாக்கவும் அல்லது பட்டியலிலிருந்து நகலெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>பட்டியலுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>இந்தக் கோப்புக்கு நகலெடு</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23453,6 +23465,44 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>பாணி எதுவும் தேர்ந்தெடுக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>பட்டியலிலிருந்து…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n பாணி</numerusform>
+            <numerusform>%n பாணிகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>%n வரி இதைப் பயன்படுத்துகிறது</numerusform>
+            <numerusform>%n வரிகள் இதைப் பயன்படுத்துகின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>பாணியைத் திரும்பப்பெறு</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>உரை மாதிரி</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>எழுத்துரு நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>எழுத்துரு நிறுவப்படவில்லை: %1 இல் காட்டப்படுகிறது</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23556,7 +23606,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>திரும்பப்பெறு</translation>
+        <translation type="vanished">திரும்பப்பெறு</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23631,11 +23681,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>பாணி</translation>
+        <translation type="vanished">பாணி</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>வரிகள்</translation>
+        <translation type="vanished">வரிகள்</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23651,7 +23701,14 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>வரிகள்: %1</translation>
+        <translation type="vanished">வரிகள்: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23659,7 +23716,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>தற்போதைய வரியின் பாணி</translation>
+        <translation type="vanished">தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>

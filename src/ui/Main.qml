@@ -11069,6 +11069,7 @@ ApplicationWindow {
             colourPicker: root.colourPicker
             app: root.app
             notices: root.notices
+            lineStyle: root.editor.style
         }
     }
     Loader {
