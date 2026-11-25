@@ -8730,6 +8730,80 @@ private slots:
                  qPrintable(QStringLiteral("%1 < %2").arg(place.height()).arg(minimum.height())));
     }
 
+    void timingLayoutPutsAudioAcrossAThirdOfTheHeight_data()
+    {
+        QTest::addColumn<QSize>("size");
+        QTest::newRow("1280x800") << QSize(1280, 800);
+        QTest::newRow("1366x768") << QSize(1366, 768);
+    }
+
+    void timingLayoutPutsAudioAcrossAThirdOfTheHeight()
+    {
+        QFETCH(QSize, size);
+        window->resize(size);
+        QTRY_COMPARE(window->size(), size);
+        QObject *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->workspaceLayout().applyPreset(QStringLiteral("Timing")));
+        QVERIFY(application->workspaceLayout().resetCurrentLayout());
+        QVERIFY(QQuickTest::qWaitForPolish(window));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        const auto place = [&](const char *dock) { return docking->placeInLayout(item<QObject>(dock)->property("uniqueName").toString()); };
+        QQuickItem *area = item("dockingArea");
+        QTRY_VERIFY(!item<QObject>("videoDock")->property("isOpen").toBool());
+        const auto describe = [&] {
+            return QStringLiteral("area %1x%2; audio %3; editor %4; grid %5")
+                .arg(area->width()).arg(area->height())
+                .arg(QDebug::toString(place("audioDock")), QDebug::toString(place("editorDock")), QDebug::toString(place("gridDock")));
+        };
+        const auto arranged = [&] {
+            const QRect audio = place("audioDock");
+            const QRect editor = place("editorDock");
+            const QRect grid = place("gridDock");
+            return audio.width() >= qFloor(area->width()) - 1 && editor.width() == audio.width()
+                && qAbs(audio.height() - area->height() * 0.36) <= 12 && editor.top() > audio.bottom()
+                && editor.height() >= 170 && grid.top() > editor.bottom();
+        };
+        QTRY_VERIFY2(arranged(), qPrintable(describe()));
+        const auto postprocessorShown = [&] {
+            QVariant result;
+            QMetaObject::invokeMethod(root, "panelShown", Q_RETURN_ARG(QVariant, result),
+                                      Q_ARG(QVariant, QVariant::fromValue(item<QObject>("postprocessorDock"))));
+            return result.toBool();
+        };
+        QTRY_VERIFY2(postprocessorShown(), qPrintable(root->property("sideBarsJson").toString()));
+    }
+
+    void timingLayoutScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        QObject *root = engine->rootObjects().first();
+        QTRY_VERIFY(root->property("sideBarsLoaded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "resetSideBars"));
+        QVERIFY(application->openFile(episode));
+        for (const QSize size : {QSize(1280, 800), QSize(1366, 768)}) {
+            window->resize(size);
+            QTRY_COMPARE(window->size(), size);
+            QVERIFY(application->workspaceLayout().applyPreset(QStringLiteral("Timing")));
+            QVERIFY(application->workspaceLayout().resetCurrentLayout());
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/timing-%1x%2-").arg(size.width()).arg(size.height())
+                                                  + ui::theme::codeName(code) + QStringLiteral(".png")));
+            }
+        }
+    }
+
     void everyArrangementFitsTheDockingArea_data()
     {
         QTest::addColumn<QString>("arrangement");
@@ -15858,7 +15932,12 @@ private slots:
                  (QStringList{QStringLiteral("leadIn"), QStringLiteral("leadOut")}));
         QVERIFY(item("postprocessorPreviewStatus")->property("text").toString().startsWith(
             QStringLiteral("Changes %1 of %2 line(s)").arg(lines).arg(lines)));
-        QCOMPARE(item("postprocessorApply")->property("text").toString(), QStringLiteral("Apply to %1 line(s)").arg(lines));
+        QCOMPARE(item("postprocessorChangeCount")->property("text").toString(), QStringLiteral("%1 line(s) change").arg(lines));
+        QCOMPARE(item("postprocessorApply")->property("text").toString(), QStringLiteral("Apply"));
+        QVERIFY(QMetaObject::invokeMethod(item("postprocessorShowChanges"), "click"));
+        QTRY_VERIFY(item("postprocessorPreview")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("postprocessorBack"), "click"));
+        QTRY_VERIFY(!item("postprocessorPreview")->isVisible());
         const auto steps = session->historySize();
         QVERIFY(QMetaObject::invokeMethod(item("postprocessorApply"), "click"));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -20557,7 +20636,7 @@ private slots:
                  QStringLiteral("Copied. Paste it into the agent’s settings."));
 
         QVERIFY(QMetaObject::invokeMethod(http, "click"));
-        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("press OK or Apply")));
+        QTRY_VERIFY(dialogItem("settingsDialog", "aiMcpJsonNote")->property("text").toString().contains(QStringLiteral("once HikariSub listens")));
         QTRY_VERIFY(mcp->server()->httpPort() != 0);
         const quint16 port = mcp->server()->httpPort();
         QTRY_COMPARE(http->property("text").toString(), QStringLiteral("Also listen on http://127.0.0.1:%1").arg(port));

@@ -50,6 +50,7 @@ private slots:
         QVERIFY(!starts(Args{"--version"}));
         QVERIFY(!starts(Args{"--export-docs", "out"}));
         QVERIFY(!starts(Args{"--export-docs=out"}));
+        QVERIFY(!starts(Args{"--test-plugin", "my-plugin", "tests.jsonl"}));
         QVERIFY(!starts(Args{"--hikari-apply-update", "1.0.0", "setup.exe", "42", "1"}));
     }
 };

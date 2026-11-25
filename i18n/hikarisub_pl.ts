@@ -15854,7 +15854,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
+        <translation type="vanished">Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16904,7 +16904,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
+        <translation type="vanished">Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -17256,7 +17256,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
+        <translation type="vanished">Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17587,10 +17587,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
     </message>
@@ -17725,6 +17721,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>Konfiguracja JSON wymaga adresu, który pojawi się, gdy HikariSub zacznie nasłuchiwać na 127.0.0.1.</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -19083,6 +19083,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 stopped: %2</source>
         <translation>%1 zatrzymał się: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>Zapisz kopię jako wtyczkę motywu…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>Wybierz, gdzie zapisać wtyczkę motywu</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 (kopia)</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>Nie można zapisać wtyczki motywu w %1.</translation>
     </message>
 </context>
 <context>
@@ -26065,8 +26082,8 @@ Usunięte style:
         <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>Wstecz</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -26144,13 +26161,29 @@ Usunięte style:
         <source>Open keyframes…</source>
         <translation>Otwórz klatki kluczowe…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n linijka się zmieni</numerusform>
+            <numerusform>%n linijki się zmienią</numerusform>
+            <numerusform>%n linijek się zmieni</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>Pokaż zmiany</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>kl.</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Zmiany</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>Asystent timingu</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>

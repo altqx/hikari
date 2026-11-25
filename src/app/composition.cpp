@@ -6,6 +6,7 @@
 #include "hikari/app/crash_record.h"
 #include "hikari/app/hang_watchdog.h"
 #include "hikari/app/launcher.h"
+#include "hikari/app/plugin_test_harness.h"
 #include "hikari/app/local_only_network.h"
 #include "hikari/app/plugin_marketplace.h"
 #include "hikari/app/qt_workarounds.h"
@@ -504,6 +505,14 @@ int run(int argc, char **argv, StartupMode mode, const std::function<void()> &wi
             return 1;
         }
         return 0;
+    }
+    if (startup.testPlugin) {
+        qputenv("QT_QPA_PLATFORM", "offscreen");
+        QGuiApplication app(argc, argv);
+        QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
+        QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
+        QGuiApplication::setApplicationVersion(QStringLiteral(HIKARI_VERSION));
+        return runPluginTests(*startup.testPlugin, stdout);
     }
 #ifdef _WIN32
     if (update_apply::setupRunning()) {

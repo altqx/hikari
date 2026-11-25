@@ -1238,15 +1238,6 @@ Item {
             }
         }
 
-        Label {
-            objectName: "aiApplyToTurnOn"
-            visible: !page.stagedOff && !!page.ai && !page.ai.on
-            text: qsTr("Press OK or Apply to turn AI back on.")
-            color: Theme.muted
-            wrapMode: Text.Wrap
-            Layout.fillWidth: true
-        }
-
         SettingsSection {
             objectName: "aiProviders"
             visible: page.live
@@ -2378,7 +2369,7 @@ Item {
             Note {
                 objectName: "aiMcpJsonNote"
                 visible: mcpSection.serverOn && !mcpSection.setup.json
-                text: mcpSection.httpOn ? qsTr("The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.")
+                text: mcpSection.httpOn ? qsTr("The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.")
                                         : qsTr("The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.")
             }
             SettingsRow {
@@ -2889,7 +2880,6 @@ Item {
                     text: qsTr("before and after each line")
                 }
             }
-            Note { text: qsTr("Actions save at once. The other settings here save with OK or Apply.") }
         }
 
         SettingsSection {

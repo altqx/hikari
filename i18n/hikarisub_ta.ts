@@ -15726,7 +15726,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>முதலில் பயன்படுத்து அல்லது ரத்துசெய் அழுத்தவும்: இறக்குமதி உடனே சேர்க்கப்படும்</translation>
+        <translation type="vanished">முதலில் பயன்படுத்து அல்லது ரத்துசெய் அழுத்தவும்: இறக்குமதி உடனே சேர்க்கப்படும்</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16768,7 +16768,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>AI ஐ மீண்டும் இயக்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+        <translation type="vanished">AI ஐ மீண்டும் இயக்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -17119,7 +17119,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
+        <translation type="vanished">JSON அமைப்புக்கு முகவரி தேவை: 127.0.0.1 இல் கேட்கத் தொடங்க சரி அல்லது பயன்படுத்து என்பதை அழுத்தவும்.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17449,10 +17449,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>கோரிக்கைகள் நீங்கள் சேர்க்கும் வழங்குநர்களுக்கும் %1-க்கும் மட்டுமே செல்லும். AI கூறு தனிமைப்படுத்தப்பட்ட சூழலில் இயங்குகிறது, மேலும் HikariSub வழியாக மட்டுமே பிணையத்தை அடைகிறது.</translation>
     </message>
@@ -17586,6 +17582,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>JSON அமைப்புக்கு முகவரி தேவை; HikariSub 127.0.0.1 இல் கேட்கத் தொடங்கியதும் அது கிடைக்கும்.</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -18943,6 +18943,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 stopped: %2</source>
         <translation>%1 நின்றது: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>கருப்பொருள் செருகுநிரலாக ஒரு நகலைச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>கருப்பொருள் செருகுநிரலைச் சேமிக்கும் இடத்தைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 நகல்</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>கருப்பொருள் செருகுநிரலை %1 இல் எழுத முடியவில்லை.</translation>
     </message>
 </context>
 <context>
@@ -25840,8 +25857,8 @@ Styles deleted:
         <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>பின்செல்</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -25919,13 +25936,28 @@ Styles deleted:
         <source>Open keyframes…</source>
         <translation>கீஃப்ரேம்களைத் திற…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n வரி மாறும்</numerusform>
+            <numerusform>%n வரிகள் மாறும்</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>மாற்றங்களைக் காட்டு</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>கீஃப்</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>மாற்றங்கள்</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>நேர உதவியாளர்</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
