@@ -1037,6 +1037,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_ai->keepPluginMcpChoices(*installed);
         m_ai->setPluginMcpServers(m_pluginRuntime->mcpServers());
     });
+    m_ai->setPluginToolRun([runtime = QPointer(m_pluginRuntime.get())](const backends::ai::PluginToolEntry &tool,
+                                                                         const api::Json &arguments,
+                                                                         backends::ai::PluginTools::Answer answer) {
+        if (!runtime)
+            return answer(std::unexpected(api::Error{std::string(api::errors::kUnavailable), "HikariSub is closing.", {}}));
+        runtime->runAiTool(tool, arguments, std::move(answer));
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::aiToolsChanged, m_ai.get(),
+            [this] { m_ai->setPluginTools(m_pluginRuntime->aiTools()); });
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
     QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
@@ -2302,6 +2311,7 @@ void Application::makeTemplateEditor(WindowViews &v, int shellWindow)
     });
     editor->setTemplater(&m_automation->templater());
     editor->setHostState([this] { return m_automation->hostState(); });
+    v.editor->addBeforeHistoryMove([editor] { editor->commit(); });
     connect(v.media->video.get(), &ui::VideoController::changed, editor, [this, editor] {
         if (!activeMedia().video->playing())
             editor->hostChanged();
@@ -2351,6 +2361,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
             showVideoSubtitles();
     });
     effects->shareTrustWith(v.templateEditor.get());
+    v.editor->addBeforeHistoryMove([effects] { effects->commit(); });
     effects->setLuaNodes([this] { return &luaNodes(); });
     effects->setGlyphs([this] { return &glyphOutlines(); });
     effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
@@ -2720,6 +2731,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     emit encodingSuggestionChanged();
+    emit attachmentsChanged();
     noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());

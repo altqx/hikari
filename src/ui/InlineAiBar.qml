@@ -15,7 +15,11 @@ ColumnLayout {
     readonly property var results: controller ? controller.results : []
     readonly property bool running: !!progress.running
     readonly property bool noticed: !running && !!notice.end
-    visible: !!controller && controller.on && (running || noticed)
+    readonly property bool warns: (notice.failed || []).length > 0 || (notice.review || []).length > 0
+                                  || notice.end === "noModel"
+    property bool translationShownElsewhere: false
+    readonly property bool shownHere: !(translationShownElsewhere && progress.action === "translate")
+    visible: !!controller && controller.on && (running || noticed) && shownHere
 
     function money(dollars) {
         return "$" + Number(dollars).toLocaleString(Qt.locale(), "f", dollars < 0.1 ? 3 : 2)
@@ -119,8 +123,7 @@ ColumnLayout {
         objectName: "inlineAiNotice"
         visible: bar.noticed
         Layout.fillWidth: true
-        severity: (bar.notice.failed || []).length > 0 || (bar.notice.review || []).length > 0
-                  || bar.notice.end === "noModel" ? "warning" : "info"
+        severity: bar.warns ? "warning" : "info"
         text: bar.noticeText(bar.notice)
         onClosed: bar.controller.dismiss()
         Button {

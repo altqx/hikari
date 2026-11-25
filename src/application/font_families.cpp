@@ -109,9 +109,20 @@ FontFamilies::FontFamilies(FontServicePort &fonts, FontNameLower lower, FontList
 {
 }
 
+std::vector<SystemFace> FontFamilies::pickerFaces() const
+{
+    if (!m_systemFaces || !m_environment.systemFonts)
+        return m_fonts.pickerFaces(m_environment);
+    FontEnvironment externalOnly = m_environment;
+    externalOnly.systemFonts = false;
+    std::vector<SystemFace> faces = *m_systemFaces;
+    std::ranges::move(m_fonts.pickerFaces(externalOnly), std::back_inserter(faces));
+    return faces;
+}
+
 void FontFamilies::enumerate()
 {
-    const std::vector<SystemFace> faces = m_fonts.pickerFaces(m_environment);
+    const std::vector<SystemFace> faces = pickerFaces();
     boost::dynamic_bitset<> covers;
     if (m_filtered)
         covers = m_fonts.facesCover(faces, m_environment, filterCharacters(m_filter, m_platform));
@@ -233,10 +244,15 @@ int catalogListPartialIndex(const std::vector<u16> &fonts, u16v partial, const F
 
 PickerResolution pickerResolution(const FontReport &report)
 {
+    return pickerResolution(report, 0);
+}
+
+PickerResolution pickerResolution(const FontReport &report, std::size_t at)
+{
     PickerResolution r;
-    if (report.requests.empty())
+    if (at >= report.requests.size())
         return r;
-    const RequestReport &request = report.requests.front();
+    const RequestReport &request = report.requests[at];
     const ResolvedFace *base = nullptr;
     for (const std::size_t i : request.faces)
         if (i < report.faces.size() && report.faces[i].code == 0) {
@@ -255,6 +271,12 @@ PickerResolution pickerResolution(const FontReport &report)
     r.emboldened = base->emboldened;
     r.italicized = base->italicized;
     return r;
+}
+
+FamilyCheck familyCheck(const PickerResolution &resolution)
+{
+    using K = PickerResolution::Kind;
+    return {resolution.kind == K::Requested, resolution.kind == K::Missing ? std::string() : resolution.family};
 }
 
 ExternalFontsLoad loadExternalFonts(u16v path, const FontNameLower &lower, FontListPlatform platform)

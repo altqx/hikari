@@ -68,6 +68,8 @@ export const Method = {
     mcpServersSet: "_hikari/mcpServers.set",
     mcpServerStatus: "_hikari/mcpServers.status",
     mcpAdmit: "_hikari/mcpServers.admit",
+    pluginToolsSet: "_hikari/pluginTools.set",
+    pluginToolsCall: "_hikari/pluginTools.call",
     taskCapabilities: "_hikari/task.capabilities",
     taskRequest: "_hikari/task.request",
     taskStatus: "_hikari/task.status",
@@ -452,6 +454,30 @@ export interface McpServerStatusParams {
     state: "connecting" | "ready" | "failed";
     tools?: number;
     error?: string;
+}
+
+/** A plugin's AI tool as Qt lists it; `readOnly` only when the user trusts the plugin's marks and it reads. */
+export interface PluginToolConfig {
+    name: string;
+    description: string;
+    inputSchema: Record<string, unknown>;
+    readOnly: boolean;
+}
+
+export interface PluginToolsSetParams {
+    tools: PluginToolConfig[];
+}
+
+/** Qt checks the arguments, gates the call for the session, runs it as the plugin and answers its return value. */
+export interface PluginToolsCallParams {
+    /** Absent for HikariSub's MCP server, which may call only read-only tools. */
+    sessionId?: string;
+    tool: string;
+    arguments: Record<string, unknown>;
+}
+
+export interface PluginToolsCallResult {
+    result: unknown;
 }
 
 /** Asks Qt to let a session call one MCP tool once, with these arguments; Qt refuses with `hikariApi` `refused`. */

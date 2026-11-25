@@ -259,6 +259,7 @@ private slots:
         QVERIFY(application->showPreview());
         auto *grid = qobject_cast<ui::LineGrid *>(item("referenceGrid"));
         QVERIFY(grid);
+        QVERIFY(grid->mutedNumberAndStart());
         QTRY_COMPARE(grid->model()->rowCount(), 5);
         const QModelIndex first = grid->model()->index(0, 0);
         QVERIFY(first.data(ui::LineTableModel::CommentRole).toBool());
@@ -385,7 +386,8 @@ private slots:
         click(item("referencePreviousMatch"));
         QCOMPARE(referenceRow(), 0);
         QCOMPARE(status(), QStringLiteral("Match 1 of 2"));
-        QCOMPARE(accessibleName("referenceLinked"), QStringLiteral("Follow the editing line"));
+        QCOMPARE(accessibleName("referenceNavigation"), QStringLiteral("Reference navigation"));
+        QCOMPARE(accessibleName("referenceLinked"), QStringLiteral("Linked"));
         QCOMPARE(accessibleName("referencePreviousMatch"), QStringLiteral("Previous match"));
         QCOMPARE(accessibleName("referenceNextMatch"), QStringLiteral("Next match"));
         QCOMPARE(accessibleName("referenceMatchStatus"), QStringLiteral("Match 1 of 2"));
@@ -397,7 +399,8 @@ private slots:
         QVERIFY(application->openReference(ref));
         QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
         QVERIFY(!shell().referenceLinked());
-        QCOMPARE(status(), QStringLiteral("Independent navigation"));
+        QVERIFY(item("referenceIndependent")->property("checked").toBool());
+        QCOMPARE(status(), QString());
         QCOMPARE(referenceRow(), 0);
         const auto target = *application->workspace().editingTarget();
         clickRow("editingGrid", 1);
@@ -423,7 +426,7 @@ private slots:
         QCOMPARE(shell().referenceMatchCount(), 1);
         clickRow("editingGrid", 0);
         QCOMPARE(referenceRow(), 0);
-        click(item("referenceLinked"));
+        click(item("referenceIndependent"));
         QVERIFY(!shell().referenceLinked());
         clickRow("editingGrid", 1);
         QCOMPARE(referenceRow(), 0);

@@ -20,6 +20,7 @@
 #include <QRegularExpression>
 
 #include <algorithm>
+#include <utility>
 
 namespace hikari::app {
 
@@ -98,6 +99,7 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
       m_catalogs(kLower), m_project(kLower), m_visible(kLower), m_service(std::make_shared<backends::LibassFontService>()),
       m_families(std::make_unique<application::FontFamilies>(*m_service, kLower))
 {
+    m_families->setSystemFaces(m_systemFaces);
     const ui::ListFile::Report report{m_hooks.fileConverted, m_hooks.fileProblem, m_hooks.fileReplaced};
     const auto convert = [](const std::filesystem::path &legacy) -> std::optional<toml::array> {
         if (const auto catalogs = ui::readLegacyFontCatalogs(legacy))
@@ -145,6 +147,9 @@ FontCatalogsController::~FontCatalogsController()
     if (m_windowMade || m_unsaved)
         save();
     stopResolver();
+    m_scanStop = true;
+    if (m_scanner.joinable())
+        m_scanner.join();
 }
 
 void FontCatalogsController::stopResolver()
@@ -153,6 +158,7 @@ void FontCatalogsController::stopResolver()
         std::lock_guard lock(m_resolveMutex);
         m_resolverStop = true;
         m_resolveJob.reset();
+        m_checkJob.reset();
     }
     m_resolveWake.notify_all();
     if (m_resolver.joinable())
@@ -165,9 +171,80 @@ void FontCatalogsController::setFontService(std::unique_ptr<application::FontSer
     m_service = std::shared_ptr<application::FontServicePort>(std::move(service));
     m_families = std::make_unique<application::FontFamilies>(*m_service, kLower);
     m_families->setEnvironment(std::move(environment));
+    m_systemFaces = std::make_shared<const std::vector<application::SystemFace>>();
+    m_families->setSystemFaces(m_systemFaces);
+    m_scanned = false;
+    ++m_scanSerial;
+    m_scanAgain = m_scanning;
     m_windowFamilies.clear();
     watchFolders();
     emit fontsChanged();
+}
+
+void FontCatalogsController::startScan(bool reread)
+{
+    if (m_scanning) {
+        m_scanAgain = true;
+        return;
+    }
+    if (m_scanner.joinable())
+        m_scanner.join();
+    m_scanning = true;
+    m_scanFiles = 0;
+    m_scanPercent = -1;
+    emit scanChanged();
+    const int serial = ++m_scanSerial;
+    m_scanner = std::thread([this, serial, reread, service = m_service] {
+        if (reread)
+            service->refresh();
+        auto faces = std::make_shared<std::vector<application::SystemFace>>(
+            service->listSystemFaces([this, serial](std::size_t files, int percent) {
+                if (m_scanStop)
+                    return false;
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, serial, files, percent] {
+                        if (serial != m_scanSerial)
+                            return;
+                        m_scanFiles = int(files);
+                        m_scanPercent = percent;
+                        emit scanChanged();
+                    },
+                    Qt::QueuedConnection);
+                return true;
+            }));
+        QMetaObject::invokeMethod(
+            this, [this, serial, faces] { scanned(serial, std::move(*faces)); }, Qt::QueuedConnection);
+    });
+}
+
+void FontCatalogsController::scanned(int serial, std::vector<application::SystemFace> faces)
+{
+    m_scanning = false;
+    const bool current = serial == m_scanSerial;
+    if (current) {
+        m_scanned = true;
+        m_systemFaces = std::make_shared<const std::vector<application::SystemFace>>(std::move(faces));
+        m_families->setSystemFaces(m_systemFaces);
+        m_families->enumerate();
+        m_windowFamilies.clear();
+        watchFolders();
+    }
+    if (std::exchange(m_scanAgain, false))
+        startScan(true);
+    else
+        emit scanChanged();
+    if (current)
+        emit fontsChanged();
+}
+
+bool FontCatalogsController::waitScanned(int ms)
+{
+    QElapsedTimer t;
+    t.start();
+    while (m_scanning && t.elapsed() < ms)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    return !m_scanning;
 }
 
 void FontCatalogsController::ensureLoaded()
@@ -368,6 +445,8 @@ QStringList FontCatalogsController::fontList(int selection, const QString &value
 
 application::FontFamilies &FontCatalogsController::familiesFor(int shellWindow)
 {
+    if (!m_scanned && !m_scanning)
+        startScan(false);
     auto project = shellWindow >= 0 && m_hooks.projectFonts ? m_hooks.projectFonts(shellWindow)
                                                             : std::vector<application::FontLease>();
     if (project.empty()) {
@@ -387,6 +466,7 @@ application::FontFamilies &FontCatalogsController::familiesFor(int shellWindow)
         environment.externalFonts = std::move(fonts);
         window.families = std::make_unique<application::FontFamilies>(*m_service, kLower);
         window.families->setEnvironment(std::move(environment));
+        window.families->setSystemFaces(m_systemFaces);
         window.projectFonts = std::move(bytes);
     }
     return *window.families;
@@ -870,7 +950,6 @@ void FontCatalogsController::loadExternalFonts()
 
 void FontCatalogsController::relist()
 {
-    m_service->refresh();
     application::FontEnvironment environment = m_families->environment();
     environment.generation = ++m_generation;
     m_families->setEnvironment(std::move(environment));
@@ -878,6 +957,7 @@ void FontCatalogsController::relist()
     m_windowFamilies.clear();
     watchFolders();
     emit fontsChanged();
+    startScan(true);
 }
 
 void FontCatalogsController::refreshFonts()
@@ -896,7 +976,12 @@ void FontCatalogsController::watchFolders()
     const QString external = m_settings.text("fonts.externalDirectory");
     if (!external.isEmpty() && QFileInfo(external).isDir())
         folders << external;
-    const QStringList watched = m_watcher.directories();
+    QStringList watched = m_watcher.directories();
+    folders.removeDuplicates();
+    folders.sort();
+    watched.sort();
+    if (watched == folders)
+        return;
     if (!watched.isEmpty())
         m_watcher.removePaths(watched);
     if (!folders.isEmpty())
@@ -915,36 +1000,95 @@ void FontCatalogsController::settingChanged(const QString &id)
 int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts,
                                           const QString &text)
 {
-    application::FontEnvironment environment = m_families->environment();
-    if (documentFonts && m_hooks.documentFonts)
-        for (auto &font : m_hooks.documentFonts())
-            environment.attachments.push_back({std::move(font.family), std::move(font.bytes)});
+    application::FontEnvironment environment = documentEnvironment(documentFonts);
     const int request = ++m_resolveRequest;
     {
         std::lock_guard lock(m_resolveMutex);
         m_resolveJob = ResolveJob{request, m_service, std::move(environment),
-                                  application::FontRequest{family.toStdString(), bold, italic,
-                                                           (text.trimmed().isEmpty() ? defaultPreviewText() : text).toStdString()}};
+                                  {application::FontRequest{family.toStdString(), bold, italic,
+                                                            (text.trimmed().isEmpty() ? defaultPreviewText() : text).toStdString()}}};
     }
+    wakeResolver();
+    return request;
+}
+
+int FontCatalogsController::checkFamilies(const QStringList &families)
+{
+    const int request = ++m_checkRequest;
+    std::vector<application::FontRequest> wants;
+    const std::string text = defaultPreviewText().toStdString();
+    for (const QString &family : families)
+        wants.push_back({family.toStdString(), false, false, text});
+    {
+        std::lock_guard lock(m_resolveMutex);
+        m_checkJob = ResolveJob{request, m_service, documentEnvironment(true), std::move(wants)};
+    }
+    wakeResolver();
+    return request;
+}
+
+void FontCatalogsController::wakeResolver()
+{
     m_resolveWake.notify_one();
     if (!m_resolver.joinable())
         m_resolver = std::thread([this] { resolverLoop(); });
-    return request;
+}
+
+application::FontEnvironment FontCatalogsController::documentEnvironment(bool documentFonts) const
+{
+    application::FontEnvironment environment = m_families->environment();
+    if (documentFonts && m_hooks.documentFonts)
+        for (auto &font : m_hooks.documentFonts())
+            environment.attachments.push_back({std::move(font.family), std::move(font.bytes)});
+    return environment;
+}
+
+namespace {
+
+QVariantMap checkedFamilies(const std::vector<application::FontRequest> &wants,
+                            const std::expected<application::FontReport, application::FontError> &report)
+{
+    QVariantMap byFamily;
+    if (!report)
+        return byFamily;
+    for (std::size_t i = 0; i < wants.size(); ++i) {
+        const auto check = application::familyCheck(application::pickerResolution(*report, i));
+        byFamily[QString::fromStdString(wants[i].family)] = QVariantMap{
+            {QStringLiteral("installed"), check.installed},
+            {QStringLiteral("shownIn"), QString::fromStdString(check.shownIn)},
+        };
+    }
+    return byFamily;
+}
+
 }
 
 void FontCatalogsController::resolverLoop()
 {
     for (;;) {
         ResolveJob job;
+        bool check = false;
         {
             std::unique_lock lock(m_resolveMutex);
-            m_resolveWake.wait(lock, [this] { return m_resolverStop || m_resolveJob.has_value(); });
+            m_resolveWake.wait(lock, [this] {
+                return m_resolverStop || m_resolveJob.has_value() || m_checkJob.has_value();
+            });
             if (m_resolverStop)
                 return;
-            job = std::move(*m_resolveJob);
-            m_resolveJob.reset();
+            check = !m_resolveJob.has_value();
+            auto &slot = check ? m_checkJob : m_resolveJob;
+            job = std::move(*slot);
+            slot.reset();
         }
-        const auto report = job.service->resolve(job.environment, {job.want});
+        const auto report = job.service->resolve(job.environment, job.wants);
+        if (check) {
+            const int request = job.request;
+            const QVariantMap byFamily = checkedFamilies(job.wants, report);
+            // MUST KILL: captures this; safe only because the destructor joins this thread.
+            QMetaObject::invokeMethod(
+                this, [this, request, byFamily] { emit familiesChecked(request, byFamily); }, Qt::QueuedConnection);
+            continue;
+        }
         QVariantMap result;
         if (report) {
             const auto r = application::pickerResolution(*report);

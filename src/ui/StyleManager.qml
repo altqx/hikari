@@ -43,6 +43,13 @@ DialogWindow {
     property bool ownChange: false
     property bool awaitingSwitch: false
     readonly property string filterText: filterField.text.trim().toLowerCase()
+    property string lineStyle: ""
+    readonly property string sampleText: catalogs.samplePlain(catalogs.previewText, true)
+    readonly property StyleFontCheck fonts: StyleFontCheck {
+        catalogs: manager.catalogs
+        families: manager.shown() ? manager.storeRows.concat(manager.assRows).map(r => r.font)
+                                    .concat(manager.editing ? [fontField.text] : []) : []
+    }
 
     function showFor(styleName) {
         const go = () => {
@@ -131,8 +138,9 @@ DialogWindow {
             return
         const problem = own(() => styles.commitEdit(v, [], false, false))
         if (problem !== "") {
-            styles.endEdit()
-            showError(qsTr("New style"), problem)
+            beginEditing(v, false)
+            pendingNew = true
+            commitProblem = problem
             return
         }
         editDocumentStyle(rowNamed(false, styleName))
@@ -479,9 +487,9 @@ DialogWindow {
             done(results)
         })
     }
-    function copyToFile(all) {
+    function copyToFile(all) { copyRowsToFile(all, storeSelected) }
+    function copyRowsToFile(all, rows) {
         guard(() => {
-            const rows = storeSelected
             reviewClashes(styles.transferClashes(false, rows), rows.length, qsTr("this file"), choices => {
                 if (all)
                     manager.own(() => styles.addToAllDocuments(rows, choices))
@@ -594,6 +602,7 @@ DialogWindow {
         if (map.name === undefined)
             return
         pendingNew = false
+        commitProblem = ""
         editingStore = store
         values = map
         mixed = mixedKeys
@@ -611,6 +620,7 @@ DialogWindow {
         updatePreview()
     }
     function endEditing() {
+        commitProblem = ""
         editing = false
         pendingNew = false
         mixed = []
@@ -619,6 +629,7 @@ DialogWindow {
     }
     function isMixed(key) { return mixed.indexOf(key) >= 0 }
     function edited(key) {
+        commitProblem = ""
         if (isMixed(key)) {
             mixed = mixed.filter(k => k !== key)
             resolved = resolved.concat([key])
@@ -667,6 +678,7 @@ DialogWindow {
             endEditing()
             return
         }
+        commitProblem = ""
         mixed = openedMixed
         resolved = []
         editor.load(values)
@@ -705,6 +717,8 @@ DialogWindow {
                                     : qsTr("This file already has a style named “%1”.").arg(name)
         return ""
     }
+    property string commitProblem: ""
+    readonly property string fieldProblem: nameProblem !== "" ? nameProblem : commitProblem
     readonly property int editedLines: !editingStore && editedRows.length === 1 && editedRows[0] < assRows.length
                                        ? assRows[editedRows[0]].lines : 0
     function commit(close) {
@@ -713,7 +727,7 @@ DialogWindow {
                 accept()
             return true
         }
-        if (nameProblem !== "")
+        if (fieldProblem !== "")
             return false
         if (!dirty) {
             if (close)
@@ -725,7 +739,7 @@ DialogWindow {
         const v = editor.values()
         const problem = commitValues(v)
         if (problem !== "") {
-            showError(qsTr("Save style"), problem)
+            commitProblem = problem
             return false
         }
         reloadRows()
@@ -856,6 +870,30 @@ DialogWindow {
         onActivated: manager.cycleRegions(-1)
     }
 
+    component FieldProblem: RowLayout {
+        id: problemRow
+        property string text
+        property color color
+        visible: text.length > 0
+        spacing: 4
+        Layout.fillWidth: true
+        Icon {
+            iconRole: "notice-warning"
+            size: 14
+            color: problemRow.color
+            Layout.alignment: Qt.AlignTop
+        }
+        Label {
+            text: problemRow.text
+            textFormat: Text.PlainText
+            color: problemRow.color
+            font: manager.fontAt(12)
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+            Accessible.role: Accessible.AlertMessage
+            Accessible.name: text
+        }
+    }
     component SectionTitle: Label {
         font: manager.fontAt(13, Font.DemiBold)
         Layout.columnSpan: 4
@@ -1061,7 +1099,7 @@ DialogWindow {
                 const r = rows[i]
                 if (i < m.count) {
                     const o = m.get(i)
-                    for (const k of ["row", "name", "primary", "outline", "lines", "pending"])
+                    for (const k of ["row", "name", "font", "size", "bold", "italic", "primary", "outline", "lines", "pending"])
                         if (o[k] !== r[k])
                             m.setProperty(i, k, r[k])
                 } else {
@@ -1130,82 +1168,45 @@ DialogWindow {
             }
             event.accepted = true
         }
-        delegate: Rectangle {
+        delegate: StyleRow {
             id: rowItem
             required property int index
             required property int row
-            required property string name
-            required property string primary
-            required property string outline
-            required property int lines
-            required property bool pending
-            readonly property bool chosen: pending || list.selected.indexOf(row) >= 0
+            required property string font
+            required name
+            required size
+            required bold
+            required italic
+            required primary
+            required outline
+            required lines
+            required pending
+            objectName: (list.store ? "storeRow" : "assRow") + index
+            namePrefix: list.store ? "store" : "ass"
+            nameIndex: index
             width: list.width
-            height: 24
-            color: chosen ? Theme.select : rowMouse.containsMouse ? Theme.raised : "transparent"
-            Accessible.role: Accessible.ListItem
-            Accessible.name: lines > 0 ? qsTr("%1, %n line(s)", "", lines).arg(name) : name
-            Accessible.selected: chosen
-            Rectangle {
-                visible: rowItem.chosen
-                width: 3
-                height: parent.height
+            family: font
+            sampleText: manager.sampleText
+            counted: !list.store
+            linesTrailing: true
+            chosen: pending || list.selected.indexOf(row) >= 0
+            marked: !list.store && name === manager.lineStyle
+            focused: list.activeFocus && list.currentIndex === index
+            fontMissing: manager.fonts.missing(font)
+            shownIn: manager.fonts.shownIn(font)
+            trailing: Rectangle {
+                objectName: "styleUnapplied"
+                visible: manager.dirty && manager.editingStore === list.store && rowItem.chosen
+                implicitWidth: 6
+                implicitHeight: 6
+                radius: 3
                 color: Theme.accent
-            }
-            Rectangle {
-                visible: list.activeFocus && list.currentIndex === rowItem.index
-                anchors.fill: parent
-                color: "transparent"
-                border.color: Theme.focus
-            }
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                spacing: 8
-                Rectangle {
-                    implicitWidth: 14
-                    implicitHeight: 14
-                    color: rowItem.primary
-                    border.color: rowItem.outline
-                    border.width: 3
-                    radius: 2
-                    Rectangle {
-                        anchors.fill: parent
-                        color: "transparent"
-                        border.color: Theme.control
-                        opacity: 0.6
-                        radius: 2
-                    }
-                }
-                Label {
-                    text: rowItem.name
-                    font.italic: rowItem.pending
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-                Rectangle {
-                    objectName: "styleUnapplied"
-                    visible: manager.dirty && manager.editingStore === list.store && rowItem.chosen
-                    implicitWidth: 6
-                    implicitHeight: 6
-                    radius: 3
-                    color: Theme.accent
-                    ToolTip.visible: unappliedMouse.containsMouse
-                    ToolTip.text: qsTr("Changes not applied")
-                    MouseArea { id: unappliedMouse; anchors.fill: parent; anchors.margins: -4; hoverEnabled: true }
-                }
-                Label {
-                    visible: !list.store && !rowItem.pending
-                    text: rowItem.lines
-                    color: rowItem.lines > 0 ? Theme.muted : Theme.disabled
-                    font: manager.fontAt(12)
-                }
+                ToolTip.visible: unappliedMouse.containsMouse
+                ToolTip.text: qsTr("Changes not applied")
+                MouseArea { id: unappliedMouse; anchors.fill: parent; anchors.margins: -4; hoverEnabled: true }
             }
             MouseArea {
-                id: rowMouse
                 anchors.fill: parent
-                hoverEnabled: true
                 onClicked: mouse => {
                     list.forceActiveFocus()
                     if (!rowItem.pending)
@@ -1311,11 +1312,11 @@ DialogWindow {
         Layout.fillHeight: true
         Rectangle {
             objectName: "styleSidebar"
-            readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24,
+            readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24, Math.ceil(assHeader.implicitWidth) + 24,
                                                        Math.ceil(catalogLine.implicitWidth - catalogBox.implicitWidth
                                                                  + catalogBox.Layout.minimumWidth) + 24)
             color: Theme.background
-            Layout.preferredWidth: Math.max(narrowest, Math.min(300, body.width - 1 - editorScroll.narrowest
+            Layout.preferredWidth: Math.max(narrowest, Math.min(340, body.width - 1 - editorScroll.narrowest
                                                                          - (editorScroll.width - editorScroll.availableWidth)))
             Layout.minimumWidth: narrowest
             Layout.fillHeight: true
@@ -1344,13 +1345,90 @@ DialogWindow {
                     }
                 }
                 RowLayout {
+                    id: assHeader
+                    spacing: 4
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("This file")
+                        font: manager.fontAt(13, Font.DemiBold)
+                        Layout.rightMargin: 8
+                    }
+                    ListTools { objectName: "assCommands"; store: false; enabled: manager.styles.available; Layout.fillWidth: true }
+                }
+                Frame {
+                    padding: 1
+                    enabled: manager.styles.available
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.preferredHeight: 0
+                    Layout.minimumHeight: 80
+                    background: Rectangle { color: "transparent"; border.color: Theme.line; radius: Theme.radius }
+                    StyleList {
+                        id: assList
+                        objectName: "assStyles"
+                        store: false
+                        anchors.fill: parent
+                    }
+                    Label {
+                        objectName: "assStylesEmpty"
+                        visible: !manager.styles.available || (manager.assRows.length === 0 && assList.count === 0)
+                        anchors.centerIn: parent
+                        width: parent.width - 24
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        color: Theme.muted
+                        text: !manager.styles.available ? qsTr("This document has no ASS styles.")
+                            : qsTr("No styles in this file. Make one with + or copy one from the catalogue.")
+                    }
+                }
+                RowLayout {
+                    id: copyRow
+                    spacing: 4
+                    Layout.fillWidth: true
+                    IconTextButton {
+                        objectName: "addToStore"
+                        flat: true
+                        iconRole: "move-down"
+                        text: qsTr("Copy to catalogue")
+                        tip: qsTr("Copy the selected file styles into the catalogue")
+                        font: manager.fontAt(12)
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
+                        Layout.minimumWidth: leftPadding + icon.width + rightPadding
+                        enabled: manager.assSelected.length > 0 && !manager.styles.catalogReadOnly
+                        onClicked: manager.copyToCatalog()
+                    }
+                    IconTextButton {
+                        objectName: "addToAss"
+                        flat: true
+                        iconRole: "move-up"
+                        text: qsTr("Copy to this file")
+                        tip: qsTr("Copy the selected catalogue styles into this file")
+                        font: manager.fontAt(12)
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
+                        Layout.minimumWidth: leftPadding + icon.width + rightPadding
+                        enabled: manager.storeSelected.length > 0 && manager.styles.available
+                        onClicked: manager.copyToFile(false)
+                    }
+                    Item { Layout.fillWidth: true }
+                    IconToolButton {
+                        objectName: "addToAllAss"
+                        iconRole: "copy-to-all-ass"
+                        text: qsTr("Add to all open files")
+                        tip: qsTr("Copy the selected catalogue styles into every open file")
+                        enabled: manager.storeSelected.length > 0
+                        onClicked: manager.copyToFile(true)
+                    }
+                }
+                RowLayout {
                     id: catalogLine
                     spacing: 4
-                    Layout.topMargin: 6
+                    Layout.topMargin: 8
                     Label {
                         text: qsTr("Catalogue")
                         font: manager.fontAt(13, Font.DemiBold)
-                        Layout.rightMargin: 6
+                        Layout.rightMargin: 8
                     }
                     ComboBox {
                         id: catalogBox
@@ -1504,72 +1582,12 @@ DialogWindow {
                     Layout.fillHeight: true
                     Layout.preferredHeight: 0
                     Layout.minimumHeight: 80
-                    background: Rectangle { color: Theme.field; border.color: Theme.line }
+                    background: Rectangle { color: "transparent"; border.color: Theme.line; radius: Theme.radius }
                     StyleList {
                         id: storeList
                         objectName: "storeStyles"
                         store: true
                         anchors.fill: parent
-                    }
-                }
-                Flow {
-                    id: copyRow
-                    spacing: 6
-                    Layout.fillWidth: true
-                    Layout.topMargin: 2
-                    IconTextButton {
-                        objectName: "addToAss"
-                        iconRole: "copy-to-ass"
-                        text: qsTr("Add to file")
-                        tip: qsTr("Copy the selected catalogue styles into this file")
-                        enabled: manager.storeSelected.length > 0 && manager.styles.available
-                        onClicked: manager.copyToFile(false)
-                    }
-                    IconTextButton {
-                        objectName: "addToStore"
-                        iconRole: "copy-to-storage"
-                        text: qsTr("Add to catalogue")
-                        tip: qsTr("Copy the selected file styles into the catalogue")
-                        enabled: manager.assSelected.length > 0 && !manager.styles.catalogReadOnly
-                        onClicked: manager.copyToCatalog()
-                    }
-                    IconToolButton {
-                        objectName: "addToAllAss"
-                        iconRole: "copy-to-all-ass"
-                        text: qsTr("Add to all open files")
-                        tip: qsTr("Copy the selected catalogue styles into every open file")
-                        enabled: manager.storeSelected.length > 0
-                        onClicked: manager.copyToFile(true)
-                    }
-                }
-                Label {
-                    text: qsTr("This file")
-                    font: manager.fontAt(13, Font.DemiBold)
-                    Layout.topMargin: 6
-                }
-                ListTools { objectName: "assCommands"; store: false; enabled: manager.styles.available; Layout.fillWidth: true }
-                Frame {
-                    padding: 1
-                    enabled: manager.styles.available
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    Layout.preferredHeight: 0
-                    Layout.minimumHeight: 80
-                    background: Rectangle { color: Theme.field; border.color: Theme.line }
-                    StyleList {
-                        id: assList
-                        objectName: "assStyles"
-                        store: false
-                        anchors.fill: parent
-                    }
-                    Label {
-                        visible: !manager.styles.available
-                        anchors.centerIn: parent
-                        width: parent.width - 24
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.Wrap
-                        color: Theme.muted
-                        text: qsTr("This document has no ASS styles.")
                     }
                 }
             }
@@ -1581,24 +1599,130 @@ DialogWindow {
         }
         ColumnLayout {
             spacing: 0
-            enabled: manager.editing
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.preferredWidth: 680
             Layout.minimumWidth: 420
             ColumnLayout {
-                spacing: 6
+                objectName: "styleNoneChosen"
+                visible: !manager.editing
+                spacing: 8
+                Layout.alignment: Qt.AlignCenter
+                Layout.fillHeight: true
+                Item { Layout.fillHeight: true }
+                Icon {
+                    iconRole: "styles"
+                    size: 32
+                    color: Theme.muted
+                    Layout.alignment: Qt.AlignHCenter
+                }
+                Label {
+                    text: qsTr("No style chosen")
+                    color: Theme.muted
+                    Layout.alignment: Qt.AlignHCenter
+                }
+                RowLayout {
+                    spacing: 8
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: 4
+                    Button {
+                        objectName: "styleNoneNew"
+                        text: qsTr("New style")
+                        onClicked: manager.startNew(!manager.styles.available, false)
+                    }
+                    Button {
+                        id: fromCatalogButton
+                        objectName: "styleNoneFromCatalog"
+                        flat: true
+                        text: qsTr("From the catalogue…")
+                        enabled: manager.styles.available && manager.storeRows.length > 0
+                        onClicked: chooseFromCatalog.openFor(fromCatalogButton, manager.storeRows.map(r => r.name), [],
+                                                             { actionText: qsTr("Copy to this file") })
+                    }
+                }
+                Item { Layout.fillHeight: true }
+            }
+            ColumnLayout {
+                visible: manager.editing
+                spacing: 8
                 Layout.fillWidth: true
                 Layout.margins: 24
                 Layout.topMargin: 12
                 Layout.bottomMargin: 12
+                Item {
+                    readonly property int percent: manager.catalogs.scanPercent
+                    Layout.fillWidth: true
+                    implicitHeight: header.implicitHeight
+                    implicitWidth: header.implicitWidth
+                RowLayout {
+                    id: header
+                    objectName: "styleEditorHeader"
+                    spacing: 8
+                    anchors.fill: parent
+                    Label {
+                        objectName: "styleEditorTitle"
+                        text: manager.multi ? qsTr("%n styles", "", manager.editedRows.length)
+                            : manager.pendingNew ? (nameField.text || qsTr("New style")) : (manager.values.name ?? "")
+                        textFormat: Text.PlainText
+                        font: manager.fontAt(13, Font.DemiBold)
+                        elide: Text.ElideRight
+                        Layout.preferredWidth: implicitWidth
+                        Layout.minimumWidth: 40
+                    }
+                    Label {
+                        objectName: "styleEditorLines"
+                        visible: !manager.editingStore && !manager.pendingNew && !manager.multi
+                        text: qsTr("%n line(s) use it", "", manager.editedLines)
+                        color: Theme.muted
+                        font: manager.fontAt(12)
+                    }
+                    Label {
+                        objectName: "styleFindingFonts"
+                        text: !manager.catalogs.scanning ? ""
+                            : header.parent.percent < 0 ? qsTr("Finding fonts")
+                            : qsTr("Finding fonts · reading %n font file(s) · %1 %", "", manager.catalogs.scanFiles)
+                                  .arg(header.parent.percent)
+                        color: Theme.muted
+                        font: manager.fontAt(12)
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignRight
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 0
+                    }
+                    IconTextButton {
+                        objectName: "styleEditorRevert"
+                        flat: true
+                        iconRole: "undo"
+                        text: qsTr("Revert style")
+                        enabled: manager.dirty
+                        onClicked: manager.revert()
+                    }
+                }
+                Rectangle {
+                    objectName: "styleFindingFontsLine"
+                    visible: manager.catalogs.scanning
+                    color: Theme.highContrast ? Theme.line : Theme.raised
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.bottom
+                    anchors.topMargin: 3
+                    height: 2
+                    Rectangle {
+                        objectName: "styleFindingFontsDone"
+                        visible: parent.parent.percent >= 0
+                        color: Theme.accent
+                        height: parent.height
+                        width: parent.width * Math.max(0, parent.parent.percent) / 100
+                    }
+                }
+                }
                 Image {
                     id: preview
                     objectName: "stylePreview"
                     Layout.fillWidth: true
                     // Image ignores the provider's pixel ratio, so the layout sets its size in window units.
                     Layout.preferredWidth: manager.styles.previewScale > 1 ? implicitWidth / manager.styles.previewScale : -1
-                    Layout.preferredHeight: 84
+                    Layout.preferredHeight: 116
                     cache: false
                     source: manager.editing ? "image://stylepreview/" + manager.styles.previewKey : ""
                     onWidthChanged: manager.updatePreview()
@@ -1606,6 +1730,7 @@ DialogWindow {
                         anchors.fill: parent
                         color: "transparent"
                         border.color: Theme.line
+                        radius: Theme.popupRadius
                     }
                     Label {
                         objectName: "stylePreviewNote"
@@ -1622,33 +1747,16 @@ DialogWindow {
                         text: qsTr("%n styles: the preview shows %1", "", manager.editedRows.length).arg(manager.values.name || "")
                     }
                 }
-                TextField {
-                    id: previewText
-                    objectName: "stylePreviewText"
-                    text: manager.catalogs.previewText
-                    Accessible.name: qsTr("Preview text")
-                    leftPadding: 28
-                    Layout.fillWidth: true
-                    onTextChanged: manager.updatePreview()
-                    onEditingFinished: manager.catalogs.setPreviewText(text)
-                    Keys.onReturnPressed: manager.catalogs.setPreviewText(text)
-                    Keys.onEnterPressed: manager.catalogs.setPreviewText(text)
-                    Icon {
-                        iconRole: "edit"
-                        color: Theme.muted
-                        anchors.left: parent.left
-                        anchors.leftMargin: 7
-                        anchors.verticalCenter: parent.verticalCenter
-                    }
-                }
             }
             Rectangle {
+                visible: manager.editing
                 color: Theme.line
                 implicitHeight: 1
                 Layout.fillWidth: true
             }
             ScrollView {
                 id: editorScroll
+                visible: manager.editing
                 objectName: "styleEditorScroll"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -1726,35 +1834,46 @@ DialogWindow {
                         return v
                     }
 
-                    SectionTitle { text: qsTr("Name"); Layout.topMargin: 16 }
+                    FieldLabel { text: qsTr("Name"); Layout.columnSpan: 3; Layout.topMargin: 12 }
+                    FieldLabel { text: qsTr("Text sample"); Layout.topMargin: 12 }
                     TextField {
                         id: nameField
                         objectName: "styleName"
-                        Layout.columnSpan: 4
+                        Layout.columnSpan: 3
                         Layout.fillWidth: true
                         enabled: !manager.multi
                         placeholderText: manager.multi ? qsTr("Multiple values") : ""
                         font.italic: manager.multi
                         Accessible.name: qsTr("Name")
+                        Accessible.description: manager.fieldProblem
                         validator: RegularExpressionValidator { regularExpression: /[^,]*/ } // ASS Style lines are comma-separated
                         onTextEdited: manager.edited("name")
                         Rectangle {
-                            visible: manager.nameProblem !== ""
+                            visible: manager.fieldProblem !== ""
                             anchors.fill: parent
                             color: "transparent"
                             border.color: Theme.danger
-                            border.width: 2
-                            radius: 2
+                            border.width: 1
+                            radius: Theme.radius
                         }
                     }
-                    Label {
-                        objectName: "styleNameProblem"
-                        visible: manager.nameProblem !== ""
-                        text: manager.nameProblem
-                        color: Theme.danger
-                        wrapMode: Text.Wrap
-                        Layout.columnSpan: 4
+                    TextField {
+                        id: previewText
+                        objectName: "stylePreviewText"
+                        text: manager.catalogs.previewText
+                        Accessible.name: qsTr("Text sample")
                         Layout.fillWidth: true
+                        Layout.preferredWidth: 60
+                        onTextChanged: manager.updatePreview()
+                        onEditingFinished: manager.catalogs.setPreviewText(text)
+                        Keys.onReturnPressed: manager.catalogs.setPreviewText(text)
+                        Keys.onEnterPressed: manager.catalogs.setPreviewText(text)
+                    }
+                    FieldProblem {
+                        objectName: "styleNameProblem"
+                        text: manager.fieldProblem
+                        color: Theme.danger
+                        Layout.columnSpan: 4
                     }
                     CheckBox {
                         id: renameBox
@@ -1768,14 +1887,15 @@ DialogWindow {
                     }
 
                     SectionTitle { text: qsTr("Font") }
-                    FieldLabel { text: qsTr("Family"); key: "fontname"; Layout.columnSpan: 3 }
+                    FieldLabel { text: qsTr("Family"); key: "fontname"; Layout.columnSpan: 2 }
                     FieldLabel { text: qsTr("Size"); key: "fontsize" }
+                    FieldLabel { text: qsTr("Emphasis"); keys: ["bold", "italic", "underline", "strikeOut"]; resetName: "emphasis" }
                     FontFamilyBox {
                         id: fontField
                         objectName: "styleFont"
                         rowName: "styleFontRow"
                         families: fontCatalogBar.fonts
-                        Layout.columnSpan: 3
+                        Layout.columnSpan: 2
                         Layout.fillWidth: true
                         Accessible.name: qsTr("Font")
                         font.italic: manager.isMixed("fontname")
@@ -1790,19 +1910,6 @@ DialogWindow {
                         }
                     }
                     StyleField { id: sizeField; objectName: "styleSize"; key: "fontsize"; Accessible.name: qsTr("Size") }
-                    FieldLabel { text: qsTr("Font catalogue"); Layout.columnSpan: 2 }
-                    FieldLabel { text: qsTr("Emphasis"); keys: ["bold", "italic", "underline", "strikeOut"]; resetName: "emphasis" }
-                    FieldLabel { text: qsTr("Text encoding"); key: "encoding" }
-                    FontCatalogBar {
-                        id: fontCatalogBar
-                        property bool made: false
-                        Layout.columnSpan: 2
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 120
-                        catalogs: manager.catalogs
-                        shellWindow: manager.shellWindow
-                        fontName: fontField.text
-                    }
                     Rectangle {
                         objectName: "styleEmphasis"
                         color: "transparent"
@@ -1822,20 +1929,13 @@ DialogWindow {
                             EmphasisToggle { id: strikeBox; objectName: "styleStrikeout"; key: "strikeOut"; iconRole: "tag-strikeout"; text: qsTr("Strikethrough") }
                         }
                     }
-                    ComboBox {
-                        id: encodings
-                        objectName: "styleEncoding"
-                        property string code: "1"
-                        Layout.fillWidth: true
-                        Layout.preferredWidth: 60
-                        Accessible.name: qsTr("Text encoding")
-                        displayText: currentIndex < 0 ? qsTr("Multiple values") : currentText
-                        onActivated: { code = currentText.split(" ")[0]; manager.edited("encoding") }
-                        model: [qsTr("-1 - Detect text direction (libass)"), qsTr("0 - ANSI"), qsTr("1 - Default"), qsTr("2 - Symbol"), qsTr("77 - Mac"), qsTr("128 - Japanese"),
-                                qsTr("129 - Hangul"), qsTr("130 - Johab"), qsTr("134 - Chinese GB2312"), qsTr("135 - Chinese BIG5"),
-                                qsTr("161 - Greek"), qsTr("162 - Turkish"), qsTr("163 - Vietnamese"), qsTr("177 - Hebrew"),
-                                qsTr("178 - Arabic"), qsTr("186 - Baltic"), qsTr("204 - Russian"), qsTr("222 - Thai"),
-                                qsTr("238 - Central European (Polish)"), qsTr("255 - OEM")]
+                    FieldProblem {
+                        objectName: "styleFontMissing"
+                        text: !manager.fonts.missing(fontField.text) ? ""
+                            : manager.fonts.shownIn(fontField.text).length === 0 ? qsTr("Font not installed")
+                            : qsTr("Font not installed: shown in %1").arg(manager.fonts.shownIn(fontField.text))
+                        color: Theme.warning
+                        Layout.columnSpan: 4
                     }
 
                     SectionTitle { text: qsTr("Colours and transparency") }
@@ -1971,26 +2071,45 @@ DialogWindow {
                         StyleField { id: marginRight; objectName: "styleMarginRight"; key: "marginRight"; Layout.row: 5; Layout.column: 1; Accessible.name: qsTr("Right margin") }
                         StyleField { id: marginVertical; objectName: "styleMarginVertical"; key: "marginVertical"; Layout.row: 5; Layout.column: 2; Accessible.name: qsTr("Vertical margin") }
                     }
+                    FieldLabel { text: qsTr("Text encoding"); key: "encoding"; Layout.topMargin: 16 }
+                    FieldLabel { text: qsTr("Font catalogue"); Layout.columnSpan: 3; Layout.topMargin: 16 }
+                    ComboBox {
+                        id: encodings
+                        objectName: "styleEncoding"
+                        property string code: "1"
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 60
+                        Accessible.name: qsTr("Text encoding")
+                        displayText: currentIndex < 0 ? qsTr("Multiple values") : currentText
+                        onActivated: { code = currentText.split(" ")[0]; manager.edited("encoding") }
+                        model: [qsTr("-1 - Detect text direction (libass)"), qsTr("0 - ANSI"), qsTr("1 - Default"), qsTr("2 - Symbol"), qsTr("77 - Mac"), qsTr("128 - Japanese"),
+                                qsTr("129 - Hangul"), qsTr("130 - Johab"), qsTr("134 - Chinese GB2312"), qsTr("135 - Chinese BIG5"),
+                                qsTr("161 - Greek"), qsTr("162 - Turkish"), qsTr("163 - Vietnamese"), qsTr("177 - Hebrew"),
+                                qsTr("178 - Arabic"), qsTr("186 - Baltic"), qsTr("204 - Russian"), qsTr("222 - Thai"),
+                                qsTr("238 - Central European (Polish)"), qsTr("255 - OEM")]
+                    }
+                    FontCatalogBar {
+                        id: fontCatalogBar
+                        property bool made: false
+                        Layout.columnSpan: 3
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 120
+                        catalogs: manager.catalogs
+                        shellWindow: manager.shellWindow
+                        fontName: fontField.text
+                    }
                     Item { implicitHeight: 20; Layout.columnSpan: 4 }
                 }
             }
         }
     }
 
-    leadingActions: [
-        Button {
-            objectName: "styleEditorRevert"
-            text: qsTr("Revert")
-            enabled: manager.dirty
-            onClicked: manager.revert()
-        }
-    ]
     buttons: [
         PrimaryButton {
             id: okButton
             objectName: "styleEditorOk"
             text: qsTr("OK")
-            enabled: manager.nameProblem === ""
+            enabled: manager.fieldProblem === ""
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
             onClicked: manager.commit(true)
         },
@@ -2003,7 +2122,7 @@ DialogWindow {
         Button {
             objectName: "styleEditorApply"
             text: qsTr("Apply")
-            enabled: manager.dirty && manager.nameProblem === ""
+            enabled: manager.dirty && manager.fieldProblem === ""
             DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole
             onClicked: manager.commit(false)
         }
@@ -2020,12 +2139,15 @@ DialogWindow {
         for (let i = 0; i < rows.length; ++i) {
             const r = rows[i]
             if (filter.length === 0 || r.name.toLowerCase().indexOf(filter) >= 0 || keep[i])
-                out.push({ row: i, name: r.name, primary: r.primary, outline: r.outline, lines: r.lines, pending: false })
+                out.push({ row: i, name: r.name, font: r.font, size: r.size, bold: r.bold, italic: r.italic,
+                           primary: r.primary, outline: r.outline, lines: r.lines, pending: false })
         }
         if (pending) {
             const c = colours.count > 0 ? colours.itemAt(0).colour : { r: 255, g: 255, b: 255 }
             const o = colours.count > 2 ? colours.itemAt(2).colour : { r: 0, g: 0, b: 0 }
-            out.push({ row: -1, name: pendingName, primary: Color.rgba(c.r / 255, c.g / 255, c.b / 255, 1).toString(),
+            out.push({ row: -1, name: pendingName, font: fontField.text, size: sizeField.text,
+                       bold: boldBox.checked, italic: italicBox.checked,
+                       primary: Color.rgba(c.r / 255, c.g / 255, c.b / 255, 1).toString(),
                        outline: Color.rgba(o.r / 255, o.g / 255, o.b / 255, 1).toString(), lines: 0, pending: true })
         }
         return out
@@ -2155,6 +2277,11 @@ DialogWindow {
             chooseLoaded.file = selectedFile
             chooseLoaded.openFor(anchor, manager.styles.fileStyles(selectedFile), [], { actionText: qsTr("Load") })
         }
+    }
+    ChooseStyles {
+        id: chooseFromCatalog
+        objectName: "chooseCatalogStyles"
+        onActed: names => manager.copyRowsToFile(false, names.map(n => manager.rowNamed(true, n)).filter(r => r >= 0))
     }
     ChooseStyles {
         id: chooseLoaded

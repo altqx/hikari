@@ -1063,6 +1063,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1” มีขนาด %2 MB เกิน 10 MB</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>สัญญาอนุญาตของ “%1” จำกัดการฝังลงในไฟล์อื่น</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>ไฟล์แนบจะมีขนาดรวม %1 MB เกิน 50 MB</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>ไฟล์แนบ</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>อ่าน “%1” ไม่ได้ จึงไม่ได้แนบสิ่งใด</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>ไฟล์แนบ…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>แสดงรายการฟอนต์และภาพกราฟิกที่แนบกับคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>แนบฟอนต์</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>แนบภาพกราฟิก</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>แนบต่อไปหรือไม่</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>แนบ</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>แยกออก</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>เขียน %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>มี “%1” อยู่แล้ว ต้องการแทนที่หรือไม่</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>แทนที่</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>ชื่อ</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>ประเภท</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>ขนาด</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>คำบรรยายนี้ไม่มีไฟล์แนบ</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>มีเพียงคำบรรยาย ASS ที่เก็บไฟล์แนบได้</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>ฟอนต์</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>ภาพกราฟิก</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>ฟอนต์ที่แนบไว้ใช้วาดคำบรรยายนี้และติดไปกับไฟล์ การแยกออกจะเขียนสำเนา คำบรรยายไม่เปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>แนบฟอนต์…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>แนบภาพกราฟิก…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>แยกออก…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>เอาออก</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>ปิด</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>ไฟล์ฟอนต์ (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>ทุกไฟล์ (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>ภาพกราฟิก (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>แยกออกไปยังโฟลเดอร์</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -4240,6 +4375,11 @@ Output device: %2</source>
         <translation>ตรวจการสะกดขณะพิมพ์</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>ตัวแก้ไขบรรทัด · ข้อความที่แปล</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>ตัวแก้ไขบรรทัด</translation>
     </message>
@@ -7103,6 +7243,13 @@ Failed to copy %2 fonts.</source>
         <source>No lines match the filter</source>
         <translation>ไม่มีบรรทัดที่ตรงกับตัวกรอง</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>แปลแล้ว %1 จาก %n บรรทัด</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Line group description</source>
         <translation>คำอธิบายกลุ่มบรรทัด</translation>
@@ -9329,6 +9476,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reopen with encoding…</source>
         <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>ไฟล์แนบ…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -13127,11 +13278,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not wired</source>
-        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13142,19 +13288,61 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Choose a colour</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>%n nodes selected.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Select a node to see its fields.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n %1 nodes</source>
+        <translation>
+            <numerusform>โหนด %1 %n โหนด</numerusform>
+        </translation>
+    </message>
     <message>
         <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a value to change it · Shift for fine steps</source>
+        <translation>ลากค่าเพื่อเปลี่ยน · กด Shift เพื่อปรับละเอียด</translation>
+    </message>
+    <message>
+        <source>Wired</source>
+        <translation>เชื่อมต่อแล้ว</translation>
+    </message>
+    <message>
+        <source>On line %1</source>
+        <extracomment>The Node panel&apos;s heading for the values from the last preview run on a line</extracomment>
+        <translation>บนบรรทัด %1</translation>
+    </message>
+    <message>
+        <source>from the last run · %1 a line</source>
+        <translation>จากการทำงานครั้งล่าสุด · บรรทัดละ %1</translation>
+    </message>
+    <message>
+        <source>→ %1</source>
+        <extracomment>An output&apos;s wires in the Node panel: &quot;→ fade › tags, emit › tags&quot;</extracomment>
+        <translation>→ %1</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>การเลือก</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>จัดกลุ่ม</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Values from the last run show for one node at a time.</source>
+        <translation>ค่าจากการทำงานครั้งล่าสุดจะแสดงทีละโหนด</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>ปัญหา</translation>
     </message>
     <message>
         <source>Name</source>
@@ -13165,9 +13353,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mixed</source>
+        <translation>หลายค่า</translation>
+    </message>
+    <message>
+        <source>Changed from the default</source>
+        <extracomment>Read out by screen readers for a Node panel field whose value isn&apos;t the node&apos;s default</extracomment>
+        <translation>เปลี่ยนจากค่าเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>รีเซ็ตเป็นค่าเริ่มต้น</translation>
+    </message>
+    <message>
         <source>+ graph seed %1</source>
         <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to “%1”</source>
+        <extracomment>Selects and centres the node a wired input comes from</extracomment>
+        <translation>ไปยัง “%1”</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>ค่าเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <extracomment>The axis after a point&apos;s coordinate in the Node panel</extracomment>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>y</source>
+        <translation>y</translation>
+    </message>
+    <message>
+        <source>Pick on the video</source>
+        <translation>เลือกบนวิดีโอ</translation>
     </message>
     <message>
         <source>Lua code</source>
@@ -13186,8 +13409,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>At least %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a smaller value: &quot;At least 1&quot;</extracomment>
+        <translation>อย่างน้อย %1</translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a larger value: &quot;At most 400&quot;</extracomment>
+        <translation>ไม่เกิน %1</translation>
+    </message>
+    <message>
+        <source>Between %1 and %2</source>
+        <extracomment>A refused value in the Node panel: &quot;Between 10 and 400&quot;</extracomment>
+        <translation>ระหว่าง %1 ถึง %2</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <extracomment>A unit after a number in the Node panel: pixels</extracomment>
+        <translation>px</translation>
+    </message>
+    <message>
         <source>ms</source>
+        <extracomment>The unit after a time in the Node panel: milliseconds</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a number</source>
+        <translation>ป้อนตัวเลข</translation>
+    </message>
+    <message>
+        <source>Enter X and Y as numbers</source>
+        <translation>ป้อน X และ Y เป็นตัวเลข</translation>
+    </message>
+    <message>
+        <source>Enter a colour as #RRGGBB</source>
+        <translation>ป้อนสีในรูปแบบ #RRGGBB</translation>
+    </message>
+    <message>
+        <source>Enter a name</source>
+        <translation>ป้อนชื่อ</translation>
+    </message>
+    <message>
+        <source>Use only letters, digits, _ and -</source>
+        <translation>ใช้ได้เฉพาะตัวอักษร ตัวเลข _ และ -</translation>
+    </message>
+    <message>
+        <source>Another node is called “%1”.</source>
+        <extracomment>A refused node name: “fade” is the name another node has</extracomment>
+        <translation>มีโหนดอื่นชื่อ “%1” แล้ว</translation>
     </message>
     <message>
         <source>New seed</source>
@@ -13202,20 +13471,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>to %1</source>
-        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On line %1, from the last run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13230,20 +13486,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>No values: this node didn’t run on the line.</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>Timing</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Last run %1 on line %2</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>1 line</source>
@@ -13284,8 +13532,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>จะไม่มีสิ่งใดทำงานจนกว่าคุณจะเชื่อถือโค้ด Lua ของไฟล์: เลือก ตัวอย่าง ในประกาศด้านบน</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13468,7 +13716,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;ตัวอย่าง&lt;/b&gt; · บรรทัด %1 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;ตัวอย่าง&lt;/b&gt; · บรรทัด %1 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · ไม่มีบรรทัดต้นทางที่นี่</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1ปิดอยู่จนกว่าคุณจะเชื่อถือไฟล์นี้</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · แก้ไขปัญหาเพื่อดูตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · บรรทัด %2 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -13685,6 +13953,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For selected lines</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step down</source>
+        <translation>ลดทีละขั้น</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>เพิ่มทีละขั้น</translation>
     </message>
 </context>
 <context>
@@ -18292,6 +18568,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ติดตั้งอัปเดตโดยอัตโนมัติ</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>เชื่อถือเครื่องหมายเครื่องมือจาก %1</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>จากนั้นเครื่องมือของปลั๊กอินที่อ่านอย่างเดียวจะทำงานโดยไม่ต้องถาม ก่อนหน้านั้น เครื่องมือทุกตัวที่ปลั๊กอินเพิ่มจะถามก่อน เหมือนการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>ไม่ได้เริ่มทำงาน</translation>
     </message>
@@ -19922,8 +20206,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ้างอิง</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>อ้างอิง · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>อ้างอิง: %1</translation>
+        <translation type="vanished">อ้างอิง: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -19940,6 +20228,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Follow the editing line</source>
         <translation>ติดตามบรรทัดที่กำลังแก้ไข</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>แยกอิสระ</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>เชื่อมโยง</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>การนำทางอ้างอิง</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -19960,6 +20260,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>บรรทัดอ้างอิง (ป้องกันไว้ อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>อ่านอย่างเดียว “แยกอิสระ” จะเลื่อนได้เอง ส่วน “เชื่อมโยง” จะติดตามบรรทัดที่กำลังแก้ไขตามเวลา</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -22741,7 +23045,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>บันทึกสไตล์</translation>
+        <translation type="vanished">บันทึกสไตล์</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -22995,7 +23299,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n บรรทัด</numerusform>
         </translation>
     </message>
@@ -23081,7 +23385,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>เพิ่มไปยังไฟล์</translation>
+        <translation type="vanished">เพิ่มไปยังไฟล์</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23089,7 +23393,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>เพิ่มไปยังแคตตาล็อก</translation>
+        <translation type="vanished">เพิ่มไปยังแคตตาล็อก</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23229,11 +23533,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>ข้อความตัวอย่าง</translation>
+        <translation type="vanished">ข้อความตัวอย่าง</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>ไฟล์นี้ไม่มีสไตล์ สร้างด้วย + หรือคัดลอกจากแคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>คัดลอกไปยังแคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>คัดลอกไปยังไฟล์นี้</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23250,6 +23566,52 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>ย้ายไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>Finding fonts</source>
+        <translation>กำลังค้นหาแบบอักษร</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>ยังไม่ได้เลือกสไตล์</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>จากแคตตาล็อก…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n สไตล์</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>ใช้ใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>กำลังค้นหาแบบอักษร · กำลังอ่านไฟล์แบบอักษร %n ไฟล์ · %1&#xa0;%</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>ย้อนกลับสไตล์</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>ข้อความตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>ไม่ได้ติดตั้งฟอนต์</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>ไม่ได้ติดตั้งฟอนต์: แสดงด้วย %1</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23353,7 +23715,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>ย้อนกลับ</translation>
+        <translation type="vanished">ย้อนกลับ</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23428,11 +23790,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>สไตล์</translation>
+        <translation type="vanished">สไตล์</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>บรรทัด</translation>
+        <translation type="vanished">บรรทัด</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23448,7 +23810,13 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>บรรทัด: %1</translation>
+        <translation type="vanished">บรรทัด: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23456,7 +23824,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>สไตล์ของบรรทัดปัจจุบัน</translation>
+        <translation type="vanished">สไตล์ของบรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
@@ -26574,6 +26942,19 @@ Styles deleted:
         <translation>ข้อความต้นฉบับ: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>การแปลด้วย AI</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>พิมพ์คำแปล กด %1 เพื่อวางข้อความต้นฉบับ</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>พิมพ์คำแปล</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>บรรทัดคาราโอเกะ: แท็กที่อยู่หน้าข้อความจะถูกนำไปด้วย แต่การจัดเวลาคาราโอเกะจะไม่ถูกนำไป</translation>
     </message>
@@ -26804,6 +27185,28 @@ Styles deleted:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>แสดงและบันทึกข้อความต้นฉบับและคำแปลของแต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>การแปลด้วย AI หยุดแล้ว</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>การแปลด้วย AI · %1 จาก %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>ผู้ให้บริการ…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>ปิดการแจ้งเตือน</translation>
     </message>
 </context>
 <context>
@@ -29277,8 +29680,40 @@ or codecs or a splitter may be missing</source>
         <translation>จุดสิ้นสุดการเคลื่อนตำแหน่ง</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>คลิปและภาพวาด</translation>
+        <source>Clip</source>
+        <translation>คลิป</translation>
+    </message>
+    <message>
+        <source>Target rectangle</source>
+        <translation>สี่เหลี่ยมเป้าหมาย</translation>
+    </message>
+    <message>
+        <source>Original rectangle</source>
+        <translation>สี่เหลี่ยมต้นฉบับ</translation>
+    </message>
+    <message>
+        <source>First point</source>
+        <translation>จุดแรก</translation>
+    </message>
+    <message>
+        <source>Second point</source>
+        <translation>จุดที่สอง</translation>
+    </message>
+    <message>
+        <source>Shape rectangle</source>
+        <translation>สี่เหลี่ยมของรูปร่าง</translation>
+    </message>
+    <message>
+        <source>Slider knob</source>
+        <translation>ปุ่มของแถบเลื่อน</translation>
+    </message>
+    <message>
+        <source>Slider track</source>
+        <translation>รางของแถบเลื่อน</translation>
+    </message>
+    <message>
+        <source>Helper cross</source>
+        <translation>กากบาทช่วย</translation>
     </message>
     <message>
         <source>Changed line</source>

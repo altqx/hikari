@@ -191,6 +191,7 @@ private:
         std::optional<std::u8string> text, effect, style;
         std::optional<std::int64_t> layer;
         DocumentKey document{};
+        std::optional<core::LineRecord> base;
     };
     struct Stats {
         int generated = 0;
@@ -214,6 +215,7 @@ private:
     std::optional<core::LineRecord> currentRecord() const;
     static core::LineRecord edited(core::LineRecord line, const Pending &pending);
     application::EditSession *pendingSession() const;
+    bool pendingOverwritten() const;
     void clearPreview();
     void edit(const Pending &change);
     std::map<core::LineId, std::u8string> pendingTexts() const;

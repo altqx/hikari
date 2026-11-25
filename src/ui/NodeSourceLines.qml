@@ -114,7 +114,7 @@ Pane {
                 spacing: 8
                 Label {
                     objectName: "nodePreviewTitle"
-                    text: root.controller.source === 0 ? qsTr("Preview") : qsTr("Preview on line %1").arg(root.controller.sourceNumber)
+                    text: root.controller.source === 0 || !root.controller.trusted ? qsTr("Preview") : qsTr("Preview on line %1").arg(root.controller.sourceNumber)
                     font.bold: true
                 }
                 Item {
@@ -146,7 +146,7 @@ Pane {
                 text: root.controller.source === 0 && root.controller.typesetting
                       ? qsTr("No lines to preview on. Select lines in the grid, then choose Subtitles › Typesetting graph….")
                       : root.controller.source === 0 ? qsTr("No karaoke line of this graph’s style to preview on.")
-                      : root.controller.hasLua && !root.controller.trusted ? qsTr("Nothing runs until the file’s Lua is trusted.")
+                      : root.controller.hasLua && !root.controller.trusted ? qsTr("Nothing runs until you trust the file’s Lua: choose Preview in the notice above.")
                       : root.controller.problems.length > 0 ? qsTr("No preview: the graph has problems.")
                       : qsTr("The graph writes no lines for line %1.").arg(root.controller.sourceNumber)
             }

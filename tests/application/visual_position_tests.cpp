@@ -1119,6 +1119,53 @@ TEST(VisualMoveTimes, MoveKeepsAnUntimedMoveUntimedOverRepeatedReads)
     EXPECT_FLOAT_EQ(*crossY, 30.f);
 }
 
+TEST(VisualMoveHandles, EachPointIsNamedOverThePathBetweenThem)
+{
+    TestHost host;
+    standard(host, 1);
+    host.s = std::make_unique<EditSession>(load(kScript));
+    const auto rows = ids(*host.s);
+    host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    const auto path = [&](const Overlay &o) {
+        const auto found = std::ranges::find_if(o.named, [](const NamedHandle &h) { return h.name == 2; });
+        return found == o.named.end() ? std::vector<PointF>() : found->path;
+    };
+    const auto middle = [](const std::vector<PointF> &p) { return PointF{(p[0].x + p[1].x) / 2, (p[0].y + p[1].y) / 2}; };
+
+    host.time = 1000;
+    const Overlay atStart = tool.overlay(host);
+    const auto between = path(atStart);
+    ASSERT_EQ(between.size(), 2u);
+    EXPECT_EQ(namedHandleAt(atStart, between[0]), 0);
+    EXPECT_EQ(namedHandleAt(atStart, between[1]), 1);
+    EXPECT_EQ(namedHandleAt(atStart, middle(between)), 2);
+
+    host.time = 2000;
+    const Overlay halfway = tool.overlay(host);
+    EXPECT_EQ(namedHandleAt(halfway, middle(path(halfway))), 3);
+}
+
+TEST(VisualMoveHandles, TwoPointsModeNamesNoneOfTheArrowsHandles)
+{
+    TestHost host;
+    standard(host, 1);
+    host.s = std::make_unique<EditSession>(load(kScript));
+    const auto rows = ids(*host.s);
+    host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    host.time = 1000;
+    ASSERT_FALSE(tool.overlay(host).named.empty());
+    ASSERT_TRUE(tool.setOption("twoPoints", 1, host));
+    EXPECT_TRUE(tool.overlay(host).named.empty());
+}
+
 TEST(VisualPositionValues, TypedPointWritesTheActiveLineAndMovesTheOthers)
 {
     TestHost host;
@@ -1352,6 +1399,25 @@ TEST(VisualPositionPointer, ADragShowsTheFourWayShapeUntilTheRelease)
     tool.pointer(at(Pointer::Kind::Press, 200, 200, Pointer::Button::Left, true), host);
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
     tool.pointer(at(Pointer::Kind::Release, 200, 200, Pointer::Button::Left), host);
+}
+
+TEST(VisualPositionPointer, APressAtTheCornerDragsTheLineWhileNoHelperIsShown)
+{
+    const auto pressAtTheCorner = [](VisualTool &tool) {
+        TestHost host;
+        standard(host);
+        host.tool = &tool;
+        tool.selected(host);
+        tool.reset(host);
+        tool.pointer(at(Pointer::Kind::Press, 1, 1, Pointer::Button::Left, true), host);
+        const PointerShape shape = host.pointerShape();
+        tool.pointer(at(Pointer::Kind::Release, 1, 1, Pointer::Button::Left), host);
+        return shape;
+    };
+    PositionTool position;
+    EXPECT_EQ(pressAtTheCorner(position), PointerShape::Sizing);
+    MoveTool move;
+    EXPECT_EQ(pressAtTheCorner(move), PointerShape::Sizing);
 }
 
 TEST(VisualPositionPointer, TheRectanglesEdgesAndCornersShowTheirResizeShapes)

@@ -1304,6 +1304,59 @@ TEST(VisualTransformPointer, ScaleRectanglesEdgesAndCornersShowTheirResizeShapes
     EXPECT_EQ(other.pointerShape(), PointerShape::Arrow);
 }
 
+TEST(VisualTransformPointer, ALeftDragInsideOnlyTheOriginalRectangleMovesIt)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-original-rectangle"));
+    ScaleTool tool;
+    tool.setToggled(55);
+    tool.selected(host);
+    tool.reset(host);
+    send(tool, host, "press 300 150 left");
+    send(tool, host, "move 400 200 left");
+    send(tool, host, "release 400 200 left");
+    send(tool, host, "press 50 50 right");
+    send(tool, host, "move 150 100 right");
+    send(tool, host, "release 150 100 right");
+    ASSERT_TRUE(tool.rectangleVisible());
+    ASSERT_TRUE(tool.originalRectangleVisible());
+    const auto before = tool.sizingRectangle();
+
+    send(tool, host, "press 100 75 left");
+    send(tool, host, "move 120 85 left");
+    send(tool, host, "release 120 85 left");
+
+    const auto after = tool.sizingRectangle();
+    EXPECT_EQ(after[0], before[0]);
+    EXPECT_EQ(after[1], before[1]);
+    EXPECT_GT(after[2].x, before[2].x);
+    EXPECT_GT(after[2].y, before[2].y);
+    EXPECT_FLOAT_EQ(after[3].x - after[2].x, before[3].x - before[2].x);
+}
+
+TEST(VisualTransformHandles, ScalesRectanglesAreNamedInsideAndOnTheirEdges)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-original-rectangle"));
+    ScaleTool tool;
+    tool.setToggled(55);
+    tool.selected(host);
+    tool.reset(host);
+    send(tool, host, "press 300 150 left");
+    send(tool, host, "move 400 200 left");
+    send(tool, host, "release 400 200 left");
+    send(tool, host, "press 50 50 right");
+    send(tool, host, "move 150 100 right");
+    send(tool, host, "release 150 100 right");
+    ASSERT_TRUE(tool.rectangleVisible());
+    ASSERT_TRUE(tool.originalRectangleVisible());
+    const Overlay o = tool.overlay(host);
+    EXPECT_EQ(namedHandleAt(o, {350, 175}), 3) << "Target rectangle";
+    EXPECT_EQ(namedHandleAt(o, {100, 75}), 4) << "Original rectangle";
+    EXPECT_EQ(namedHandleAt(o, {400, 175}), 3);
+    EXPECT_EQ(namedHandleAt(o, {600, 300}), std::nullopt);
+}
+
 TEST(VisualTransformPointer, RotationZDragsShowTheFourWayShape)
 {
     TestHost host;

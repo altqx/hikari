@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <charconv>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <set>
 #include <string>
@@ -145,6 +146,63 @@ std::optional<std::string> vectorClipOptionOfHotkey(std::string_view symbol)
     if (symbol == "VIDEO_VECTOR_CLIP_INVERT")
         return "invert";
     return std::nullopt;
+}
+
+namespace {
+
+float distanceToSegment(PointF p, PointF a, PointF b)
+{
+    const float dx = b.x - a.x, dy = b.y - a.y;
+    const float length2 = dx * dx + dy * dy;
+    const float t = length2 > 0 ? std::clamp(((p.x - a.x) * dx + (p.y - a.y) * dy) / length2, 0.f, 1.f) : 0.f;
+    return std::hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+}
+
+bool insidePolygon(const std::vector<PointF> &polygon, PointF p)
+{
+    bool inside = false;
+    for (std::size_t i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+        const PointF a = polygon[i], b = polygon[j];
+        if ((a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x)
+            inside = !inside;
+    }
+    return inside;
+}
+
+float distanceToHandle(const NamedHandle &handle, PointF p)
+{
+    const auto &path = handle.path;
+    if (path.size() == 1)
+        return std::hypot(p.x - path[0].x, p.y - path[0].y);
+    if (handle.filled && path.size() > 2 && insidePolygon(path, p))
+        return 0;
+    float best = std::numeric_limits<float>::infinity();
+    for (std::size_t i = 1; i < path.size(); ++i)
+        best = std::min(best, distanceToSegment(p, path[i - 1], path[i]));
+    if ((handle.closed || handle.filled) && path.size() > 2)
+        best = std::min(best, distanceToSegment(p, path.back(), path.front()));
+    return best;
+}
+
+}
+
+std::optional<int> namedHandleAt(const Overlay &overlay, PointF pos)
+{
+    std::optional<int> found;
+    bool foundDot = false;
+    float nearest = std::numeric_limits<float>::infinity();
+    for (const NamedHandle &handle : overlay.named) {
+        if (handle.path.empty())
+            continue;
+        const bool dot = handle.path.size() == 1;
+        const float distance = distanceToHandle(handle, pos);
+        if (distance > handle.reach || (foundDot && !dot) || (dot == foundDot && distance > nearest))
+            continue;
+        nearest = distance;
+        foundDot = dot;
+        found = handle.name;
+    }
+    return found;
 }
 
 bool isArrowKey(int key)

@@ -1677,6 +1677,8 @@ void AllTagsTool::drawSlider(Overlay &out, const VisualHost &host, const Slider 
     const float thumbbottom = s.bottom + 7;
     const std::uint32_t fill = 0xAA121150, border = 0xFFBB0000;
     out.polygons.push_back({{{s.left, s.top}, {s.right, s.top}, {s.right, s.bottom}, {s.left, s.bottom}}, fill, border});
+    out.named.push_back({{{s.left, s.top - 5}, {s.right, s.top - 5}, {s.right, s.bottom + 5}, {s.left, s.bottom + 5}}, 0, 2,
+                         true, true});
     const auto text = [&](const u16 &label, long left, long top, long right, long bottom, bool atBottom) {
         const auto [w, h] = host.measureLabel(label);
         const int x = static_cast<int>(left + ((right - left) - w) / 2);
@@ -1712,6 +1714,12 @@ void AllTagsTool::drawSlider(Overlay &out, const VisualHost &host, const Slider 
                             border,
                             {},
                             true});
+    out.named.push_back({{{thumbleft, s.top - 10}, {thumbright, s.top - 10}, {thumbright, s.bottom + 10},
+                          {thumbleft, s.bottom + 10}},
+                         0,
+                         1,
+                         true,
+                         true});
     if (s.onThumb)
         text(getfloat(s.thumbValue, m_floatFormat), static_cast<long>(thumbleft) - 50, static_cast<long>(thumbbottom) + 10,
              static_cast<long>(thumbright) + 50, static_cast<long>(thumbbottom) + 50, false);
@@ -1797,6 +1805,7 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
             ++outlined;
             const PointF a = toView(box->first), b = toView(box->second);
             o.overlay.polygons.push_back({{{a.x, a.y}, {b.x, a.y}, {b.x, b.y}, {a.x, b.y}}, 0, kOutline});
+            o.overlay.named.push_back({{{a.x, a.y}, {b.x, a.y}, {b.x, b.y}, {a.x, b.y}}, 4 * out.unit, 0, true});
             if (targets.size() > 1) {
                 const u16 number = ascii(std::to_string(i + 1));
                 const auto [w, h] = host.measureLabel(number);

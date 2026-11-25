@@ -507,6 +507,10 @@ QVariantList StyleManagerController::styleRows(bool store) const
         out << QVariantMap{{QStringLiteral("name"), qs(style.name)},
                            {QStringLiteral("primary"), hex(style.primary)},
                            {QStringLiteral("outline"), hex(style.outline)},
+                           {QStringLiteral("font"), qs(style.fontname)},
+                           {QStringLiteral("size"), qs(style.fontsize)},
+                           {QStringLiteral("bold"), style.bold},
+                           {QStringLiteral("italic"), style.italic},
                            {QStringLiteral("lines"), store ? -1 : used == lines.end() ? 0 : used->second}};
     }
     return out;

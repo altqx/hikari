@@ -1204,6 +1204,7 @@ Overlay DrawingTool::overlay(const VisualHost &host) const
         const PointF v4[5] = {point1, {point2.x, point1.y}, point2, {point1.x, point2.y}, point1};
         for (int i = 0; i < 4; ++i)
             out.lines.push_back({v4[i], v4[i + 1], 1.f, kShapeRectangle});
+        out.named.push_back({{v4[0], v4[1], v4[2], v4[3]}, 5 * out.unit, 2, true, true});
     }
     return out;
 }

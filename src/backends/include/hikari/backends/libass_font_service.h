@@ -13,6 +13,7 @@ public:
     resolve(const application::FontEnvironment &environment,
             const std::vector<application::FontRequest> &requests) override;
     std::vector<application::SystemFace> systemFaces() override;
+    std::vector<application::SystemFace> listSystemFaces(const application::FaceListProgress &progress) override;
     std::expected<application::FontCollection, application::FontError>
     collect(const std::vector<std::byte> &script, const application::FontEnvironment &environment,
             const std::atomic<bool> *cancel = nullptr) override;

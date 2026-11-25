@@ -1063,6 +1063,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1”의 크기는 %2MB로 10MB를 넘습니다.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>“%1”의 라이선스는 다른 파일에 포함하는 것을 제한합니다.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>첨부 파일의 합계가 %1MB로 50MB를 넘게 됩니다.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>첨부 파일</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>“%1”을(를) 읽을 수 없어 아무것도 첨부하지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>첨부 파일…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>자막에 첨부된 글꼴과 그림을 보여 줍니다</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>글꼴 첨부</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>그림 첨부</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>그래도 첨부할까요?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>첨부</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>추출</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>%1을(를) 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>“%1”이(가) 이미 있습니다. 바꿀까요?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>바꾸기</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>이름</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>유형</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>크기</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>이 자막에는 첨부 파일이 없습니다.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>첨부 파일은 ASS 자막에만 넣을 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>글꼴</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>그림</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>첨부된 글꼴은 이 자막을 그리는 데 쓰이며 파일과 함께 전달됩니다. 추출하면 사본을 쓰며 자막은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>글꼴 첨부…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>그림 첨부…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>추출…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>제거</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>닫기</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>글꼴 파일 (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>모든 파일 (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>그림 (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>폴더로 추출</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -4240,6 +4375,11 @@ Output device: %2</source>
         <translation>입력하는 동안 철자 검사</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>줄 편집기 · 번역문</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>줄 편집기</translation>
     </message>
@@ -7103,6 +7243,13 @@ Failed to copy %2 fonts.</source>
         <source>No lines match the filter</source>
         <translation>필터와 일치하는 줄 없음</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%1/%n줄 번역됨</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Line group description</source>
         <translation>줄 그룹 설명</translation>
@@ -9329,6 +9476,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Reopen with encoding…</source>
         <translation>인코딩을 지정해 다시 열기…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>첨부 파일…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -13127,11 +13278,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not wired</source>
-        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13142,19 +13288,61 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Choose a colour</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>%n nodes selected.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Select a node to see its fields.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n %1 nodes</source>
+        <translation>
+            <numerusform>%1 노드 %n개</numerusform>
+        </translation>
+    </message>
     <message>
         <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a value to change it · Shift for fine steps</source>
+        <translation>끌어서 값 바꾸기 · Shift로 미세 조정</translation>
+    </message>
+    <message>
+        <source>Wired</source>
+        <translation>연결됨</translation>
+    </message>
+    <message>
+        <source>On line %1</source>
+        <extracomment>The Node panel&apos;s heading for the values from the last preview run on a line</extracomment>
+        <translation>%1번 줄에서</translation>
+    </message>
+    <message>
+        <source>from the last run · %1 a line</source>
+        <translation>마지막 실행 기준 · 줄당 %1</translation>
+    </message>
+    <message>
+        <source>→ %1</source>
+        <extracomment>An output&apos;s wires in the Node panel: &quot;→ fade › tags, emit › tags&quot;</extracomment>
+        <translation>→ %1</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>선택 항목</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>그룹으로 묶기</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>삭제</translation>
+    </message>
+    <message>
+        <source>Values from the last run show for one node at a time.</source>
+        <translation>마지막 실행의 값은 한 번에 노드 하나씩만 표시됩니다.</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>문제</translation>
     </message>
     <message>
         <source>Name</source>
@@ -13165,9 +13353,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mixed</source>
+        <translation>혼합</translation>
+    </message>
+    <message>
+        <source>Changed from the default</source>
+        <extracomment>Read out by screen readers for a Node panel field whose value isn&apos;t the node&apos;s default</extracomment>
+        <translation>기본값에서 변경됨</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>기본값으로 재설정</translation>
+    </message>
+    <message>
         <source>+ graph seed %1</source>
         <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to “%1”</source>
+        <extracomment>Selects and centres the node a wired input comes from</extracomment>
+        <translation>“%1”(으)로 이동</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>기본값</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <extracomment>The axis after a point&apos;s coordinate in the Node panel</extracomment>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>y</source>
+        <translation>y</translation>
+    </message>
+    <message>
+        <source>Pick on the video</source>
+        <translation>영상에서 지정</translation>
     </message>
     <message>
         <source>Lua code</source>
@@ -13186,8 +13409,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>At least %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a smaller value: &quot;At least 1&quot;</extracomment>
+        <translation>%1 이상</translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a larger value: &quot;At most 400&quot;</extracomment>
+        <translation>%1 이하</translation>
+    </message>
+    <message>
+        <source>Between %1 and %2</source>
+        <extracomment>A refused value in the Node panel: &quot;Between 10 and 400&quot;</extracomment>
+        <translation>%1에서 %2 사이</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <extracomment>A unit after a number in the Node panel: pixels</extracomment>
+        <translation>px</translation>
+    </message>
+    <message>
         <source>ms</source>
+        <extracomment>The unit after a time in the Node panel: milliseconds</extracomment>
         <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>Enter a number</source>
+        <translation>숫자를 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Enter X and Y as numbers</source>
+        <translation>X와 Y를 숫자로 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Enter a colour as #RRGGBB</source>
+        <translation>색상을 #RRGGBB 형식으로 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Enter a name</source>
+        <translation>이름을 입력하십시오</translation>
+    </message>
+    <message>
+        <source>Use only letters, digits, _ and -</source>
+        <translation>문자, 숫자, _, -만 사용하십시오</translation>
+    </message>
+    <message>
+        <source>Another node is called “%1”.</source>
+        <extracomment>A refused node name: “fade” is the name another node has</extracomment>
+        <translation>이름이 “%1”인 노드가 이미 있습니다.</translation>
     </message>
     <message>
         <source>New seed</source>
@@ -13202,20 +13471,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>to %1</source>
-        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On line %1, from the last run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13232,18 +13488,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished">타이밍</translation>
+        <translation type="obsolete">타이밍</translation>
     </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Last run %1 on line %2</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>1 line</source>
@@ -13284,8 +13536,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>파일의 Lua를 신뢰할 때까지 아무것도 실행되지 않습니다. 위 알림에서 미리 보기를 선택하십시오.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13468,7 +13720,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · 여기에 원본 줄 없음</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>이 파일을 신뢰할 때까지 %1 꺼짐</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · 문제를 고치면 표시됨</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · %2번 줄 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -13685,6 +13957,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For selected lines</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step down</source>
+        <translation>한 단계 줄이기</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>한 단계 늘리기</translation>
     </message>
 </context>
 <context>
@@ -18292,6 +18572,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>업데이트 자동 설치</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1에서 온 도구 표시 신뢰</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>읽기만 하는 도구는 그 후 묻지 않고 실행됩니다. 그 전까지는 추가한 모든 도구가 변경처럼 먼저 묻습니다.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>시작되지 않았습니다.</translation>
     </message>
@@ -19922,8 +20210,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>참조</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>참조 · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>참조: %1</translation>
+        <translation type="vanished">참조: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -19940,6 +20232,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Follow the editing line</source>
         <translation>편집 중인 줄 따라가기</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>독립</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>연동</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>참조 탐색</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -19960,6 +20264,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>참조 줄(보호됨, 읽기 전용)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>읽기 전용입니다. 독립: 따로 움직입니다. 연동: 편집 중인 줄을 시간에 맞춰 따라갑니다.</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -22741,7 +23049,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>스타일 저장</translation>
+        <translation type="vanished">스타일 저장</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -22995,7 +23303,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n줄</numerusform>
         </translation>
     </message>
@@ -23081,7 +23389,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>파일에 추가</translation>
+        <translation type="vanished">파일에 추가</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23089,7 +23397,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>목록에 추가</translation>
+        <translation type="vanished">목록에 추가</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23229,11 +23537,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>미리 보기 텍스트</translation>
+        <translation type="vanished">미리 보기 텍스트</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>적용</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>이 파일에 스타일이 없습니다. +로 만들거나 목록에서 복사하세요.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>목록으로 복사</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>이 파일로 복사</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23250,6 +23570,52 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>내 항목으로 이동</translation>
+    </message>
+    <message>
+        <source>Finding fonts</source>
+        <translation>글꼴 찾는 중</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>선택한 스타일 없음</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>목록에서…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>스타일 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>%n줄에서 사용</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>글꼴 찾는 중 · 글꼴 파일 %n개 읽는 중 · %1&#xa0;%</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>스타일 원래대로</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>텍스트 견본</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>글꼴이 설치되지 않음</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>글꼴이 설치되지 않음: %1(으)로 표시</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23353,7 +23719,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>원래대로</translation>
+        <translation type="vanished">원래대로</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23428,11 +23794,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>스타일</translation>
+        <translation type="vanished">스타일</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>줄</translation>
+        <translation type="vanished">줄</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23448,7 +23814,13 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>줄: %1</translation>
+        <translation type="vanished">줄: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23456,7 +23828,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>현재 줄의 스타일</translation>
+        <translation type="vanished">현재 줄의 스타일</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
@@ -26574,6 +26946,19 @@ Styles deleted:
         <translation>원문: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>AI 번역</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>번역문을 입력하십시오. %1 키를 누르면 원문을 붙여 넣습니다.</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>번역문을 입력하십시오.</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>노래방 줄: 글자 앞의 태그는 가져오지만 노래방 타이밍은 가져오지 않습니다.</translation>
     </message>
@@ -26804,6 +27189,28 @@ Styles deleted:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>각 줄의 원문과 번역문을 표시하고 저장합니다</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>AI 번역이 중지되었습니다.</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI 번역 · %1/%n줄</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>공급자…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>세부 정보</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>닫기</translation>
     </message>
 </context>
 <context>
@@ -29277,8 +29684,40 @@ or codecs or a splitter may be missing</source>
         <translation>이동 끝점</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>클립과 도형</translation>
+        <source>Clip</source>
+        <translation>클립</translation>
+    </message>
+    <message>
+        <source>Target rectangle</source>
+        <translation>대상 사각형</translation>
+    </message>
+    <message>
+        <source>Original rectangle</source>
+        <translation>원래 사각형</translation>
+    </message>
+    <message>
+        <source>First point</source>
+        <translation>첫 번째 점</translation>
+    </message>
+    <message>
+        <source>Second point</source>
+        <translation>두 번째 점</translation>
+    </message>
+    <message>
+        <source>Shape rectangle</source>
+        <translation>도형 사각형</translation>
+    </message>
+    <message>
+        <source>Slider knob</source>
+        <translation>슬라이더 손잡이</translation>
+    </message>
+    <message>
+        <source>Slider track</source>
+        <translation>슬라이더 트랙</translation>
+    </message>
+    <message>
+        <source>Helper cross</source>
+        <translation>보조 십자선</translation>
     </message>
     <message>
         <source>Changed line</source>
