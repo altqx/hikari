@@ -11,6 +11,8 @@
 #include "desktop_guard.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/extradata.h"
+#include "hikari/application/node_graph.h"
+#include "hikari/application/typesetting_graphs.h"
 #include "hikari/application/kanji_timer.h"
 #include "hikari/core/tag_transfer.h"
 #include "hikari/core/tag_cleanup.h"
@@ -17584,6 +17586,187 @@ private slots:
         }
         QVERIFY(QMetaObject::invokeMethod(item("nodeLeave"), "clicked"));
         QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
+    }
+
+    void nodeEffectsPreviewRedrawsThePausedFrameAndUndoTakesBackAPendingEdit()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        const QString path = folder.filePath(QStringLiteral("node-preview.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n\n[Events]\nFormat: Layer, Start, "
+                    "End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,Default,,"
+                    "0,0,0,,Wafer gym\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &video = application->video().session();
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        video.seekTo(core::DocumentTime(1'500'000));
+        QTRY_VERIFY_WITH_TIMEOUT(video.shownFrame(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.lastOverlay() && !video.lastOverlay()->empty, 20000);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        const auto plain = video.lastOverlay();
+
+        auto *action = item<QObject>("nodeEffectsMenuItem")->property("action").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+        auto &effects = application->nodeEffects();
+        const auto graphs = application::typesettingGraphs();
+        const auto shake = std::ranges::find(graphs, std::string_view("shake"), &application::TypesettingGraph::id);
+        QVERIFY(effects.addTypesettingGraph(int(shake - graphs.begin())));
+        QTRY_VERIFY2(effects.videoPreview(), qPrintable(effects.previewBlocked() + QStringLiteral(" on ") +
+                                                        QString::number(effects.source())));
+        QTRY_VERIFY(item("videoNodeBadge")->isVisible());
+        QCOMPARE(effects.sourceNumber(), 2);
+        QTRY_VERIFY(item("videoNodeBadgeText")->property("text").toString().contains(QStringLiteral("no source line here")));
+        QTRY_VERIFY(video.lastOverlay()->pixels != plain->pixels);
+        effects.commit();
+        QVERIFY(!video.playing());
+
+        const auto shaken = video.lastOverlay();
+        const std::uint64_t updates = video.subtitleUpdates();
+        effects.setField(QStringLiteral("amplitude"), QStringLiteral("value"), 80);
+        QTRY_VERIFY(video.subtitleUpdates() > updates);
+        QTRY_VERIFY(video.lastOverlay()->pixels != shaken->pixels);
+        effects.commit();
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto amplitude = [&] {
+            for (const auto &g : application::documentGraphs(session->document()))
+                if (g.line.value == effects.current() && g.graph)
+                    for (const auto &n : g.graph->nodes)
+                        if (n.id == "amplitude")
+                            return application::nodeField(n, "value").asNumber();
+            return -1.0;
+        };
+        QCOMPARE(amplitude(), 80.0);
+        effects.setField(QStringLiteral("amplitude"), QStringLiteral("value"), 3);
+        QVERIFY(application->editor().undo());
+        QCOMPARE(amplitude(), 80.0);
+        QVERIFY(session->canRedo());
+        QTest::qWait(1000);
+        QCOMPARE(amplitude(), 80.0);
+
+        QVERIFY(QMetaObject::invokeMethod(item("nodeLeave"), "clicked"));
+        QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
+    }
+
+    void ne1PreviewScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const auto graphs = application::typesettingGraphs();
+        const auto graphIndex = [&](std::string_view id) {
+            return int(std::ranges::find(graphs, id, &application::TypesettingGraph::id) - graphs.begin());
+        };
+        int file = 0;
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite")}) {
+            for (const QSize size : {QSize(1366, 768), QSize(1280, 800)}) {
+                const QString tag = code + QLatin1Char('-') + QString::number(size.width());
+                const auto shot = [&](const char *step) {
+                    QTest::qWait(700);
+                    auto &effects = application->nodeEffects();
+                    auto *badge = item("videoNodeBadge");
+                    qInfo("ne1 %s %s: videoPreview=%d badge=%d \"%s\" source=%llu lines=%lld", qPrintable(tag), step,
+                          int(effects.videoPreview()), int(badge && badge->isVisible()),
+                          qPrintable(item("videoNodeBadgeText")->property("text").toString()),
+                          effects.source(), qint64(effects.previewLines().size()));
+                    QVERIFY(window->grabWindow().save(out + QStringLiteral("/ne1-") + tag + QLatin1Char('-') +
+                                                      QLatin1String(step) + QStringLiteral(".png")));
+                };
+                const auto freshAppAt = [&](const char *name) {
+                    restartWithoutSound();
+                    auto &settings = *application->settingsStore();
+                    settings.setValue(QStringLiteral("appearance.followSystem"), false);
+                    settings.setValue(QStringLiteral("appearance.theme"), code);
+                    window->resize(size);
+                    QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+                    const QString path = dir.filePath(QStringLiteral("%1-%2.ass").arg(QLatin1String(name)).arg(++file));
+                    {
+                        QFile f(path);
+                        QVERIFY(f.open(QIODevice::WriteOnly));
+                        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[V4+ Styles]\n"
+                                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                                "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                                "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                                "Style: Default,Tahoma,28,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                                "2,2,10,10,10,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
+                                "MarginV, Effect, Text\n"
+                                "Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,Wafer gym\n"
+                                "Dialogue: 0,0:00:05.00,0:00:07.00,Default,,0,0,0,,Second line\n");
+                    }
+                    QVERIFY(application->openFile(path));
+                    auto &video = application->video().session();
+                    application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+                    QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+                    video.seekTo(core::DocumentTime(1'500'000));
+                    QTRY_VERIFY_WITH_TIMEOUT(video.shownFrame(), 20000);
+                    item("editingGrid")->forceActiveFocus();
+                    press(Qt::Key_Home);
+                    QTRY_VERIFY(application->editor().hasLine());
+                };
+
+                freshAppAt("ne1-typesetting");
+                QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTypesettingGraph"));
+                QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+                QVERIFY(application->nodeEffects().addTypesettingGraph(graphIndex("shake")));
+                shot("0-typesetting-graph");
+
+                freshAppAt("ne1-problems");
+                QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTypesettingGraph"));
+                QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+                application->nodeEffects().setDelays(3000, 800);
+                QVERIFY(application->nodeEffects().addTypesettingGraph(graphIndex("shake")));
+                application->nodeEffects().disconnectInput(QStringLiteral("emit"), QStringLiteral("units"));
+                QTRY_COMPARE_WITH_TIMEOUT(application->nodeEffects().previewBlocked(), QStringLiteral("problems"), 10000);
+                application->nodeEffects().setDelays(150, 800);
+                shot("0-problems");
+
+                freshAppAt("ne1-view");
+                auto &effects = application->nodeEffects();
+                auto *action = item<QObject>("nodeEffectsMenuItem")->property("action").value<QObject *>();
+                QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+                QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+                QVERIFY(effects.addTypesettingGraph(graphIndex("shake")));
+                const qulonglong shake = effects.current();
+                shot("1-view");
+                effects.setField(QStringLiteral("amplitude"), QStringLiteral("value"), 40);
+                shot("2-value");
+                effects.addNode(QStringLiteral("math.random"), 40, 40);
+                shot("3-add-node");
+                QVERIFY(effects.addTypesettingGraph(graphIndex("typewriter")));
+                effects.setCurrent(shake);
+                shot("4-switch");
+                effects.setField(QStringLiteral("amplitude"), QStringLiteral("value"), 2);
+                QVERIFY(application->editor().undo());
+                QTest::qWait(1200);
+                QString amplitude;
+                for (const QVariant &n : effects.nodes())
+                    if (n.toMap().value(QStringLiteral("id")).toString() == QStringLiteral("amplitude"))
+                        for (const QVariant &f : n.toMap().value(QStringLiteral("fields")).toList())
+                            if (f.toMap().value(QStringLiteral("name")).toString() == QStringLiteral("value"))
+                                amplitude = f.toMap().value(QStringLiteral("text")).toString();
+                qInfo("ne1 %s undo: graphs=%lld amplitude=%s (before Undo: 2 graphs, amplitude 40)", qPrintable(tag),
+                      qint64(effects.graphs().size()), qPrintable(amplitude));
+                shot("5-undo");
+                effects.addNode(QStringLiteral("lua.code"), 40, 200);
+                effects.commit();
+                shot("6-lua");
+            }
+        }
+        application->settingsStore()->setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
     }
 
     void ne2Screenshots()
