@@ -18466,6 +18466,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Instaluj aktualizacje automatycznie</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>Ufaj oznaczeniom narzędzi od %1</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>Jej narzędzia, które tylko odczytują, działają wtedy bez pytania. Do tego czasu każde dodane przez nią narzędzie najpierw pyta, tak jak zmiana.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>Nie uruchomiła się.</translation>
     </message>
@@ -19067,14 +19075,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
         <translation>Zainstalowana wtyczka %1 jest zastąpiona wtyczką deweloperską, dopóki jej nie wyładujesz.</translation>
-    </message>
-    <message>
-        <source>Trust %1’s tool marks</source>
-        <translation>Ufaj oznaczeniom narzędzi wtyczki %1</translation>
-    </message>
-    <message>
-        <source>Its read AI tools then run without asking, and can’t change anything. Until then, every one of its tools counts as a change.</source>
-        <translation>Jej narzędzia AI do odczytu działają wtedy bez pytania i nie mogą niczego zmienić. Do tego czasu każde jej narzędzie liczy się jako zmiana.</translation>
     </message>
     <message>
         <source>Choose a plugin folder</source>

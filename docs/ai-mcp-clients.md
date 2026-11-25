@@ -41,7 +41,7 @@ A plugin's `contributes.aiTools` entries are typed tools that run its own comman
 
 - **Listed by Qt.** `PluginRuntime::aiTools` lists the tools of the plugins that run, and Qt sends them as `_hikari/pluginTools.set`. The sidecar offers them as the group `plugin_tools`, which `search_tools` finds, to threads, Claude sessions and agent channels. [HikariSub's MCP server](ai-mcp.md) lists only the trusted `read` ones.
 - **Named** `p_<the first 8 hex digits of the SHA-256 of "<plugin id>/<command>">_<command>`, with `-` as `_` and cut to 64 characters. The description starts with the plugin's name.
-- **Trust.** "Trust <plugin>'s tool marks" in the plugin's details, off by default, is `trustToolMarks` in `plugins.json`. Without it every tool of the plugin counts as a write.
+- **Trust.** "Trust tool marks from <plugin>" in the plugin's details, off by default, is `trustToolMarks` in `plugins.json`. Without it every tool of the plugin counts as a write.
 - **Checked by Qt.** `_hikari/pluginTools.call` carries the tool and its arguments. Qt checks them against `parameters` (`invalid_params`), gates the call as `plugin.tool` for the session, runs the command with `context.via = "ai"` and answers `{result}`, the handler's return value, after checking it against `result`.
 - **Read tools can't write.** While a trusted `read` tool runs, the plugin's write operations, `programs.*`, `net.fetch`, `files.write` and `hikari/settings.set` answer `refused` with reason `read_tool`.
 

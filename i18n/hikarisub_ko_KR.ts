@@ -18188,6 +18188,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>업데이트 자동 설치</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1에서 온 도구 표시 신뢰</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>읽기만 하는 도구는 그 후 묻지 않고 실행됩니다. 그 전까지는 추가한 모든 도구가 변경처럼 먼저 묻습니다.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>시작되지 않았습니다.</translation>
     </message>
@@ -18787,14 +18795,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The installed %1 is overridden by a dev plugin until you unload it.</source>
         <translation>설치된 %1(은)는 불러오기를 해제할 때까지 개발 플러그인으로 대체됩니다.</translation>
-    </message>
-    <message>
-        <source>Trust %1’s tool marks</source>
-        <translation>%1의 도구 표시 신뢰</translation>
-    </message>
-    <message>
-        <source>Its read AI tools then run without asking, and can’t change anything. Until then, every one of its tools counts as a change.</source>
-        <translation>이후 읽기용 AI 도구는 묻지 않고 실행되며 아무것도 변경할 수 없습니다. 그 전까지는 모든 도구가 변경으로 간주됩니다.</translation>
     </message>
     <message>
         <source>Choose a plugin folder</source>

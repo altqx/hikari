@@ -1131,24 +1131,33 @@ DialogWindow {
                 checked = Qt.binding(() => details.row.autoUpdate)
             }
         }
-        CheckBox {
-            objectName: "pluginTrustToolMarks_" + details.row.id
+        ColumnLayout {
+            objectName: "pluginTrustToolMarksRow"
             visible: details.row.aiTools
-            text: qsTr("Trust %1’s tool marks").arg(details.row.name)
-            checked: details.row.trustToolMarks
-            onToggled: {
-                const problem = dialog.manager.setTrustToolMarks(details.row.id, checked)
-                if (problem.length > 0)
-                    dialog.tell(qsTr("Plugin not changed"), problem)
-                checked = Qt.binding(() => details.row.trustToolMarks)
-            }
-        }
-        Label {
-            visible: details.row.aiTools
-            text: qsTr("Its read AI tools then run without asking, and can’t change anything. Until then, every one of its tools counts as a change.")
-            color: Theme.muted
-            wrapMode: Text.Wrap
+            spacing: 4
+            Layout.topMargin: 2
+            Layout.bottomMargin: 2
             Layout.fillWidth: true
+            CheckBox {
+                id: trustToolMarks
+                objectName: "pluginTrustToolMarks_" + details.row.id
+                leftPadding: 0
+                text: qsTr("Trust tool marks from %1").arg(details.row.name)
+                checked: details.row.trustToolMarks
+                onToggled: {
+                    const problem = dialog.manager.setTrustToolMarks(details.row.id, checked)
+                    if (problem.length > 0)
+                        dialog.tell(qsTr("Plugin not changed"), problem)
+                    checked = Qt.binding(() => details.row.trustToolMarks)
+                }
+            }
+            Label {
+                text: qsTr("Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.leftMargin: trustToolMarks.indicator.width + trustToolMarks.spacing
+                Layout.fillWidth: true
+            }
         }
         Rectangle {
             objectName: "pluginDetailsError"
