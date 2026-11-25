@@ -7,6 +7,7 @@
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/application/node_graph_library.h"
 #include "hikari/application/plugin_content.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/typesetting_graphs.h"
 #include "hikari/application/typesetting_line.h"
 #include "hikari/core/ass_load.h"
@@ -377,6 +378,45 @@ TEST(NodeEffects, ApplyIsOneUndoStep)
     EXPECT_NE(text(core::encodeAss(session.document())), before);
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(text(core::encodeAss(session.document())), before);
+}
+
+namespace {
+
+core::Document withoutPlayRes(const core::Document &doc)
+{
+    std::string ass = text(core::encodeAss(doc));
+    for (const std::string_view key : {"PlayResX: 1280", "PlayResY: 720"}) {
+        const auto at = ass.find(key);
+        ass.erase(at, ass.find('\n', at) + 1 - at);
+    }
+    return load(ass);
+}
+
+}
+
+TEST(NodeEffects, ApplyIntoAFileWithoutPlayResWritesThePlayersSizeInTheSameStep)
+{
+    EditSession session(withoutPlayRes(presetDocument(kPresets[1])));
+    ASSERT_TRUE(lacksScriptResolution(writtenScriptResolution(session.document())));
+    const std::string before = text(core::encodeAss(session.document()));
+    const NodeEffectRun run = runGraph(session.document(), u8"bounce");
+    ASSERT_EQ(run.resolution, (Resolution{384, 288}));
+    ASSERT_TRUE(applyNodeEffect(session, run));
+    EXPECT_EQ(writtenScriptResolution(session.document()), (Resolution{384, 288}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(text(core::encodeAss(session.document())), before);
+}
+
+TEST(NodeEffects, AFileWithoutPlayResThatGetsNoLinesSavesAsItWas)
+{
+    core::Document doc = withoutPlayRes(presetDocument(kPresets[1]));
+    const std::string before = text(core::encodeAss(doc));
+    NodeEffectOptions none;
+    none.sources = std::set<core::LineId>{};
+    const NodeEffectRun run = runGraph(doc, u8"bounce", none);
+    EXPECT_TRUE(run.lines.empty());
+    EXPECT_FALSE(applyNodeEffect(doc, run));
+    EXPECT_EQ(text(core::encodeAss(doc)), before);
 }
 
 TEST(NodeEffects, GeneratedLinesFoldInTheGrid)
@@ -1796,4 +1836,13 @@ TEST(TypesettingGraphs, KaraokeToAlphaKeepsTheSyllableTiming)
     for (const std::string &line : linesOf(runGraph(doc, u8"lib", onlyLine(lineWithText(doc, u8"ki")))))
         times.push_back(line.substr(12, 21) + line.substr(line.rfind('}') + 1));
     EXPECT_EQ(times, (std::vector<std::string>{"0:00:03.00,0:00:04.00ki", "0:00:03.40,0:00:04.00ra"}));
+}
+
+TEST(NodeEffects, AFileWithPlayResKeepsIt)
+{
+    core::Document doc = typesettingDocument(kTypewriter);
+    const NodeEffectRun run = runGraph(doc, u8"ts", onlyLine(lineWithText(doc, u8"ab")));
+    EXPECT_FALSE(run.resolution);
+    ASSERT_TRUE(applyNodeEffect(doc, run));
+    EXPECT_EQ(writtenScriptResolution(doc), (Resolution{1280, 720}));
 }

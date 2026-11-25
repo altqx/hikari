@@ -109,9 +109,20 @@ FontFamilies::FontFamilies(FontServicePort &fonts, FontNameLower lower, FontList
 {
 }
 
+std::vector<SystemFace> FontFamilies::pickerFaces() const
+{
+    if (!m_systemFaces || !m_environment.systemFonts)
+        return m_fonts.pickerFaces(m_environment);
+    FontEnvironment externalOnly = m_environment;
+    externalOnly.systemFonts = false;
+    std::vector<SystemFace> faces = *m_systemFaces;
+    std::ranges::move(m_fonts.pickerFaces(externalOnly), std::back_inserter(faces));
+    return faces;
+}
+
 void FontFamilies::enumerate()
 {
-    const std::vector<SystemFace> faces = m_fonts.pickerFaces(m_environment);
+    const std::vector<SystemFace> faces = pickerFaces();
     boost::dynamic_bitset<> covers;
     if (m_filtered)
         covers = m_fonts.facesCover(faces, m_environment, filterCharacters(m_filter, m_platform));

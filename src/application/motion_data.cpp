@@ -3,6 +3,7 @@
 #include "motion_tags.h"
 
 #include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 
 #include "hikari/core/extradata.h"
 #include "hikari/core/style.h"
@@ -365,6 +366,7 @@ std::expected<void, CommandRefusal> replaceLines(EditSession &session, std::stri
     Selection selection;
     const core::LineId anchor = lines.front()->id;
     const auto ran = session.run(Command{std::move(name), session.revision(), touched, [&](core::Document &d) {
+        stampScriptResolution(d, scriptResolution(d));
         selection = {};
         for (const auto &out : outputs) {
             const auto id = d.insertLineBefore(anchor, out);
@@ -793,6 +795,7 @@ std::expected<int, CommandRefusal> extrapolateMoves(EditSession &session, const 
     for (const auto &[id, _] : changes)
         touched.insert(id);
     const auto ran = session.run(Command{"Extrapolate \\move", session.revision(), touched, [&](core::Document &d) {
+        stampScriptResolution(d, scriptResolution(d));
         for (const auto &[id, text] : changes)
             if (!d.editLine(id, [&](core::LineRecord &l) { l.text = text; }))
                 return false;

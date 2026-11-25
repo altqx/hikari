@@ -193,20 +193,24 @@ QtObject {
     function handles(family) {
         const h = (name, mark) => ({ name: name, mark: mark })
         switch (family) {
-        case 1: return [h(qsTr("Position"), "square")]
+        case 1: return [h(qsTr("Position"), "square"), h(qsTr("Helper cross"), "square")]
         case 2: return [h(qsTr("Start point"), "square"), h(qsTr("End point"), "circle"), h(qsTr("Path"), "arrow"),
-                        h(qsTr("Current position"), "cross")]
-        case 3: return [h(qsTr("Width"), "arrow"), h(qsTr("Height"), "arrow"), h(qsTr("Both"), "arrow")]
-        case 4: return [h(qsTr("Origin"), "cross"), h(qsTr("Angle"), "line")]
+                        h(qsTr("Current position"), "cross"), h(qsTr("First point"), "square"),
+                        h(qsTr("Second point"), "circle"), h(qsTr("Helper cross"), "square")]
+        case 3: return [h(qsTr("Width"), "arrow"), h(qsTr("Height"), "arrow"), h(qsTr("Both"), "arrow"),
+                        h(qsTr("Target rectangle"), "outline"), h(qsTr("Original rectangle"), "outline")]
+        case 4: return [h(qsTr("Origin"), "cross"), h(qsTr("Angle"), "line"), h(qsTr("First point"), "square"),
+                        h(qsTr("Second point"), "square")]
         case 5: return [h(qsTr("Origin"), "cross"), h(qsTr("Tilt grid"), "outline")]
         case 6: return [h(qsTr("Edges and corners"), "outline")]
         case 7:
-        case 8:
         case 13: return [h(qsTr("Point"), "square"), h(qsTr("Curve handle"), "circle")]
+        case 8: return [h(qsTr("Point"), "square"), h(qsTr("Curve handle"), "circle"), h(qsTr("Shape rectangle"), "outline")]
         case 9: return [h(qsTr("Position and move start"), "square"), h(qsTr("Move end"), "circle"),
-                        h(qsTr("Origin"), "cross"), h(qsTr("Clip and drawing"), "outline")]
-        case 10: return [h(qsTr("Changed line"), "outline")]
-        case 11: return [h(qsTr("Corners"), "square"), h(qsTr("Plane corners"), "circle"), h(qsTr("Origin"), "cross")]
+                        h(qsTr("Origin"), "cross"), h(qsTr("Clip"), "outline"), h(qsTr("Drawing"), "outline")]
+        case 10: return [h(qsTr("Changed line"), "outline"), h(qsTr("Slider knob"), "square"), h(qsTr("Slider track"), "line")]
+        case 11: return [h(qsTr("Corners"), "square"), h(qsTr("Plane corners"), "circle"), h(qsTr("Origin"), "cross"),
+                         h(qsTr("Text"), "outline"), h(qsTr("Plane"), "outline")]
         case 12: return [h(qsTr("Start and end"), "square"), h(qsTr("Skew"), "square"), h(qsTr("P1, P2 and P3"), "square")]
         }
         return []

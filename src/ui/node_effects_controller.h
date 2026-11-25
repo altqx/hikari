@@ -8,6 +8,7 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QSize>
 #include <QStringList>
 #include <QTimer>
 #include <QVariantList>
@@ -77,6 +78,8 @@ class NodeEffectsController : public QObject {
     Q_PROPERTY(bool videoPreview READ videoPreview NOTIFY previewChanged)
     // Why the video shows no new preview: "noSource", "problems", "untrusted", or empty.
     Q_PROPERTY(QString previewBlocked READ previewBlocked NOTIFY previewChanged)
+    // The PlayRes Apply writes into a file that has none; empty when the file has one.
+    Q_PROPERTY(QSize previewResolution READ previewResolution NOTIFY previewChanged)
     Q_PROPERTY(bool hasLua READ hasLua NOTIFY graphChanged)
     Q_PROPERTY(bool trusted READ trusted NOTIFY changed)
     Q_PROPERTY(bool canApply READ canApply NOTIFY changed)
@@ -164,6 +167,8 @@ public:
     void setPreviewOnVideo(bool on);
     bool videoPreview() const;
     QString previewBlocked() const;
+    QSize previewResolution() const;
+    Q_INVOKABLE void setScriptResolution();
     bool hasLua() const;
     bool hasPluginNodes() const;
     bool drawsText() const;

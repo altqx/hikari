@@ -75,7 +75,7 @@ list(APPEND hikari_ui_qml_files FilterChip.qml FontResolutionNote.qml FontWindow
 list(APPEND hikari_ui_qml_files MatroskaSubtitles.qml)
 list(APPEND hikari_ui_qml_files LineInspector.qml LineCounters.qml LineEditorStrip.qml ReviewStrip.qml ReviewPanel.qml AgentPanel.qml AgentPanelOff.qml ModelPicker.qml InlineAiMenu.qml InlineAiBox.qml InlineAiBar.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
-list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualToolGuide.qml VisualOverlay.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
+list(APPEND hikari_ui_qml_files VisualToolRail.qml VisualToolTexts.qml VisualToolGuide.qml VisualOverlay.qml VisualHandleTip.qml VisualToolBar.qml VisualPointerReadout.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 list(APPEND hikari_ui_qml_files VisualToolOption.qml VisualToolDialogs.qml)
 list(APPEND hikari_ui_qml_files ShapesEditionPane.qml ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
 list(APPEND hikari_ui_qml_files AllTagsEditionPane.qml AllTagsEditionDialog.qml EditionUndoRedo.qml)

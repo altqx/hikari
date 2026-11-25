@@ -6,6 +6,7 @@
 #include "hikari/api/api.h"
 #include "hikari/app/plugin_files.h"
 #include "hikari/app/plugin_manager.h"
+#include "hikari/app/plugin_secrets.h"
 #include "hikari/app/plugin_network.h"
 #include "hikari/app/plugin_program_downloads.h"
 #include "hikari/app/plugin_programs.h"
@@ -103,6 +104,7 @@ public:
         std::function<QString(application::DocumentId)> documentTitle;
         PluginPrograms *programs = nullptr;
         QString lowRightsHelper;
+        PluginSecrets *secrets = nullptr;
     };
 
     explicit PluginRuntime(Wiring wiring, QObject *parent = nullptr);
@@ -169,6 +171,7 @@ public:
     Q_INVOKABLE void restart(const QString &pluginId);
     // Ends the plugin and starts its files afresh, as after an update.
     void reload(const QString &pluginId);
+    void resendSetting(const plugins::Manifest &manifest, const std::string &setting);
     // A setting the plugin manager changed, so that hikari.settings.get sees it at once.
     void settingChanged(const QString &pluginId, const QString &setting, const QString &json);
     PluginUi *ui() const { return m_ui; }
@@ -269,7 +272,7 @@ private:
     void wirePrograms();
     std::optional<std::string> setSetting(const std::string &plugin, const std::string &setting, const api::Json &value);
     const plugins::ProjectPlugins *windowProject(int shellWindow) const;
-    api::Json storedSettings(const std::string &plugin) const;
+    api::Json settingsOf(const plugins::Manifest &manifest) const;
 
     struct LockWaiter {
         Running *plugin = nullptr;

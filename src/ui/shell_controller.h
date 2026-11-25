@@ -171,6 +171,10 @@ public:
     }
     void setRowMarks(LineTableModel::RowMarks marks) { m_lines.setRowMarks(std::move(marks)); }
     void setLinesOnFrame(const std::vector<core::LineId> &lines) { m_lines.setLinesOnFrame(lines); }
+    void setCurrentMisspell(std::optional<LineTableModel::CurrentMisspell> misspell)
+    {
+        m_lines.setCurrentMisspell(misspell);
+    }
 
     bool foldGenerated() const { return m_lines.foldGenerated(); }
     // MUST KILL: setFoldGenerated emits foldGeneratedChanged before the rows fold; Application relies on that order

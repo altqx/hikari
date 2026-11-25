@@ -253,6 +253,7 @@ Item {
                 id: inspectorBar
                 objectName: "fullscreenToolBar"
                 width: inspector.availableWidth
+                height: Math.max(implicitHeight, inspector.availableHeight)
                 column: true
                 padding: 12
                 tools: ts.shell.visualTools

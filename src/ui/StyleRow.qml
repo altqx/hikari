@@ -39,7 +39,7 @@ Item {
         return f
     }
 
-    implicitHeight: Math.max(sample.height, text.implicitHeight) + 12
+    implicitHeight: Math.max(sample.height, textColumn.implicitHeight) + 12
     Accessible.role: Accessible.ListItem
     Accessible.name: name + ", " + family + " " + size
                      + (counted ? ", " + qsTr("%n line(s)", "", lines) : "")
@@ -121,7 +121,7 @@ Item {
             }
         }
         ColumnLayout {
-            id: text
+            id: textColumn
             spacing: 0
             Layout.fillWidth: true
             Item {
@@ -176,7 +176,7 @@ Item {
                     font: row.smallFont
                     elide: Text.ElideRight
                     Layout.fillWidth: true
-                    ToolTip.text: text
+                    ToolTip.text: missingText.text
                     ToolTip.visible: truncated && hover.hovered
                     ToolTip.delay: 600
                 }

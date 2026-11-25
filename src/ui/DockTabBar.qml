@@ -120,6 +120,7 @@ KDDWViews.TabBarBase {
         return sum
     }
     readonly property real selectedNaturalWidth: currentTab ? currentTab.naturalWidth : 0
+    readonly property real toolbarRoom: Math.max(0, width - selectedNaturalWidth - 12)
     Row {
         id: tabRow
         visible: !root.titleMode
@@ -263,7 +264,7 @@ KDDWViews.TabBarBase {
         anchors.right: parent.right
         anchors.rightMargin: 4
         height: parent.height
-        width: toolbar ? Math.min(toolbar.implicitWidth, Math.max(0, root.width - root.selectedNaturalWidth - 12)) : 0
+        width: toolbar ? Math.min(toolbar.implicitWidth, root.toolbarRoom) : 0
     }
 
     MouseArea {
