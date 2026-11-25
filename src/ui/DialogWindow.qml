@@ -24,6 +24,8 @@ Window {
     readonly property alias buttonBox: closing
     readonly property int naturalWidth: Math.ceil(column.implicitWidth)
     readonly property int naturalHeight: Math.ceil(column.implicitHeight)
+    property int smallestWidth: naturalWidth
+    property int smallestHeight: naturalHeight
     property QtObject returnWindow: null // a QWindow: a floating panel is no QML Window
     property Item returnFocus: null
     property bool accepting: false
@@ -35,8 +37,8 @@ Window {
     flags: Qt.Dialog
     color: Theme.panel
     modality: modal ? Qt.WindowModal : Qt.NonModal
-    minimumWidth: Math.min(naturalWidth, placement.room.width)
-    minimumHeight: Math.min(naturalHeight, placement.room.height)
+    minimumWidth: Math.min(smallestWidth, placement.room.width)
+    minimumHeight: Math.min(smallestHeight, placement.room.height)
     maximumWidth: resizable ? 16777215 : minimumWidth
     maximumHeight: resizable ? 16777215 : minimumHeight
 

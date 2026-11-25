@@ -579,6 +579,43 @@ TEST_F(Spelling, ReplaceAllKeepsCaseAndTranslationQuirk)
     EXPECT_EQ(utf8(tl.document().lines()[0]->translation), "world");
 }
 
+TEST_F(Spelling, WalkTalliesWhatItDidAndTheLinesItChecked)
+{
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EditSession session{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,zzz\n"
+                                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Teh wrold\n"
+                                                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,wrold aaa\n"
+                                                    "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,bbb ccc\n")};
+    const auto lines = session.document().lines();
+    session.setSelection(Selection{lines[1]->id, {lines[1]->id}, lines[1]->id, {}});
+    SpellCheckWalk walk(*checker, text);
+    const SpellCheckWalk::Options options;
+    EXPECT_EQ(walk.linesChecked(session.document()), 0u);
+    ASSERT_TRUE(walk.next(session, options));
+    EXPECT_EQ(walk.current()->word, u"Teh");
+    ASSERT_EQ(walk.replace(session, u"The", options), SpellCheckWalk::Result::Replaced);
+    ASSERT_EQ(walk.replaceAll(session, u"wrold", u"world", options), SpellCheckWalk::Result::Replaced);
+    EXPECT_EQ(walk.current()->word, u"aaa");
+    EXPECT_TRUE(walk.addWord(session, u"aaa", options));
+    walk.ignore(session, options);
+    walk.ignoreAll(session, u"ccc", options);
+    EXPECT_FALSE(walk.current());
+    EXPECT_EQ(walk.tally().found, 5);
+    EXPECT_EQ(walk.tally().replaced, 3);
+    EXPECT_EQ(walk.tally().ignored, 2);
+    EXPECT_EQ(walk.tally().added, 1);
+    EXPECT_EQ(walk.linesChecked(session.document()), 3u);
+
+    EXPECT_FALSE(walk.activated(session, options));
+    session.setSelection(Selection{lines[0]->id, {lines[0]->id}, lines[0]->id, {}});
+    ASSERT_TRUE(walk.activated(session, options));
+    EXPECT_EQ(walk.current()->word, u"zzz");
+    EXPECT_EQ(walk.linesChecked(session.document()), 4u);
+    walk.ignore(session, options);
+    EXPECT_EQ(walk.current()->word, u"bbb");
+    EXPECT_EQ(walk.tally().found, 6);
+}
+
 TEST_F(Spelling, AddWordAndActivation)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);

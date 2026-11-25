@@ -76,11 +76,16 @@ std::optional<QByteArray> readFile(const QString &path)
     return file.readAll();
 }
 
+QByteArray withLf(QByteArray text)
+{
+    return text.replace("\r\n", "\n");
+}
+
 QByteArray comparable(QByteArray text)
 {
     if (text.startsWith("\xEF\xBB\xBF"))
         text.remove(0, 3);
-    return text.replace("\r\n", "\n");
+    return withLf(std::move(text));
 }
 
 std::string firstDifference(const QByteArray &expected, const QByteArray &actual)
@@ -483,8 +488,9 @@ private:
         const auto got = readFile(result->value(QStringLiteral("file")).toUrl().toLocalFile());
         if (!want)
             return fail("there is no expected file at " + expected->asString());
-        if (!got || *got != *want)
-            fail("the file differs from " + expected->asString() + ": " + firstDifference(*want, got ? *got : QByteArray()));
+        if (!got || withLf(*got) != withLf(*want))
+            fail("the file differs from " + expected->asString() + ": " +
+                 firstDifference(withLf(*want), withLf(got ? *got : QByteArray())));
     }
 
     void expectDocument()

@@ -6666,7 +6666,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation>ขั้นตอนที่ %1 จาก %2</translation>
+        <translation type="vanished">ขั้นตอนที่ %1 จาก %2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
@@ -6702,7 +6702,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation>มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
+        <translation type="vanished">มี HikariSub 0.0.x ติดตั้งอยู่ในคอมพิวเตอร์นี้ จะไม่มีการเปลี่ยนแปลงใดๆ ในโปรแกรมนั้น</translation>
     </message>
     <message>
         <source>Later: Settings › General › Import settings…</source>
@@ -6738,7 +6738,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation>เลือกธีม หน้าต่างนี้จะเปลี่ยนตามที่คุณเลือก</translation>
+        <translation type="vanished">เลือกธีม หน้าต่างนี้จะเปลี่ยนตามที่คุณเลือก</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
@@ -6758,7 +6758,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation>เปิดใช้คอนทราสต์สูง</translation>
+        <translation type="vanished">เปิดใช้คอนทราสต์สูง</translation>
     </message>
     <message>
         <source>Title bar</source>
@@ -6782,11 +6782,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation>คุณทำงานด้านใดเป็นส่วนใหญ่?</translation>
+        <translation type="vanished">คุณทำงานด้านใดเป็นส่วนใหญ่?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation>เลือกหนึ่งรายการเพื่อกำหนดเค้าโครงที่แท็บแรกจะใช้เมื่อเปิด หากไม่เลือกจะใช้เค้าโครง “แก้ไข” ซึ่งมีทุกอย่างอยู่บ้าง</translation>
+        <translation type="vanished">เลือกหนึ่งรายการเพื่อกำหนดเค้าโครงที่แท็บแรกจะใช้เมื่อเปิด หากไม่เลือกจะใช้เค้าโครง “แก้ไข” ซึ่งมีทุกอย่างอยู่บ้าง</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
@@ -6865,6 +6865,110 @@ Failed to copy %2 fonts.</source>
         <translation>แก้ไข</translation>
     </message>
     <message>
+        <source>Welcome</source>
+        <translation>ยินดีต้อนรับ</translation>
+    </message>
+    <message>
+        <source>Bring over</source>
+        <translation>นำเข้า</translation>
+    </message>
+    <message>
+        <source>How you work</source>
+        <translation>วิธีทำงานของคุณ</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>พร้อม</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation>เต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>%1’s settings were found on this computer. Nothing in them is changed.</source>
+        <translation>พบการตั้งค่าของ %1 ในคอมพิวเตอร์เครื่องนี้ จะไม่มีการเปลี่ยนแปลงสิ่งใดในนั้น</translation>
+    </message>
+    <message>
+        <source>Settings from %1 and %2 were found on this computer. Nothing in them is changed.</source>
+        <translation>พบการตั้งค่าจาก %1 และ %2 ในคอมพิวเตอร์เครื่องนี้ จะไม่มีการเปลี่ยนแปลงสิ่งใดในนั้น</translation>
+    </message>
+    <message>
+        <source>Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed.</source>
+        <translation>พบการตั้งค่าจาก %1, %2 และ %3 ในคอมพิวเตอร์เครื่องนี้ จะไม่มีการเปลี่ยนแปลงสิ่งใดในนั้น</translation>
+    </message>
+    <message>
+        <source>HikariSub (built in)</source>
+        <translation>HikariSub (ในตัว)</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>ขั้น</translation>
+    </message>
+    <message>
+        <source>Step %1 of %2, %3</source>
+        <translation>ขั้นที่ %1 จาก %2, %3</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>ปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>เสร็จแล้ว</translation>
+    </message>
+    <message>
+        <source>Skip setup keeps HikariSub’s defaults.</source>
+        <translation>ข้ามการตั้งค่าจะใช้ค่าเริ่มต้นของ HikariSub</translation>
+    </message>
+    <message>
+        <source>This window changes as you choose.</source>
+        <translation>หน้าต่างนี้จะเปลี่ยนไปตามที่คุณเลือก</translation>
+    </message>
+    <message>
+        <source>High contrast</source>
+        <translation>คอนทราสต์สูง</translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation>ในตัว</translation>
+    </message>
+    <message>
+        <source>From plugins</source>
+        <translation>จากปลั๊กอิน</translation>
+    </message>
+    <message>
+        <source>More themes…</source>
+        <translation>ธีมเพิ่มเติม…</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>มาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Icons</source>
+        <translation>ไอคอน</translation>
+    </message>
+    <message>
+        <source>How do you mostly work?</source>
+        <translation>คุณทำงานแบบไหนเป็นส่วนใหญ่?</translation>
+    </message>
+    <message>
+        <source>This sets the layout your first tab opens with. Leave it on Editing for a bit of everything.</source>
+        <translation>ตั้งเค้าโครงที่แท็บแรกจะเปิดขึ้นมา ปล่อยไว้ที่แก้ไขหากต้องการทุกอย่างนิดหน่อย</translation>
+    </message>
+    <message>
+        <source>Video, audio, the line editor and the grid.</source>
+        <translation>วิดีโอ เสียง ตัวแก้ไขบรรทัด และตาราง</translation>
+    </message>
+    <message>
+        <source>Just the picture and a line box. View › Full screen typesetting any time.</source>
+        <translation>มีแค่ภาพและช่องบรรทัด มุมมอง › ไทป์เซ็ตเต็มหน้าจอ ได้ทุกเมื่อ</translation>
+    </message>
+    <message>
         <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>ภายหลัง: การตั้งค่า › ทั่วไป › การบันทึก และ การตั้งค่า › การสะกดและไวยากรณ์</translation>
     </message>
@@ -6917,8 +7021,36 @@ Failed to copy %2 fonts.</source>
         <translation>She has seen teh last episode already.</translation>
     </message>
     <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation>อย่างมากวันละครั้ง เมื่อ HikariSub เริ่มทำงาน</translation>
+    </message>
+    <message>
         <source>Updates and privacy</source>
         <translation>การอัปเดตและความเป็นส่วนตัว</translation>
+    </message>
+    <message>
+        <source>HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on.</source>
+        <translation>HikariSub ช่วยเรื่องการแปล การตรวจทาน และมีเอเจนต์ที่แก้ไขไปพร้อมกับคุณ ปิดไว้จนกว่าคุณจะเปิด</translation>
+    </message>
+    <message>
+        <source>Later: Settings › AI</source>
+        <translation>ภายหลัง: การตั้งค่า › AI</translation>
+    </message>
+    <message>
+        <source>Keep AI off</source>
+        <translation>ปิด AI ไว้</translation>
+    </message>
+    <message>
+        <source>No AI menus, panels or downloads. Nothing about your subtitles leaves this computer.</source>
+        <translation>ไม่มีเมนู แผง หรือการดาวน์โหลด AI ไม่มีข้อมูลใดเกี่ยวกับซับไตเติลของคุณออกจากคอมพิวเตอร์เครื่องนี้</translation>
+    </message>
+    <message>
+        <source>Turn AI on</source>
+        <translation>เปิด AI</translation>
+    </message>
+    <message>
+        <source>HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI.</source>
+        <translation>HikariSub จะดาวน์โหลดส่วนประกอบ AI ครั้งเดียวหลังเสร็จสิ้น คุณเพิ่มผู้ให้บริการหรือลงชื่อเข้าใช้เอเจนต์ได้ใน การตั้งค่า › AI</translation>
     </message>
     <message>
         <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
@@ -6950,7 +7082,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation>ไม่เกินวันละครั้ง เมื่อ HikariSub เริ่มทำงาน “มีอะไรใหม่” ในหน้าแรกก็ต้องใช้ตัวเลือกนี้ด้วย</translation>
+        <translation type="vanished">ไม่เกินวันละครั้ง เมื่อ HikariSub เริ่มทำงาน “มีอะไรใหม่” ในหน้าแรกก็ต้องใช้ตัวเลือกนี้ด้วย</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -6965,6 +7097,70 @@ Failed to copy %2 fonts.</source>
         <translation>สิ่งที่ส่ง</translation>
     </message>
     <message>
+        <source>Your Discord status shows the mode you’re in. Never folders, your subtitles or the video.</source>
+        <translation>สถานะ Discord ของคุณแสดงโหมดที่คุณใช้อยู่ ไม่แสดงโฟลเดอร์ ซับไตเติล หรือวิดีโอเลย</translation>
+    </message>
+    <message>
+        <source>You’re set</source>
+        <translation>พร้อมแล้ว</translation>
+    </message>
+    <message>
+        <source>Finish saves these choices. Everything is in Settings.</source>
+        <translation>เสร็จสิ้นจะบันทึกตัวเลือกเหล่านี้ ทุกอย่างอยู่ในการตั้งค่า</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>ภาษา</translation>
+    </message>
+    <message>
+        <source>%1 accent</source>
+        <translation>สีเน้น %1</translation>
+    </message>
+    <message>
+        <source>%1 icons</source>
+        <translation>ไอคอน %1</translation>
+    </message>
+    <message>
+        <source>HikariSub icons</source>
+        <translation>ไอคอน HikariSub</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>เค้าโครง</translation>
+    </message>
+    <message>
+        <source>Full screen, once a video is open</source>
+        <translation>เต็มหน้าจอ เมื่อเปิดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>On, downloads after Finish</source>
+        <translation>เปิด ดาวน์โหลดหลังเสร็จสิ้น</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>เปิด</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>อัปเดต</translation>
+    </message>
+    <message>
+        <source>Stable only, automatically</source>
+        <translation>เฉพาะเวอร์ชันเสถียร อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Stable only, not automatically</source>
+        <translation>เฉพาะเวอร์ชันเสถียร ไม่อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Pre-releases, automatically</source>
+        <translation>รุ่นทดสอบก่อนเผยแพร่ อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Pre-releases, not automatically</source>
+        <translation>รุ่นทดสอบก่อนเผยแพร่ ไม่อัตโนมัติ</translation>
+    </message>
+    <message>
         <source>Your files</source>
         <translation>ไฟล์ของคุณ</translation>
     </message>
@@ -6974,15 +7170,31 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation>ภายหลัง: การตั้งค่า › ทั่วไป</translation>
+        <translation type="vanished">ภายหลัง: การตั้งค่า › ทั่วไป</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation>โฟลเดอร์ของคุณ</translation>
+        <translation type="vanished">โฟลเดอร์ของคุณ</translation>
     </message>
     <message>
         <source>Open folder</source>
         <translation>เปิดโฟลเดอร์</translation>
+    </message>
+    <message>
+        <source>Good to know</source>
+        <translation>ควรรู้</translation>
+    </message>
+    <message>
+        <source>Open anything, or run any command</source>
+        <translation>เปิดอะไรก็ได้ หรือเรียกคำสั่งใดก็ได้</translation>
+    </message>
+    <message>
+        <source>Formats, presets and themes from the marketplace</source>
+        <translation>รูปแบบ พรีเซ็ต และธีมจากมาร์เก็ตเพลส</translation>
+    </message>
+    <message>
+        <source>Automation › Plugins</source>
+        <translation>สคริปต์อัตโนมัติ › ปลั๊กอิน</translation>
     </message>
     <message>
         <source>Back</source>
@@ -7868,10 +8080,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Audio shortcut</source>
         <translation>ปุ่มลัดของเสียง</translation>
-    </message>
-    <message>
-        <source>Node graph shortcut</source>
-        <translation>ปุ่มลัดของกราฟโหนด</translation>
     </message>
     <message>
         <source>Press the keys</source>
@@ -9486,74 +9694,6 @@ Failed to copy %2 fonts.</source>
         <translation>ไฟล์แนบ…</translation>
     </message>
     <message>
-        <source>Add node…</source>
-        <translation>เพิ่มโหนด…</translation>
-    </message>
-    <message>
-        <source>Select all</source>
-        <translation>เลือกทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Delete</source>
-        <translation>ลบ</translation>
-    </message>
-    <message>
-        <source>Group</source>
-        <translation>จัดกลุ่ม</translation>
-    </message>
-    <message>
-        <source>Go into the group</source>
-        <translation>เข้าไปในกลุ่ม</translation>
-    </message>
-    <message>
-        <source>Go out of the group</source>
-        <translation>ออกจากกลุ่ม</translation>
-    </message>
-    <message>
-        <source>Fit the graph</source>
-        <translation>ซูมให้พอดีกับกราฟ</translation>
-    </message>
-    <message>
-        <source>Frame the selection</source>
-        <translation>ซูมให้พอดีกับส่วนที่เลือก</translation>
-    </message>
-    <message>
-        <source>Zoom to 100 %</source>
-        <translation>ซูม 100 %</translation>
-    </message>
-    <message>
-        <source>Select the nearest node left</source>
-        <translation>เลือกโหนดที่ใกล้ที่สุดทางซ้าย</translation>
-    </message>
-    <message>
-        <source>Select the nearest node right</source>
-        <translation>เลือกโหนดที่ใกล้ที่สุดทางขวา</translation>
-    </message>
-    <message>
-        <source>Select the nearest node up</source>
-        <translation>เลือกโหนดที่ใกล้ที่สุดด้านบน</translation>
-    </message>
-    <message>
-        <source>Select the nearest node down</source>
-        <translation>เลือกโหนดที่ใกล้ที่สุดด้านล่าง</translation>
-    </message>
-    <message>
-        <source>Move the selection left</source>
-        <translation>ย้ายส่วนที่เลือกไปทางซ้าย</translation>
-    </message>
-    <message>
-        <source>Move the selection right</source>
-        <translation>ย้ายส่วนที่เลือกไปทางขวา</translation>
-    </message>
-    <message>
-        <source>Move the selection up</source>
-        <translation>ย้ายส่วนที่เลือกขึ้น</translation>
-    </message>
-    <message>
-        <source>Move the selection down</source>
-        <translation>ย้ายส่วนที่เลือกลง</translation>
-    </message>
-    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -9572,10 +9712,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Audio</source>
         <translation>เสียง</translation>
-    </message>
-    <message>
-        <source>Node graph</source>
-        <translation>กราฟโหนด</translation>
     </message>
     <message>
         <source>Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).</source>
@@ -15321,6 +15457,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>เลื่อนไปยังบรรทัดที่มองเห็นหลังออกจากโหมดเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>The symbol that stands for each tag block when tags are replaced.</source>
+        <translation>สัญลักษณ์ที่ใช้แทนบล็อกแท็กแต่ละบล็อกเมื่อแทนที่แท็ก</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>ทำเครื่องหมายบรรทัดในเฟรมปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Tints the lines that show on the current video frame.</source>
+        <translation>แต้มสีบรรทัดที่แสดงในเฟรมวิดีโอปัจจุบัน</translation>
+    </message>
+    <message>
         <source>Styles for new files</source>
         <translation>สไตล์สำหรับไฟล์ใหม่</translation>
     </message>
@@ -15653,6 +15801,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
         <translation>จำนวนการบันทึกก่อนหน้าของแต่ละไฟล์ที่เก็บไว้ในโฟลเดอร์กู้คืน ช่วง 0 ถึง 100</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>แสดง</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>แทนที่ด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>ซ่อน</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>แท็กในตาราง</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -16371,12 +16535,16 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>นำเข้าปุ่มลัดจากรุ่นเดิม</translation>
     </message>
     <message>
-        <source>Node graph shortcuts</source>
-        <translation>ปุ่มลัดกราฟโหนด</translation>
+        <source>Vector clip smoothing</source>
+        <translation>การปรับให้เรียบของคลิปเวกเตอร์</translation>
     </message>
     <message>
-        <source>Node graph</source>
-        <translation>กราฟโหนด</translation>
+        <source>How closely a freehand stroke is followed. Range from 0 to 100</source>
+        <translation>เส้นที่วาดมือเปล่าจะตามการลากใกล้แค่ไหน ช่วงตั้งแต่ 0 ถึง 100</translation>
+    </message>
+    <message>
+        <source>Drawing smoothing</source>
+        <translation>การปรับให้เรียบของภาพวาด</translation>
     </message>
     <message>
         <source>No plugin has settings.</source>
@@ -16403,6 +16571,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Enter a number.</source>
         <translation>ป้อนตัวเลข</translation>
+    </message>
+    <message>
+        <source>%1, item %2</source>
+        <translation>%1 รายการที่ %2</translation>
+    </message>
+    <message>
+        <source>Remove item %1</source>
+        <translation>ลบรายการที่ %1</translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation>ยังไม่ได้ตั้งค่า</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -18074,6 +18254,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
         <translation>แทนที่ไอคอนในอินเทอร์เฟซของ HikariSub ไอคอนที่ธีมไม่มีจะแสดงเป็นไอคอนของ HikariSub เอง</translation>
     </message>
+    <message>
+        <source>This window has no trusted project to keep it in.</source>
+        <translation>หน้าต่างนี้ไม่มีโปรเจกต์ที่เชื่อถือให้เก็บค่านี้</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”.</source>
+        <translation>โปรเจกต์ตั้งค่า “%1” ไม่ได้</translation>
+    </message>
+    <message>
+        <source>project.toml can’t be written.</source>
+        <translation>เขียน project.toml ไม่ได้</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -19302,6 +19494,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can’t write the theme plugin to %1.</source>
         <translation>เขียนปลั๊กอินธีมไปที่ %1 ไม่ได้</translation>
+    </message>
+    <message>
+        <source>“%1” takes text</source>
+        <translation>“%1” รับข้อความ</translation>
+    </message>
+    <message>
+        <source>No system keychain to keep it in</source>
+        <translation>ไม่มีพวงกุญแจของระบบให้เก็บค่านี้</translation>
+    </message>
+    <message>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>เก็บ “%1” ในพวงกุญแจของระบบไม่ได้</translation>
     </message>
 </context>
 <context>
@@ -22640,7 +22844,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>No spelling errors were found</source>
-        <translation>ไม่พบคำสะกดผิด</translation>
+        <translation type="vanished">ไม่พบคำสะกดผิด</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -22668,15 +22872,15 @@ because it was edited.</source>
     </message>
     <message>
         <source>No dictionaries found</source>
-        <translation>ไม่พบพจนานุกรม</translation>
+        <translation type="vanished">ไม่พบพจนานุกรม</translation>
     </message>
     <message>
         <source>No spelling errors in %1</source>
-        <translation>ไม่พบคำสะกดผิดใน %1</translation>
+        <translation type="vanished">ไม่พบคำสะกดผิดใน %1</translation>
     </message>
     <message>
         <source>Spelling settings…</source>
-        <translation>การตั้งค่าการสะกด…</translation>
+        <translation type="vanished">การตั้งค่าการสะกด…</translation>
     </message>
     <message>
         <source>Check again</source>
@@ -22696,17 +22900,22 @@ because it was edited.</source>
     </message>
     <message>
         <source>Checking line %1 of %2…</source>
-        <translation>กำลังตรวจบรรทัด %1 จาก %2…</translation>
+        <translation type="vanished">กำลังตรวจบรรทัด %1 จาก %2…</translation>
     </message>
     <message>
         <source>Finding %1 of %2 · %3</source>
-        <translation>ปัญหา %1 จาก %2 · %3</translation>
+        <translation type="vanished">ปัญหา %1 จาก %2 · %3</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked</source>
         <translation>
             <numerusform>ตรวจแล้ว %n บรรทัด</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <extracomment>Joins two counts, as in &quot;3 words replaced, 2 ignored&quot;.</extracomment>
+        <translation>%1 %2</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -22726,7 +22935,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>No more grammar findings in %1</source>
-        <translation>ไม่พบปัญหาไวยากรณ์เพิ่มเติมใน %1</translation>
+        <translation type="vanished">ไม่พบปัญหาไวยากรณ์เพิ่มเติมใน %1</translation>
     </message>
     <message>
         <source>No more grammar findings</source>
@@ -22734,11 +22943,11 @@ because it was edited.</source>
     </message>
     <message>
         <source>No grammar findings in %1</source>
-        <translation>ไม่พบปัญหาไวยากรณ์ใน %1</translation>
+        <translation type="vanished">ไม่พบปัญหาไวยากรณ์ใน %1</translation>
     </message>
     <message>
         <source>No grammar findings</source>
-        <translation>ไม่พบปัญหาไวยากรณ์</translation>
+        <translation type="vanished">ไม่พบปัญหาไวยากรณ์</translation>
     </message>
     <message>
         <source>Choose an English in Settings to check grammar with Harper.</source>
@@ -22746,7 +22955,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%n lines checked.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>ตรวจแล้ว %n บรรทัด</numerusform>
         </translation>
     </message>
@@ -22765,6 +22974,77 @@ because it was edited.</source>
     <message>
         <source>Misspelled word: %1</source>
         <translation>คำสะกดผิด: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n word(s) replaced</source>
+        <translation>
+            <numerusform>แทนที่แล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n ignored</source>
+        <extracomment>After &quot;3 words replaced, &quot;: how many misspelled words were ignored.</extracomment>
+        <translation>
+            <numerusform>ละเว้นแล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n added to the dictionary</source>
+        <extracomment>How many words were added to the dictionary.</extracomment>
+        <translation>
+            <numerusform>เพิ่มลงในพจนานุกรมแล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>, </source>
+        <extracomment>Joins &quot;3 words replaced&quot;, &quot;2 ignored&quot; and &quot;1 added to the dictionary&quot;.</extracomment>
+        <translation type="vanished"> </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 of %2 · %n found so far</source>
+        <translation>
+            <numerusform>บรรทัด %1 จาก %2 · พบแล้ว %n คำ</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Dictionary language</source>
+        <translation>ภาษาของพจนานุกรม</translation>
+    </message>
+    <message>
+        <source>Checking · line %1 of %2</source>
+        <translation>กำลังตรวจ · บรรทัด %1 จาก %2</translation>
+    </message>
+    <message>
+        <source>Spell checking is turned off.</source>
+        <translation>การตรวจการสะกดปิดอยู่</translation>
+    </message>
+    <message>
+        <source>No dictionary for %1 was found, so nothing can be checked.</source>
+        <translation>ไม่พบพจนานุกรมสำหรับ %1 จึงตรวจการสะกดไม่ได้</translation>
+    </message>
+    <message>
+        <source>No dictionary was found, so nothing can be checked.</source>
+        <translation>ไม่พบพจนานุกรม จึงตรวจการสะกดไม่ได้</translation>
+    </message>
+    <message>
+        <source>No more spelling mistakes</source>
+        <translation>ไม่พบคำสะกดผิดเพิ่มเติม</translation>
+    </message>
+    <message>
+        <source>Dictionaries are .dic and .aff files in “%1”.</source>
+        <translation>พจนานุกรมคือไฟล์ .dic และ .aff ในโฟลเดอร์ “%1”</translation>
+    </message>
+    <message>
+        <source>Choose a language…</source>
+        <translation>เลือกภาษา…</translation>
+    </message>
+    <message>
+        <source>Open Settings…</source>
+        <translation>เปิดการตั้งค่า…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
     </message>
     <message>
         <source>Line %1</source>
@@ -22827,6 +23107,11 @@ because it was edited.</source>
     <message>
         <source>Failed to initialise the spellchecker.</source>
         <translation>ไม่สามารถเริ่มตัวตรวจการสะกดได้</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A dictionary&apos;s language and region code, as in English (US).</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The edited line cannot be committed.</source>

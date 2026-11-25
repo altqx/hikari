@@ -72,7 +72,8 @@ public:
 
     const PluginIconTheme *active() const
     {
-        const QString id = settings ? settings->value(QLatin1String(kThemeSetting)).toString() : QString();
+        const QString id = previewId ? *previewId
+                           : settings ? settings->value(QLatin1String(kThemeSetting)).toString() : QString();
         const auto it = std::ranges::find(themes, id, &PluginIconTheme::id);
         return it == themes.end() ? nullptr : &*it;
     }
@@ -86,6 +87,7 @@ public:
     std::vector<PluginIconTheme> themes;
     QHash<QString, QByteArray> own;
     QPointer<SettingsStore> settings;
+    std::optional<QString> previewId;
     int generation = 0;
 
 signals:
@@ -153,6 +155,24 @@ void useSettings(SettingsStore *settings)
             if (id == QLatin1String(kThemeSetting))
                 hub.bump();
         });
+    hub.bump();
+}
+
+void preview(const QString &id)
+{
+    Hub &hub = Hub::get();
+    if (hub.previewId == id)
+        return;
+    hub.previewId = id;
+    hub.bump();
+}
+
+void endPreview()
+{
+    Hub &hub = Hub::get();
+    if (!hub.previewId)
+        return;
+    hub.previewId.reset();
     hub.bump();
 }
 

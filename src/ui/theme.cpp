@@ -1,5 +1,6 @@
 #include "theme.h"
 
+#include "icon_theme.h"
 #include "settings_store.h"
 #include "menu_key.h"
 #include "style/style_colours.h"
@@ -426,6 +427,14 @@ double contrastRatio(const QColor &a, const QColor &b)
     return themes::contrastRatio(a.rgba(), b.rgba());
 }
 
+QColor tintFill(const State &state, QColor ink, float alpha)
+{
+    if (themes::isHighContrast(state.type))
+        return state.roles.panel;
+    ink.setAlphaF(alpha);
+    return ink;
+}
+
 QColor composite(const QColor &over, const QColor &under)
 {
     const double a = over.alphaF();
@@ -738,10 +747,13 @@ void preview(const QVariantMap &values)
 {
     Hub::get().previewValues = values;
     Hub::get().refresh();
+    if (const auto icons = values.constFind(QLatin1String(icons::kThemeSetting)); icons != values.cend())
+        icons::preview(icons->toString());
 }
 
 void endPreview()
 {
+    icons::endPreview();
     if (!Hub::get().previewValues)
         return;
     Hub::get().previewValues.reset();

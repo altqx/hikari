@@ -4,6 +4,7 @@
 #include "hikari/core/srt.h"
 
 #include <QAbstractItemModelTester>
+#include <QRegularExpression>
 #include <QSignalSpy>
 #include <QSortFilterProxyModel>
 #include <QTest>
@@ -589,6 +590,30 @@ private slots:
         model.setTagsMode(application::GridTagsMode::Hide, QStringLiteral("ab"));
         model.index(0, LineTableModel::TextColumn).data(LineTableModel::SpellMarksRole);
         QCOMPARE(seenLength, 0);
+    }
+
+    void currentMisspellFindsItsWordWhenTagsAreSwapped()
+    {
+        using enum application::GridTagsMode;
+        LineTableModel model;
+        model.setSpelling(LineTableModel::TagSpelling(
+            [](std::u16string_view raw, core::SubtitleFormat, bool, int replaceTagsLen) {
+                QString shown = QString::fromStdU16String(std::u16string(raw));
+                if (replaceTagsLen >= 0)
+                    shown.replace(QRegularExpression(QStringLiteral("\\{[^}]*\\}")), QString(replaceTagsLen, u'*'));
+                const int teh = int(shown.indexOf(u"Teh")), wrold = int(shown.indexOf(u"wrold"));
+                return core::legacy::SpellMarks{{teh, teh + 2, wrold, wrold + 4}, {}};
+            }));
+        model.setDocument(load("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\b1}Teh wrold\n"));
+        model.setCurrentMisspell(LineTableModel::CurrentMisspell{*model.lineAt(0), 5, 7});
+        const auto current = [&] {
+            return model.index(0, LineTableModel::TextColumn).data(LineTableModel::CurrentSpellMarkRole).toList();
+        };
+        QCOMPARE(current(), (QVariantList{5, 7}));
+        model.setTagsMode(Hide, QStringLiteral("*"));
+        QCOMPARE(current(), (QVariantList{0, 2}));
+        model.setTagsMode(ReplaceWithSymbol, QStringLiteral("*"));
+        QCOMPARE(current(), (QVariantList{1, 3}));
     }
 
     void lineStateAndLabelColours()

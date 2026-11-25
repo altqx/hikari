@@ -51,7 +51,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     skills_settings.cpp include/hikari/app/skills_settings.h
     review_controller.cpp include/hikari/app/review_controller.h agent_controller.cpp include/hikari/app/agent_controller.h model_picker.cpp include/hikari/app/model_picker.h
     inline_ai_controller.cpp include/hikari/app/inline_ai_controller.h
-    plugin_manager.cpp include/hikari/app/plugin_manager.h
+    plugin_manager.cpp include/hikari/app/plugin_manager.h plugin_secrets.cpp include/hikari/app/plugin_secrets.h
     plugin_marketplace.cpp include/hikari/app/plugin_marketplace.h plugin_runtime.cpp include/hikari/app/plugin_runtime.h plugin_test_harness.cpp include/hikari/app/plugin_test_harness.h
     plugin_programs.cpp include/hikari/app/plugin_programs.h
     plugin_program_downloads.cpp include/hikari/app/plugin_program_downloads.h

@@ -35,5 +35,7 @@ std::optional<std::string> patchTomlSetting(std::string_view text, std::string_v
                                             const std::optional<application::SettingValue> &value);
 // patchTomlSetting for any node, such as an inline table.
 std::optional<std::string> patchTomlNode(std::string_view text, std::string_view id, const toml::node *value);
+// patchTomlNode with the key given segment by segment, for keys that hold dots, such as a plugin id.
+std::optional<std::string> patchTomlPath(std::string_view text, const std::vector<std::string> &path, const toml::node *value);
 
 }
