@@ -39884,6 +39884,8 @@ private slots:
         QCOMPARE(hotkeyRow(QStringLiteral("Video Change aspect ratio…")).value(QStringLiteral("accel")).toString(),
                  QStringLiteral("Alt-Ctrl-J"));
         QTRY_VERIFY(window->isActive());
+        QTest::mouseMove(window, kOverNoPanel);
+        QTRY_VERIFY(!named("keyRouter")->property("hoveredPanel").value<QQuickItem *>());
         item("videoPanel")->forceActiveFocus();
         press(Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY(named("aspectRatioDialog")->property("opened").toBool());
