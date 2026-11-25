@@ -29549,6 +29549,30 @@ or codecs or a splitter may be missing</source>
         <translation>கையால் வரைதல்: அழுத்திப் பிடித்து வரையவும்.</translation>
     </message>
     <message>
+        <source>Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.</source>
+        <translation>சீரமைப்பின்படி வரியை வைக்க ஒரு பெட்டியை இழுக்கவும். அளவை மாற்ற அதன் ஓரங்களையும், நகர்த்த உள்ளேயும் இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.</source>
+        <translation>வரி பின்தொடரும் ஒரு புள்ளியைச் சொடுக்கி, வீடியோவை முன்னே நகர்த்தி, அதே புள்ளியை மீண்டும் சொடுக்கவும். சரிசெய்ய எந்தப் புள்ளியையும் இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.</source>
+        <translation>உரை பொருந்த வேண்டிய பெட்டியை இழுக்கவும்; இப்போதுள்ள உரையைச் சுற்றி ஒரு பெட்டியை வலது பொத்தானால் இழுக்கவும். அளவை மாற்ற ஓரங்களையும், நகர்த்த உள்ளேயும் இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit. Drag its edges to resize, inside to move.</source>
+        <translation>உரை பொருந்த வேண்டிய பெட்டியை இழுக்கவும். அளவை மாற்ற அதன் ஓரங்களையும், நகர்த்த உள்ளேயும் இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.</source>
+        <translation>படத்தில் ஒரு விளிம்பின் வழியே இரண்டு புள்ளிகளைச் சொடுக்கவும்; உரை அதற்கேற்பச் சுழலும். சரிசெய்ய எந்தப் புள்ளியையும் இழுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Drag a box to draw the shape. Drag its edges to resize, inside to move.</source>
+        <translation>வடிவத்தை வரைய ஒரு பெட்டியை இழுக்கவும். அளவை மாற்ற அதன் ஓரங்களையும், நகர்த்த உள்ளேயும் இழுக்கவும்.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>நிலையைப் படிக்கப் படத்தின் மீது சுட்டவும். Ctrl-சொடுக்கு வரியை அங்கே வைக்கும்.</translation>
     </message>

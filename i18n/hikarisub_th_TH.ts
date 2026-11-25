@@ -29286,6 +29286,30 @@ or codecs or a splitter may be missing</source>
         <translation>วาดมือเปล่า: กดค้างแล้ววาด</translation>
     </message>
     <message>
+        <source>Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบเพื่อวางบรรทัดตามการจัดแนว ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.</source>
+        <translation>คลิกจุดที่บรรทัดจะเคลื่อนตาม เลื่อนวิดีโอไปข้างหน้า แล้วคลิกจุดเดิมอีกครั้ง ลากจุดใดก็ได้เพื่อปรับ</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบที่ข้อความต้องพอดี ลากด้วยปุ่มขวาเพื่อสร้างกรอบรอบข้อความตามที่เป็นอยู่ ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบที่ข้อความต้องพอดี ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.</source>
+        <translation>คลิกสองจุดตามแนวขอบในภาพ ข้อความจะหมุนให้ตรงกัน ลากจุดใดก็ได้เพื่อปรับ</translation>
+    </message>
+    <message>
+        <source>Drag a box to draw the shape. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบเพื่อวาดรูปทรง ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>ชี้ที่ภาพเพื่ออ่านตำแหน่ง Ctrl+คลิกเพื่อวางบรรทัดที่นั่น</translation>
     </message>

@@ -30673,6 +30673,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
         QCOMPARE(tools.activeFamily(), 1);
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         QQuickItem *byRect = visualItem("visualOption_byRectangle");
         QVERIFY(byRect);
         QCOMPARE(byRect->property("iconRole").toString(), QStringLiteral("frame-to-scale"));
@@ -33741,6 +33742,7 @@ private slots:
 
     void visualToolRailFoldsUnderMoreTools()
     {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("Binding loop")));
         auto &tools = application->visualTools();
         QVERIFY(application->openFile(
             visualDocument("rail.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}Rail\n")));
@@ -33828,6 +33830,7 @@ private slots:
 
     void visualInspectorBarFitsOneLine()
     {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("Binding loop")));
         auto &tools = application->visualTools();
         QVERIFY(application->openFile(visualDocument(
             "one-line.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}One line\n"
@@ -41874,6 +41877,42 @@ private slots:
             shoot("vt8f-scale-rectangle.png");
             QVERIFY(tools.setOption(QStringLiteral("rectangle"), 0));
             QTRY_VERIFY(fullscreenItem("visualInspectorHandle2"));
+        }
+        {
+            const auto hint = [&] { return fullscreenItem("visualInspectorHintText")->property("text").toString(); };
+            struct Mode {
+                int family;
+                QStringList options;
+                QString hint;
+            };
+            const QList<Mode> modes{
+                {1, {QStringLiteral("byRectangle")},
+                 QStringLiteral("Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.")},
+                {2, {QStringLiteral("twoPoints")},
+                 QStringLiteral("Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.")},
+                {3, {QStringLiteral("rectangle")},
+                 QStringLiteral("Drag a box the text should fit. Drag its edges to resize, inside to move.")},
+                {3, {QStringLiteral("rectangle"), QStringLiteral("originalRectangle")},
+                 QStringLiteral("Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.")},
+                {4, {QStringLiteral("twoPoints")},
+                 QStringLiteral("Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.")},
+                {8, {QStringLiteral("shape")}, QStringLiteral("Drag a box to draw the shape. Drag its edges to resize, inside to move.")},
+            };
+            for (const Mode &mode : modes) {
+                if (tools.activeFamily() != mode.family)
+                    tools.selectFamily(mode.family);
+                QTRY_COMPARE(tools.activeFamily(), mode.family);
+                const QString plain = hint();
+                QVERIFY(!plain.isEmpty());
+                for (const QString &option : mode.options)
+                    QVERIFY2(tools.setOption(option, 1), qPrintable(option));
+                QTRY_COMPARE(hint(), mode.hint);
+                for (auto it = mode.options.crbegin(); it != mode.options.crend(); ++it)
+                    QVERIFY(tools.setOption(*it, 0));
+                QTRY_COMPARE(hint(), plain);
+            }
+            tools.selectFamily(3);
+            QTRY_COMPARE(tools.activeFamily(), 3);
         }
         {
             auto *keys = fullscreenItem("videoFullscreenKeys");

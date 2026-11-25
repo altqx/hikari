@@ -29290,6 +29290,30 @@ or codecs or a splitter may be missing</source>
         <translation>자유 곡선: 누른 채로 그리십시오.</translation>
     </message>
     <message>
+        <source>Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.</source>
+        <translation>끌어서 상자를 만들면 정렬에 맞춰 줄이 배치됩니다. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.</source>
+        <translation>줄이 따라갈 지점을 클릭하고 영상을 앞으로 넘긴 뒤 같은 지점을 다시 클릭하십시오. 어느 점이든 끌어서 조정할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.</source>
+        <translation>텍스트가 맞춰질 상자를 끌어서 만들고, 오른쪽 끌기로 지금 텍스트를 둘러싼 상자를 만드십시오. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit. Drag its edges to resize, inside to move.</source>
+        <translation>텍스트가 맞춰질 상자를 끌어서 만드십시오. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.</source>
+        <translation>화면 속 가장자리를 따라 두 점을 클릭하면 텍스트가 그에 맞게 회전합니다. 어느 점이든 끌어서 조정할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Drag a box to draw the shape. Drag its edges to resize, inside to move.</source>
+        <translation>끌어서 상자를 만들면 도형이 그려집니다. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>화면을 가리키면 위치를 읽습니다. Ctrl+클릭하면 줄을 그곳에 놓습니다.</translation>
     </message>

@@ -29808,6 +29808,30 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Rysuj odręcznie: przytrzymaj i rysuj.</translation>
     </message>
     <message>
+        <source>Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.</source>
+        <translation>Przeciągnij, aby narysować prostokąt, według którego linijka zostanie ustawiona zgodnie z wyrównaniem. Przeciągaj krawędzie, aby zmienić rozmiar, a wnętrze, aby przesunąć.</translation>
+    </message>
+    <message>
+        <source>Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.</source>
+        <translation>Kliknij punkt, za którym podąża linijka, przewiń wideo dalej i kliknij ten sam punkt ponownie. Przeciągnij dowolny z punktów, aby go poprawić.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.</source>
+        <translation>Przeciągnij prostokąt, w który ma się zmieścić tekst; prawym przyciskiem – prostokąt wokół tekstu w obecnej postaci. Przeciągaj krawędzie, aby zmienić rozmiar, a wnętrze, aby przesunąć.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit. Drag its edges to resize, inside to move.</source>
+        <translation>Przeciągnij prostokąt, w który ma się zmieścić tekst. Przeciągaj krawędzie, aby zmienić rozmiar, a wnętrze, aby przesunąć.</translation>
+    </message>
+    <message>
+        <source>Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.</source>
+        <translation>Kliknij dwa punkty wzdłuż krawędzi na obrazie; tekst obróci się do niej. Przeciągnij dowolny z punktów, aby go poprawić.</translation>
+    </message>
+    <message>
+        <source>Drag a box to draw the shape. Drag its edges to resize, inside to move.</source>
+        <translation>Przeciągnij prostokąt, aby narysować kształt. Przeciągaj krawędzie, aby zmienić rozmiar, a wnętrze, aby przesunąć.</translation>
+    </message>
+    <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>
         <translation>Wskaż obraz, aby odczytać pozycję. Ctrl+kliknięcie umieszcza tam linijkę.</translation>
     </message>
