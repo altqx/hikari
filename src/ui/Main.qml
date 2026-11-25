@@ -5717,6 +5717,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "EDITBOX_SPLIT_AT_CURSOR_ESTIMATE"
+                    iconRole: "split-characters"
                     objectName: field.objectName + "SplitEstimate"
                     text: qsTranslate("HikariSub.Editor", "Estimate times")
                     enabled: splitHereMenu.canSplit
@@ -5724,6 +5725,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     command: "EDITBOX_SPLIT_AT_CURSOR_KEEP"
+                    iconRole: "split-lines"
                     objectName: field.objectName + "SplitKeep"
                     text: qsTranslate("HikariSub.Editor", "Keep times")
                     enabled: splitHereMenu.canSplit
