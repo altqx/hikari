@@ -41053,6 +41053,33 @@ private slots:
         QVERIFY(!fullscreenItem("visualInspectorHandle3"));
         QVERIFY(fullscreenItem("visualApplyTo")->isVisible());
         {
+            auto *applyTo = fullscreenItem("visualApplyTo");
+            const auto foot = [&] { return applyTo->mapToItem(fsBar, QPointF(0, applyTo->height())).y(); };
+            const auto barFoot = [&] { return fsBar->height() - fsBar->property("bottomPadding").toReal(); };
+            const auto shoot = [&](const char *name) {
+                if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+                    QVERIFY(QDir().mkpath(out));
+                    QVERIFY(fsWindow->grabWindow().save(QDir(out).filePath(QString::fromLatin1(name))));
+                }
+            };
+            QTRY_VERIFY2(std::abs(foot() - barFoot()) <= 1, qPrintable(QStringLiteral("%1 %2").arg(foot()).arg(barFoot())));
+            const qreal arrows = foot();
+            shoot("vt8f-scale-arrows.png");
+            QVERIFY(tools.setOption(QStringLiteral("rectangle"), 1));
+            QTRY_VERIFY(!fullscreenItem("visualInspectorHandles")->isVisible());
+            QTRY_COMPARE(foot(), arrows);
+            const QPointF middle = tools.videoRect().center();
+            tools.pointer(3, middle.x() - 60, middle.y() - 30, Qt::LeftButton, Qt::LeftButton, 0);
+            tools.pointer(2, middle.x() + 60, middle.y() + 30, Qt::NoButton, Qt::LeftButton, 0);
+            tools.pointer(4, middle.x() + 60, middle.y() + 30, Qt::LeftButton, Qt::NoButton, 0);
+            QTRY_VERIFY(tools.handleRows().contains(3));
+            QTRY_VERIFY(fullscreenItem("visualInspectorHandles")->isVisible());
+            QTRY_COMPARE(foot(), arrows);
+            shoot("vt8f-scale-rectangle.png");
+            QVERIFY(tools.setOption(QStringLiteral("rectangle"), 0));
+            QTRY_VERIFY(fullscreenItem("visualInspectorHandle2"));
+        }
+        {
             auto *keys = fullscreenItem("videoFullscreenKeys");
             const auto in = [&](const char *region) {
                 QQuickItem *focus = fsWindow->activeFocusItem();
@@ -41596,11 +41623,19 @@ private slots:
             shot("menu");
             QMetaObject::invokeMethod(fsMenu, "close");
             QTRY_VERIFY(!fsMenu->property("visible").toBool());
+            QVERIFY(application->video().showFrameAt(0));
+            QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 0);
             tools.selectFamily(6);
+            const QPointF middle = tools.videoRect().center();
+            tools.pointer(3, middle.x() - 60, middle.y() - 30, Qt::LeftButton, Qt::LeftButton, 0);
+            tools.pointer(2, middle.x() + 60, middle.y() + 30, Qt::NoButton, Qt::LeftButton, 0);
+            tools.pointer(4, middle.x() + 60, middle.y() + 30, Qt::LeftButton, Qt::NoButton, 0);
             QTRY_VERIFY(fullscreenItem("visualInspectorHandles")->isVisible());
             QTest::mouseMove(fsWindow, centre + QPoint(4, 0));
             shot("tool");
             tools.selectFamily(0);
+            QVERIFY(application->video().showFrameAt(30));
+            QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
             fs.setMode(ui::VideoFullscreenController::Mode::Simple);
             QTRY_VERIFY(!fullscreenItem("fullscreenTypesetting"));
             fs.setBarMode(1);
