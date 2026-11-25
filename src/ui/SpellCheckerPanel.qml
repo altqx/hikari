@@ -235,14 +235,8 @@ FocusScope {
     }
     component QuietButton: Button {
         flat: true
-        implicitHeight: Theme.controlHeight
-        topPadding: 0
-        bottomPadding: 0
     }
     component ActionButton: Button {
-        implicitHeight: Theme.controlHeight
-        topPadding: 0
-        bottomPadding: 0
         Layout.fillWidth: true
         Layout.minimumWidth: implicitWidth
     }
@@ -257,8 +251,7 @@ FocusScope {
         objectName: "spellTools"
         visible: parent !== null && parent.objectName === "dockToolbarSlot"
         readonly property Item host: parent ? parent.parent : null
-        // MUST KILL: room copies DockTabBar's toolbar slot sizing (naturalTabsWidth, 4 margin + 8 gap) from outside it
-        readonly property real room: host && host.naturalTabsWidth !== undefined ? host.width - host.naturalTabsWidth - 12 : Infinity
+        readonly property real room: host && host.toolbarRoom !== undefined ? host.toolbarRoom : Infinity
         readonly property real smallWidth: modeSwitch.implicitWidth + (cancel.visible ? 8 + cancel.implicitWidth : 0)
         readonly property real languageWidth: panel.grammarMode ? 0 : 8 + language.Layout.preferredWidth
         readonly property real statusWidth: 8 + Math.ceil(statusMetrics.advanceWidth)
@@ -275,7 +268,6 @@ FocusScope {
             SegmentedButtons {
                 id: modeSwitch
                 objectName: "spellMode"
-                implicitHeight: Theme.controlHeight
                 choices: [{text: qsTr("Spelling"), name: "spellModeSpelling"}, {text: qsTr("Grammar"), name: "spellModeGrammar"}]
                 currentIndex: panel.grammarMode ? 1 : 0
                 onActivated: index => panel.setMode(index === 1 ? "grammar" : "spelling")
@@ -285,7 +277,6 @@ FocusScope {
                 id: language
                 objectName: "spellLanguage"
                 visible: !panel.grammarMode && tools.showsLanguage
-                implicitHeight: Theme.controlHeight
                 font: panel.labelFont
                 Layout.preferredWidth: 140
                 textRole: "name"
@@ -405,9 +396,6 @@ FocusScope {
             Button {
                 id: emptyAction
                 objectName: "spellEmptyAction"
-                implicitHeight: Theme.controlHeight
-                topPadding: 0
-                bottomPadding: 0
                 flat: emptyState.finished
                 readonly property bool settings: emptyState.grammarOff
                 text: panel.noDictionary ? qsTr("Choose a language…")

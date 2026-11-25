@@ -16,7 +16,7 @@ Along the bottom, about 200 high, the full width.
 
 ## Marks
 
-Q741. Words the dictionary doesn't know keep their red wavy underline (GRID_SPELLCHECKER in the Grid's Text column, EDITOR_SPELLCHECKER in the Line editor), whether or not the panel is open (owner decision 8 on [#531](https://github.com/altqx/hikari/issues/531), [visual language](visual-language.md)). While the panel is checking, the current word is also tinted `danger` at 18 %, radius 2, in both (`dangerFill`; in high contrast a 1-unit `danger` ring instead). The tint goes when the check ends or the panel closes.
+Q741. Words the dictionary doesn't know keep their red wavy underline (GRID_SPELLCHECKER in the Grid's Text column, EDITOR_SPELLCHECKER in the Line editor), whether or not the panel is open (owner decision 8 on [#531](https://github.com/altqx/hikari/issues/531), [visual language](visual-language.md)). While the panel is checking, the current word is also tinted `danger` at 18 %, radius 2, in both ([`dangerFill`](visual-language.md#semantic-appearance-tokens); in high contrast a 1-unit `danger` ring instead). The tint goes when the check ends or the panel closes.
 
 ## Panel states
 

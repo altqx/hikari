@@ -754,9 +754,15 @@ QVariantList LineTableModel::currentSpellMarkOf(const Row &row) const
 {
     if (!m_currentMisspell || row.line.id != m_currentMisspell->line)
         return {};
+    const QString raw = qs(row.line.text);
+    const auto shown = [&](int rawOffset) {
+        return tagsSwapped() ? int(swapTags(raw.left(rawOffset), m_format, tagSwap()).size()) : rawOffset;
+    };
+    const int start = shown(m_currentMisspell->start);
+    const int end = shown(m_currentMisspell->end + 1) - 1;
     const QVariantList &marks = spellMarksOf(row);
     for (qsizetype m = 0; m + 1 < marks.size(); m += 2)
-        if (marks[m].toInt() <= m_currentMisspell->end && marks[m + 1].toInt() >= m_currentMisspell->start)
+        if (marks[m].toInt() <= end && marks[m + 1].toInt() >= start)
             return {marks[m], marks[m + 1]};
     return {};
 }

@@ -5308,7 +5308,7 @@ ApplicationWindow {
             model: {
                 const state = spellTool.current
                 if (!field.spelled || !spellTool.checking || spellTool.grammarMode || state.found !== true
-                        || (state.from ?? -1) < 0 || state.to > field.length || state.to <= state.from)
+                        || state.line !== root.shell.activeLineNumber || (state.from ?? -1) < 0 || state.to > field.length || state.to <= state.from)
                     return []
                 field.text
                 field.width
@@ -5323,6 +5323,7 @@ ApplicationWindow {
                 y: modelData.y
                 width: modelData.width
                 height: modelData.height
+                z: -0.5
                 radius: 2
                 color: Theme.dangerFill
                 border.width: Theme.highContrast ? 1 : 0

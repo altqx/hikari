@@ -8922,6 +8922,9 @@ private slots:
         QVERIFY(bar);
         QTRY_COMPARE(bar->parentItem(), findItem(header, QStringLiteral("dockToolbarSlot")));
         QVERIFY(bar->isVisible());
+        const qreal room = header->property("toolbarRoom").toReal();
+        QCOMPARE(room, std::max(0.0, header->width() - header->property("selectedNaturalWidth").toReal() - 12));
+        QCOMPARE(bar->parentItem()->width(), std::min(bar->implicitWidth(), room));
         const QRectF inHeader = bar->mapRectToItem(header, QRectF(0, 0, bar->width(), bar->height()));
         QVERIFY(inHeader.top() >= 0 && inHeader.bottom() <= header->height());
         QQuickItem *tab = header->property("currentTab").value<QQuickItem *>();
@@ -14243,6 +14246,11 @@ private slots:
         QCOMPARE(spellItem("spellStatus")->property("text").toString(), QStringLiteral("Line 2 of 3 · 2 found so far"));
         QCOMPARE(currentMark(0), QVariantList{});
         QCOMPARE(currentMark(1), (QVariantList{0, 2}));
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 1);
+        application->selectLine(session->document().lines()[2]->id.value);
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 0);
+        application->selectLine(session->document().lines()[1]->id.value);
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 1);
         QVERIFY(QMetaObject::invokeMethod(spellItem("spellIgnore"), "click"));
         QTRY_VERIFY(spellItem("spellEmpty")->isVisible());
         QCOMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No more spelling mistakes"));
