@@ -29366,8 +29366,8 @@ or codecs or a splitter may be missing</source>
         <translation>நகர்வு முடிவு</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>கிளிப்பும் வரைபடமும்</translation>
+        <source>Clip</source>
+        <translation>கிளிப்</translation>
     </message>
     <message>
         <source>Changed line</source>

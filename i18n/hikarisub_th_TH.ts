@@ -29113,8 +29113,8 @@ or codecs or a splitter may be missing</source>
         <translation>จุดสิ้นสุดการเคลื่อนตำแหน่ง</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>คลิปและภาพวาด</translation>
+        <source>Clip</source>
+        <translation>คลิป</translation>
     </message>
     <message>
         <source>Changed line</source>

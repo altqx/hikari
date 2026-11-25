@@ -1149,6 +1149,23 @@ TEST(VisualMoveHandles, EachPointIsNamedOverThePathBetweenThem)
     EXPECT_EQ(namedHandleAt(halfway, middle(path(halfway))), 3);
 }
 
+TEST(VisualMoveHandles, TwoPointsModeNamesNoneOfTheArrowsHandles)
+{
+    TestHost host;
+    standard(host, 1);
+    host.s = std::make_unique<EditSession>(load(kScript));
+    const auto rows = ids(*host.s);
+    host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    host.time = 1000;
+    ASSERT_FALSE(tool.overlay(host).named.empty());
+    ASSERT_TRUE(tool.setOption("twoPoints", 1, host));
+    EXPECT_TRUE(tool.overlay(host).named.empty());
+}
+
 TEST(VisualPositionValues, TypedPointWritesTheActiveLineAndMovesTheOthers)
 {
     TestHost host;
