@@ -36,6 +36,7 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(int activeFamily READ activeFamily NOTIFY changed)
     Q_PROPERTY(bool railEnabled READ railEnabled NOTIFY changed)
     Q_PROPERTY(QVariantList overlay READ overlay NOTIFY overlayChanged)
+    Q_PROPERTY(QVariantList handleRows READ handleRows NOTIFY overlayChanged)
     Q_PROPERTY(QString labelFamily READ labelFamily CONSTANT)
     Q_PROPERTY(int labelPixelSize READ labelPixelSize NOTIFY geometryChanged)
     Q_PROPERTY(bool hideCursor READ hideCursor NOTIFY changed)
@@ -102,6 +103,7 @@ public:
     int activeFamily() const { return static_cast<int>(m_family); }
     bool railEnabled() const { return m_railEnabled; }
     QVariantList overlay() const;
+    QVariantList handleRows() const;
     QString labelFamily() const;
     int labelPixelSize() const;
     bool hideCursor() const;

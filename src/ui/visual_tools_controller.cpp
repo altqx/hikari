@@ -28,6 +28,7 @@
 #include <QVariantMap>
 
 #include <algorithm>
+#include <set>
 #include <cmath>
 #include <utility>
 
@@ -1063,6 +1064,20 @@ QVariantMap VisualToolsController::segmentAt(qreal x, qreal y) const
     if (!segment)
         return {};
     return {{QStringLiteral("index"), segment->index}, {QStringLiteral("curve"), segment->curve}};
+}
+
+QVariantList VisualToolsController::handleRows() const
+{
+    const auto *t = tool();
+    if (!t || !m_view.hasVideo() || m_view.zoomMode() || (t->warnsOutsideLine() && currentWarning() != LineWarning::None))
+        return {};
+    std::set<int> rows;
+    for (const NamedHandle &handle : t->overlay(*this).named)
+        rows.insert(handle.name);
+    QVariantList out;
+    for (const int row : rows)
+        out.append(row);
+    return out;
 }
 
 int VisualToolsController::handleAt(qreal x, qreal y) const

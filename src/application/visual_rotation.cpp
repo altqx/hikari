@@ -507,9 +507,12 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
         if (m_visibility[1]) {
             out.lines.push_back({m_twoPoints[0], m_twoPoints[1], 2.f, out.handles.border});
             drawRect(out, m_twoPoints[1], m_hover[1], 4.f);
+            out.named.push_back({{m_twoPoints[1]}, 6 * u, 3});
         }
-        if (m_visibility[0])
+        if (m_visibility[0]) {
             drawRect(out, m_twoPoints[0], m_hover[0], 4.f);
+            out.named.push_back({{m_twoPoints[0]}, 6 * u, 2});
+        }
         return out;
     }
     const int time = static_cast<int>(host.videoTimeMs());
@@ -537,6 +540,10 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
         outer.push_back({org.x + ((radius + 10.f * u) * std::sin(a)), org.y + ((radius + 10.f * u) * std::cos(a))});
         inner.push_back({org.x + (radius * std::sin(a)), org.y + (radius * std::cos(a))});
     }
+    NamedHandle band{{}, 6 * u, 1, true};
+    for (std::size_t j = 0; j < outer.size(); ++j)
+        band.path.push_back({(outer[j].x + inner[j].x) / 2, (outer[j].y + inner[j].y) / 2});
+    out.named.push_back(std::move(band));
     ring.points = outer;
     ring.points.insert(ring.points.end(), inner.rbegin(), inner.rend());
     out.polygons.push_back(std::move(ring));

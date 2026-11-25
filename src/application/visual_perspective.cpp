@@ -2383,6 +2383,9 @@ Overlay PerspectiveTool::overlay(const VisualHost &host) const
     for (int i = 0; i < 4; ++i)
         out.lines.push_back({inner[static_cast<std::size_t>(i)], inner[static_cast<std::size_t>((i + 1) % 4)], 2.f,
                              kInnerColour});
+    if (m_plane)
+        out.named.push_back({{o.begin(), o.end()}, 4 * out.unit, 4, true, true});
+    out.named.push_back({{inner.begin(), inner.end()}, 4 * out.unit, 3, true, true});
     const PointF org = view.scriptToView(m_state.transform.org);
     if (m_orgMode == OrgMode::Keep)
         drawCircle(out, org, m_drag == Drag::Org);

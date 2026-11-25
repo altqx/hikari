@@ -158,15 +158,28 @@ float distanceToSegment(PointF p, PointF a, PointF b)
     return std::hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
 }
 
+bool insidePolygon(const std::vector<PointF> &polygon, PointF p)
+{
+    bool inside = false;
+    for (std::size_t i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++) {
+        const PointF a = polygon[i], b = polygon[j];
+        if ((a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x)
+            inside = !inside;
+    }
+    return inside;
+}
+
 float distanceToHandle(const NamedHandle &handle, PointF p)
 {
     const auto &path = handle.path;
     if (path.size() == 1)
         return std::hypot(p.x - path[0].x, p.y - path[0].y);
+    if (handle.filled && path.size() > 2 && insidePolygon(path, p))
+        return 0;
     float best = std::numeric_limits<float>::infinity();
     for (std::size_t i = 1; i < path.size(); ++i)
         best = std::min(best, distanceToSegment(p, path[i - 1], path[i]));
-    if (handle.closed && path.size() > 2)
+    if ((handle.closed || handle.filled) && path.size() > 2)
         best = std::min(best, distanceToSegment(p, path.back(), path.front()));
     return best;
 }

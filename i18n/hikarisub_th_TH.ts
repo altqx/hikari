@@ -29684,6 +29684,38 @@ or codecs or a splitter may be missing</source>
         <translation>คลิป</translation>
     </message>
     <message>
+        <source>Target rectangle</source>
+        <translation>สี่เหลี่ยมเป้าหมาย</translation>
+    </message>
+    <message>
+        <source>Original rectangle</source>
+        <translation>สี่เหลี่ยมต้นฉบับ</translation>
+    </message>
+    <message>
+        <source>First point</source>
+        <translation>จุดแรก</translation>
+    </message>
+    <message>
+        <source>Second point</source>
+        <translation>จุดที่สอง</translation>
+    </message>
+    <message>
+        <source>Shape rectangle</source>
+        <translation>สี่เหลี่ยมของรูปร่าง</translation>
+    </message>
+    <message>
+        <source>Slider knob</source>
+        <translation>ปุ่มของแถบเลื่อน</translation>
+    </message>
+    <message>
+        <source>Slider track</source>
+        <translation>รางของแถบเลื่อน</translation>
+    </message>
+    <message>
+        <source>Helper cross</source>
+        <translation>กากบาทช่วย</translation>
+    </message>
+    <message>
         <source>Changed line</source>
         <translation>บรรทัดที่เปลี่ยน</translation>
     </message>

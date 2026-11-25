@@ -709,8 +709,10 @@ Overlay PositionTool::overlay(const VisualHost &host) const
         for (int i = 0; i < 4; i++)
             out.lines.push_back({v[i], v[i + 1], 2, out.handles.border});
     }
-    if (!nothingToShow && m_hasHelperLine)
+    if (!nothingToShow && m_hasHelperLine) {
         drawHelperLine(out, m_helperX, m_helperY, host.view());
+        out.named.push_back({{PointF{static_cast<float>(m_helperX), static_cast<float>(m_helperY)}}, 6 * out.unit, 1});
+    }
     return out;
 }
 
@@ -1292,14 +1294,18 @@ Overlay MoveTool::overlay(const VisualHost &host) const
     const int time = static_cast<int>(host.videoTimeMs());
     if (m_hasLineToMove && m_lineToMoveVisibility[0]) {
         drawRect(out, m_lineToMoveStart);
+        out.named.push_back({{m_lineToMoveStart}, 7 * out.unit, 4});
         if (m_lineToMoveVisibility[1]) {
             const PointF end = drawArrow(out, m_lineToMoveStart, m_lineToMoveEnd, 6);
             out.lines.push_back({m_lineToMoveStart, end, 2, out.handles.border});
             drawCircle(out, m_lineToMoveEnd);
+            out.named.push_back({{m_lineToMoveEnd}, 8 * out.unit, 5});
         }
     }
-    if (m_hasHelperLine)
+    if (m_hasHelperLine) {
         drawHelperLine(out, m_helperX, m_helperY, host.view());
+        out.named.push_back({{PointF{static_cast<float>(m_helperX), static_cast<float>(m_helperY)}}, 6 * out.unit, 6});
+    }
     const PointF end = drawArrow(out, m_from, m_to, 6);
     const float tmpt = static_cast<float>(time - m_moveStart);
     const float tmpt1 = static_cast<float>(m_moveEnd - m_moveStart);
