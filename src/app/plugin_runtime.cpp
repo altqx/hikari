@@ -129,6 +129,26 @@ QString menuLocation(plugins::MenuLocation location)
     return QStringLiteral("menuBar");
 }
 
+bool writes(const PluginProcess::ServiceRequest &request)
+{
+    switch (request.service) {
+    case protocol::Service::Call: {
+        const api::Operation *op = api::Api::registry().find(request.name);
+        return (op && op->access == api::Access::Write) || request.name.starts_with("programs.");
+    }
+    case protocol::Service::SetSetting:
+    case protocol::Service::Net: return true;
+    case protocol::Service::Files: return request.name == "files.write";
+    default: return false;
+    }
+}
+
+api::Result readToolRefusal(const std::string &what)
+{
+    return api::fail(api::errors::kRefused, what + " can't change anything while the plugin runs as a read AI tool",
+                     api::Json::object({{"reason", "read_tool"}}));
+}
+
 std::string envelope(const api::Result &result)
 {
     if (result)
@@ -376,12 +396,15 @@ void PluginRuntime::sync()
     application::PluginContent content;
     std::vector<PluginTheme> pluginThemes;
     PluginIcons pluginIcons;
+    std::set<std::string> trustsToolMarks;
     if (m_installer) {
         std::set<std::string> installedIds;
         const auto registry = m_installer->registry();
         if (registry)
             for (const auto &[id, entry] : *registry) {
                 installedIds.insert(id);
+                if (entry.trustToolMarks)
+                    trustsToolMarks.insert(id);
                 auto manifest = m_installer->installedManifest(id);
                 if (!manifest) {
                     if (entry.enabled && m_wiring.log)
@@ -459,6 +482,7 @@ void PluginRuntime::sync()
         m_installOrder.push_back(std::move(id));
     m_userOn = std::move(userOn);
     m_onIn = std::move(onIn);
+    m_trustsToolMarks = std::move(trustsToolMarks);
     application::setPluginNodes(std::move(nodes), std::move(unavailable));
     application::setPluginContent(std::move(content));
     syncPluginIcons(std::move(pluginIcons));
@@ -469,6 +493,7 @@ void PluginRuntime::sync()
     m_ui->setPlugins(std::move(installed));
     relist();
     emit mcpServersChanged();
+    emit aiToolsChanged();
     emit languageServersChanged();
 }
 
@@ -499,6 +524,56 @@ std::vector<backends::ai::McpServerEntry> PluginRuntime::mcpServers() const
             out.push_back(std::move(entry));
         }
     return out;
+}
+
+std::vector<backends::ai::PluginToolEntry> PluginRuntime::aiTools() const
+{
+    std::vector<backends::ai::PluginToolEntry> out;
+    for (const Running *plugin : byName())
+        for (const plugins::AiTool &tool : plugin->manifest.aiTools)
+            out.push_back({.name = backends::ai::pluginToolName(plugin->manifest.id, tool.command),
+                           .plugin = plugin->id,
+                           .pluginName = plugin->manifest.name,
+                           .command = tool.command,
+                           .description = tool.description,
+                           .parameters = tool.parameters,
+                           .result = tool.result,
+                           .read = tool.read,
+                           .trusted = m_trustsToolMarks.contains(plugin->id)});
+    return out;
+}
+
+void PluginRuntime::runAiTool(const backends::ai::PluginToolEntry &tool, const api::Json &arguments,
+                              backends::ai::PluginTools::Answer answer)
+{
+    const auto refuse = [&](std::string_view code, std::string why) {
+        answer(std::unexpected(api::Error{std::string(code), std::move(why), {}}));
+    };
+    const auto it = m_plugins.find(tool.plugin);
+    const auto declared = [&](const plugins::AiTool &t) { return t.command == tool.command; };
+    if (it == m_plugins.end() || !std::ranges::any_of(it->second->manifest.aiTools, declared))
+        return refuse(api::errors::kNotFound, tool.pluginName + " isn't on.");
+    Running &plugin = *it->second;
+    const QString commandId = qs(std::string(kCommandPrefix) + plugin.id + "." + tool.command);
+    if (const QString why = disabledReason(commandId); !why.isEmpty())
+        return refuse(api::errors::kRefused, tool.command + " can't run now: " + why.toStdString());
+    if (plugin.held || plugin.process->state() == PluginProcess::State::LoadFailed)
+        return refuse(api::errors::kUnavailable, tool.pluginName + " isn't running.");
+    const std::string call = api::Json::object({{"args", arguments}, {"context", api::Json::object({{"via", "ai"}})}}).dump();
+    PluginProcess::FormatDone done = [answer, name = plugin.manifest.name](std::expected<std::string, QString> result) {
+        if (!result)
+            return answer(std::unexpected(
+                api::Error{std::string(api::errors::kUnavailable), name + ": " + result.error().toStdString(), {}}));
+        auto json = api::Json::parse(*result);
+        if (!json)
+            return answer(std::unexpected(
+                api::Error{std::string(api::errors::kUnavailable), name + " gave an answer that isn't JSON", {}}));
+        answer(std::move(*json));
+    };
+    const bool queued = tool.readOnly() ? plugin.process->runReadTool(tool.command, call, done)
+                                        : plugin.process->run(tool.command, call, done);
+    if (!queued)
+        refuse(api::errors::kBusy, tool.pluginName + " can't take more work now.");
 }
 
 std::expected<backends::ProgramProcess::Options, QString>
@@ -774,6 +849,12 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
 
 void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &request, PluginProcess::ServiceReply reply)
 {
+    if (plugin.process->inReadTool() && writes(request)) {
+        const api::Result refusal = readToolRefusal(request.service == protocol::Service::SetSetting ? "settings.set"
+                                                                                                    : request.name);
+        reply(request.service == protocol::Service::SetSetting ? refusal.error().message : envelope(refusal));
+        return;
+    }
     switch (request.service) {
     case protocol::Service::Notify:
         if (m_wiring.log) {
@@ -961,6 +1042,25 @@ QVariantList PluginRuntime::marks(const QString &pluginId) const
             {QStringLiteral("file"), m_wiring.documentTitle ? m_wiring.documentTitle(application::DocumentId{document}) : QString()},
             {QStringLiteral("count"), qulonglong(count)}});
     return out;
+}
+
+QVariantList PluginRuntime::stoppedLanguageServers(const QString &pluginId) const
+{
+    return m_stoppedLanguageServers ? m_stoppedLanguageServers(pluginId.toStdString()) : QVariantList{};
+}
+
+void PluginRuntime::startLanguageServerAgain(const QString &pluginId, const QString &serverId)
+{
+    if (m_startLanguageServerAgain)
+        m_startLanguageServerAgain(pluginId.toStdString(), serverId.toStdString());
+}
+
+void PluginRuntime::setLanguageServerStates(std::function<QVariantList(const std::string &)> stopped,
+                                            std::function<void(const std::string &, const std::string &)> startAgain)
+{
+    m_stoppedLanguageServers = std::move(stopped);
+    m_startLanguageServerAgain = std::move(startAgain);
+    languageServerStatesUpdated();
 }
 
 QVariantList PluginRuntime::programs(const QString &pluginId) const

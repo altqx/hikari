@@ -233,10 +233,15 @@ int catalogListPartialIndex(const std::vector<u16> &fonts, u16v partial, const F
 
 PickerResolution pickerResolution(const FontReport &report)
 {
+    return pickerResolution(report, 0);
+}
+
+PickerResolution pickerResolution(const FontReport &report, std::size_t at)
+{
     PickerResolution r;
-    if (report.requests.empty())
+    if (at >= report.requests.size())
         return r;
-    const RequestReport &request = report.requests.front();
+    const RequestReport &request = report.requests[at];
     const ResolvedFace *base = nullptr;
     for (const std::size_t i : request.faces)
         if (i < report.faces.size() && report.faces[i].code == 0) {
@@ -255,6 +260,12 @@ PickerResolution pickerResolution(const FontReport &report)
     r.emboldened = base->emboldened;
     r.italicized = base->italicized;
     return r;
+}
+
+FamilyCheck familyCheck(const PickerResolution &resolution)
+{
+    using K = PickerResolution::Kind;
+    return {resolution.kind == K::Requested, resolution.kind == K::Missing ? std::string() : resolution.family};
 }
 
 ExternalFontsLoad loadExternalFonts(u16v path, const FontNameLower &lower, FontListPlatform platform)

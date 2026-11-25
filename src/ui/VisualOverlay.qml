@@ -11,12 +11,20 @@ Item {
     property VideoViewController view: null
     // MUST KILL: cursorOverride -1 means the tool's cursor
     property int cursorOverride: -1
+    property var pickPoint: null
+    signal pickCancelled()
     signal contextMenuRequested(real x, real y)
     signal fullScreenRequested()
     signal pointerMoved(real x, real y)
 
     property bool pointerInside: false
 
+    function cancelPick() {
+        if (overlayItem.pickPoint === null)
+            return false
+        overlayItem.pickCancelled()
+        return true
+    }
     function route(kind, x, y, button, buttons, modifiers, steps) {
         if (kind === 1) {
             if (!pointerInside)
@@ -78,29 +86,56 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-        cursorShape: overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
+        cursorShape: overlayItem.pickPoint !== null ? Qt.CrossCursor
+                     : overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
                      : overlayItem.view && overlayItem.view.zoomMode
                      ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
                      : overlayItem.tools.hideCursor ? Qt.BlankCursor
                      : overlayItem.tools.pointerShape
         onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
-        onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
+        onPositionChanged: mouse => {
+            if (!pickPress)
+                overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
+        }
         property bool segmentPress: false
+        property bool pickPress: false
+        property bool lastWasPick: false
         onPressed: mouse => {
             if (overlayItem.focusTarget)
                 overlayItem.focusTarget.forceActiveFocus()
+            pickPress = overlayItem.pickPoint !== null
+            if (pickPress) {
+                lastWasPick = true
+                const picked = overlayItem.tools.scriptPointAt(mouse.x, mouse.y)
+                if (mouse.button === Qt.LeftButton && picked.x !== undefined)
+                    overlayItem.pickPoint(picked)
+                else
+                    overlayItem.pickCancelled()
+                return
+            }
             segmentPress = mouse.button === Qt.RightButton && overlayItem.openSegmentMenu(mouse.x, mouse.y)
             if (!segmentPress)
                 overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
         onReleased: mouse => {
+            if (pickPress) {
+                pickPress = false
+                return
+            }
+            lastWasPick = false
             if (mouse.button === Qt.RightButton && segmentPress)
                 segmentPress = false
             else
                 overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
-        onDoubleClicked: mouse => overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        onDoubleClicked: mouse => {
+            if (lastWasPick) {
+                lastWasPick = false
+                return
+            }
+            overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        }
         onWheel: wheel => {
             if (overlayItem.view && overlayItem.view.wheel(wheel.x, wheel.y, wheel.angleDelta.x / 120,
                                                            wheel.angleDelta.y / 120, wheel.modifiers)) {
@@ -111,6 +146,12 @@ Item {
                               Math.round(wheel.angleDelta.y / 120))
             wheel.accepted = overlayItem.view !== null
         }
+    }
+
+    Shortcut {
+        sequence: StandardKey.Cancel
+        enabled: overlayItem.pickPoint !== null
+        onActivated: overlayItem.cancelPick()
     }
 
     PinchHandler {

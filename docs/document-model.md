@@ -54,6 +54,16 @@ A save that replaces a file keeps the file as it was in the Recovery folder, und
 
 The Autosaves window lists them with the autosaves, tagged "Earlier save", one row per file with its copies newest first. **Open copy** opens one as a new unsaved Document titled "<name> (earlier save)"; Delete removes every copy of that file, and Delete older than… leaves them. `DocumentFiles::setSavedOver` reports the replaced bytes once a save is published; the copies are a second `RecoveryStore`.
 
+## Attachments
+An ASS file carries fonts in `[Fonts]` and graphics in `[Graphics]`, each as a `fontname:` or `filename:` line followed by Aegisub's uuencoding ([#1214](https://github.com/altqx/hikari/issues/1214)). **Subtitles › Attachments…** (Global 5372, ASS only) lists them with their type and decoded size.
+
+- **Attach font…** and **Attach graphic…** take several files and add them in one undo step, "Attach fonts" or "Attach graphics". A font is named as Aegisub names it, with `_0` before the extension (`Noto Sans.ttf` becomes `Noto Sans_0.ttf`), and a graphic keeps its file name. The data is written in lines of 80 characters.
+- **Before attaching, HikariSub asks** when a file is over 10 MB, when the attachments would total over 50 MB, or when a font's licence restricts embedding. A font is restricted when its OS/2 `fsType` has bit 1 set and neither bit 2 nor bit 3. Attach goes on with every file; the user decides.
+- **Extract…** writes one attachment to a file the user names, or several to a folder under their own names. An existing file is replaced only after asking.
+- **Remove** takes the selected attachments out in one undo step, "Remove attachment". A section left without attachments goes.
+
+A new attachment goes after the last one of its kind. A file without the section gains one at its end, after a blank line. Every other byte of the file stays: a data line that begins with `[`, which the loader reads as a section header, stays part of the attachment before it. Attached fonts are used to draw the subtitles, and the renderer's copy of the file still leaves `[Fonts]` out.
+
 ## Interfaces and ownership
 
 Conceptual interfaces, not production declarations:

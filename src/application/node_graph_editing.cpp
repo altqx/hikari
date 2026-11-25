@@ -150,6 +150,20 @@ std::optional<NodeGraph> withNodeRenamed(NodeGraph graph, std::string_view from,
     return graph;
 }
 
+NodeGraph withFieldOnNodes(NodeGraph graph, std::span<const std::string> nodes, std::string_view field,
+                           const std::optional<json::Json> &value)
+{
+    for (GraphNode &n : graph.nodes) {
+        if (std::ranges::find(nodes, n.id) == nodes.end())
+            continue;
+        if (value)
+            n.fields[field] = *value;
+        else if (n.fields.isObject())
+            std::erase_if(n.fields.asObject(), [&](const json::Json::Member &m) { return m.key == field; });
+    }
+    return graph;
+}
+
 std::string freeNodeId(const NodeGraph &graph, std::string_view type)
 {
     const auto dot = type.rfind('.');

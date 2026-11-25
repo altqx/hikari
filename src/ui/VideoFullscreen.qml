@@ -14,6 +14,7 @@ Window {
     readonly property Item keyTarget: keyScope
     readonly property alias contextMenu: fullscreenMenu
     readonly property bool cursorHidden: controller.cursorHidden
+    property var cancelPick: () => false
     readonly property real pinnedPanelHeight: controller.stripReserved ? strip.height : 0
     readonly property bool typesetting: controller.mode === VideoFullscreenController.Mode.Typesetting
     readonly property color ink: "#EEF0F2"
@@ -39,6 +40,11 @@ Window {
         }
     }
 
+    function editTime() {
+        if (typesetting.item)
+            return typesettingTime.edit()
+        return stripTime.edit()
+    }
     function pointerMoved(at) {
         fs.controller.pointerMoved(at)
     }
@@ -67,7 +73,7 @@ Window {
     Binding {
         target: fs.controller
         property: "menuOpen"
-        value: fullscreenMenu.opened || outputMenu.opened || stripMenu.opened || strip.holdsFocus
+        value: fullscreenMenu.opened || outputMenu.opened || stripMenu.opened || stripZoom.menu.opened || strip.holdsFocus
     }
     Connections {
         target: fs.controller
@@ -117,7 +123,9 @@ Window {
         Keys.onPressed: event => {
             const action = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers)
             const back = (event.modifiers & Qt.ShiftModifier) !== 0
-            if (event.key === Qt.Key_F6 && action === "" && typesetting.item) {
+            if (event.key === Qt.Key_Escape && fs.cancelPick()) {
+                event.accepted = true
+            } else if (event.key === Qt.Key_F6 && action === "" && typesetting.item) {
                 typesetting.item.nextRegion(fs.activeFocusItem, back)
                 event.accepted = true
             } else if (event.key === Qt.Key_F6 && action === "" && fs.controller.barShown) {
@@ -161,6 +169,24 @@ Window {
                 controller: fs.controller
                 onPictureFocusRequested: keyScope.focusPicture()
             }
+        }
+        VideoTimeField {
+            id: typesettingTime
+            objectName: "fullscreenTypesettingTimes"
+            itemPrefix: "fullscreenTypesetting"
+            parent: typesetting.item ? typesetting.item.timeSlot : fs.contentItem
+            visible: typesetting.item !== null
+            video: fs.shell.video
+            time: fs.controller.positionText
+            pixelSize: 13
+            tip: fs.shell.videoTimeTip
+        }
+        VideoZoomReadout {
+            objectName: "fullscreenTypesettingZoomReadout"
+            itemPrefix: "fullscreenTypesettingZoomReadout"
+            parent: typesetting.item ? typesetting.item.zoomReadoutSlot : fs.contentItem
+            visible: typesetting.item !== null
+            shell: fs.shell
         }
 
         Item {
@@ -558,15 +584,16 @@ Window {
                             tip: fs.shell.bitmapTip(text, "VIDEO_STOP", 3)
                             onClicked: if (!fs.shell.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) fs.shell.video.stop()
                         }
-                        Label {
+                        VideoTimeField {
+                            id: stripTime
                             objectName: "fullscreenTime"
+                            itemPrefix: "fullscreenStrip"
                             Layout.leftMargin: 10
-                            text: fs.controller.positionText
-                            color: fs.ink
+                            video: fs.shell.video
+                            time: fs.controller.positionText
+                            ink: fs.ink
                             opacity: fs.controller.failedFrame >= 0 ? 0.5 : 1
-                            font.family: "monospace"
-                            font.pixelSize: 20
-                            Accessible.name: qsTr("Video time, %1").arg(text)
+                            tip: fs.shell.videoTimeTip
                         }
                     }
                     RowLayout {
@@ -574,6 +601,14 @@ Window {
                         objectName: "fullscreenTrailing"
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                         spacing: 2
+                        VideoZoomReadout {
+                            id: stripZoom
+                            objectName: "fullscreenZoomReadout"
+                            itemPrefix: "fullscreenZoomReadout"
+                            shell: fs.shell
+                            ink: fs.ink
+                            hoverFill: Qt.rgba(1, 1, 1, 0.12)
+                        }
                         FullscreenStripButton {
                             id: modeSwitch
                             objectName: "fullscreenTypeset"

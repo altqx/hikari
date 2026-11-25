@@ -11,6 +11,7 @@ HikariSub.Documents	Opening, saving, closing and reloading Documents; Untitled D
 HikariSub.Editor	The line editor panel: text fields and their menu, the line inspector, counters, alignment, tag buttons
 HikariSub.Export	Export as: its window, the formats and options, and the report of what each format drops
 HikariSub.Fonts	The font collector, font catalogs, fonts from subtitles and the font chooser
+HikariSub.Attachments	Fonts and graphics attached to ASS subtitles: the Attachments window, its warnings and extracting
 HikariSub.GettingStarted	Getting started, the setup of the first start (FR1)
 HikariSub.Grid	The subtitle grid: headings, line states, selection, line groups, copy and paste of columns
 HikariSub.Explorer	The Explorer panel: the Project folder tree, its filter, grouping and file actions (PJ4)

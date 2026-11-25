@@ -83,6 +83,13 @@ struct PickerResolution {
     bool emboldened = false, italicized = false;
 };
 PickerResolution pickerResolution(const FontReport &report);
+PickerResolution pickerResolution(const FontReport &report, std::size_t request);
+
+struct FamilyCheck {
+    bool installed = false;
+    std::string shownIn; // empty when no face draws it
+};
+FamilyCheck familyCheck(const PickerResolution &resolution);
 
 // Non-empty ttf, otf, ttc or pfb files in listing order; each full path is
 // `path` followed by the name, no separator added.

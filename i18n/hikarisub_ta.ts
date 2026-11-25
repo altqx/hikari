@@ -1076,6 +1076,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1” %2 MB அளவு, 10 MB-ஐ விட அதிகம்.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>“%1”-இன் உரிமம் அதைப் பிற கோப்புகளில் உட்பொதிப்பதைக் கட்டுப்படுத்துகிறது.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>இணைப்புகளின் மொத்த அளவு %1 MB ஆகும், 50 MB-ஐ விட அதிகம்.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>இணைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>“%1”-ஐப் படிக்க முடியவில்லை; எதுவும் இணைக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>இணைப்புகள்…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>வசனங்களுடன் இணைக்கப்பட்ட எழுத்துருக்களையும் படங்களையும் பட்டியலிடுகிறது</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>எழுத்துருக்களை இணை</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>படங்களை இணை</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>இருந்தாலும் இணைக்கவா?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>இணை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>பிரித்தெடு</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>%1-ஐ எழுத முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>“%1” ஏற்கெனவே உள்ளது. அதை மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>பெயர்</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>வகை</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>அளவு</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>இந்த வசனங்களில் இணைப்புகள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>ASS வசனங்கள் மட்டுமே இணைப்புகளைக் கொண்டிருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>படம்</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>இணைக்கப்பட்ட எழுத்துருக்கள் இந்த வசனங்களை வரையப் பயன்படுகின்றன, கோப்புடனே செல்கின்றன. பிரித்தெடுத்தல் ஒரு நகலை எழுதும்; வசனங்கள் மாறாது.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>எழுத்துருவை இணை…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>படத்தை இணை…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>பிரித்தெடு…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>எழுத்துருக் கோப்புகள் (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லாக் கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>படங்கள் (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>கோப்புறைக்குப் பிரித்தெடு</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -9365,8 +9500,52 @@ Failed to copy %2 fonts.</source>
         <translation>முழுத் திரை டைப்செட்டிங்</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>தாவிச் செல்</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>பெரிதாக்கம் 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>பெரிதாக்கம் 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>பெரிதாக்கம் 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>சிறிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>பொருந்தும்படி பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>1:1 சாதனப் படப்புள்ளிகளுக்குப் பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>அடுத்த வசன எல்லை</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>முந்தைய வசன எல்லை</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>இணைப்புகள்…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -12494,6 +12673,46 @@ Failed to copy %2 fonts.</source>
         <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>தாவிச் செல்</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>பெரிதாக்கம் 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>பெரிதாக்கம் 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>பெரிதாக்கம் 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>பெரிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>சிறிதாக்கு</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>பலகத்துக்குப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>1:1 சாதனப் படப்புள்ளிகள்</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>அடுத்த வசன எல்லை</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>முந்தைய வசன எல்லை</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>வீடியோ கோப்பைத் திறக்கிறது</translation>
     </message>
@@ -12686,6 +12905,14 @@ Failed to copy %2 fonts.</source>
         <translation>வீடியோவைத் திற… (&amp;o)</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>முந்தைய கோப்பு</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>அடுத்த கோப்பு</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>கீஃப்ரேம் கோப்பைத் திறக்கிறது</translation>
     </message>
@@ -12710,6 +12937,18 @@ Failed to copy %2 fonts.</source>
         <translation>ஒரு சட்டகம் முன்னோக்கிச் செல்கிறது</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>வீடியோவை ஒரு வரியின் முந்தைய தொடக்கத்துக்கோ முடிவுக்கோ நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>வீடியோவை ஒரு வரியின் அடுத்த தொடக்கத்துக்கோ முடிவுக்கோ நகர்த்துகிறது</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>காட்ட வேண்டிய நேரத்தையோ சட்டகத்தையோ தட்டச்சு செய்கிறது</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>தேர்ந்தெடுத்த வரிகளின் தொடக்கத்தை வீடியோ சட்டகத்தின் நேரத்துக்கு அமைக்கிறது</translation>
     </message>
@@ -12728,6 +12967,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>தோற்ற விகிதத்தை மாற்றவும்…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>பெரிதாக்கம்</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -13142,11 +13385,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not wired</source>
-        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13157,20 +13395,62 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Choose a colour</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>%n nodes selected.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Select a node to see its fields.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n %1 nodes</source>
+        <translation>
+            <numerusform>%n %1 கணு</numerusform>
+            <numerusform>%n %1 கணுக்கள்</numerusform>
+        </translation>
+    </message>
     <message>
         <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a value to change it · Shift for fine steps</source>
+        <translation>மதிப்பை மாற்ற அதை இழுக்கவும் · நுண்ணிய படிகளுக்கு Shift</translation>
+    </message>
+    <message>
+        <source>Wired</source>
+        <translation>இணைக்கப்பட்டவை</translation>
+    </message>
+    <message>
+        <source>On line %1</source>
+        <extracomment>The Node panel&apos;s heading for the values from the last preview run on a line</extracomment>
+        <translation>வரி %1 இல்</translation>
+    </message>
+    <message>
+        <source>from the last run · %1 a line</source>
+        <translation>கடைசி இயக்கத்திலிருந்து · ஒரு வரிக்கு %1</translation>
+    </message>
+    <message>
+        <source>→ %1</source>
+        <extracomment>An output&apos;s wires in the Node panel: &quot;→ fade › tags, emit › tags&quot;</extracomment>
+        <translation>→ %1</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>தேர்வு</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>குழுவாக்கு</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Values from the last run show for one node at a time.</source>
+        <translation>கடைசி இயக்கத்தின் மதிப்புகள் ஒரு நேரத்தில் ஒரு கணுவுக்கு மட்டுமே காட்டப்படும்.</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>சிக்கல்கள்</translation>
     </message>
     <message>
         <source>Name</source>
@@ -13181,9 +13461,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mixed</source>
+        <translation>கலவை</translation>
+    </message>
+    <message>
+        <source>Changed from the default</source>
+        <extracomment>Read out by screen readers for a Node panel field whose value isn&apos;t the node&apos;s default</extracomment>
+        <translation>இயல்புநிலையிலிருந்து மாற்றப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>இயல்புநிலைக்கு மீட்டமை</translation>
+    </message>
+    <message>
         <source>+ graph seed %1</source>
         <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to “%1”</source>
+        <extracomment>Selects and centres the node a wired input comes from</extracomment>
+        <translation>“%1” க்குச் செல்</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>இயல்புநிலை</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <extracomment>The axis after a point&apos;s coordinate in the Node panel</extracomment>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>y</source>
+        <translation>y</translation>
+    </message>
+    <message>
+        <source>Pick on the video</source>
+        <translation>வீடியோவில் தேர்ந்தெடு</translation>
     </message>
     <message>
         <source>Lua code</source>
@@ -13202,8 +13517,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>At least %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a smaller value: &quot;At least 1&quot;</extracomment>
+        <translation>குறைந்தது %1</translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a larger value: &quot;At most 400&quot;</extracomment>
+        <translation>அதிகபட்சம் %1</translation>
+    </message>
+    <message>
+        <source>Between %1 and %2</source>
+        <extracomment>A refused value in the Node panel: &quot;Between 10 and 400&quot;</extracomment>
+        <translation>%1 முதல் %2 வரை</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <extracomment>A unit after a number in the Node panel: pixels</extracomment>
+        <translation>px</translation>
+    </message>
+    <message>
         <source>ms</source>
+        <extracomment>The unit after a time in the Node panel: milliseconds</extracomment>
         <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>Enter a number</source>
+        <translation>ஓர் எண்ணை உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Enter X and Y as numbers</source>
+        <translation>X, Y ஐ எண்களாக உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Enter a colour as #RRGGBB</source>
+        <translation>வண்ணத்தை #RRGGBB ஆக உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Enter a name</source>
+        <translation>ஒரு பெயரை உள்ளிடவும்</translation>
+    </message>
+    <message>
+        <source>Use only letters, digits, _ and -</source>
+        <translation>எழுத்துகள், இலக்கங்கள், _ மற்றும் - ஆகியவற்றை மட்டும் பயன்படுத்தவும்</translation>
+    </message>
+    <message>
+        <source>Another node is called “%1”.</source>
+        <extracomment>A refused node name: “fade” is the name another node has</extracomment>
+        <translation>“%1” என்ற பெயரில் வேறொரு கணு ஏற்கெனவே உள்ளது.</translation>
     </message>
     <message>
         <source>New seed</source>
@@ -13218,20 +13579,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>to %1</source>
-        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On line %1, from the last run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13248,19 +13596,15 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished">நேரமிடல்</translation>
+        <translation type="obsolete">நேரமிடல்</translation>
     </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Last run %1 on line %2</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>1 line</source>
@@ -13302,8 +13646,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>கோப்பின் Lua-வை நீங்கள் நம்பும் வரை எதுவும் இயங்காது: மேலே உள்ள அறிவிப்பில் முன்னோட்டம் என்பதைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13490,7 +13834,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · வரி %1 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · வரி %1 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · இங்கே மூல வரி இல்லை</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>இந்தக் கோப்பை நீங்கள் நம்பும் வரை %1 முடக்கப்பட்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · அதைப் பார்க்க சிக்கல்களைச் சரிசெய்யவும்</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · வரி %2 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -13707,6 +14071,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For selected lines</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step down</source>
+        <translation>ஒரு படி குறை</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>ஒரு படி கூட்டு</translation>
     </message>
 </context>
 <context>
@@ -18327,6 +18699,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>புதுப்பிப்புகளைத் தானாக நிறுவு</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1 இலிருந்து வரும் கருவிக் குறிகளை நம்பு</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>படிக்க மட்டும் செய்யும் அதன் கருவிகள் அதன் பிறகு கேட்காமல் இயங்கும். அதுவரை அது சேர்க்கும் ஒவ்வொரு கருவியும் ஒரு மாற்றத்தைப் போலவே முதலில் கேட்கும்.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>அது தொடங்கவில்லை.</translation>
     </message>
@@ -22834,7 +23214,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>பாணியைச் சேமி</translation>
+        <translation type="vanished">பாணியைச் சேமி</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -23091,7 +23471,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n வரி</numerusform>
             <numerusform>%1, %n வரிகள்</numerusform>
         </translation>
@@ -23178,7 +23558,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>கோப்பில் சேர்</translation>
+        <translation type="vanished">கோப்பில் சேர்</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23186,7 +23566,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>பட்டியலில் சேர்</translation>
+        <translation type="vanished">பட்டியலில் சேர்</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23328,11 +23708,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>முன்னோட்ட உரை</translation>
+        <translation type="vanished">முன்னோட்ட உரை</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>இந்தக் கோப்பில் பாணிகள் இல்லை. + மூலம் ஒன்றை உருவாக்கவும் அல்லது பட்டியலிலிருந்து நகலெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>பட்டியலுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>இந்தக் கோப்புக்கு நகலெடு</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23349,6 +23741,44 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>பாணி எதுவும் தேர்ந்தெடுக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>பட்டியலிலிருந்து…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n பாணி</numerusform>
+            <numerusform>%n பாணிகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>%n வரி இதைப் பயன்படுத்துகிறது</numerusform>
+            <numerusform>%n வரிகள் இதைப் பயன்படுத்துகின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>பாணியைத் திரும்பப்பெறு</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>உரை மாதிரி</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>எழுத்துரு நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>எழுத்துரு நிறுவப்படவில்லை: %1 இல் காட்டப்படுகிறது</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23452,7 +23882,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>திரும்பப்பெறு</translation>
+        <translation type="vanished">திரும்பப்பெறு</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23527,11 +23957,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>பாணி</translation>
+        <translation type="vanished">பாணி</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>வரிகள்</translation>
+        <translation type="vanished">வரிகள்</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23547,7 +23977,14 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>வரிகள்: %1</translation>
+        <translation type="vanished">வரிகள்: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23555,7 +23992,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>தற்போதைய வரியின் பாணி</translation>
+        <translation type="vanished">தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
@@ -27135,15 +27572,15 @@ Styles deleted:
     </message>
     <message>
         <source>Video position</source>
-        <translation>வீடியோ நிலை</translation>
+        <translation type="vanished">வீடியோ நிலை</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>வீடியோ நேரங்கள்</translation>
+        <translation type="vanished">வீடியோ நேரங்கள்</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>சட்டக நேரம்; சட்டக எண்; வரியின் தொடக்கச் சட்டகத்திலிருந்து சட்டகங்கள்; வரியின் தொடக்கம் மற்றும் முடிவிலிருந்து மில்லிவினாடிகள்</translation>
+        <translation type="vanished">சட்டக நேரம்; சட்டக எண்; வரியின் தொடக்கச் சட்டகத்திலிருந்து சட்டகங்கள்; வரியின் தொடக்கம் மற்றும் முடிவிலிருந்து மில்லிவினாடிகள்</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -27170,6 +27607,15 @@ Styles deleted:
         <translation>நிறுத்து</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>தாவிச் செல்</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>வரி %2 இன் தொடக்கத்திலிருந்து %1 சட்டகங்கள் · அதன் தொடக்கத்திலிருந்து %3 ms · அதன் முடிவிலிருந்து %4 ms</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>அடுத்த கோப்பு</translation>
     </message>
@@ -27192,6 +27638,11 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>எல்லா கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>சட்டகம் %1 / %2</translation>
     </message>
     <message>
         <source>Video (%1)</source>
@@ -27325,6 +27776,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>பெரிதாக்கத்தையும் நகர்த்தலையும் மீட்டமை</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>பெரிதாக்கம்</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -28078,6 +28533,48 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>நேரமோ சட்டகமோ அல்ல: %1. %2 அல்லது ஒரு சட்டக எண்ணை முயலவும்.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>வீடியோ நேரம், %1, திருத்தக்கூடியது</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>பொருத்தம்</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>வீடியோ பெரிதாக்கம், %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>வீடியோ பெரிதாக்கம்</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>

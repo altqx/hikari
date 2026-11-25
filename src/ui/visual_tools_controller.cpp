@@ -998,6 +998,15 @@ QString VisualToolsController::copyCoordinates(qreal x, qreal y)
     return m_copied;
 }
 
+QVariantMap VisualToolsController::scriptPointAt(qreal x, qreal y) const
+{
+    if (!m_view.hasVideo())
+        return {};
+    const CrossCoefficients coeff = crossCoefficients(m_view);
+    const PointF script = crossScriptPoint(m_view, coeff.x, coeff.y, m_view.toDevice(x), m_view.toDevice(y));
+    return {{QStringLiteral("x"), double(script.x)}, {QStringLiteral("y"), double(script.y)}};
+}
+
 QString VisualToolsController::copyCoordinatesAtCursor(QQuickItem *area)
 {
     if (m_lastPointer)

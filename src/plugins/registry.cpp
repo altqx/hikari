@@ -65,6 +65,11 @@ std::optional<InstalledPlugin> readPlugin(const Json &json)
             return std::nullopt;
         plugin.autoUpdate = autoUpdate->asBool();
     }
+    if (const Json *trust = json.find("trustToolMarks")) {
+        if (!trust->isBool())
+            return std::nullopt;
+        plugin.trustToolMarks = trust->asBool();
+    }
     for (auto [name, field] : {std::pair{"skip", &plugin.skip}, {"previous", &plugin.previous}, {"held", &plugin.held},
                                {"path", &plugin.path}, {"accepted", &plugin.accepted}})
         if (const Json *value = json.find(name)) {
@@ -147,6 +152,8 @@ bool saveRegistry(const std::filesystem::path &file, const Registry &registry)
             entry["source"] = plugin.source == Source::Marketplace ? "marketplace" : "dev";
         if (!plugin.autoUpdate)
             entry["autoUpdate"] = false;
+        if (plugin.trustToolMarks)
+            entry["trustToolMarks"] = true;
         for (auto [name, field] : {std::pair{"skip", &plugin.skip}, {"previous", &plugin.previous}, {"held", &plugin.held},
                                    {"path", &plugin.path}, {"accepted", &plugin.accepted}})
             if (!field->empty())
