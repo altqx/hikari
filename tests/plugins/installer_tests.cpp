@@ -120,6 +120,7 @@ TEST_F(PluginInstaller, AnUpdateKeepsDataAndSettingsAndClearsTheCache)
     touch(folders().data / "com.example.hello/notes.txt");
     touch(folders().cache / "com.example.hello/index.bin");
     ASSERT_TRUE(installer.setEnabled("com.example.hello", false));
+    ASSERT_TRUE(installer.edit("com.example.hello", [](InstalledPlugin &p) { p.trustToolMarks = true; }));
 
     const InstallReview r = reviewed(plugin("1.1.0", &a), &a);
     EXPECT_EQ(r.change, Change::Update);
@@ -135,6 +136,7 @@ TEST_F(PluginInstaller, AnUpdateKeepsDataAndSettingsAndClearsTheCache)
     const InstalledPlugin entry = installed();
     EXPECT_EQ(entry.version, "1.1.0");
     EXPECT_FALSE(entry.enabled);
+    EXPECT_TRUE(entry.trustToolMarks);
     EXPECT_EQ(entry.key, a.key);
 }
 
@@ -452,6 +454,7 @@ TEST_F(PluginInstaller, TheUpdateStateRoundTrips)
     Registry registry;
     InstalledPlugin entry{"1.4.0", false, a.key};
     entry.autoUpdate = false;
+    entry.trustToolMarks = true;
     entry.skip = "1.5.0";
     entry.previous = "1.3.2";
     entry.held = "1.6.0";
@@ -461,6 +464,7 @@ TEST_F(PluginInstaller, TheUpdateStateRoundTrips)
     ASSERT_TRUE(saveRegistry(folders().registry, registry));
     const InstalledPlugin loaded = loadRegistry(folders().registry)->at("com.example.hello");
     EXPECT_FALSE(loaded.autoUpdate);
+    EXPECT_TRUE(loaded.trustToolMarks);
     EXPECT_EQ(loaded.skip, "1.5.0");
     EXPECT_EQ(loaded.previous, "1.3.2");
     EXPECT_EQ(loaded.held, "1.6.0");
@@ -469,9 +473,11 @@ TEST_F(PluginInstaller, TheUpdateStateRoundTrips)
     registry["com.example.hello"] = {"1.4.0"};
     ASSERT_TRUE(saveRegistry(folders().registry, registry));
     EXPECT_EQ(read(folders().registry).find("autoUpdate"), std::string::npos);
+    EXPECT_EQ(read(folders().registry).find("trustToolMarks"), std::string::npos);
     EXPECT_TRUE(loadRegistry(folders().registry)->at("com.example.hello").autoUpdate);
+    EXPECT_FALSE(loadRegistry(folders().registry)->at("com.example.hello").trustToolMarks);
 
-    for (const char *bad : {R"("autoUpdate": "no")", R"("skip": 1)", R"("revoked": {"reason": "x"})"}) {
+    for (const char *bad : {R"("autoUpdate": "no")", R"("trustToolMarks": 1)", R"("skip": 1)", R"("revoked": {"reason": "x"})"}) {
         std::ofstream(folders().registry) << R"({"format": 1, "plugins": {"com.example.hello": {"version": "1.0.0", "enabled": true, )"
                                           << bad << "}}}";
         EXPECT_FALSE(loadRegistry(folders().registry)) << bad;

@@ -153,6 +153,7 @@ void FontCatalogsController::stopResolver()
         std::lock_guard lock(m_resolveMutex);
         m_resolverStop = true;
         m_resolveJob.reset();
+        m_checkJob.reset();
     }
     m_resolveWake.notify_all();
     if (m_resolver.joinable())
@@ -915,36 +916,95 @@ void FontCatalogsController::settingChanged(const QString &id)
 int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts,
                                           const QString &text)
 {
-    application::FontEnvironment environment = m_families->environment();
-    if (documentFonts && m_hooks.documentFonts)
-        for (auto &font : m_hooks.documentFonts())
-            environment.attachments.push_back({std::move(font.family), std::move(font.bytes)});
+    application::FontEnvironment environment = documentEnvironment(documentFonts);
     const int request = ++m_resolveRequest;
     {
         std::lock_guard lock(m_resolveMutex);
         m_resolveJob = ResolveJob{request, m_service, std::move(environment),
-                                  application::FontRequest{family.toStdString(), bold, italic,
-                                                           (text.trimmed().isEmpty() ? defaultPreviewText() : text).toStdString()}};
+                                  {application::FontRequest{family.toStdString(), bold, italic,
+                                                            (text.trimmed().isEmpty() ? defaultPreviewText() : text).toStdString()}}};
     }
+    wakeResolver();
+    return request;
+}
+
+int FontCatalogsController::checkFamilies(const QStringList &families)
+{
+    const int request = ++m_checkRequest;
+    std::vector<application::FontRequest> wants;
+    const std::string text = defaultPreviewText().toStdString();
+    for (const QString &family : families)
+        wants.push_back({family.toStdString(), false, false, text});
+    {
+        std::lock_guard lock(m_resolveMutex);
+        m_checkJob = ResolveJob{request, m_service, documentEnvironment(true), std::move(wants)};
+    }
+    wakeResolver();
+    return request;
+}
+
+void FontCatalogsController::wakeResolver()
+{
     m_resolveWake.notify_one();
     if (!m_resolver.joinable())
         m_resolver = std::thread([this] { resolverLoop(); });
-    return request;
+}
+
+application::FontEnvironment FontCatalogsController::documentEnvironment(bool documentFonts) const
+{
+    application::FontEnvironment environment = m_families->environment();
+    if (documentFonts && m_hooks.documentFonts)
+        for (auto &font : m_hooks.documentFonts())
+            environment.attachments.push_back({std::move(font.family), std::move(font.bytes)});
+    return environment;
+}
+
+namespace {
+
+QVariantMap checkedFamilies(const std::vector<application::FontRequest> &wants,
+                            const std::expected<application::FontReport, application::FontError> &report)
+{
+    QVariantMap byFamily;
+    if (!report)
+        return byFamily;
+    for (std::size_t i = 0; i < wants.size(); ++i) {
+        const auto check = application::familyCheck(application::pickerResolution(*report, i));
+        byFamily[QString::fromStdString(wants[i].family)] = QVariantMap{
+            {QStringLiteral("installed"), check.installed},
+            {QStringLiteral("shownIn"), QString::fromStdString(check.shownIn)},
+        };
+    }
+    return byFamily;
+}
+
 }
 
 void FontCatalogsController::resolverLoop()
 {
     for (;;) {
         ResolveJob job;
+        bool check = false;
         {
             std::unique_lock lock(m_resolveMutex);
-            m_resolveWake.wait(lock, [this] { return m_resolverStop || m_resolveJob.has_value(); });
+            m_resolveWake.wait(lock, [this] {
+                return m_resolverStop || m_resolveJob.has_value() || m_checkJob.has_value();
+            });
             if (m_resolverStop)
                 return;
-            job = std::move(*m_resolveJob);
-            m_resolveJob.reset();
+            check = !m_resolveJob.has_value();
+            auto &slot = check ? m_checkJob : m_resolveJob;
+            job = std::move(*slot);
+            slot.reset();
         }
-        const auto report = job.service->resolve(job.environment, {job.want});
+        const auto report = job.service->resolve(job.environment, job.wants);
+        if (check) {
+            const int request = job.request;
+            const QVariantMap byFamily = checkedFamilies(job.wants, report);
+            // MUST KILL: captures this; safe only because the destructor joins this thread.
+            QMetaObject::invokeMethod(
+                this, [this, request, byFamily] { emit familiesChecked(request, byFamily); }, Qt::QueuedConnection);
+            continue;
+        }
         QVariantMap result;
         if (report) {
             const auto r = application::pickerResolution(*report);

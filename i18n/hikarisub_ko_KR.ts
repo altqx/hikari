@@ -13284,8 +13284,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>파일의 Lua를 신뢰할 때까지 아무것도 실행되지 않습니다. 위 알림에서 미리 보기를 선택하십시오.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13468,7 +13468,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;미리 보기&lt;/b&gt; · %1번 줄 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · 여기에 원본 줄 없음</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>이 파일을 신뢰할 때까지 %1 꺼짐</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · 문제를 고치면 표시됨</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · %2번 줄 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -18292,6 +18312,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>업데이트 자동 설치</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1에서 온 도구 표시 신뢰</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>읽기만 하는 도구는 그 후 묻지 않고 실행됩니다. 그 전까지는 추가한 모든 도구가 변경처럼 먼저 묻습니다.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>시작되지 않았습니다.</translation>
     </message>
@@ -22741,7 +22769,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>스타일 저장</translation>
+        <translation type="vanished">스타일 저장</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -22995,7 +23023,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n줄</numerusform>
         </translation>
     </message>
@@ -23081,7 +23109,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>파일에 추가</translation>
+        <translation type="vanished">파일에 추가</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23089,7 +23117,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>목록에 추가</translation>
+        <translation type="vanished">목록에 추가</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23229,11 +23257,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>미리 보기 텍스트</translation>
+        <translation type="vanished">미리 보기 텍스트</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>적용</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>이 파일에 스타일이 없습니다. +로 만들거나 목록에서 복사하세요.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>목록으로 복사</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>이 파일로 복사</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23250,6 +23290,42 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>내 항목으로 이동</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>선택한 스타일 없음</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>목록에서…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>스타일 %n개</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>%n줄에서 사용</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>스타일 원래대로</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>텍스트 견본</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>글꼴이 설치되지 않음</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>글꼴이 설치되지 않음: %1(으)로 표시</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23353,7 +23429,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>원래대로</translation>
+        <translation type="vanished">원래대로</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23428,11 +23504,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>스타일</translation>
+        <translation type="vanished">스타일</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>줄</translation>
+        <translation type="vanished">줄</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23448,7 +23524,13 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>줄: %1</translation>
+        <translation type="vanished">줄: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n줄</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23456,7 +23538,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>현재 줄의 스타일</translation>
+        <translation type="vanished">현재 줄의 스타일</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>

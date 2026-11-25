@@ -489,6 +489,8 @@ void PluginManager::refresh()
                     {QStringLiteral("settings"), manifest ? settingRows(*manifest, entry.settings) : QVariantList()},
                     {QStringLiteral("folders"), manifest ? folderRows(*manifest, entry.grants) : QVariantList()},
                     {QStringLiteral("autoUpdate"), entry.autoUpdate},
+                    {QStringLiteral("aiTools"), manifest && !manifest->aiTools.empty()},
+                    {QStringLiteral("trustToolMarks"), entry.trustToolMarks},
                     {QStringLiteral("previous"), text(entry.previous)},
                     {QStringLiteral("held"), text(entry.held)},
                     {QStringLiteral("revoked"), entry.revoked.has_value()},
@@ -837,6 +839,11 @@ QString PluginManager::edit(const QString &id, const std::function<void(plugins:
 QString PluginManager::setAutoUpdate(const QString &id, bool on)
 {
     return edit(id, [on](plugins::InstalledPlugin &plugin) { plugin.autoUpdate = on; });
+}
+
+QString PluginManager::setTrustToolMarks(const QString &id, bool on)
+{
+    return edit(id, [on](plugins::InstalledPlugin &plugin) { plugin.trustToolMarks = on; });
 }
 
 QString PluginManager::rollBack(const QString &id)

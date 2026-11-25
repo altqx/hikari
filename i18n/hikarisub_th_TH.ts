@@ -13284,8 +13284,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>จะไม่มีสิ่งใดทำงานจนกว่าคุณจะเชื่อถือโค้ด Lua ของไฟล์: เลือก ตัวอย่าง ในประกาศด้านบน</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13468,7 +13468,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;ตัวอย่าง&lt;/b&gt; · บรรทัด %1 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;ตัวอย่าง&lt;/b&gt; · บรรทัด %1 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · ไม่มีบรรทัดต้นทางที่นี่</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1ปิดอยู่จนกว่าคุณจะเชื่อถือไฟล์นี้</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · แก้ไขปัญหาเพื่อดูตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · บรรทัด %2 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -18292,6 +18312,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ติดตั้งอัปเดตโดยอัตโนมัติ</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>เชื่อถือเครื่องหมายเครื่องมือจาก %1</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>จากนั้นเครื่องมือของปลั๊กอินที่อ่านอย่างเดียวจะทำงานโดยไม่ต้องถาม ก่อนหน้านั้น เครื่องมือทุกตัวที่ปลั๊กอินเพิ่มจะถามก่อน เหมือนการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>ไม่ได้เริ่มทำงาน</translation>
     </message>
@@ -22741,7 +22769,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>บันทึกสไตล์</translation>
+        <translation type="vanished">บันทึกสไตล์</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -22995,7 +23023,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n บรรทัด</numerusform>
         </translation>
     </message>
@@ -23081,7 +23109,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>เพิ่มไปยังไฟล์</translation>
+        <translation type="vanished">เพิ่มไปยังไฟล์</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23089,7 +23117,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>เพิ่มไปยังแคตตาล็อก</translation>
+        <translation type="vanished">เพิ่มไปยังแคตตาล็อก</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23229,11 +23257,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>ข้อความตัวอย่าง</translation>
+        <translation type="vanished">ข้อความตัวอย่าง</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>นำไปใช้</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>ไฟล์นี้ไม่มีสไตล์ สร้างด้วย + หรือคัดลอกจากแคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>คัดลอกไปยังแคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>คัดลอกไปยังไฟล์นี้</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23250,6 +23290,42 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>ย้ายไปยังของคุณ</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>ยังไม่ได้เลือกสไตล์</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>จากแคตตาล็อก…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n สไตล์</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>ใช้ใน %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>ย้อนกลับสไตล์</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>ข้อความตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>ไม่ได้ติดตั้งฟอนต์</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>ไม่ได้ติดตั้งฟอนต์: แสดงด้วย %1</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23353,7 +23429,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>ย้อนกลับ</translation>
+        <translation type="vanished">ย้อนกลับ</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23428,11 +23504,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>สไตล์</translation>
+        <translation type="vanished">สไตล์</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>บรรทัด</translation>
+        <translation type="vanished">บรรทัด</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23448,7 +23524,13 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>บรรทัด: %1</translation>
+        <translation type="vanished">บรรทัด: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23456,7 +23538,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>สไตล์ของบรรทัดปัจจุบัน</translation>
+        <translation type="vanished">สไตล์ของบรรทัดปัจจุบัน</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>

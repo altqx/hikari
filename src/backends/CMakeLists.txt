@@ -95,7 +95,7 @@ add_library(hikari_ai STATIC ai_config_store.cpp include/hikari/backends/ai_conf
     ai_http_relay.cpp include/hikari/backends/ai_http_relay.h ai_agent.cpp ai_agent_detail.h ai_agent_tasks.cpp include/hikari/backends/ai_agent.h ai_agent_broker.cpp
     include/hikari/backends/ai_agent_broker.h ai_agent_cli.cpp include/hikari/backends/ai_agent_cli.h ai_antigravity.cpp
     include/hikari/backends/ai_antigravity.h ai_ca_bundle.cpp include/hikari/backends/ai_ca_bundle.h
-    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
+    ai_mcp_server.cpp include/hikari/backends/ai_mcp_server.h ai_mcp_clients.cpp include/hikari/backends/ai_mcp_clients.h ai_plugin_tools.cpp include/hikari/backends/ai_plugin_tools.h ai_mcp_bridge.cpp include/hikari/backends/ai_mcp_bridge.h
     ai_inline_run.cpp ai_translation_run.cpp include/hikari/backends/ai_inline_run.h)
 if(WIN32)
     target_sources(hikari_ai PRIVATE ai_private_pipe.h ai_private_pipe_windows.cpp ai_file_key_store_windows.cpp

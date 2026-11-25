@@ -13528,8 +13528,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>Nic się nie uruchomi, dopóki nie zaufasz kodowi Lua tego pliku: wybierz Podgląd w powiadomieniu powyżej.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13720,7 +13720,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;Podgląd&lt;/b&gt; · linijka %1 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;Podgląd&lt;/b&gt; · linijka %1 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · brak tu linijki źródłowej</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 wyłączony, dopóki nie zaufasz temu plikowi</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · popraw problemy, aby go zobaczyć</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · linijka %2 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -18570,6 +18590,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Instaluj aktualizacje automatycznie</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>Ufaj oznaczeniom narzędzi od %1</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>Jej narzędzia, które tylko odczytują, działają wtedy bez pytania. Do tego czasu każde dodane przez nią narzędzie najpierw pyta, tak jak zmiana.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>Nie uruchomiła się.</translation>
     </message>
@@ -23135,7 +23163,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Save style</source>
-        <translation>Zapisz styl</translation>
+        <translation type="vanished">Zapisz styl</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -23395,7 +23423,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n linijka</numerusform>
             <numerusform>%1, %n linijki</numerusform>
             <numerusform>%1, %n linijek</numerusform>
@@ -23483,7 +23511,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>Dodaj do pliku</translation>
+        <translation type="vanished">Dodaj do pliku</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23491,7 +23519,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>Dodaj do katalogu</translation>
+        <translation type="vanished">Dodaj do katalogu</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23635,11 +23663,23 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>Tekst podglądu</translation>
+        <translation type="vanished">Tekst podglądu</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>Ten plik nie ma stylów. Utwórz styl przyciskiem + albo skopiuj go z katalogu.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>Kopiuj do katalogu</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>Kopiuj do tego pliku</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23656,6 +23696,46 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Move to yours</source>
         <translation>Przenieś do Twoich</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>Nie wybrano stylu</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>Z katalogu…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n styl</numerusform>
+            <numerusform>%n style</numerusform>
+            <numerusform>%n stylów</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>Używa go %n linijka</numerusform>
+            <numerusform>Używają go %n linijki</numerusform>
+            <numerusform>Używa go %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>Cofnij zmiany stylu</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>Próbka tekstu</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>Czcionka nie jest zainstalowana</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>Czcionka nie jest zainstalowana: wyświetlana jako %1</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23759,7 +23839,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation>Cofnij zmiany</translation>
+        <translation type="vanished">Cofnij zmiany</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23834,11 +23914,11 @@ Usunięte style:
     </message>
     <message>
         <source>Style</source>
-        <translation>Styl</translation>
+        <translation type="vanished">Styl</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>Linijki</translation>
+        <translation type="vanished">Linijki</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23854,7 +23934,15 @@ Usunięte style:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>Linijki: %1</translation>
+        <translation type="vanished">Linijki: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n linijka</numerusform>
+            <numerusform>%n linijki</numerusform>
+            <numerusform>%n linijek</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23862,7 +23950,7 @@ Usunięte style:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>Styl bieżącej linijki</translation>
+        <translation type="vanished">Styl bieżącej linijki</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>

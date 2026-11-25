@@ -11,6 +11,7 @@
 #include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/ai_mcp_clients.h"
+#include "hikari/backends/ai_plugin_tools.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/conditions.h"
 #include "hikari/plugins/installer.h"
@@ -199,6 +200,11 @@ public:
     std::vector<backends::ai::McpServerEntry> mcpServers() const;
     // How a plugin's MCP server starts in the plugin's sandbox, or why it can't.
     std::expected<backends::ProgramProcess::Options, QString> mcpServerStart(const backends::ai::McpServerEntry &server) const;
+    // The AI tools of the plugins that run, by plugin name, each trusted when the user trusts its plugin's marks.
+    std::vector<backends::ai::PluginToolEntry> aiTools() const;
+    // Runs the tool's command with `arguments` and context.via "ai", as a read tool when it only reads after trust.
+    void runAiTool(const backends::ai::PluginToolEntry &tool, const api::Json &arguments,
+                   backends::ai::PluginTools::Answer answer);
     // The installed plugins, as of the last sync; nullopt before a registry was read.
     const std::optional<std::set<std::string>> &installed() const { return m_installed; }
 
@@ -243,6 +249,7 @@ signals:
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
     void mcpServersChanged();
+    void aiToolsChanged();
     void languageServersChanged();
     void languageServerStatesChanged();
 
@@ -306,6 +313,7 @@ private:
     void renewServers(Running &plugin);
     std::int64_t m_serversRevision = 0;
     std::optional<std::set<std::string>> m_installed;
+    std::set<std::string> m_trustsToolMarks;
     std::set<std::string> m_reloading;
     void rework();
     QVariantList m_working;
