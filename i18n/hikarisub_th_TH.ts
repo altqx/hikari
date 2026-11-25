@@ -4375,6 +4375,11 @@ Output device: %2</source>
         <translation>ตรวจการสะกดขณะพิมพ์</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>ตัวแก้ไขบรรทัด · ข้อความที่แปล</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>ตัวแก้ไขบรรทัด</translation>
     </message>
@@ -7237,6 +7242,13 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>No lines match the filter</source>
         <translation>ไม่มีบรรทัดที่ตรงกับตัวกรอง</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>แปลแล้ว %1 จาก %n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -20194,8 +20206,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>อ้างอิง</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>อ้างอิง · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>อ้างอิง: %1</translation>
+        <translation type="vanished">อ้างอิง: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -20212,6 +20228,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Follow the editing line</source>
         <translation>ติดตามบรรทัดที่กำลังแก้ไข</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>แยกอิสระ</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>เชื่อมโยง</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>การนำทางอ้างอิง</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -20232,6 +20260,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>บรรทัดอ้างอิง (ป้องกันไว้ อ่านอย่างเดียว)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>อ่านอย่างเดียว “แยกอิสระ” จะเลื่อนได้เอง ส่วน “เชื่อมโยง” จะติดตามบรรทัดที่กำลังแก้ไขตามเวลา</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -26900,6 +26932,19 @@ Styles deleted:
         <translation>ข้อความต้นฉบับ: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>การแปลด้วย AI</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>พิมพ์คำแปล กด %1 เพื่อวางข้อความต้นฉบับ</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>พิมพ์คำแปล</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>บรรทัดคาราโอเกะ: แท็กที่อยู่หน้าข้อความจะถูกนำไปด้วย แต่การจัดเวลาคาราโอเกะจะไม่ถูกนำไป</translation>
     </message>
@@ -27130,6 +27175,28 @@ Styles deleted:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>แสดงและบันทึกข้อความต้นฉบับและคำแปลของแต่ละบรรทัด</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>การแปลด้วย AI หยุดแล้ว</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>การแปลด้วย AI · %1 จาก %n บรรทัด</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>ผู้ให้บริการ…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>รายละเอียด</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>ปิดการแจ้งเตือน</translation>
     </message>
 </context>
 <context>

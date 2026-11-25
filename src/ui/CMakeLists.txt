@@ -129,7 +129,7 @@ list(APPEND hikari_ui_qml_files AudioOutputMenu.qml MenuRadioItem.qml MenuHeadin
 list(APPEND hikari_ui_qml_files LineBreaksMenu.qml ChangeCaseMenu.qml)
 list(APPEND hikari_ui_qml_files AudioSliderRow.qml)
 list(APPEND hikari_ui_qml_files AudioTapBar.qml TapCalibrationWindow.qml Keycap.qml KeycapSentence.qml)
-list(APPEND hikari_ui_qml_files TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml
+list(APPEND hikari_ui_qml_files TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml TranslationRunState.qml
     TranslationModeOffConfirm.qml)
 target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
 list(APPEND hikari_ui_qml_files ScreenDropperView.qml)

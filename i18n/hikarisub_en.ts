@@ -511,6 +511,14 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%1 of %n line translated</numerusform>
+            <numerusform>%1 of %n lines translated</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>This file has %n Aegisub folds.</source>
         <translation>
             <numerusform>This file has %n Aegisub fold.</numerusform>
@@ -1805,6 +1813,16 @@
         <translation>
             <numerusform>Fits position, scale and rotation over the %n selected line (degree %1, error %2 px).</numerusform>
             <numerusform>Fits position, scale and rotation over the %n selected lines (degree %1, error %2 px).</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Translation</name>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI translation · %1 of %n line</numerusform>
+            <numerusform>AI translation · %1 of %n lines</numerusform>
         </translation>
     </message>
 </context>
