@@ -255,7 +255,7 @@ void PluginRuntime::wirePrograms()
             auto folder = [](const fs::path &path) { return QString::fromStdU16String(path.u16string()); };
             return PluginPrograms::Plugin{&it->second->manifest, folder(m_installer->codeFolder(id)),
                                           folder(m_installer->dataFolder(id)), folder(m_installer->cacheFolder(id)),
-                                          plugins::settingValues(it->second->manifest, storedSettings(id))};
+                                          settingsOf(it->second->manifest)};
         },
         m_wiring.networkAllowed,
         [this](const std::string &id, const QString &line) {
@@ -288,7 +288,7 @@ void PluginRuntime::wireQmlPanels()
             const auto it = m_plugins.find(plugin);
             if (it == m_plugins.end() || !m_installer)
                 return api::Json::object();
-            return plugins::settingValues(it->second->manifest, storedSettings(plugin));
+            return settingsOf(it->second->manifest);
         },
         [this] { return m_wiring.language ? m_wiring.language() : QString(); },
         [this](const QString &pluginName, const QString &text, bool error) {
@@ -331,14 +331,16 @@ const plugins::ProjectPlugins *PluginRuntime::windowProject(int shellWindow) con
     return found == m_windows.end() || !found->second ? nullptr : &*found->second;
 }
 
-api::Json PluginRuntime::storedSettings(const std::string &plugin) const
+api::Json PluginRuntime::settingsOf(const plugins::Manifest &manifest) const
 {
     api::Json stored = api::Json::object();
     if (!m_installer)
-        return stored;
-    if (const auto registry = m_installer->registry(); registry && registry->contains(plugin))
-        stored = registry->at(plugin).settings;
-    return plugins::projectSettings(plugin, stored, windowProject(m_wiring.activeWindow ? m_wiring.activeWindow() : 0));
+        return plugins::settingValues(manifest, stored);
+    if (const auto registry = m_installer->registry(); registry && registry->contains(manifest.id))
+        stored = registry->at(manifest.id).settings;
+    const plugins::ProjectPlugins *project = windowProject(m_wiring.activeWindow ? m_wiring.activeWindow() : 0);
+    api::Json values = plugins::settingValues(manifest, plugins::projectSettings(manifest, stored, project));
+    return m_wiring.secrets ? m_wiring.secrets->fill(manifest, std::move(values)) : values;
 }
 
 bool PluginRuntime::onIn(const QString &pluginId, int shellWindow) const
@@ -628,7 +630,7 @@ api::Json PluginRuntime::pluginSettings(const std::string &plugin) const
     const auto it = m_plugins.find(plugin);
     if (it == m_plugins.end() || !m_installer)
         return api::Json::object();
-    return plugins::settingValues(it->second->manifest, storedSettings(plugin));
+    return settingsOf(it->second->manifest);
 }
 
 void PluginRuntime::logProgramLine(const std::string &plugin, const QString &line)
@@ -725,7 +727,7 @@ std::unique_ptr<PluginRuntime::Running> PluginRuntime::launch(const std::string 
         request.tier = m.tier == plugins::Tier::Unrestricted ? protocol::Tier::Unrestricted : protocol::Tier::Restricted;
         request.memoryLimit = static_cast<std::int64_t>(m_wiring.memoryLimit);
         request.locale = m_wiring.language ? m_wiring.language().toStdString() : std::string();
-        request.settings = plugins::settingValues(m, storedSettings(raw->id)).dump();
+        request.settings = settingsOf(m).dump();
         for (const auto &command : m.commands)
             request.commands.push_back(command.id);
         for (const auto &format : m.formats) {
@@ -883,6 +885,11 @@ void PluginRuntime::serve(Running &plugin, const PluginProcess::ServiceRequest &
         auto value = api::Json::parse(request.json);
         if (!value || !m_installer) {
             reply("HikariSub can’t keep settings here");
+            return;
+        }
+        if (const auto declared = std::ranges::find(plugin.manifest.settings, request.name, &plugins::Setting::id);
+            declared != plugin.manifest.settings.end() && declared->secret()) {
+            reply(setSetting(plugin.id, request.name, *value).value_or(std::string()));
             return;
         }
         const auto kept = m_installer->setSetting(plugin.id, request.name, *value);
@@ -1385,6 +1392,13 @@ void PluginRuntime::restart(const QString &pluginId)
         if (hasCode(it->second->manifest))
             it->second->process->start();
     }
+}
+
+void PluginRuntime::resendSetting(const plugins::Manifest &manifest, const std::string &setting)
+{
+    const api::Json values = settingsOf(manifest);
+    const api::Json *value = values.find(setting);
+    settingChanged(qs(manifest.id), qs(setting), qs((value ? *value : api::Json()).dump()));
 }
 
 void PluginRuntime::settingChanged(const QString &pluginId, const QString &setting, const QString &json)

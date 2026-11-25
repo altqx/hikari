@@ -4371,22 +4371,6 @@ Output device: %2</source>
         <translation>“%1” 단어를 사전에 추가하지 못했습니다.</translation>
     </message>
     <message>
-        <source>Split here</source>
-        <translation>여기서 분할</translation>
-    </message>
-    <message>
-        <source>Estimate times</source>
-        <translation>시간 추정</translation>
-    </message>
-    <message>
-        <source>Keep times</source>
-        <translation>시간 유지</translation>
-    </message>
-    <message>
-        <source>At the video frame</source>
-        <translation>영상 프레임에서</translation>
-    </message>
-    <message>
         <source>Check spelling as you type</source>
         <translation>입력하는 동안 철자 검사</translation>
     </message>
@@ -4588,10 +4572,6 @@ Output device: %2</source>
         <translation>저장 실패, 디스크의 파일은 변경되지 않음</translation>
     </message>
     <message>
-        <source>Nothing to split: both halves need text.</source>
-        <translation>분할할 수 없습니다: 두 부분 모두 글자가 있어야 합니다.</translation>
-    </message>
-    <message>
         <source>End time is before start time.</source>
         <translation>종료 시간이 시작 시간보다 앞섭니다.</translation>
     </message>
@@ -4696,6 +4676,26 @@ Output device: %2</source>
     <message>
         <source>Characters per second. Keep it at %1 or under.</source>
         <translation>초당 문자 수입니다. %1 이하로 유지해야 합니다.</translation>
+    </message>
+    <message>
+        <source>Split here</source>
+        <translation>여기서 분할</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>시간 추정</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>시간 유지</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>영상 프레임에서</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>분할할 수 없습니다: 두 부분 모두 글자가 있어야 합니다.</translation>
     </message>
 </context>
 <context>
@@ -6686,7 +6686,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation>단계 %1/%2</translation>
+        <translation type="vanished">단계 %1/%2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
@@ -6722,7 +6722,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation>이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
+        <translation type="vanished">이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
     </message>
     <message>
         <source>Later: Settings › General › Import settings…</source>
@@ -6758,7 +6758,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation>테마를 선택하십시오. 선택하는 대로 이 창이 바뀝니다.</translation>
+        <translation type="vanished">테마를 선택하십시오. 선택하는 대로 이 창이 바뀝니다.</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
@@ -6778,7 +6778,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation>고대비 사용</translation>
+        <translation type="vanished">고대비 사용</translation>
     </message>
     <message>
         <source>Title bar</source>
@@ -6802,11 +6802,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation>주로 어떤 작업을 하십니까?</translation>
+        <translation type="vanished">주로 어떤 작업을 하십니까?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation>하나를 고르면 첫 탭이 열릴 때의 레이아웃이 정해집니다. 고르지 않으면 모든 기능을 조금씩 갖춘 편집 레이아웃이 유지됩니다.</translation>
+        <translation type="vanished">하나를 고르면 첫 탭이 열릴 때의 레이아웃이 정해집니다. 고르지 않으면 모든 기능을 조금씩 갖춘 편집 레이아웃이 유지됩니다.</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
@@ -6885,6 +6885,110 @@ Failed to copy %2 fonts.</source>
         <translation>편집</translation>
     </message>
     <message>
+        <source>Welcome</source>
+        <translation>환영합니다</translation>
+    </message>
+    <message>
+        <source>Bring over</source>
+        <translation>가져오기</translation>
+    </message>
+    <message>
+        <source>How you work</source>
+        <translation>작업 방식</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>준비</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation>전체 화면</translation>
+    </message>
+    <message>
+        <source>%1’s settings were found on this computer. Nothing in them is changed.</source>
+        <translation>이 컴퓨터에서 %1 설정을 찾았습니다. 원본은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Settings from %1 and %2 were found on this computer. Nothing in them is changed.</source>
+        <translation>이 컴퓨터에서 %1와(과) %2의 설정을 찾았습니다. 원본은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed.</source>
+        <translation>이 컴퓨터에서 %1, %2, %3의 설정을 찾았습니다. 원본은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub (built in)</source>
+        <translation>HikariSub (기본 제공)</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>단계</translation>
+    </message>
+    <message>
+        <source>Step %1 of %2, %3</source>
+        <translation>%2단계 중 %1단계, %3</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>현재</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>Skip setup keeps HikariSub’s defaults.</source>
+        <translation>설정을 건너뛰면 HikariSub 기본값을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>This window changes as you choose.</source>
+        <translation>선택하는 대로 이 창이 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>High contrast</source>
+        <translation>고대비</translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation>기본 제공</translation>
+    </message>
+    <message>
+        <source>From plugins</source>
+        <translation>플러그인 테마</translation>
+    </message>
+    <message>
+        <source>More themes…</source>
+        <translation>테마 더 보기…</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>마켓플레이스</translation>
+    </message>
+    <message>
+        <source>Icons</source>
+        <translation>아이콘</translation>
+    </message>
+    <message>
+        <source>How do you mostly work?</source>
+        <translation>주로 어떻게 작업하시나요?</translation>
+    </message>
+    <message>
+        <source>This sets the layout your first tab opens with. Leave it on Editing for a bit of everything.</source>
+        <translation>첫 탭이 열릴 때의 레이아웃을 정합니다. 두루 쓰려면 편집으로 두세요.</translation>
+    </message>
+    <message>
+        <source>Video, audio, the line editor and the grid.</source>
+        <translation>비디오, 오디오, 줄 편집기, 그리드.</translation>
+    </message>
+    <message>
+        <source>Just the picture and a line box. View › Full screen typesetting any time.</source>
+        <translation>영상과 줄 상자만. 보기 › 전체 화면 식자로 언제든지 전환할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>나중에: 설정 › 일반 › 저장, 설정 › 철자 및 문법</translation>
     </message>
@@ -6937,8 +7041,36 @@ Failed to copy %2 fonts.</source>
         <translation>지난 화는 벌써 봣어요.</translation>
     </message>
     <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation>HikariSub가 시작될 때, 하루에 한 번까지.</translation>
+    </message>
+    <message>
         <source>Updates and privacy</source>
         <translation>업데이트 및 개인정보</translation>
+    </message>
+    <message>
+        <source>HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on.</source>
+        <translation>HikariSub는 번역, 검토, 그리고 함께 편집하는 에이전트를 도울 수 있습니다. 직접 켜기 전에는 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › AI</source>
+        <translation>나중에: 설정 › AI</translation>
+    </message>
+    <message>
+        <source>Keep AI off</source>
+        <translation>AI 끈 채로 두기</translation>
+    </message>
+    <message>
+        <source>No AI menus, panels or downloads. Nothing about your subtitles leaves this computer.</source>
+        <translation>AI 메뉴, 패널, 다운로드가 없습니다. 자막에 관한 어떤 것도 이 컴퓨터를 떠나지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Turn AI on</source>
+        <translation>AI 켜기</translation>
+    </message>
+    <message>
+        <source>HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI.</source>
+        <translation>마침 후에 HikariSub가 AI 구성 요소를 한 번 내려받습니다. 제공자 추가나 에이전트 로그인은 설정 › AI에서 합니다.</translation>
     </message>
     <message>
         <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
@@ -6970,7 +7102,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation>HikariSub을 시작할 때 하루에 한 번까지 확인합니다. 홈의 새로운 기능에도 필요합니다.</translation>
+        <translation type="vanished">HikariSub을 시작할 때 하루에 한 번까지 확인합니다. 홈의 새로운 기능에도 필요합니다.</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -6985,6 +7117,70 @@ Failed to copy %2 fonts.</source>
         <translation>보내는 정보</translation>
     </message>
     <message>
+        <source>Your Discord status shows the mode you’re in. Never folders, your subtitles or the video.</source>
+        <translation>Discord 상태에 지금 쓰는 모드가 표시됩니다. 폴더, 자막, 영상은 절대 표시되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>You’re set</source>
+        <translation>준비가 끝났습니다</translation>
+    </message>
+    <message>
+        <source>Finish saves these choices. Everything is in Settings.</source>
+        <translation>마침을 누르면 이 선택이 저장됩니다. 모든 것은 설정에 있습니다.</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>언어</translation>
+    </message>
+    <message>
+        <source>%1 accent</source>
+        <translation>%1 강조 색</translation>
+    </message>
+    <message>
+        <source>%1 icons</source>
+        <translation>%1 아이콘</translation>
+    </message>
+    <message>
+        <source>HikariSub icons</source>
+        <translation>HikariSub 아이콘</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>레이아웃</translation>
+    </message>
+    <message>
+        <source>Full screen, once a video is open</source>
+        <translation>전체 화면, 비디오를 열면</translation>
+    </message>
+    <message>
+        <source>On, downloads after Finish</source>
+        <translation>켬, 마침 후 다운로드</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>켬</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Stable only, automatically</source>
+        <translation>안정 버전만, 자동으로</translation>
+    </message>
+    <message>
+        <source>Stable only, not automatically</source>
+        <translation>안정 버전만, 자동 아님</translation>
+    </message>
+    <message>
+        <source>Pre-releases, automatically</source>
+        <translation>시험판 포함, 자동으로</translation>
+    </message>
+    <message>
+        <source>Pre-releases, not automatically</source>
+        <translation>시험판 포함, 자동 아님</translation>
+    </message>
+    <message>
         <source>Your files</source>
         <translation>내 파일</translation>
     </message>
@@ -6994,15 +7190,31 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation>나중에: 설정 › 일반</translation>
+        <translation type="vanished">나중에: 설정 › 일반</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation>사용자 폴더</translation>
+        <translation type="vanished">사용자 폴더</translation>
     </message>
     <message>
         <source>Open folder</source>
         <translation>폴더 열기</translation>
+    </message>
+    <message>
+        <source>Good to know</source>
+        <translation>알아 두면 좋은 것</translation>
+    </message>
+    <message>
+        <source>Open anything, or run any command</source>
+        <translation>무엇이든 열거나 아무 명령이나 실행</translation>
+    </message>
+    <message>
+        <source>Formats, presets and themes from the marketplace</source>
+        <translation>마켓플레이스의 형식, 프리셋, 테마</translation>
+    </message>
+    <message>
+        <source>Automation › Plugins</source>
+        <translation>자동화 › 플러그인</translation>
     </message>
     <message>
         <source>Back</source>
@@ -7186,10 +7398,6 @@ Failed to copy %2 fonts.</source>
         <translation>끝 줄 글자 남김</translation>
     </message>
     <message>
-        <source>As karaoke</source>
-        <translation>노래방 줄로</translation>
-    </message>
-    <message>
         <source>Split</source>
         <translation>분할</translation>
     </message>
@@ -7212,14 +7420,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>By wraps</source>
         <translation>줄 바꿈 기준으로</translation>
-    </message>
-    <message>
-        <source>By karaoke syllables</source>
-        <translation>노래방 음절 단위로</translation>
-    </message>
-    <message>
-        <source>Keep layout</source>
-        <translation>레이아웃 유지</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -7712,6 +7912,18 @@ Failed to copy %2 fonts.</source>
         <source>Tags in the Grid: Hide</source>
         <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
         <translation>자막 목록의 태그: 숨기기</translation>
+    </message>
+    <message>
+        <source>As karaoke</source>
+        <translation>노래방 줄로</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>노래방 음절 단위로</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>레이아웃 유지</translation>
     </message>
 </context>
 <context>
@@ -9090,18 +9302,6 @@ Failed to copy %2 fonts.</source>
         <translation>가로 세로 비율 변경…</translation>
     </message>
     <message>
-        <source>Split at the cursor, estimating times</source>
-        <translation>커서 위치에서 분할, 시간 추정</translation>
-    </message>
-    <message>
-        <source>Split at the cursor, keeping times</source>
-        <translation>커서 위치에서 분할, 시간 유지</translation>
-    </message>
-    <message>
-        <source>Split at the cursor, at the video frame</source>
-        <translation>커서 위치에서 분할, 영상 프레임에서</translation>
-    </message>
-    <message>
         <source>Vector clip: freehand</source>
         <translation>벡터 클립: 자유 곡선</translation>
     </message>
@@ -9474,14 +9674,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Split by karaoke syllables</source>
-        <translation>노래방 음절 단위로 분할</translation>
-    </message>
-    <message>
-        <source>Join as karaoke</source>
-        <translation>노래방 줄로 병합</translation>
-    </message>
-    <message>
         <source>Full screen typesetting</source>
         <translation>전체 화면 식자</translation>
     </message>
@@ -9788,6 +9980,26 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Move lines down</source>
         <translation>줄 아래로 이동</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>커서 위치에서 분할, 시간 추정</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>커서 위치에서 분할, 시간 유지</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>커서 위치에서 분할, 영상 프레임에서</translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>노래방 음절 단위로 분할</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>노래방 줄로 병합</translation>
     </message>
 </context>
 <context>
@@ -15301,8 +15513,16 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>전체 화면 종료 후 보이는 줄 찾기</translation>
     </message>
     <message>
-        <source>Keep the layout when splitting by karaoke syllables</source>
-        <translation>노래방 음절 단위로 분할할 때 레이아웃 유지</translation>
+        <source>The symbol that stands for each tag block when tags are replaced.</source>
+        <translation>태그를 바꿀 때 각 태그 블록을 대신하는 기호입니다.</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>현재 프레임의 줄 표시</translation>
+    </message>
+    <message>
+        <source>Tints the lines that show on the current video frame.</source>
+        <translation>현재 비디오 프레임에 보이는 줄에 색을 입힙니다.</translation>
     </message>
     <message>
         <source>Styles for new files</source>
@@ -15637,6 +15857,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
         <translation>복구 폴더에 보관하는 각 파일의 이전 저장본 수. 범위는 0부터 100까지</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>표시</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>기호로 바꾸기</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>숨기기</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>자막 목록의 태그</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -16355,6 +16591,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>이전 버전 단축키 가져오기</translation>
     </message>
     <message>
+        <source>Vector clip smoothing</source>
+        <translation>벡터 클립 매끄러움</translation>
+    </message>
+    <message>
+        <source>How closely a freehand stroke is followed. Range from 0 to 100</source>
+        <translation>자유 곡선이 획을 얼마나 가깝게 따를지 정합니다. 0부터 100까지</translation>
+    </message>
+    <message>
+        <source>Drawing smoothing</source>
+        <translation>도형 매끄러움</translation>
+    </message>
+    <message>
         <source>No plugin has settings.</source>
         <translation>설정이 있는 플러그인이 없습니다.</translation>
     </message>
@@ -16379,6 +16627,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Enter a number.</source>
         <translation>숫자를 입력하십시오.</translation>
+    </message>
+    <message>
+        <source>%1, item %2</source>
+        <translation>%1, 항목 %2</translation>
+    </message>
+    <message>
+        <source>Remove item %1</source>
+        <translation>항목 %1 제거</translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation>설정 안 됨</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -18050,6 +18310,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
         <translation>HikariSub의 인터페이스 아이콘을 바꿉니다. 테마에 없는 아이콘은 HikariSub의 기본 아이콘으로 표시됩니다.</translation>
     </message>
+    <message>
+        <source>This window has no trusted project to keep it in.</source>
+        <translation>이 창에는 이 값을 둘 신뢰하는 프로젝트가 없습니다.</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”.</source>
+        <translation>프로젝트에서는 “%1”(을)를 설정할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>project.toml can’t be written.</source>
+        <translation>project.toml에 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>노래방 음절 단위로 분할할 때 레이아웃 유지</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -19278,6 +19554,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can’t write the theme plugin to %1.</source>
         <translation>테마 플러그인을 %1에 쓸 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>“%1” takes text</source>
+        <translation>“%1”에는 텍스트가 필요합니다</translation>
+    </message>
+    <message>
+        <source>No system keychain to keep it in</source>
+        <translation>저장할 시스템 키체인이 없습니다</translation>
+    </message>
+    <message>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>시스템 키체인에 “%1”(을)를 저장하지 못했습니다</translation>
     </message>
 </context>
 <context>
@@ -22616,7 +22904,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>No spelling errors were found</source>
-        <translation>철자 오류를 찾을 수 없습니다</translation>
+        <translation type="vanished">철자 오류를 찾을 수 없습니다</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -22644,15 +22932,15 @@ because it was edited.</source>
     </message>
     <message>
         <source>No dictionaries found</source>
-        <translation>사전을 찾을 수 없음</translation>
+        <translation type="vanished">사전을 찾을 수 없음</translation>
     </message>
     <message>
         <source>No spelling errors in %1</source>
-        <translation>%1에 철자 오류 없음</translation>
+        <translation type="vanished">%1에 철자 오류 없음</translation>
     </message>
     <message>
         <source>Spelling settings…</source>
-        <translation>철자 설정…</translation>
+        <translation type="vanished">철자 설정…</translation>
     </message>
     <message>
         <source>Check again</source>
@@ -22672,17 +22960,22 @@ because it was edited.</source>
     </message>
     <message>
         <source>Checking line %1 of %2…</source>
-        <translation>줄 %1/%2 검사 중…</translation>
+        <translation type="vanished">줄 %1/%2 검사 중…</translation>
     </message>
     <message>
         <source>Finding %1 of %2 · %3</source>
-        <translation>검사 결과 %1/%2 · %3</translation>
+        <translation type="vanished">검사 결과 %1/%2 · %3</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked</source>
         <translation>
             <numerusform>%n줄 검사함</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <extracomment>Joins two counts, as in &quot;3 words replaced, 2 ignored&quot;.</extracomment>
+        <translation>%1, %2</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -22702,7 +22995,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>No more grammar findings in %1</source>
-        <translation>%1에 더 이상 문법 검사 결과 없음</translation>
+        <translation type="vanished">%1에 더 이상 문법 검사 결과 없음</translation>
     </message>
     <message>
         <source>No more grammar findings</source>
@@ -22710,11 +23003,11 @@ because it was edited.</source>
     </message>
     <message>
         <source>No grammar findings in %1</source>
-        <translation>%1에 문법 검사 결과 없음</translation>
+        <translation type="vanished">%1에 문법 검사 결과 없음</translation>
     </message>
     <message>
         <source>No grammar findings</source>
-        <translation>문법 검사 결과 없음</translation>
+        <translation type="vanished">문법 검사 결과 없음</translation>
     </message>
     <message>
         <source>Choose an English in Settings to check grammar with Harper.</source>
@@ -22722,7 +23015,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%n lines checked.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%n줄을 검사했습니다.</numerusform>
         </translation>
     </message>
@@ -22741,6 +23034,77 @@ because it was edited.</source>
     <message>
         <source>Misspelled word: %1</source>
         <translation>철자 오류 단어: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n word(s) replaced</source>
+        <translation>
+            <numerusform>단어 %n개 바꿈</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n ignored</source>
+        <extracomment>After &quot;3 words replaced, &quot;: how many misspelled words were ignored.</extracomment>
+        <translation>
+            <numerusform>%n개 무시함</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n added to the dictionary</source>
+        <extracomment>How many words were added to the dictionary.</extracomment>
+        <translation>
+            <numerusform>%n개 사전에 추가함</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>, </source>
+        <extracomment>Joins &quot;3 words replaced&quot;, &quot;2 ignored&quot; and &quot;1 added to the dictionary&quot;.</extracomment>
+        <translation type="vanished">, </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 of %2 · %n found so far</source>
+        <translation>
+            <numerusform>줄 %1/%2 · 지금까지 %n개 찾음</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Dictionary language</source>
+        <translation>사전 언어</translation>
+    </message>
+    <message>
+        <source>Checking · line %1 of %2</source>
+        <translation>검사 중 · 줄 %1/%2</translation>
+    </message>
+    <message>
+        <source>Spell checking is turned off.</source>
+        <translation>철자 검사가 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>No dictionary for %1 was found, so nothing can be checked.</source>
+        <translation>%1 사전을 찾을 수 없어 검사할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>No dictionary was found, so nothing can be checked.</source>
+        <translation>사전을 찾을 수 없어 검사할 수 없습니다.</translation>
+    </message>
+    <message>
+        <source>No more spelling mistakes</source>
+        <translation>더 이상 철자 오류 없음</translation>
+    </message>
+    <message>
+        <source>Dictionaries are .dic and .aff files in “%1”.</source>
+        <translation>사전은 “%1”에 있는 .dic 및 .aff 파일입니다.</translation>
+    </message>
+    <message>
+        <source>Choose a language…</source>
+        <translation>언어 선택…</translation>
+    </message>
+    <message>
+        <source>Open Settings…</source>
+        <translation>설정 열기…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>세부 정보</translation>
     </message>
     <message>
         <source>Line %1</source>
@@ -22803,6 +23167,11 @@ because it was edited.</source>
     <message>
         <source>Failed to initialise the spellchecker.</source>
         <translation>철자 검사기를 초기화하지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A dictionary&apos;s language and region code, as in English (US).</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The edited line cannot be committed.</source>

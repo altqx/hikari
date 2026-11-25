@@ -202,6 +202,10 @@ constexpr OptionsBinding kBindings[] = {
     {"grid.maxLines", Number, Grid, 1, 20},
     {"problems.reading", Check, Grid},
     {"autosave.savedCopies", Number, General, 0, 100},
+    {"grid.tagsMode", IndexChoice, Grid, 0, 0, 3},
+    {"grid.markCurrentFrame", Check, Grid},
+    {"video.vectorClipSmoothing", Number, Video, 0, 100},
+    {"video.drawingSmoothing", Number, Video, 0, 100},
     {"grid.splitKaraokeKeepLayout", Check, Grid},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound

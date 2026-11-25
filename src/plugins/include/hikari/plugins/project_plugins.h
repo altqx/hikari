@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hikari/api/json.h"
+#include "hikari/plugins/manifest.h"
 #include "hikari/plugins/registry.h"
 
 #include <map>
@@ -20,8 +21,10 @@ bool pluginOn(const std::string &id, const InstalledPlugin &installed, const Pro
 // On in at least one window, or by the user's switch when no window has a Project.
 bool pluginRunsAnywhere(const std::string &id, const InstalledPlugin &installed,
                         const std::vector<const ProjectPlugins *> &windows);
-// The user's values with the Project's set over them, key by key.
-api::Json projectSettings(const std::string &id, const api::Json &stored, const ProjectPlugins *project);
+// A secret never is; any other setting unless its manifest says `projectable: false`.
+bool projectable(const Setting &setting);
+// The user's values with the Project's set over them, key by key, for the projectable settings only.
+api::Json projectSettings(const Manifest &manifest, const api::Json &stored, const ProjectPlugins *project);
 // Ids the Project enables that aren't installed, in its order.
 std::vector<std::string> missingPlugins(const ProjectPlugins &project, const Registry &registry);
 

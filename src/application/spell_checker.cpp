@@ -599,6 +599,7 @@ std::u16string SpellCheckWalk::findNextMisspell(EditSession &session, const Opti
         m_lastActiveLine = current;
         m_lastMisspell = 0;
     }
+    m_firstLine = std::min(m_firstLine.value_or(m_lastLine), m_lastLine);
     const core::Document &document = session.document();
     const auto lines = document.lines();
     const auto check = m_checker.wordCheck(true);
@@ -661,8 +662,16 @@ bool SpellCheckWalk::next(EditSession &session, const Options &options)
         m_lastActiveLine = static_cast<std::ptrdiff_t>(m_lastLine);
     }
     m_lastText = lineText(session.document(), m_lastLine);
+    if (m_seen.emplace(found.line.value, found.start, found.word).second)
+        ++m_tally.found;
     m_current = std::move(found);
     return true;
+}
+
+std::size_t SpellCheckWalk::linesChecked(const core::Document &document) const
+{
+    const std::size_t lines = document.lines().size();
+    return m_firstLine && *m_firstLine < lines ? lines - *m_firstLine : 0;
 }
 
 bool SpellCheckWalk::stale(EditSession &session, bool otherDocument) const
@@ -711,6 +720,7 @@ SpellCheckWalk::replace(EditSession &session, std::u16string_view replacement, c
                                          }});
     if (!ran)
         return std::unexpected(ran.error());
+    ++m_tally.replaced;
     const int oldPos = misspell.start;
     next(session, options);
     // MUST KILL: skips by offset only, so the next Line's word at the same offset is skipped too
@@ -738,6 +748,7 @@ SpellCheckWalk::replaceAll(EditSession &session, std::u16string_view misspell, s
     const core::Document &document = session.document();
     const bool translationMode = spellsTranslation(document);
     std::vector<std::pair<core::LineId, std::u8string>> changes;
+    int replaced = 0;
     for (const auto *line : document.lines()) {
         if (line->comment && options.ignoreComments)
             continue;
@@ -750,6 +761,7 @@ SpellCheckWalk::replaceAll(EditSession &session, std::u16string_view misspell, s
         for (auto it = found.rbegin(); it != found.rend(); ++it)
             core::legacy::replaceMisspell(it->word, core::legacy::rightCase(replacement, it->word, cases), it->start,
                                           it->end, text);
+        replaced += static_cast<int>(found.size());
         changes.emplace_back(line->id, core::toUtf8(text));
     }
     if (!changes.empty()) {
@@ -768,6 +780,7 @@ SpellCheckWalk::replaceAll(EditSession &session, std::u16string_view misspell, s
                                              }});
         if (!ran)
             return std::unexpected(ran.error());
+        m_tally.replaced += replaced;
     }
     next(session, options);
     return changes.empty() ? Result::NothingReplaced : Result::Replaced;
@@ -776,18 +789,22 @@ SpellCheckWalk::replaceAll(EditSession &session, std::u16string_view misspell, s
 void SpellCheckWalk::ignore(EditSession &session, const Options &options)
 {
     ++m_lastMisspell;
+    ++m_tally.ignored;
     next(session, options);
 }
 
 void SpellCheckWalk::ignoreAll(EditSession &session, std::u16string_view word, const Options &options)
 {
     m_ignored.emplace_back(word);
+    ++m_tally.ignored;
     next(session, options);
 }
 
 bool SpellCheckWalk::addWord(EditSession &session, std::u16string_view word, const Options &options, Tier tier)
 {
     const bool added = m_checker.addWord(word, tier);
+    if (added)
+        ++m_tally.added;
     next(session, options);
     return added;
 }

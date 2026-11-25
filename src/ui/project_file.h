@@ -45,6 +45,8 @@ public:
     };
     // project.local.toml's lists replace project.toml's, and its plugin settings go over them key by key.
     PluginTable plugins() const;
+    // Sets project.toml's `[plugins."<plugin>"]` entry; null removes it.
+    bool setPluginSetting(const std::string &plugin, const std::string &setting, const toml::node *value);
     // `[export]` as a JSON object, project.local.toml's keys over project.toml's; empty without the table.
     std::string exportJson() const;
 

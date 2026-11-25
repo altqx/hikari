@@ -4451,22 +4451,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Słowo “%1” nie zostało dodane do słownika.</translation>
     </message>
     <message>
-        <source>Split here</source>
-        <translation>Podziel tutaj</translation>
-    </message>
-    <message>
-        <source>Estimate times</source>
-        <translation>Oszacuj czasy</translation>
-    </message>
-    <message>
-        <source>Keep times</source>
-        <translation>Zachowaj czasy</translation>
-    </message>
-    <message>
-        <source>At the video frame</source>
-        <translation>Na klatce wideo</translation>
-    </message>
-    <message>
         <source>Check spelling as you type</source>
         <translation>Sprawdzaj pisownię podczas pisania</translation>
     </message>
@@ -4668,10 +4652,6 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Zapis nie powiódł się; plik na dysku pozostał bez zmian</translation>
     </message>
     <message>
-        <source>Nothing to split: both halves need text.</source>
-        <translation>Nie ma nic do podzielenia: obie części muszą zawierać tekst.</translation>
-    </message>
-    <message>
         <source>End time is before start time.</source>
         <translation>Czas końcowy jest wcześniejszy niż czas początkowy.</translation>
     </message>
@@ -4778,6 +4758,26 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Characters per second. Keep it at %1 or under.</source>
         <translation>Znaki na sekundę. Wartość powinna wynosić %1 lub mniej.</translation>
+    </message>
+    <message>
+        <source>Split here</source>
+        <translation>Podziel tutaj</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>Oszacuj czasy</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>Zachowaj czasy</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>Na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>Nie ma nic do podzielenia: obie części muszą zawierać tekst.</translation>
     </message>
 </context>
 <context>
@@ -6810,7 +6810,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation>Krok %1 z %2</translation>
+        <translation type="vanished">Krok %1 z %2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
@@ -6846,7 +6846,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation>Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
+        <translation type="vanished">Na tym komputerze jest zainstalowany HikariSub 0.0.x. Nic w nim nie zostanie zmienione.</translation>
     </message>
     <message>
         <source>Later: Settings › General › Import settings…</source>
@@ -6882,7 +6882,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation>Wybierz motyw. To okno zmienia się wraz z wyborem.</translation>
+        <translation type="vanished">Wybierz motyw. To okno zmienia się wraz z wyborem.</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
@@ -6902,7 +6902,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation>Włącz wysoki kontrast</translation>
+        <translation type="vanished">Włącz wysoki kontrast</translation>
     </message>
     <message>
         <source>Title bar</source>
@@ -6926,11 +6926,11 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation>Czym zajmujesz się najczęściej?</translation>
+        <translation type="vanished">Czym zajmujesz się najczęściej?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation>Wybierz jedną opcję, aby ustawić układ, z którym otworzy się pierwsza zakładka. Bez wyboru zostanie układ Edycja, w którym jest wszystkiego po trochu.</translation>
+        <translation type="vanished">Wybierz jedną opcję, aby ustawić układ, z którym otworzy się pierwsza zakładka. Bez wyboru zostanie układ Edycja, w którym jest wszystkiego po trochu.</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
@@ -7009,6 +7009,110 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Edycja</translation>
     </message>
     <message>
+        <source>Welcome</source>
+        <translation>Witaj</translation>
+    </message>
+    <message>
+        <source>Bring over</source>
+        <translation>Przeniesienie</translation>
+    </message>
+    <message>
+        <source>How you work</source>
+        <translation>Sposób pracy</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>Gotowe</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation>Pełny ekran</translation>
+    </message>
+    <message>
+        <source>%1’s settings were found on this computer. Nothing in them is changed.</source>
+        <translation>Na tym komputerze znaleziono ustawienia programu %1. Nic w nich nie zostanie zmienione.</translation>
+    </message>
+    <message>
+        <source>Settings from %1 and %2 were found on this computer. Nothing in them is changed.</source>
+        <translation>Na tym komputerze znaleziono ustawienia programów %1 i %2. Nic w nich nie zostanie zmienione.</translation>
+    </message>
+    <message>
+        <source>Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed.</source>
+        <translation>Na tym komputerze znaleziono ustawienia programów %1, %2 i %3. Nic w nich nie zostanie zmienione.</translation>
+    </message>
+    <message>
+        <source>HikariSub (built in)</source>
+        <translation>HikariSub (wbudowane)</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>Kroki</translation>
+    </message>
+    <message>
+        <source>Step %1 of %2, %3</source>
+        <translation>Krok %1 z %2, %3</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>bieżący</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>ukończony</translation>
+    </message>
+    <message>
+        <source>Skip setup keeps HikariSub’s defaults.</source>
+        <translation>Pominięcie konfiguracji zachowuje domyślne ustawienia HikariSub.</translation>
+    </message>
+    <message>
+        <source>This window changes as you choose.</source>
+        <translation>To okno zmienia się wraz z Twoim wyborem.</translation>
+    </message>
+    <message>
+        <source>High contrast</source>
+        <translation>Wysoki kontrast</translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation>Wbudowane</translation>
+    </message>
+    <message>
+        <source>From plugins</source>
+        <translation>Z wtyczek</translation>
+    </message>
+    <message>
+        <source>More themes…</source>
+        <translation>Więcej motywów…</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>Katalog wtyczek</translation>
+    </message>
+    <message>
+        <source>Icons</source>
+        <translation>Ikony</translation>
+    </message>
+    <message>
+        <source>How do you mostly work?</source>
+        <translation>Jak najczęściej pracujesz?</translation>
+    </message>
+    <message>
+        <source>This sets the layout your first tab opens with. Leave it on Editing for a bit of everything.</source>
+        <translation>To ustawia układ, z jakim otworzy się pierwsza karta. Zostaw Edycję, by mieć wszystkiego po trochu.</translation>
+    </message>
+    <message>
+        <source>Video, audio, the line editor and the grid.</source>
+        <translation>Wideo, audio, edytor linii i siatka.</translation>
+    </message>
+    <message>
+        <source>Just the picture and a line box. View › Full screen typesetting any time.</source>
+        <translation>Tylko obraz i pole linii. Widok › Typesetting na pełnym ekranie w każdej chwili.</translation>
+    </message>
+    <message>
         <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>Później: Ustawienia › Ogólne › Zapisywanie i Ustawienia › Pisownia i gramatyka</translation>
     </message>
@@ -7061,8 +7165,36 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Ona już widziała ostatni odicnek.</translation>
     </message>
     <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation>Najwyżej raz dziennie, przy uruchomieniu HikariSub.</translation>
+    </message>
+    <message>
         <source>Updates and privacy</source>
         <translation>Aktualizacje i prywatność</translation>
+    </message>
+    <message>
+        <source>HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on.</source>
+        <translation>HikariSub może pomóc w tłumaczeniu, przeglądzie i z agentem, który edytuje razem z Tobą. AI pozostaje wyłączone, dopóki go nie włączysz.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › AI</source>
+        <translation>Później: Ustawienia › AI</translation>
+    </message>
+    <message>
+        <source>Keep AI off</source>
+        <translation>Pozostaw AI wyłączone</translation>
+    </message>
+    <message>
+        <source>No AI menus, panels or downloads. Nothing about your subtitles leaves this computer.</source>
+        <translation>Bez menu, paneli i pobrań AI. Nic o Twoich napisach nie opuszcza tego komputera.</translation>
+    </message>
+    <message>
+        <source>Turn AI on</source>
+        <translation>Włącz AI</translation>
+    </message>
+    <message>
+        <source>HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI.</source>
+        <translation>HikariSub pobierze składnik AI raz, po Zakończ. Dostawcę dodasz lub do agenta zalogujesz się w Ustawienia › AI.</translation>
     </message>
     <message>
         <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
@@ -7094,7 +7226,7 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation>Najwyżej raz dziennie, przy uruchomieniu HikariSub. Korzysta z tego także sekcja Co nowego na stronie głównej.</translation>
+        <translation type="vanished">Najwyżej raz dziennie, przy uruchomieniu HikariSub. Korzysta z tego także sekcja Co nowego na stronie głównej.</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -7109,6 +7241,70 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Co jest wysyłane</translation>
     </message>
     <message>
+        <source>Your Discord status shows the mode you’re in. Never folders, your subtitles or the video.</source>
+        <translation>Twój status w Discordzie pokazuje tryb, w którym pracujesz. Nigdy foldery, napisy ani wideo.</translation>
+    </message>
+    <message>
+        <source>You’re set</source>
+        <translation>Wszystko gotowe</translation>
+    </message>
+    <message>
+        <source>Finish saves these choices. Everything is in Settings.</source>
+        <translation>Zakończ zapisuje te wybory. Wszystko znajdziesz w Ustawieniach.</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>Język</translation>
+    </message>
+    <message>
+        <source>%1 accent</source>
+        <translation>akcent: %1</translation>
+    </message>
+    <message>
+        <source>%1 icons</source>
+        <translation>ikony: %1</translation>
+    </message>
+    <message>
+        <source>HikariSub icons</source>
+        <translation>ikony HikariSub</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>Układ</translation>
+    </message>
+    <message>
+        <source>Full screen, once a video is open</source>
+        <translation>Pełny ekran po otwarciu wideo</translation>
+    </message>
+    <message>
+        <source>On, downloads after Finish</source>
+        <translation>Włączone, pobranie po Zakończ</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>Włączone</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>Aktualizacje</translation>
+    </message>
+    <message>
+        <source>Stable only, automatically</source>
+        <translation>Tylko stabilne, automatycznie</translation>
+    </message>
+    <message>
+        <source>Stable only, not automatically</source>
+        <translation>Tylko stabilne, nie automatycznie</translation>
+    </message>
+    <message>
+        <source>Pre-releases, automatically</source>
+        <translation>Wersje wstępne, automatycznie</translation>
+    </message>
+    <message>
+        <source>Pre-releases, not automatically</source>
+        <translation>Wersje wstępne, nie automatycznie</translation>
+    </message>
+    <message>
         <source>Your files</source>
         <translation>Twoje pliki</translation>
     </message>
@@ -7118,15 +7314,31 @@ Nie udało się skopiować czcionek: %2.</translation>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation>Później: Ustawienia › Ogólne</translation>
+        <translation type="vanished">Później: Ustawienia › Ogólne</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation>Twój folder</translation>
+        <translation type="vanished">Twój folder</translation>
     </message>
     <message>
         <source>Open folder</source>
         <translation>Otwórz folder</translation>
+    </message>
+    <message>
+        <source>Good to know</source>
+        <translation>Warto wiedzieć</translation>
+    </message>
+    <message>
+        <source>Open anything, or run any command</source>
+        <translation>Otwórz cokolwiek lub uruchom dowolne polecenie</translation>
+    </message>
+    <message>
+        <source>Formats, presets and themes from the marketplace</source>
+        <translation>Formaty, ustawienia i motywy z katalogu wtyczek</translation>
+    </message>
+    <message>
+        <source>Automation › Plugins</source>
+        <translation>Automatyzacja › Wtyczki</translation>
     </message>
     <message>
         <source>Back</source>
@@ -7312,10 +7524,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zostaw ostatnią</translation>
     </message>
     <message>
-        <source>As karaoke</source>
-        <translation>Jako karaoke</translation>
-    </message>
-    <message>
         <source>Split</source>
         <translation>Podziel</translation>
     </message>
@@ -7338,14 +7546,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>By wraps</source>
         <translation>Według łamań wierszy</translation>
-    </message>
-    <message>
-        <source>By karaoke syllables</source>
-        <translation>Według sylab karaoke</translation>
-    </message>
-    <message>
-        <source>Keep layout</source>
-        <translation>Zachowaj układ</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -7868,6 +8068,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Tags in the Grid: Hide</source>
         <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
         <translation>Tagi na liście napisów: Ukryj</translation>
+    </message>
+    <message>
+        <source>As karaoke</source>
+        <translation>Jako karaoke</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>Według sylab karaoke</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>Zachowaj układ</translation>
     </message>
 </context>
 <context>
@@ -9248,18 +9460,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
-        <source>Split at the cursor, estimating times</source>
-        <translation>Podziel w miejscu kursora, szacując czasy</translation>
-    </message>
-    <message>
-        <source>Split at the cursor, keeping times</source>
-        <translation>Podziel w miejscu kursora, zachowując czasy</translation>
-    </message>
-    <message>
-        <source>Split at the cursor, at the video frame</source>
-        <translation>Podziel w miejscu kursora, na klatce wideo</translation>
-    </message>
-    <message>
         <source>Vector clip: freehand</source>
         <translation>Wycinek wektorowy: rysuj odręcznie</translation>
     </message>
@@ -9632,14 +9832,6 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Split by karaoke syllables</source>
-        <translation>Podziel według sylab karaoke</translation>
-    </message>
-    <message>
-        <source>Join as karaoke</source>
-        <translation>Złącz jako karaoke</translation>
-    </message>
-    <message>
         <source>Full screen typesetting</source>
         <translation>Typesetting na pełnym ekranie</translation>
     </message>
@@ -9946,6 +10138,26 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Move lines down</source>
         <translation>Przenieś linijki w dół</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>Podziel w miejscu kursora, szacując czasy</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>Podziel w miejscu kursora, zachowując czasy</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>Podziel w miejscu kursora, na klatce wideo</translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>Podziel według sylab karaoke</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>Złącz jako karaoke</translation>
     </message>
 </context>
 <context>
@@ -15557,8 +15769,16 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
-        <source>Keep the layout when splitting by karaoke syllables</source>
-        <translation>Zachowuj układ przy dzieleniu według sylab karaoke</translation>
+        <source>The symbol that stands for each tag block when tags are replaced.</source>
+        <translation>Symbol zastępujący każdy blok tagów, gdy tagi są zastępowane.</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
+    </message>
+    <message>
+        <source>Tints the lines that show on the current video frame.</source>
+        <translation>Zabarwia linijki widoczne na bieżącej klatce wideo.</translation>
     </message>
     <message>
         <source>Styles for new files</source>
@@ -15895,6 +16115,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
         <translation>Wcześniejsze zapisy każdego pliku zachowywane w folderze odzyskiwania. Zakres od 0 do 100</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>Tagi na liście napisów</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -16613,6 +16849,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Importuj skróty ze starej wersji</translation>
     </message>
     <message>
+        <source>Vector clip smoothing</source>
+        <translation>Wygładzanie wycinka wektorowego</translation>
+    </message>
+    <message>
+        <source>How closely a freehand stroke is followed. Range from 0 to 100</source>
+        <translation>Jak dokładnie odręczna linia podąża za ruchem. Zakres od 0 do 100</translation>
+    </message>
+    <message>
+        <source>Drawing smoothing</source>
+        <translation>Wygładzanie rysunku</translation>
+    </message>
+    <message>
         <source>No plugin has settings.</source>
         <translation>Żadna wtyczka nie ma ustawień.</translation>
     </message>
@@ -16639,6 +16887,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Enter a number.</source>
         <translation>Wpisz liczbę.</translation>
+    </message>
+    <message>
+        <source>%1, item %2</source>
+        <translation>%1, element %2</translation>
+    </message>
+    <message>
+        <source>Remove item %1</source>
+        <translation>Usuń element %1</translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation>Nie ustawiono</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -18330,6 +18590,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
         <translation>Zastępuje ikony interfejsu HikariSub. Ikony, których motyw nie obejmuje, pozostają ikonami HikariSub.</translation>
     </message>
+    <message>
+        <source>This window has no trusted project to keep it in.</source>
+        <translation>To okno nie ma zaufanego projektu, w którym można to zapisać.</translation>
+    </message>
+    <message>
+        <source>A project can’t set “%1”.</source>
+        <translation>Projekt nie może ustawić “%1”.</translation>
+    </message>
+    <message>
+        <source>project.toml can’t be written.</source>
+        <translation>Nie można zapisać project.toml.</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>Zachowuj układ przy dzieleniu według sylab karaoke</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -19560,6 +19836,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can’t write the theme plugin to %1.</source>
         <translation>Nie można zapisać wtyczki motywu w %1.</translation>
+    </message>
+    <message>
+        <source>“%1” takes text</source>
+        <translation>“%1” przyjmuje tekst</translation>
+    </message>
+    <message>
+        <source>No system keychain to keep it in</source>
+        <translation>Brak systemowego magazynu kluczy, w którym można to zapisać</translation>
+    </message>
+    <message>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>Nie udało się zapisać “%1” w systemowym magazynie kluczy</translation>
     </message>
 </context>
 <context>
@@ -23000,7 +23288,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No spelling errors were found</source>
-        <translation>Nie znaleziono błędów pisowni</translation>
+        <translation type="vanished">Nie znaleziono błędów pisowni</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -23028,15 +23316,15 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No dictionaries found</source>
-        <translation>Nie znaleziono słowników</translation>
+        <translation type="vanished">Nie znaleziono słowników</translation>
     </message>
     <message>
         <source>No spelling errors in %1</source>
-        <translation>Brak błędów pisowni w %1</translation>
+        <translation type="vanished">Brak błędów pisowni w %1</translation>
     </message>
     <message>
         <source>Spelling settings…</source>
-        <translation>Ustawienia pisowni…</translation>
+        <translation type="vanished">Ustawienia pisowni…</translation>
     </message>
     <message>
         <source>Check again</source>
@@ -23056,11 +23344,11 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Checking line %1 of %2…</source>
-        <translation>Sprawdzanie linijki %1 z %2…</translation>
+        <translation type="vanished">Sprawdzanie linijki %1 z %2…</translation>
     </message>
     <message>
         <source>Finding %1 of %2 · %3</source>
-        <translation>Uwaga %1 z %2 · %3</translation>
+        <translation type="vanished">Uwaga %1 z %2 · %3</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked</source>
@@ -23069,6 +23357,11 @@ ponieważ została zmieniona.</translation>
             <numerusform>Sprawdzono %n linijki</numerusform>
             <numerusform>Sprawdzono %n linijek</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>%1, %2</source>
+        <extracomment>Joins two counts, as in &quot;3 words replaced, 2 ignored&quot;.</extracomment>
+        <translation>%1, %2</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -23088,7 +23381,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No more grammar findings in %1</source>
-        <translation>Brak dalszych uwag gramatycznych w %1</translation>
+        <translation type="vanished">Brak dalszych uwag gramatycznych w %1</translation>
     </message>
     <message>
         <source>No more grammar findings</source>
@@ -23096,11 +23389,11 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>No grammar findings in %1</source>
-        <translation>Brak uwag gramatycznych w %1</translation>
+        <translation type="vanished">Brak uwag gramatycznych w %1</translation>
     </message>
     <message>
         <source>No grammar findings</source>
-        <translation>Brak uwag gramatycznych</translation>
+        <translation type="vanished">Brak uwag gramatycznych</translation>
     </message>
     <message>
         <source>Choose an English in Settings to check grammar with Harper.</source>
@@ -23108,7 +23401,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message numerus="yes">
         <source>%n lines checked.</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>Sprawdzono %n linijkę.</numerusform>
             <numerusform>Sprawdzono %n linijki.</numerusform>
             <numerusform>Sprawdzono %n linijek.</numerusform>
@@ -23129,6 +23422,85 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Misspelled word: %1</source>
         <translation>Błędne słowo: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n word(s) replaced</source>
+        <translation>
+            <numerusform>%n słowo zastąpione</numerusform>
+            <numerusform>%n słowa zastąpione</numerusform>
+            <numerusform>%n słów zastąpionych</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n ignored</source>
+        <extracomment>After &quot;3 words replaced, &quot;: how many misspelled words were ignored.</extracomment>
+        <translation>
+            <numerusform>%n zignorowane</numerusform>
+            <numerusform>%n zignorowane</numerusform>
+            <numerusform>%n zignorowanych</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n added to the dictionary</source>
+        <extracomment>How many words were added to the dictionary.</extracomment>
+        <translation>
+            <numerusform>%n dodane do słownika</numerusform>
+            <numerusform>%n dodane do słownika</numerusform>
+            <numerusform>%n dodanych do słownika</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>, </source>
+        <extracomment>Joins &quot;3 words replaced&quot;, &quot;2 ignored&quot; and &quot;1 added to the dictionary&quot;.</extracomment>
+        <translation type="vanished">, </translation>
+    </message>
+    <message numerus="yes">
+        <source>Line %1 of %2 · %n found so far</source>
+        <translation>
+            <numerusform>Linijka %1 z %2 · dotąd znaleziono %n błąd</numerusform>
+            <numerusform>Linijka %1 z %2 · dotąd znaleziono %n błędy</numerusform>
+            <numerusform>Linijka %1 z %2 · dotąd znaleziono %n błędów</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Dictionary language</source>
+        <translation>Język słownika</translation>
+    </message>
+    <message>
+        <source>Checking · line %1 of %2</source>
+        <translation>Sprawdzanie · linijka %1 z %2</translation>
+    </message>
+    <message>
+        <source>Spell checking is turned off.</source>
+        <translation>Sprawdzanie pisowni jest wyłączone.</translation>
+    </message>
+    <message>
+        <source>No dictionary for %1 was found, so nothing can be checked.</source>
+        <translation>Nie znaleziono słownika dla języka %1, więc nie można niczego sprawdzić.</translation>
+    </message>
+    <message>
+        <source>No dictionary was found, so nothing can be checked.</source>
+        <translation>Nie znaleziono słownika, więc nie można niczego sprawdzić.</translation>
+    </message>
+    <message>
+        <source>No more spelling mistakes</source>
+        <translation>Brak dalszych błędów pisowni</translation>
+    </message>
+    <message>
+        <source>Dictionaries are .dic and .aff files in “%1”.</source>
+        <translation>Słowniki to pliki .dic i .aff w folderze “%1”.</translation>
+    </message>
+    <message>
+        <source>Choose a language…</source>
+        <translation>Wybierz język…</translation>
+    </message>
+    <message>
+        <source>Open Settings…</source>
+        <translation>Otwórz Ustawienia…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
     </message>
     <message>
         <source>Line %1</source>
@@ -23193,6 +23565,11 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Failed to initialise the spellchecker.</source>
         <translation>Nie można zainicjalizować sprawdzania pisowni.</translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <extracomment>A dictionary&apos;s language and region code, as in English (US).</extracomment>
+        <translation>%1 (%2)</translation>
     </message>
     <message>
         <source>The edited line cannot be committed.</source>
