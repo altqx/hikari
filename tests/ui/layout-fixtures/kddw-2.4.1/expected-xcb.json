@@ -27,6 +27,7 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
@@ -40,6 +41,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -53,6 +55,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -66,6 +69,7 @@
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
@@ -135,6 +139,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -148,6 +153,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -217,6 +223,7 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
@@ -230,6 +237,7 @@
                 {
                     "current": "Template",
                     "floating": false,
+                    "minimumHeight": 298,
                     "panels": [
                         "Editor",
                         "Template"
@@ -244,6 +252,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -257,6 +266,7 @@
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
@@ -299,6 +309,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -312,6 +323,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 158,
                     "panels": [
                         "Grid",
                         "Search",
@@ -327,6 +339,7 @@
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
@@ -371,6 +384,7 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
@@ -384,6 +398,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -397,6 +412,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -441,6 +457,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -454,6 +471,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -467,6 +485,7 @@
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
@@ -510,6 +529,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -523,6 +543,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -536,6 +557,7 @@
                 {
                     "current": "Styles",
                     "floating": false,
+                    "minimumHeight": 158,
                     "panels": [
                         "Styles"
                     ],
@@ -549,6 +571,7 @@
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
@@ -620,6 +643,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -633,6 +657,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -702,6 +727,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -715,6 +741,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 158,
                     "panels": [
                         "Grid",
                         "Search",
@@ -730,6 +757,7 @@
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
@@ -780,6 +808,7 @@
             {
                 "current": "Editor",
                 "floating": false,
+                "minimumHeight": 170,
                 "panels": [
                     "Editor"
                 ],
@@ -793,6 +822,7 @@
             {
                 "current": "Grid",
                 "floating": false,
+                "minimumHeight": 158,
                 "panels": [
                     "Grid",
                     "Search",
@@ -853,6 +883,7 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
@@ -866,6 +897,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -879,6 +911,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
@@ -948,6 +981,7 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
@@ -961,6 +995,7 @@
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
