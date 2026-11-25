@@ -6037,6 +6037,7 @@ ApplicationWindow {
                 VisualToolRail {
                     id: visualRail
                     tools: root.visualTools
+                    activeHint: videoToolBar.hintInRail ? videoToolBar.hint : ""
                     keyOf: symbol => root.boundKeys(symbol, 3)
                     anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
                 }

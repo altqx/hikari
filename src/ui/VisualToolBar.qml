@@ -147,29 +147,39 @@ Control {
                                          group: v.group, unit: v.unit, step: v.step,
                                          swatch: v.swatch ? "#000000" : "", marked: v.marked === undefined ? undefined : false }))
     })
-    readonly property real groupsRoom: availableWidth - (batchTool ? pickerWidth : 0)
-                                       - (rowGuide.visible ? rowGuide.implicitWidth + 4 : 0)
-    readonly property int fitCount: {
-        const n = segments.length
+    readonly property real rowRoom: availableWidth - (batchTool ? pickerWidth : 0)
+    readonly property real guideWidth: rowGuide.implicitWidth + 4
+    readonly property var groupWidths: {
         if (column || !(availableWidth > 0))
-            return n
+            return null
         const widths = []
         void measuredItems
         for (let i = 0; i < measures.count; ++i) {
             const m = measures.itemAt(i)
             if (!m || !(m.implicitWidth > 0))
-                return n
+                return null
             widths.push(m.implicitWidth)
         }
-        const right = k => widths.slice(0, k).reduce((sum, w) => sum + w, 0) + Math.max(0, k - 1) * groupSpacing
-        if (widths.length !== n || right(n) <= groupsRoom)
+        return widths.length === segments.length ? widths : null
+    }
+    function widthOf(k) {
+        return groupWidths.slice(0, k).reduce((sum, w) => sum + w, 0) + Math.max(0, k - 1) * groupSpacing
+    }
+    readonly property bool guideInRow: hint.length > 0
+                                       && (!groupWidths || widthOf(segments.length) + guideWidth <= rowRoom)
+    readonly property real groupsRoom: rowRoom - (guideInRow ? guideWidth : 0)
+    readonly property bool hintInRail: shown && !column && hint.length > 0 && !guideInRow && foldedSegments.length === 0
+    readonly property int fitCount: {
+        const n = segments.length
+        if (!groupWidths || widthOf(n) <= groupsRoom)
             return n
         let k = 0
-        while (k < n && right(k + 1) <= groupsRoom - more.implicitWidth - 4)
+        while (k < n && widthOf(k + 1) <= groupsRoom - more.implicitWidth - 4)
             ++k
         return k
     }
     readonly property int groupSpacing: 6
+    readonly property font labelFont: TypeRoles.sized(bar.font, 12, Font.Normal)
     // Repeater.itemAt() is not bindable: bumped as the unseen copies are made.
     property int measuredItems: 0
     readonly property var foldedSegments: segments.slice(fitCount)
@@ -198,7 +208,7 @@ Control {
                 Layout.rightMargin: 3
                 Layout.alignment: Qt.AlignVCenter
                 color: Theme.line
-                opacity: segment.x > 0 ? 1 : 0
+                visible: segment.index > 0 && !(segment.modelData.popover ?? false)
             }
             Label {
                 visible: segment.modelData.group.length > 0
@@ -206,6 +216,7 @@ Control {
                 Layout.rightMargin: 3
                 text: bar.groupName(segment.modelData.group)
                 color: Theme.muted
+                font: bar.labelFont
             }
             Repeater {
                 model: segment.modelData.kind === "options" ? segment.modelData.items : []
@@ -249,7 +260,7 @@ Control {
                 visible: field.modelData.group.length > 0
                 text: bar.groupName(field.modelData.group)
                 color: Theme.muted
-                font.pixelSize: 12
+                font: bar.labelFont
             }
             Flow {
                 Layout.fillWidth: true
@@ -277,7 +288,9 @@ Control {
 
     contentItem: Item {
         implicitHeight: bar.column ? inspector.implicitHeight : row.implicitHeight
-        implicitWidth: bar.column ? inspector.implicitWidth : row.implicitWidth
+        // MUST KILL: counts the ? even when it folds, so placing it cannot resize the bar
+        implicitWidth: bar.column ? inspector.implicitWidth
+                       : row.implicitWidth + (bar.shown && bar.hint.length > 0 && !rowGuide.visible ? bar.guideWidth : 0)
         ColumnLayout {
             id: inspector
             objectName: "visualInspector"
@@ -344,7 +357,7 @@ Control {
                 Label {
                     text: qsTr("On the frame")
                     color: Theme.muted
-                    font.pixelSize: 12
+                    font: bar.labelFont
                 }
                 Repeater {
                     id: handleList
@@ -401,7 +414,7 @@ Control {
                 Label {
                     text: qsTr("Apply to")
                     color: Theme.muted
-                    font.pixelSize: 12
+                    font: bar.labelFont
                 }
                 SegmentedButtons {
                     objectName: "visualApplyToChoice"
@@ -450,7 +463,7 @@ Control {
                 objectName: "visualToolGuideButton"
                 Layout.alignment: Qt.AlignTop
                 Layout.topMargin: 1
-                visible: bar.shown && bar.hint.length > 0
+                visible: bar.shown && bar.guideInRow
                 iconRole: "help"
                 text: qsTr("How this tool works")
                 tip: bar.hint
@@ -549,6 +562,27 @@ Control {
         id: morePopover
         objectName: "visualToolMorePopover"
         title: qsTr("More options")
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 4
+            Label {
+                Layout.fillWidth: true
+                text: morePopover.title
+                font.weight: Font.DemiBold
+            }
+            IconToolButton {
+                objectName: "visualToolMoreGuide"
+                visible: bar.hint.length > 0
+                iconRole: "help"
+                text: qsTr("How this tool works")
+                tip: bar.hint
+                focusPolicy: Qt.TabFocus
+                onClicked: {
+                    morePopover.close()
+                    guide.openBeside(more)
+                }
+            }
+        }
         Repeater {
             model: morePopover.visible ? bar.foldedSegments.map(g => Object.assign({}, g, { popover: true })) : []
             delegate: segmentDelegate
