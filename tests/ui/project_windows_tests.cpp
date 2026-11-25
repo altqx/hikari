@@ -14,6 +14,7 @@
 #include "docking.h"
 #include "hikari/application/all_tags.h"
 #include "hikari/application/shape_presets.h"
+#include "hikari/plugins/registry.h"
 #include "hikari/core/style.h"
 #include "list_files.h"
 #include "menu_rows.h"
@@ -141,10 +142,8 @@ class ProjectWindowsTests : public QObject {
                      .arg(id, QString::fromUtf8(settings))
                      .toUtf8());
         writeAll(folder + QStringLiteral("/main.lua"), "local _ = hikari\n");
-        writeAll(home.filePath(QStringLiteral("plugins.json")),
-                 QJsonDocument(QJsonObject{{id, QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")},
-                                                           {QStringLiteral("enabled"), true}}}})
-                     .toJson());
+        QVERIFY(hikari::plugins::saveRegistry(home.filePath(QStringLiteral("plugins.json")).toStdString(),
+                                      {{id.toStdString(), hikari::plugins::InstalledPlugin{.version = "1.0.0", .installed = 1}}}));
         withPlugins = true;
     }
 
@@ -1069,16 +1068,21 @@ private slots:
         const auto rows = [&] {
             const QVariantList plugins = application->projectPluginSettings(w);
             QMap<QString, QVariant> out;
-            if (plugins.size() == 1)
-                for (const QVariant &row : plugins.first().toMap().value(QStringLiteral("settings")).toList())
-                    out.insert(row.toMap().value(QStringLiteral("id")).toString(), row.toMap().value(QStringLiteral("project")));
+            for (const QVariant &plugin : plugins)
+                if (plugin.toMap().value(QStringLiteral("id")).toString() == QLatin1String("com.example.kf"))
+                    for (const QVariant &row : plugin.toMap().value(QStringLiteral("settings")).toList())
+                        out.insert(row.toMap().value(QStringLiteral("id")).toString(), row.toMap().value(QStringLiteral("project")));
             return out;
         };
         QTRY_COMPARE(rows().keys(), (QStringList{"hosts", "mode", "size"}));
         QCOMPARE(rows().value(QStringLiteral("size")).toInt(), 3);
-        QTRY_COMPARE(application->pluginManager()->plugins().first().toMap().value(QStringLiteral("settings")).toList().last()
-                         .toMap().value(QStringLiteral("value")).toString(),
-                     QStringLiteral("t0"));
+        const auto tokenValue = [&] {
+            for (const QVariant &plugin : application->pluginManager()->plugins())
+                if (plugin.toMap().value(QStringLiteral("id")).toString() == QLatin1String("com.example.kf"))
+                    return plugin.toMap().value(QStringLiteral("settings")).toList().last().toMap().value(QStringLiteral("value")).toString();
+            return QString();
+        };
+        QTRY_COMPARE(tokenValue(), QStringLiteral("t0"));
 
         const QString plugin = QStringLiteral("com.example.kf");
         QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("mode"), QStringLiteral("\"slow\"")), QString());
@@ -1105,7 +1109,7 @@ private slots:
         QTRY_COMPARE(elsewhere("plugin.com.example.kf.size"), QStringLiteral("Set in this project"));
         QVERIFY(elsewhere("plugin.com.example.kf.host").isEmpty());
         settings->setProperty("projectTab", true);
-        QTRY_VERIFY(item(settings->contentItem(), QStringLiteral("setting_hosts")));
+        QTRY_VERIFY(item(settings->contentItem(), QStringLiteral("setting_plugin.com.example.kf.hosts")));
         QCOMPARE(elsewhere("plugin.com.example.kf.size"), QStringLiteral("Set in this project"));
         QVERIFY(QMetaObject::invokeMethod(settings, "resetSetting",
                                           Q_ARG(QVariant, QStringList{QStringLiteral("plugin.com.example.kf.size")})));

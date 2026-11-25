@@ -1296,7 +1296,8 @@ void PluginRuntime::restart(const QString &pluginId)
 
 void PluginRuntime::resendSetting(const plugins::Manifest &manifest, const std::string &setting)
 {
-    const api::Json *value = settingsOf(manifest).find(setting);
+    const api::Json values = settingsOf(manifest);
+    const api::Json *value = values.find(setting);
     settingChanged(qs(manifest.id), qs(setting), qs((value ? *value : api::Json()).dump()));
 }
 

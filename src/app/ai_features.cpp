@@ -6,8 +6,6 @@
 #include "hikari/backends/ai_ca_bundle.h"
 #include "hikari/backends/ai_antigravity.h"
 #include "hikari/backends/ai_config_store.h"
-#ifdef Q_OS_WIN
-#endif
 #include "hikari/backends/ai_http_relay.h"
 #include "hikari/backends/ai_mcp_clients.h"
 #include "hikari/backends/ai_requests.h"

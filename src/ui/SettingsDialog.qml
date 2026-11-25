@@ -1687,6 +1687,24 @@ DialogWindow {
                         SettingCheck { setting: "grid.autoHideColumns" }
                     }
                     Section {
+                        key: "grid.display"
+                        SettingsRow {
+                            host: dialog
+                            setting: "grid.tagsMode"
+                            SettingChoice {
+                                setting: "grid.tagsMode"
+                                model: [qsTr("Show"), qsTr("Replace with symbol"), qsTr("Hide")]
+                                Accessible.name: qsTr("Tags in the Grid")
+                            }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "grid.tagsSwapCharacter"
+                            SettingText { setting: "grid.tagsSwapCharacter"; Layout.preferredWidth: 120; Accessible.name: qsTr("ASS tag replacement") }
+                        }
+                        SettingCheck { setting: "grid.markCurrentFrame" }
+                    }
+                    Section {
                         key: "grid.counting"
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForWraps" }
                         SettingCheck { setting: "grid.calcSpacesAndPunctuationForCps" }
@@ -1727,11 +1745,6 @@ DialogWindow {
                             host: dialog
                             setting: "grid.insertEndOffset"
                             SettingNumber { setting: "grid.insertEndOffset"; from: -100000; to: 100000; unit: qsTr("ms"); name: qsTr("End frame offset") }
-                        }
-                        SettingsRow {
-                            host: dialog
-                            setting: "grid.tagsSwapCharacter"
-                            SettingText { setting: "grid.tagsSwapCharacter"; Layout.preferredWidth: 120; Accessible.name: qsTr("ASS tag replacement") }
                         }
                     }
                 }
@@ -1930,6 +1943,22 @@ DialogWindow {
                             SettingNumber {
                                 setting: "video.handleSize"; from: 50; to: 400; unit: "%"
                                 name: qsTr("Handle size"); tip: qsTr("Size of the visual tools’ handles. Range from 50 to 400")
+                            }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "video.vectorClipSmoothing"
+                            SettingNumber {
+                                setting: "video.vectorClipSmoothing"; from: 0; to: 100
+                                name: qsTr("Vector clip smoothing"); tip: qsTr("How closely a freehand stroke is followed. Range from 0 to 100")
+                            }
+                        }
+                        SettingsRow {
+                            host: dialog
+                            setting: "video.drawingSmoothing"
+                            SettingNumber {
+                                setting: "video.drawingSmoothing"; from: 0; to: 100
+                                name: qsTr("Drawing smoothing"); tip: qsTr("How closely a freehand stroke is followed. Range from 0 to 100")
                             }
                         }
                     }
