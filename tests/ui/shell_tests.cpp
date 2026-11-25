@@ -30720,10 +30720,10 @@ private slots:
         window->resize(size.value(0).toInt(), size.value(1).toInt());
         auto &effects = application->nodeEffects();
         QVERIFY(effects.newGraph());
-        const QString number = effects.addNode(QStringLiteral("values.number"), 0, 0);
-        const QString random = effects.addNode(QStringLiteral("math.random"), 220, 0);
-        const QString fades[] = {effects.addNode(QStringLiteral("tags.fade"), 0, 160), effects.addNode(QStringLiteral("tags.fade"), 220, 160),
-                                 effects.addNode(QStringLiteral("tags.fade"), 440, 160)};
+        const QString number = effects.addNode(QStringLiteral("values.number"), 0, 320);
+        const QString random = effects.addNode(QStringLiteral("math.random"), 220, 320);
+        const QString fades[] = {effects.addNode(QStringLiteral("tags.fade"), 0, 480), effects.addNode(QStringLiteral("tags.fade"), 220, 480),
+                                 effects.addNode(QStringLiteral("tags.fade"), 440, 480)};
         effects.setField(fades[0], QStringLiteral("fade_in"), 150);
         effects.setField(random, QStringLiteral("step"), 1);
         effects.commit();
