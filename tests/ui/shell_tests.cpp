@@ -1756,7 +1756,7 @@ private slots:
 
         const QString script = scriptWithoutPlayRes();
         QVERIFY(application->openFile(script));
-        QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+        QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("384 x 288"));
         QCOMPARE(statusField("statusVideoResolution"), QString());
         QCOMPARE(statusField("statusVideoName"), QString());
 
@@ -1776,7 +1776,7 @@ private slots:
         QCOMPARE(statusField("statusFramesPerSecond"), QStringLiteral("23.976 FPS"));
         QCOMPARE(statusField("statusAspectRatio"), QStringLiteral("4 : 3"));
         QCOMPARE(statusField("statusVideoName"), QStringLiteral("cfr.mkv"));
-        QCOMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+        QCOMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("384 x 288"));
         QVERIFY(!statusField("statusText").contains(QLatin1String("status.ass")));
 
         QQuickItem *bar = visualItem("statusBar");
@@ -1959,12 +1959,12 @@ private slots:
             QVERIFY(shot.save(out + QStringLiteral("/main-window") + suffix));
             QVERIFY(shot.copy(crop(bar)).save(out + QStringLiteral("/status-bar") + suffix));
             application->shell().setStatusText(QString());
-            QVERIFY(application->resample(1280, 720, 320, 240, false));
+            QVERIFY(application->resample(384, 288, 320, 240, false));
             QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("320 x 240"));
             QTest::qWait(200);
             QVERIFY(window->grabWindow().copy(crop(bar)).save(out + QStringLiteral("/status-bar-matching") + suffix));
             application->editor().undo();
-            QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+            QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("384 x 288"));
         }
         restartWithoutSound();
         window->resize(1600, 900);
@@ -27063,8 +27063,8 @@ private slots:
         auto *height = in(dialog, "scriptResolutionHeight");
         auto *useVideo = in(dialog, "scriptResolutionUseVideo");
         auto *always = in(dialog, "scriptResolutionAlways");
-        QCOMPARE(width->property("value").toInt(), 320);
-        QCOMPARE(height->property("value").toInt(), 240);
+        QCOMPARE(width->property("value").toInt(), 384);
+        QCOMPARE(height->property("value").toInt(), 288);
         QVERIFY(useVideo->property("enabled").toBool());
         QVERIFY(always->property("enabled").toBool());
         QVERIFY(!always->property("checked").toBool());
