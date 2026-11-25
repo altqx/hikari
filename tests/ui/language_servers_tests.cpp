@@ -453,6 +453,33 @@ private slots:
         QVERIFY(hover && !*hover);
     }
 
+    void aRealTyposServerMarksAndFixesAMisspelling()
+    {
+        const QString typos = qEnvironmentVariable("HIKARI_TEST_TYPOS_LSP");
+        if (typos.isEmpty())
+            QSKIP("Set HIKARI_TEST_TYPOS_LSP to a typos-lsp binary to run this.");
+        if (!backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete())
+            QSKIP("This machine can't confine programs.");
+        const QString copy = folder(QStringLiteral("package/bin/")) + QFileInfo(typos).fileName();
+        QFile::remove(copy);
+        QVERIFY(QFile::copy(typos, copy));
+        QFile::setPermissions(copy, QFile::permissions(copy) | QFileDevice::ExeOwner);
+        m_manifest.programs.front().platforms.begin()->second =
+            plugins::ProgramRun{"bin/" + QFileInfo(typos).fileName().toStdString(), std::nullopt, {}, {}};
+        m_session = std::make_unique<application::EditSession>(load("[Events]\n"
+                                                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}teh cat\n"));
+        auto ls = servers();
+        ls->serversChanged();
+        QTRY_VERIFY_WITH_TIMEOUT(held().size() == 1 && !held()[0].problem.fixes.empty(), 30000);
+        const auto problems = held();
+        const Problem &problem = problems[0].problem;
+        QCOMPARE(*problem.from, std::size_t(5));
+        QCOMPARE(*problem.to, std::size_t(8));
+        QCOMPARE(problem.fixes.size(), std::size_t(1));
+        QCOMPARE(problem.fixes[0].title, std::string("the"));
+        QCOMPARE(problem.fixes[0].edits, (std::vector<application::ProblemEdit>{{5, 8, "the"}}));
+    }
+
     void aLineScopeServerSeesTheEditedLineAlone()
     {
         if (!backends::sandbox::systemCoverage(backends::sandbox::Network::None).complete())
