@@ -11172,11 +11172,8 @@ ApplicationWindow {
             app: root.app
             importer: root.settingsImport
             updates: root.updates
-            layouts: root.workspaceLayout.presets
-            onFinished: layout => {
-                if (layout.length > 0)
-                    root.applyPreset(layout)
-            }
+            openAnythingKeys: root.boundKeys("GLOBAL_QUICK_OPEN", 0)
+            onFinished: (layout, aiOn, settingShown) => root.finishGettingStarted(layout, aiOn, settingShown)
             onSkipped: if (gettingStartedDialog.due) root.notices.post("info", qsTranslate("HikariSub.GettingStarted", "Default settings in use"),
                                                                       qsTranslate("HikariSub.GettingStarted", "Help › Getting started opens the setup again."))
         }
@@ -11205,6 +11202,33 @@ ApplicationWindow {
                 onLegacyRollBackRequested: root.lazy(settingsImportDialogLoader).openRollBack()
             }
         }
+    }
+    property bool fullScreenOnFirstVideo: false
+    Connections {
+        target: root.video
+        function onHasVideoChanged() {
+            if (root.fullScreenOnFirstVideo && root.video.hasVideo) {
+                root.fullScreenOnFirstVideo = false
+                root.videoFullscreen.toggleTypesetting()
+            }
+        }
+    }
+    function finishGettingStarted(layout, aiOn, settingShown) {
+        if (layout === "fullScreen") {
+            root.applyPreset("Typesetting")
+            root.fullScreenOnFirstVideo = true
+        } else if (layout.length > 0) {
+            root.applyPreset(layout)
+        }
+        if (aiOn) {
+            if (root.aiSettings.componentNeeded())
+                root.aiSettings.installComponent()
+            root.showPanel(agentDock)
+        }
+        if (settingShown.startsWith("marketplace:"))
+            pluginManagerDialog.showMarket(settingShown.slice("marketplace:".length))
+        else if (settingShown.startsWith("setting:"))
+            root.settingsWindow().openAt(settingShown.slice("setting:".length))
     }
     function settingsWindow() {
         settingsLoader.active = true

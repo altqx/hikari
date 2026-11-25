@@ -6666,7 +6666,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation>단계 %1/%2</translation>
+        <translation type="vanished">단계 %1/%2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
@@ -6702,7 +6702,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation>이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
+        <translation type="vanished">이 컴퓨터에 HikariSub 0.0.x가 설치되어 있습니다. 설치본의 내용은 변경되지 않습니다.</translation>
     </message>
     <message>
         <source>Later: Settings › General › Import settings…</source>
@@ -6738,7 +6738,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation>테마를 선택하십시오. 선택하는 대로 이 창이 바뀝니다.</translation>
+        <translation type="vanished">테마를 선택하십시오. 선택하는 대로 이 창이 바뀝니다.</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
@@ -6758,7 +6758,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation>고대비 사용</translation>
+        <translation type="vanished">고대비 사용</translation>
     </message>
     <message>
         <source>Title bar</source>
@@ -6782,11 +6782,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation>주로 어떤 작업을 하십니까?</translation>
+        <translation type="vanished">주로 어떤 작업을 하십니까?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation>하나를 고르면 첫 탭이 열릴 때의 레이아웃이 정해집니다. 고르지 않으면 모든 기능을 조금씩 갖춘 편집 레이아웃이 유지됩니다.</translation>
+        <translation type="vanished">하나를 고르면 첫 탭이 열릴 때의 레이아웃이 정해집니다. 고르지 않으면 모든 기능을 조금씩 갖춘 편집 레이아웃이 유지됩니다.</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
@@ -6865,6 +6865,110 @@ Failed to copy %2 fonts.</source>
         <translation>편집</translation>
     </message>
     <message>
+        <source>Welcome</source>
+        <translation>환영합니다</translation>
+    </message>
+    <message>
+        <source>Bring over</source>
+        <translation>가져오기</translation>
+    </message>
+    <message>
+        <source>How you work</source>
+        <translation>작업 방식</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>준비</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation>전체 화면</translation>
+    </message>
+    <message>
+        <source>%1’s settings were found on this computer. Nothing in them is changed.</source>
+        <translation>이 컴퓨터에서 %1 설정을 찾았습니다. 원본은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Settings from %1 and %2 were found on this computer. Nothing in them is changed.</source>
+        <translation>이 컴퓨터에서 %1와(과) %2의 설정을 찾았습니다. 원본은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed.</source>
+        <translation>이 컴퓨터에서 %1, %2, %3의 설정을 찾았습니다. 원본은 바뀌지 않습니다.</translation>
+    </message>
+    <message>
+        <source>HikariSub (built in)</source>
+        <translation>HikariSub (기본 제공)</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>단계</translation>
+    </message>
+    <message>
+        <source>Step %1 of %2, %3</source>
+        <translation>%2단계 중 %1단계, %3</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>현재</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>완료</translation>
+    </message>
+    <message>
+        <source>Skip setup keeps HikariSub’s defaults.</source>
+        <translation>설정을 건너뛰면 HikariSub 기본값을 사용합니다.</translation>
+    </message>
+    <message>
+        <source>This window changes as you choose.</source>
+        <translation>선택하는 대로 이 창이 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>High contrast</source>
+        <translation>고대비</translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation>기본 제공</translation>
+    </message>
+    <message>
+        <source>From plugins</source>
+        <translation>플러그인 테마</translation>
+    </message>
+    <message>
+        <source>More themes…</source>
+        <translation>테마 더 보기…</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>마켓플레이스</translation>
+    </message>
+    <message>
+        <source>Icons</source>
+        <translation>아이콘</translation>
+    </message>
+    <message>
+        <source>How do you mostly work?</source>
+        <translation>주로 어떻게 작업하시나요?</translation>
+    </message>
+    <message>
+        <source>This sets the layout your first tab opens with. Leave it on Editing for a bit of everything.</source>
+        <translation>첫 탭이 열릴 때의 레이아웃을 정합니다. 두루 쓰려면 편집으로 두세요.</translation>
+    </message>
+    <message>
+        <source>Video, audio, the line editor and the grid.</source>
+        <translation>비디오, 오디오, 줄 편집기, 그리드.</translation>
+    </message>
+    <message>
+        <source>Just the picture and a line box. View › Full screen typesetting any time.</source>
+        <translation>영상과 줄 상자만. 보기 › 전체 화면 식자로 언제든지 전환할 수 있습니다.</translation>
+    </message>
+    <message>
         <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>나중에: 설정 › 일반 › 저장, 설정 › 철자 및 문법</translation>
     </message>
@@ -6917,8 +7021,36 @@ Failed to copy %2 fonts.</source>
         <translation>지난 화는 벌써 봣어요.</translation>
     </message>
     <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation>HikariSub가 시작될 때, 하루에 한 번까지.</translation>
+    </message>
+    <message>
         <source>Updates and privacy</source>
         <translation>업데이트 및 개인정보</translation>
+    </message>
+    <message>
+        <source>HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on.</source>
+        <translation>HikariSub는 번역, 검토, 그리고 함께 편집하는 에이전트를 도울 수 있습니다. 직접 켜기 전에는 꺼져 있습니다.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › AI</source>
+        <translation>나중에: 설정 › AI</translation>
+    </message>
+    <message>
+        <source>Keep AI off</source>
+        <translation>AI 끈 채로 두기</translation>
+    </message>
+    <message>
+        <source>No AI menus, panels or downloads. Nothing about your subtitles leaves this computer.</source>
+        <translation>AI 메뉴, 패널, 다운로드가 없습니다. 자막에 관한 어떤 것도 이 컴퓨터를 떠나지 않습니다.</translation>
+    </message>
+    <message>
+        <source>Turn AI on</source>
+        <translation>AI 켜기</translation>
+    </message>
+    <message>
+        <source>HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI.</source>
+        <translation>마침 후에 HikariSub가 AI 구성 요소를 한 번 내려받습니다. 제공자 추가나 에이전트 로그인은 설정 › AI에서 합니다.</translation>
     </message>
     <message>
         <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
@@ -6950,7 +7082,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation>HikariSub을 시작할 때 하루에 한 번까지 확인합니다. 홈의 새로운 기능에도 필요합니다.</translation>
+        <translation type="vanished">HikariSub을 시작할 때 하루에 한 번까지 확인합니다. 홈의 새로운 기능에도 필요합니다.</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -6965,6 +7097,70 @@ Failed to copy %2 fonts.</source>
         <translation>보내는 정보</translation>
     </message>
     <message>
+        <source>Your Discord status shows the mode you’re in. Never folders, your subtitles or the video.</source>
+        <translation>Discord 상태에 지금 쓰는 모드가 표시됩니다. 폴더, 자막, 영상은 절대 표시되지 않습니다.</translation>
+    </message>
+    <message>
+        <source>You’re set</source>
+        <translation>준비가 끝났습니다</translation>
+    </message>
+    <message>
+        <source>Finish saves these choices. Everything is in Settings.</source>
+        <translation>마침을 누르면 이 선택이 저장됩니다. 모든 것은 설정에 있습니다.</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>언어</translation>
+    </message>
+    <message>
+        <source>%1 accent</source>
+        <translation>%1 강조 색</translation>
+    </message>
+    <message>
+        <source>%1 icons</source>
+        <translation>%1 아이콘</translation>
+    </message>
+    <message>
+        <source>HikariSub icons</source>
+        <translation>HikariSub 아이콘</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>레이아웃</translation>
+    </message>
+    <message>
+        <source>Full screen, once a video is open</source>
+        <translation>전체 화면, 비디오를 열면</translation>
+    </message>
+    <message>
+        <source>On, downloads after Finish</source>
+        <translation>켬, 마침 후 다운로드</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>켬</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Stable only, automatically</source>
+        <translation>안정 버전만, 자동으로</translation>
+    </message>
+    <message>
+        <source>Stable only, not automatically</source>
+        <translation>안정 버전만, 자동 아님</translation>
+    </message>
+    <message>
+        <source>Pre-releases, automatically</source>
+        <translation>시험판 포함, 자동으로</translation>
+    </message>
+    <message>
+        <source>Pre-releases, not automatically</source>
+        <translation>시험판 포함, 자동 아님</translation>
+    </message>
+    <message>
         <source>Your files</source>
         <translation>내 파일</translation>
     </message>
@@ -6974,15 +7170,31 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation>나중에: 설정 › 일반</translation>
+        <translation type="vanished">나중에: 설정 › 일반</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation>사용자 폴더</translation>
+        <translation type="vanished">사용자 폴더</translation>
     </message>
     <message>
         <source>Open folder</source>
         <translation>폴더 열기</translation>
+    </message>
+    <message>
+        <source>Good to know</source>
+        <translation>알아 두면 좋은 것</translation>
+    </message>
+    <message>
+        <source>Open anything, or run any command</source>
+        <translation>무엇이든 열거나 아무 명령이나 실행</translation>
+    </message>
+    <message>
+        <source>Formats, presets and themes from the marketplace</source>
+        <translation>마켓플레이스의 형식, 프리셋, 테마</translation>
+    </message>
+    <message>
+        <source>Automation › Plugins</source>
+        <translation>자동화 › 플러그인</translation>
     </message>
     <message>
         <source>Back</source>

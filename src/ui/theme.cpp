@@ -1,5 +1,6 @@
 #include "theme.h"
 
+#include "icon_theme.h"
 #include "settings_store.h"
 #include "menu_key.h"
 #include "style/style_colours.h"
@@ -738,10 +739,13 @@ void preview(const QVariantMap &values)
 {
     Hub::get().previewValues = values;
     Hub::get().refresh();
+    if (const auto icons = values.constFind(QLatin1String(icons::kThemeSetting)); icons != values.cend())
+        icons::preview(icons->toString());
 }
 
 void endPreview()
 {
+    icons::endPreview();
     if (!Hub::get().previewValues)
         return;
     Hub::get().previewValues.reset();

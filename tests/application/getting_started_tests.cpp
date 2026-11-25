@@ -34,7 +34,7 @@ TEST(GettingStarted, SetsTheCrucialSettingsInPageOrder)
 {
     const auto all = gettingStartedSettings();
     EXPECT_EQ(all.front(), "program.language");
-    EXPECT_EQ(all.back(), "privacy.usageData");
+    EXPECT_EQ(all.back(), "privacy.discordPresence");
     for (const auto id : all) {
         EXPECT_NE(findSetting(id), nullptr) << id;
         EXPECT_EQ(std::ranges::count(all, id), 1) << id;
@@ -54,6 +54,9 @@ TEST(GettingStarted, PagesShowTheLiveValuesAsTheSettingsWindowDoes)
     EXPECT_EQ(std::get<std::string>(state.at("appearance.titleBar")), "auto");
     EXPECT_EQ(std::get<bool>(state.at("updater.autoCheck")), false);
     EXPECT_EQ(std::get<bool>(state.at("privacy.usageData")), true);
+    EXPECT_EQ(std::get<std::string>(state.at("appearance.iconTheme")), "hikarisub");
+    EXPECT_EQ(std::get<bool>(state.at("ai.off")), true);
+    EXPECT_EQ(std::get<bool>(state.at("privacy.discordPresence")), false);
     EXPECT_EQ(state.size(), gettingStartedSettings().size());
 }
 
@@ -138,4 +141,7 @@ TEST(GettingStarted, EachSettingHasItsPage)
     EXPECT_EQ(gettingStartedPageOf("editor.spellchecker"), "editing");
     EXPECT_EQ(gettingStartedPageOf("autosave.maxFiles"), "editing");
     EXPECT_EQ(gettingStartedPageOf("privacy.usageData"), "updates");
+    EXPECT_EQ(gettingStartedPageOf("privacy.discordPresence"), "updates");
+    EXPECT_EQ(gettingStartedPageOf("ai.off"), "ai");
+    EXPECT_EQ(gettingStartedPageOf("appearance.iconTheme"), "look");
 }

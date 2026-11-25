@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFileInfo>
 #include <QVariantMap>
 
 namespace hikari::app {
@@ -55,6 +56,15 @@ QString kindName(si::RowKind kind)
     return {};
 }
 
+QString programOf(const SettingsImportStore::Root &root)
+{
+    if (root.files.contains(QLatin1String("hotkey.json")))
+        return QStringLiteral("Aegisub");
+    if (QFileInfo(root.path).fileName().compare(QLatin1String("Kainote"), Qt::CaseInsensitive) == 0)
+        return QStringLiteral("Kainote");
+    return QStringLiteral("HikariSub 0.0.x");
+}
+
 }
 
 SettingsImportController::SettingsImportController(SettingsImportStore *store, QStringList defaultFolders, QObject *parent)
@@ -67,7 +77,8 @@ QVariantList SettingsImportController::roots() const
     QVariantList out;
     for (const auto &r : m_roots)
         out << QVariantMap{{QStringLiteral("path"), QDir::toNativeSeparators(r.path)},
-                           {QStringLiteral("files"), r.files.join(QStringLiteral(", "))}};
+                           {QStringLiteral("files"), r.files.join(QStringLiteral(", "))},
+                           {QStringLiteral("name"), programOf(r)}};
     return out;
 }
 

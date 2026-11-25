@@ -6728,7 +6728,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Step %1 of %2</source>
-        <translation>படி %1 / %2</translation>
+        <translation type="vanished">படி %1 / %2</translation>
     </message>
     <message>
         <source>Welcome to HikariSub</source>
@@ -6764,7 +6764,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>HikariSub 0.0.x is installed on this computer. Nothing in it is changed.</source>
-        <translation>HikariSub 0.0.x இந்தக் கணினியில் நிறுவப்பட்டுள்ளது. அதில் எதுவும் மாற்றப்படாது.</translation>
+        <translation type="vanished">HikariSub 0.0.x இந்தக் கணினியில் நிறுவப்பட்டுள்ளது. அதில் எதுவும் மாற்றப்படாது.</translation>
     </message>
     <message>
         <source>Later: Settings › General › Import settings…</source>
@@ -6800,7 +6800,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Choose a theme. This window changes as you choose.</source>
-        <translation>ஒரு கருப்பொருளைத் தேர்ந்தெடுக்கவும். நீங்கள் தேர்ந்தெடுக்கும்போதே இந்தச் சாளரம் மாறும்.</translation>
+        <translation type="vanished">ஒரு கருப்பொருளைத் தேர்ந்தெடுக்கவும். நீங்கள் தேர்ந்தெடுக்கும்போதே இந்தச் சாளரம் மாறும்.</translation>
     </message>
     <message>
         <source>Later: Settings › Appearance</source>
@@ -6820,7 +6820,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Enable high contrast</source>
-        <translation>உயர் மாறுபாட்டை இயக்கு</translation>
+        <translation type="vanished">உயர் மாறுபாட்டை இயக்கு</translation>
     </message>
     <message>
         <source>Title bar</source>
@@ -6844,11 +6844,11 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>What do you mostly do?</source>
-        <translation>நீங்கள் பெரும்பாலும் என்ன செய்கிறீர்கள்?</translation>
+        <translation type="vanished">நீங்கள் பெரும்பாலும் என்ன செய்கிறீர்கள்?</translation>
     </message>
     <message>
         <source>Pick one to set the layout your first tab opens with. Leave it to keep Editing, which has a bit of everything.</source>
-        <translation>உங்கள் முதல் தாவல் திறக்கும் தளவமைப்பை அமைக்க ஒன்றைத் தேர்ந்தெடுக்கவும். எல்லாவற்றிலும் சிறிது கொண்ட திருத்துதல் தளவமைப்பை வைத்திருக்க இதை அப்படியே விடவும்.</translation>
+        <translation type="vanished">உங்கள் முதல் தாவல் திறக்கும் தளவமைப்பை அமைக்க ஒன்றைத் தேர்ந்தெடுக்கவும். எல்லாவற்றிலும் சிறிது கொண்ட திருத்துதல் தளவமைப்பை வைத்திருக்க இதை அப்படியே விடவும்.</translation>
     </message>
     <message>
         <source>Later: View › Layout, or the layout switcher in the title bar</source>
@@ -6927,6 +6927,110 @@ Failed to copy %2 fonts.</source>
         <translation>திருத்துதல்</translation>
     </message>
     <message>
+        <source>Welcome</source>
+        <translation>வரவேற்பு</translation>
+    </message>
+    <message>
+        <source>Bring over</source>
+        <translation>கொண்டு வா</translation>
+    </message>
+    <message>
+        <source>How you work</source>
+        <translation>நீங்கள் வேலை செய்யும் முறை</translation>
+    </message>
+    <message>
+        <source>AI</source>
+        <translation>AI</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation>தயார்</translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation>முழுத் திரை</translation>
+    </message>
+    <message>
+        <source>%1’s settings were found on this computer. Nothing in them is changed.</source>
+        <translation>%1 இன் அமைப்புகள் இந்தக் கணினியில் கண்டறியப்பட்டன. அவற்றில் எதுவும் மாற்றப்படாது.</translation>
+    </message>
+    <message>
+        <source>Settings from %1 and %2 were found on this computer. Nothing in them is changed.</source>
+        <translation>%1, %2 இன் அமைப்புகள் இந்தக் கணினியில் கண்டறியப்பட்டன. அவற்றில் எதுவும் மாற்றப்படாது.</translation>
+    </message>
+    <message>
+        <source>Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed.</source>
+        <translation>%1, %2, %3 இன் அமைப்புகள் இந்தக் கணினியில் கண்டறியப்பட்டன. அவற்றில் எதுவும் மாற்றப்படாது.</translation>
+    </message>
+    <message>
+        <source>HikariSub (built in)</source>
+        <translation>HikariSub (உள்ளமைந்தது)</translation>
+    </message>
+    <message>
+        <source>Steps</source>
+        <translation>படிகள்</translation>
+    </message>
+    <message>
+        <source>Step %1 of %2, %3</source>
+        <translation>படி %1 / %2, %3</translation>
+    </message>
+    <message>
+        <source>current</source>
+        <translation>தற்போதையது</translation>
+    </message>
+    <message>
+        <source>done</source>
+        <translation>முடிந்தது</translation>
+    </message>
+    <message>
+        <source>Skip setup keeps HikariSub’s defaults.</source>
+        <translation>அமைவைத் தவிர்த்தால் HikariSub இன் இயல்புநிலைகள் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>This window changes as you choose.</source>
+        <translation>நீங்கள் தேர்வு செய்யச் செய்ய இந்தச் சாளரம் மாறும்.</translation>
+    </message>
+    <message>
+        <source>High contrast</source>
+        <translation>உயர் மாறுபாடு</translation>
+    </message>
+    <message>
+        <source>Built in</source>
+        <translation>உள்ளமைந்தவை</translation>
+    </message>
+    <message>
+        <source>From plugins</source>
+        <translation>செருகுநிரல்களிலிருந்து</translation>
+    </message>
+    <message>
+        <source>More themes…</source>
+        <translation>மேலும் கருப்பொருள்கள்…</translation>
+    </message>
+    <message>
+        <source>Marketplace</source>
+        <translation>சந்தை</translation>
+    </message>
+    <message>
+        <source>Icons</source>
+        <translation>சின்னங்கள்</translation>
+    </message>
+    <message>
+        <source>How do you mostly work?</source>
+        <translation>நீங்கள் பெரும்பாலும் எப்படி வேலை செய்கிறீர்கள்?</translation>
+    </message>
+    <message>
+        <source>This sets the layout your first tab opens with. Leave it on Editing for a bit of everything.</source>
+        <translation>உங்கள் முதல் தாவல் திறக்கும் தளவமைப்பை இது அமைக்கிறது. எல்லாவற்றிலும் கொஞ்சம் வேண்டுமெனில் திருத்துதலிலேயே விடுங்கள்.</translation>
+    </message>
+    <message>
+        <source>Video, audio, the line editor and the grid.</source>
+        <translation>வீடியோ, ஆடியோ, வரித் திருத்தி, கட்டம்.</translation>
+    </message>
+    <message>
+        <source>Just the picture and a line box. View › Full screen typesetting any time.</source>
+        <translation>படமும் ஒரு வரிப் பெட்டியும் மட்டும். பார்வை › முழுத் திரை டைப்செட்டிங் எப்போது வேண்டுமானாலும்.</translation>
+    </message>
+    <message>
         <source>Later: Settings › General › Saving and Settings › Spelling and grammar</source>
         <translation>பின்னர்: அமைப்புகள் › பொது › சேமித்தல் மற்றும் அமைப்புகள் › எழுத்துப்பிழை மற்றும் இலக்கணம்</translation>
     </message>
@@ -6979,8 +7083,36 @@ Failed to copy %2 fonts.</source>
         <translation>அவள் கடைசி அத்தியாயதை ஏற்கனவே பார்த்துவிட்டாள்.</translation>
     </message>
     <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation>HikariSub தொடங்கும்போது, நாளுக்கு அதிகபட்சம் ஒருமுறை.</translation>
+    </message>
+    <message>
         <source>Updates and privacy</source>
         <translation>புதுப்பிப்புகளும் தனியுரிமையும்</translation>
+    </message>
+    <message>
+        <source>HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on.</source>
+        <translation>மொழிபெயர்ப்பு, மதிப்பாய்வு, உங்களுடன் திருத்தும் ஒரு முகவர் ஆகியவற்றில் HikariSub உதவ முடியும். நீங்கள் இயக்கும் வரை இது முடக்கத்தில் இருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Later: Settings › AI</source>
+        <translation>பின்னர்: அமைப்புகள் › AI</translation>
+    </message>
+    <message>
+        <source>Keep AI off</source>
+        <translation>AI ஐ முடக்கத்திலேயே வை</translation>
+    </message>
+    <message>
+        <source>No AI menus, panels or downloads. Nothing about your subtitles leaves this computer.</source>
+        <translation>AI பட்டிகள், பலகங்கள், பதிவிறக்கங்கள் இல்லை. உங்கள் வசனங்கள் பற்றிய எதுவும் இந்தக் கணினியை விட்டு வெளியேறாது.</translation>
+    </message>
+    <message>
+        <source>Turn AI on</source>
+        <translation>AI ஐ இயக்கு</translation>
+    </message>
+    <message>
+        <source>HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI.</source>
+        <translation>முடி அழுத்திய பின் HikariSub AI கூறை ஒருமுறை பதிவிறக்கும். வழங்குநரைச் சேர்ப்பது அல்லது முகவரில் உள்நுழைவது அமைப்புகள் › AI இல்.</translation>
     </message>
     <message>
         <source>Which versions HikariSub offers you, whether it looks for them by itself, and whether it sends anonymous usage data.</source>
@@ -7012,7 +7144,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>At most once a day, when HikariSub starts. What’s new on Home needs it too.</source>
-        <translation>HikariSub தொடங்கும்போது, நாளுக்கு அதிகபட்சம் ஒருமுறை. முகப்பில் உள்ள புதிதாக என்ன பகுதிக்கும் இது தேவை.</translation>
+        <translation type="vanished">HikariSub தொடங்கும்போது, நாளுக்கு அதிகபட்சம் ஒருமுறை. முகப்பில் உள்ள புதிதாக என்ன பகுதிக்கும் இது தேவை.</translation>
     </message>
     <message>
         <source>Send anonymous usage data</source>
@@ -7027,6 +7159,70 @@ Failed to copy %2 fonts.</source>
         <translation>என்ன அனுப்பப்படுகிறது</translation>
     </message>
     <message>
+        <source>Your Discord status shows the mode you’re in. Never folders, your subtitles or the video.</source>
+        <translation>நீங்கள் உள்ள பயன்முறையை உங்கள் Discord நிலை காட்டும். கோப்புறைகள், வசனங்கள், வீடியோ ஒருபோதும் இல்லை.</translation>
+    </message>
+    <message>
+        <source>You’re set</source>
+        <translation>எல்லாம் தயார்</translation>
+    </message>
+    <message>
+        <source>Finish saves these choices. Everything is in Settings.</source>
+        <translation>முடி இந்தத் தேர்வுகளைச் சேமிக்கும். அனைத்தும் அமைப்புகளில் உள்ளன.</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation>மொழி</translation>
+    </message>
+    <message>
+        <source>%1 accent</source>
+        <translation>%1 சிறப்பு வண்ணம்</translation>
+    </message>
+    <message>
+        <source>%1 icons</source>
+        <translation>%1 சின்னங்கள்</translation>
+    </message>
+    <message>
+        <source>HikariSub icons</source>
+        <translation>HikariSub சின்னங்கள்</translation>
+    </message>
+    <message>
+        <source>Layout</source>
+        <translation>தளவமைப்பு</translation>
+    </message>
+    <message>
+        <source>Full screen, once a video is open</source>
+        <translation>முழுத் திரை, வீடியோ திறந்ததும்</translation>
+    </message>
+    <message>
+        <source>On, downloads after Finish</source>
+        <translation>இயக்கம், முடித்த பின் பதிவிறக்கும்</translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation>இயக்கம்</translation>
+    </message>
+    <message>
+        <source>Updates</source>
+        <translation>புதுப்பிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Stable only, automatically</source>
+        <translation>நிலையானவை மட்டும், தானாக</translation>
+    </message>
+    <message>
+        <source>Stable only, not automatically</source>
+        <translation>நிலையானவை மட்டும், தானாக அல்ல</translation>
+    </message>
+    <message>
+        <source>Pre-releases, automatically</source>
+        <translation>முன்வெளியீடுகள், தானாக</translation>
+    </message>
+    <message>
+        <source>Pre-releases, not automatically</source>
+        <translation>முன்வெளியீடுகள், தானாக அல்ல</translation>
+    </message>
+    <message>
         <source>Your files</source>
         <translation>உங்கள் கோப்புகள்</translation>
     </message>
@@ -7036,15 +7232,31 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Later: Settings › General</source>
-        <translation>பின்னர்: அமைப்புகள் › பொது</translation>
+        <translation type="vanished">பின்னர்: அமைப்புகள் › பொது</translation>
     </message>
     <message>
         <source>Your folder</source>
-        <translation>உங்கள் கோப்புறை</translation>
+        <translation type="vanished">உங்கள் கோப்புறை</translation>
     </message>
     <message>
         <source>Open folder</source>
         <translation>கோப்புறையைத் திற</translation>
+    </message>
+    <message>
+        <source>Good to know</source>
+        <translation>தெரிந்துகொள்ள வேண்டியவை</translation>
+    </message>
+    <message>
+        <source>Open anything, or run any command</source>
+        <translation>எதையும் திற, அல்லது எந்தக் கட்டளையையும் இயக்கு</translation>
+    </message>
+    <message>
+        <source>Formats, presets and themes from the marketplace</source>
+        <translation>சந்தையிலிருந்து வடிவங்கள், முன்னமைவுகள், கருப்பொருள்கள்</translation>
+    </message>
+    <message>
+        <source>Automation › Plugins</source>
+        <translation>தானியங்கு › செருகுநிரல்கள்</translation>
     </message>
     <message>
         <source>Back</source>

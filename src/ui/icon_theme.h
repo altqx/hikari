@@ -52,6 +52,9 @@ void setOwnIcons(QHash<QString, QByteArray> icons);
 // The role for an icon a plugin's manifest names: own:<id> becomes that plugin's own icon, anything else is a role.
 QString pluginIconRole(const QString &plugin, const QString &icon);
 void useSettings(SettingsStore *settings);
+// Shows `id` instead of appearance.iconTheme until endPreview().
+void preview(const QString &id);
+void endPreview();
 // Bumps when the icon theme or a plugin's icons change.
 int generation();
 void onChanged(QObject *context, std::function<void()> slot);

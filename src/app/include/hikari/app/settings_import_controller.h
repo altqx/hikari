@@ -18,7 +18,7 @@ namespace hikari::app {
 
 class SettingsImportController : public QObject {
     Q_OBJECT
-    // {path, files} per legacy root found.
+    // {path, files, name} per root found; name is the program it belongs to: Aegisub, Kainote or HikariSub 0.0.x.
     Q_PROPERTY(QVariantList roots READ roots NOTIFY rootsChanged)
     Q_PROPERTY(QString root READ root NOTIFY planChanged)
     // Rows {id, kind, source, key, raw, destination, value, current, disposition, reason,

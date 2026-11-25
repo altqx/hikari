@@ -23025,7 +23025,7 @@ private slots:
         QTRY_VERIFY(gettingStarted()->property("visible").toBool());
         QCOMPARE(application->settingsStore()->text("workspace.gettingStarted"), QStringLiteral("due"));
         QCOMPARE(gettingStarted()->property("pages").toStringList(),
-                 (QStringList{"language", "look", "layout", "media", "editing", "updates", "files"}));
+                 (QStringList{"language", "look", "layout", "media", "editing", "ai", "updates", "ready"}));
         QCOMPARE(setupItem("gettingStartedTitle")->property("text").toString(), QStringLiteral("Welcome to HikariSub"));
         QVERIFY(!setupItem("gettingStartedBack")->isVisible());
         restartWithSpelling(home.path(), false, {}, true);
@@ -23083,6 +23083,8 @@ private slots:
         QVERIFY(setupItem("gettingStartedFrame")->property("source").toString().startsWith(u"data:image/png;base64,"));
         setupNext();
         setupPut("autosave.maxFiles", 7);
+        setupNext();
+        QCOMPARE(setupPage(), QStringLiteral("ai"));
         setupNext();
         QVERIFY(setupItem("gettingStartedStable")->property("checked").toBool());
         QCOMPARE(setupItem("gettingStartedStable")->property("badge").toString(), QStringLiteral("Recommended"));
@@ -23167,7 +23169,7 @@ private slots:
         setupNext();
         QCOMPARE(setupValues().value(QStringLiteral("autosave.maxFiles")).toInt(), 6);
         QCOMPARE(setupValues().value(QStringLiteral("updater.checkForStable")).toBool(), true);
-        while (setupPage() != u"files")
+        while (setupPage() != u"ready")
             setupNext();
         QVERIFY(!store->isSet(QStringLiteral("grid.font")));
         setupNext();
@@ -23196,7 +23198,7 @@ private slots:
         QVERIFY(home.isValid());
         restartWithSpelling(home.path(), false, {}, true);
         QTRY_VERIFY(gettingStarted()->property("visible").toBool());
-        while (setupPage() != u"files")
+        while (setupPage() != u"ready")
             setupNext();
         QFile file(legacy.data.filePath(QStringLiteral("HikariSub/Legacy/Config/Config.txt")));
         QVERIFY(file.open(QIODevice::WriteOnly));
@@ -23214,7 +23216,7 @@ private slots:
         QVERIFY(application->settingsImport().chosen().contains("setting:grid.font"));
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedReadAgain"), "click"));
         QTRY_VERIFY(!setupItem("gettingStartedImportProblem")->isVisible());
-        while (setupPage() != u"files")
+        while (setupPage() != u"ready")
             setupNext();
         setupNext();
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
@@ -23241,7 +23243,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedAccent_blue"), "click"));
         const QStringList picked{QStringLiteral("dark=red"), QStringLiteral("light=blue")};
         QCOMPARE(setupValues().value(QStringLiteral("appearance.accents")).toStringList(), picked);
-        while (setupPage() != u"files")
+        while (setupPage() != u"ready")
             setupNext();
         setupNext();
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
@@ -23268,7 +23270,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(encoding, "activated", Q_ARG(int, 1)));
         QCOMPARE(importer.interpretation(), 1);
         QVERIFY(importer.chosen().contains("setting:grid.font"));
-        while (setupPage() != u"files")
+        while (setupPage() != u"ready")
             setupNext();
         setupNext();
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
@@ -23283,15 +23285,127 @@ private slots:
         QVERIFY(home.isValid());
         restartWithSpelling(home.path(), false, {}, true);
         QTRY_VERIFY(gettingStarted()->property("visible").toBool());
-        for (int n = 0; n < 8 && setupPage() != u"files"; ++n)
+        for (int n = 0; n < 9 && setupPage() != u"ready"; ++n)
             setupNext();
-        QCOMPARE(setupPage(), QStringLiteral("files"));
+        QCOMPARE(setupPage(), QStringLiteral("ready"));
         QCOMPARE(setupItem("gettingStartedUserFolder")->property("text").toString(), QDir::toNativeSeparators(home.path()));
         hikari::test::desktop::clear();
         QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedOpenFolder"), "click"));
         QCOMPARE(hikari::test::desktop::opened(), QList<QUrl>{QUrl::fromLocalFile(home.path())});
         QTest::keyClick(qobject_cast<QWindow *>(gettingStarted()), Qt::Key_Escape);
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+    }
+
+    void gettingStartedStepsGoAnywhereAndTheSummaryGoesBack()
+    {
+        const LegacyHere none({});
+        QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedStep_updates"), "click"));
+        QCOMPARE(setupPage(), QStringLiteral("updates"));
+        QVERIFY(gettingStarted()->property("visited").toMap().value(QStringLiteral("updates")).toBool());
+        QVERIFY(!gettingStarted()->property("visited").toMap().value(QStringLiteral("ai")).toBool());
+        QTest::keyClick(qobject_cast<QWindow *>(gettingStarted()), Qt::Key_PageUp, Qt::ControlModifier);
+        QCOMPARE(setupPage(), QStringLiteral("ai"));
+        QTest::keyClick(qobject_cast<QWindow *>(gettingStarted()), Qt::Key_Left, Qt::AltModifier);
+        QCOMPARE(setupPage(), QStringLiteral("editing"));
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedStep_ready"), "click"));
+        QCOMPARE(setupItem("gettingStartedTitle")->property("text").toString(), QStringLiteral("You’re set"));
+        QCOMPARE(setupItem("gettingStartedSummary_ai")->property("value").toString(), QStringLiteral("Off"));
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedSummary_look"), "click"));
+        QCOMPARE(setupPage(), QStringLiteral("look"));
+        QCOMPARE(setupItem("gettingStartedIcons")->property("currentValue").toString(), QStringLiteral("hikarisub"));
+        QVERIFY(setupItem("gettingStartedMoreThemes"));
+        auto *dialog = qobject_cast<QQuickWindow *>(gettingStarted());
+        auto *look = setupItem("gettingStartedLook");
+        for (const QSize size : {QSize(860, 600), QSize(dialog->minimumWidth(), dialog->minimumHeight())}) {
+            dialog->resize(size);
+            QTest::qWait(200);
+            QVERIFY2(!look->property("overflows").toBool() || look->property("scrollShown").toBool(),
+                     qPrintable(QStringLiteral("Look overflows at %1x%2 with no scroll bar").arg(size.width()).arg(size.height())));
+        }
+        QTest::keyClick(qobject_cast<QWindow *>(gettingStarted()), Qt::Key_Escape);
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+    }
+
+    void gettingStartedWritesAiAndDiscordAndFullScreenTypesetsOnTheFirstVideo()
+    {
+        const LegacyHere none({});
+        auto *store = application->settingsStore();
+        QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        while (setupPage() != u"layout")
+            setupNext();
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedLayout_fullScreen"), "click"));
+        while (setupPage() != u"updates")
+            setupNext();
+        QVERIFY(!setupItem("gettingStartedDiscord")->property("checked").toBool());
+        setupPut("privacy.discordPresence", true);
+        setupNext();
+        QCOMPARE(setupItem("gettingStartedSummary_layout")->property("value").toString(),
+                 QStringLiteral("Full screen, once a video is open"));
+        setupNext();
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(store->boolean("privacy.discordPresence"), true);
+        QTRY_COMPARE(application->workspaceLayout().preset(), QStringLiteral("Typesetting"));
+        QVERIFY(engine->rootObjects().first()->property("fullScreenOnFirstVideo").toBool());
+        engine->rootObjects().first()->setProperty("fullScreenOnFirstVideo", false);
+    }
+
+    void gettingStartedLaterOpensSettingsAtTheStepsSetting()
+    {
+        const LegacyHere none({});
+        QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedStep_ai"), "click"));
+        setupPut("ai.off", true);
+        QCOMPARE(setupItem("gettingStartedLater")->property("text").toString(), QStringLiteral("Later: Settings › AI"));
+        QVERIFY(QMetaObject::invokeMethod(setupItem("gettingStartedLater"), "click"));
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        QCOMPARE(application->settingsStore()->text("workspace.gettingStarted"), QStringLiteral("done"));
+        QTRY_VERIFY(named("settingsDialog") && named("settingsDialog")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("settingsDialog"), "close"));
+    }
+
+    void gettingStartedScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QString tag = qEnvironmentVariable("HIKARI_SURFACE_SHOT_TAG");
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        const LegacyHere legacy(config + "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\n");
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        auto *dialog = qobject_cast<QQuickWindow *>(gettingStarted());
+        QVERIFY(dialog);
+        qInfo().noquote() << "getting started opens at" << dialog->width() << "x" << dialog->height() << "minimum"
+                          << dialog->minimumWidth() << "x" << dialog->minimumHeight() << "natural"
+                          << dialog->property("naturalWidth").toInt() << "x" << dialog->property("naturalHeight").toInt();
+        const QStringList pages = gettingStarted()->property("pages").toStringList();
+        const auto shoot = [&](const QString &theme, const QStringList &which, QSize size, const QString &name) {
+            setupPut("appearance.followSystem", false);
+            setupPut("appearance.theme", theme);
+            dialog->resize(size);
+            for (const QString &page : which) {
+                QVERIFY(QMetaObject::invokeMethod(gettingStarted(), "goTo", Q_ARG(QVariant, int(pages.indexOf(page)))));
+                QTRY_COMPARE(setupPage(), page);
+                QTest::qWait(400);
+                QVERIFY(dialog->grabWindow().save(out + QStringLiteral("/getting-started-%1-%2%3%4.png").arg(page, theme, name, tag)));
+            }
+        };
+        shoot(QStringLiteral("light"), pages, QSize(860, 600), {});
+        shoot(QStringLiteral("dark"), pages, QSize(860, 600), {});
+        shoot(QStringLiteral("highContrastBlack"), {QStringLiteral("look"), QStringLiteral("layout"), QStringLiteral("ready")}, QSize(860, 600), {});
+        shoot(QStringLiteral("light"), {QStringLiteral("look")}, QSize(dialog->minimumWidth(), dialog->minimumHeight()), QStringLiteral("-minimum"));
+        QTest::keyClick(dialog, Qt::Key_Escape);
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        restartWith(app::Application::Options());
     }
 
     void userFolderScreenshots()
@@ -23375,44 +23489,6 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
             QTRY_VERIFY(!settingsWindow->isVisible());
         }
-    }
-
-    void gettingStartedScreenshots()
-    {
-        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
-        if (out.isEmpty())
-            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
-        QVERIFY(QDir().mkpath(out));
-        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
-        for (int i = 1; i <= 11; ++i)
-            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
-        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nPROGRAM_THEME=Mine\r\n";
-        const LegacyHere legacy(config);
-        QTemporaryDir home;
-        QVERIFY(home.isValid());
-        restartWithSpelling(home.path(), false);
-        auto *store = application->settingsStore();
-        for (const auto code : ui::theme::kCodes) {
-            const QString theme = ui::theme::codeName(code);
-            store->setValue(QStringLiteral("appearance.followSystem"), false);
-            store->setValue(QStringLiteral("appearance.theme"), theme);
-            QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
-            QTRY_VERIFY(gettingStarted()->property("visible").toBool());
-            auto *box = qobject_cast<QQuickWindow *>(gettingStarted());
-            QVERIFY(box);
-            const QStringList pages = gettingStarted()->property("pages").toStringList();
-            for (int n = 0; n < pages.size(); ++n) {
-                QCOMPARE(setupPage(), pages[n]);
-                // MUST KILL: fixed 400 ms wait for layout and paint before each grab
-                QTest::qWait(400);
-                QVERIFY(box->grabWindow().save(out + QStringLiteral("/fr1-%1-%2-%3.png").arg(n + 1).arg(pages[n], theme)));
-                if (n + 1 < pages.size())
-                    setupNext();
-            }
-            QTest::keyClick(box, Qt::Key_Escape);
-            QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
-        }
-        restartWith(app::Application::Options());
     }
 
     void settingsDictionariesComeFromTheSettingsFolder()
