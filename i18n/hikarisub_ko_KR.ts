@@ -2504,7 +2504,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
-        <translation>매크로가 취소되어 스크립트 해상도만 설정되었습니다.</translation>
+        <translation type="vanished">매크로가 취소되어 스크립트 해상도만 설정되었습니다.</translation>
     </message>
     <message>
         <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
@@ -13524,6 +13524,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">%1번 줄 미리 보기</translation>
     </message>
     <message>
+        <source>Set to %1×%2</source>
+        <extracomment>Writes the PlayRes the preview uses into a file that has none; %1×%2 is the size</extracomment>
+        <translation>%1×%2(으)로 설정</translation>
+    </message>
+    <message>
         <source>Kept from the last run that worked</source>
         <translation type="unfinished">마지막으로 성공한 실행의 결과</translation>
     </message>
@@ -13736,6 +13741,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 · fix the problems to see it</source>
         <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
         <translation>%1 · 문제를 고치면 표시됨</translation>
+    </message>
+    <message>
+        <source>%1 · no script resolution · Apply sets %2×%3</source>
+        <extracomment>Over the video: the file has no PlayRes, and Apply writes this size with the lines; %1 is &quot;Preview&quot;, %2×%3 the size</extracomment>
+        <translation>%1 · 스크립트 해상도 없음 · 적용 시 %2×%3(으)로 설정</translation>
     </message>
     <message>
         <source>%1 · line %2 · %3</source>

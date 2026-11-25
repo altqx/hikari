@@ -319,7 +319,7 @@ Layout::Layout(const core::Document &document, ExtentsCache &extents, std::optio
                 styles.emplace_back(st->name, std::move(fields));
             }
     }
-    addStyles(styles, writtenScriptResolution(document), video);
+    addStyles(styles, layoutResolution(document, video), video);
 }
 
 Layout::Layout(const std::vector<MacroInfoLine> &info, const std::vector<MacroStyleLine> &styles,
@@ -364,7 +364,7 @@ void Layout::addStyles(const std::vector<std::pair<std::u8string, std::vector<st
         m_added_styles.emplace(name, furiganaOf(*base));
         ++m_added;
     }
-    const Resolution res = lacksScriptResolution(written) ? legacyScriptResolution(written) : written;
+    const Resolution res = lacksScriptResolution(written) ? playersScriptResolution(written) : written;
     m_resX = res.width;
     m_resY = res.height;
     if (video && video->width > 0 && video->height > 0 && res.width > 0 && res.height > 0)

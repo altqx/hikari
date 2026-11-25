@@ -1,5 +1,7 @@
 #include "hikari/application/position_commands.h"
 
+#include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/visual_transform.h"
 #include "hikari/core/text_projection.h"
 
@@ -331,6 +333,7 @@ std::expected<void, CommandRefusal> commit(EditSession &session, std::string nam
     for (const auto &c : changed)
         touched.insert(c.id);
     const auto ran = session.run(application::Command{std::move(name), session.revision(), touched, [&](core::Document &d) {
+        stampScriptResolution(d, scriptResolution(d));
         for (const auto &c : changed)
             if (!d.editLine(c.id, [&](core::LineRecord &r) {
                     r.text = c.text;

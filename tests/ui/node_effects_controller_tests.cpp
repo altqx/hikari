@@ -7,6 +7,7 @@
 #include "hikari/application/node_graph.h"
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/application/plugin_content.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/typesetting_graphs.h"
 #include "hikari/core/ass_load.h"
 
@@ -540,6 +541,35 @@ private slots:
         QVERIFY(shown);
         QVERIFY(lineOf(*shown, dialogue[0])->comment);
         QVERIFY(!lineOf(*shown, dialogue[1])->comment);
+    }
+
+    void withoutPlayResThePreviewSaysWhatApplyWritesAndCanSetIt()
+    {
+        core::Document bare = m_session->document();
+        QVERIFY(bare.removeScriptInfo(u8"PlayResX") && bare.removeScriptInfo(u8"PlayResY"));
+        m_session.emplace(std::move(bare));
+        const auto dialogue = lineIds(*m_session);
+        controller().setTargetLines({dialogue[0]});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QTRY_VERIFY(controller().videoPreview());
+        QCOMPARE(controller().previewResolution(), QSize(384, 288));
+        const auto shown = controller().videoDocument(m_session->document());
+        QVERIFY(shown);
+        QCOMPARE(application::writtenScriptResolution(*shown), (application::Resolution{384, 288}));
+        QVERIFY(application::lacksScriptResolution(application::writtenScriptResolution(m_session->document())));
+
+        controller().setScriptResolution();
+        QCOMPARE(historyNames(*m_session).back(), std::string(application::kScriptResolutionStep));
+        QCOMPARE(application::writtenScriptResolution(m_session->document()), (application::Resolution{384, 288}));
+        QTRY_VERIFY(controller().previewResolution().isEmpty());
+    }
+
+    void withPlayResThePreviewNamesNoSize()
+    {
+        controller().setTargetLines({lineIds(*m_session)[0]});
+        QVERIFY(controller().addTypesettingGraph(shakeIndex()));
+        QTRY_VERIFY(controller().videoPreview());
+        QVERIFY(controller().previewResolution().isEmpty());
     }
 
     void theBadgeSaysWhyThereIsNoPreview()

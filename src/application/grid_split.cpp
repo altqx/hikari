@@ -2,6 +2,7 @@
 
 #include "hikari/application/frame_bake.h"
 #include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 
 #include "hikari/core/graphemes.h"
 #include "hikari/core/tag_cleanup.h"
@@ -212,6 +213,7 @@ std::expected<void, CommandRefusal> splitIntoFrames(EditSession &session, const 
     for (const auto &p : plans)
         touched.insert(p.id);
     const auto ran = session.run(Command{"Splitting lines", session.revision(), touched, [&](core::Document &d) {
+                                             stampScriptResolution(d, scriptResolution(d));
                                              for (const auto &p : plans) {
                                                  const auto &first = p.frames.front();
                                                  if (!d.editLine(p.id, [&](core::LineRecord &l) {
@@ -1184,20 +1186,8 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
     if (selected.empty())
         return std::unexpected(CommandRefusal::Invalid);
     const auto &document = session.document();
-    auto info = [&](const char8_t *key) {
-        const auto v = document.scriptInfo(key).value_or(std::u8string());
-        return std::atoi(u8s(v).c_str());
-    };
-    // MUST KILL: duplicates legacyScriptResolution
-    int resX = info(u8"PlayResX"), resY = info(u8"PlayResY");
-    if (resX < 1 && resY < 1) {
-        resX = 1280;
-        resY = 720;
-    } else if (resX < 1) {
-        resX = static_cast<int>(static_cast<float>(resY) * (16.0 / 9.0));
-    } else if (resY < 1) {
-        resY = static_cast<int>(static_cast<float>(resX) * (9.0 / 16.0));
-    }
+    const Resolution res = scriptResolution(document);
+    const int resX = res.width, resY = res.height;
     const auto styles = core::decodeStyles(document);
     const bool byWraps = kind == SplitText::Wraps;
     struct Plan {
@@ -1425,6 +1415,7 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
     for (const auto &p : plans)
         touched.insert(p.id);
     const auto ran = session.run(Command{"Splitting lines", session.revision(), touched, [&](core::Document &d) {
+                                             stampScriptResolution(d, scriptResolution(d));
                                              for (const auto &p : plans) {
                                                  const core::LineRecord *source = nullptr;
                                                  for (const auto *l : d.lines())

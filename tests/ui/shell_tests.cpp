@@ -13,6 +13,9 @@
 #include "hikari/core/extradata.h"
 #include "hikari/application/node_graph.h"
 #include "hikari/application/typesetting_graphs.h"
+#include "hikari/application/document_overlay.h"
+#include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/kanji_timer.h"
 #include "hikari/core/tag_transfer.h"
 #include "hikari/core/tag_cleanup.h"
@@ -1765,7 +1768,7 @@ private slots:
 
         const QString script = scriptWithoutPlayRes();
         QVERIFY(application->openFile(script));
-        QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+        QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("384 x 288"));
         QCOMPARE(statusField("statusVideoResolution"), QString());
         QCOMPARE(statusField("statusVideoName"), QString());
 
@@ -1785,7 +1788,7 @@ private slots:
         QCOMPARE(statusField("statusFramesPerSecond"), QStringLiteral("23.976 FPS"));
         QCOMPARE(statusField("statusAspectRatio"), QStringLiteral("4 : 3"));
         QCOMPARE(statusField("statusVideoName"), QStringLiteral("cfr.mkv"));
-        QCOMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+        QCOMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("384 x 288"));
         QVERIFY(!statusField("statusText").contains(QLatin1String("status.ass")));
 
         QQuickItem *bar = visualItem("statusBar");
@@ -1968,12 +1971,12 @@ private slots:
             QVERIFY(shot.save(out + QStringLiteral("/main-window") + suffix));
             QVERIFY(shot.copy(crop(bar)).save(out + QStringLiteral("/status-bar") + suffix));
             application->shell().setStatusText(QString());
-            QVERIFY(application->resample(1280, 720, 320, 240, false));
+            QVERIFY(application->resample(384, 288, 320, 240, false));
             QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("320 x 240"));
             QTest::qWait(200);
             QVERIFY(window->grabWindow().copy(crop(bar)).save(out + QStringLiteral("/status-bar-matching") + suffix));
             application->editor().undo();
-            QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+            QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("384 x 288"));
         }
         restartWithoutSound();
         window->resize(1600, 900);
@@ -17754,6 +17757,83 @@ private slots:
         QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
     }
 
+    void applyingIntoAFileWithoutPlayResLeavesEveryLineWhereItWas()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        const QString path = folder.filePath(QStringLiteral("no-playres.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n\n[Events]\nFormat: Layer, Start, "
+                    "End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,Wafer gym\n"
+                    "Dialogue: 0,0:00:01.20,0:00:02.00,Default,,0,0,0,,Second line\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &video = application->video().session();
+        application->setAskForBadResolution(false);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        const auto showAt = [&](int ms) {
+            const int frame = video.legacyTimebase().frameAt(ms);
+            video.seekTo(core::DocumentTime(std::int64_t(ms) * 1000));
+            QTRY_COMPARE_WITH_TIMEOUT(video.shownFrame(), std::optional<int>(frame), 20000);
+        };
+        const auto settled = [&] {
+            QTest::qWait(500);
+            return video.lastOverlay();
+        };
+        showAt(1500);
+        QTRY_VERIFY_WITH_TIMEOUT(video.lastOverlay() && !video.lastOverlay()->empty, 20000);
+        const auto other = settled();
+        showAt(500);
+        QTRY_VERIFY_WITH_TIMEOUT(video.lastOverlay()->pixels != other->pixels, 20000);
+        const auto source = settled();
+        const auto sourceInk = application::inkBounds(*source);
+        QVERIFY(sourceInk);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTypesettingGraph"));
+        QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+        auto &effects = application->nodeEffects();
+        const auto graphs = application::typesettingGraphs();
+        const auto shake = std::ranges::find(graphs, std::string_view("shake"), &application::TypesettingGraph::id);
+        QVERIFY(effects.addTypesettingGraph(int(shake - graphs.begin())));
+        QTRY_VERIFY(effects.videoPreview());
+        QCOMPARE(effects.previewResolution(), QSize(384, 288));
+        QTRY_VERIFY(item("videoNodeBadgeText")->property("text").toString().endsWith(
+            QStringLiteral(" · no script resolution · Apply sets 384×288")));
+        QVERIFY(item("nodeSetScriptResolution")->isVisible());
+        QVERIFY(effects.apply(false));
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QCOMPARE(application::writtenScriptResolution(session->document()), (application::Resolution{384, 288}));
+        showAt(1500);
+        QTRY_VERIFY_WITH_TIMEOUT(video.lastOverlay()->pixels == other->pixels, 20000);
+        showAt(500);
+        QTRY_VERIFY_WITH_TIMEOUT(video.lastOverlay()->pixels != other->pixels, 20000);
+        const auto generated = application::inkBounds(*settled());
+        QVERIFY(generated);
+        const double scale = double(source->width) / 384;
+        const auto centre = [](const application::PixelRect &r) { return QPointF(r.x + r.width / 2.0, r.y + r.height / 2.0); };
+        const QPointF moved = centre(*generated) - centre(*sourceInk);
+        QVERIFY2(std::abs(moved.x()) <= 8 * scale && std::abs(moved.y()) <= 8 * scale,
+                 qPrintable(QStringLiteral("moved %1,%2 at scale %3").arg(moved.x()).arg(moved.y()).arg(scale)));
+
+        QVERIFY(application->editor().undo());
+        QVERIFY(application::lacksScriptResolution(application::writtenScriptResolution(session->document())));
+        QVERIFY(QMetaObject::invokeMethod(item("nodeLeave"), "clicked"));
+        QTRY_VERIFY(!application->workspaceLayout().nodeEffects());
+    }
+
     void ne1PreviewScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -17779,7 +17859,7 @@ private slots:
                     QVERIFY(window->grabWindow().save(out + QStringLiteral("/ne1-") + tag + QLatin1Char('-') +
                                                       QLatin1String(step) + QStringLiteral(".png")));
                 };
-                const auto freshAppAt = [&](const char *name) {
+                const auto freshAppAt = [&](const char *name, bool playRes = true) {
                     restartWithoutSound();
                     auto &settings = *application->settingsStore();
                     settings.setValue(QStringLiteral("appearance.followSystem"), false);
@@ -17790,7 +17870,9 @@ private slots:
                     {
                         QFile f(path);
                         QVERIFY(f.open(QIODevice::WriteOnly));
-                        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[V4+ Styles]\n"
+                        f.write(playRes ? "[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n"
+                                        : "[Script Info]\nScriptType: v4.00+\n\n");
+                        f.write("[V4+ Styles]\n"
                                 "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
                                 "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
                                 "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
@@ -17826,6 +17908,13 @@ private slots:
                 QTRY_COMPARE_WITH_TIMEOUT(application->nodeEffects().previewBlocked(), QStringLiteral("problems"), 10000);
                 application->nodeEffects().setDelays(150, 800);
                 shot("0-problems");
+
+                freshAppAt("ne1-no-playres", false);
+                QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "openTypesettingGraph"));
+                QTRY_VERIFY(application->workspaceLayout().nodeEffects());
+                QVERIFY(application->nodeEffects().addTypesettingGraph(graphIndex("shake")));
+                QTRY_VERIFY(!application->nodeEffects().previewResolution().isEmpty());
+                shot("0-no-playres");
 
                 freshAppAt("ne1-view");
                 auto &effects = application->nodeEffects();
@@ -27066,8 +27155,8 @@ private slots:
         auto *height = in(dialog, "scriptResolutionHeight");
         auto *useVideo = in(dialog, "scriptResolutionUseVideo");
         auto *always = in(dialog, "scriptResolutionAlways");
-        QCOMPARE(width->property("value").toInt(), 320);
-        QCOMPARE(height->property("value").toInt(), 240);
+        QCOMPARE(width->property("value").toInt(), 384);
+        QCOMPARE(height->property("value").toInt(), 288);
         QVERIFY(useVideo->property("enabled").toBool());
         QVERIFY(always->property("enabled").toBool());
         QVERIFY(!always->property("checked").toBool());

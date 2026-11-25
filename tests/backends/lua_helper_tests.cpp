@@ -1150,15 +1150,17 @@ TEST_F(LuaHelper, ScriptResolutionAsksTheHostWhileItIsMissing)
     services.resolution.clear();
     snapshot = snapshotForMacro(half);
     ASSERT_TRUE(runMacro(*host, macro(*host, "Read resolution"), *snapshot, run));
-    EXPECT_EQ(run.log.value(0), "853 x 480, 853 x 480, PlayResY=480");
-    EXPECT_EQ(asked(services).size(), 2u);
-    EXPECT_EQ(host->lastResult()->info, snapshot->info);
+    EXPECT_EQ(run.log.value(0), "640 x 480, 640 x 480, PlayResY=480;PlayResX=640");
+    EXPECT_EQ(asked(services).size(), 1u);
+    auto players = snapshot->info;
+    players.push_back({"PlayResX", "640"});
+    EXPECT_EQ(host->lastResult()->info, players);
     snapshot = snapshotForMacro(session);
     ASSERT_TRUE(runMacro(*host, macro(*host, "Read resolution"), *snapshot, run));
-    EXPECT_EQ(run.log.value(0), "1280 x 720, 1280 x 720, ");
+    EXPECT_EQ(run.log.value(0), "384 x 288, 384 x 288, PlayResX=384;PlayResY=288");
     auto bare = load(fixture("script-resolution.lua"));
     ASSERT_TRUE(runMacro(*bare, macro(*bare, "Read resolution"), *snapshot, run));
-    EXPECT_EQ(run.log.value(0), "1280 x 720, 1280 x 720, ");
+    EXPECT_EQ(run.log.value(0), "384 x 288, 384 x 288, PlayResX=384;PlayResY=288");
 }
 
 TEST_F(LuaHelper, UnavailableServicesReturnNil)
