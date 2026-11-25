@@ -29,6 +29,7 @@
 #include "style/text_menus.h"
 #include "window_decorations.h"
 #include "window_frame.h"
+#include "window_menus_closed.h"
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "list_files.h"
@@ -1536,6 +1537,7 @@ private slots:
         QCOMPARE(bar->objectName(), QStringLiteral("mainTitleBar"));
         auto *frame = qobject_cast<MainWindowFrame *>(bar->property("frame").value<QObject *>());
         QVERIFY(frame);
+        const WindowMenusClosed menusClosed(frame);
         QTRY_VERIFY(frame->custom());
         QVERIFY(window->flags().testFlag(Qt::FramelessWindowHint));
         QTRY_COMPARE(qRound(bar->height()), 36);
