@@ -1399,6 +1399,65 @@ private slots:
         QCOMPARE(templater->previews, before);
     }
 
+    void anUndoUnderAPendingEditIsNotOverwritten()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        editor->refresh();
+        editor->setDelays(60'000, 60'000);
+        QVERIFY(editor->current() != 0);
+        const QString original = editor->text();
+        editor->setText(original + QStringLiteral("{\\bord3}"));
+        editor->commit();
+        editor->refresh();
+        const std::size_t cursor = session->historyCursor();
+        editor->setText(editor->text() + QStringLiteral("{\\be1}"));
+        QVERIFY(session->undo());
+        editor->refresh();
+        QCOMPARE(editor->text(), original);
+        editor->commit();
+        QCOMPARE(session->historyCursor(), cursor - 1);
+        QVERIFY(session->canRedo());
+        editor->refresh();
+        QCOMPARE(editor->text(), original);
+    }
+
+    void aTextEditElsewhereUnderAPendingEditIsNotOverwritten()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        editor->refresh();
+        editor->setDelays(60'000, 60'000);
+        const core::LineId id{editor->current()};
+        QVERIFY(id.value != 0);
+        editor->setText(editor->text() + QStringLiteral("{\\be1}"));
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.editLine(id, [](core::LineRecord &l) { l.text += u8"{\\bord9}"; });
+        }));
+        const std::size_t cursor = session->historyCursor();
+        editor->refresh();
+        editor->commit();
+        QCOMPARE(session->historyCursor(), cursor);
+        QVERIFY(editor->text().endsWith(QStringLiteral("{\\bord9}")));
+    }
+
+    void anotherFieldEditedElsewhereKeepsThePendingText()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        editor->refresh();
+        editor->setDelays(60'000, 60'000);
+        const core::LineId id{editor->current()};
+        QVERIFY(id.value != 0);
+        const QString typed = editor->text() + QStringLiteral("{\\be1}");
+        editor->setText(typed);
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.editLine(id, [](core::LineRecord &l) { l.layer = core::IntField{u8"7", 7}; });
+        }));
+        editor->refresh();
+        editor->commit();
+        editor->refresh();
+        QCOMPARE(editor->text(), typed);
+        QCOMPARE(editor->layer(), 7);
+    }
+
     void aTemplateRewrittenElsewhereAsksFirst()
     {
         open(QStringLiteral("stock-tutorials.ass"));

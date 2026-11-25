@@ -17,7 +17,7 @@ The Editing arrangement ([editing-layout.md](editing-layout.md)) with Translatio
 | Right side bar | Find, as the preset opens it |
 | Reference tray, under the Grid, when open | See [Reference tray](#reference-tray) |
 
-An untranslated Line's field shows the hint "Type the translation. Ctrl+Shift+V pastes the original."
+An untranslated Line's field shows the hint "Type the translation. Ctrl+Alt+J pastes the original.", with the keys Paste all is bound to. Paste all has no default key (Ctrl+Shift+V is the Grid's Paste columns), so without one the hint is "Type the translation."
 
 ## The question
 
@@ -45,7 +45,7 @@ Q719. AI translation reports in the Original text panel, as [Editing's panel sta
 | State | Shown under the Original text header |
 | --- | --- |
 | Running | A 2-unit `accent` progress line and "AI translation · 24 of 60 lines" with **Stop** (quiet) |
-| Failed | The `notice-warning` glyph in `danger`, one line with the reason ("AI translation stopped: the provider refused the key."), the next step (**Providers…**) and **Details** (the Log entry) |
+| Failed | The glyph of its severity, `notice-error` in `danger` (a warning, such as lines to review, takes `notice-warning` in `warning`), one line with the reason ("AI translation stopped: the provider refused the key."), the next step (**Providers…**) and **Details** (the Log entry) |
 
 Video and Audio keep Editing's empty, busy and error states.
 

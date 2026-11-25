@@ -11,6 +11,7 @@ The user can add MCP servers in Settings › AI, and the in-app agent gets their
 | `AiMcpServers` (`src/app/ai_mcp_servers.*`) | The server list in Settings › AI: `ai.mcp.servers`, plus the secrets in the keychain, and the [plugin servers](#plugin-servers) the user turned on in `ai.mcp.pluginServers`. |
 | `PluginRuntime::mcpServers` (`src/app/plugin_runtime.*`) | The servers of the plugins that are on, and how each starts in its plugin's sandbox. |
 | `AgentThreads::gateMcp` (`src/backends/ai_agent.cpp`) | Decides a tool call by the thread's mode and the tool's hints. |
+| `PluginTools` (`src/backends/ai_plugin_tools.*`, `src/ai-sidecar/src/tools/plugins.ts`) | The [plugins' AI tools](#plugins-ai-tools): Qt lists them, checks each call and runs it as the plugin; the sidecar offers them as one group. |
 
 The SDK stays on 1.x while the Claude Agent SDK's peer range is `^1.29`.
 
@@ -34,6 +35,23 @@ A plugin's `contributes.mcpServers` entry names one of its programs ([plugins](p
 - **When it changes.** A new plugin version, a changed plugin setting or a finished download gives it a new revision, so the sidecar connects again. A program that isn't downloaded or available here answers the start with why.
 - **When it goes.** Turning the plugin off removes the server from every thread. Uninstalling it also forgets the row.
 
+## Plugins' AI tools
+
+A plugin's `contributes.aiTools` entries are typed tools that run its own commands ([plugins](plugins.md#ai-tools-and-mcp-servers), [#1228](https://github.com/altqx/hikari/issues/1228)). They follow the rules of a server's tools, with the plugin's marks in place of hints:
+
+- **Listed by Qt.** `PluginRuntime::aiTools` lists the tools of the plugins that run, and Qt sends them as `_hikari/pluginTools.set`. The sidecar offers them as the group `plugin_tools`, which `search_tools` finds, to threads, Claude sessions and agent channels. [HikariSub's MCP server](ai-mcp.md) lists only the trusted `read` ones.
+- **Named** `p_<the first 8 hex digits of the SHA-256 of "<plugin id>/<command>">_<command>`, with `-` as `_` and cut to 64 characters. The description starts with the plugin's name.
+- **Trust.** "Trust tool marks from <plugin>" in the plugin's details, off by default, is `trustToolMarks` in `plugins.json`. Without it every tool of the plugin counts as a write.
+- **Checked by Qt.** `_hikari/pluginTools.call` carries the tool and its arguments. Qt checks them against `parameters` (`invalid_params`), gates the call as `plugin.tool` for the session, runs the command with `context.via = "ai"` and answers `{result}`, the handler's return value, after checking it against `result`.
+- **Read tools can't write.** While a trusted `read` tool runs, the plugin's write operations, `programs.*`, `net.fetch`, `files.write` and `hikari/settings.set` answer `refused` with reason `read_tool`.
+
+| Tool, after trust | Every mode |
+| --- | --- |
+| `read` | Runs, never asks |
+| `write`, or any tool of an untrusted plugin | Manual asks, Auto asks the judge, Full access runs. "Allow in this thread" covers that one tool. |
+
+A sub-agent may use only the trusted `read` tools. Once the turn has stopped, everything but a trusted `read` tool is refused.
+
 ## The link
 
 | Message | From | Does |
@@ -41,12 +59,14 @@ A plugin's `contributes.mcpServers` entry names one of its programs ([plugins](p
 | `_hikari/mcpServers.set {servers: [{id, name, transport, revision}]}` | Qt | The servers, with no command, URL or secret. Qt sends it whenever the sidecar is ready and whenever the list changes. |
 | `_hikari/mcpServers.status {server, state, tools?, error?}` | sidecar | `connecting`, `ready` (with the tool count) or `failed`, for the settings row. |
 | `_hikari/mcpServers.admit {sessionId, server, tool, arguments}` | sidecar | Asks to call one tool once with these arguments. Qt answers `{}` or refuses as HA1 does (code -32000, `data.code` `refused` or `not_found`). |
+| `_hikari/pluginTools.set {tools: [{name, description, inputSchema, readOnly}]}` | Qt | The plugins' AI tools; `readOnly` only for a trusted `read` tool. Qt sends it whenever the sidecar is ready and whenever the list changes. |
+| `_hikari/pluginTools.call {sessionId?, tool, arguments}` | sidecar | Runs one plugin tool. Qt answers `{result}` or refuses as HA1 does. Without `sessionId`, for HikariSub's MCP server, only a trusted `read` tool runs. |
 
 ## Tools
 
 - **Namespaced:** a tool is offered as `<server id>__<tool>`, in `[A-Za-z0-9_-]`. A name longer than 64 characters is cut and ends in a hash of the whole name. Each server is a group, `mcp_<id>`, that `search_tools` finds ([tool sources](ai-tools.md#the-tools)). `search_tools`' description names each MCP server you added, with the first 40 characters of its name. A server's tools are sent only after `search_tools` finds them. Each server's line still counts toward the [up-front budget](ai-tools.md#the-tools).
 - **Results:** text and images pass through as they came. Other content goes to the model as JSON text, and `structuredContent` does too when a result has no content.
-- **Threads only.** Only the in-app agent loop gets these tools. They aren't offered to the Claude Code or Codex sessions, or to agents that use HikariSub's MCP server.
+- **Threads only.** Only the in-app agent loop gets these tools. They aren't offered to the Claude Code or Codex sessions, or to agents that use HikariSub's MCP server. Plugins' AI tools are offered more widely; see [above](#plugins-ai-tools).
 
 ## What Qt enforces
 
@@ -89,3 +109,4 @@ Each row shows the command or URL, the status ("Starts when the agent needs it",
 - `hikari_ui_ai_settings_tests`: a plugin server is off until turned on, keeps its trust and approvals in its own row, leaves with its plugin, and is forgotten once the plugin is uninstalled.
 - `hikari_plugins_tests`: a manifest's `mcpServers` name a declared program without `"api": true`, their ids are unique, and a new one asks for more on update.
 - `hikari_backends_ai_agent_tests`: trust and the decision table, the allowance key, and a thread whose MCP calls run, ask and always ask, with the ask naming the server.
+- `hikari_backends_ai_agent_tests`, `hikari_ui_plugin_runtime_tests`, `hikari_plugins_tests` and `hikari_ai_sidecar_bun_tests` (`test/tools/plugins.test.ts`): a plugin tool's name, a thread whose plugin tools run, ask or are allowed by their trusted marks and the mode, arguments and answers checked against their schemas, a `read` tool's writes and setting refused with `read_tool` while its handler's answer comes back, the manifest's `aiTools` rules, trust kept in `plugins.json` across updates, and the sidecar's group and MCP listing.

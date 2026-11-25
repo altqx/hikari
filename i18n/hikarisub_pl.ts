@@ -1089,6 +1089,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>„%1” ma %2 MB, ponad 10 MB.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>Licencja „%1” ogranicza osadzanie go w innych plikach.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>Załączniki zajęłyby łącznie %1 MB, ponad 50 MB.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>Załączniki</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>Nie udało się odczytać „%1”; nic nie zostało załączone.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>Załączniki…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>Wyświetla czcionki i grafiki załączone do napisów</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>Załącz czcionki</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>Załącz grafiki</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>Załączyć je mimo to?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>Załącz</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>Wyodrębnij</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>Nie udało się zapisać %1.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>„%1” już istnieje. Zastąpić?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>Zastąp</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Nazwa</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>Typ</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>Rozmiar</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>Te napisy nie mają załączników.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>Załączniki mogą mieć tylko napisy ASS.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>Czcionka</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>Grafika</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>Załączone czcionki służą do rysowania tych napisów i są przenoszone razem z plikiem. Wyodrębnianie zapisuje kopię; napisy się nie zmieniają.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>Załącz czcionkę…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>Załącz grafikę…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>Wyodrębnij…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Zamknij</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>Pliki czcionek (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>Grafiki (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>Wyodrębnij do folderu</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -4320,6 +4455,11 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Sprawdzaj pisownię podczas pisania</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>Edytor linijki · Tekst tłumaczenia</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>Edytor linijki</translation>
     </message>
@@ -7231,6 +7371,15 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>No lines match the filter</source>
         <translation>Brak linijek pasujących do filtra</translation>
     </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>Przetłumaczono %1 z %n linijki</numerusform>
+            <numerusform>Przetłumaczono %1 z %n linijek</numerusform>
+            <numerusform>Przetłumaczono %1 z %n linijek</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Line group description</source>
         <translation>Opis grupy linijek</translation>
@@ -9443,8 +9592,52 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Typesetting na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>Powiększenie 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>Powiększenie 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Powiększ</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Pomniejsz</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>Dopasuj powiększenie do panelu</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>Powiększ do pikseli urządzenia 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>Następna granica napisu</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>Otwórz ponownie z kodowaniem…</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>Załączniki…</translation>
     </message>
     <message>
         <source>Global</source>
@@ -12610,6 +12803,46 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz ponownie z kodowaniem…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>Powiększenie 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>Powiększenie 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Powiększ</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Pomniejsz</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>Dopasuj do panelu</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>Piksele urządzenia 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>Następna granica napisu</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>Otwiera plik wideo</translation>
     </message>
@@ -12802,6 +13035,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Otwórz wideo…</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>Poprzedni plik</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>Następny plik</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>Otwiera plik klatek kluczowych</translation>
     </message>
@@ -12826,6 +13067,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przechodzi o jedną klatkę w przód</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>Przewija wideo do poprzedniego początku lub końca linijki</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>Przewija wideo do następnego początku lub końca linijki</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>Pozwala wpisać czas lub klatkę do pokazania</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>Ustawia początek zaznaczonych linijek na czas klatki wideo</translation>
     </message>
@@ -12844,6 +13097,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Change aspect ratio…</source>
         <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>Poziom powiększenia</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -13261,11 +13518,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Not wired</source>
-        <extracomment>A wired input in the inspector: &quot;From palette › value&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>From %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13276,21 +13528,63 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Choose a colour</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>%n nodes selected.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Select a node to see its fields.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n %1 nodes</source>
+        <translation>
+            <numerusform>%n węzeł typu %1</numerusform>
+            <numerusform>%n węzły typu %1</numerusform>
+            <numerusform>%n węzłów typu %1</numerusform>
+        </translation>
+    </message>
     <message>
         <source>“%1” is not a node this HikariSub knows. It may come from a newer version. Update HikariSub, or delete the node; its fields and wires are kept until then.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drag a value to change it · Shift for fine steps</source>
+        <translation>Przeciągnij wartość, aby ją zmienić · Shift daje małe kroki</translation>
+    </message>
+    <message>
+        <source>Wired</source>
+        <translation>Podłączone</translation>
+    </message>
+    <message>
+        <source>On line %1</source>
+        <extracomment>The Node panel&apos;s heading for the values from the last preview run on a line</extracomment>
+        <translation>Na linijce %1</translation>
+    </message>
+    <message>
+        <source>from the last run · %1 a line</source>
+        <translation>z ostatniego uruchomienia · %1 na linijkę</translation>
+    </message>
+    <message>
+        <source>→ %1</source>
+        <extracomment>An output&apos;s wires in the Node panel: &quot;→ fade › tags, emit › tags&quot;</extracomment>
+        <translation>→ %1</translation>
+    </message>
+    <message>
+        <source>Selection</source>
+        <translation>Zaznaczenie</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>Grupuj</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Values from the last run show for one node at a time.</source>
+        <translation>Wartości z ostatniego uruchomienia są widoczne tylko dla jednego węzła naraz.</translation>
+    </message>
+    <message>
+        <source>Problems</source>
+        <translation>Problemy</translation>
     </message>
     <message>
         <source>Name</source>
@@ -13301,9 +13595,44 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Mixed</source>
+        <translation>Różne</translation>
+    </message>
+    <message>
+        <source>Changed from the default</source>
+        <extracomment>Read out by screen readers for a Node panel field whose value isn&apos;t the node&apos;s default</extracomment>
+        <translation>Zmieniono względem wartości domyślnej</translation>
+    </message>
+    <message>
+        <source>Reset to the default</source>
+        <translation>Przywróć domyślne</translation>
+    </message>
+    <message>
         <source>+ graph seed %1</source>
         <extracomment>Under a Random node&apos;s seed: its numbers also depend on the graph&apos;s seed</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to “%1”</source>
+        <extracomment>Selects and centres the node a wired input comes from</extracomment>
+        <translation>Przejdź do “%1”</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>Domyślne</translation>
+    </message>
+    <message>
+        <source>x</source>
+        <extracomment>The axis after a point&apos;s coordinate in the Node panel</extracomment>
+        <translation>x</translation>
+    </message>
+    <message>
+        <source>y</source>
+        <translation>y</translation>
+    </message>
+    <message>
+        <source>Pick on the video</source>
+        <translation>Wskaż na wideo</translation>
     </message>
     <message>
         <source>Lua code</source>
@@ -13322,8 +13651,54 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>At least %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a smaller value: &quot;At least 1&quot;</extracomment>
+        <translation>Co najmniej %1</translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <extracomment>A field&apos;s range in the Node panel, and the refusal of a larger value: &quot;At most 400&quot;</extracomment>
+        <translation>Najwyżej %1</translation>
+    </message>
+    <message>
+        <source>Between %1 and %2</source>
+        <extracomment>A refused value in the Node panel: &quot;Between 10 and 400&quot;</extracomment>
+        <translation>Od %1 do %2</translation>
+    </message>
+    <message>
+        <source>px</source>
+        <extracomment>A unit after a number in the Node panel: pixels</extracomment>
+        <translation>px</translation>
+    </message>
+    <message>
         <source>ms</source>
+        <extracomment>The unit after a time in the Node panel: milliseconds</extracomment>
         <translation type="unfinished">ms</translation>
+    </message>
+    <message>
+        <source>Enter a number</source>
+        <translation>Wpisz liczbę</translation>
+    </message>
+    <message>
+        <source>Enter X and Y as numbers</source>
+        <translation>Wpisz X i Y jako liczby</translation>
+    </message>
+    <message>
+        <source>Enter a colour as #RRGGBB</source>
+        <translation>Wpisz kolor w formacie #RRGGBB</translation>
+    </message>
+    <message>
+        <source>Enter a name</source>
+        <translation>Wpisz nazwę</translation>
+    </message>
+    <message>
+        <source>Use only letters, digits, _ and -</source>
+        <translation>Używaj tylko liter, cyfr, _ i -</translation>
+    </message>
+    <message>
+        <source>Another node is called “%1”.</source>
+        <extracomment>A refused node name: “fade” is the name another node has</extracomment>
+        <translation>Inny węzeł ma już nazwę “%1”.</translation>
     </message>
     <message>
         <source>New seed</source>
@@ -13338,20 +13713,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Inputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Outputs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>to %1</source>
-        <extracomment>An output&apos;s wires in the inspector: &quot;to fade › tags, emit › tags&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>On line %1, from the last run</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -13368,20 +13730,16 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Timing</source>
-        <translation type="unfinished">Timing</translation>
+        <translation type="obsolete">Timing</translation>
     </message>
     <message numerus="yes">
         <source>Wrote %n lines in %1 on the last run</source>
-        <extracomment>A node&apos;s timing: &quot;Last run 0.42 ms on line 12&quot;; an Emit adds how many lines it wrote</extracomment>
+        <extracomment>A node&apos;s timing beside &quot;On line 46&quot;: &quot;from the last run · 0.3 ms a line&quot;; an Emit says how many lines it wrote</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>Last run %1 on line %2</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>1 line</source>
@@ -13424,8 +13782,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>Nic się nie uruchomi, dopóki nie zaufasz kodowi Lua tego pliku: wybierz Podgląd w powiadomieniu powyżej.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13616,7 +13974,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;Podgląd&lt;/b&gt; · linijka %1 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;Podgląd&lt;/b&gt; · linijka %1 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · brak tu linijki źródłowej</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 wyłączony, dopóki nie zaufasz temu plikowi</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · popraw problemy, aby go zobaczyć</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · linijka %2 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -13833,6 +14211,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>For selected lines</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step down</source>
+        <translation>Zmniejsz</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>Zwiększ</translation>
     </message>
 </context>
 <context>
@@ -18466,6 +18852,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Instaluj aktualizacje automatycznie</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>Ufaj oznaczeniom narzędzi od %1</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>Jej narzędzia, które tylko odczytują, działają wtedy bez pytania. Do tego czasu każde dodane przez nią narzędzie najpierw pyta, tak jak zmiana.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>Nie uruchomiła się.</translation>
     </message>
@@ -19083,6 +19477,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 stopped: %2</source>
         <translation>%1 zatrzymał się: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>Zapisz kopię jako wtyczkę motywu…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>Wybierz, gdzie zapisać wtyczkę motywu</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 (kopia)</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>Nie można zapisać wtyczki motywu w %1.</translation>
     </message>
 </context>
 <context>
@@ -20127,8 +20538,12 @@ Linijki [Sekcja] je grupują.</translation>
         <translation>Dokument referencyjny</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>Dokument referencyjny · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>Dokument referencyjny: %1</translation>
+        <translation type="vanished">Dokument referencyjny: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -20145,6 +20560,18 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Follow the editing line</source>
         <translation>Podążaj za edytowaną linijką</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>Niezależna</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>Powiązana</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>Nawigacja dokumentu referencyjnego</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -20165,6 +20592,10 @@ Linijki [Sekcja] je grupują.</translation>
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>Linijki dokumentu referencyjnego (chronione, tylko do odczytu)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>Tylko do odczytu. Niezależna: dokument przesuwa się samodzielnie; Powiązana podąża za edytowaną linijką według czasu.</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -23014,7 +23445,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Save style</source>
-        <translation>Zapisz styl</translation>
+        <translation type="vanished">Zapisz styl</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -23274,7 +23705,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n linijka</numerusform>
             <numerusform>%1, %n linijki</numerusform>
             <numerusform>%1, %n linijek</numerusform>
@@ -23362,7 +23793,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>Dodaj do pliku</translation>
+        <translation type="vanished">Dodaj do pliku</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23370,7 +23801,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>Dodaj do katalogu</translation>
+        <translation type="vanished">Dodaj do katalogu</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23514,11 +23945,23 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>Tekst podglądu</translation>
+        <translation type="vanished">Tekst podglądu</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>Zastosuj</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>Ten plik nie ma stylów. Utwórz styl przyciskiem + albo skopiuj go z katalogu.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>Kopiuj do katalogu</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>Kopiuj do tego pliku</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23535,6 +23978,46 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Move to yours</source>
         <translation>Przenieś do Twoich</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>Nie wybrano stylu</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>Z katalogu…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n styl</numerusform>
+            <numerusform>%n style</numerusform>
+            <numerusform>%n stylów</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>Używa go %n linijka</numerusform>
+            <numerusform>Używają go %n linijki</numerusform>
+            <numerusform>Używa go %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>Cofnij zmiany stylu</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>Próbka tekstu</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>Czcionka nie jest zainstalowana</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>Czcionka nie jest zainstalowana: wyświetlana jako %1</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23638,7 +24121,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Revert</source>
-        <translation>Cofnij zmiany</translation>
+        <translation type="vanished">Cofnij zmiany</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23713,11 +24196,11 @@ Usunięte style:
     </message>
     <message>
         <source>Style</source>
-        <translation>Styl</translation>
+        <translation type="vanished">Styl</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>Linijki</translation>
+        <translation type="vanished">Linijki</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23733,7 +24216,15 @@ Usunięte style:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>Linijki: %1</translation>
+        <translation type="vanished">Linijki: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n linijka</numerusform>
+            <numerusform>%n linijki</numerusform>
+            <numerusform>%n linijek</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23741,7 +24232,7 @@ Usunięte style:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>Styl bieżącej linijki</translation>
+        <translation type="vanished">Styl bieżącej linijki</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
@@ -26065,8 +26556,8 @@ Usunięte style:
         <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>Wstecz</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -26144,13 +26635,29 @@ Usunięte style:
         <source>Open keyframes…</source>
         <translation>Otwórz klatki kluczowe…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n linijka się zmieni</numerusform>
+            <numerusform>%n linijki się zmienią</numerusform>
+            <numerusform>%n linijek się zmieni</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>Pokaż zmiany</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>kl.</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Zmiany</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>Asystent timingu</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -26919,6 +27426,19 @@ Usunięte style:
         <translation>Tekst oryginalny: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>Tłumaczenie AI</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>Wpisz tłumaczenie. %1 wkleja tekst oryginalny.</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>Wpisz tłumaczenie.</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>Linijka karaoke: tagi przed tekstem są przenoszone, timing karaoke nie.</translation>
     </message>
@@ -27150,6 +27670,30 @@ Usunięte style:
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>Wyświetla i zapisuje tekst oryginalny i tłumaczenie każdej linijki</translation>
     </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>Tłumaczenie AI zatrzymało się.</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>Tłumaczenie AI · %1 z %n linijki</numerusform>
+            <numerusform>Tłumaczenie AI · %1 z %n linijek</numerusform>
+            <numerusform>Tłumaczenie AI · %1 z %n linijek</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>Dostawcy…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>Szczegóły</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>Odrzuć</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Video</name>
@@ -27343,15 +27887,15 @@ Usunięte style:
     </message>
     <message>
         <source>Video position</source>
-        <translation>Pozycja wideo</translation>
+        <translation type="vanished">Pozycja wideo</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>Czasy wideo</translation>
+        <translation type="vanished">Czasy wideo</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
+        <translation type="vanished">Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -27378,6 +27922,15 @@ Usunięte style:
         <translation>Zatrzymaj</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%1 klatek od początku linijki %2 · %3 ms od jej początku · %4 ms od jej końca</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>Następny plik</translation>
     </message>
@@ -27400,6 +27953,11 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>klatka %1 / %2</translation>
     </message>
     <message>
         <source>Video (%1)</source>
@@ -27533,6 +28091,10 @@ Usunięte style:
     <message>
         <source>Reset zoom and pan</source>
         <translation>Resetuj powiększenie i przesunięcie</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>Poziom powiększenia</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -28291,6 +28853,48 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>To nie jest czas ani klatka: %1. Spróbuj %2 lub numeru klatki.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>Czas wideo, %1, edytowalny</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>Dopasowanie</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>Powiększenie wideo, %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>Powiększenie wideo</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>

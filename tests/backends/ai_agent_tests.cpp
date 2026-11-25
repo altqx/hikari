@@ -4,6 +4,7 @@
 #include "hikari/application/settings.h"
 #include "hikari/backends/ai_agent.h"
 #include "hikari/backends/ai_mcp_clients.h"
+#include "hikari/backends/ai_plugin_tools.h"
 #include "hikari/backends/ai_requests.h"
 #include "hikari/backends/ai_sidecar_host.h"
 
@@ -977,6 +978,74 @@ TEST_F(AgentThreadsTest, AnMcpToolRunsAsksOrAlwaysAsksAsItsHintsAndTheThreadsMod
     const auto answers = receivedAs("answer");
     ASSERT_EQ(answers.size(), 4u);
     EXPECT_NE(answers[3].dump().find(hikari::api::errors::kRefused), std::string::npos) << answers[3].dump();
+}
+
+TEST_F(AgentThreadsTest, APluginToolRunsAsItsTrustedMarkAndTheThreadsModeSayAndItsAnswerIsChecked)
+{
+    const auto tool = [](std::string command, bool read, bool trusted) {
+        return PluginToolEntry{
+            .name = pluginToolName("org.example.words", command),
+            .plugin = "org.example.words",
+            .pluginName = "Words",
+            .command = std::move(command),
+            .description = "Counts words",
+            .parameters = *Json::parse(R"({"type": "object", "properties": {"line": {"type": "integer"}},
+                                           "additionalProperties": false})"),
+            .result = *Json::parse(R"({"type": "object", "required": ["words"]})"),
+            .read = read,
+            .trusted = trusted};
+    };
+    PluginTools plugins;
+    plugins.setTools({tool("count", true, true), tool("guess", true, false), tool("fix", false, true),
+                      tool("empty", true, true)});
+    std::vector<std::string> ran;
+    plugins.setRun([&](const PluginToolEntry &t, const Json &, PluginTools::Answer answer) {
+        ran.push_back(t.command);
+        answer(t.command == "empty" ? Json::object() : Json::object({{"words", 3}}));
+    });
+    plugins.attach(*sidecar());
+    const auto use = [](std::string command, Json arguments = Json::object()) {
+        return Json::object({{"method", kPluginToolsCall},
+                             {"params", Json::object({{"tool", pluginToolName("org.example.words", command)},
+                                                      {"arguments", std::move(arguments)}})}});
+    };
+    const std::string id = withMode(AgentMode::Manual);
+    threads->send(id, script(Json::array({use("count"), use("guess"), use("guess"), use("fix"),
+                                          use("count", Json::object({{"line", "two"}})), use("empty")})));
+    std::uint64_t ask = openAsk();
+    EXPECT_EQ(ran, std::vector<std::string>{"count"});
+    EXPECT_EQ(threads->asks().at(ask).kind, Decision::Ask);
+    threads->answer(ask, Answer::AllowInThread);
+    ASSERT_TRUE(waitFor([&] { return !threads->asks().empty() && threads->asks().begin()->first != ask; }));
+    ask = threads->asks().begin()->first;
+    EXPECT_EQ(ran, (std::vector<std::string>{"count", "guess", "guess"}));
+    EXPECT_TRUE(thread(id).allowed.contains("plugin.tool:org.example.words/guess"));
+    threads->answer(ask, Answer::Deny);
+    ASSERT_TRUE(idle(id));
+    EXPECT_EQ(ran, (std::vector<std::string>{"count", "guess", "guess", "empty"}));
+    const auto asks = items(id, "ask");
+    ASSERT_EQ(asks.size(), 2u);
+    EXPECT_EQ(at(asks[0], "tool"), "Words: guess");
+    EXPECT_EQ(at(asks[1], "tool"), "Words: fix");
+    const auto answers = receivedAs("answer");
+    ASSERT_EQ(answers.size(), 6u);
+    EXPECT_NE(answers[0].dump().find(R"("words":3)"), std::string::npos) << answers[0].dump();
+    EXPECT_NE(answers[3].dump().find(hikari::api::errors::kRefused), std::string::npos) << answers[3].dump();
+    EXPECT_NE(answers[4].dump().find(hikari::api::errors::kInvalidParams), std::string::npos) << answers[4].dump();
+    EXPECT_NE(answers[5].dump().find("doesn't match its result schema"), std::string::npos) << answers[5].dump();
+
+    const std::string full = withMode(AgentMode::FullAccess);
+    threads->send(full, script(Json::array({use("fix")})));
+    ASSERT_TRUE(idle(full));
+    EXPECT_EQ(ran.back(), "fix");
+    EXPECT_TRUE(items(full, "ask").empty());
+}
+
+TEST(PluginToolName, IsTheHashOfPluginAndCommandThenTheCommandInEveryProvidersCharacters)
+{
+    EXPECT_EQ(pluginToolName("org.example.words", "count"), "p_d9d72246_count");
+    EXPECT_EQ(pluginToolName("org.example.words", "word-count").substr(11), "word_count");
+    EXPECT_EQ(pluginToolName("org.example.words", std::string(80, 'a')).size(), 64u);
 }
 
 TEST_F(AgentThreadsTest, ALuaScriptShowsInFullAndAsksOnEveryRunInEveryMode)

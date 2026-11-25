@@ -82,6 +82,8 @@ struct Entry {
 };
 const std::vector<Entry> &entries();
 const Entry *find(const QString &id);
+// A built-in theme's title translated; a plugin theme's as written.
+QString shownTitle(const Entry &entry);
 // A plugin theme, already through themes::load; replaces one with the same id.
 void install(Entry entry);
 // Removes a plugin theme, falling back from it as fallBackFrom does.

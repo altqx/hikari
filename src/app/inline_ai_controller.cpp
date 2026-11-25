@@ -623,9 +623,9 @@ bool InlineAiController::launch(const QVariantMap &askMap, Picked picked,
         m_run->engine = translationRun(std::move(pipelineJobs), std::move(w), *ask);
     else
         m_run->engine = std::make_unique<InlineRun>(role, std::move(jobs), std::move(w));
+    m_run->engine->start();
     emit changed();
     emit runChanged();
-    m_run->engine->start();
     return true;
 }
 

@@ -79,6 +79,28 @@ ShellMenu {
         onTriggered: if (!videoMenu.gesture("VIDEO_STOP")) videoMenu.shell.video.stop()
     }
     ShellMenuItem {
+        objectName: videoMenu.itemPrefix + "PreviousFile"
+        iconRole: "media-previous-file"
+        command: "VIDEO_PREVIOUS_FILE"
+        text: qsTr("Previous file")
+        onTriggered: if (!videoMenu.gesture("VIDEO_PREVIOUS_FILE")) videoMenu.shell.videoHotkey("VIDEO_PREVIOUS_FILE")
+    }
+    ShellMenuItem {
+        objectName: videoMenu.itemPrefix + "NextFile"
+        iconRole: "media-next-file"
+        command: "VIDEO_NEXT_FILE"
+        text: qsTr("Next file")
+        onTriggered: if (!videoMenu.gesture("VIDEO_NEXT_FILE")) videoMenu.shell.videoHotkey("VIDEO_NEXT_FILE")
+    }
+    ShellMenuItem {
+        iconRole: "video-seek"
+        objectName: videoMenu.itemPrefix + "JumpTo"
+        command: "GLOBAL_JUMP_TO"
+        text: qsTr("Jump to")
+        enabled: videoMenu.shell.video.hasVideo
+        onTriggered: if (!videoMenu.shell.hotkeyGesture("GLOBAL_JUMP_TO", 0)) videoMenu.shell.editVideoTime()
+    }
+    ShellMenuItem {
         iconRole: "fullscreen"
         objectName: videoMenu.itemPrefix + "FullScreen"
         text: qsTr("Full screen")
@@ -338,6 +360,54 @@ ShellMenu {
         text: qsTr("Reset zoom and pan")
         enabled: videoMenu.shell.videoView.zoomed
         onTriggered: if (!videoMenu.shell.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM", 0)) videoMenu.shell.videoView.resetZoom()
+    }
+    ShellMenu {
+        objectName: videoMenu.itemPrefix + "ZoomLevel"
+        iconRole: "zoom"
+        title: qsTr("Zoom level")
+        ShellMenuItem {
+            objectName: videoMenu.itemPrefix + "ZoomFit"
+            command: "GLOBAL_VIDEO_ZOOM_FIT"
+            iconRole: "zoom-reset"
+            action: videoMenu.shell.globalActions()[command]
+        }
+        ShellMenuItem {
+            objectName: videoMenu.itemPrefix + "Zoom50"
+            command: "GLOBAL_VIDEO_ZOOM_50"
+            iconRole: "zoom"
+            action: videoMenu.shell.globalActions()[command]
+        }
+        ShellMenuItem {
+            objectName: videoMenu.itemPrefix + "Zoom100"
+            command: "GLOBAL_VIDEO_ZOOM_100"
+            iconRole: "zoom"
+            action: videoMenu.shell.globalActions()[command]
+        }
+        ShellMenuItem {
+            objectName: videoMenu.itemPrefix + "Zoom200"
+            command: "GLOBAL_VIDEO_ZOOM_200"
+            iconRole: "zoom"
+            action: videoMenu.shell.globalActions()[command]
+        }
+        ShellMenuItem {
+            objectName: videoMenu.itemPrefix + "ZoomDevicePixels"
+            command: "GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"
+            iconRole: "preview-resolution"
+            action: videoMenu.shell.globalActions()[command]
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: videoMenu.itemPrefix + "ZoomIn"
+            command: "GLOBAL_VIDEO_ZOOM_IN"
+            iconRole: "add"
+            action: videoMenu.shell.globalActions()[command]
+        }
+        ShellMenuItem {
+            objectName: videoMenu.itemPrefix + "ZoomOut"
+            command: "GLOBAL_VIDEO_ZOOM_OUT"
+            iconRole: "remove"
+            action: videoMenu.shell.globalActions()[command]
+        }
     }
     Instantiator {
         model: videoMenu.filters.length > 0 ? 1 : 0

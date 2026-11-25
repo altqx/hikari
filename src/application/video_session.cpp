@@ -661,13 +661,19 @@ std::int64_t msOf(core::DocumentTime t)
 
 }
 
-void VideoSession::seekToEnd(core::DocumentTime end)
+std::optional<int> VideoSession::lastFrameBefore(core::DocumentTime end) const
 {
     if (!m_timeline)
-        return;
+        return std::nullopt;
     const core::DocumentTime before(std::max<std::int64_t>(0, end.microseconds() - 1000));
     const auto frame = m_timeline->frameContaining(before);
-    showFrame(frame ? static_cast<int>(frame->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1));
+    return frame ? static_cast<int>(frame->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1);
+}
+
+void VideoSession::seekToEnd(core::DocumentTime end)
+{
+    if (const auto frame = lastFrameBefore(end))
+        showFrame(*frame);
 }
 
 std::optional<int> VideoSession::jumpOrigin() const

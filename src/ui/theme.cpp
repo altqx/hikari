@@ -239,6 +239,12 @@ const std::vector<Entry> &entries()
     return registry().entries;
 }
 
+QString shownTitle(const Entry &entry)
+{
+    const QByteArray source = entry.title.toUtf8();
+    return codeFromName(entry.id) ? QCoreApplication::translate("HikariSub.Options", source.constData()) : entry.title;
+}
+
 const Entry *find(const QString &id)
 {
     for (const Entry &e : registry().entries)
@@ -828,11 +834,8 @@ QVariantList Theme::themes() const
 {
     QVariantList out;
     for (const auto &e : theme::entries()) {
-        const bool builtin = theme::codeFromName(e.id).has_value();
-        const QByteArray source = e.title.toUtf8();
         out << QVariantMap{{QStringLiteral("code"), e.id},
-                           {QStringLiteral("name"), builtin ? QCoreApplication::translate("HikariSub.Options", source.constData())
-                                                            : e.title},
+                           {QStringLiteral("name"), theme::shownTitle(e)},
                            {QStringLiteral("source"), e.title},
                            {QStringLiteral("plugin"), e.plugin},
                            {QStringLiteral("type"), QString::fromLatin1(themes::typeName(e.file.type))},

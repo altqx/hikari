@@ -80,6 +80,8 @@ public:
     using FormatDone = std::function<void(std::expected<std::string, QString>)>;
     // `call` is the JSON {args, context} the handler gets.
     bool run(const std::string &command, const std::string &call, FormatDone done = {});
+    // As run, as a read AI tool: inReadTool() holds while it runs.
+    bool runReadTool(const std::string &command, const std::string &call, FormatDone done);
     // Queued and started as run is.
     bool exportDocument(const std::string &format, std::string snapshotJson, std::string optionsJson, FormatDone done);
     bool importFile(const std::string &format, std::string bytes, std::string fileName, FormatDone done);
@@ -100,6 +102,7 @@ public:
     // The running unit passed stillWorkingMs and isn't a job.
     bool stillWorking() const { return m_stillWorking; }
     bool inTimer() const { return m_running && m_running->kind == Unit::Kind::Timer; }
+    bool inReadTool() const { return m_running && m_running->readTool; }
     // The running unit answers the user: a command run with context.via other than api and ai, or a click in the
     // plugin's own panel or dialog (a dialog's button too), or an accept, button or back of its own live quick pick or
     // input box. A job keeps its command's answer.
@@ -143,6 +146,7 @@ private:
         FormatDone done;
         std::int64_t timer = 0;
         bool last = false;
+        bool readTool = false;
         QDeadlineTimer deadline = QDeadlineTimer::Forever;
     };
     struct Timer {

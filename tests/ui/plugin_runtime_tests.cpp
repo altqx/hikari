@@ -16,6 +16,7 @@
 #include "hikari/application/settings.h"
 
 #include "settings_store.h"
+#include "icon_theme.h"
 #include "theme.h"
 
 #include <QDir>
@@ -1774,6 +1775,63 @@ end)
         return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
     }
 
+    void aReadAiToolReadsButCantChangeAnythingAndItsHandlerAnswers()
+    {
+        auto a = openEpisodes(1);
+        QVERIFY(a);
+        const QString id = QStringLiteral("com.example.words");
+        const QString folder = folders().plugins + QStringLiteral("/") + id;
+        write(folder + QStringLiteral("/hikari-plugin.json"), R"({"id": "com.example.words", "name": "Words",
+            "version": "1.0.0", "api": 1, "main": "main.lua", "authors": ["Ana"], "contributes": {
+            "commands": [{"id": "count", "title": "Count"}],
+            "settings": [{"id": "seen", "title": "Seen", "type": "integer", "default": 0}],
+            "aiTools": [{"command": "count", "description": "Counts the lines", "mark": "read",
+                "parameters": {"type": "object", "properties": {"line": {"type": "integer"}}, "additionalProperties": false}}]}})");
+        write(folder + QStringLiteral("/main.lua"), R"~(
+hikari.commands.register("count", function(args, context)
+    local listed = hikari.call("lines.list", {fields = {"text"}})
+    local _, refused = hikari.call("document.apply", {revision = 0, edits = {}})
+    local kept, why = pcall(hikari.settings.set, "seen", 1)
+    return {lines = #listed.lines, line = args.line, via = context.via, code = refused and refused.code or "none",
+            reason = refused and refused.data and refused.data.reason, settingKept = kept, settingWhy = why}
+end)
+)~");
+        m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("1.0.0")},
+                                     {QStringLiteral("enabled"), true},
+                                     {QStringLiteral("trustToolMarks"), true}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        app::PluginRuntime runtime(wiring(*a));
+        runtime.sync();
+        const auto tools = runtime.aiTools();
+        QCOMPARE(tools.size(), std::size_t(1));
+        QCOMPARE(tools[0].name, backends::ai::pluginToolName("com.example.words", "count"));
+        QCOMPARE(tools[0].pluginName, std::string("Words"));
+        QVERIFY(tools[0].readOnly());
+
+        std::optional<std::expected<api::Json, api::Error>> answer;
+        runtime.runAiTool(tools[0], *api::Json::parse(R"({"line": 2})"), [&](auto result) { answer = std::move(result); });
+        QTRY_VERIFY(answer.has_value());
+        QVERIFY2(answer->has_value(), answer->has_value() ? "" : answer->error().message.c_str());
+        const api::Json &result = **answer;
+        QCOMPARE(result.find("lines")->asInt(), 2);
+        QCOMPARE(result.find("line")->asInt(), 2);
+        QCOMPARE(result.find("via")->asString(), std::string("ai"));
+        QCOMPARE(result.find("code")->asString(), std::string("refused"));
+        QCOMPARE(result.find("reason")->asString(), std::string("read_tool"));
+        QVERIFY(!result.find("settingKept")->asBool());
+        QVERIFY(result.find("settingWhy")->asString().find("read AI tool") != std::string::npos);
+
+        backends::ai::PluginToolEntry untrusted = tools[0];
+        untrusted.trusted = false;
+        answer.reset();
+        runtime.runAiTool(untrusted, api::Json::object(), [&](auto result) { answer = std::move(result); });
+        QTRY_VERIFY(answer.has_value());
+        QVERIFY(answer->has_value());
+        QVERIFY((**answer).find("settingKept")->asBool());
+        QVERIFY((**answer).find("code")->asString() != "refused");
+    }
+
     void providersAnswerInInstallOrderWithoutItemsThatBreakTheContract()
     {
         const auto install = [&](const QString &id, const QString &name, const QJsonObject &providers, const char *lua) {
@@ -1896,26 +1954,38 @@ hikari.providers.hover(function() return {text = "Never asked for text"} end)
         QCOMPARE(items->front().label, QStringLiteral("\\fad"));
     }
 
-    void aDevPluginsThemesComeAndGoWithItsFolder()
+    void aDevPluginsThemesAndIconsComeAndGoWithItsFolder()
     {
         write(folders().registry, QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), QJsonObject{}}}).toJson());
         const QString work = m_dir.filePath(QStringLiteral("work/looks"));
         QFile dark(QStringLiteral(QT_TESTCASE_SOURCEDIR "/../../src/ui/themes/dark.json"));
         QVERIFY(dark.open(QIODevice::ReadOnly));
         write(work + QStringLiteral("/themes/dusk.json"), dark.readAll());
-        const auto manifest = [&](bool withTheme) {
+        const QByteArray dot = R"(<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="currentColor"/></svg>)";
+        for (const QString &role : ui::icons::roles())
+            write(work + QStringLiteral("/icons/round/") + role + QStringLiteral(".svg"), dot);
+        write(work + QStringLiteral("/icons/spark.svg"), dot);
+        const auto manifest = [&](bool withLooks) {
             QJsonObject m{{QStringLiteral("id"), QStringLiteral("com.example.looks")},
                           {QStringLiteral("name"), QStringLiteral("Looks")},
                           {QStringLiteral("version"), QStringLiteral("1.0.0")},
                           {QStringLiteral("api"), 1},
                           {QStringLiteral("authors"), QJsonArray{QStringLiteral("Ana")}}};
-            QJsonArray themes;
-            if (withTheme)
+            QJsonArray themes, iconThemes, icons;
+            if (withLooks) {
                 themes.append(QJsonObject{{QStringLiteral("id"), QStringLiteral("dusk")},
                                           {QStringLiteral("title"), QStringLiteral("Dusk")},
                                           {QStringLiteral("type"), QStringLiteral("dark")},
                                           {QStringLiteral("path"), QStringLiteral("themes/dusk.json")}});
-            m[QStringLiteral("contributes")] = QJsonObject{{QStringLiteral("themes"), themes}};
+                iconThemes.append(QJsonObject{{QStringLiteral("id"), QStringLiteral("round")},
+                                              {QStringLiteral("title"), QStringLiteral("Round")},
+                                              {QStringLiteral("path"), QStringLiteral("icons/round")}});
+                icons.append(QJsonObject{{QStringLiteral("id"), QStringLiteral("spark")},
+                                         {QStringLiteral("path"), QStringLiteral("icons/spark.svg")}});
+            }
+            m[QStringLiteral("contributes")] = QJsonObject{{QStringLiteral("themes"), themes},
+                                                           {QStringLiteral("iconThemes"), iconThemes},
+                                                           {QStringLiteral("icons"), icons}};
             write(work + QStringLiteral("/hikari-plugin.json"), QJsonDocument(m).toJson());
         };
         manifest(true);
@@ -1929,10 +1999,54 @@ hikari.providers.hover(function() return {text = "Never asked for text"} end)
         QVERIFY2(review.value(QStringLiteral("ok")).toBool(), qPrintable(review.value(QStringLiteral("message")).toString()));
         QCOMPARE(manager.install(false), QString());
         const QString dusk = QStringLiteral("plugin:com.example.looks/dusk");
+        const QString round = QStringLiteral("plugin:com.example.looks/round");
+        const QString spark = ui::icons::pluginIconRole(QStringLiteral("com.example.looks"), QStringLiteral("own:spark"));
+        const auto hasRound = [&] { return std::ranges::contains(ui::icons::themes(), round, &ui::icons::PluginIconTheme::id); };
         QTRY_VERIFY(ui::theme::find(dusk));
+        QVERIFY(hasRound());
+        QVERIFY(ui::icons::exists(spark));
 
         manifest(false);
         QTRY_VERIFY(!ui::theme::find(dusk));
+        QVERIFY(!hasRound());
+        QVERIFY(!ui::icons::exists(spark));
+    }
+
+    void aSavedThemeCopyLoadsAsADevPluginThatLooksTheSame()
+    {
+        write(folders().registry, QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), QJsonObject{}}}).toJson());
+        app::Application::Options o;
+        o.settingsFile = m_dir.filePath(QStringLiteral("settings.toml"));
+        o.playbackAudio = false;
+        o.plugins = folders();
+        app::Application a(o);
+        app::PluginManager &manager = *a.pluginManager();
+        const QString work = m_dir.filePath(QStringLiteral("work"));
+        QVERIFY(QDir().mkpath(work));
+        const QString shown = ui::theme::current().id;
+        QVERIFY2(shown == QStringLiteral("dark") || shown == QStringLiteral("light"), qPrintable(shown));
+
+        const auto save = [&] {
+            const QVariantMap review = manager.saveThemeCopy(QUrl::fromLocalFile(work));
+            if (!review.value(QStringLiteral("ok")).toBool() || !review.value(QStringLiteral("dev")).toBool())
+                return review.value(QStringLiteral("message")).toString() + QStringLiteral(" (not a dev review)");
+            return manager.install(false);
+        };
+        QCOMPARE(save(), QString());
+        const QString copy = QStringLiteral("plugin:local.%1-copy/%1").arg(shown);
+        QTRY_VERIFY(ui::theme::find(copy));
+        const ui::theme::Entry &saved = *ui::theme::find(copy);
+        QCOMPARE(saved.title, shown == QStringLiteral("dark") ? QStringLiteral("Dark copy") : QStringLiteral("Light copy"));
+        QCOMPARE(saved.file.type, ui::theme::find(shown)->file.type);
+        for (const auto &role : saved.file.roles)
+            QVERIFY(role.has_value());
+        const themes::ThemeFile &builtin = ui::theme::find(shown)->file;
+        QCOMPARE(themes::resolve(saved.file).roles, themes::resolve(builtin).roles);
+        QCOMPARE(saved.file.accents.size(), builtin.accents.size());
+        QVERIFY(QFile::exists(work + QStringLiteral("/%1-copy/themes/%1.json").arg(shown)));
+
+        QCOMPARE(save(), QString());
+        QTRY_VERIFY(ui::theme::find(QStringLiteral("plugin:local.%1-copy-2/%1").arg(shown)));
     }
 
     void completionItemsAndHoversKeepToTheContract()
