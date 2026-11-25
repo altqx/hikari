@@ -18,6 +18,8 @@ DialogWindow {
     flush: true
     resizable: true
     footerRule: true
+    smallestWidth: 760
+    smallestHeight: 560
     defaultButton: nextButton
 
     property var values: ({})
@@ -248,11 +250,11 @@ DialogWindow {
         Accessible.description: description
         contentItem: ColumnLayout {
             id: optionColumn
-            spacing: 6
+            spacing: 8
             RowLayout {
                 spacing: 8
                 Icon { iconRole: option.iconRole; size: 18 }
-                Label { text: option.text; font.bold: true; Layout.fillWidth: true }
+                Label { text: option.text; font.weight: Font.DemiBold; Layout.fillWidth: true }
                 Label {
                     visible: option.badge.length > 0
                     text: option.badge
@@ -260,7 +262,7 @@ DialogWindow {
                     font: setup.fontAt(11, Font.DemiBold)
                     leftPadding: 6
                     rightPadding: 6
-                    background: Rectangle { color: "transparent"; radius: 3; border.color: Theme.accent }
+                    background: Rectangle { color: "transparent"; radius: Theme.radius; border.color: Theme.accent }
                 }
             }
             Label {
@@ -282,7 +284,7 @@ DialogWindow {
         padding: 6
         contentItem: ColumnLayout {
             id: themeColumn
-            spacing: 6
+            spacing: 8
             Rectangle {
                 radius: 6
                 color: themeCard.roles.background
@@ -333,7 +335,7 @@ DialogWindow {
         required property string preset
         color: Theme.background
         border.color: Theme.line
-        radius: 4
+        radius: Theme.radius
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 2
@@ -396,9 +398,9 @@ DialogWindow {
         Layout.preferredWidth: 1
         contentItem: ColumnLayout {
             id: layoutColumn
-            spacing: 6
+            spacing: 8
             LayoutThumb { preset: layoutCard.preset; Layout.fillWidth: true; Layout.preferredHeight: 58 }
-            Label { text: layoutCard.text; font.bold: true }
+            Label { text: layoutCard.text; font.weight: Font.DemiBold }
             Label {
                 text: layoutCard.description
                 color: Theme.muted
@@ -416,7 +418,7 @@ DialogWindow {
         property string name
         property int from: 0
         property int to: 100000
-        spacing: 6
+        spacing: 8
         SpinBox {
             id: spin
             objectName: "gettingStarted_" + numberRow.setting
@@ -455,6 +457,8 @@ DialogWindow {
         property string value
         objectName: "gettingStartedSummary_" + step
         implicitHeight: 30
+        leftPadding: 8
+        rightPadding: 8
         Layout.fillWidth: true
         Accessible.role: Accessible.Button
         Accessible.name: name + ", " + value
@@ -465,7 +469,7 @@ DialogWindow {
             FocusRing { control: row; radius: Theme.radius }
         }
         contentItem: RowLayout {
-            spacing: 10
+            spacing: 12
             Icon { iconRole: row.iconRole; size: 16; color: Theme.muted }
             Label { text: row.name; color: Theme.muted; Layout.preferredWidth: 110 }
             Label { text: row.value; elide: Text.ElideRight; Layout.fillWidth: true }
@@ -486,7 +490,7 @@ DialogWindow {
             anchors.fill: parent
             anchors.leftMargin: 12
             anchors.rightMargin: 12
-            spacing: 10
+            spacing: 12
             Icon { iconRole: know.iconRole; size: 16 }
             Label { text: know.sentence; elide: Text.ElideRight; Layout.fillWidth: true }
             Keycap { text: know.keys }
@@ -496,9 +500,7 @@ DialogWindow {
     RowLayout {
         spacing: 0
         Layout.preferredWidth: 860
-        Layout.preferredHeight: 520
-        Layout.minimumWidth: 760
-        Layout.minimumHeight: 480
+        Layout.preferredHeight: 535
         Layout.fillWidth: true
         Layout.fillHeight: true
 
@@ -565,7 +567,7 @@ DialogWindow {
                             Label {
                                 text: setup.stepNames[stepRow.modelData]
                                 color: stepRow.current || stepRow.done ? Theme.text : Theme.muted
-                                font.bold: stepRow.current
+                                font.weight: stepRow.current ? Font.DemiBold : Font.Normal
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
@@ -655,7 +657,7 @@ DialogWindow {
                             Accessible.name: modelData
                             Accessible.checked: highlighted
                             background: Rectangle { color: languageRow.highlighted ? Theme.select : "transparent" }
-                            contentItem: Label { text: languageRow.modelData; font.bold: languageRow.highlighted }
+                            contentItem: Label { text: languageRow.modelData; font.weight: languageRow.highlighted ? Font.DemiBold : Font.Normal }
                         }
                         Rectangle { z: -1; anchors.fill: parent; color: Theme.field; border.color: Theme.line; radius: Theme.radius }
                     }
@@ -839,7 +841,7 @@ DialogWindow {
                             Layout.preferredWidth: 1
                             Layout.fillHeight: true
                             contentItem: ColumnLayout {
-                                spacing: 6
+                                spacing: 8
                                 Rectangle {
                                     radius: 6
                                     color: Theme.raised
@@ -851,8 +853,10 @@ DialogWindow {
                                 Label { text: qsTr("Marketplace"); color: Theme.muted; font: setup.fontAt(11) }
                             }
                         }
-                        Item { Layout.fillWidth: true; Layout.preferredWidth: 1; visible: setup.allThemes.filter(t => t.plugin.length > 0).length % 4 < 2 }
-                        Item { Layout.fillWidth: true; Layout.preferredWidth: 1; visible: setup.allThemes.filter(t => t.plugin.length > 0).length % 4 < 1 }
+                        Repeater {
+                            model: (4 - (setup.allThemes.filter(t => t.plugin.length > 0).length + 1) % 4) % 4
+                            Item { Layout.fillWidth: true; Layout.preferredWidth: 1 }
+                        }
                     }
                     RowLayout {
                         objectName: "gettingStartedAccents"
@@ -891,7 +895,7 @@ DialogWindow {
                             text: qsTranslate("HikariSub.Options", (parent.accents.find(a => a.key === parent.chosen) ?? {source: ""}).source)
                             color: Theme.muted
                             font: setup.fontAt(12)
-                            Layout.leftMargin: 10
+                            Layout.leftMargin: 8
                         }
                     }
                     Label {
@@ -937,7 +941,7 @@ DialogWindow {
                                                                       : qsTr("HikariSub’s suits this desktop.")
                             color: Theme.muted
                             font: setup.fontAt(12)
-                            Layout.leftMargin: 6
+                            Layout.leftMargin: 8
                         }
                     }
                 }
@@ -974,7 +978,7 @@ DialogWindow {
                         Layout.fillWidth: true
                         Label { text: qsTr("Subtitles drawn by") }
                         RowLayout {
-                            spacing: 10
+                            spacing: 12
                             PageChoice {
                                 setting: "video.subtitleProvider"
                                 visible: setup.renderers.length > 1
@@ -1006,7 +1010,7 @@ DialogWindow {
                         }
                         Label { text: qsTr("Sound plays on") }
                         RowLayout {
-                            spacing: 10
+                            spacing: 12
                             PageChoice {
                                 setting: "audio.outputDevice"
                                 model: setup.outputDevices
@@ -1037,7 +1041,7 @@ DialogWindow {
                         PageNumber { setting: "autosave.maxFiles"; from: 2; to: 1000000; name: qsTr("Autosave files kept") }
                         Label { text: qsTr("Spelling") }
                         RowLayout {
-                            spacing: 10
+                            spacing: 12
                             CheckBox {
                                 objectName: "gettingStartedSpelling"
                                 text: qsTr("Check spelling")
@@ -1274,13 +1278,13 @@ DialogWindow {
                         }
                         RowLayout {
                             objectName: "gettingStartedSummary_files"
-                            spacing: 10
+                            spacing: 12
                             Layout.fillWidth: true
                             Layout.preferredHeight: 30
                             HoverHandler { id: filesHover }
                             ToolTip.text: qsTr("Everything of yours is in one folder. Copy it to move your setup to another computer.")
                             ToolTip.visible: filesHover.hovered
-                            Icon { iconRole: "folder-open"; size: 16; color: Theme.muted; Layout.leftMargin: 6 }
+                            Icon { iconRole: "folder-open"; size: 16; color: Theme.muted; Layout.leftMargin: 8 }
                             Label { text: qsTr("Your files"); color: Theme.muted; Layout.preferredWidth: 110 }
                             Label {
                                 objectName: "gettingStartedUserFolder"
@@ -1297,20 +1301,27 @@ DialogWindow {
                             }
                         }
                     }
-                    GroupLabel { text: qsTr("Good to know"); Layout.topMargin: 6 }
+                    GroupLabel { text: qsTr("Good to know"); Layout.topMargin: 8 }
                     KnowRow { iconRole: "search"; sentence: qsTr("Open anything, or run any command"); keys: setup.openAnythingKeys }
                     KnowRow { iconRole: "plugins"; sentence: qsTr("Formats, presets and themes from the marketplace"); keys: qsTr("Automation › Plugins") }
                 }
             }
 
+            Label {
+                objectName: "gettingStartedLaterText"
+                visible: pagesStack.shown !== null && pagesStack.shown.later.length > 0 && pagesStack.shown.laterSetting.length === 0
+                text: pagesStack.shown ? pagesStack.shown.later : ""
+                color: Theme.muted
+                font: setup.fontAt(12)
+                Layout.topMargin: 8
+            }
             LinkButton {
                 objectName: "gettingStartedLater"
-                visible: pagesStack.shown !== null && pagesStack.shown.later.length > 0
-                enabled: pagesStack.shown !== null && pagesStack.shown.laterSetting.length > 0
+                visible: pagesStack.shown !== null && pagesStack.shown.laterSetting.length > 0
                 iconRole: "settings"
                 text: pagesStack.shown ? pagesStack.shown.later : ""
                 ToolTip.text: text
-                ToolTip.visible: hovered && enabled
+                ToolTip.visible: hovered
                 onClicked: setup.finish("setting:" + pagesStack.shown.laterSetting)
                 Layout.topMargin: 8
             }

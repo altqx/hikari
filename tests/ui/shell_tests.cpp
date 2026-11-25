@@ -22947,6 +22947,47 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("settingsDialog"), "close"));
     }
 
+    void gettingStartedScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QString tag = qEnvironmentVariable("HIKARI_SURFACE_SHOT_TAG");
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        const LegacyHere legacy(config + "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\n");
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false, {}, true);
+        QTRY_VERIFY(gettingStarted()->property("visible").toBool());
+        auto *dialog = qobject_cast<QQuickWindow *>(gettingStarted());
+        QVERIFY(dialog);
+        qInfo().noquote() << "getting started opens at" << dialog->width() << "x" << dialog->height() << "minimum"
+                          << dialog->minimumWidth() << "x" << dialog->minimumHeight() << "natural"
+                          << dialog->property("naturalWidth").toInt() << "x" << dialog->property("naturalHeight").toInt();
+        const QStringList pages = gettingStarted()->property("pages").toStringList();
+        const auto shoot = [&](const QString &theme, const QStringList &which, QSize size, const QString &name) {
+            setupPut("appearance.followSystem", false);
+            setupPut("appearance.theme", theme);
+            dialog->resize(size);
+            for (const QString &page : which) {
+                QVERIFY(QMetaObject::invokeMethod(gettingStarted(), "goTo", Q_ARG(QVariant, int(pages.indexOf(page)))));
+                QTRY_COMPARE(setupPage(), page);
+                QTest::qWait(400);
+                QVERIFY(dialog->grabWindow().save(out + QStringLiteral("/getting-started-%1-%2%3%4.png").arg(page, theme, name, tag)));
+            }
+        };
+        shoot(QStringLiteral("light"), pages, QSize(860, 600), {});
+        shoot(QStringLiteral("dark"), pages, QSize(860, 600), {});
+        shoot(QStringLiteral("highContrastBlack"), {QStringLiteral("look"), QStringLiteral("layout"), QStringLiteral("ready")}, QSize(860, 600), {});
+        shoot(QStringLiteral("light"), {QStringLiteral("look")}, QSize(dialog->minimumWidth(), dialog->minimumHeight()), QStringLiteral("-minimum"));
+        QTest::keyClick(dialog, Qt::Key_Escape);
+        QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
+        restartWith(app::Application::Options());
+    }
+
     void userFolderScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -23028,44 +23069,6 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsClose"), "click"));
             QTRY_VERIFY(!settingsWindow->isVisible());
         }
-    }
-
-    void gettingStartedScreenshots()
-    {
-        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
-        if (out.isEmpty())
-            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
-        QVERIFY(QDir().mkpath(out));
-        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
-        for (int i = 1; i <= 11; ++i)
-            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
-        config += "GRID_FONT=Arial\r\nAUTOSAVE_MAX_FILES=10\r\nPROGRAM_THEME=Mine\r\n";
-        const LegacyHere legacy(config);
-        QTemporaryDir home;
-        QVERIFY(home.isValid());
-        restartWithSpelling(home.path(), false);
-        auto *store = application->settingsStore();
-        for (const auto code : ui::theme::kCodes) {
-            const QString theme = ui::theme::codeName(code);
-            store->setValue(QStringLiteral("appearance.followSystem"), false);
-            store->setValue(QStringLiteral("appearance.theme"), theme);
-            QVERIFY(QMetaObject::invokeMethod(named("gettingStartedMenuItem")->property("action").value<QObject *>(), "trigger"));
-            QTRY_VERIFY(gettingStarted()->property("visible").toBool());
-            auto *box = qobject_cast<QQuickWindow *>(gettingStarted());
-            QVERIFY(box);
-            const QStringList pages = gettingStarted()->property("pages").toStringList();
-            for (int n = 0; n < pages.size(); ++n) {
-                QCOMPARE(setupPage(), pages[n]);
-                // MUST KILL: fixed 400 ms wait for layout and paint before each grab
-                QTest::qWait(400);
-                QVERIFY(box->grabWindow().save(out + QStringLiteral("/fr1-%1-%2-%3.png").arg(n + 1).arg(pages[n], theme)));
-                if (n + 1 < pages.size())
-                    setupNext();
-            }
-            QTest::keyClick(box, Qt::Key_Escape);
-            QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
-        }
-        restartWith(app::Application::Options());
     }
 
     void settingsDictionariesComeFromTheSettingsFolder()
