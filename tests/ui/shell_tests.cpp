@@ -13873,7 +13873,23 @@ private slots:
         auto *root = engine->rootObjects().first();
         QVERIFY(QMetaObject::invokeMethod(root, "addQcNote", Q_ARG(QVariant, 3200)));
         QTRY_VERIFY(item("qcNotesAddEditor")->isVisible());
-        auto *text = item("qcNotesAddEditor")->findChild<QQuickItem *>(QStringLiteral("qcNoteText"));
+        auto *editor = item("qcNotesAddEditor");
+        QVERIFY(editor->implicitHeight() > 4 * 24.0);
+        QTRY_COMPARE(editor->height(), editor->implicitHeight());
+        std::function<void(QQuickItem *)> fitsTheEditor = [&](QQuickItem *from) {
+            for (QQuickItem *child : from->childItems()) {
+                if (!child->isVisible())
+                    continue;
+                if (child->inherits("QQuickControl")) {
+                    const QRectF r = child->mapRectToItem(editor, QRectF(0, 0, child->width(), child->height()));
+                    QVERIFY2(r.left() >= -0.5 && r.right() <= editor->width() + 0.5 && r.bottom() <= editor->height() + 0.5,
+                             qPrintable(child->objectName() + QLatin1Char(' ') + QString::number(r.right())));
+                }
+                fitsTheEditor(child);
+            }
+        };
+        fitsTheEditor(editor);
+        auto *text = editor->findChild<QQuickItem *>(QStringLiteral("qcNoteText"));
         QTRY_VERIFY(text->hasActiveFocus());
         QCOMPARE(item("qcNotesAddEditor")->findChild<QQuickItem *>(QStringLiteral("qcNoteTime"))->property("text").toString(),
                  QStringLiteral("0:00:03.20"));

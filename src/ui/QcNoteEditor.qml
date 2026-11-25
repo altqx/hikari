@@ -13,9 +13,9 @@ Pane {
     property int lineMs: -1
     readonly property int ms: qcNotes.parseTime(time.text)
     readonly property bool canSave: ms >= 0 && note.text.trim().length > 0
-    readonly property font labelFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    readonly property font labelFont: TypeRoles.sized(editor.font, 12, Font.Normal)
     readonly property font timeFont: {
-        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        const f = TypeRoles.sized(editor.font, 12, Font.Normal)
         f.features = { "tnum": 1 }
         return f
     }
@@ -54,10 +54,6 @@ Pane {
         }
     }
 
-    Label {
-        id: fontSource
-        visible: false
-    }
     TextMetrics {
         id: timeMetrics
         font: editor.timeFont
@@ -75,8 +71,10 @@ Pane {
             color: Theme.muted
             Layout.alignment: Qt.AlignVCenter
         }
-        RowLayout {
+        Flow {
+            objectName: "qcNoteTimeRow"
             spacing: 8
+            Layout.fillWidth: true
             TextField {
                 id: time
                 objectName: "qcNoteTime"
@@ -86,7 +84,7 @@ Pane {
                 bottomPadding: 0
                 Accessible.name: qsTr("Time")
                 color: editor.ms >= 0 ? Theme.text : Theme.danger
-                Layout.preferredWidth: Math.ceil(timeMetrics.advanceWidth) + leftPadding + rightPadding + 2
+                width: Math.ceil(timeMetrics.advanceWidth) + leftPadding + rightPadding + 2
                 Keys.forwardTo: [editor]
             }
             LinkButton {
@@ -114,7 +112,7 @@ Pane {
             id: sectionBox
             objectName: "qcNoteSection"
             editable: true
-            font: fontSource.font
+            font: editor.font
             implicitHeight: Theme.controlHeight
             Accessible.name: qsTr("Section")
             Layout.fillWidth: true
@@ -148,7 +146,7 @@ Pane {
                 objectName: "qcNoteDoneBox"
                 visible: !editor.adding
                 text: qsTr("Done")
-                font: fontSource.font
+                font: editor.font
                 implicitHeight: Theme.controlHeight
                 topPadding: 0
                 bottomPadding: 0
