@@ -398,6 +398,14 @@ int main(int argc, char **argv)
                 hanging.push_back(*id);
                 continue;
             }
+            if (translator == "fail") {
+                send(Json::object({{"jsonrpc", "2.0"}, {"id", *id},
+                                   {"error", Json::object({{"code", -32010}, {"message", "invalid key"},
+                                                           {"data", Json::object({{"kind", "unauthorized"},
+                                                                                  {"httpStatus", 401},
+                                                                                  {"detail", "the provider refused the key"}})}})}}));
+                continue;
+            }
             const Json stream = *arg.find("stream");
             send(Json::object({{"jsonrpc", "2.0"}, {"method", "_hikari/translate.progress"},
                                {"params", Json::object({{"stream", stream}, {"role", "translator"},

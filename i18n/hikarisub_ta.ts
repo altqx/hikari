@@ -4415,6 +4415,11 @@ Output device: %2</source>
         <translation>தட்டச்சு செய்யும்போது எழுத்துப்பிழை சரிபார்ப்பு</translation>
     </message>
     <message>
+        <source>Line editor · Translated</source>
+        <extracomment>The Line editor&apos;s panel title while its text field is the Translated text.</extracomment>
+        <translation>வரி திருத்தி · மொழிபெயர்த்த உரை</translation>
+    </message>
+    <message>
         <source>Line editor</source>
         <translation>வரி திருத்தி</translation>
     </message>
@@ -7301,6 +7306,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>No lines match the filter</source>
         <translation>வடிப்பியுடன் பொருந்தும் வரிகள் இல்லை</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%n வரியில் %1 மொழிபெயர்க்கப்பட்டது</numerusform>
+            <numerusform>%n வரிகளில் %1 மொழிபெயர்க்கப்பட்டன</numerusform>
+        </translation>
     </message>
     <message>
         <source>Line group description</source>
@@ -20361,8 +20374,12 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>மேற்கோள்</translation>
     </message>
     <message>
+        <source>Reference · %1</source>
+        <translation>மேற்கோள் · %1</translation>
+    </message>
+    <message>
         <source>Reference: %1</source>
-        <translation>மேற்கோள்: %1</translation>
+        <translation type="vanished">மேற்கோள்: %1</translation>
     </message>
     <message>
         <source>Reference (protected, read-only): %1</source>
@@ -20379,6 +20396,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Follow the editing line</source>
         <translation>திருத்தப்படும் வரியைப் பின்தொடர்</translation>
+    </message>
+    <message>
+        <source>Independent</source>
+        <translation>சுயாதீனம்</translation>
+    </message>
+    <message>
+        <source>Linked</source>
+        <translation>இணைக்கப்பட்டது</translation>
+    </message>
+    <message>
+        <source>Reference navigation</source>
+        <translation>மேற்கோள் வழிசெலுத்தல்</translation>
     </message>
     <message>
         <source>No matching line</source>
@@ -20399,6 +20428,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Reference lines (protected, read-only)</source>
         <translation>மேற்கோள் வரிகள் (பாதுகாக்கப்பட்டவை, படிக்க மட்டும்)</translation>
+    </message>
+    <message>
+        <source>Read-only. Independent: it moves on its own; Linked follows the editing line by time.</source>
+        <translation>படிக்க மட்டும். சுயாதீனம்: அது தானாக நகரும்; இணைக்கப்பட்டது திருத்தப்படும் வரியை நேரப்படி பின்தொடரும்.</translation>
     </message>
     <message>
         <source>Copy</source>
@@ -27148,6 +27181,19 @@ Styles deleted:
         <translation>அசல் உரை: %1</translation>
     </message>
     <message>
+        <source>AI translation</source>
+        <translation>AI மொழிபெயர்ப்பு</translation>
+    </message>
+    <message>
+        <source>Type the translation. %1 pastes the original.</source>
+        <extracomment>%1 is the keys of Paste all, which copies the Original text into the translation.</extracomment>
+        <translation>மொழிபெயர்ப்பைத் தட்டச்சு செய்யவும். %1 அசல் உரையை ஒட்டும்.</translation>
+    </message>
+    <message>
+        <source>Type the translation.</source>
+        <translation>மொழிபெயர்ப்பைத் தட்டச்சு செய்யவும்.</translation>
+    </message>
+    <message>
         <source>Karaoke line: the tags before its text are carried, the karaoke timing is not.</source>
         <translation>கரோக்கி வரி: அதன் உரைக்கு முன் உள்ள குறிச்சொற்கள் கொண்டுசெல்லப்படும், கரோக்கி நேரமிடல் கொண்டுசெல்லப்படாது.</translation>
     </message>
@@ -27378,6 +27424,29 @@ Styles deleted:
     <message>
         <source>Shows and saves the original text and the translation of each line</source>
         <translation>ஒவ்வொரு வரியின் அசல் உரையையும் மொழிபெயர்ப்பையும் காட்டிச் சேமிக்கிறது</translation>
+    </message>
+    <message>
+        <source>AI translation stopped.</source>
+        <translation>AI மொழிபெயர்ப்பு நின்றுவிட்டது.</translation>
+    </message>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI மொழிபெயர்ப்பு · %n வரியில் %1</numerusform>
+            <numerusform>AI மொழிபெயர்ப்பு · %n வரிகளில் %1</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Providers…</source>
+        <translation>வழங்குநர்கள்…</translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation>விவரங்கள்</translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation>நிராகரி</translation>
     </message>
 </context>
 <context>

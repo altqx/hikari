@@ -62,7 +62,7 @@ protected:
             wait(300ms);
             observed.push_back(status());
             observed.push_back(referenceRow());
-            mouseClick("mainWindow/referenceLinked");
+            mouseClick("mainWindow/referenceIndependent");
             wait(300ms);
             observed.push_back(status());
             invokeMethod("mainWindow/referenceGrid", "forceActiveFocus", {});
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
         expect(o[1] == "0", "the reference shows the first candidate's Line");
         expect(o[2] == "Match 2 of 2" && o[3] == "2", "Next match shows the second candidate");
         expect(o[4] == "Match 1 of 1" && o[5] == "2", "the editing Grid's Down arrow moves the linked reference");
-        expect(o[6] == "Independent navigation", "unlinking makes the tray independent");
+        expect(o[6].empty(), "unlinking makes the tray independent");
         expect(o[7] == "3", "the tray's Down arrow moves the reference");
         expect(o[8].find("Reference (protected, read-only): ref.ass") != std::string::npos, "the tray names the reference");
         expect(o[9] == "3", "an independent reference does not follow the editing Line");

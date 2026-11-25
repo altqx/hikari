@@ -130,7 +130,7 @@ ApplicationWindow {
         let field = edited ?? root.editedField()
         // MUST KILL: tag button type is a magic int (2 = plain text into the main field)
         if (b.type === 2)
-            field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
+            field = root.originalShown || (root.editor.translationMode && translationText.text.length > 0) ? translationText : lineText
         return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
     }
 
@@ -1236,8 +1236,10 @@ ApplicationWindow {
                 root.shiftTimes.applyPreset("postprocessor", root.shiftTimes.timingPreset)
         }
         function onPresetModeChosen(mode) {
-            if (mode === "Translation" && root.app.translationQuestionDue())
-                root.openInMainWindow(translationModeQuestion)
+            if (mode === "Translation" && root.app.translationQuestionDue()) {
+                root.raiseMainWindow()
+                translationModeQuestion.ask(layoutSwitcher)
+            }
             if (mode === "Karaoke") {
                 const karaoke = root.audio.karaoke
                 const folds = root.shell.foldGenerated
@@ -2124,17 +2126,22 @@ ApplicationWindow {
         take()
     }
 
-    function openInMainWindow(dialog) {
+    function raiseMainWindow() {
         if (root.workspaceLayout.focusWindow !== root) {
             root.raise()
             root.requestActivate()
         }
+    }
+    function openInMainWindow(dialog) {
+        raiseMainWindow()
         dialog.open()
     }
 
     // Qt restores each window's own focus item on activation, so activeFocus can't tell which field was edited.
     property Item lastTextField: null
     function editedField() {
+        if (root.originalShown)
+            return translationText
         return translationText.visible && root.lastTextField === translationText
                && (lineText.activeFocus || translationText.activeFocus) ? translationText : lineText
     }
@@ -2334,6 +2341,7 @@ ApplicationWindow {
         frame: windowFrame
         menus: appMenus
         switcher: LayoutSwitcher {
+            id: layoutSwitcher
             layouts: root.workspaceLayout
             lockAction: lockLayoutAction
             lockReason: root.lockReason
@@ -5083,7 +5091,9 @@ ApplicationWindow {
         readonly property string shown: role === 0 ? root.editor.text : root.editor.translationText
         property Item tabNext: null
         property Item tabPrevious: null
-        readOnly: !root.editor.editable
+        readonly property bool inOriginalPanel: role === 0 && root.originalShown
+        readOnly: !root.editor.editable || inOriginalPanel
+        background.visible: !inOriginalPanel
         wrapMode: TextEdit.Wrap
         selectByMouse: true
         persistentSelection: true
@@ -7970,13 +7980,31 @@ ApplicationWindow {
                     const action = editorPanel.panelAction(event)
                     if (action === "")
                         return
-                    root.runEditorHotkey(action, lineText)
+                    root.runEditorHotkey(action, root.editedField())
                     event.accepted = true
+                }
+                TranslationRunState {
+                    id: translationRunState
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    bar: inlineAiBar
+                    onProvidersRequested: root.openSettings("ai")
+                    onDetailsRequested: root.showPanel(logDock)
+                    onFailureShown: text => root.log.log(text, LogController.Warning, qsTranslate("HikariSub.Translation", "AI translation"))
                 }
                 Item {
                     id: originalSlot
                     objectName: "originalSlot"
                     anchors.fill: parent
+                    anchors.topMargin: translationRunState.visible ? translationRunState.height : 0
+                    Rectangle {
+                        objectName: "originalFrame"
+                        anchors.fill: parent
+                        color: Theme.background
+                        border.color: Theme.line
+                        radius: Theme.radius
+                    }
                 }
                 OriginalTextTools {
                     id: originalTools
@@ -7994,7 +8022,9 @@ ApplicationWindow {
             objectName: "editorDock"
             uniqueName: root.engineName("Editor")
             affinities: root.dockAffinities
-            title: qsTranslate("HikariSub.Editor", "Line editor")
+            //: The Line editor's panel title while its text field is the Translated text.
+            title: root.originalShown ? qsTranslate("HikariSub.Editor", "Line editor · Translated")
+                                      : qsTranslate("HikariSub.Editor", "Line editor")
             Panel {
                 id: editorPanel
                 anchors.fill: parent
@@ -8119,6 +8149,13 @@ ApplicationWindow {
                                 objectName: "translationText"
                                 role: 1
                                 tabPrevious: root.originalShown ? lineText : null
+                                placeholderText: {
+                                    // MUST KILL: menus, Quick open and this hint each turn the hotkeys' "Ctrl-" into "Ctrl+" themselves
+                                    const keys = root.boundKeys("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2).replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+")
+                                    //: %1 is the keys of Paste all, which copies the Original text into the translation.
+                                    return keys.length ? qsTranslate("HikariSub.Translation", "Type the translation. %1 pastes the original.").arg(keys)
+                                                       : qsTranslate("HikariSub.Translation", "Type the translation.")
+                                }
                                 Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                             }
                         }
@@ -8217,6 +8254,7 @@ ApplicationWindow {
                     anchors.top: parent.top
                     z: 1
                     controller: root.inlineAi
+                    translationShownElsewhere: root.originalShown
                     onSettingsRequested: root.openSettings("ai")
                 }
                 HikariGrid {
@@ -8724,14 +8762,31 @@ ApplicationWindow {
                     color: gridPanel.palette.placeholderText
                     Accessible.ignored: true
                 }
-                GridFilterField {
-                    id: gridFilterField
-                    shell: root.shell
-                    onLeave: toFirstLine => {
-                        const first = toFirstLine ? root.shell.firstShownLine() : undefined
-                        if (first !== undefined)
-                            root.app.selectLine(first)
-                        root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                RowLayout {
+                    id: gridHeaderTools
+                    objectName: "gridHeaderTools"
+                    spacing: 8
+                    GridFilterField {
+                        shell: root.shell
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: implicitWidth
+                        Layout.minimumWidth: 120
+                        onLeave: toFirstLine => {
+                            const first = toFirstLine ? root.shell.firstShownLine() : undefined
+                            if (first !== undefined)
+                                root.app.selectLine(first)
+                            root.focusPanel(gridPanel, Qt.OtherFocusReason)
+                        }
+                    }
+                    Label {
+                        objectName: "gridTranslationProgress"
+                        visible: root.translationMode && root.shell.hasEditingTarget
+                        //: %1 is the translated lines; %n all the lines that aren't comments.
+                        text: qsTranslate("HikariSub.Grid", "%1 of %n line(s) translated", "", root.shell.translatableLines)
+                              .arg(root.shell.translatedLines)
+                        textFormat: Text.PlainText
+                        color: Theme.muted
+                        font.features: { "tnum": 1 }
                     }
                 }
             }
@@ -8742,7 +8797,7 @@ ApplicationWindow {
             objectName: "referenceDock"
             uniqueName: root.engineName("Reference")
             affinities: root.dockAffinities
-            title: shell.hasReference ? qsTranslate("HikariSub.Reference", "Reference: %1").arg(shell.referenceTitle) : qsTranslate("HikariSub.Reference", "Reference")
+            title: shell.hasReference ? qsTranslate("HikariSub.Reference", "Reference · %1").arg(shell.referenceTitle) : qsTranslate("HikariSub.Reference", "Reference")
             Panel {
                 id: referencePanel
                 anchors.fill: parent
@@ -9232,7 +9287,7 @@ ApplicationWindow {
         }
 
         Component.onCompleted: {
-            Docking.setPanelHeader(root.engineName("Grid"), true, gridFilterField)
+            Docking.setPanelHeader(root.engineName("Grid"), true, gridHeaderTools)
             Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
             Docking.setPanelHeader(root.engineName("Search"), true, null)
             Docking.setPanelHeader(root.engineName("Log"), true, null)
