@@ -28,6 +28,7 @@ class VideoViewController : public QObject {
     Q_PROPERTY(bool zoomMode READ zoomMode NOTIFY changed)
     Q_PROPERTY(bool zoomed READ zoomed NOTIFY changed)
     Q_PROPERTY(int zoomPercent READ zoomPercent NOTIFY changed)
+    Q_PROPERTY(int readoutPercent READ readoutPercent NOTIFY changed)
     Q_PROPERTY(QRectF zoomFrame READ zoomFrame NOTIFY changed)
     Q_PROPERTY(QRectF zoomBounds READ zoomBounds NOTIFY changed)
     // MUST KILL: zoomCursor is a magic int (0 arrow, 1 west-east, 2 north-south)
@@ -49,6 +50,7 @@ public:
     bool zoomMode() const;
     bool zoomed() const;
     int zoomPercent() const;
+    int readoutPercent() const;
     QRectF zoomFrame() const;
     QRectF zoomBounds() const;
     int zoomCursor() const { return m_zoomCursor; }
@@ -62,6 +64,9 @@ public:
 
     Q_INVOKABLE bool toggleZoom();
     Q_INVOKABLE bool resetZoom();
+    Q_INVOKABLE bool zoomTo(int percent);
+    Q_INVOKABLE bool zoomToDevicePixels();
+    Q_INVOKABLE bool zoomStep(int direction);
     enum PointerRequest { NoRequest = 0, ContextMenuRequest = 1, FullScreenRequest = 2, MovedOverVideo = 3 };
     Q_ENUM(PointerRequest)
     // MUST KILL: pointer's kind is a magic int (6 a double click) and it returns a PointerRequest as int

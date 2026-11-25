@@ -37,7 +37,8 @@ class VideoController : public QObject {
     Q_PROPERTY(bool offerApplyToAll READ offerApplyToAll WRITE setOfferApplyToAll NOTIFY changed)
     Q_PROPERTY(bool playing READ playing NOTIFY changed)
     Q_PROPERTY(bool looping READ looping NOTIFY changed)
-    Q_PROPERTY(QString times READ times NOTIFY textsChanged)
+    Q_PROPERTY(QString timecode READ timecode NOTIFY textsChanged)
+    Q_PROPERTY(QVariantMap lineDistance READ lineDistance NOTIFY textsChanged)
     Q_PROPERTY(bool keyframeShown READ keyframeShown NOTIFY textsChanged)
     Q_PROPERTY(bool indexing READ indexing NOTIFY changed)
     Q_PROPERTY(double indexingProgress READ indexingProgress NOTIFY changed)
@@ -90,12 +91,17 @@ public:
     Q_INVOKABLE bool playActualLine();
     Q_INVOKABLE bool loopRange(int startMs, int endMs);
     bool looping() const { return m_session.looping(); }
-    QString times() const;
+    QString timecode() const;
+    // {} without an active Line, else {frames, fromStart, fromEnd}: the shown frame's distance from its start frame
+    // and, in milliseconds, from its start and end times.
+    QVariantMap lineDistance() const;
     bool keyframeShown() const;
     Q_INVOKABLE bool showFrameAt(int frame);
     // Jump to's grammar: {} when unreadable, else {kind, value} (kind time, frame, timeStep or frameStep; value in
     // milliseconds or frames), plus with video the target's {frame, time}.
     Q_INVOKABLE QVariantMap jumpTarget(const QString &text) const;
+    // Stops playback and shows Jump to's target; false when the text isn't one.
+    Q_INVOKABLE bool jumpTo(const QString &text);
     Q_INVOKABLE void seekBarMoved(int frame, bool held);
     Q_INVOKABLE void seekBarReleased();
     Q_INVOKABLE bool seekBy(int ms);
@@ -103,6 +109,9 @@ public:
     Q_INVOKABLE bool previousKeyframe() { return m_session.previousKeyframe(); }
     Q_INVOKABLE bool goToLineStart();
     Q_INVOKABLE bool goToLineEnd();
+    // The frame of the next (direction > 0) or previous subtitle boundary inside the active Line;
+    // -1 when the step leaves the Line.
+    Q_INVOKABLE int boundaryInLine(int direction) const;
     void setActiveLineTimes(std::optional<std::pair<core::DocumentTime, core::DocumentTime>> times);
 
     void setMediaInfo(application::DisplayAudioPort *tracks, application::ChapterPort *chapters);

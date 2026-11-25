@@ -54,6 +54,12 @@ FieldSpec atLeast(FieldSpec spec, double minimum)
     return spec;
 }
 
+FieldSpec in(FieldSpec spec, std::string unit)
+{
+    spec.unit = std::move(unit);
+    return spec;
+}
+
 const std::vector<std::string> kRetimeModes{"line",     "syl",       "presyl",  "postsyl", "preline",
                                             "postline", "start2syl", "syl2end", "sylpct",  "set"};
 
@@ -104,7 +110,7 @@ std::vector<NodeSpec> makeCatalogue()
                                                           "top to bottom."),
                   field("colours", FieldKind::List, Json::array({Json("#FFFFFF"), Json("#000000")}),
                         "The gradient's stops, as #RRGGBB, at least one."),
-                  field("padding", FieldKind::Number, Json(0), "Added to the box on every side, in pixels.")}});
+                  in(field("padding", FieldKind::Number, Json(0), "Added to the box on every side, in pixels."), "px")}});
     c.push_back({"units.array", "units",
                  "Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along "
                  "a path drawn from its position. angle is in degrees, as \\frz takes it.",
@@ -118,8 +124,9 @@ std::vector<NodeSpec> makeCatalogue()
                         "Grid: from one copy to the next, as [across, down]."),
                   atLeast(field("count", FieldKind::Integer, Json(8), "Circle and path: how many copies."), 1),
                   field("radius", FieldKind::Number, Json(50), "Circle: its radius."),
-                  field("start_angle", FieldKind::Number, Json(90), "Circle: the first copy's angle, in degrees "
-                                                                    "counter-clockwise from the right.")}});
+                  in(field("start_angle", FieldKind::Number, Json(90), "Circle: the first copy's angle, in degrees "
+                                                                       "counter-clockwise from the right."),
+                     "°")}});
     c.push_back({"units.particles", "units",
                  "Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The "
                  "same graph seed, node seed and Line give the same particles on every run and platform.",

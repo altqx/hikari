@@ -76,6 +76,7 @@ struct AiFeatures::Live {
     std::vector<std::string> acpAdded;
     std::shared_ptr<backends::ai::TokenFileLease> antigravity;
     std::unique_ptr<backends::ai::McpClients> mcp;
+    std::unique_ptr<backends::ai::PluginTools> pluginTools;
     std::unique_ptr<backends::ai::AiSignIn> signIn;
     bool drafting = false;
     std::uint64_t webSearchApplied = 0;
@@ -324,6 +325,9 @@ void AiFeatures::apply()
         m_live->mcp = std::make_unique<backends::ai::McpClients>(*m_live->keys, QDir::homePath());
         m_live->mcp->setPluginStart(m_pluginMcpStart);
         m_live->mcp->setServers(mcpServers());
+        m_live->pluginTools = std::make_unique<backends::ai::PluginTools>();
+        m_live->pluginTools->setRun(m_pluginToolRun);
+        m_live->pluginTools->setTools(m_pluginTools);
         m_live->relay = std::make_unique<backends::ai::HttpRelay>(backends::ai::withSearchTargets(
             m_live->mcp->relayTargets(backends::ai::withRegistryTargets(m_live->requests->relayTargets())),
             *m_live->searchKeys,
@@ -369,6 +373,20 @@ void AiFeatures::setPluginMcpStart(backends::ai::McpClients::PluginStart start)
     m_pluginMcpStart = std::move(start);
     if (m_live)
         m_live->mcp->setPluginStart(m_pluginMcpStart);
+}
+
+void AiFeatures::setPluginTools(std::vector<backends::ai::PluginToolEntry> tools)
+{
+    m_pluginTools = std::move(tools);
+    if (m_live)
+        m_live->pluginTools->setTools(m_pluginTools);
+}
+
+void AiFeatures::setPluginToolRun(backends::ai::PluginTools::Run run)
+{
+    m_pluginToolRun = std::move(run);
+    if (m_live)
+        m_live->pluginTools->setRun(m_pluginToolRun);
 }
 
 void AiFeatures::keepPluginMcpChoices(const std::set<std::string> &installed)
@@ -560,6 +578,7 @@ backends::ai::AiSidecarHost *AiFeatures::buildHost()
                 addAcpAgents();
                 m_live->agents->attach(*m_live->host);
                 m_live->mcp->attach(*m_live->host, *m_live->agents);
+                m_live->pluginTools->attach(*m_live->host);
                 watchHost(m_live->host.get(), install->version);
             }
         }

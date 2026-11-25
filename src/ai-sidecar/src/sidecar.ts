@@ -22,6 +22,7 @@ import type { OperationName, Operations } from "./tools/api.gen";
 import { kReadSkillTool, Skills } from "./skills/skills";
 import { Catalogue, kCatalogue, type Reference } from "./tools/catalogue";
 import { ToolSet, type HikariCalls, type ToolSource } from "./tools/toolset";
+import { checkedPluginTools, PluginTools } from "./tools/plugins";
 import { WebSearch, whileOn } from "./tools/web";
 import { checkedTranslate, translate } from "./translate/run";
 
@@ -153,6 +154,7 @@ export class Sidecar {
     readonly mcp: McpServer;
     readonly sessions: AgentSessions;
     readonly mcpClients: McpClients;
+    readonly pluginTools: PluginTools;
     /** Each agent session's private tools channel, by connection. */
     private readonly channels = new Map<string, McpServer>();
     private initialized = false;
@@ -171,12 +173,13 @@ export class Sidecar {
         this.tools = new ToolSet(this.api, this.catalogue, [this.web]);
         this.mcpClients = new McpClients(connector(peer,
             (server) => agentRelay.start(mcpAgent(server), { args: [], env: {} }), options.relay, info));
+        this.pluginTools = new PluginTools((method, p) => peer.request(method, p));
         this.mcp = new McpServer((connection, client) => new HikariApi(peer, () => ({ connection, client: client() })),
-            info, () => this.catalogue);
+            info, () => this.catalogue, () => [this.pluginTools.readOnlySource()]);
         this.sessions = new AgentSessions((id, webSearch, params) => {
             const tasks = this.taskTools(id, params);
             return new ToolSet(sessionCalls(new HikariApi(peer, undefined, id), params), this.catalogue,
-                () => [whileOn(this.web, webSearch), ...this.mcpClients.sources(id), ...tasks]);
+                () => [whileOn(this.web, webSearch), ...this.mcpClients.sources(id), this.pluginTools.source(id), ...tasks]);
         },
             (params, signal, emit) => this.providers.complete(params, signal, emit),
             (method, params) => peer.notify(method, params),
@@ -187,7 +190,7 @@ export class Sidecar {
                     : Promise.reject(new Error("Qt gave the sidecar no vendor folder"))),
                 spawn: (o) => agentRelay.start("claude", { args: o.args, env: o.env, signal: o.signal }),
                 mcp: new McpServer(() => sessionCalls(new HikariApi(peer, undefined, id), params), info, () => this.catalogue,
-                    () => this.taskTools(id, params)),
+                    () => [...this.taskTools(id, params), this.pluginTools.source(id)]),
                 skills: new Skills(new HikariApi(peer, undefined, id)),
                 kindOf: (tool) => this.kindOf(tool),
                 send,
@@ -221,6 +224,14 @@ export class Sidecar {
                     void this.mcpClients.ensure();
                 return null;
             }));
+        this.handle(Method.pluginToolsSet, (params) => {
+            const tools = checkedPluginTools(params);
+            if (!tools)
+                throw new RpcError(ErrorCode.invalidParams,
+                    `${Method.pluginToolsSet} needs tools with a name, a description, an input schema and readOnly`);
+            this.pluginTools.set(tools);
+            return null;
+        });
         this.handle(Method.sessionPrompt, (params) =>
             wire(() => this.sessions.prompt(checkedPrompt<SessionPromptParams>(Method.sessionPrompt, params))));
         this.handle(Method.sessionSteer, (params) =>
@@ -307,7 +318,7 @@ export class Sidecar {
             const params = this.sessions.params(session);
             const tasks = this.taskTools(session, params);
             channel = new McpServer(() => whileTurnRuns(sessionCalls(new HikariApi(this.peer, undefined, session), params),
-                () => this.sessions.get(session)), info, () => this.catalogue, () => tasks);
+                () => this.sessions.get(session)), info, () => this.catalogue, () => [...tasks, this.pluginTools.source(session)]);
             this.channels.set(connection, channel);
         }
         return channel;
@@ -321,6 +332,8 @@ export class Sidecar {
         if (tool === "document_apply")
             return "edit";
         if (tool === kReadSkillTool.name)
+            return "read";
+        if (this.pluginTools.readOnly(tool))
             return "read";
         return this.tools.list(true).find((t) => t.name === tool)?.annotations.readOnlyHint ? "read" : "other";
     }

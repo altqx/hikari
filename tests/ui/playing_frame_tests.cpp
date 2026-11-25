@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 #include "hikari/application/general_player.h"
+#include "hikari/application/video_fullscreen.h"
 #include "audio_controller.h"
 #include "docking.h"
 #include "line_editor_controller.h"
@@ -398,7 +399,7 @@ private slots:
         auto *bar = findItem(window->contentItem(), QStringLiteral("videoSlider"));
         QTRY_COMPARE(qRound(bar->property("value").toReal()), last);
         QVERIFY(video.status().startsWith(QStringLiteral("Frame %1 of %2").arg(last).arg(last + 1)));
-        QVERIFY(video.times().contains(QStringLiteral(";  %1;  ").arg(last)));
+        QCOMPARE(video.timecode(), QString::fromStdString(hikari::application::fullscreenTimecode(startMs(last))));
         QVERIFY(video.pause());
         QTRY_COMPARE_WITH_TIMEOUT(session().shownFrame().value_or(-1), last, 10000);
         QCOMPARE(video.frame(), last);

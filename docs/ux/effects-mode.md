@@ -41,7 +41,7 @@ Apply is disabled with no graph and while a run is applying.
 Q732.
 
 - **The pill.** "No problems" on `raised` when the graph validates; "2 problems" with the `notice-warning` glyph, `danger` text and a 1-unit `danger` edge when it doesn't.
-- **The list.** The pill opens a popover (`panel`, radius 6, the popup shadow) headed in `muted` "2 problems · Apply waits until they're fixed". Each row is the `notice-warning` glyph in `danger`, the node id in semibold and its port or field ("sweep · at"), and under it in `muted` what's wrong. Choosing a row selects and centres the node.
+- **The list.** The pill opens a popover (`panel`, radius 6, the popup shadow) headed in `muted` "2 problems · Apply waits until they're fixed". Each row starts with the glyph of its severity: `notice-error` in `danger` for an error, `notice-warning` in `warning` for a warning (a problem with no severity is a warning), and `notice-info` in `accent` for information. Then come the node id in semibold and its port or field ("sweep · at"), and under it in `muted` what's wrong. Choosing a row selects and centres the node.
 - **On the canvas.** A node with a problem has a 2-unit `danger` edge and the `notice-warning` glyph in `danger` before its title.
 - **In the Node panel.** A Problems section lists the node's own problems the same way.
 

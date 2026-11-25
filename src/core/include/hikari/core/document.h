@@ -143,6 +143,7 @@ struct FormatRecord {
 // payload, unknown-section content, and lines that failed to parse.
 struct OpaqueRecord {
     SourceSpan span;
+    std::optional<std::u8string> inserted; // added in the editor: written as this line
 };
 
 using Record = std::variant<LineRecord, StyleRecord, PropertyRecord, FormatRecord, OpaqueRecord>;
@@ -160,6 +161,8 @@ enum class SectionKind {
     Cues,       // the single body of a sectionless format (SRT)
     AegisubExtradata, // [Aegisub Extradata]: kept verbatim; its entries are also read into the Document
 };
+
+enum class AttachmentKind { Font, Graphic };
 
 struct Section {
     SectionKind kind = SectionKind::Preamble;
@@ -272,6 +275,12 @@ public:
     // before trailing [Fonts]/[Graphics] (libass reads any line after [Fonts] as font data). False
     // for formats other than ASS.
     bool setHikariProperty(std::u8string_view key, std::u8string value);
+
+    // An ASS attachment ("fontname:" in [Fonts], "filename:" in [Graphics]) after the last one of its
+    // kind, or in a section of its own at the end. False for formats other than ASS.
+    bool addAttachment(AttachmentKind kind, std::u8string_view name, const std::vector<std::byte> &bytes);
+    // `index` as attachments() lists them; a section left without attachments goes. False when absent.
+    bool removeAttachment(std::size_t index);
 
     // [Aegisub Project Garbage] "Key: Value" lines, as Aegisub 3.5.1 keeps its project properties; a
     // section inside embedded data is data. The last value for key.

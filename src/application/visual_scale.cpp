@@ -452,10 +452,15 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
             if (m_originalRectangleVisible) {
                 const int grabbed1 = hitTest({static_cast<float>(x), static_cast<float>(y)}, true, true, unitOf(host));
                 if (grabbed1 == INSIDE) {
-                    if (m_sizingRectangle[2].x <= pointx && m_sizingRectangle[3].x >= pointx &&
-                        m_sizingRectangle[2].y <= pointy && m_sizingRectangle[3].y >= pointy) {
+                    const auto inside = [&](std::size_t first) {
+                        return m_sizingRectangle[first].x <= pointx && m_sizingRectangle[first + 1].x >= pointx &&
+                               m_sizingRectangle[first].y <= pointy && m_sizingRectangle[first + 1].y >= pointy;
+                    };
+                    if (inside(2)) {
                         m_diffs.x = static_cast<float>(x);
                         m_diffs.y = static_cast<float>(y);
+                        if (!(m_rectangleVisible && inside(0)))
+                            m_rightHolding = true;
                     }
                     m_grabbed = grabbed1;
                 } else if (grabbed1 < INSIDE) {

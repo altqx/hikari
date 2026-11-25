@@ -384,6 +384,8 @@ private:
               AiSidecarHost::Admit admit, std::function<void(std::function<void()>)> onWithdraw);
     void gateMcp(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
                  std::function<void(std::function<void()>)> onWithdraw);
+    void gatePluginTool(AgentThread &thread, const api::Json &params, AiSidecarHost::Admit admit,
+                        std::function<void(std::function<void()>)> onWithdraw);
     void judge(AgentThread &thread, const std::string &operation, const api::Json &params, AiSidecarHost::Admit admit,
                std::function<void(std::function<void()>)> onWithdraw);
     void openAsk(AgentThread &thread, Decision kind, const std::string &operation, const api::Json &params,

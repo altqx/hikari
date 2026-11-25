@@ -33,7 +33,7 @@ protected:
     std::string status() { return getStringProperty("mainWindow/videoStatus", "text"); }
     bool stepTo(int frame, const char *button = "mainWindow/nextFrame")
     {
-        const std::string want = "Frame " + std::to_string(frame) + " of";
+        const std::string want = "frame " + std::to_string(frame) + " /";
         for (int n = 0; n < 60; ++n) {
             const std::string before = status();
             if (before.rfind(want, 0) == 0)
@@ -55,7 +55,7 @@ protected:
     {
         if (waitForItem("mainWindow/loadAssociated", 5s)) {
             mouseClick("mainWindow/loadAssociated");
-            for (int i = 0; i < 100 && status().rfind("Frame", 0) != 0; ++i)
+            for (int i = 0; i < 100 && status().rfind("frame ", 0) != 0; ++i)
                 wait(100ms);
             observed.push_back(status());
             mouseClick("mainWindow/editingGrid");
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
         std::printf("observed[%zu] = %s\n", i, o[i].c_str());
     expect(o.size() == 5, "every step observed");
     if (o.size() == 5) {
-        expect(o[0].rfind("Frame 0 of 48", 0) == 0, "indexed; the video opens at its first frame");
+        expect(o[0].rfind("frame 0 / 48", 0) == 0, "indexed; the video opens at its first frame");
         expect(o[1] == "frame 12" && o[2] == "frame 24" && o[3] == "frame 36" && o[4] == "frame 12",
                "Next and Previous frame reach the frames");
     }

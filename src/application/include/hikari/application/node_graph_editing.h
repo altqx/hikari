@@ -32,6 +32,11 @@ NodeGraph withoutNode(NodeGraph graph, std::string_view node);
 // The graph with node `from` renamed, its wires following; unchanged when `to` is taken or not an id.
 std::optional<NodeGraph> withNodeRenamed(NodeGraph graph, std::string_view from, std::string_view to);
 
+// The graph with `field` set to `value` on each of `nodes`, or taken off them, so the node's
+// default applies, when `value` is nothing.
+NodeGraph withFieldOnNodes(NodeGraph graph, std::span<const std::string> nodes, std::string_view field,
+                           const std::optional<json::Json> &value);
+
 // A node id not yet in the graph, from the type's last part: "random", "random2", ...
 std::string freeNodeId(const NodeGraph &graph, std::string_view type);
 

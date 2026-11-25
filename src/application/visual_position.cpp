@@ -353,7 +353,7 @@ void PositionTool::pointer(const Pointer &evt, VisualHost &host)
         return;
     }
     if (click) {
-        if (isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
+        if (m_hasHelperLine && isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
             m_movingHelperLine = true;
             return;
         }
@@ -1099,7 +1099,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
             return;
         }
         if (click) {
-            if (isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
+            if (m_hasHelperLine && isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
                 m_movingHelperLine = true;
                 return;
             }
@@ -1179,7 +1179,7 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
         return;
     }
     if (click) {
-        if (isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
+        if (m_hasHelperLine && isInPos(x, y, m_helperX, m_helperY, 4 * unitOf(host))) {
             m_movingHelperLine = true;
             return;
         }
