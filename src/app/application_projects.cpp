@@ -239,10 +239,10 @@ QString Application::setProjectPluginSetting(int shellWindow, const QString &plu
     ui::ProjectFile *project = settings.trusted() ? settings.project() : nullptr;
     const auto manifest = m_pluginManager ? m_pluginManager->manifest(plugin.toStdString()) : std::nullopt;
     if (!value || !project || !manifest)
-        return QCoreApplication::translate("HikariSub.Options", "This window has no trusted Project to keep it in.");
+        return QCoreApplication::translate("HikariSub.Options", "This window has no trusted project to keep it in.");
     const auto declared = std::ranges::find(manifest->settings, setting.toStdString(), &plugins::Setting::id);
     if (declared == manifest->settings.end() || !plugins::projectable(*declared))
-        return QCoreApplication::translate("HikariSub.Options", "A Project can’t set “%1”.")
+        return QCoreApplication::translate("HikariSub.Options", "A project can’t set “%1”.")
             .arg(declared == manifest->settings.end() ? setting : QString::fromStdString(declared->title));
     if (!value->isNull())
         if (const auto refused = plugins::settingRefusal(*declared, *value))

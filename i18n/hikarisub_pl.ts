@@ -18035,11 +18035,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Zastępuje ikony interfejsu HikariSub. Ikony, których motyw nie obejmuje, pozostają ikonami HikariSub.</translation>
     </message>
     <message>
-        <source>This window has no trusted Project to keep it in.</source>
+        <source>This window has no trusted project to keep it in.</source>
         <translation>To okno nie ma zaufanego projektu, w którym można to zapisać.</translation>
     </message>
     <message>
-        <source>A Project can’t set “%1”.</source>
+        <source>A project can’t set “%1”.</source>
         <translation>Projekt nie może ustawić “%1”.</translation>
     </message>
     <message>

@@ -17896,11 +17896,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>HikariSub இன் இடைமுகப் படவுருக்களை மாற்றுகிறது. கருப்பொருளில் இல்லாத படவுருக்கள் HikariSub இன் சொந்தப் படவுருக்களாகவே காட்டப்படும்.</translation>
     </message>
     <message>
-        <source>This window has no trusted Project to keep it in.</source>
+        <source>This window has no trusted project to keep it in.</source>
         <translation>இதை வைத்திருக்க இந்தச் சாளரத்துக்கு நம்பகமான திட்டப்பணி இல்லை.</translation>
     </message>
     <message>
-        <source>A Project can’t set “%1”.</source>
+        <source>A project can’t set “%1”.</source>
         <translation>ஒரு திட்டப்பணியால் “%1” ஐ அமைக்க முடியாது.</translation>
     </message>
     <message>

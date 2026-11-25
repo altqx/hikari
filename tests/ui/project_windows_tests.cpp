@@ -1089,7 +1089,7 @@ private slots:
         QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("mode"), QStringLiteral("\"Slow\"")),
                  QStringLiteral("“mode” must be one of: Fast, Slow"));
         QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("host"), QStringLiteral("\"a\"")),
-                 QStringLiteral("A Project can’t set “Host”."));
+                 QStringLiteral("A project can’t set “Host”."));
         QVERIFY(!application->setProjectPluginSetting(w, plugin, QStringLiteral("token"), QStringLiteral("\"t\"")).isEmpty());
         QCOMPARE(application->setProjectPluginSetting(w, plugin, QStringLiteral("hosts"), QStringLiteral(R"(["a.example"])")),
                  QString());

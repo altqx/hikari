@@ -17757,11 +17757,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>HikariSub의 인터페이스 아이콘을 바꿉니다. 테마에 없는 아이콘은 HikariSub의 기본 아이콘으로 표시됩니다.</translation>
     </message>
     <message>
-        <source>This window has no trusted Project to keep it in.</source>
+        <source>This window has no trusted project to keep it in.</source>
         <translation>이 창에는 이 값을 둘 신뢰하는 프로젝트가 없습니다.</translation>
     </message>
     <message>
-        <source>A Project can’t set “%1”.</source>
+        <source>A project can’t set “%1”.</source>
         <translation>프로젝트에서는 “%1”(을)를 설정할 수 없습니다.</translation>
     </message>
     <message>

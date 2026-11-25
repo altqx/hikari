@@ -17757,11 +17757,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>แทนที่ไอคอนในอินเทอร์เฟซของ HikariSub ไอคอนที่ธีมไม่มีจะแสดงเป็นไอคอนของ HikariSub เอง</translation>
     </message>
     <message>
-        <source>This window has no trusted Project to keep it in.</source>
+        <source>This window has no trusted project to keep it in.</source>
         <translation>หน้าต่างนี้ไม่มีโปรเจกต์ที่เชื่อถือให้เก็บค่านี้</translation>
     </message>
     <message>
-        <source>A Project can’t set “%1”.</source>
+        <source>A project can’t set “%1”.</source>
         <translation>โปรเจกต์ตั้งค่า “%1” ไม่ได้</translation>
     </message>
     <message>
