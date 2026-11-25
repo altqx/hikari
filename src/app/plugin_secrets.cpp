@@ -95,7 +95,7 @@ QString PluginSecrets::set(const std::string &plugin, const std::string &setting
         emit self->notKept(plugin, setting,
                            *error == ai::KeyError::Unavailable
                                ? QCoreApplication::translate("HikariSub.Plugins", "No system keychain to keep it in")
-                               : QCoreApplication::translate("HikariSub.Plugins", "The system keychain didn’t keep “%1”").arg(setting));
+                               : QCoreApplication::translate("HikariSub.Plugins", "Couldn’t keep “%1” in the system keychain").arg(setting));
     };
     const std::string name = keychainName(plugin, setting);
     if (clearing)

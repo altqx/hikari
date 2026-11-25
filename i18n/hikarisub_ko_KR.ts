@@ -18998,8 +18998,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>저장할 시스템 키체인이 없습니다</translation>
     </message>
     <message>
-        <source>The system keychain didn’t keep “%1”</source>
-        <translation>시스템 키체인이 “%1”(을)를 저장하지 못했습니다</translation>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>시스템 키체인에 “%1”(을)를 저장하지 못했습니다</translation>
     </message>
 </context>
 <context>

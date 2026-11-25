@@ -19138,8 +19138,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>இதை வைத்திருக்க கணினி விசைக்கொத்து இல்லை</translation>
     </message>
     <message>
-        <source>The system keychain didn’t keep “%1”</source>
-        <translation>கணினி விசைக்கொத்து “%1” ஐ வைத்திருக்கவில்லை</translation>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>“%1” ஐக் கணினி விசைக்கொத்தில் வைத்திருக்க முடியவில்லை</translation>
     </message>
 </context>
 <context>

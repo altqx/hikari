@@ -18998,8 +18998,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไม่มีพวงกุญแจของระบบให้เก็บค่านี้</translation>
     </message>
     <message>
-        <source>The system keychain didn’t keep “%1”</source>
-        <translation>พวงกุญแจของระบบเก็บ “%1” ไม่ได้</translation>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>เก็บ “%1” ในพวงกุญแจของระบบไม่ได้</translation>
     </message>
 </context>
 <context>

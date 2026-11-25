@@ -19278,8 +19278,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Brak systemowego magazynu kluczy, w którym można to zapisać</translation>
     </message>
     <message>
-        <source>The system keychain didn’t keep “%1”</source>
-        <translation>Systemowy magazyn kluczy nie zapisał “%1”</translation>
+        <source>Couldn’t keep “%1” in the system keychain</source>
+        <translation>Nie udało się zapisać “%1” w systemowym magazynie kluczy</translation>
     </message>
 </context>
 <context>

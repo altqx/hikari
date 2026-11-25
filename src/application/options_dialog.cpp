@@ -53,8 +53,6 @@ constexpr OptionsBinding kBindings[] = {
     {"grid.insertStartOffset", Number, Grid, -100000, 100000},
     {"grid.insertEndOffset", Number, Grid, -100000, 100000},
     {"grid.tagsSwapCharacter", Text, Grid},
-    {"grid.tagsMode", IndexChoice, Grid, 0, 0, 3},
-    {"grid.markCurrentFrame", Check, Grid},
     {"grid.font", Font, Grid, 0, 0, 0, "grid.fontSize"},
     {"program.font", Font, Appearance, 0, 0, 0, "program.fontSize"},
     {"grid.calcSpacesAndPunctuationForWraps", Check, Grid},
@@ -147,8 +145,6 @@ constexpr OptionsBinding kBindings[] = {
     {"ai.autoUpdate", Check, Ai},
     {"ai.promptCaching", Check, Ai},
     {"video.handleSize", Number, Video, 50, 400},
-    {"video.vectorClipSmoothing", Number, Video, 0, 100},
-    {"video.drawingSmoothing", Number, Video, 0, 100},
     {"video.missingMatrix", IndexChoice, Video, 0, 0, 3},
     {"video.matrixMismatch", IndexChoice, Video, 0, 0, 4},
     {"video.missingLayoutRes", IndexChoice, Video, 0, 0, 4},
@@ -206,6 +202,10 @@ constexpr OptionsBinding kBindings[] = {
     {"grid.maxLines", Number, Grid, 1, 20},
     {"problems.reading", Check, Grid},
     {"autosave.savedCopies", Number, General, 0, 100},
+    {"grid.tagsMode", IndexChoice, Grid, 0, 0, 3},
+    {"grid.markCurrentFrame", Check, Grid},
+    {"video.vectorClipSmoothing", Number, Video, 0, 100},
+    {"video.drawingSmoothing", Number, Video, 0, 100},
 #ifdef _WIN32
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},  // 0 WASAPI, 1 DirectSound
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2}, // 0 built-in, 1 DirectShow
