@@ -75,6 +75,8 @@ class NodeEffectsController : public QObject {
     Q_PROPERTY(double previewMs READ previewMs NOTIFY previewChanged)
     Q_PROPERTY(bool previewOnVideo READ previewOnVideo WRITE setPreviewOnVideo NOTIFY changed)
     Q_PROPERTY(bool videoPreview READ videoPreview NOTIFY previewChanged)
+    // Why the video shows no new preview: "noSource", "problems", "untrusted", or empty.
+    Q_PROPERTY(QString previewBlocked READ previewBlocked NOTIFY previewChanged)
     Q_PROPERTY(bool hasLua READ hasLua NOTIFY graphChanged)
     Q_PROPERTY(bool trusted READ trusted NOTIFY changed)
     Q_PROPERTY(bool canApply READ canApply NOTIFY changed)
@@ -152,11 +154,12 @@ public:
     int sourceStartMs() const;
     int sourceEndMs() const;
     QVariantList previewLines() const;
-    bool previewKept() const { return m_previewKept; }
+    bool previewKept() const { return m_previewKept && trusted(); }
     double previewMs() const { return m_previewSeconds * 1000; }
     bool previewOnVideo() const { return m_previewOnVideo; }
     void setPreviewOnVideo(bool on);
     bool videoPreview() const;
+    QString previewBlocked() const;
     bool hasLua() const;
     bool hasPluginNodes() const;
     bool drawsText() const;
@@ -233,6 +236,11 @@ private:
                          std::u8string_view title);
     QVariantMap problemRow(const std::string &node, const std::string &port, const std::string &message) const;
     void reload();
+    std::optional<std::u8string> graphLineText() const;
+    bool pendingOverwritten() const;
+    void dropPending();
+    std::optional<core::LineId> activeSource() const;
+    bool followActiveLine();
     void updateSources();
     void selectEveryTarget();
     void schedulePreview();
@@ -261,6 +269,8 @@ private:
     std::optional<core::LineId> m_current;
     std::optional<application::NodeGraph> m_graph;
     bool m_pending = false;
+    std::uint64_t m_pendingSession = 0;
+    std::optional<std::u8string> m_pendingBase;
     std::vector<std::string> m_path;
     QString m_unreadable;
     bool m_newerFormat = false;
@@ -272,6 +282,7 @@ private:
     std::set<core::LineId> m_sourceSelection;
     std::set<core::LineId> m_targets;
     bool m_selectEveryTarget = false;
+    std::optional<core::LineId> m_seenActive;
 
     QTimer m_previewTimer, m_commitTimer;
     std::optional<application::NodeEffectRun> m_preview;

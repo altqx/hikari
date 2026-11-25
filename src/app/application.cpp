@@ -986,9 +986,29 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                 open.emplace_back(id, m_files->session(id));
             return open;
         },
+        [this]() -> LanguageServers::Editing {
+            const auto target = m_workspace.editingTarget();
+            const auto *session = target ? m_files->session(*target) : nullptr;
+            const auto line = session ? session->selection().active : std::nullopt;
+            if (!line)
+                return std::nullopt;
+            return std::pair{*target, *line};
+        },
         &m_problems,
     });
+    m_languageProviders->setServers(m_languageServers.get());
     connect(m_pluginRuntime.get(), &PluginRuntime::languageServersChanged, m_languageServers.get(), &LanguageServers::serversChanged);
+    m_pluginRuntime->setLanguageServerStates(
+        [this](const std::string &plugin) {
+            QVariantList out;
+            for (const LanguageServers::Stopped &stopped : m_languageServers->stopped(plugin))
+                out.push_back(QVariantMap{{QStringLiteral("id"), QString::fromStdString(stopped.server)},
+                                          {QStringLiteral("title"), stopped.title},
+                                          {QStringLiteral("reason"), stopped.reason}});
+            return out;
+        },
+        [this](const std::string &plugin, const std::string &server) { m_languageServers->startAgain(plugin, server); });
+    connect(m_languageServers.get(), &LanguageServers::statesChanged, m_pluginRuntime.get(), &PluginRuntime::languageServerStatesUpdated);
     m_files->setDeferredEncoder([this](application::DocumentId document, const application::DestinationKey &destination) {
         return pluginSaveBytes(document, destination);
     });
@@ -1017,6 +1037,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_ai->keepPluginMcpChoices(*installed);
         m_ai->setPluginMcpServers(m_pluginRuntime->mcpServers());
     });
+    m_ai->setPluginToolRun([runtime = QPointer(m_pluginRuntime.get())](const backends::ai::PluginToolEntry &tool,
+                                                                         const api::Json &arguments,
+                                                                         backends::ai::PluginTools::Answer answer) {
+        if (!runtime)
+            return answer(std::unexpected(api::Error{std::string(api::errors::kUnavailable), "HikariSub is closing.", {}}));
+        runtime->runAiTool(tool, arguments, std::move(answer));
+    });
+    connect(m_pluginRuntime.get(), &PluginRuntime::aiToolsChanged, m_ai.get(),
+            [this] { m_ai->setPluginTools(m_pluginRuntime->aiTools()); });
     QMetaObject::invokeMethod(m_pluginRuntime.get(), &PluginRuntime::sync, Qt::QueuedConnection);
     connect(m_pluginManager.get(), &PluginManager::pluginsChanged, this, &Application::readPluginDictionaries);
     QMetaObject::invokeMethod(this, &Application::readPluginDictionaries, Qt::QueuedConnection);
@@ -2105,6 +2134,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
         if (target == activeMedia().videoDocument)
             activeMedia().video->setActiveLineTimes(activeLineTimes(*session));
         followEditingLine();
+        m_languageServers->sync();
         v.templateEditor->refresh();
     });
     v.shell->setSpelling([this, shellWindow](std::u16string_view text, core::SubtitleFormat format, bool spell,
@@ -2145,7 +2175,7 @@ void Application::makeViews(WindowViews &v, int shellWindow)
                                          [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
     const auto fieldOf = [](int role) { return role == 1 ? QStringLiteral("translation") : QStringLiteral("text"); };
     v.editor->tagList()->setHover(
-        [this, fieldOf](int role) { return !m_pluginRuntime->providers("hover", fieldOf(role).toStdString()).empty(); },
+        [this, fieldOf](int role) { return m_languageProviders->hovers(fieldOf(role)); },
         [this, fieldOf](int role, const QString &text, int position, ui::TagListController::HoverAnswer answer) {
             const auto target = m_workspace.editingTarget();
             const auto *session = target ? m_files->session(*target) : nullptr;
@@ -2330,6 +2360,7 @@ void Application::makeNodeEffects(WindowViews &v, int shellWindow)
             showVideoSubtitles();
     });
     effects->shareTrustWith(v.templateEditor.get());
+    v.editor->addBeforeHistoryMove([effects] { effects->commit(); });
     effects->setLuaNodes([this] { return &luaNodes(); });
     effects->setGlyphs([this] { return &glyphOutlines(); });
     effects->setAudio([this]() -> std::optional<const application::DisplayAudio *> {
@@ -2699,6 +2730,7 @@ void Application::refreshViews()
 {
     noteLastUsedWindow();
     emit encodingSuggestionChanged();
+    emit attachmentsChanged();
     noteCrashWindows();
     protectReference();
     showTabArrangement(m_workspace.activeWindow());
@@ -3886,6 +3918,7 @@ bool Application::applySelection(application::Selection next)
     templateEditor().refresh();
     refreshVideo();
     followEditingLine();
+    m_languageServers->sync();
     if (m_apiHost)
         m_apiHost->observe();
     return true;

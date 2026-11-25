@@ -216,9 +216,10 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         } else if (section.headerSpan) {
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
             newlines.see(*section.headerSpan);
-        } else if (added && (section.kind == SectionKind::Hikari || section.kind == SectionKind::Unknown)) {
+        } else if (added && (section.kind == SectionKind::Hikari || section.kind == SectionKind::Unknown ||
+                             section.kind == SectionKind::Fonts || section.kind == SectionKind::Graphics)) {
             // An added [Hikari] section (at the end, or before trailing
-            // embedded data) or [Aegisub Project Garbage]: after a blank
+            // embedded data), [Aegisub Project Garbage], [Fonts] or [Graphics]: after a blank
             // line, in the line ends of the record before it.
             if (newlines.openEnd)
                 append(newlines.newline);
@@ -270,7 +271,10 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                     text += (i ? u8"," : u8"") + style->fields[i];
                 generated = text;
             }
-            if ((property && property->inserted) || (style && style->inserted)) {
+            const auto *opaque = std::get_if<OpaqueRecord>(&record);
+            if (opaque && opaque->inserted)
+                generated = *opaque->inserted;
+            if ((property && property->inserted) || (style && style->inserted) || (opaque && opaque->inserted)) {
                 append(newlines.wrap(*generated));
                 newlines.openEnd = false;
                 continue;
@@ -389,7 +393,9 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             writeAddedExtradata();
         if (takesHeld)
             flushHeld();
-        if (added && !editorOnly && (section.kind != SectionKind::Hikari || &section != &document.sections().back()))
+        const bool trailing = section.kind == SectionKind::Hikari || section.kind == SectionKind::Fonts ||
+                              section.kind == SectionKind::Graphics;
+        if (added && !editorOnly && (!trailing || &section != &document.sections().back()))
             append(newlines.newline);
     }
     if (!beforeEmbedded)

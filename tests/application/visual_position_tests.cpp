@@ -1354,6 +1354,25 @@ TEST(VisualPositionPointer, ADragShowsTheFourWayShapeUntilTheRelease)
     tool.pointer(at(Pointer::Kind::Release, 200, 200, Pointer::Button::Left), host);
 }
 
+TEST(VisualPositionPointer, APressAtTheCornerDragsTheLineWhileNoHelperIsShown)
+{
+    const auto pressAtTheCorner = [](VisualTool &tool) {
+        TestHost host;
+        standard(host);
+        host.tool = &tool;
+        tool.selected(host);
+        tool.reset(host);
+        tool.pointer(at(Pointer::Kind::Press, 1, 1, Pointer::Button::Left, true), host);
+        const PointerShape shape = host.pointerShape();
+        tool.pointer(at(Pointer::Kind::Release, 1, 1, Pointer::Button::Left), host);
+        return shape;
+    };
+    PositionTool position;
+    EXPECT_EQ(pressAtTheCorner(position), PointerShape::Sizing);
+    MoveTool move;
+    EXPECT_EQ(pressAtTheCorner(move), PointerShape::Sizing);
+}
+
 TEST(VisualPositionPointer, TheRectanglesEdgesAndCornersShowTheirResizeShapes)
 {
     TestHost host;

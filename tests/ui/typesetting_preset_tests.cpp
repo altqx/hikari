@@ -546,7 +546,7 @@ private slots:
         QVERIFY(plain(rowItem("stylesName0")));
         QCOMPARE(rowItem("stylesName0")->property("text").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
         QVERIFY(plain(rowItem("stylesFont0")));
-        QCOMPARE(rowItem("stylesFont0")->property("text").toString(), QStringLiteral("<b>Arial</b> · 48"));
+        QCOMPARE(rowItem("stylesFont0")->property("text").toString(), QStringLiteral("<b>Arial</b> · 48 · 1 line(s)"));
         auto *choice = item<QObject>("styleChoice");
         QVERIFY(choice);
         QTRY_COMPARE(choice->property("currentText").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));

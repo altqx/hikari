@@ -476,3 +476,39 @@ TEST(FontPicker, TheRendererSelectionIsDescribed)
     report.faces[0].stage = SelectionStage::DefaultFamily;
     EXPECT_EQ(pickerResolution(report).kind, PickerResolution::Kind::Fallback);
 }
+
+TEST(FontPicker, EachRequestOfAReportIsDescribedOnItsOwn)
+{
+    FontReport report;
+    ResolvedFace arial;
+    arial.stage = SelectionStage::Requested;
+    arial.familyNames = {"Arial"};
+    ResolvedFace liberation;
+    liberation.stage = SelectionStage::Requested;
+    liberation.familyNames = {"Liberation Sans"};
+    ResolvedFace dejavu;
+    dejavu.stage = SelectionStage::DefaultFamily;
+    dejavu.familyNames = {"DejaVu Sans"};
+    report.faces = {arial, liberation, dejavu};
+    RequestReport installed;
+    installed.faces = {0};
+    installed.requestedFamilyFound = true;
+    RequestReport substituted;
+    substituted.faces = {1};
+    substituted.substituted = true;
+    RequestReport fallback;
+    fallback.faces = {2};
+    RequestReport missing;
+    report.requests = {installed, substituted, fallback, missing};
+
+    const auto check = [&](std::size_t i) { return familyCheck(pickerResolution(report, i)); };
+    EXPECT_TRUE(check(0).installed);
+    EXPECT_EQ(check(0).shownIn, "Arial");
+    EXPECT_FALSE(check(1).installed);
+    EXPECT_EQ(check(1).shownIn, "Liberation Sans");
+    EXPECT_FALSE(check(2).installed);
+    EXPECT_EQ(check(2).shownIn, "DejaVu Sans");
+    EXPECT_FALSE(check(3).installed);
+    EXPECT_EQ(check(3).shownIn, "");
+    EXPECT_EQ(pickerResolution(report, 4).kind, PickerResolution::Kind::Missing);
+}

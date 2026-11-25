@@ -49,7 +49,8 @@ public:
     void setOfficialAuthor(plugins::OfficialAuthor official);
     // Rows {id, name, version, description, enabled, keyId ("" when unsigned), source ("file", "marketplace" or "dev"),
     // unrestricted, official (signed by officialAuthor() under its handle), icon (a file URL, or empty), authors, homepage, permissions: [text], adds: [text], settings: [the
-    // manifest's setting with its value], folders: [{id, title, path, writable}] remembered for it, autoUpdate,
+    // manifest's setting with its value], folders: [{id, title, path, writable}] remembered for it, autoUpdate, aiTools (it
+    // contributes AI tools), trustToolMarks,
     // previous (the version Roll back returns to, or ""), held (a newer version waiting for consent, or ""),
     // revoked, revokedReason, lastGood (the version to offer instead of a revoked one, or ""), path (a dev plugin's
     // folder, else ""), folder (path as a file URL), overrides (the installed version a dev plugin stands in for, or ""), devProblem (why its last
@@ -86,6 +87,7 @@ public:
     // Installs what review() last accepted; "" on success, else the problem.
     Q_INVOKABLE QString install(bool retrusted);
     Q_INVOKABLE QString setAutoUpdate(const QString &id, bool on);
+    Q_INVOKABLE QString setTrustToolMarks(const QString &id, bool on);
     // Returns to the version kept by the last update, which automatic updates then pass over.
     Q_INVOKABLE QString rollBack(const QString &id);
     // Takes back rollBack(): the version left returns and is no longer passed over.

@@ -1076,6 +1076,141 @@
     </message>
 </context>
 <context>
+    <name>HikariSub.Attachments</name>
+    <message>
+        <source>“%1” is %2 MB, over 10 MB.</source>
+        <translation>“%1” %2 MB அளவு, 10 MB-ஐ விட அதிகம்.</translation>
+    </message>
+    <message>
+        <source>The licence of “%1” restricts embedding it in other files.</source>
+        <translation>“%1”-இன் உரிமம் அதைப் பிற கோப்புகளில் உட்பொதிப்பதைக் கட்டுப்படுத்துகிறது.</translation>
+    </message>
+    <message>
+        <source>The attachments would total %1 MB, over 50 MB.</source>
+        <translation>இணைப்புகளின் மொத்த அளவு %1 MB ஆகும், 50 MB-ஐ விட அதிகம்.</translation>
+    </message>
+    <message>
+        <source>Attachments</source>
+        <translation>இணைப்புகள்</translation>
+    </message>
+    <message>
+        <source>Could not read “%1”; nothing was attached.</source>
+        <translation>“%1”-ஐப் படிக்க முடியவில்லை; எதுவும் இணைக்கப்படவில்லை.</translation>
+    </message>
+    <message>
+        <source>Attachments…</source>
+        <translation>இணைப்புகள்…</translation>
+    </message>
+    <message>
+        <source>Lists the fonts and graphics attached to the subtitles</source>
+        <translation>வசனங்களுடன் இணைக்கப்பட்ட எழுத்துருக்களையும் படங்களையும் பட்டியலிடுகிறது</translation>
+    </message>
+    <message>
+        <source>Attach fonts</source>
+        <translation>எழுத்துருக்களை இணை</translation>
+    </message>
+    <message>
+        <source>Attach graphics</source>
+        <translation>படங்களை இணை</translation>
+    </message>
+    <message>
+        <source>Attach them anyway?</source>
+        <translation>இருந்தாலும் இணைக்கவா?</translation>
+    </message>
+    <message>
+        <source>Attach</source>
+        <translation>இணை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Extract</source>
+        <translation>பிரித்தெடு</translation>
+    </message>
+    <message>
+        <source>Could not write %1.</source>
+        <translation>%1-ஐ எழுத முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>“%1” already exists. Replace it?</source>
+        <translation>“%1” ஏற்கெனவே உள்ளது. அதை மாற்றவா?</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>பெயர்</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>வகை</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation>அளவு</translation>
+    </message>
+    <message>
+        <source>These subtitles have no attachments.</source>
+        <translation>இந்த வசனங்களில் இணைப்புகள் இல்லை.</translation>
+    </message>
+    <message>
+        <source>Only ASS subtitles hold attachments.</source>
+        <translation>ASS வசனங்கள் மட்டுமே இணைப்புகளைக் கொண்டிருக்கும்.</translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Graphic</source>
+        <translation>படம்</translation>
+    </message>
+    <message>
+        <source>Attached fonts are used to draw these subtitles, and travel with the file. Extracting writes a copy; the subtitles do not change.</source>
+        <translation>இணைக்கப்பட்ட எழுத்துருக்கள் இந்த வசனங்களை வரையப் பயன்படுகின்றன, கோப்புடனே செல்கின்றன. பிரித்தெடுத்தல் ஒரு நகலை எழுதும்; வசனங்கள் மாறாது.</translation>
+    </message>
+    <message>
+        <source>Attach font…</source>
+        <translation>எழுத்துருவை இணை…</translation>
+    </message>
+    <message>
+        <source>Attach graphic…</source>
+        <translation>படத்தை இணை…</translation>
+    </message>
+    <message>
+        <source>Extract…</source>
+        <translation>பிரித்தெடு…</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>மூடு</translation>
+    </message>
+    <message>
+        <source>Font files (*.ttf *.ttc *.otf *.otc)</source>
+        <translation>எழுத்துருக் கோப்புகள் (*.ttf *.ttc *.otf *.otc)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>எல்லாக் கோப்புகளும் (*)</translation>
+    </message>
+    <message>
+        <source>Graphics (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</source>
+        <translation>படங்கள் (*.bmp *.gif *.jpg *.jpeg *.ico *.png *.wmf *.emf)</translation>
+    </message>
+    <message>
+        <source>Extract to folder</source>
+        <translation>கோப்புறைக்குப் பிரித்தெடு</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.Audio</name>
     <message>
         <source>Play</source>
@@ -9409,6 +9544,10 @@ Failed to copy %2 fonts.</source>
         <translation>குறியாக்கத்துடன் மீண்டும் திற…</translation>
     </message>
     <message>
+        <source>Attachments…</source>
+        <translation>இணைப்புகள்…</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -13406,8 +13545,8 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Nothing runs until the file’s Lua is trusted.</source>
-        <translation type="unfinished"></translation>
+        <source>Nothing runs until you trust the file’s Lua: choose Preview in the notice above.</source>
+        <translation>கோப்பின் Lua-வை நீங்கள் நம்பும் வரை எதுவும் இயங்காது: மேலே உள்ள அறிவிப்பில் முன்னோட்டம் என்பதைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
         <source>No preview: the graph has problems.</source>
@@ -13594,7 +13733,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>&lt;b&gt;Preview&lt;/b&gt; · line %1 · %2</source>
         <extracomment>Over the video: the node effects&apos; preview of Line %1, %2 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
-        <translation type="unfinished">&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · வரி %1 · %2</translation>
+        <translation type="obsolete">&lt;b&gt;முன்னோட்டம்&lt;/b&gt; · வரி %1 · %2</translation>
+    </message>
+    <message>
+        <source>%1 · no source line here</source>
+        <extracomment>Over the video: the node effects&apos; preview has no source line chosen, or none at the playhead; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · இங்கே மூல வரி இல்லை</translation>
+    </message>
+    <message>
+        <source>%1 off until you trust this file</source>
+        <extracomment>Over the video: the node effects&apos; preview waits until the file&apos;s Lua is trusted; %1 is &quot;Preview&quot;</extracomment>
+        <translation>இந்தக் கோப்பை நீங்கள் நம்பும் வரை %1 முடக்கப்பட்டுள்ளது</translation>
+    </message>
+    <message>
+        <source>%1 · fix the problems to see it</source>
+        <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
+        <translation>%1 · அதைப் பார்க்க சிக்கல்களைச் சரிசெய்யவும்</translation>
+    </message>
+    <message>
+        <source>%1 · line %2 · %3</source>
+        <extracomment>Over the video: %1 is &quot;Preview&quot;, then the node effects&apos; preview of Line %2, %3 &quot;not applied&quot; or &quot;last run that worked&quot;</extracomment>
+        <translation>%1 · வரி %2 · %3</translation>
     </message>
     <message>
         <source>last run that worked</source>
@@ -18431,6 +18590,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>புதுப்பிப்புகளைத் தானாக நிறுவு</translation>
     </message>
     <message>
+        <source>Trust tool marks from %1</source>
+        <translation>%1 இலிருந்து வரும் கருவிக் குறிகளை நம்பு</translation>
+    </message>
+    <message>
+        <source>Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.</source>
+        <translation>படிக்க மட்டும் செய்யும் அதன் கருவிகள் அதன் பிறகு கேட்காமல் இயங்கும். அதுவரை அது சேர்க்கும் ஒவ்வொரு கருவியும் ஒரு மாற்றத்தைப் போலவே முதலில் கேட்கும்.</translation>
+    </message>
+    <message>
         <source>It didn’t start.</source>
         <translation>அது தொடங்கவில்லை.</translation>
     </message>
@@ -22938,7 +23105,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Save style</source>
-        <translation>பாணியைச் சேமி</translation>
+        <translation type="vanished">பாணியைச் சேமி</translation>
     </message>
     <message>
         <source>Style catalogue</source>
@@ -23195,7 +23362,7 @@ because it was edited.</source>
     </message>
     <message numerus="yes">
         <source>%1, %n line(s)</source>
-        <translation>
+        <translation type="vanished">
             <numerusform>%1, %n வரி</numerusform>
             <numerusform>%1, %n வரிகள்</numerusform>
         </translation>
@@ -23282,7 +23449,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to file</source>
-        <translation>கோப்பில் சேர்</translation>
+        <translation type="vanished">கோப்பில் சேர்</translation>
     </message>
     <message>
         <source>Copy the selected catalogue styles into this file</source>
@@ -23290,7 +23457,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Add to catalogue</source>
-        <translation>பட்டியலில் சேர்</translation>
+        <translation type="vanished">பட்டியலில் சேர்</translation>
     </message>
     <message>
         <source>Copy the selected file styles into the catalogue</source>
@@ -23432,11 +23599,23 @@ because it was edited.</source>
     </message>
     <message>
         <source>Preview text</source>
-        <translation>முன்னோட்ட உரை</translation>
+        <translation type="vanished">முன்னோட்ட உரை</translation>
     </message>
     <message>
         <source>Apply</source>
         <translation>பயன்படுத்து</translation>
+    </message>
+    <message>
+        <source>No styles in this file. Make one with + or copy one from the catalogue.</source>
+        <translation>இந்தக் கோப்பில் பாணிகள் இல்லை. + மூலம் ஒன்றை உருவாக்கவும் அல்லது பட்டியலிலிருந்து நகலெடுக்கவும்.</translation>
+    </message>
+    <message>
+        <source>Copy to catalogue</source>
+        <translation>பட்டியலுக்கு நகலெடு</translation>
+    </message>
+    <message>
+        <source>Copy to this file</source>
+        <translation>இந்தக் கோப்புக்கு நகலெடு</translation>
     </message>
     <message>
         <source>Yours</source>
@@ -23453,6 +23632,44 @@ because it was edited.</source>
     <message>
         <source>Move to yours</source>
         <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
+    </message>
+    <message>
+        <source>No style chosen</source>
+        <translation>பாணி எதுவும் தேர்ந்தெடுக்கப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>From the catalogue…</source>
+        <translation>பட்டியலிலிருந்து…</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles</source>
+        <translation>
+            <numerusform>%n பாணி</numerusform>
+            <numerusform>%n பாணிகள்</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s) use it</source>
+        <translation>
+            <numerusform>%n வரி இதைப் பயன்படுத்துகிறது</numerusform>
+            <numerusform>%n வரிகள் இதைப் பயன்படுத்துகின்றன</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Revert style</source>
+        <translation>பாணியைத் திரும்பப்பெறு</translation>
+    </message>
+    <message>
+        <source>Text sample</source>
+        <translation>உரை மாதிரி</translation>
+    </message>
+    <message>
+        <source>Font not installed</source>
+        <translation>எழுத்துரு நிறுவப்படவில்லை</translation>
+    </message>
+    <message>
+        <source>Font not installed: shown in %1</source>
+        <translation>எழுத்துரு நிறுவப்படவில்லை: %1 இல் காட்டப்படுகிறது</translation>
     </message>
     <message>
         <source>Colours and transparency</source>
@@ -23556,7 +23773,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Revert</source>
-        <translation>திரும்பப்பெறு</translation>
+        <translation type="vanished">திரும்பப்பெறு</translation>
     </message>
     <message>
         <source>A catalogue named “%1” already exists.</source>
@@ -23631,11 +23848,11 @@ Styles deleted:
     </message>
     <message>
         <source>Style</source>
-        <translation>பாணி</translation>
+        <translation type="vanished">பாணி</translation>
     </message>
     <message>
         <source>Lines</source>
-        <translation>வரிகள்</translation>
+        <translation type="vanished">வரிகள்</translation>
     </message>
     <message>
         <source>No styles: the file has no ASS styles</source>
@@ -23651,7 +23868,14 @@ Styles deleted:
     </message>
     <message>
         <source>Lines: %1</source>
-        <translation>வரிகள்: %1</translation>
+        <translation type="vanished">வரிகள்: %1</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n line(s)</source>
+        <translation>
+            <numerusform>%n வரி</numerusform>
+            <numerusform>%n வரிகள்</numerusform>
+        </translation>
     </message>
     <message>
         <source>the current line’s style</source>
@@ -23659,7 +23883,7 @@ Styles deleted:
     </message>
     <message>
         <source>Current line’s style</source>
-        <translation>தற்போதைய வரியின் பாணி</translation>
+        <translation type="vanished">தற்போதைய வரியின் பாணி</translation>
     </message>
     <message>
         <source>Apply to the selected lines</source>
