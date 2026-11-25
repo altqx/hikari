@@ -1054,7 +1054,7 @@ Each line of the script is one step. `expect` matches as the API scripts in `tes
 | `{"event": "<name>", "data": {…}}` | Sends the plugin an event it listens for, and waits for its handlers. |
 | `{"call": "<operation>", "params": {…}, "expect": …}` | Calls a Hikari API operation as the plugin. |
 | `{"complete": {…}, "expect": …}`, `{"hover": {…}, "expect": …}` | Asks the plugin's provider. The request is `{document, line, field, text, offset, trigger}`, and the step's object sets any of them; the editing target's first Line, `"text"`, `""`, `0` and `null` otherwise. |
-| `{"export": "<format>", "expectFile": "<path>"}` | Exports the Document with one of the plugin's formats and compares the file byte for byte. |
+| `{"export": "<format>", "expectFile": "<path>"}` | Exports the Document with one of the plugin's formats and compares the file byte for byte, line endings aside. |
 | `{"expectDocument": "<fixture.ass>"}` | Compares the Document, saved as ASS, with the fixture, line endings and a BOM aside. |
 | `{"answer": {…}}` | Answers the next dialog, quick pick or input box: `{"button", "values"}` for a dialog, `{"pick": [ids]}`, `{"text"}`, `{"button"}` or `{"back": true}` for a quick pick or input box, or `{"dismiss": true}`. A prompt with no answer waiting is dismissed and fails its step. |
 
