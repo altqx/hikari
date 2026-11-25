@@ -3874,7 +3874,12 @@ private slots:
     QQuickItem *spellItem(const char *name) const
     {
         auto *panel = item<QQuickItem>("spellCheckerPanel");
-        return panel ? findItem(panel, QLatin1String(name)) : nullptr;
+        if (!panel)
+            return nullptr;
+        if (auto *found = findItem(panel, QLatin1String(name)))
+            return found;
+        auto *toolbar = panel->property("toolbar").value<QQuickItem *>();
+        return toolbar ? findItem(toolbar, QLatin1String(name)) : nullptr;
     }
     QQuickWindow *messageBox(const char *host) const
     {
@@ -9133,6 +9138,9 @@ private slots:
         QVERIFY(bar);
         QTRY_COMPARE(bar->parentItem(), findItem(header, QStringLiteral("dockToolbarSlot")));
         QVERIFY(bar->isVisible());
+        const qreal room = header->property("toolbarRoom").toReal();
+        QCOMPARE(room, std::max(0.0, header->width() - header->property("selectedNaturalWidth").toReal() - 12));
+        QCOMPARE(bar->parentItem()->width(), std::min(bar->implicitWidth(), room));
         const QRectF inHeader = bar->mapRectToItem(header, QRectF(0, 0, bar->width(), bar->height()));
         QVERIFY(inHeader.top() >= 0 && inHeader.bottom() <= header->height());
         QQuickItem *tab = header->property("currentTab").value<QQuickItem *>();
@@ -14421,6 +14429,10 @@ private slots:
 
     void spellCheckerWindowAndEditorMarks()
     {
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
         QTemporaryDir home;
         QVERIFY(home.isValid());
         writeDictionary(home.path());
@@ -14445,8 +14457,16 @@ private slots:
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QCOMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
         QCOMPARE(spellItem("spellReplacement")->property("text").toString(), QStringLiteral("world"));
+        auto *chosen = spellItem("spellSuggestions")->property("currentItem").value<QQuickItem *>();
+        QVERIFY(chosen && chosen->property("highlighted").toBool());
+        QCOMPARE(chosen->property("contentItem").value<QQuickItem *>()->property("color").value<QColor>(),
+                 ui::theme::current().roles.text);
         QCOMPARE(application->editor().selectionStart(), 6);
         QCOMPARE(application->editor().selectionEnd(), 11);
+        const auto currentMark = [&](int row) { return grid->index(row, 0).data(ui::LineTableModel::CurrentSpellMarkRole).toList(); };
+        QCOMPARE(currentMark(0), (QVariantList{6, 10}));
+        QCOMPARE(currentMark(1), QVariantList{});
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 1);
         QVERIFY(QMetaObject::invokeMethod(spellItem("spellReplace"), "click"));
         QCOMPARE(session->history().back().name, std::string("Correcting spelling errors"));
         auto text = [&](std::size_t row) {
@@ -14459,10 +14479,24 @@ private slots:
         QCOMPARE(application->editor().text(), QStringLiteral("Teh text"));
         QCOMPARE(application->editor().selectionStart(), 0);
         QCOMPARE(application->editor().selectionEnd(), 3);
+        QCOMPARE(spellItem("spellStatus")->property("text").toString(), QStringLiteral("Line 2 of 3 · 2 found so far"));
+        QCOMPARE(currentMark(0), QVariantList{});
+        QCOMPARE(currentMark(1), (QVariantList{0, 2}));
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 1);
+        application->selectLine(session->document().lines()[2]->id.value);
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 0);
+        application->selectLine(session->document().lines()[1]->id.value);
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 1);
         QVERIFY(QMetaObject::invokeMethod(spellItem("spellIgnore"), "click"));
-        QTRY_VERIFY(toastWith(QStringLiteral("No spelling errors were found")));
-        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No spelling errors in spelling.ass"));
-        QVERIFY(spellItem("spellEmpty")->isVisible());
+        QTRY_VERIFY(spellItem("spellEmpty")->isVisible());
+        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No more spelling mistakes"));
+        QCOMPARE(spellItem("spellEmptyDetail")->property("text").toString(),
+                 QStringLiteral("3 lines checked · 1 word replaced, 1 ignored"));
+        QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Check again"));
+        QVERIFY(!toastWith(QStringLiteral("No spelling errors were found")));
+        QCOMPARE(currentMark(1), QVariantList{});
+        QTRY_COMPARE(item("lineTextCurrentMisspell")->property("count").toInt(), 0);
+        QCOMPARE(grid->index(1, 0).data(ui::LineTableModel::SpellMarksRole).toList(), (QVariantList{0, 2}));
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
 
@@ -14570,7 +14604,7 @@ private slots:
         QTRY_VERIFY(ui::theme::currentIs(ui::theme::Code::Dark));
     }
 
-    void spellingStartsOnceAndReportsMissingDictionaries()
+    void spellingStartsOnceAndLogsMissingDictionaries()
     {
         QTemporaryDir home;
         QVERIFY(home.isValid());
@@ -14581,6 +14615,14 @@ private slots:
         QVERIFY(application->openFile(path));
         auto marks = [&] { return application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(); };
         QCOMPARE(marks(), QVariantList{});
+        auto *dock = named("spellDock");
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(spellItem("spellEmptyText"));
+        QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("Spell checking is turned off."));
+        QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Open Settings…"));
+        QVERIFY(!spellItem("spellNoDictionaryMark")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
         application->setSpellingOn(true);
         QCOMPARE(marks(), QVariantList{});
         application->setDictionaryLanguage(QStringLiteral("en_US"));
@@ -14592,15 +14634,102 @@ private slots:
         QVERIFY(application->openFile(path));
         const QString text = QStringLiteral("No dictionary files were found in the “%1” folder. Spell checking will be disabled.")
                                  .arg(QDir::toNativeSeparators(QDir(empty.path()).absoluteFilePath(QStringLiteral("Dictionary"))));
-        QQuickItem *notice = nullptr;
-        QTRY_VERIFY((notice = toastWith(text)));
-        QCOMPARE(partNamed(notice, "toastTitle")->property("text").toString(),
-                 QStringLiteral("Spellchecker"));
-        QVERIFY(application->log().history().contains(QStringLiteral("Spellchecker: ") + text));
+        QTRY_VERIFY(application->log().history().contains(QStringLiteral("Spellchecker: ") + text));
+        QVERIFY(!toastWith(text));
 #ifndef _WIN32
         QVERIFY(!text.contains(QLatin1Char('\\')));
 #endif
         QVERIFY(!application->spellingOn());
+    }
+
+    void spellcheckerAndQcNotesScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "area11.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold good\n"
+                                                          "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Teh text\n");
+        auto *settings = application->settingsStore();
+        settings->setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto setTheme = [&](const char *code) {
+            settings->setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto grab = [&](const QString &name) {
+            QTest::qWait(400);
+            QVERIFY(window->grabWindow().save(out + name));
+        };
+        const auto show = [&](const char *dock) {
+            QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel",
+                                              Q_ARG(QVariant, QVariant::fromValue(item<QObject>(dock)))));
+            QTRY_VERIFY(item<QObject>(dock)->property("isOpen").toBool());
+        };
+        const auto close = [&](const char *dock) {
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>(dock), "close"));
+            QTRY_VERIFY(!item<QObject>(dock)->property("isOpen").toBool());
+        };
+        const QList<QSize> sizes{{1366, 768}, {1280, 800}};
+        const std::initializer_list<const char *> themes{"light", "dark", "highContrastBlack", "highContrastWhite"};
+
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &qc = application->qcNotes();
+        QVERIFY(qc.add(1000, QStringLiteral("General"), QStringLiteral("Too early")));
+        QVERIFY(qc.add(3000, QStringLiteral("TLC"), QStringLiteral("Typo in the second line, and a note long enough to wrap")));
+        QVERIFY(qc.setDone(0, true));
+        for (const QSize &size : sizes)
+            for (const char *code : themes) {
+                window->resize(size);
+                setTheme(code);
+                const QString suffix = QStringLiteral("-%1x%2-%3.png").arg(size.width()).arg(size.height()).arg(QLatin1String(code));
+                const auto first = session->document().lines()[0]->id;
+                session->setSelection(application::Selection{first, {first}, first, {}});
+                show("spellDock");
+                QTRY_VERIFY(spellItem("spellColumns") && spellItem("spellColumns")->isVisible());
+                grab(QStringLiteral("/area11-spelling-found") + suffix);
+                while (spellItem("spellColumns")->isVisible())
+                    QVERIFY(QMetaObject::invokeMethod(spellItem("spellIgnore"), "click"));
+                QTRY_VERIFY(spellItem("spellEmpty")->isVisible());
+                grab(QStringLiteral("/area11-spelling-done") + suffix);
+                close("spellDock");
+                show("qcNotesDock");
+                QTRY_VERIFY(item("qcNotesTool")->isVisible());
+                grab(QStringLiteral("/area11-qc-list") + suffix);
+                QVERIFY(QMetaObject::invokeMethod(item("qcNotesTool"), "startAdding", Q_ARG(QVariant, 2000)));
+                QTRY_VERIFY(item("qcNotesAddEditor")->isVisible());
+                grab(QStringLiteral("/area11-qc-editor") + suffix);
+                QVERIFY(QMetaObject::invokeMethod(item("qcNotesTool"), "stopEditing"));
+                close("qcNotesDock");
+            }
+
+        QTemporaryDir bare;
+        QVERIFY(bare.isValid());
+        restartWithSpelling(bare.path(), true);
+        settings = application->settingsStore();
+        settings->setValue(QStringLiteral("appearance.followSystem"), false);
+        QVERIFY(application->openFile(path));
+        for (const QSize &size : sizes)
+            for (const char *code : themes) {
+                window->resize(size);
+                setTheme(code);
+                show("spellDock");
+                QTRY_VERIFY(spellItem("spellNoDictionaryMark") && spellItem("spellNoDictionaryMark")->isVisible());
+                QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyDetails"), "click"));
+                grab(QStringLiteral("/area11-spelling-no-dictionary-%1x%2-%3.png").arg(size.width()).arg(size.height()).arg(QLatin1String(code)));
+                QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyDetails"), "click"));
+                close("spellDock");
+            }
+        application->editor().discard();
     }
 
     void popupsAreTitledForWhatTheyShow()
@@ -14976,6 +15105,10 @@ private slots:
 
     void spellCheckerPanelStatesAndAddedWords()
     {
+        QTranslator english;
+        QVERIFY(english.load(QStringLiteral(HIKARI_EN_CATALOG)));
+        QCoreApplication::installTranslator(&english);
+        auto removeEnglish = qScopeGuard([&] { QCoreApplication::removeTranslator(&english); });
         QTemporaryDir home;
         QVERIFY(home.isValid());
         writeDictionary(home.path());
@@ -15000,10 +15133,10 @@ private slots:
         QQmlExpression names(qmlContext(root), root, QStringLiteral("panelOwnItems(spellDock).map(i => i.name).join(',')"));
         QCOMPARE(names.evaluate().toString(), QStringLiteral("spellIgnoreComments,spellIgnoreUpper,spellAddedWords"));
         QVERIFY(QMetaObject::invokeMethod(spellItem("spellAddWord"), "click"));
-        QTRY_VERIFY(toastWith(QStringLiteral("No spelling errors were found")));
         QTRY_VERIFY(spellItem("spellEmpty")->isVisible());
-        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(),
-                 QStringLiteral("No spelling errors in %1").arg(application->shell().editingTitle()));
+        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No more spelling mistakes"));
+        QCOMPARE(spellItem("spellEmptyDetail")->property("text").toString(),
+                 QStringLiteral("1 line checked · 1 added to the dictionary"));
         QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Check again"));
         QVERIFY(application->addedDictionaryWords().contains(QStringLiteral("wrold")));
         QQmlExpression added(qmlContext(root), root, QStringLiteral("panelOwnItems(spellDock)[2].run()"));
@@ -15017,7 +15150,7 @@ private slots:
         QTRY_VERIFY((word = dialogItem("spellAddedWords", "spellAdded_wrold")));
         QVERIFY(QMetaObject::invokeMethod(word, "click"));
         QTRY_VERIFY(remove->property("enabled").toBool());
-        QCOMPARE(remove->property("text").toString(), QStringLiteral("Remove 1 word(s)"));
+        QCOMPARE(remove->property("text").toString(), QStringLiteral("Remove 1 word"));
         QVERIFY(QMetaObject::invokeMethod(remove, "click"));
         QTRY_VERIFY(!words->property("visible").toBool());
         QVERIFY(!application->addedDictionaryWords().contains(QStringLiteral("wrold")));
@@ -15040,7 +15173,14 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel",
                                               Q_ARG(QVariant, QVariant::fromValue(dock))));
             QTRY_VERIFY(dock->property("isOpen").toBool());
-            QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
+            QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(),
+                         QStringLiteral("No dictionary for English (US) was found, so nothing can be checked."));
+            QVERIFY(spellItem("spellNoDictionaryMark")->isVisible());
+            QCOMPARE(spellItem("spellEmptyDetail")->property("text").toString(), QString());
+            QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyDetails"), "click"));
+            QCOMPARE(spellItem("spellEmptyDetail")->property("text").toString(),
+                     QStringLiteral("Dictionaries are .dic and .aff files in “%1”.")
+                         .arg(QDir::toNativeSeparators(QDir(bare.path()).absoluteFilePath(QStringLiteral("Dictionary")))));
             const auto dictionary = [&](const char *code, const QByteArray &words) {
                 QDir folder(bare.path() + QStringLiteral("/Dictionary"));
                 QDir().mkpath(folder.path());
@@ -15054,16 +15194,10 @@ private slots:
             };
             dictionary("en_US", "3\nHello\nwrold\ngood\n");
             QSignalSpy noticed(&application->log(), &ui::LogController::noticed);
-            const auto clean = [&] {
-                return std::ranges::count_if(noticed, [](const QList<QVariant> &n) {
-                    return n.at(3).toString() == QStringLiteral("No spelling errors were found");
-                });
-            };
             application->setSpellingOn(true);
             application->setDictionaryLanguage(QStringLiteral("en_US"));
-            QTRY_COMPARE(clean(), 1);
-            QTest::qWait(200);
-            QCOMPARE(clean(), 1);
+            QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No more spelling mistakes"));
+            QVERIFY(!spellItem("spellNoDictionaryMark")->isVisible());
             dictionary("en_GB", "2\nHello\nwrold\n");
             application->setDictionaryLanguage(QStringLiteral("en_GB"));
             QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("good"));
@@ -15071,7 +15205,7 @@ private slots:
             dictionary("en_AU", "2\nHello\ngood\n");
             application->setDictionaryLanguage(QStringLiteral("en_AU"));
             QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
-            QCOMPARE(clean(), 1);
+            QCOMPARE(noticed.count(), 0);
             QVERIFY(QMetaObject::invokeMethod(dock, "close"));
             QTRY_VERIFY(!dock->property("isOpen").toBool());
             application->editor().discard();
@@ -15083,12 +15217,18 @@ private slots:
         dock = named("spellDock");
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         QTRY_VERIFY(dock->property("isOpen").toBool());
-        QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
-        QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Spelling settings…"));
+        QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(),
+                     QStringLiteral("No dictionary for English (US) was found, so nothing can be checked."));
+        QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Choose a language…"));
         QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyAction"), "click"));
         auto *settingsWindow = qobject_cast<QWindow *>(this->settingsWindow());
         QTRY_VERIFY(settingsWindow && settingsWindow->isVisible());
-        QTRY_COMPARE(settingsWindow->property("currentPage").toString(), QStringLiteral("spelling"));
+        auto landedRow = [&] {
+            QQuickItem *flash = findItem(qobject_cast<QQuickWindow *>(settingsWindow)->contentItem(), QStringLiteral("settingsRowFlash"));
+            QObject *row = flash ? flash->property("row").value<QObject *>() : nullptr;
+            return row ? row->property("setting").toString() : QString();
+        };
+        QTRY_COMPARE(landedRow(), QStringLiteral("editor.dictionaryLanguage"));
         settingsWindow->close();
         QTRY_VERIFY(!settingsWindow->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));

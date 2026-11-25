@@ -600,7 +600,7 @@ ApplicationWindow {
         else if (dock === referenceDock && gridDock.isOpen)
             dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         else
-            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+            dockingArea.addDockWidget(dock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, dock === spellDock ? 200 : 180))
     }
     function openSpellChecker() {
         const checking = spellTool.checking
@@ -5491,6 +5491,33 @@ ApplicationWindow {
                 }
             }
         }
+        Repeater {
+            objectName: field.objectName + "CurrentMisspell"
+            model: {
+                const state = spellTool.current
+                if (!field.spelled || !spellTool.checking || spellTool.grammarMode || state.found !== true
+                        || state.line !== root.shell.activeLineNumber || (state.from ?? -1) < 0 || state.to > field.length || state.to <= state.from)
+                    return []
+                field.text
+                field.width
+                field.font
+                const first = field.positionToRectangle(state.from)
+                return field.underlineRows(first, field.positionToRectangle(state.to))
+                    .filter(r => r.width > 0).map(r => Qt.rect(r.x - 1, r.y - first.height, r.width + 2, first.height))
+            }
+            Rectangle {
+                required property rect modelData
+                x: modelData.x
+                y: modelData.y
+                width: modelData.width
+                height: modelData.height
+                z: -0.5
+                radius: 2
+                color: Theme.dangerFill
+                border.width: Theme.highContrast ? 1 : 0
+                border.color: Theme.danger
+            }
+        }
         EditorHighlighter {
             id: spellMarks
             objectName: field.objectName + "Highlighter"
@@ -9103,8 +9130,8 @@ ApplicationWindow {
                     app: root.app
                     shellWindow: root.shellWindow
                     notices: root.notices
-                    documentName: root.shell.editingTitle
                     onSettingsRequested: root.openSettings("spelling")
+                    onSettingRequested: setting => root.openSettingLink(setting, false)
                 }
             }
         }
@@ -9300,7 +9327,7 @@ ApplicationWindow {
             Docking.setPanelHeader(root.engineName("Reference"), true, referenceTray.toolbar)
             Docking.setPanelHeader(root.engineName("Search"), true, null)
             Docking.setPanelHeader(root.engineName("Log"), true, null)
-            Docking.setPanelHeader(root.engineName("Spellchecker"), true, null)
+            Docking.setPanelHeader(root.engineName("Spellchecker"), true, spellTool.toolbar)
             Docking.setPanelHeader(root.engineName("Original"), true, originalTools)
             Docking.setPanelHeader(root.engineName("Styles"), true, stylesTool.toolbar)
             Docking.setPanelHeader(root.engineName("Template"), false, templateTool.toolbar)
