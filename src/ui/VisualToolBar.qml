@@ -13,7 +13,7 @@ Control {
     readonly property bool batchTool: family > 0 && (familyInfo.available ?? false)
     property bool column: false
     property var keyOf: symbol => ""
-    readonly property string hint: texts.hint(family)
+    readonly property string hint: texts.hint(family, tools.options)
     padding: 0
     topPadding: 3
     bottomPadding: 3
@@ -288,9 +288,8 @@ Control {
 
     contentItem: Item {
         implicitHeight: bar.column ? inspector.implicitHeight : row.implicitHeight
-        // MUST KILL: counts the ? even when it folds, so placing it cannot resize the bar
         implicitWidth: bar.column ? inspector.implicitWidth
-                       : row.implicitWidth + (bar.shown && bar.hint.length > 0 && !rowGuide.visible ? bar.guideWidth : 0)
+                       : (bar.shown && bar.hint.length > 0 ? bar.guideWidth : 0) + (bar.batchTool ? bar.pickerWidth : 0)
         ColumnLayout {
             id: inspector
             objectName: "visualInspector"

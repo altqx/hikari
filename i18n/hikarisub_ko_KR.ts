@@ -10607,6 +10607,10 @@ Failed to copy %2 fonts.</source>
         <translation>서로 다른 스타일 두 개를 선택하십시오.</translation>
     </message>
     <message>
+        <source>Pairs of romaji and kanji lines show here.</source>
+        <translation>로마자 줄과 한자 줄의 쌍이 여기에 표시됩니다.</translation>
+    </message>
+    <message>
         <source>No karaoke lines in “%1”</source>
         <translation>“%1”에 노래방 줄 없음</translation>
     </message>
@@ -10641,6 +10645,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>%1 of %2 groups</source>
         <translation>그룹 %1/%2</translation>
+    </message>
+    <message>
+        <source>A pair’s syllables and their kanji show here.</source>
+        <translation>쌍의 음절과 해당 한자가 여기에 표시됩니다.</translation>
     </message>
     <message>
         <source>Choose the romaji and kanji styles</source>
@@ -22046,6 +22054,10 @@ because it was edited.</source>
         <translation>자동 저장 파일</translation>
     </message>
     <message>
+        <source>Delete old autosaves</source>
+        <translation>오래된 자동 저장 파일 삭제</translation>
+    </message>
+    <message>
         <source>Search autosaves</source>
         <translation>자동 저장 파일 검색</translation>
     </message>
@@ -29667,6 +29679,30 @@ or codecs or a splitter may be missing</source>
         <source>Freehand: hold and draw.</source>
         <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
         <translation>자유 곡선: 누른 채로 그리십시오.</translation>
+    </message>
+    <message>
+        <source>Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.</source>
+        <translation>끌어서 상자를 만들면 정렬에 맞춰 줄이 배치됩니다. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.</source>
+        <translation>줄이 따라갈 지점을 클릭하고 영상을 앞으로 넘긴 뒤 같은 지점을 다시 클릭하십시오. 어느 점이든 끌어서 조정할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.</source>
+        <translation>텍스트가 맞춰질 상자를 끌어서 만들고, 오른쪽 끌기로 지금 텍스트를 둘러싼 상자를 만드십시오. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit. Drag its edges to resize, inside to move.</source>
+        <translation>텍스트가 맞춰질 상자를 끌어서 만드십시오. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
+    </message>
+    <message>
+        <source>Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.</source>
+        <translation>화면 속 가장자리를 따라 두 점을 클릭하면 텍스트가 그에 맞게 회전합니다. 어느 점이든 끌어서 조정할 수 있습니다.</translation>
+    </message>
+    <message>
+        <source>Drag a box to draw the shape. Drag its edges to resize, inside to move.</source>
+        <translation>끌어서 상자를 만들면 도형이 그려집니다. 가장자리를 끌면 크기가, 안쪽을 끌면 위치가 바뀝니다.</translation>
     </message>
     <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>

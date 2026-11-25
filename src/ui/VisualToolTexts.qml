@@ -45,7 +45,33 @@ QtObject {
         return qsTr("Freehand: hold and draw.")
     }
 
-    function hint(family) {
+    function hint(family, options) {
+        const on = name => (options ?? []).some(o => o.name === name && o.checked)
+        const chosen = name => (options ?? []).some(o => o.name === name && o.index > 0)
+        switch (family) {
+        case 1:
+            if (on("byRectangle"))
+                return qsTr("Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.")
+            break
+        case 2:
+            if (on("twoPoints"))
+                return qsTr("Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.")
+            break
+        case 3:
+            if (on("rectangle") && on("originalRectangle"))
+                return qsTr("Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.")
+            if (on("rectangle"))
+                return qsTr("Drag a box the text should fit. Drag its edges to resize, inside to move.")
+            break
+        case 4:
+            if (on("twoPoints"))
+                return qsTr("Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.")
+            break
+        case 8:
+            if (chosen("shape"))
+                return qsTr("Drag a box to draw the shape. Drag its edges to resize, inside to move.")
+            break
+        }
         switch (family) {
         case 0: return qsTr("Point at the picture to read a position. Ctrl-click puts the line there.")
         case 1: return qsTr("Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer.")

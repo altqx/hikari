@@ -1766,6 +1766,7 @@ DialogWindow {
                 contentWidth: Math.max(narrowest, availableWidth)
                 // Never sized by its content: that would loop through contentWidth.
                 implicitWidth: 0
+                implicitHeight: Math.min(contentHeight, 380)
                 ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
                 ScrollBar.horizontal.policy: contentWidth > availableWidth + 0.5 ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
                 GridLayout {

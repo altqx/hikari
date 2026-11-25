@@ -2503,7 +2503,7 @@ ApplicationWindow {
         Action {
             id: removeTemporaryAction
             text: qsTr("Delete old autosaves…")
-            onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) autosaves.show(true)
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) autosaves.showDeleting()
         }
         Action {
             id: loadLastSessionAction

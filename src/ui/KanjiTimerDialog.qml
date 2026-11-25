@@ -185,6 +185,15 @@ DialogWindow {
                     font: dialog.fontAt(12)
                     text: qsTr("The romaji style needs lines timed with %1 tags.").arg("\\k")
                 }
+                Label {
+                    objectName: "kanjiPairsWhat"
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    color: Theme.muted
+                    font: dialog.fontAt(12)
+                    text: qsTr("Pairs of romaji and kanji lines show here.")
+                }
             }
             ListView {
                 id: pairList
@@ -305,12 +314,28 @@ DialogWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 background: Rectangle { color: Theme.field; border.color: Theme.line }
-                Label {
-                    objectName: "kanjiNoPair"
+                ColumnLayout {
                     anchors.centerIn: parent
-                    color: Theme.muted
-                    text: dialog.timer.problem !== "" ? qsTr("Choose the romaji and kanji styles")
-                                                      : qsTr("No pair with both lines")
+                    width: parent.width - 32
+                    spacing: 4
+                    Label {
+                        objectName: "kanjiNoPair"
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        color: Theme.muted
+                        text: dialog.timer.problem !== "" ? qsTr("Choose the romaji and kanji styles")
+                                                          : qsTr("No pair with both lines")
+                    }
+                    Label {
+                        objectName: "kanjiPairWhat"
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        color: Theme.muted
+                        font: dialog.fontAt(12)
+                        text: qsTr("A pair’s syllables and their kanji show here.")
+                    }
                 }
             }
 

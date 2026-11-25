@@ -10607,6 +10607,10 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกสไตล์สองแบบที่ต่างกัน</translation>
     </message>
     <message>
+        <source>Pairs of romaji and kanji lines show here.</source>
+        <translation>คู่บรรทัดโรมาจิและคันจิจะแสดงที่นี่</translation>
+    </message>
+    <message>
         <source>No karaoke lines in “%1”</source>
         <translation>ไม่มีบรรทัดคาราโอเกะใน “%1”</translation>
     </message>
@@ -10641,6 +10645,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>%1 of %2 groups</source>
         <translation>%1 จาก %2 กลุ่ม</translation>
+    </message>
+    <message>
+        <source>A pair’s syllables and their kanji show here.</source>
+        <translation>พยางค์ของคู่และคันจิของพยางค์จะแสดงที่นี่</translation>
     </message>
     <message>
         <source>Choose the romaji and kanji styles</source>
@@ -22042,6 +22050,10 @@ because it was edited.</source>
         <translation>ไฟล์บันทึกอัตโนมัติ</translation>
     </message>
     <message>
+        <source>Delete old autosaves</source>
+        <translation>ลบไฟล์บันทึกอัตโนมัติเก่า</translation>
+    </message>
+    <message>
         <source>Search autosaves</source>
         <translation>ค้นหาไฟล์บันทึกอัตโนมัติ</translation>
     </message>
@@ -29663,6 +29675,30 @@ or codecs or a splitter may be missing</source>
         <source>Freehand: hold and draw.</source>
         <extracomment>The hint of the vector clip and drawing tools, after their own; Freehand is a mode button</extracomment>
         <translation>วาดมือเปล่า: กดค้างแล้ววาด</translation>
+    </message>
+    <message>
+        <source>Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบเพื่อวางบรรทัดตามการจัดแนว ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.</source>
+        <translation>คลิกจุดที่บรรทัดจะเคลื่อนตาม เลื่อนวิดีโอไปข้างหน้า แล้วคลิกจุดเดิมอีกครั้ง ลากจุดใดก็ได้เพื่อปรับ</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบที่ข้อความต้องพอดี ลากด้วยปุ่มขวาเพื่อสร้างกรอบรอบข้อความตามที่เป็นอยู่ ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Drag a box the text should fit. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบที่ข้อความต้องพอดี ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
+    </message>
+    <message>
+        <source>Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.</source>
+        <translation>คลิกสองจุดตามแนวขอบในภาพ ข้อความจะหมุนให้ตรงกัน ลากจุดใดก็ได้เพื่อปรับ</translation>
+    </message>
+    <message>
+        <source>Drag a box to draw the shape. Drag its edges to resize, inside to move.</source>
+        <translation>ลากสร้างกรอบเพื่อวาดรูปทรง ลากขอบเพื่อปรับขนาด ลากด้านในเพื่อย้าย</translation>
     </message>
     <message>
         <source>Point at the picture to read a position. Ctrl-click puts the line there.</source>

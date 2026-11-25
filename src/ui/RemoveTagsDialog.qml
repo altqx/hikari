@@ -148,7 +148,7 @@ DialogWindow {
             }
         }
         GridLayout {
-            columns: 3
+            columns: 4
             columnSpacing: 12
             rowSpacing: 0
             Repeater {
@@ -163,7 +163,6 @@ DialogWindow {
                         dialog.setFamily(index, checked)
                         checked = Qt.binding(() => dialog.families.indexOf(index) >= 0)
                     }
-                    Layout.fillWidth: true
                     ToolTip.visible: hovered
                     ToolTip.delay: 500
                     ToolTip.text: modelData.tags
@@ -173,7 +172,7 @@ DialogWindow {
         }
         Label { text: qsTr("Clean up"); font: dialog.fontAt(13, Font.DemiBold) }
         GridLayout {
-            columns: 2
+            columns: 3
             columnSpacing: 12
             rowSpacing: 0
             Repeater {
@@ -187,7 +186,6 @@ DialogWindow {
                         dialog.setCleanup(modelData.key, checked)
                         checked = Qt.binding(() => dialog.cleanup[modelData.key] === true)
                     }
-                    Layout.fillWidth: true
                     ToolTip.visible: hovered && !!modelData.help
                     ToolTip.delay: 500
                     ToolTip.text: modelData.help ?? ""
@@ -200,7 +198,7 @@ DialogWindow {
             border.color: Theme.line
             radius: 4
             Layout.fillWidth: true
-            Layout.preferredHeight: 190
+            Layout.preferredHeight: 150
             ListView {
                 id: previewList
                 objectName: "removeTagsPreview"

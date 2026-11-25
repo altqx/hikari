@@ -8107,7 +8107,7 @@ private slots:
     {
         QObject *autosaves = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("autosaves"));
         QVERIFY(autosaves);
-        QVERIFY(QMetaObject::invokeMethod(autosaves, "show", Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(autosaves, "showDeleting"));
         auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"));
         QVERIFY(window);
         auto close = qScopeGuard([&] { window->close(); });
@@ -8120,6 +8120,16 @@ private slots:
         QDate monthAgo = QDate::currentDate().addMonths(-1);
         QCOMPARE(picker->property("date").toDateTime().date(), monthAgo);
         QVERIFY(window->findChild<QObject *>(QStringLiteral("datePickerOpen")));
+        QCOMPARE(window->title(), QStringLiteral("Delete old autosaves"));
+        QTRY_VERIFY(window->activeFocusItem());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(autosaves, "show"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("Autosaves"));
+        QTRY_VERIFY(window->activeFocusItem());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!window->isVisible());
     }
 
     void everyMenuItemHasAnIcon()
@@ -13871,6 +13881,18 @@ private slots:
         QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiSameStyle")->isVisible());
         QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 0);
         QVERIFY(dialogItem("kanjiTimerDialog", "kanjiNoPair")->isVisible());
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairsWhat")->property("text").toString(),
+                 QStringLiteral("Pairs of romaji and kanji lines show here."));
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiPairsWhat")->isVisible());
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairWhat")->property("text").toString(),
+                 QStringLiteral("A pair’s syllables and their kanji show here."));
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiPairWhat")->isVisible());
+        const auto above = [&](const char *state, const char *what) {
+            return dialogItem("kanjiTimerDialog", state)->mapToScene(QPointF()).y()
+                   < dialogItem("kanjiTimerDialog", what)->mapToScene(QPointF()).y();
+        };
+        QTRY_VERIFY(above("kanjiPairsEmpty", "kanjiPairsWhat"));
+        QTRY_VERIFY(above("kanjiNoPair", "kanjiPairWhat"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -31010,6 +31032,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
         QCOMPARE(tools.activeFamily(), 1);
+        QVERIFY(QQuickTest::qWaitForPolish(window));
         QQuickItem *byRect = visualItem("visualOption_byRectangle");
         QVERIFY(byRect);
         QCOMPARE(byRect->property("iconRole").toString(), QStringLiteral("frame-to-scale"));
@@ -34078,6 +34101,7 @@ private slots:
 
     void visualToolRailFoldsUnderMoreTools()
     {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("Binding loop")));
         auto &tools = application->visualTools();
         QVERIFY(application->openFile(
             visualDocument("rail.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}Rail\n")));
@@ -34165,6 +34189,7 @@ private slots:
 
     void visualInspectorBarFitsOneLine()
     {
+        QTest::failOnWarning(QRegularExpression(QStringLiteral("Binding loop")));
         auto &tools = application->visualTools();
         QVERIFY(application->openFile(visualDocument(
             "one-line.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}One line\n"
@@ -38384,6 +38409,87 @@ private slots:
         }
     }
 
+    void styleManagerAndRemoveTagsFitASmallScreenWithRoom()
+    {
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto *root = engine->rootObjects().first();
+        for (const auto &[name, menuItem] : {std::pair{"styleManager", "styleManagerMenuItem"},
+                                             std::pair{"removeTagsDialog", "gridRemoveTags"}}) {
+            QVERIFY(QMetaObject::invokeMethod(named(menuItem)->property("action").value<QObject *>(), "trigger"));
+            QQuickWindow *window = nullptr;
+            QTRY_VERIFY((window = root->findChild<QQuickWindow *>(QLatin1String(name))) && window->isVisible());
+            QTRY_VERIFY(window->property("naturalHeight").toInt() > 0);
+            QVERIFY2(window->property("naturalHeight").toInt() <= 640, name);
+            QVERIFY2(window->property("naturalWidth").toInt() <= 1366 - 160, name);
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        }
+        QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "show"));
+        QQuickWindow *autosaves = nullptr;
+        QTRY_VERIFY((autosaves = root->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"))) && autosaves->isVisible());
+        auto *empty = autosaves->findChild<QQuickItem *>(QStringLiteral("autosavesEmpty"));
+        QVERIFY(empty);
+        QTRY_VERIFY(empty->isVisible());
+        QVERIFY2(autosaves->property("naturalHeight").toInt() <= 300, "an empty Autosaves window is no bigger than its empty state");
+        auto *body = autosaves->findChild<QQuickItem *>(QStringLiteral("dialogBody"));
+        QVERIFY(body);
+        QCOMPARE(body->mapToScene(QPointF()).x(), 24.0);
+        QCOMPARE(body->width(), autosaves->width() - 48.0);
+        QVERIFY(autosaves->close());
+        QTRY_VERIFY(!autosaves->isVisible());
+    }
+
+    void settingsAndDialogsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_AREA9_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_AREA9_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        QVERIFY(application->video().showFrameAt(0));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light")); });
+        const auto trigger = [&](const char *menuItem) {
+            return [&, menuItem] {
+                QVERIFY(QMetaObject::invokeMethod(named(menuItem)->property("action").value<QObject *>(), "trigger"));
+            };
+        };
+        const std::vector<std::pair<QString, std::function<void()>>> windows{
+            {QStringLiteral("styleManager"), trigger("styleManagerMenuItem")},
+            {QStringLiteral("removeTagsDialog"), trigger("gridRemoveTags")},
+            {QStringLiteral("kanjiTimerDialog"), trigger("kanjiTimerMenuItem")},
+            {QStringLiteral("findFadeDialog"), trigger("findFadeMenuItem")},
+            {QStringLiteral("trackColourDialog"), trigger("trackColourMenuItem")},
+            {QStringLiteral("autosavesWindow"),
+             [&] { QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "showDeleting")); }},
+        };
+        QFile sizes(out + QStringLiteral("/area9-sizes.txt"));
+        QVERIFY(sizes.open(QIODevice::WriteOnly | QIODevice::Text));
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            for (const auto &[name, open] : windows) {
+                open();
+                QQuickWindow *window = nullptr;
+                QTRY_VERIFY((window = root->findChild<QQuickWindow *>(name)) && window->isVisible());
+                QVERIFY(QTest::qWaitForWindowExposed(window));
+                QTest::qWait(300);
+                QVERIFY(window->grabWindow().save(QStringLiteral("%1/area9-%2-%3.png").arg(out, name, theme)));
+                if (code == ui::theme::kCodes.front())
+                    sizes.write(QStringLiteral("%1 %2x%3\n").arg(name).arg(window->width()).arg(window->height()).toUtf8());
+                QVERIFY(window->close());
+                QTRY_VERIFY(!window->isVisible());
+            }
+        }
+    }
+
     void pu7Screenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_PU7_SHOT_DIR");
@@ -42213,6 +42319,42 @@ private slots:
             shoot("vt8f-scale-rectangle.png");
             QVERIFY(tools.setOption(QStringLiteral("rectangle"), 0));
             QTRY_VERIFY(fullscreenItem("visualInspectorHandle2"));
+        }
+        {
+            const auto hint = [&] { return fullscreenItem("visualInspectorHintText")->property("text").toString(); };
+            struct Mode {
+                int family;
+                QStringList options;
+                QString hint;
+            };
+            const QList<Mode> modes{
+                {1, {QStringLiteral("byRectangle")},
+                 QStringLiteral("Drag a box to place the line by its alignment. Drag its edges to resize, inside to move.")},
+                {2, {QStringLiteral("twoPoints")},
+                 QStringLiteral("Click a point the line follows, step the video on, then click the same point again. Drag either point to adjust.")},
+                {3, {QStringLiteral("rectangle")},
+                 QStringLiteral("Drag a box the text should fit. Drag its edges to resize, inside to move.")},
+                {3, {QStringLiteral("rectangle"), QStringLiteral("originalRectangle")},
+                 QStringLiteral("Drag a box the text should fit; right-drag one round the text as it is. Drag the edges to resize, inside to move.")},
+                {4, {QStringLiteral("twoPoints")},
+                 QStringLiteral("Click two points along an edge in the picture; the text turns to match. Drag either point to adjust.")},
+                {8, {QStringLiteral("shape")}, QStringLiteral("Drag a box to draw the shape. Drag its edges to resize, inside to move.")},
+            };
+            for (const Mode &mode : modes) {
+                if (tools.activeFamily() != mode.family)
+                    tools.selectFamily(mode.family);
+                QTRY_COMPARE(tools.activeFamily(), mode.family);
+                const QString plain = hint();
+                QVERIFY(!plain.isEmpty());
+                for (const QString &option : mode.options)
+                    QVERIFY2(tools.setOption(option, 1), qPrintable(option));
+                QTRY_COMPARE(hint(), mode.hint);
+                for (auto it = mode.options.crbegin(); it != mode.options.crend(); ++it)
+                    QVERIFY(tools.setOption(*it, 0));
+                QTRY_COMPARE(hint(), plain);
+            }
+            tools.selectFamily(3);
+            QTRY_COMPARE(tools.activeFamily(), 3);
         }
         {
             auto *keys = fullscreenItem("videoFullscreenKeys");
