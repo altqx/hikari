@@ -15213,6 +15213,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
     </message>
     <message>
+        <source>The symbol that stands for each tag block when tags are replaced.</source>
+        <translation>Symbol zastępujący każdy blok tagów, gdy tagi są zastępowane.</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
+    </message>
+    <message>
+        <source>Tints the lines that show on the current video frame.</source>
+        <translation>Zabarwia linijki widoczne na bieżącej klatce wideo.</translation>
+    </message>
+    <message>
         <source>Styles for new files</source>
         <translation>Style nowych plików</translation>
     </message>
@@ -15547,6 +15559,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
         <translation>Wcześniejsze zapisy każdego pliku zachowywane w folderze odzyskiwania. Zakres od 0 do 100</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Pokaż</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>Tagi na liście napisów</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -16265,6 +16293,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Importuj skróty ze starej wersji</translation>
     </message>
     <message>
+        <source>Vector clip smoothing</source>
+        <translation>Wygładzanie wycinka wektorowego</translation>
+    </message>
+    <message>
+        <source>How closely a freehand stroke is followed. Range from 0 to 100</source>
+        <translation>Jak dokładnie odręczna linia podąża za ruchem. Zakres od 0 do 100</translation>
+    </message>
+    <message>
+        <source>Drawing smoothing</source>
+        <translation>Wygładzanie rysunku</translation>
+    </message>
+    <message>
         <source>No plugin has settings.</source>
         <translation>Żadna wtyczka nie ma ustawień.</translation>
     </message>
@@ -16291,6 +16331,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Enter a number.</source>
         <translation>Wpisz liczbę.</translation>
+    </message>
+    <message>
+        <source>%1, item %2</source>
+        <translation>%1, element %2</translation>
+    </message>
+    <message>
+        <source>Remove item %1</source>
+        <translation>Usuń element %1</translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation>Nie ustawiono</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -17982,6 +18034,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
         <translation>Zastępuje ikony interfejsu HikariSub. Ikony, których motyw nie obejmuje, pozostają ikonami HikariSub.</translation>
     </message>
+    <message>
+        <source>This window has no trusted Project to keep it in.</source>
+        <translation>To okno nie ma zaufanego projektu, w którym można to zapisać.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set “%1”.</source>
+        <translation>Projekt nie może ustawić “%1”.</translation>
+    </message>
+    <message>
+        <source>project.toml can’t be written.</source>
+        <translation>Nie można zapisać project.toml.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -19204,6 +19268,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can’t write the theme plugin to %1.</source>
         <translation>Nie można zapisać wtyczki motywu w %1.</translation>
+    </message>
+    <message>
+        <source>“%1” takes text</source>
+        <translation>“%1” przyjmuje tekst</translation>
+    </message>
+    <message>
+        <source>No system keychain to keep it in</source>
+        <translation>Brak systemowego magazynu kluczy, w którym można to zapisać</translation>
+    </message>
+    <message>
+        <source>The system keychain didn’t keep “%1”</source>
+        <translation>Systemowy magazyn kluczy nie zapisał “%1”</translation>
     </message>
 </context>
 <context>

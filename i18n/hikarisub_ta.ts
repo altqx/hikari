@@ -15086,6 +15086,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>முழுத் திரையிலிருந்து வெளியேறிய பின் தெரியும் வரியைக் கண்டுபிடி</translation>
     </message>
     <message>
+        <source>The symbol that stands for each tag block when tags are replaced.</source>
+        <translation>குறிச்சொற்கள் மாற்றப்படும்போது ஒவ்வொரு குறிச்சொல் தொகுதிக்கும் பதிலாக வரும் குறியீடு.</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>தற்போதைய சட்டகத்திலுள்ள வரிகளைக் குறி</translation>
+    </message>
+    <message>
+        <source>Tints the lines that show on the current video frame.</source>
+        <translation>தற்போதைய வீடியோ சட்டகத்தில் தெரியும் வரிகளுக்கு வண்ணம் தீட்டுகிறது.</translation>
+    </message>
+    <message>
         <source>Styles for new files</source>
         <translation>புதிய கோப்புகளுக்கான பாணிகள்</translation>
     </message>
@@ -15419,6 +15431,22 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
         <translation>மீட்புக் கோப்புறையில் வைத்திருக்கும் ஒவ்வொரு கோப்பின் முந்தைய சேமிப்புகள். வரம்பு 0 முதல் 100 வரை</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>காட்டு</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>குறியீட்டால் மாற்று</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>மறை</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>கட்டத்தில் குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
@@ -16137,6 +16165,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>பழைய குறுக்குவிசைகளை இறக்குமதி செய்</translation>
     </message>
     <message>
+        <source>Vector clip smoothing</source>
+        <translation>திசையன் கிளிப் மென்மையாக்கல்</translation>
+    </message>
+    <message>
+        <source>How closely a freehand stroke is followed. Range from 0 to 100</source>
+        <translation>கையால் வரைந்த கோட்டை எவ்வளவு நெருக்கமாகப் பின்பற்றுவது. வரம்பு 0 முதல் 100 வரை</translation>
+    </message>
+    <message>
+        <source>Drawing smoothing</source>
+        <translation>வரைபட மென்மையாக்கல்</translation>
+    </message>
+    <message>
         <source>No plugin has settings.</source>
         <translation>எந்தச் செருகுநிரலுக்கும் அமைப்புகள் இல்லை.</translation>
     </message>
@@ -16162,6 +16202,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Enter a number.</source>
         <translation>ஓர் எண்ணை உள்ளிடவும்.</translation>
+    </message>
+    <message>
+        <source>%1, item %2</source>
+        <translation>%1, உருப்படி %2</translation>
+    </message>
+    <message>
+        <source>Remove item %1</source>
+        <translation>உருப்படி %1 ஐ நீக்கு</translation>
+    </message>
+    <message>
+        <source>Not set</source>
+        <translation>அமைக்கப்படவில்லை</translation>
     </message>
     <message>
         <source>The file could not be read.</source>
@@ -17843,6 +17895,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>Replaces HikariSub’s interface icons. Icons a theme doesn’t cover show HikariSub’s own.</source>
         <translation>HikariSub இன் இடைமுகப் படவுருக்களை மாற்றுகிறது. கருப்பொருளில் இல்லாத படவுருக்கள் HikariSub இன் சொந்தப் படவுருக்களாகவே காட்டப்படும்.</translation>
     </message>
+    <message>
+        <source>This window has no trusted Project to keep it in.</source>
+        <translation>இதை வைத்திருக்க இந்தச் சாளரத்துக்கு நம்பகமான திட்டப்பணி இல்லை.</translation>
+    </message>
+    <message>
+        <source>A Project can’t set “%1”.</source>
+        <translation>ஒரு திட்டப்பணியால் “%1” ஐ அமைக்க முடியாது.</translation>
+    </message>
+    <message>
+        <source>project.toml can’t be written.</source>
+        <translation>project.toml இல் எழுத முடியாது.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Plugins</name>
@@ -19064,6 +19128,18 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Can’t write the theme plugin to %1.</source>
         <translation>கருப்பொருள் செருகுநிரலை %1 இல் எழுத முடியவில்லை.</translation>
+    </message>
+    <message>
+        <source>“%1” takes text</source>
+        <translation>“%1” உரையை ஏற்கிறது</translation>
+    </message>
+    <message>
+        <source>No system keychain to keep it in</source>
+        <translation>இதை வைத்திருக்க கணினி விசைக்கொத்து இல்லை</translation>
+    </message>
+    <message>
+        <source>The system keychain didn’t keep “%1”</source>
+        <translation>கணினி விசைக்கொத்து “%1” ஐ வைத்திருக்கவில்லை</translation>
     </message>
 </context>
 <context>
