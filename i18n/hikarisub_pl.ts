@@ -14039,6 +14039,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>For selected lines</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Step down</source>
+        <translation>Zmniejsz</translation>
+    </message>
+    <message>
+        <source>Step up</source>
+        <translation>Zwiększ</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Nodes</name>
@@ -31063,17 +31071,6 @@ nie działają na komentarzach</translation>
     <message>
         <source>QT_LAYOUT_DIRECTION</source>
         <translation>LTR</translation>
-    </message>
-</context>
-<context>
-    <name>ScrubField</name>
-    <message>
-        <source>Step down</source>
-        <translation>Zmniejsz</translation>
-    </message>
-    <message>
-        <source>Step up</source>
-        <translation>Zwiększ</translation>
     </message>
 </context>
 </TS>

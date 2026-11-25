@@ -41,8 +41,9 @@ Pane {
         let widest = 0
         for (const f of root.fields.concat(root.wired))
             widest = Math.max(widest, labelMetrics.advanceWidth(root.label(f.name)))
-        return Math.ceil(Math.min(widest, 110)) + 8
+        return Math.ceil(Math.min(widest, 110)) + root.changedMarkWidth
     }
+    readonly property real changedMarkWidth: 6 + 4
 
     function label(name) {
         return name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, " ")

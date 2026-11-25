@@ -1,4 +1,5 @@
 pragma ComponentBehavior: Bound
+pragma Translator: "HikariSub.NodeEffects"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

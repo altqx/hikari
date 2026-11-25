@@ -89,6 +89,7 @@ ColumnLayout {
                 Accessible.ignored: true
             }
             Label {
+                objectName: editor.objectName + "Label"
                 Layout.fillWidth: true
                 text: editor.label(editor.name)
                 font: editor.labelFont

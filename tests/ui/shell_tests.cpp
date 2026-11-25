@@ -30756,6 +30756,8 @@ private slots:
         shoot(QStringLiteral("one"), {random});
         shoot(QStringLiteral("three"), {fades[0], fades[1], fades[2]});
         shoot(QStringLiteral("mixed"), {number, random, fades[0]});
+        effects.setSelection({random});
+        QQuickTest::qWaitForPolish(window);
         if (named(window->contentItem(), QStringLiteral("nodeFieldValue_stepInput")))
             shoot(QStringLiteral("refusal"), {random}, [&] {
                 QQuickItem *input = named(window->contentItem(), QStringLiteral("nodeFieldValue_stepInput"));

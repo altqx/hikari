@@ -265,6 +265,21 @@ private slots:
         QTRY_VERIFY(!item(QStringLiteral("nodeField_stepRefusal"))->isVisible());
     }
 
+    void noFieldLabelIsCutOff()
+    {
+        for (const char *type : {"math.random", "tags.fade"}) {
+            const QString node = controller().addNode(QString::fromLatin1(type), 0, 0);
+            controller().setSelection({node});
+            showPanel();
+            for (const QVariant &f : controller().form().value(QStringLiteral("fields")).toList()) {
+                const QString name = f.toMap().value(QStringLiteral("name")).toString();
+                QQuickItem *label = item(QStringLiteral("nodeField_%1Label").arg(name));
+                QVERIFY2(label, qPrintable(name));
+                QVERIFY2(!label->property("truncated").toBool(), qPrintable(QStringLiteral("%1: %2").arg(QLatin1String(type), name)));
+            }
+        }
+    }
+
     void thePanelSaysMixedForSeveralNodes()
     {
         const QString a = controller().addNode(QStringLiteral("tags.fade"), 0, 0);
