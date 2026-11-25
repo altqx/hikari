@@ -1,0 +1,6 @@
+styleManager 756x630
+removeTagsDialog 688x585
+kanjiTimerDialog 756x515
+findFadeDialog 632x620
+trackColourDialog 632x558
+autosavesWindow 756x254
