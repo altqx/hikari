@@ -8082,6 +8082,10 @@ Failed to copy %2 fonts.</source>
         <translation>ปุ่มลัดของเสียง</translation>
     </message>
     <message>
+        <source>Node graph shortcut</source>
+        <translation>ปุ่มลัดของกราฟโหนด</translation>
+    </message>
+    <message>
         <source>Press the keys</source>
         <translation>กดปุ่ม</translation>
     </message>
@@ -9694,6 +9698,74 @@ Failed to copy %2 fonts.</source>
         <translation>ไฟล์แนบ…</translation>
     </message>
     <message>
+        <source>Add node…</source>
+        <translation>เพิ่มโหนด…</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>เลือกทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>ลบ</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>จัดกลุ่ม</translation>
+    </message>
+    <message>
+        <source>Go into the group</source>
+        <translation>เข้าไปในกลุ่ม</translation>
+    </message>
+    <message>
+        <source>Go out of the group</source>
+        <translation>ออกจากกลุ่ม</translation>
+    </message>
+    <message>
+        <source>Fit the graph</source>
+        <translation>ซูมให้พอดีกับกราฟ</translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation>ซูมให้พอดีกับส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>Zoom to 100 %</source>
+        <translation>ซูม 100 %</translation>
+    </message>
+    <message>
+        <source>Select the nearest node left</source>
+        <translation>เลือกโหนดที่ใกล้ที่สุดทางซ้าย</translation>
+    </message>
+    <message>
+        <source>Select the nearest node right</source>
+        <translation>เลือกโหนดที่ใกล้ที่สุดทางขวา</translation>
+    </message>
+    <message>
+        <source>Select the nearest node up</source>
+        <translation>เลือกโหนดที่ใกล้ที่สุดด้านบน</translation>
+    </message>
+    <message>
+        <source>Select the nearest node down</source>
+        <translation>เลือกโหนดที่ใกล้ที่สุดด้านล่าง</translation>
+    </message>
+    <message>
+        <source>Move the selection left</source>
+        <translation>ย้ายส่วนที่เลือกไปทางซ้าย</translation>
+    </message>
+    <message>
+        <source>Move the selection right</source>
+        <translation>ย้ายส่วนที่เลือกไปทางขวา</translation>
+    </message>
+    <message>
+        <source>Move the selection up</source>
+        <translation>ย้ายส่วนที่เลือกขึ้น</translation>
+    </message>
+    <message>
+        <source>Move the selection down</source>
+        <translation>ย้ายส่วนที่เลือกลง</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>ส่วนกลาง</translation>
     </message>
@@ -9712,6 +9784,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Audio</source>
         <translation>เสียง</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>กราฟโหนด</translation>
     </message>
     <message>
         <source>Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).</source>
@@ -16545,6 +16621,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Drawing smoothing</source>
         <translation>การปรับให้เรียบของภาพวาด</translation>
+    </message>
+    <message>
+        <source>Node graph shortcuts</source>
+        <translation>ปุ่มลัดกราฟโหนด</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>กราฟโหนด</translation>
     </message>
     <message>
         <source>No plugin has settings.</source>

@@ -8161,6 +8161,10 @@ Failed to copy %2 fonts.</source>
         <translation>ஆடியோ குறுக்குவிசை</translation>
     </message>
     <message>
+        <source>Node graph shortcut</source>
+        <translation>கணு வரைபடக் குறுக்குவிசை</translation>
+    </message>
+    <message>
         <source>Press the keys</source>
         <translation>விசைகளை அழுத்தவும்</translation>
     </message>
@@ -9773,6 +9777,74 @@ Failed to copy %2 fonts.</source>
         <translation>இணைப்புகள்…</translation>
     </message>
     <message>
+        <source>Add node…</source>
+        <translation>கணுவைச் சேர்…</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>அனைத்தையும் தெரிவுசெய்</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>நீக்கு</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>குழுவாக்கு</translation>
+    </message>
+    <message>
+        <source>Go into the group</source>
+        <translation>குழுவுக்குள் செல்</translation>
+    </message>
+    <message>
+        <source>Go out of the group</source>
+        <translation>குழுவிலிருந்து வெளியே செல்</translation>
+    </message>
+    <message>
+        <source>Fit the graph</source>
+        <translation>வரைபடத்தைப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation>தேர்வைப் பொருத்து</translation>
+    </message>
+    <message>
+        <source>Zoom to 100 %</source>
+        <translation>பெரிதாக்கம் 100 %</translation>
+    </message>
+    <message>
+        <source>Select the nearest node left</source>
+        <translation>இடப்பக்கம் அருகிலுள்ள கணுவைத் தெரிவுசெய்</translation>
+    </message>
+    <message>
+        <source>Select the nearest node right</source>
+        <translation>வலப்பக்கம் அருகிலுள்ள கணுவைத் தெரிவுசெய்</translation>
+    </message>
+    <message>
+        <source>Select the nearest node up</source>
+        <translation>மேலே அருகிலுள்ள கணுவைத் தெரிவுசெய்</translation>
+    </message>
+    <message>
+        <source>Select the nearest node down</source>
+        <translation>கீழே அருகிலுள்ள கணுவைத் தெரிவுசெய்</translation>
+    </message>
+    <message>
+        <source>Move the selection left</source>
+        <translation>தேர்வை இடப்பக்கம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move the selection right</source>
+        <translation>தேர்வை வலப்பக்கம் நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move the selection up</source>
+        <translation>தேர்வை மேலே நகர்த்து</translation>
+    </message>
+    <message>
+        <source>Move the selection down</source>
+        <translation>தேர்வைக் கீழே நகர்த்து</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>உலகளாவிய</translation>
     </message>
@@ -9791,6 +9863,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Audio</source>
         <translation>ஆடியோ</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>கணு வரைபடம்</translation>
     </message>
     <message>
         <source>Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).</source>
@@ -16678,6 +16754,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Drawing smoothing</source>
         <translation>வரைபட மென்மையாக்கல்</translation>
+    </message>
+    <message>
+        <source>Node graph shortcuts</source>
+        <translation>கணு வரைபடக் குறுக்குவிசைகள்</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>கணு வரைபடம்</translation>
     </message>
     <message>
         <source>No plugin has settings.</source>
