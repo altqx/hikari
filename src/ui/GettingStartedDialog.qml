@@ -207,14 +207,16 @@ DialogWindow {
         property string later
         property string laterSetting
         property bool fills: false
+        readonly property bool overflows: !fills && pageColumn.implicitHeight > availableHeight + 0.5
+        readonly property bool scrollShown: ScrollBar.vertical.visible && ScrollBar.vertical.policy === ScrollBar.AlwaysOn
         default property alias content: pageColumn.data
         contentWidth: availableWidth
         contentHeight: fills ? availableHeight : pageColumn.implicitHeight
-        ScrollBar.vertical.policy: fills ? ScrollBar.AlwaysOff : ScrollBar.AsNeeded
+        ScrollBar.vertical.policy: overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
         clip: true
         ColumnLayout {
             id: pageColumn
-            width: setupPage.availableWidth
+            width: setupPage.availableWidth - (setupPage.overflows ? setupPage.ScrollBar.vertical.width + 4 : 0)
             spacing: 14
         }
     }
@@ -301,7 +303,13 @@ DialogWindow {
                     color: themeCard.roles.panel; border.color: themeCard.roles.line
                     Rectangle { x: 3; y: 3; width: parent.width - 6; height: 6; color: themeCard.roles.select } }
             }
-            Label { text: themeCard.text; elide: Text.ElideRight; Layout.fillWidth: true }
+            Label {
+                text: themeCard.text
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+            }
             Label {
                 visible: themeCard.theme.plugin.length > 0
                 text: themeCard.theme.plugin
@@ -310,6 +318,7 @@ DialogWindow {
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
+            Item { Layout.fillHeight: true }
         }
     }
     component Block: Rectangle {
@@ -806,6 +815,7 @@ DialogWindow {
                                 chosen: setup.stagedTheme === modelData.code
                                 onClicked: setup.chooseTheme(modelData)
                                 Layout.fillWidth: true
+                                Layout.fillHeight: true
                                 Layout.preferredWidth: 1
                             }
                         }
@@ -825,6 +835,7 @@ DialogWindow {
                                 chosen: setup.stagedTheme === modelData.code
                                 onClicked: setup.chooseTheme(modelData)
                                 Layout.fillWidth: true
+                                Layout.fillHeight: true
                                 Layout.preferredWidth: 1
                             }
                         }

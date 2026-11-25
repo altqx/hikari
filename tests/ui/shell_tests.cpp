@@ -22904,6 +22904,14 @@ private slots:
         QCOMPARE(setupPage(), QStringLiteral("look"));
         QCOMPARE(setupItem("gettingStartedIcons")->property("currentValue").toString(), QStringLiteral("hikarisub"));
         QVERIFY(setupItem("gettingStartedMoreThemes"));
+        auto *dialog = qobject_cast<QQuickWindow *>(gettingStarted());
+        auto *look = setupItem("gettingStartedLook");
+        for (const QSize size : {QSize(860, 600), QSize(dialog->minimumWidth(), dialog->minimumHeight())}) {
+            dialog->resize(size);
+            QTest::qWait(200);
+            QVERIFY2(!look->property("overflows").toBool() || look->property("scrollShown").toBool(),
+                     qPrintable(QStringLiteral("Look overflows at %1x%2 with no scroll bar").arg(size.width()).arg(size.height())));
+        }
         QTest::keyClick(qobject_cast<QWindow *>(gettingStarted()), Qt::Key_Escape);
         QTRY_VERIFY(!gettingStarted()->property("visible").toBool());
     }
