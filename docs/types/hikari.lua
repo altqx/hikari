@@ -394,12 +394,12 @@ function Change:set_info(key, value) end
 
 ---The params of commands.list.
 ---@class hikari.CommandsListParams
----@field window? "global"|"subtitles"|"editor"|"video"|"audio"
+---@field window? "global"|"subtitles"|"editor"|"video"|"audio"|"node graph"
 ---@field query? string A case-insensitive part of the command id or its name.
 
 ---The result of commands.list.
 ---@class hikari.CommandsListResult
----@field commands { command: string, name: string, window: "global"|"subtitles"|"editor"|"video"|"audio", enabled: boolean, disabledReason?: string, keys: string[], kind?: "hotkey"|"macro"|"plugin", file?: string, macro?: string }[]
+---@field commands { command: string, name: string, window: "global"|"subtitles"|"editor"|"video"|"audio"|"node graph", enabled: boolean, disabledReason?: string, keys: string[], kind?: "hotkey"|"macro"|"plugin", file?: string, macro?: string }[]
 
 ---The params of panels.list.
 ---@alias hikari.PanelsListParams table<string, any>

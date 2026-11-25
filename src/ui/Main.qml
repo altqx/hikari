@@ -9224,10 +9224,12 @@ ApplicationWindow {
                 title: root.nodeEffects.hasGraph ? qsTranslate("HikariSub.NodeEffects", "Graph: %1").arg(root.nodeEffects.name)
                                                  : qsTranslate("HikariSub.NodeEffects", "Graph")
                 accessibleName: qsTranslate("HikariSub.NodeEffects", "Graph")
+                keyTarget: nodeGraphTool.keyTarget
                 NodeGraphCanvas {
                     id: nodeGraphTool
                     anchors.fill: parent
                     controller: root.nodeEffects
+                    hotkeys: root.hotkeys
                 }
             }
         }
@@ -12130,6 +12132,8 @@ ApplicationWindow {
             return root.runEditorHotkey(symbol, field)
         if (symbol.startsWith("GRID_"))
             return root.runGridHotkey(symbol)
+        if (symbol.startsWith("NODE_GRAPH_"))
+            return nodeGraphTool.runHotkey(symbol)
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
                                "GLOBAL_OPEN_TIMECODES", "GLOBAL_SAVE_TIMECODES", "GLOBAL_SAVE_KEYFRAMES",
                                "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",

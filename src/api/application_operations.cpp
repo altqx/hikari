@@ -435,13 +435,13 @@ void addApplicationOperations(Registry &registry)
          apiVersion);
     read(registry, "commands.list", "The commands of menus, toolbars and shortcuts, with their enabled state and keys.",
          R"({"type": "object", "properties": {
-             "window": {"enum": ["global", "subtitles", "editor", "video", "audio"]},
+             "window": {"enum": ["global", "subtitles", "editor", "video", "audio", "node graph"]},
              "query": {"type": "string", "description": "A case-insensitive part of the command id or its name."}},
              "additionalProperties": false})",
          R"({"type": "object", "properties": {"commands": {"type": "array", "items": {"type": "object", "properties": {
              "command": {"type": "string", "description": "The stable command id, e.g. GLOBAL_SAVE_SUBS."},
              "name": {"type": "string", "description": "The English name the shortcut editor shows."},
-             "window": {"enum": ["global", "subtitles", "editor", "video", "audio"]},
+             "window": {"enum": ["global", "subtitles", "editor", "video", "audio", "node graph"]},
              "enabled": {"type": "boolean"},
              "disabledReason": {"type": "string"},
              "keys": {"type": "array", "items": {"type": "string"}},

@@ -8240,6 +8240,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Skrót audio</translation>
     </message>
     <message>
+        <source>Node graph shortcut</source>
+        <translation>Skrót grafu węzłów</translation>
+    </message>
+    <message>
         <source>Press the keys</source>
         <translation>Naciśnij klawisze</translation>
     </message>
@@ -9852,6 +9856,74 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Załączniki…</translation>
     </message>
     <message>
+        <source>Add node…</source>
+        <translation>Dodaj węzeł…</translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation>Zaznacz wszystko</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation>Usuń</translation>
+    </message>
+    <message>
+        <source>Group</source>
+        <translation>Grupuj</translation>
+    </message>
+    <message>
+        <source>Go into the group</source>
+        <translation>Wejdź do grupy</translation>
+    </message>
+    <message>
+        <source>Go out of the group</source>
+        <translation>Wyjdź z grupy</translation>
+    </message>
+    <message>
+        <source>Fit the graph</source>
+        <translation>Dopasuj graf</translation>
+    </message>
+    <message>
+        <source>Frame the selection</source>
+        <translation>Dopasuj do zaznaczenia</translation>
+    </message>
+    <message>
+        <source>Zoom to 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Select the nearest node left</source>
+        <translation>Zaznacz najbliższy węzeł po lewej</translation>
+    </message>
+    <message>
+        <source>Select the nearest node right</source>
+        <translation>Zaznacz najbliższy węzeł po prawej</translation>
+    </message>
+    <message>
+        <source>Select the nearest node up</source>
+        <translation>Zaznacz najbliższy węzeł powyżej</translation>
+    </message>
+    <message>
+        <source>Select the nearest node down</source>
+        <translation>Zaznacz najbliższy węzeł poniżej</translation>
+    </message>
+    <message>
+        <source>Move the selection left</source>
+        <translation>Przenieś zaznaczenie w lewo</translation>
+    </message>
+    <message>
+        <source>Move the selection right</source>
+        <translation>Przenieś zaznaczenie w prawo</translation>
+    </message>
+    <message>
+        <source>Move the selection up</source>
+        <translation>Przenieś zaznaczenie w górę</translation>
+    </message>
+    <message>
+        <source>Move the selection down</source>
+        <translation>Przenieś zaznaczenie w dół</translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation>Globalne</translation>
     </message>
@@ -9870,6 +9942,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Audio</source>
         <translation>Audio</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>Graf węzłów</translation>
     </message>
     <message>
         <source>Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).</source>
@@ -16807,6 +16883,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Drawing smoothing</source>
         <translation>Wygładzanie rysunku</translation>
+    </message>
+    <message>
+        <source>Node graph shortcuts</source>
+        <translation>Skróty grafu węzłów</translation>
+    </message>
+    <message>
+        <source>Node graph</source>
+        <translation>Graf węzłów</translation>
     </message>
     <message>
         <source>No plugin has settings.</source>

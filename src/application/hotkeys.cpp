@@ -469,6 +469,25 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_QUICK_FIX", 5373},
         {"GLOBAL_FULL_SCREEN_TYPESETTING", 5374},
         {"GLOBAL_IMPORT_TEXT", 5375},
+        {"NODE_GRAPH_ADD_NODE", 6001},
+        {"NODE_GRAPH_SELECT_ALL", 6006},
+        {"NODE_GRAPH_DELETE", 6008},
+        {"NODE_GRAPH_GROUP", 6011},
+        {"NODE_GRAPH_ENTER_GROUP", 6013},
+        {"NODE_GRAPH_LEAVE_GROUP", 6014},
+        {"NODE_GRAPH_FIT", 6015},
+        {"NODE_GRAPH_FRAME_SELECTION", 6016},
+        {"NODE_GRAPH_ZOOM_100", 6017},
+        {"NODE_GRAPH_ZOOM_IN", 6018},
+        {"NODE_GRAPH_ZOOM_OUT", 6019},
+        {"NODE_GRAPH_SELECT_LEFT", 6020},
+        {"NODE_GRAPH_SELECT_RIGHT", 6021},
+        {"NODE_GRAPH_SELECT_UP", 6022},
+        {"NODE_GRAPH_SELECT_DOWN", 6023},
+        {"NODE_GRAPH_MOVE_LEFT", 6024},
+        {"NODE_GRAPH_MOVE_RIGHT", 6025},
+        {"NODE_GRAPH_MOVE_UP", 6026},
+        {"NODE_GRAPH_MOVE_DOWN", 6027},
 };
 
 struct NameRow {
@@ -907,6 +926,25 @@ constexpr NameRow kNames[] = {
         {5373, "Quick fix"},
         {5374, "Full screen typesetting"},
         {5375, "Import text…"},
+        {6001, "Add node…"},
+        {6006, "Select all"},
+        {6008, "Delete"},
+        {6011, "Group"},
+        {6013, "Go into the group"},
+        {6014, "Go out of the group"},
+        {6015, "Fit the graph"},
+        {6016, "Frame the selection"},
+        {6017, "Zoom to 100 %"},
+        {6018, "Zoom in"},
+        {6019, "Zoom out"},
+        {6020, "Select the nearest node left"},
+        {6021, "Select the nearest node right"},
+        {6022, "Select the nearest node up"},
+        {6023, "Select the nearest node down"},
+        {6024, "Move the selection left"},
+        {6025, "Move the selection right"},
+        {6026, "Move the selection up"},
+        {6027, "Move the selection down"},
 };
 
 struct DefaultRow {
@@ -1014,6 +1052,27 @@ constexpr DefaultRow kMainDefaults[] = {
         {3028, EditorHotkey, "Place run 9", "Alt-9"},
         {3010, EditorHotkey, "Apply changes", "Ctrl-Enter"},
         {3011, EditorHotkey, "Apply the changes and go to the next line", "Enter"},
+        {5244, GlobalHotkey, "Node effects", "Ctrl-Shift-E"},
+        {5338, GlobalHotkey, "Typesetting graph…", "Ctrl-Shift-G"},
+        {6001, NodeGraphHotkey, "Add node…", "Shift-A"},
+        {6006, NodeGraphHotkey, "Select all", "Ctrl-A"},
+        {6008, NodeGraphHotkey, "Delete", "Delete"},
+        {6011, NodeGraphHotkey, "Group", "Ctrl-G"},
+        {6013, NodeGraphHotkey, "Go into the group", "Enter"},
+        {6014, NodeGraphHotkey, "Go out of the group", "Backspace"},
+        {6015, NodeGraphHotkey, "Fit the graph", "Home"},
+        {6016, NodeGraphHotkey, "Frame the selection", "F"},
+        {6017, NodeGraphHotkey, "Zoom to 100 %", "Ctrl-0"},
+        {6018, NodeGraphHotkey, "Zoom in", "Ctrl-="},
+        {6019, NodeGraphHotkey, "Zoom out", "Ctrl--"},
+        {6020, NodeGraphHotkey, "Select the nearest node left", "Left"},
+        {6021, NodeGraphHotkey, "Select the nearest node right", "Right"},
+        {6022, NodeGraphHotkey, "Select the nearest node up", "Up"},
+        {6023, NodeGraphHotkey, "Select the nearest node down", "Down"},
+        {6024, NodeGraphHotkey, "Move the selection left", "Ctrl-Left"},
+        {6025, NodeGraphHotkey, "Move the selection right", "Ctrl-Right"},
+        {6026, NodeGraphHotkey, "Move the selection up", "Ctrl-Up"},
+        {6027, NodeGraphHotkey, "Move the selection down", "Ctrl-Down"},
 };
 constexpr DefaultRow kAudioDefaults[] = {
         {1010, AudioHotkey, "Apply changes", "Enter"},
@@ -1046,8 +1105,8 @@ constexpr DefaultRow kAudioDefaults[] = {
         {1032, AudioHotkey, "Faster", "]"},
 };
 
-constexpr std::string_view kWindowNames[] = {"Global", "Subtitles", "Editor", "Video", "Audio"};
-constexpr std::string_view kWindowLetters = "GSEVA";
+constexpr std::string_view kWindowNames[] = {"Global", "Subtitles", "Editor", "Video", "Audio", "Node graph"};
+constexpr std::string_view kWindowLetters = "GSEVAN";
 
 std::string trim(std::string_view s)
 {
@@ -1152,6 +1211,11 @@ bool inVideoPlayRange(int id)
     return id >= kVideoPlayPause && id <= kVideo5SecondsBackward;
 }
 
+bool videoOrAudio(int type)
+{
+    return type == VideoHotkey || type == AudioHotkey;
+}
+
 std::string reportName(const HotkeyId &key, const Hotkey &hotkey)
 {
     auto name = hotkeyName(key.id);
@@ -1249,6 +1313,8 @@ int hotkeyType(int id)
         return EditorHotkey;
     if (id < kGlobalFirst)
         return GridHotkey;
+    if (id >= kNodeGraphFirst && id <= kNodeGraphLast)
+        return NodeGraphHotkey;
     return GlobalHotkey;
 }
 
@@ -1568,19 +1634,24 @@ void HotkeyList::append(std::string text, std::string name, std::string accel, H
 void HotkeyList::build(const HotkeyMap &live, const std::function<bool(int id)> &hidden)
 {
     HotkeyMap mapped = live;
-    const auto &names = hotkeyNames();
+    const auto &named = hotkeyNames();
+    std::vector<std::pair<int, std::string>> names(named.begin(), named.end());
+    std::ranges::sort(names, [](const auto &a, const auto &b) {
+        const int ta = hotkeyType(a.first), tb = hotkeyType(b.first);
+        return ta != tb ? ta < tb : a.first > b.first;
+    });
     int lastType = -1;
-    for (auto cur = names.rbegin(); cur != names.rend(); ++cur) {
+    for (auto cur = names.begin(); cur != names.end(); ++cur) {
         const int htype = hotkeyType(cur->first);
         auto next = cur;
-        if ((lastType != htype && lastType != -1) || ++next == names.rend()) {
+        if ((lastType != htype && lastType != -1) || ++next == names.end()) {
             std::size_t done = 0;
             for (auto it = mapped.begin(); it != mapped.end(); ++it) {
                 if (lastType != it->first.type)
                     break;
                 ++done;
-                const auto named = names.find(it->first.id);
-                const std::string name = named != names.end() ? named->second : it->second.name;
+                const auto found = named.find(it->first.id);
+                const std::string name = found != named.end() ? found->second : it->second.name;
                 append(std::string(hotkeyWindowName(it->first.type)) + " " + name, name, it->second.accel, it->first);
             }
             for (std::size_t i = 0; i < done; ++i)
@@ -1626,6 +1697,7 @@ bool shownByFilter(int mode, const HotkeyList::Row &r)
     case 4: return r.key.type == EditorHotkey;
     case 5: return r.key.type == VideoHotkey;
     case 6: return r.key.type == AudioHotkey;
+    case 9: return r.key.type == NodeGraphHotkey;
     case 7: return r.key.id >= kFirstScriptHotkey && !isPluginCommand(r.name);
     case 8: return r.key.id >= kFirstScriptHotkey && isPluginCommand(r.name);
     default: return true;
@@ -1936,7 +2008,7 @@ std::optional<HotkeyConflict> HotkeyList::mapConflict(int index, const std::stri
     ConflictScan scan;
     for (const auto &k : found) {
         // MUST KILL: Video/Audio, and video play/seek ids, count as one window
-        if (k.type == type || (k.type >= VideoHotkey && type >= VideoHotkey) ||
+        if (k.type == type || (videoOrAudio(k.type) && videoOrAudio(type)) ||
             ((inVideoPlayRange(id) || inVideoPlayRange(k.id)) && (k.type >= GridHotkey || type >= GridHotkey))) {
             scan.doubled = true;
             scan.names = reportName(k, m_copy.at(k));

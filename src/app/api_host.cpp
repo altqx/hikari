@@ -201,7 +201,7 @@ void ApiHost::commandRan(const QString &command, bool ok)
 QVariantList ApiHost::commands()
 {
     static const QStringList kWindows{QStringLiteral("global"), QStringLiteral("subtitles"), QStringLiteral("editor"),
-                                      QStringLiteral("video"), QStringLiteral("audio")};
+                                      QStringLiteral("video"), QStringLiteral("audio"), QStringLiteral("node graph")};
     QVariantList out = call(QStringLiteral("commands.list")).toMap().value(QStringLiteral("commands")).toList();
     for (QVariant &entry : out) {
         QVariantMap command = entry.toMap();

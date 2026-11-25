@@ -13,6 +13,8 @@ QtObject {
             return 3
         if (command.startsWith("AUDIO_"))
             return 4
+        if (command.startsWith("NODE_GRAPH_"))
+            return 5
         return 0
     }
     function text(command: string, window: int): string {

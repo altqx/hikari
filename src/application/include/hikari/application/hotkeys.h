@@ -15,8 +15,8 @@
 
 namespace hikari::application {
 
-enum HotkeyWindow : int { GlobalHotkey = 0, GridHotkey, EditorHotkey, VideoHotkey, AudioHotkey };
-inline constexpr int kHotkeyWindows = 5;
+enum HotkeyWindow : int { GlobalHotkey = 0, GridHotkey, EditorHotkey, VideoHotkey, AudioHotkey, NodeGraphHotkey };
+inline constexpr int kHotkeyWindows = 6;
 
 struct HotkeyId {
     int id = 0;
@@ -46,6 +46,8 @@ inline constexpr int kEditorTagButton20 = 3119;
 inline constexpr int kGridFirst = 4001;
 inline constexpr int kGridFilterIgnoreInActions = 4546;
 inline constexpr int kGlobalFirst = 5000;
+inline constexpr int kNodeGraphFirst = 6001;
+inline constexpr int kNodeGraphLast = 6999;
 inline constexpr int kGlobalQuit = 5108;
 inline constexpr int kGlobalCloseWindow = 5263;
 inline constexpr int kLegacyHotkeyActions = 243;
@@ -83,7 +85,7 @@ std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map);
 // The window an id's range belongs to.
 int hotkeyType(int id);
 // The window names the Options list prefixes ("Global", "Subtitles",
-// "Editor", "Video", "Audio").
+// "Editor", "Video", "Audio", "Node graph").
 std::string_view hotkeyWindowName(int type);
 
 // Assigns the defaults of the main (or audio) file over `map`.
@@ -98,7 +100,7 @@ std::string defaultHotkey(const HotkeyId &key);
 // one; empty bindings, ids under 100 and script ids are not written (the
 // script bindings are the automation hotkeys').
 std::vector<std::string> hotkeyLines(const HotkeyMap &map, bool audio);
-// "<SYMBOL or id> <G|S|E|V|A>=<accel>": an unknown symbol becomes id 0, an
+// "<SYMBOL or id> <G|S|E|V|A|N>=<accel>": an unknown symbol becomes id 0, an
 // unknown window letter window -1, and an empty binding is skipped. A numeric
 // label is read with hotkeyLabelNumber, which never fails. "Script ..." lines
 // are skipped. The version header and record count are the importer's.
@@ -205,7 +207,7 @@ public:
     int filterMode() const { return m_filterMode; }
     // 0 All, 1 Set shortcuts, 2 Global, 3 Subtitles, 4 Editor, 5 Video,
     // 6 Audio, 7 Automation (the macros' rows), 8 Plugins (the plugin
-    // commands' rows). The selection goes to the first shown row.
+    // commands' rows), 9 Node graph. The selection goes to the first shown row.
     void filter(int mode);
     // 0 every row, 1 built-in (the default key), 2 yours (a key set or cleared), 3 plugin commands, 4 macros.
     void filterSource(int source);

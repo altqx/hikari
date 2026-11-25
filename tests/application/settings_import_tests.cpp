@@ -534,7 +534,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
     std::string mainBody, audioBody;
     for (const auto &a : hotkeyActions()) {
         const int type = hotkeyType(a.id);
-        std::string line = std::string(a.symbol) + " " + "GSEVA"[type] + "=Ctrl-Alt-Shift-F12\r\n";
+        std::string line = std::string(a.symbol) + " " + "GSEVAN"[type] + "=Ctrl-Alt-Shift-F12\r\n";
         (type == AudioHotkey ? audioBody : mainBody) += line;
     }
     const Plan plan = buildPlan({hotkeys(mainBody), audioHotkeys(audioBody)}, linuxHost(), readBy(ReadBy::Windows));
@@ -545,7 +545,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         const int id = std::stoi(csv.at(1));
         ASSERT_EQ(hotkeyIdOf(symbol), id) << symbol;
         const int type = hotkeyType(id);
-        const std::string rowId = "shortcut:" + symbol + ":" + std::string(1, "GSEVA"[type]);
+        const std::string rowId = "shortcut:" + symbol + ":" + std::string(1, "GSEVAN"[type]);
         const PlanRow &row = rowOf(plan, rowId);
         EXPECT_EQ(row.binding, (HotkeyId{id, type})) << symbol;
         EXPECT_EQ(row.destination, symbol + " (" + std::string(hotkeyWindowName(type)) + ")");
@@ -572,7 +572,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 440);
+    EXPECT_EQ(bound, 459);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
