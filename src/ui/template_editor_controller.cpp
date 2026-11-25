@@ -581,6 +581,20 @@ application::EditSession *TemplateEditorController::pendingSession() const
     return m_sessionOf ? m_sessionOf(m_pending->document) : nullptr;
 }
 
+bool TemplateEditorController::pendingOverwritten() const
+{
+    const auto *s = pendingSession();
+    if (!s || !m_pending->base)
+        return false;
+    const core::LineRecord &was = *m_pending->base;
+    for (const auto *now : s->document().lines())
+        if (now->id == m_pending->line)
+            return (m_pending->text && (now->text != was.text || now->translation != was.translation)) ||
+                   (m_pending->effect && now->effect != was.effect) || (m_pending->style && now->style != was.style) ||
+                   (m_pending->layer && now->layer.value != was.layer.value);
+    return false;
+}
+
 std::string TemplateEditorController::keyOf(const core::LineRecord &l) const
 {
     const auto join = [](const std::u8string &s) { return std::string(s.begin(), s.end()); };
@@ -628,6 +642,10 @@ void TemplateEditorController::refresh()
         emit previewChanged();
         emit videoChanged();
         return;
+    }
+    if (m_pending && pendingOverwritten()) {
+        m_pending.reset();
+        m_commitTimer.stop();
     }
     if (!m_baselines.contains(documentKey()))
         takeBaseline();
@@ -1292,7 +1310,7 @@ void TemplateEditorController::edit(const Pending &change)
             return;
     }
     if (!m_pending)
-        m_pending = Pending{*m_current, {}, {}, {}, {}, documentKey()};
+        m_pending = Pending{*m_current, {}, {}, {}, {}, documentKey(), *line(*m_current)};
     if (change.text)
         m_pending->text = change.text;
     if (change.effect)
@@ -1355,7 +1373,7 @@ void TemplateEditorController::commit()
         emit changed();
     };
     const core::LineRecord *was = s ? lineOf() : nullptr;
-    if (!was)
+    if (!was || pendingOverwritten())
         return drop();
     if (s->draftLine() == change.line) {
         if (!s->commitDraft() && s->draftLine() == change.line) {
