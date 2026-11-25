@@ -1,0 +1,13 @@
+{"run": "greet", "args": {"name": "Ana"}, "expect": {"hello": "Ana"}}
+{"run": "greet", "expect": {"hello": "you"}}
+{"answer": {"text": "Bo"}}
+{"run": "ask", "expect": "Bo"}
+{"answer": {"pick": ["blue"]}}
+{"run": "pick", "expect": ["blue"]}
+{"call": "lines.list", "params": {}, "expect": {"total": 2}}
+{"complete": {"text": "\\", "offset": 1, "trigger": "\\"}, "expect": [{"label": "\\fad", "from": 0, "to": 1}]}
+{"export": "cues", "expectFile": "expected.cue"}
+{"event": "document.changed", "data": {"document": 1, "revision": 2, "step": "Test"}}
+{"run": "seen", "expect": "Test"}
+{"run": "shout"}
+{"expectDocument": "shouted.ass"}

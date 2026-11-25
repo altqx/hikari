@@ -45,6 +45,7 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 | `plugins` | `plugins_list`, `plugins_manifest`, `plugins_review`, `plugins_scaffold`, `plugins_install`, which asks the user on every install, and `plugins_run` ([AI-written plugins](ai-agent.md#ai-written-plugins)) |
 | `web` | `web_search`, `web_fetch`, while a search service is chosen ([Web search](#web-search)). |
 | `mcp_<id>` | one group per [MCP server](ai-mcp-clients.md) you added, with its tools. |
+| `plugin_tools` | the [AI tools](ai-mcp-clients.md#plugins-ai-tools) of the plugins that run. |
 | `agent` | in a root thread: the [sub-agent tools](ai-agent.md), offered from the start. |
 
 `search_tools`' description names each MCP server you added, with the first 40 characters of its name. A server's tools are sent only after `search_tools` finds them.
@@ -53,7 +54,7 @@ Hikari AI's threads also get `update_plan` ([AI agent](ai-agent.md)) and `read_s
 - **`search_commands {query, window?, limit?}`** reads `commands.list` and keeps the commands whose id or name holds every word.
 - **`run_command`** is `commands.run`.
 
-**Tool sources.** A `ToolSource` adds tools from outside HA1 as one more group: its `group`, `description`, `tools()` and `call`. `search_tools` lists a source's group, and searches its tools, only while it has tools. A source marked `offered` has its tools offered from the start: `search_tools` finds them but leaves its group out of its description. The sources are the web search, each [MCP server](ai-mcp-clients.md) the user added, and a root thread's sub-agent tools ([AI23c #894](https://github.com/altqx/hikari/issues/894)).
+**Tool sources.** A `ToolSource` adds tools from outside HA1 as one more group: its `group`, `description`, `tools()` and `call`. `search_tools` lists a source's group, and searches its tools, only while it has tools. A source marked `offered` has its tools offered from the start: `search_tools` finds them but leaves its group out of its description. The sources are the web search, each [MCP server](ai-mcp-clients.md) the user added, the plugins' [AI tools](ai-mcp-clients.md#plugins-ai-tools), and a root thread's sub-agent tools ([AI23c #894](https://github.com/altqx/hikari/issues/894)).
 
 **The up-front budget.** The tools offered before any search, with `update_plan`, `read_skill`, a search service chosen and a provider's own search tools added, must stay within 5,000 tokens (`o200k_base`) on every wire, raised from 3,000 (owner Q123, 2026-11-09). A bun test measures the `tools` each wire sends, for a thread and for a root thread with the sub-agent tools and 10 MCP servers. The largest is Responses: 3,467 for a thread and 4,478 for the root thread. Each server adds about 40 tokens through its line in `search_tools`.
 

@@ -141,6 +141,11 @@ std::optional<Problem> checkContrast(const ThemeFile &file);
 // parse, then checkContrast: what installing a theme runs.
 std::expected<ThemeFile, Problem> load(std::string_view json);
 
+// Every left-out key set to what resolve works out, except those that follow a user colour or the accent choice.
+ThemeFile complete(const ThemeFile &file);
+// A theme file that parse reads back as `file`.
+std::string write(const ThemeFile &file);
+
 double contrastRatio(Colour a, Colour b);
 Colour composite(Colour over, Colour under);
 Colour withAlpha(Colour colour, int alpha);

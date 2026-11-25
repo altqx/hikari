@@ -202,6 +202,9 @@ hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBR
 target_compile_definitions(hikari_ui_open_reload_tests PRIVATE
     HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_qttest(hikari_ui_recovery_tests SOURCES recovery_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_attachments_tests SOURCES attachments_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_attachments_tests PRIVATE
+    HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments")
 hikari_add_qttest(hikari_ui_automation_hotkeys_tests SOURCES automation_hotkeys_ui_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_automation_hotkeys_tests PRIVATE
     HIKARI_AUTOLOAD_DIR="${HIKARI_AUTOMATION_STAGE}/Autoload"
@@ -466,6 +469,15 @@ target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_PLUGIN_
     HIKARI_PLUGIN_EXAMPLES="${PROJECT_SOURCE_DIR}/docs/examples")
 add_dependencies(hikari_ui_plugin_runtime_tests hikari_plugin_helper hikari_plugin_test_program)
 target_compile_definitions(hikari_ui_plugin_runtime_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
+hikari_add_qttest(hikari_ui_plugin_test_harness_tests OFFSCREEN_ONLY SOURCES plugin_test_harness_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_plugin_test_harness_tests PRIVATE
+    HIKARI_HARNESS_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness")
+add_dependencies(hikari_ui_plugin_test_harness_tests hikari_plugin_helper)
+add_test(NAME hikari_plugin_test_harness_cli
+    COMMAND hikarisub --test-plugin "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/plugin"
+            "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/pass.jsonl"
+            --document "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/plugin-harness/episode.ass")
+set_tests_properties(hikari_plugin_test_harness_cli PROPERTIES LABELS "ui;plugins" TIMEOUT 120)
 hikari_add_qttest(hikari_ui_plugin_programs_tests SOURCES plugin_programs_tests.cpp LIBRARIES hikari_composition)
 target_compile_definitions(hikari_ui_plugin_programs_tests PRIVATE HIKARI_TEST_PROGRAM="$<TARGET_FILE:hikari_plugin_test_program>")
 add_dependencies(hikari_ui_plugin_programs_tests hikari_plugin_test_program)

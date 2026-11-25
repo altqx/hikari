@@ -424,6 +424,7 @@ public:
     Q_INVOKABLE bool reloadTarget();
     Q_PROPERTY(QString encodingSuggestion READ encodingSuggestion NOTIFY encodingSuggestionChanged)
     Q_PROPERTY(bool canReopenWithEncoding READ canReopenWithEncoding NOTIFY encodingSuggestionChanged)
+    Q_PROPERTY(bool canAttach READ canAttach NOTIFY attachmentsChanged)
     bool canReopenWithEncoding() const;
     // The label of the legacy encoding the target's file looks like it is in; empty for UTF-8 and once dismissed.
     QString encodingSuggestion() const;
@@ -433,6 +434,23 @@ public:
     // Reads the target's file as `name` (an ICU name) into UTF-8; the Document starts modified, so the next save
     // writes UTF-8. A file that is not text in `name` keeps the Document as it is.
     Q_INVOKABLE bool reopenWithEncoding(const QString &name);
+
+    // An ASS editing target that takes edits.
+    bool canAttach() const;
+    // {name, font, size (decoded bytes)} for the editing target's attachments, in file order.
+    Q_INVOKABLE QVariantList attachmentRows() const;
+    // What to confirm before attaching `files`: one over 10 MB, a total over 50 MB, a font whose licence
+    // restricts embedding.
+    Q_INVOKABLE QStringList attachmentWarnings(bool fonts, const QList<QUrl> &files) const;
+    // One undo step ("Attach fonts" or "Attach graphics"); fonts are named as Aegisub names them ("_0").
+    // Nothing is attached when a file cannot be read.
+    Q_INVOKABLE bool attachFiles(bool fonts, const QList<QUrl> &files);
+    // One undo step ("Remove attachment"); rows as attachmentRows lists them.
+    Q_INVOKABLE bool removeAttachments(QList<int> rows);
+    // Where `row` extracts to in `folder`: its name without any folder part; empty when it has none.
+    Q_INVOKABLE QUrl attachmentFile(const QUrl &folder, int row) const;
+    // "written", "failed", or "exists" when `file` exists and `replace` is false.
+    Q_INVOKABLE QString extractAttachment(int row, const QUrl &file, bool replace);
     // id 0: the editing target. Its next save writes over the change on disk.
     Q_INVOKABLE bool acceptFileOnDisk(qulonglong id);
     // Opens the file on disk as the read-only reference and compares the two; false
@@ -903,9 +921,9 @@ public:
     Q_INVOKABLE QString sampleFrame(int renderer, int width, int height);
     // device: an index into the opening's list.
     Q_INVOKABLE void playTestSound(int device);
-    // The controls' state at the defaults; nothing is stored until OK or Apply.
+    // The controls' state at the defaults; nothing is stored until applySettings.
     Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
-    // page: an OptionsPage id ("general", "appearance", ...); stored only at OK or Apply.
+    // page: an OptionsPage id ("general", "appearance", ...); stored only by applySettings.
     Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
     // The conversion catalog's Styles.
     Q_INVOKABLE QStringList settingsStyles() const;
@@ -1267,6 +1285,7 @@ signals:
     void filesForwarded();
     void timecodesChanged();
     void encodingSuggestionChanged();
+    void attachmentsChanged();
     void keyframesChanged();
 
 private:

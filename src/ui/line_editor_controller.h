@@ -120,6 +120,8 @@ public:
 
     void setDocument(std::optional<application::DocumentId> document, bool editable);
     void setCommittedListener(std::function<void()> listener) { m_onCommitted = std::move(listener); }
+    // Each runs before Undo, Redo or a History jump moves the session, so edits held elsewhere land first.
+    void addBeforeHistoryMove(std::function<void()> hook) { m_beforeHistoryMove.push_back(std::move(hook)); }
 
     bool hasLine() const;
     bool editable() const { return m_editable && hasLine(); }
@@ -457,6 +459,8 @@ private:
     std::vector<Snapshot> m_draftUndo;
     std::vector<Snapshot> m_draftRedo;
     std::function<void()> m_onCommitted;
+    std::vector<std::function<void()>> m_beforeHistoryMove;
+    void beforeHistoryMove();
     std::optional<application::ContentId> m_typingStep;
     QElapsedTimer m_lastTyped;
     bool findNext(std::size_t &cursor, const std::function<bool(const core::LineRecord &)> &match,

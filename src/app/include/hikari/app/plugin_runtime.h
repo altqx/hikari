@@ -11,6 +11,7 @@
 #include "hikari/app/plugin_programs.h"
 #include "hikari/app/plugin_ui.h"
 #include "hikari/backends/ai_mcp_clients.h"
+#include "hikari/backends/ai_plugin_tools.h"
 #include "hikari/backends/plugin_process.h"
 #include "hikari/plugins/conditions.h"
 #include "hikari/plugins/installer.h"
@@ -59,6 +60,7 @@ class PluginRuntime : public QObject {
     Q_PROPERTY(QVariantList working READ working NOTIFY workingChanged)
     Q_PROPERTY(int marksRevision READ marksRevision NOTIFY marksChanged)
     Q_PROPERTY(int programsRevision READ programsRevision NOTIFY programsChanged)
+    Q_PROPERTY(int languageServersRevision READ languageServersRevision NOTIFY languageServerStatesChanged)
     Q_PROPERTY(hikari::app::PluginUi *ui READ ui CONSTANT)
     // Restricted plugins run in an operating-system sandbox here.
     Q_PROPERTY(bool sandboxed READ sandboxed CONSTANT)
@@ -145,6 +147,17 @@ public:
     Q_INVOKABLE QVariantList programs(const QString &pluginId) const;
     Q_INVOKABLE void downloadPrograms(const QString &pluginId);
     int programsRevision() const { return m_programsRevision; }
+    // The plugin's language servers that stopped after crashing: [{id, title, reason}].
+    Q_INVOKABLE QVariantList stoppedLanguageServers(const QString &pluginId) const;
+    Q_INVOKABLE void startLanguageServerAgain(const QString &pluginId, const QString &serverId);
+    int languageServersRevision() const { return m_languageServersRevision; }
+    void setLanguageServerStates(std::function<QVariantList(const std::string &plugin)> stopped,
+                                 std::function<void(const std::string &plugin, const std::string &server)> startAgain);
+    void languageServerStatesUpdated()
+    {
+        ++m_languageServersRevision;
+        emit languageServerStatesChanged();
+    }
     Q_INVOKABLE void clearMarks(const QString &pluginId, double document);
     int marksRevision() const { return m_marksRevision; }
     void rowMarksChanged()
@@ -187,6 +200,11 @@ public:
     std::vector<backends::ai::McpServerEntry> mcpServers() const;
     // How a plugin's MCP server starts in the plugin's sandbox, or why it can't.
     std::expected<backends::ProgramProcess::Options, QString> mcpServerStart(const backends::ai::McpServerEntry &server) const;
+    // The AI tools of the plugins that run, by plugin name, each trusted when the user trusts its plugin's marks.
+    std::vector<backends::ai::PluginToolEntry> aiTools() const;
+    // Runs the tool's command with `arguments` and context.via "ai", as a read tool when it only reads after trust.
+    void runAiTool(const backends::ai::PluginToolEntry &tool, const api::Json &arguments,
+                   backends::ai::PluginTools::Answer answer);
     // The installed plugins, as of the last sync; nullopt before a registry was read.
     const std::optional<std::set<std::string>> &installed() const { return m_installed; }
 
@@ -231,7 +249,9 @@ signals:
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
     void mcpServersChanged();
+    void aiToolsChanged();
     void languageServersChanged();
+    void languageServerStatesChanged();
 
 private:
     struct Running;
@@ -286,10 +306,14 @@ private:
     std::vector<Job> m_jobs;
     int m_marksRevision = 0;
     int m_programsRevision = 0;
+    int m_languageServersRevision = 0;
+    std::function<QVariantList(const std::string &)> m_stoppedLanguageServers;
+    std::function<void(const std::string &, const std::string &)> m_startLanguageServerAgain;
     void endJob(const std::string &plugin);
     void renewServers(Running &plugin);
     std::int64_t m_serversRevision = 0;
     std::optional<std::set<std::string>> m_installed;
+    std::set<std::string> m_trustsToolMarks;
     std::set<std::string> m_reloading;
     void rework();
     QVariantList m_working;

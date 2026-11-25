@@ -14,6 +14,13 @@ namespace {
 using api::Json;
 
 constexpr std::array<std::string_view, 4> kTypeNames{"light", "dark", "highContrastLight", "highContrastDark"};
+constexpr std::array<std::string_view, 4> kLabels{"normal", "modified", "saved", "doubtful"};
+constexpr std::array<std::string_view, kSyntaxCount> kSyntax{
+    "default",           "curlyBraces",       "operators",         "names",           "values",
+    "splitAndDrawings",  "templateVariables", "templateCodeMarks", "templateFunctions", "templateKeywords",
+    "templateStrings",   "drawingX",          "drawingY"};
+constexpr std::array<std::string_view, kPortCount> kPorts{"units", "tags", "number", "text",
+                                                          "colour", "point", "bool", "drawing"};
 
 struct Schema {
     Json root;
@@ -213,21 +220,14 @@ std::expected<ThemeFile, Problem> parse(std::string_view json)
         c.grid.comparison[i] = colourOf(grid.find("comparison")->asArray()[i]);
     c.grid.comparisonSelection = optionalAt(grid, "comparisonSelection");
     const Json &labels = *grid.find("labels");
-    constexpr std::array<std::string_view, 4> kLabels{"normal", "modified", "saved", "doubtful"};
     for (std::size_t i = 0; i < kLabels.size(); ++i)
         c.grid.labels[i] = colourAt(labels, kLabels[i]);
 
     const Json &syntax = *content.find("syntax");
-    constexpr std::array<std::string_view, kSyntaxCount> kSyntax{
-        "default",           "curlyBraces",       "operators",         "names",           "values",
-        "splitAndDrawings",  "templateVariables", "templateCodeMarks", "templateFunctions", "templateKeywords",
-        "templateStrings",   "drawingX",          "drawingY"};
     for (std::size_t i = 0; i < kSyntax.size(); ++i)
         c.syntax[i] = optionalAt(syntax, kSyntax[i]);
 
     const Json &ports = *content.find("ports");
-    constexpr std::array<std::string_view, kPortCount> kPorts{"units", "tags",  "number", "text",
-                                                              "colour", "point", "bool",   "drawing"};
     for (std::size_t i = 0; i < kPorts.size(); ++i)
         c.ports[i] = colourAt(ports, kPorts[i]);
 
@@ -409,4 +409,156 @@ std::expected<ThemeFile, Problem> load(std::string_view json)
     return file;
 }
 
+ThemeFile complete(const ThemeFile &file)
+{
+    const auto userPicks = [&file](Role role) { return std::ranges::contains(file.userColours, role); };
+    const auto workedOutFrom = [](Role role) -> std::optional<Role> {
+        switch (role) {
+        case Role::Focus:
+        case Role::Hover:
+        case Role::Pressed:
+            return Role::Text;
+        case Role::Control:
+            return Role::Line;
+        case Role::OnAccent:
+            return Role::Accent;
+        default:
+            return std::nullopt;
+        }
+    };
+    const Resolved resolved = resolve(file);
+    ThemeFile out = file;
+    for (std::size_t i = 0; i < kRoleCount; ++i) {
+        const auto source = workedOutFrom(Role(i));
+        if (!out.roles[i] && !(source && userPicks(*source)))
+            out.roles[i] = resolved.roles[i];
+    }
+    for (AccentChoice &choice : out.accents)
+        choice.onAccent = at(resolve(file, {choice.id, {}}).roles, Role::OnAccent);
+
+    Content &c = out.content;
+    const Content &worked = resolved.content;
+    if (!userPicks(Role::Text))
+        c.syntax[0] = worked.syntax[0];
+    if (file.accents.empty() && !userPicks(Role::Accent)) {
+        c.grid.comparisonSelection = worked.grid.comparisonSelection;
+        c.audio.selectionBackground = worked.audio.selectionBackground;
+        c.audio.selectionModified = worked.audio.selectionModified;
+        c.audio.waveformSelected = worked.audio.waveformSelected;
+    }
+    return out;
+}
+
+namespace {
+
+Json colourJson(Colour colour)
+{
+    char text[12];
+    if (colour >> 24 == 0xFF)
+        std::snprintf(text, sizeof text, "#%06X", colour & 0xFFFFFFu);
+    else
+        std::snprintf(text, sizeof text, "#%06X%02X", colour & 0xFFFFFFu, colour >> 24);
+    return Json(text);
+}
+
+void put(Json &object, std::string_view key, std::optional<Colour> colour)
+{
+    if (colour)
+        object[key] = colourJson(*colour);
+}
+
+Json contentJson(const Content &c)
+{
+    Json content = Json::object();
+    put(content, "spellcheck", c.spellcheck);
+    put(content, "grammar", c.grammar);
+    Json grid = Json::object();
+    put(grid, "alternate", c.grid.alternate);
+    put(grid, "warning", c.grid.warning);
+    put(grid, "comment", c.grid.comment);
+    Json comparison = Json::array();
+    for (const Colour colour : c.grid.comparison)
+        comparison.push(colourJson(colour));
+    grid["comparison"] = std::move(comparison);
+    put(grid, "comparisonSelection", c.grid.comparisonSelection);
+    Json labels = Json::object();
+    for (std::size_t i = 0; i < kLabels.size(); ++i)
+        put(labels, kLabels[i], c.grid.labels[i]);
+    grid["labels"] = std::move(labels);
+    content["grid"] = std::move(grid);
+
+    Json syntax = Json::object();
+    for (std::size_t i = 0; i < kSyntax.size(); ++i)
+        put(syntax, kSyntax[i], c.syntax[i]);
+    content["syntax"] = std::move(syntax);
+    Json ports = Json::object();
+    for (std::size_t i = 0; i < kPorts.size(); ++i)
+        put(ports, kPorts[i], c.ports[i]);
+    content["ports"] = std::move(ports);
+
+    const AudioColours &a = c.audio;
+    Json audio = Json::object();
+    put(audio, "background", a.background);
+    put(audio, "lineStart", a.lineStart);
+    put(audio, "lineEnd", a.lineEnd);
+    put(audio, "inactiveBoundary", a.inactiveBoundary);
+    put(audio, "cursor", a.cursor);
+    put(audio, "secondBoundaries", a.secondBoundaries);
+    put(audio, "keyframe", a.keyframe);
+    put(audio, "selectionBackground", a.selectionBackground);
+    put(audio, "selectionModified", a.selectionModified);
+    put(audio, "inactiveBackground", a.inactiveBackground);
+    put(audio, "waveform", a.waveform);
+    put(audio, "waveformInactive", a.waveformInactive);
+    put(audio, "waveformModified", a.waveformModified);
+    put(audio, "waveformSelected", a.waveformSelected);
+    put(audio, "timescaleBackground", a.timescaleBackground);
+    put(audio, "timescaleText", a.timescaleText);
+    put(audio, "spectrumBackground", a.spectrumBackground);
+    put(audio, "spectrumEcho", a.spectrumEcho);
+    put(audio, "spectrumInner", a.spectrumInner);
+    put(audio, "lineBoundaryMark", a.lineBoundaryMark);
+    put(audio, "syllableBoundaries", a.syllableBoundaries);
+    put(audio, "syllableText", a.syllableText);
+    content["audio"] = std::move(audio);
+
+    Json tools = Json::object();
+    put(tools, "handle", c.visualTools.handle);
+    put(tools, "handleSelected", c.visualTools.handleSelected);
+    put(tools, "handleBorder", c.visualTools.handleBorder);
+    content["visualTools"] = std::move(tools);
+    return content;
+}
+
+}
+
+std::string write(const ThemeFile &file)
+{
+    Json root = Json::object();
+    root["$schema"] = "https://hikarisub.altqx.com/schemas/hikari-theme.schema.json";
+    root["type"] = typeName(file.type);
+    Json roles = Json::object();
+    for (std::size_t i = 0; i < kRoleCount; ++i)
+        put(roles, kRoleNames[i], file.roles[i]);
+    root["roles"] = std::move(roles);
+    if (!file.accents.empty()) {
+        Json accents = Json::array();
+        for (const AccentChoice &choice : file.accents) {
+            Json a = Json::object({{"id", choice.id}, {"title", choice.title}});
+            put(a, "accent", choice.accent);
+            put(a, "onAccent", choice.onAccent);
+            put(a, "select", choice.select);
+            accents.push(std::move(a));
+        }
+        root["accents"] = std::move(accents);
+    }
+    if (!file.userColours.empty()) {
+        Json user = Json::array();
+        for (const Role role : file.userColours)
+            user.push(kRoleNames[std::size_t(role)]);
+        root["userColours"] = std::move(user);
+    }
+    root["content"] = contentJson(file.content);
+    return root.dump(2) + "\n";
+}
 }
