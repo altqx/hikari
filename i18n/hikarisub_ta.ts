@@ -10498,6 +10498,10 @@ Failed to copy %2 fonts.</source>
         <translation>இரண்டு வெவ்வேறு பாணிகளைத் தேர்வுசெய்யவும்.</translation>
     </message>
     <message>
+        <source>Pairs of romaji and kanji lines show here.</source>
+        <translation>ரோமாஜி மற்றும் காஞ்சி வரிகளின் இணைகள் இங்கே தோன்றும்.</translation>
+    </message>
+    <message>
         <source>No karaoke lines in “%1”</source>
         <translation>“%1” இல் கரோக்கி வரிகள் இல்லை</translation>
     </message>
@@ -10532,6 +10536,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>%1 of %2 groups</source>
         <translation>%2 குழுக்களில் %1</translation>
+    </message>
+    <message>
+        <source>A pair’s syllables and their kanji show here.</source>
+        <translation>ஒரு இணையின் அசைகளும் அவற்றின் காஞ்சியும் இங்கே தோன்றும்.</translation>
     </message>
     <message>
         <source>Choose the romaji and kanji styles</source>
@@ -21930,6 +21938,10 @@ because it was edited.</source>
     <message>
         <source>Autosaves</source>
         <translation>தானியங்கு சேமிப்புகள்</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves</source>
+        <translation>பழைய தானியங்கு சேமிப்புகளை நீக்கு</translation>
     </message>
     <message>
         <source>Search autosaves</source>

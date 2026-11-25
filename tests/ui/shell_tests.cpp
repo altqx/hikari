@@ -8087,7 +8087,7 @@ private slots:
     {
         QObject *autosaves = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("autosaves"));
         QVERIFY(autosaves);
-        QVERIFY(QMetaObject::invokeMethod(autosaves, "show", Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(autosaves, "showDeleting"));
         auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"));
         QVERIFY(window);
         auto close = qScopeGuard([&] { window->close(); });
@@ -8100,6 +8100,16 @@ private slots:
         QDate monthAgo = QDate::currentDate().addMonths(-1);
         QCOMPARE(picker->property("date").toDateTime().date(), monthAgo);
         QVERIFY(window->findChild<QObject *>(QStringLiteral("datePickerOpen")));
+        QCOMPARE(window->title(), QStringLiteral("Delete old autosaves"));
+        QTRY_VERIFY(window->activeFocusItem());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(autosaves, "show"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("Autosaves"));
+        QTRY_VERIFY(window->activeFocusItem());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!window->isVisible());
     }
 
     void everyMenuItemHasAnIcon()
@@ -13848,6 +13858,12 @@ private slots:
         QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiSameStyle")->isVisible());
         QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 0);
         QVERIFY(dialogItem("kanjiTimerDialog", "kanjiNoPair")->isVisible());
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairsWhat")->property("text").toString(),
+                 QStringLiteral("Pairs of romaji and kanji lines show here."));
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiPairsWhat")->isVisible());
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairWhat")->property("text").toString(),
+                 QStringLiteral("A pair’s syllables and their kanji show here."));
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiPairWhat")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -38046,6 +38062,87 @@ private slots:
                     continue;
                 open();
                 shoot(name, QStringLiteral("dg1-%1-system-%2.png").arg(name, code));
+            }
+        }
+    }
+
+    void styleManagerAndRemoveTagsFitASmallScreenWithRoom()
+    {
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto *root = engine->rootObjects().first();
+        for (const auto &[name, menuItem] : {std::pair{"styleManager", "styleManagerMenuItem"},
+                                             std::pair{"removeTagsDialog", "gridRemoveTags"}}) {
+            QVERIFY(QMetaObject::invokeMethod(named(menuItem)->property("action").value<QObject *>(), "trigger"));
+            QQuickWindow *window = nullptr;
+            QTRY_VERIFY((window = root->findChild<QQuickWindow *>(QLatin1String(name))) && window->isVisible());
+            QTRY_VERIFY(window->property("naturalHeight").toInt() > 0);
+            QVERIFY2(window->property("naturalHeight").toInt() <= 640, name);
+            QVERIFY2(window->property("naturalWidth").toInt() <= 1366 - 160, name);
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        }
+        QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "show"));
+        QQuickWindow *autosaves = nullptr;
+        QTRY_VERIFY((autosaves = root->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"))) && autosaves->isVisible());
+        auto *empty = autosaves->findChild<QQuickItem *>(QStringLiteral("autosavesEmpty"));
+        QVERIFY(empty);
+        if (empty->isVisible())
+            QVERIFY2(autosaves->property("naturalHeight").toInt() <= 300, "an empty Autosaves window is no bigger than its empty state");
+        auto *body = autosaves->findChild<QQuickItem *>(QStringLiteral("dialogBody"));
+        QVERIFY(body);
+        QCOMPARE(body->mapToScene(QPointF()).x(), 24.0);
+        QCOMPARE(body->width(), autosaves->width() - 48.0);
+        QVERIFY(autosaves->close());
+        QTRY_VERIFY(!autosaves->isVisible());
+    }
+
+    void settingsAndDialogsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_AREA9_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_AREA9_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        QVERIFY(application->video().showFrameAt(0));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light")); });
+        const auto trigger = [&](const char *menuItem) {
+            return [&, menuItem] {
+                QVERIFY(QMetaObject::invokeMethod(named(menuItem)->property("action").value<QObject *>(), "trigger"));
+            };
+        };
+        const std::vector<std::pair<QString, std::function<void()>>> windows{
+            {QStringLiteral("styleManager"), trigger("styleManagerMenuItem")},
+            {QStringLiteral("removeTagsDialog"), trigger("gridRemoveTags")},
+            {QStringLiteral("kanjiTimerDialog"), trigger("kanjiTimerMenuItem")},
+            {QStringLiteral("findFadeDialog"), trigger("findFadeMenuItem")},
+            {QStringLiteral("trackColourDialog"), trigger("trackColourMenuItem")},
+            {QStringLiteral("autosavesWindow"),
+             [&] { QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "showDeleting")); }},
+        };
+        QFile sizes(out + QStringLiteral("/area9-sizes.txt"));
+        QVERIFY(sizes.open(QIODevice::WriteOnly | QIODevice::Text));
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            for (const auto &[name, open] : windows) {
+                open();
+                QQuickWindow *window = nullptr;
+                QTRY_VERIFY((window = root->findChild<QQuickWindow *>(name)) && window->isVisible());
+                QVERIFY(QTest::qWaitForWindowExposed(window));
+                QTest::qWait(300);
+                QVERIFY(window->grabWindow().save(QStringLiteral("%1/area9-%2-%3.png").arg(out, name, theme)));
+                if (code == ui::theme::kCodes.front())
+                    sizes.write(QStringLiteral("%1 %2x%3\n").arg(name).arg(window->width()).arg(window->height()).toUtf8());
+                QVERIFY(window->close());
+                QTRY_VERIFY(!window->isVisible());
             }
         }
     }

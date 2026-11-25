@@ -10395,6 +10395,10 @@ Failed to copy %2 fonts.</source>
         <translation>서로 다른 스타일 두 개를 선택하십시오.</translation>
     </message>
     <message>
+        <source>Pairs of romaji and kanji lines show here.</source>
+        <translation>로마자 줄과 한자 줄의 쌍이 여기에 표시됩니다.</translation>
+    </message>
+    <message>
         <source>No karaoke lines in “%1”</source>
         <translation>“%1”에 노래방 줄 없음</translation>
     </message>
@@ -10429,6 +10433,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>%1 of %2 groups</source>
         <translation>그룹 %1/%2</translation>
+    </message>
+    <message>
+        <source>A pair’s syllables and their kanji show here.</source>
+        <translation>쌍의 음절과 해당 한자가 여기에 표시됩니다.</translation>
     </message>
     <message>
         <source>Choose the romaji and kanji styles</source>
@@ -21746,6 +21754,10 @@ because it was edited.</source>
     <message>
         <source>Autosaves</source>
         <translation>자동 저장 파일</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves</source>
+        <translation>오래된 자동 저장 파일 삭제</translation>
     </message>
     <message>
         <source>Search autosaves</source>

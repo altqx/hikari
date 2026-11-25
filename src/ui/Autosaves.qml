@@ -13,6 +13,7 @@ Item {
     property string range: "any"
     property date before: new Date()
     property string query: ""
+    property bool deleting: false
     property date now: new Date()
     readonly property DialogWindow window: windowLoader.item as DialogWindow
     readonly property var shown: {
@@ -70,12 +71,18 @@ Item {
         rows.sort((a, b) => b.when - a.when)
         entries = rows
     }
-    function show(deleting) {
+    function show() {
+        autosaves.deleting = false
         reload()
         windowLoader.active = true
         window.open()
-        if (deleting === true)
-            window.openDeleteOlder()
+    }
+    function showDeleting() {
+        autosaves.deleting = true
+        reload()
+        windowLoader.active = true
+        window.open()
+        window.openDeleteOlder()
     }
     function openCopy(entry, version) {
         const v = entry.versions[version]
@@ -116,7 +123,7 @@ Item {
             dialogId: "autosaves"
             settings: autosaves.settings
             resizable: true
-            title: qsTr("Autosaves")
+            title: autosaves.deleting ? qsTr("Delete old autosaves") : qsTr("Autosaves")
             initialFocus: search
 
             function openDeleteOlder() {
@@ -165,8 +172,8 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredWidth: 720
-                Layout.minimumHeight: 160
-                Layout.preferredHeight: header.height + 5 * 48 + 2
+                Layout.minimumHeight: autosaves.entries.length === 0 ? header.height + 48 + 2 : 160
+                Layout.preferredHeight: header.height + (autosaves.entries.length === 0 ? 1 : 5) * 48 + 2
                 Rectangle {
                     id: header
                     x: 1; y: 1
@@ -326,6 +333,7 @@ Item {
                 showTitle: true
                 initialFocus: olderDate.field
                 readonly property int count: autosaves.olderCount(olderDate.date)
+                onReverted: if (autosaves.deleting) autosavesWindow.reject()
                 DatePicker {
                     id: olderDate
                     objectName: "olderDate"

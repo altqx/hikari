@@ -10395,6 +10395,10 @@ Failed to copy %2 fonts.</source>
         <translation>เลือกสไตล์สองแบบที่ต่างกัน</translation>
     </message>
     <message>
+        <source>Pairs of romaji and kanji lines show here.</source>
+        <translation>คู่บรรทัดโรมาจิและคันจิจะแสดงที่นี่</translation>
+    </message>
+    <message>
         <source>No karaoke lines in “%1”</source>
         <translation>ไม่มีบรรทัดคาราโอเกะใน “%1”</translation>
     </message>
@@ -10429,6 +10433,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>%1 of %2 groups</source>
         <translation>%1 จาก %2 กลุ่ม</translation>
+    </message>
+    <message>
+        <source>A pair’s syllables and their kanji show here.</source>
+        <translation>พยางค์ของคู่และคันจิของพยางค์จะแสดงที่นี่</translation>
     </message>
     <message>
         <source>Choose the romaji and kanji styles</source>
@@ -21742,6 +21750,10 @@ because it was edited.</source>
     <message>
         <source>Autosaves</source>
         <translation>ไฟล์บันทึกอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves</source>
+        <translation>ลบไฟล์บันทึกอัตโนมัติเก่า</translation>
     </message>
     <message>
         <source>Search autosaves</source>

@@ -10601,6 +10601,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Wybierz dwa różne style.</translation>
     </message>
     <message>
+        <source>Pairs of romaji and kanji lines show here.</source>
+        <translation>Tutaj pojawiają się pary linijek romaji i kanji.</translation>
+    </message>
+    <message>
         <source>No karaoke lines in “%1”</source>
         <translation>Brak linijek karaoke w “%1”</translation>
     </message>
@@ -10635,6 +10639,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>%1 of %2 groups</source>
         <translation>%1 z %2 grup</translation>
+    </message>
+    <message>
+        <source>A pair’s syllables and their kanji show here.</source>
+        <translation>Tutaj pojawiają się sylaby pary i ich kanji.</translation>
     </message>
     <message>
         <source>Choose the romaji and kanji styles</source>
@@ -22114,6 +22122,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Autosaves</source>
         <translation>Autozapisy</translation>
+    </message>
+    <message>
+        <source>Delete old autosaves</source>
+        <translation>Usuń stare autozapisy</translation>
     </message>
     <message>
         <source>Search autosaves</source>
