@@ -13864,6 +13864,12 @@ private slots:
         QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairWhat")->property("text").toString(),
                  QStringLiteral("A pair’s syllables and their kanji show here."));
         QVERIFY(dialogItem("kanjiTimerDialog", "kanjiPairWhat")->isVisible());
+        const auto above = [&](const char *state, const char *what) {
+            return dialogItem("kanjiTimerDialog", state)->mapToScene(QPointF()).y()
+                   < dialogItem("kanjiTimerDialog", what)->mapToScene(QPointF()).y();
+        };
+        QTRY_VERIFY(above("kanjiPairsEmpty", "kanjiPairsWhat"));
+        QTRY_VERIFY(above("kanjiNoPair", "kanjiPairWhat"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -38087,8 +38093,8 @@ private slots:
         QTRY_VERIFY((autosaves = root->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"))) && autosaves->isVisible());
         auto *empty = autosaves->findChild<QQuickItem *>(QStringLiteral("autosavesEmpty"));
         QVERIFY(empty);
-        if (empty->isVisible())
-            QVERIFY2(autosaves->property("naturalHeight").toInt() <= 300, "an empty Autosaves window is no bigger than its empty state");
+        QTRY_VERIFY(empty->isVisible());
+        QVERIFY2(autosaves->property("naturalHeight").toInt() <= 300, "an empty Autosaves window is no bigger than its empty state");
         auto *body = autosaves->findChild<QQuickItem *>(QStringLiteral("dialogBody"));
         QVERIFY(body);
         QCOMPARE(body->mapToScene(QPointF()).x(), 24.0);

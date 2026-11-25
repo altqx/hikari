@@ -165,20 +165,11 @@ DialogWindow {
                 visible: pairList.count === 0
                 spacing: 4
                 Label {
-                    objectName: "kanjiPairsWhat"
-                    Layout.fillWidth: true
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.Wrap
-                    color: Theme.muted
-                    text: qsTr("Pairs of romaji and kanji lines show here.")
-                }
-                Label {
                     objectName: "kanjiPairsEmpty"
                     Layout.fillWidth: true
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     color: Theme.muted
-                    font: dialog.fontAt(12)
                     textFormat: Text.PlainText
                     text: dialog.timer.problem === "noKaraoke"
                           ? qsTr("No karaoke lines in “%1”").arg(dialog.timer.romajiStyle)
@@ -193,6 +184,15 @@ DialogWindow {
                     color: Theme.muted
                     font: dialog.fontAt(12)
                     text: qsTr("The romaji style needs lines timed with %1 tags.").arg("\\k")
+                }
+                Label {
+                    objectName: "kanjiPairsWhat"
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    color: Theme.muted
+                    font: dialog.fontAt(12)
+                    text: qsTr("Pairs of romaji and kanji lines show here.")
                 }
             }
             ListView {
@@ -319,22 +319,22 @@ DialogWindow {
                     width: parent.width - 32
                     spacing: 4
                     Label {
-                        objectName: "kanjiPairWhat"
-                        Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
-                        wrapMode: Text.Wrap
-                        color: Theme.muted
-                        text: qsTr("A pair’s syllables and their kanji show here.")
-                    }
-                    Label {
                         objectName: "kanjiNoPair"
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.Wrap
                         color: Theme.muted
-                        font: dialog.fontAt(12)
                         text: dialog.timer.problem !== "" ? qsTr("Choose the romaji and kanji styles")
                                                           : qsTr("No pair with both lines")
+                    }
+                    Label {
+                        objectName: "kanjiPairWhat"
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        color: Theme.muted
+                        font: dialog.fontAt(12)
+                        text: qsTr("A pair’s syllables and their kanji show here.")
                     }
                 }
             }

@@ -350,6 +350,7 @@ Item {
                     Layout.alignment: Qt.AlignRight
                     onClicked: {
                         autosaves.deleteOlder(olderDate.date)
+                        autosaves.deleting = false
                         deleteOlder.keep()
                     }
                 }
