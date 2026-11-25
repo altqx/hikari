@@ -12,6 +12,9 @@ ColumnLayout {
     property string node: ""
     property bool editable: true
     property real labelWidth: 80
+    property real trailWidth: 0
+    readonly property real naturalTrailWidth: Math.max(rangeLabel.shows ? rangeLabel.implicitWidth : 0,
+                                                       newSeed.visible ? newSeed.implicitWidth : 0)
     property font labelFont: Qt.application.font
     property font valueFont: Qt.application.font
     property font monoFont: Qt.application.font
@@ -119,20 +122,30 @@ ColumnLayout {
                              : textEditor
         }
 
-        IconToolButton {
-            objectName: "nodeNewSeed"
-            visible: editor.random && editor.name === "seed" && !editor.wired
-            iconRole: "refresh"
-            text: qsTr("New seed")
-            enabled: editor.editable
-            onClicked: editor.apply(Math.floor(Math.random() * 1000000))
-        }
-        Label {
-            objectName: editor.objectName + "Range"
-            visible: editor.scrubbed && !editor.wired && !editor.slid && (editor.field.range ?? "") !== ""
-            text: editor.field.range ?? ""
-            font: editor.labelFont
-            color: Theme.muted
+        Item {
+            visible: !editor.port && editor.trailWidth > 0
+            implicitWidth: editor.trailWidth
+            implicitHeight: Theme.controlHeight
+            IconToolButton {
+                id: newSeed
+                objectName: "nodeNewSeed"
+                anchors.verticalCenter: parent.verticalCenter
+                visible: editor.random && editor.name === "seed" && !editor.wired
+                iconRole: "refresh"
+                text: qsTr("New seed")
+                enabled: editor.editable
+                onClicked: editor.apply(Math.floor(Math.random() * 1000000))
+            }
+            Label {
+                id: rangeLabel
+                readonly property bool shows: editor.scrubbed && !editor.wired && !editor.slid && text !== ""
+                objectName: editor.objectName + "Range"
+                anchors.verticalCenter: parent.verticalCenter
+                visible: shows && editor.refusal === ""
+                text: editor.field.range ?? ""
+                font: editor.labelFont
+                color: Theme.muted
+            }
         }
 
         Item {

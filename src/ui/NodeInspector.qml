@@ -44,6 +44,12 @@ Pane {
         return Math.ceil(Math.min(widest, 110)) + root.changedMarkWidth
     }
     readonly property real changedMarkWidth: 6 + 4
+    readonly property real trailWidth: {
+        let widest = 0
+        for (let i = 0; i < fieldEditors.count; ++i)
+            widest = Math.max(widest, fieldEditors.itemAt(i)?.naturalTrailWidth ?? 0)
+        return Math.ceil(widest)
+    }
 
     function label(name) {
         return name.charAt(0).toUpperCase() + name.slice(1).replace(/_/g, " ")
@@ -263,6 +269,7 @@ Pane {
                 detail: qsTr("Drag a value to change it · Shift for fine steps")
             }
             Repeater {
+                id: fieldEditors
                 model: root.fields.length
                 delegate: NodeFieldEditor {
                     required property int index
@@ -272,6 +279,7 @@ Pane {
                     node: root.one ? root.node.id : ""
                     editable: root.editable
                     labelWidth: root.labelWidth
+                    trailWidth: root.trailWidth
                     labelFont: root.labelFont
                     valueFont: root.valueFont
                     monoFont: root.monoFont
@@ -416,7 +424,6 @@ Pane {
                     objectName: "nodeSelectionDelete"
                     flat: true
                     implicitHeight: Theme.controlHeight
-                    iconRole: "delete"
                     text: qsTr("Delete")
                     enabled: root.editable
                     onClicked: root.controller.removeSelected()

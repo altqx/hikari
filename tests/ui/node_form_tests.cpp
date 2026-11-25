@@ -257,6 +257,7 @@ private slots:
         QTest::keyClick(m_view.get(), Qt::Key_Return);
         QTRY_VERIFY(item(QStringLiteral("nodeField_stepRefusal"))->isVisible());
         QCOMPARE(item(QStringLiteral("nodeField_stepRefusal"))->property("text").toString(), QStringLiteral("At least 0"));
+        QVERIFY(!item(QStringLiteral("nodeField_stepRange"))->isVisible());
         QCOMPARE(stored(controller(), random, QStringLiteral("step")).toDouble(), 11.0);
 
         QQuickItem *reset = item(QStringLiteral("nodeField_stepReset"));
@@ -278,6 +279,24 @@ private slots:
                 QVERIFY2(!label->property("truncated").toBool(), qPrintable(QStringLiteral("%1: %2").arg(QLatin1String(type), name)));
             }
         }
+    }
+
+    void everyFieldOfANodeEndsAtTheSameX()
+    {
+        const QString random = controller().addNode(QStringLiteral("math.random"), 0, 0);
+        controller().setSelection({random});
+        showPanel();
+        QVERIFY(item(QStringLiteral("nodeField_stepRange"))->isVisible());
+        QVERIFY(!item(QStringLiteral("nodeField_minRange"))->isVisible());
+        const auto rightEdge = [this](const QString &name) {
+            QQuickItem *field = item(name);
+            return field ? field->mapToScene(QPointF(field->width(), 0)).x() : -1.0;
+        };
+        const qreal edge = rightEdge(QStringLiteral("nodeFieldValue_min"));
+        QVERIFY(edge > 0);
+        QCOMPARE(rightEdge(QStringLiteral("nodeFieldValue_max")), edge);
+        QCOMPARE(rightEdge(QStringLiteral("nodeFieldValue_step")), edge);
+        QCOMPARE(rightEdge(QStringLiteral("nodeFieldValue_seed")), edge);
     }
 
     void thePanelSaysMixedForSeveralNodes()
