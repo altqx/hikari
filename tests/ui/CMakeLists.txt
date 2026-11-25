@@ -8,7 +8,7 @@ target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFAC
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_wheel_scroll_tests SOURCES wheel_scroll_tests.cpp LIBRARIES hikari_ui Qt6::QuickControls2)
 # MUST KILL: each part runs from its named function up to the next part's, in shell_tests.cpp's order
-hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp
+hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp next_file_folder.cpp gui_thread_clock.cpp window_menus_closed.cpp
     LIBRARIES hikari_composition Qt6::CorePrivate Qt6::QuickTest ZLIB::ZLIB Hikari::sodium
     PARTS documents
           documents2=gridGesturesSelectRanges
@@ -678,6 +678,13 @@ if(WIN32)
         ENVIRONMENT "QT_QPA_PLATFORM=windows" LABELS "qttest;windows" TIMEOUT 120)
 endif()
 hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LIBRARIES hikari_ui)
+if(WIN32)
+    add_test(NAME hikari_ui_window_frame_tests.windows
+        COMMAND $<TARGET_FILE:hikari_ui_window_frame_tests> windowsRestoreLeavesAWindowAsBigAsItsScreenWindowed
+            -o "${CMAKE_BINARY_DIR}/qttest-hikari_ui_window_frame_tests-windows.txt,txt" -o "-,txt")
+    set_tests_properties(hikari_ui_window_frame_tests.windows PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=windows" LABELS "qttest;windows" TIMEOUT 120)
+endif()
 hikari_add_qttest(hikari_ui_dialog_frame_tests SOURCES dialog_frame_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
 hikari_add_qttest(hikari_ui_association_offer_tests SOURCES association_offer_tests.cpp

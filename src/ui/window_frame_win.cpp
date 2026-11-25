@@ -112,11 +112,27 @@ public:
                                      == QPlatformSurfaceEvent::SurfaceCreated;
             if (made || event->type() == QEvent::Show)
                 QMetaObject::invokeMethod(this, [this] { apply(m_custom); }, Qt::QueuedConnection);
+            if (event->type() == QEvent::WindowStateChange && restoredAsFullScreen())
+                QMetaObject::invokeMethod(this, [this] { keepRestoredWindowNormal(); }, Qt::QueuedConnection);
         }
         return QObject::eventFilter(watched, event);
     }
 
 private:
+    // Qt calls a restored window that exactly covers its screen full screen (QWindowsWindow::isFullScreen_sys);
+    // its real full screen drops the caption styles.
+    bool restoredAsFullScreen() const
+    {
+        return hwnd() && m_window->windowStates().testFlag(Qt::WindowFullScreen) && !IsZoomed(hwnd())
+               && !IsIconic(hwnd()) && (GetWindowLongPtrW(hwnd(), GWL_STYLE) & WS_CAPTION);
+    }
+
+    void keepRestoredWindowNormal()
+    {
+        if (m_custom && restoredAsFullScreen())
+            m_window->setWindowStates(Qt::WindowNoState);
+    }
+
     // Qt passes posted messages with no result (true drops them) and sent ones with one.
     static bool answer(qintptr *result, qintptr value)
     {

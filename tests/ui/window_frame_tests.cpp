@@ -6,6 +6,13 @@
 #include <QSignalSpy>
 #include <QtTest>
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 using namespace hikari;
 using ui::MainWindowFrame;
 namespace wf = ui::windowframe;
@@ -112,6 +119,35 @@ private slots:
         QTRY_COMPARE(window.visibility(), QWindow::Maximized);
         frame.toggleMaximized();
         QTRY_COMPARE(window.visibility(), QWindow::Windowed);
+    }
+
+    void windowsRestoreLeavesAWindowAsBigAsItsScreenWindowed()
+    {
+#ifdef _WIN32
+        if (QGuiApplication::platformName() != QLatin1String("windows"))
+            QSKIP("restores through the Windows window frame (QT_QPA_PLATFORM=windows)");
+        QQuickWindow window;
+        MainWindowFrame frame;
+        frame.setWindow(&window);
+        frame.setCustom(true);
+        const QRect screen = window.screen()->geometry();
+        window.setGeometry(screen);
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        QTRY_COMPARE(window.visibility(), QWindow::Windowed);
+        const auto hwnd = reinterpret_cast<HWND>(window.winId());
+        for (int round = 0; round < 2; ++round) {
+            SendMessageW(hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+            QTRY_COMPARE(window.visibility(), QWindow::Maximized);
+            SendMessageW(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+            QTRY_COMPARE(window.visibility(), QWindow::Windowed);
+            QTest::qWait(200);
+            QCOMPARE(window.visibility(), QWindow::Windowed);
+            QCOMPARE(window.geometry(), screen);
+        }
+#else
+        QSKIP("restores through the Windows window frame");
+#endif
     }
 
     void titleBarPartsAsTheWindowSystemIsTold()
