@@ -176,6 +176,36 @@ Packing a zip after every change is slow. Instead, load the folder as a dev plug
 
 A dev plugin has its own data, settings and folders, so it never touches an installed copy of the same plugin. While it's loaded, it stands in for that copy. **Unload…** in its details returns to the installed copy and leaves your folder alone. See [Developer tools](plugins.md#developer-tools).
 
+## Test it
+
+`hikarisub --test-plugin` runs your plugin against a subtitle file with no window, and says which steps failed. Put a test subtitle file and a `tests.jsonl` beside your plugin, one step per line:
+
+```jsonl
+{"call": "documents.get", "params": {}, "expect": {"lineCount": 2}}
+{"call": "selection.set", "params": {"selected": [1]}}
+{"run": "unbreak"}
+{"expectDocument": "unbroken.ass"}
+```
+
+```sh
+hikarisub --test-plugin first-plugin tests.jsonl --document episode.ass
+```
+
+- **The run.** It loads your folder as a dev plugin in a throwaway user folder, so your own settings and plugins are never touched. It gives the plugin every permission the manifest asks for, without asking, and lists them first.
+- **What a command returns** is checked with `expect`, as in `{"run": "greet", "expect": {"hello": "Ana"}}`.
+- **The result.** It prints a line for each failed step, with its line in `tests.jsonl`, and exits with 0 when all passed, 1 when one failed, and 2 when the tests couldn't run. `--json` prints a report for other tools instead.
+- **Prompts.** A command that asks the user gets its answer from the `answer` step before it.
+- **A stuck step.** Each step has 10 seconds, or `--timeout <ms>`.
+
+[The test harness](plugins.md#developer-tools) lists every step.
+
+**In your CI.** The harness needs no display, so it runs on any Linux or Windows runner with HikariSub installed. On Linux, run the command as above, from the AppImage or the installed package. On Windows, install it silently with `/S`, which installs it for the current user. `hikarisub.exe` is a windowed program, so pipe its output to let PowerShell wait for it and keep what it prints:
+
+```powershell
+& "$env:LOCALAPPDATA\Programs\HikariSub\hikarisub.exe" --test-plugin first-plugin tests.jsonl --document episode.ass | Write-Output
+exit $LASTEXITCODE
+```
+
 ## The manifest
 
 [The manifest](plugins.md#the-manifest) lists every field. Besides the fields above:

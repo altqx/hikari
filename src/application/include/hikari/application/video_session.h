@@ -207,6 +207,8 @@ public:
     std::optional<core::DocumentTime> frameStart(int index) const;
     // nullopt past the last frame's start.
     std::optional<int> frameAtOrAfter(core::DocumentTime time) const;
+    // The frame seekToEnd shows: the one holding 1 ms before `end`.
+    std::optional<int> lastFrameBefore(core::DocumentTime end) const;
     std::shared_ptr<const IndexedFrame> lastFrame() const { return m_shown; }
     std::shared_ptr<const OverlayFrame> lastOverlay() const { return m_overlay; }
     std::optional<PresentResult> lastPresent() const { return m_lastPresent; }

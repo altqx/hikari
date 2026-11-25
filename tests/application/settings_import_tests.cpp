@@ -309,6 +309,25 @@ TEST(SettingsImport, AegisubKaraokeSplitAndJoinGoToTheGrid)
     EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_JOIN_AS_KARAOKE:S").value, SettingValue(std::string("Ctrl-Shift-K")));
 }
 
+TEST(SettingsImport, AegisubVideoControlsImportToTheirCommands)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Video": {"video/jump": ["Ctrl-J"], "video/zoom/50": ["F5"], "video/zoom/100": ["F6"],
+                  "video/zoom/200": ["F7"], "video/zoom/in": ["Alt-KP_Add"], "video/zoom/out": ["Alt-KP_Subtract"],
+                  "video/frame/next/boundary": ["Alt-Right"], "video/frame/prev/boundary": ["Alt-Left"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_JUMP_TO:V").value, SettingValue(std::string("Ctrl-J")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_50:V").value, SettingValue(std::string("F5")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_100:V").value, SettingValue(std::string("F6")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_200:V").value, SettingValue(std::string("F7")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_IN:V").value, SettingValue(std::string("Alt-Num +")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_OUT:V").value, SettingValue(std::string("Alt-Num -")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_NEXT_SUBTITLE_BOUNDARY:V").value, SettingValue(std::string("Alt-Right")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY:V").value,
+              SettingValue(std::string("Alt-Left")));
+}
+
 TEST(SettingsImport, AegisubCommandsAndKeysHikariSubLacksAreListed)
 {
     const Plan plan = buildPlan({aegisub(R"({
@@ -578,7 +597,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 434);
+    EXPECT_EQ(bound, 444);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)

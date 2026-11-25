@@ -1352,9 +1352,8 @@ DialogWindow {
                                 objectName: "hotkeyImportLegacy"
                                 iconRole: "import"
                                 text: qsTr("Import legacy shortcuts…")
-                                enabled: dialog.hotkeys !== null && !dialog.hotkeys.optionsModified
-                                tip: enabled ? qsTr("Adds the script shortcuts of a legacy Hotkeys.txt at once")
-                                             : qsTr("Press Apply or Cancel first: the import is added at once")
+                                enabled: dialog.hotkeys !== null
+                                tip: qsTr("Adds the script shortcuts of a legacy Hotkeys.txt at once")
                                 onClicked: legacyHotkeysFile.open()
                             }
                         }

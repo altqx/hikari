@@ -1,5 +1,7 @@
 #include "hikari/application/visual_view.h"
 
+#include "hikari/application/video_controls.h"
+
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -317,6 +319,62 @@ void VideoView::resetZoom()
     m_contentZoom = 1.0;
     m_pan = {};
     refreshToolTransform();
+}
+
+void VideoView::zoomCropAboutItsCentre(float crop)
+{
+    if (crop <= 1.f) {
+        resetZoom();
+        return;
+    }
+    const float centreX = (m_zoomRect.x + m_zoomRect.width) / 2.f - static_cast<float>(m_videoRect.left);
+    const float centreY = (m_zoomRect.y + m_zoomRect.height) / 2.f - static_cast<float>(m_videoRect.top);
+    zoomAt(crop, static_cast<int>(centreX), static_cast<int>(centreY));
+}
+
+void VideoView::zoomContentAboutTheWindowCentre(double zoom)
+{
+    const double x = m_windowRect.left + m_windowRect.width() / 2.0;
+    const double y = m_windowRect.top + m_windowRect.height() / 2.0;
+    zoomAndPan(zoom, zoomAnchor(x, y), x, y);
+}
+
+void VideoView::zoomToPercent(double percent)
+{
+    if (!m_open || m_videoRect.width() <= 0 || !std::isfinite(percent))
+        return;
+    if (m_model == ZoomModel::Legacy) {
+        zoomCropAboutItsCentre(static_cast<float>(percent / 100.0));
+        return;
+    }
+    zoomContentAboutTheWindowCentre(percent / 100.0 * m_width / toLogical(m_videoRect.width()));
+}
+
+void VideoView::zoomToDevicePixels()
+{
+    if (!m_open || m_videoRect.width() <= 0)
+        return;
+    const double zoom = static_cast<double>(m_width) / m_videoRect.width();
+    if (m_model == ZoomModel::Legacy)
+        zoomCropAboutItsCentre(static_cast<float>(zoom));
+    else
+        zoomContentAboutTheWindowCentre(zoom);
+}
+
+void VideoView::zoomStep(int direction)
+{
+    if (!m_open || direction == 0)
+        return;
+    if (m_model == ZoomModel::Legacy)
+        zoomCropAboutItsCentre(wheelZoomPercent(m_zoomPercent, direction > 0 ? 1 : -1));
+    else
+        zoomContentAboutTheWindowCentre(m_contentZoom * (direction > 0 ? 1.125 : 0.875));
+}
+
+int VideoView::readoutPercent() const
+{
+    const double percent = m_model == ZoomModel::Legacy ? m_zoomPercent * 100.0 : displayScale() * 100.0;
+    return static_cast<int>(std::lround(percent));
 }
 
 void VideoView::zoomPress(int x, int y)

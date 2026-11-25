@@ -35,11 +35,13 @@ struct HoverText {
 
 inline constexpr std::size_t kMostCompletions = 200;
 
+class LanguageServers;
+
 // A plugin's completion answer, without the items that break the contract.
 std::vector<CompletionItem> completionItems(const api::Json &answer, int length, int offset, const QString &source);
 std::optional<HoverText> hoverText(const api::Json &answer, int length, const QString &source);
 
-// The plugins' contributes.providers for the line editor (#1227).
+// The plugins' contributes.providers for the line editor, then their language servers (#1227).
 class LanguageProviders : public QObject {
     Q_OBJECT
 public:
@@ -55,17 +57,20 @@ public:
     using Hover = std::function<void(std::optional<HoverText>)>;
 
     explicit LanguageProviders(PluginRuntime &runtime, QObject *parent = nullptr);
+    void setServers(LanguageServers *servers) { m_servers = servers; }
 
-    // The trigger characters of every plugin that completes `field`.
+    // The trigger characters of every plugin and server that completes `field`.
     QStringList triggers(const QString &field) const;
-    // `done` gets every plugin's items in install order once each has answered, failed or run out of time; it isn't
-    // called when a newer complete() came first.
+    bool hovers(const QString &field) const;
+    // `done` gets every plugin's items in install order, then the servers', once each has answered, failed or run out
+    // of time; it isn't called when a newer complete() came first.
     void complete(const Request &request, Completions done);
-    // `done` gets the first plugin's hover, in install order; as complete for newer requests.
+    // `done` gets the first plugin's hover in install order, else the first server's; as complete for newer requests.
     void hover(const Request &request, Hover done);
 
 private:
     PluginRuntime &m_runtime;
+    LanguageServers *m_servers = nullptr;
     std::uint64_t m_completion = 0;
     std::uint64_t m_hover = 0;
 };

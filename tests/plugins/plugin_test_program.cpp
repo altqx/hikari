@@ -3,8 +3,11 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -154,18 +157,14 @@ std::string numberAfter(const std::string &body, const std::string &key)
     return body.substr(from, body.find_first_of(",}", from) - from);
 }
 
-// A warning at each "bad", by LSP line and UTF-16 character.
-std::string badDiagnostics(const std::string &text)
+// Each "bad" as its LSP line and UTF-16 character.
+std::vector<std::pair<int, int>> bads(const std::string &text)
 {
-    std::string out;
+    std::vector<std::pair<int, int>> out;
     int line = 0, units = 0;
     for (std::size_t i = 0; i < text.size(); ++i) {
-        if (text.compare(i, 3, "bad") == 0) {
-            const std::string start = "{\"line\":" + std::to_string(line) + ",\"character\":" + std::to_string(units) + "}";
-            const std::string end = "{\"line\":" + std::to_string(line) + ",\"character\":" + std::to_string(units + 3) + "}";
-            out += std::string(out.empty() ? "" : ",") + "{\"range\":{\"start\":" + start + ",\"end\":" + end +
-                   "},\"severity\":2,\"code\":\"Bad\",\"source\":\"fake\",\"message\":\"Avoid bad\"}";
-        }
+        if (text.compare(i, 3, "bad") == 0)
+            out.emplace_back(line, units);
         const auto byte = static_cast<unsigned char>(text[i]);
         if (byte == '\n') {
             ++line;
@@ -174,18 +173,78 @@ std::string badDiagnostics(const std::string &text)
             units += byte >= 0xF0 ? 2 : 1;
         }
     }
+    return out;
+}
+
+std::string position(int line, int character)
+{
+    return "{\"character\":" + std::to_string(character) + ",\"line\":" + std::to_string(line) + "}";
+}
+
+std::string range(int line, int from, int toLine, int to)
+{
+    return "{\"end\":" + position(toLine, to) + ",\"start\":" + position(line, from) + "}";
+}
+
+std::string badDiagnostic(int line, int units)
+{
+    return "{\"code\":\"Bad\",\"message\":\"Avoid bad\",\"range\":" + range(line, units, line, units + 3) +
+           ",\"severity\":2,\"source\":\"fake\"}";
+}
+
+std::string badDiagnostics(const std::string &text)
+{
+    std::string out;
+    for (const auto &[line, units] : bads(text))
+        out += std::string(out.empty() ? "" : ",") + badDiagnostic(line, units);
+    return "[" + out + "]";
+}
+
+int intAfter(const std::string &body, const std::string &key, std::size_t from = 0)
+{
+    const std::size_t at = body.find("\"" + key + "\":", from);
+    return at == std::string::npos ? -1 : std::atoi(body.c_str() + at + key.size() + 3);
+}
+
+std::string edit(const std::string &uri, const std::string &range, const std::string &text)
+{
+    return "{\"changes\":{\"" + uri + "\":[{\"newText\":\"" + text + "\",\"range\":" + range + "}]}}";
+}
+
+// For each "bad" on the asked line: a fix, then one across two lines, one into the line's first character (a tag
+// when the line starts with one) and one that only runs a command.
+std::string codeActions(const std::string &uri, const std::string &text, int line)
+{
+    std::string out;
+    const auto add = [&out](const std::string &action) { out += std::string(out.empty() ? "" : ",") + action; };
+    for (const auto &[at, units] : bads(text)) {
+        if (at != line)
+            continue;
+        const std::string diagnostics = "[" + badDiagnostic(at, units) + "]";
+        add("{\"diagnostics\":" + diagnostics + ",\"edit\":" + edit(uri, range(at, units, at, units + 3), "good") +
+            ",\"isPreferred\":true,\"kind\":\"quickfix\",\"title\":\"Use good\"}");
+        add("{\"diagnostics\":" + diagnostics + ",\"edit\":" + edit(uri, range(at, units, at + 1, 0), "") +
+            ",\"kind\":\"quickfix\",\"title\":\"Across lines\"}");
+        add("{\"diagnostics\":" + diagnostics + ",\"edit\":" + edit(uri, range(at, 0, at, 1), "x") +
+            ",\"kind\":\"quickfix\",\"title\":\"Into the start\"}");
+        add("{\"command\":{\"command\":\"fake.fix\",\"title\":\"Run\"},\"diagnostics\":" + diagnostics +
+            ",\"kind\":\"quickfix\",\"title\":\"Run a command\"}");
+    }
     return "[" + out + "]";
 }
 
 // A language server, scripted for language_servers_tests; what HikariSub sends goes to stderr.
 int lsp(const std::string &variant)
 {
+    std::map<std::string, std::string> texts;
     for (std::string body = readFrame(); !body.empty(); body = readFrame()) {
         const std::string method = stringAfter(body, "method");
         const std::string id = idOf(body);
         if (method == "initialize") {
             std::cerr << "init " << body << std::endl;
-            sendFrame("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":{\"capabilities\":{\"textDocumentSync\":1}}}");
+            sendFrame("{\"jsonrpc\":\"2.0\",\"id\":" + id +
+                      R"(,"result":{"capabilities":{"textDocumentSync":1,"hoverProvider":true,"codeActionProvider":true,)"
+                      R"("completionProvider":{"triggerCharacters":["\\"]}}}})");
         } else if (method == "initialized") {
             sendFrame(R"({"jsonrpc":"2.0","id":"c1","method":"workspace/configuration","params":{"items":[{"section":"style"},{}]}})");
             sendFrame(R"({"jsonrpc":"2.0","method":"window/logMessage","params":{"type":3,"message":"ready"}})");
@@ -196,12 +255,33 @@ int lsp(const std::string &variant)
             const std::string uri = stringAfter(body, "uri");
             const std::string version = numberAfter(body, "version");
             const std::string text = stringAfter(body, "text");
+            texts[uri] = text;
             std::cerr << (method == "textDocument/didOpen" ? "open " : "change ") << uri << ' ' << version << ' ' << text
                       << std::endl;
             if (variant == "crash")
                 return 3;
             sendFrame("{\"jsonrpc\":\"2.0\",\"method\":\"textDocument/publishDiagnostics\",\"params\":{\"uri\":\"" + uri +
                       "\",\"version\":" + version + ",\"diagnostics\":" + badDiagnostics(text) + "}}");
+        } else if (method == "textDocument/completion") {
+            const std::size_t at = body.find("\"position\"");
+            const int line = intAfter(body, "line", at), character = intAfter(body, "character", at);
+            std::cerr << "complete " << stringAfter(body, "uri") << ' ' << line << ' ' << character << " '"
+                      << stringAfter(body, "triggerCharacter") << "'" << std::endl;
+            sendFrame("{\"jsonrpc\":\"2.0\",\"id\":" + id +
+                      R"(,"result":{"isIncomplete":false,"items":[{"label":"zebra","sortText":"2","detail":"a word"},)"
+                      R"j({"label":"\\fad","sortText":"1","insertTextFormat":2,"textEdit":{"newText":"\\fad(${1:200})","range":)j" +
+                      range(line, character - 1, line, character) + R"(}},{"label":"far","textEdit":{"newText":"far","range":)" +
+                      range(line + 1, 0, line + 1, 0) + "}}]}}");
+        } else if (method == "textDocument/hover") {
+            const std::size_t at = body.find("\"position\"");
+            const int line = intAfter(body, "line", at), character = intAfter(body, "character", at);
+            sendFrame("{\"jsonrpc\":\"2.0\",\"id\":" + id + R"(,"result":{"contents":{"kind":"markdown","value":"hover at )" +
+                      std::to_string(character) + R"("},"range":)" + range(line, 0, line, 3) + "}}");
+        } else if (method == "textDocument/codeAction") {
+            const std::string uri = stringAfter(body, "uri");
+            const int line = intAfter(body, "line", body.rfind("\"range\""));
+            std::cerr << "actions " << uri << ' ' << line << std::endl;
+            sendFrame("{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + codeActions(uri, texts[uri], line) + "}");
         } else if (method == "textDocument/didClose") {
             std::cerr << "close " << stringAfter(body, "uri") << std::endl;
         } else if (method == "shutdown") {
