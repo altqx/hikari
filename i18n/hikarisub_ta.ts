@@ -10088,10 +10088,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Line %1 failed: %2</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <source>Line %1 failed: %2.</source>
+        <translation>
+            <numerusform>வரி %1 தோல்வியடைந்தது: %2.</numerusform>
+            <numerusform>வரிகள் %1 தோல்வியடைந்தன: %2.</numerusform>
         </translation>
     </message>
     <message numerus="yes">

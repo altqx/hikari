@@ -680,10 +680,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>Line %1 failed: %2</source>
+        <source>Line %1 failed: %2.</source>
         <translation>
-            <numerusform>Line %1 failed: %2</numerusform>
-            <numerusform>Lines %1 failed: %2</numerusform>
+            <numerusform>Line %1 failed: %2.</numerusform>
+            <numerusform>Lines %1 failed: %2.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
