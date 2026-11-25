@@ -4440,7 +4440,7 @@ ApplicationWindow {
                     }
                     ShellMenuItem {
                         command: "GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"
-                        iconRole: "preview-resolution"
+                        iconRole: "zoom"
                         objectName: "videoZoomDevicePixelsMenuItem"
                         action: videoZoomDevicePixelsAction
                     }
