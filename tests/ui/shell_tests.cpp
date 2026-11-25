@@ -14422,10 +14422,10 @@ private slots:
         restartWithSpelling(home.path(), true);
         const QString path = writeFile(dir, "area11.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold good\n"
                                                           "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Teh text\n");
-        auto &settings = *application->settingsStore();
-        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *settings = application->settingsStore();
+        settings->setValue(QStringLiteral("appearance.followSystem"), false);
         const auto setTheme = [&](const char *code) {
-            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            settings->setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
             auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
         };
@@ -14479,7 +14479,8 @@ private slots:
         QTemporaryDir bare;
         QVERIFY(bare.isValid());
         restartWithSpelling(bare.path(), true);
-        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings = application->settingsStore();
+        settings->setValue(QStringLiteral("appearance.followSystem"), false);
         QVERIFY(application->openFile(path));
         for (const QSize &size : sizes)
             for (const char *code : themes) {
