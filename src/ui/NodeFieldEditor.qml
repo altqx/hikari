@@ -315,7 +315,6 @@ ColumnLayout {
         id: segmentEditor
         SegmentedButtons {
             objectName: "nodeFieldChoice_" + editor.name
-            implicitHeight: Theme.controlHeight
             enabled: editor.editable
             choices: (editor.field.choices ?? []).map(c => ({ text: editor.label(c), name: "nodeFieldChoice_" + editor.name + "_" + c }))
             currentIndex: editor.mixed ? -1 : (editor.field.choices ?? []).indexOf(String(editor.field.value))
