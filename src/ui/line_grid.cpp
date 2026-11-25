@@ -112,6 +112,8 @@ void LineGrid::setModel(QAbstractItemModel *model)
                         repaint();
                         if (roles.contains(LineTableModel::ActiveRole) || roles.contains(LineTableModel::SelectedRole))
                             stateChanged();
+                        if (roles.isEmpty() || roles.contains(LineTableModel::OnFrameRole))
+                            updateOnFrameTicks();
                     }),
         };
         if (auto *lines = sourceLines(m_model))
@@ -128,6 +130,26 @@ void LineGrid::modelLayoutChanged()
     updateViewport();
     update();
     stateChanged();
+    updateOnFrameTicks();
+}
+
+void LineGrid::updateOnFrameTicks()
+{
+    QList<qreal> ticks;
+    const auto *lines = m_model ? sourceLines(m_model) : nullptr;
+    if (const int rows = m_model ? m_model->rowCount() : 0; lines && rows > 0) {
+        std::vector<int> marked;
+        for (const auto id : lines->linesOnFrame())
+            if (const int row = rowOfLine(core::LineId{id}); row >= 0)
+                marked.push_back(row);
+        std::ranges::sort(marked);
+        for (const int row : marked)
+            ticks.push_back((row + 0.5) / rows);
+    }
+    if (ticks != m_onFrameTicks) {
+        m_onFrameTicks = std::move(ticks);
+        emit onFrameTicksChanged();
+    }
 }
 
 namespace {
@@ -955,6 +977,13 @@ QColor commentInk(const theme::Roles &roles, const QColor &background)
     return theme::contrastRatio(roles.muted, background) >= 4.5 ? roles.muted : roles.text;
 }
 
+QColor onFrameTint(const theme::Roles &roles, const QColor &row)
+{
+    QColor tint = roles.warning;
+    tint.setAlphaF(0.18f);
+    return QColor(theme::composite(tint, row).rgb());
+}
+
 QColor selectionOver(const QColor &colour, const QColor &selection)
 {
     const int r = selection.red(), g = selection.green(), b = selection.blue(), invA = 0xFF - selection.alpha();
@@ -1179,6 +1208,8 @@ void LineGrid::paint(QPainter *painter)
             background = selected ? selectionOver(content.gridComment, content.comparisonSelection) : content.gridComment;
         else if (selected)
             background = roles.select;
+        else if (idx.data(LineTableModel::OnFrameRole).toBool())
+            background = onFrameTint(roles, background);
         const int comparison = idx.data(LineTableModel::ComparisonRole).toInt();
         painter->fillRect(QRectF(0, top, viewWidth, rh), background);
         const auto compared =

@@ -7661,6 +7661,33 @@ Nie udało się skopiować czcionek: %2.</translation>
         <source>Filter the Grid</source>
         <translation>Filtruj listę napisów</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Pokaż</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>Tagi na liście napisów: Ukryj</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9416,6 +9443,46 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Typesetting na pełnym ekranie</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>Powiększenie 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>Powiększenie 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Powiększ</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Pomniejsz</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>Dopasuj powiększenie do panelu</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>Powiększ do pikseli urządzenia 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>Następna granica napisu</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>Otwórz ponownie z kodowaniem…</translation>
     </message>
@@ -9646,6 +9713,34 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>Przełącz tryb tagów na liście napisów</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>Pokaż tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>Zastąp tagi na liście napisów symbolem</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>Usuń tekst, zachowaj tagi</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>Przenieś linijki w górę</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>Przenieś linijki w dół</translation>
     </message>
 </context>
 <context>
@@ -12555,6 +12650,46 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Otwórz ponownie z kodowaniem…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>Powiększenie 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>Powiększenie 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>Powiększenie 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>Powiększ</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>Pomniejsz</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>Dopasuj do panelu</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>Piksele urządzenia 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>Następna granica napisu</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>Poprzednia granica napisu</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>Otwiera plik wideo</translation>
     </message>
@@ -12747,6 +12882,14 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>&amp;Otwórz wideo…</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>Poprzedni plik</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>Następny plik</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>Otwiera plik klatek kluczowych</translation>
     </message>
@@ -12771,6 +12914,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Przechodzi o jedną klatkę w przód</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>Przewija wideo do poprzedniego początku lub końca linijki</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>Przewija wideo do następnego początku lub końca linijki</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>Pozwala wpisać czas lub klatkę do pokazania</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>Ustawia początek zaznaczonych linijek na czas klatki wideo</translation>
     </message>
@@ -12789,6 +12944,10 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Change aspect ratio…</source>
         <translation>Zmień proporcje obrazu…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>Poziom powiększenia</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -12845,14 +13004,6 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Open a file first</source>
         <translation>Najpierw otwórz plik</translation>
-    </message>
-    <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>Pokazuje lub ukrywa tagi na liście napisów</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>Ukryj tagi na liście napisów</translation>
     </message>
     <message>
         <source>Shows or hides tags in the line editor</source>
@@ -12921,6 +13072,42 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>Pokazuje, zastępuje symbolem lub ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>Tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>Pokazuje tagi na liście napisów bez zmian</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>Pokazuje każdy blok tagów na liście napisów jako symbol ustawiony w Ustawienia › Lista napisów</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>Zastąp symbolem</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>Ukrywa tagi na liście napisów</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>Ukryj</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>Zabarwia linijki na liście napisów widoczne na bieżącej klatce wideo</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>Oznacz linijki na bieżącej klatce</translation>
     </message>
 </context>
 <context>
@@ -15455,6 +15642,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>Żadne ustawienie nie pasuje do “%1”.</translation>
     </message>
     <message>
+        <source>Backup copies kept</source>
+        <translation>Zachowywane kopie zapasowe</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>Wcześniejsze zapisy każdego pliku zachowywane w folderze odzyskiwania. Zakres od 0 do 100</translation>
+    </message>
+    <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
         <translation>Kółko powiększa wokół wskaźnika. Powiększ wideo pokazuje ramkę do przeciągania.</translation>
     </message>
@@ -15864,7 +16059,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
+        <translation type="vanished">Najpierw naciśnij Zastosuj lub Anuluj: import jest dodawany od razu</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16914,7 +17109,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
+        <translation type="vanished">Naciśnij OK lub Zastosuj, aby ponownie włączyć AI.</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -17266,7 +17461,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
+        <translation type="vanished">Konfiguracja JSON wymaga adresu: naciśnij OK lub Zastosuj, aby zacząć nasłuchiwać na 127.0.0.1.</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17597,10 +17792,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>Żądania trafiają tylko do dodanych dostawców i do %1. Komponent AI działa w piaskownicy i łączy się z siecią wyłącznie przez HikariSub.</translation>
     </message>
@@ -17735,6 +17926,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>Konfiguracja JSON wymaga adresu, który pojawi się, gdy HikariSub zacznie nasłuchiwać na 127.0.0.1.</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -19089,6 +19284,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>Manifest podaje teraz identyfikator „%1”. Wyładuj wtyczkę i wczytaj folder ponownie.</translation>
+    </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 zatrzymał się: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>Zapisz kopię jako wtyczkę motywu…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>Wybierz, gdzie zapisać wtyczkę motywu</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 (kopia)</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>Nie można zapisać wtyczki motywu w %1.</translation>
     </message>
 </context>
 <context>
@@ -21647,6 +21863,26 @@ ponieważ została zmieniona.</translation>
         <source>Overlapping lines</source>
         <translation>Nakładające się linijki</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>Częściowe dopasowanie</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>Dokładne dopasowanie</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>Dopasowanie</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>Zawęź zaznaczenie</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>Usunięto z zaznaczenia linijek: %1.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21723,6 +21959,10 @@ ponieważ została zmieniona.</translation>
         <translation>Poprzednia wersja</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>Wcześniejszy zapis</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>Autozapis poprzedniej wersji</translation>
     </message>
@@ -21747,8 +21987,12 @@ ponieważ została zmieniona.</translation>
         <translation>Usuń</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Wcześniejsze zapisy to plik w postaci sprzed zastąpienia go przez zapis. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
+        <translation type="vanished">Każdy otwiera się jako nowa, niezapisana kopia; oryginalny plik nie jest zmieniany. Autozapisy poprzedniej wersji są tylko do odczytu.</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21904,7 +22148,7 @@ ponieważ została zmieniona.</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -21937,6 +22181,10 @@ ponieważ została zmieniona.</translation>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>Nie można otworzyć %1; nic nie zostało zmienione.</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (wcześniejszy zapis)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
@@ -26039,8 +26287,8 @@ Usunięte style:
         <translation>%1 ms</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>Wstecz</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -26118,13 +26366,29 @@ Usunięte style:
         <source>Open keyframes…</source>
         <translation>Otwórz klatki kluczowe…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n linijka się zmieni</numerusform>
+            <numerusform>%n linijki się zmienią</numerusform>
+            <numerusform>%n linijek się zmieni</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>Pokaż zmiany</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>kl.</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>Zmiany</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>Asystent timingu</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -27317,15 +27581,15 @@ Usunięte style:
     </message>
     <message>
         <source>Video position</source>
-        <translation>Pozycja wideo</translation>
+        <translation type="vanished">Pozycja wideo</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>Czasy wideo</translation>
+        <translation type="vanished">Czasy wideo</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
+        <translation type="vanished">Czas klatki; numer klatki; klatki od klatki początkowej linijki; milisekundy od początku i końca linijki</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -27352,12 +27616,21 @@ Usunięte style:
         <translation>Zatrzymaj</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>Przejdź do</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%1 klatek od początku linijki %2 · %3 ms od jej początku · %4 ms od jej końca</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>Następny plik</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">Wideo (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -27374,6 +27647,15 @@ Usunięte style:
     <message>
         <source>All files (*)</source>
         <translation>Wszystkie pliki (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>klatka %1 / %2</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>Wideo (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27503,6 +27785,10 @@ Usunięte style:
     <message>
         <source>Reset zoom and pan</source>
         <translation>Resetuj powiększenie i przesunięcie</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>Poziom powiększenia</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -28261,6 +28547,48 @@ bądź brakuje kodeków czy też splittera</translation>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>To nie jest czas ani klatka: %1. Spróbuj %2 lub numeru klatki.</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>Czas wideo, %1, edytowalny</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>Dopasowanie</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>Powiększenie wideo, %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>Powiększenie wideo</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>

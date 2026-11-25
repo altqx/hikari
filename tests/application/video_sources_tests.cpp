@@ -1,4 +1,5 @@
 #include "hikari/application/video_details.h"
+#include "hikari/application/video_extensions.h"
 #include "hikari/application/video_session.h"
 #include "hikari/application/video_sources.h"
 
@@ -7,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <climits>
+#include <cctype>
 #include <cmath>
 #include <numeric>
 
@@ -25,12 +27,30 @@ std::array<int, 4> pixel(const std::vector<std::byte> &bgra, int width, int x, i
 
 TEST(NextFile, VideoExtensions)
 {
-    for (const char *p : {"a.avi", "a.MP4", "a.mkv", "a.ogm", "a.wmv", "a.asf", "a.rmvb", "a.rm", "a.3gp", "a.ts",
-                          "a.M2TS", "a.mpg", "a.mpeg", "a.WebM", "dir.v/a.Mkv",
-                          "mkv"})
+    for (const auto extension : kVideoExtensions) {
+        EXPECT_TRUE(isNextFileVideo("a." + std::string(extension))) << extension;
+        std::string upper(extension);
+        std::ranges::transform(upper, upper.begin(), [](char c) { return char(std::toupper(c)); });
+        EXPECT_TRUE(isNextFileVideo("a." + upper)) << upper;
+    }
+    for (const char *p : {"a.WebM", "dir.v/a.Mkv", "mkv"})
         EXPECT_TRUE(isNextFileVideo(p)) << p;
-    for (const char *p : {"a.avs", "a.ass", "a.mov", "a.mkv.txt", "a.", "/v/mkv/notes"})
+    for (const char *p : {"a.avs", "a.ass", "a.mkv.txt", "a.", "/v/mkv/notes"})
         EXPECT_FALSE(isNextFileVideo(p)) << p;
+}
+
+TEST(NextFile, StopsAtY4mMovM4vAndFlv)
+{
+    const std::vector<std::string> files{"/v/ep01.mkv", "/v/ep02.y4m", "/v/ep03.mov", "/v/ep04.m4v", "/v/ep05.flv",
+                                         "/v/ep06.mkv"};
+    NextFileWalker walker;
+    for (std::size_t i = 1; i < files.size(); ++i) {
+        const auto step = walker.step(files, files[i - 1], true);
+        EXPECT_EQ(step.kind, NextFileStep::Kind::Open);
+        EXPECT_EQ(step.path, files[i]);
+    }
+    for (std::size_t i = files.size() - 1; i > 0; --i)
+        EXPECT_EQ(walker.step(files, files[i], false).path, files[i - 1]);
 }
 
 TEST(NextFile, WalksTheListingInNameOrderSkippingOtherFiles)

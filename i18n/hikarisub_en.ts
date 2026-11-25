@@ -1699,6 +1699,13 @@
             <numerusform>Snapped to the keyframe %n frames later.</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>%n line changes</numerusform>
+            <numerusform>%n lines change</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Tracking</name>

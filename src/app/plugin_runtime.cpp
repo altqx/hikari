@@ -161,7 +161,7 @@ struct PluginRuntime::Running {
             status.push_back({item});
     }
     bool held = false;
-    std::int64_t mcpRevision = 0;
+    std::int64_t serversRevision = 0;
 };
 
 namespace {
@@ -209,7 +209,7 @@ PluginRuntime::PluginRuntime(Wiring wiring, QObject *parent) : QObject(parent), 
         emit programsChanged();
         const auto it = m_plugins.find(pluginId.toStdString());
         if (it != m_plugins.end())
-            renewMcpServers(*it->second);
+            renewServers(*it->second);
         if (it != m_plugins.end() && !it->second->manifest.mainProgram.empty() && !it->second->held &&
             it->second->process->state() == PluginProcess::State::LoadFailed && m_downloads->missing(it->first, it->second->manifest).empty())
             it->second->process->start();
@@ -449,7 +449,7 @@ void PluginRuntime::sync()
     for (auto &[id, manifest] : wanted)
         if (!m_plugins.contains(id)) {
             Running &plugin = *m_plugins.emplace(id, launch(id, std::move(manifest))).first->second;
-            plugin.mcpRevision = ++m_mcpRevision;
+            plugin.serversRevision = ++m_serversRevision;
             if (hasCode(plugin.manifest))
                 plugin.process->start();
         }
@@ -469,14 +469,18 @@ void PluginRuntime::sync()
     m_ui->setPlugins(std::move(installed));
     relist();
     emit mcpServersChanged();
+    emit languageServersChanged();
 }
 
-void PluginRuntime::renewMcpServers(Running &plugin)
+void PluginRuntime::renewServers(Running &plugin)
 {
-    if (plugin.manifest.mcpServers.empty())
+    if (plugin.manifest.mcpServers.empty() && plugin.manifest.languageServers.empty())
         return;
-    plugin.mcpRevision = ++m_mcpRevision;
-    emit mcpServersChanged();
+    plugin.serversRevision = ++m_serversRevision;
+    if (!plugin.manifest.mcpServers.empty())
+        emit mcpServersChanged();
+    if (!plugin.manifest.languageServers.empty())
+        emit languageServersChanged();
 }
 
 std::vector<backends::ai::McpServerEntry> PluginRuntime::mcpServers() const
@@ -491,7 +495,7 @@ std::vector<backends::ai::McpServerEntry> PluginRuntime::mcpServers() const
                              .toStdString();
             entry.plugin = plugin->id;
             entry.pluginServer = server.id;
-            entry.revision = plugin->mcpRevision;
+            entry.revision = plugin->serversRevision;
             out.push_back(std::move(entry));
         }
     return out;
@@ -512,6 +516,50 @@ PluginRuntime::mcpServerStart(const backends::ai::McpServerEntry &server) const
     if (!options)
         return std::unexpected(qs(options.error().message));
     return std::move(*options);
+}
+
+std::vector<PluginRuntime::LanguageServer> PluginRuntime::languageServers() const
+{
+    std::vector<LanguageServer> out;
+    for (const std::string &id : m_installOrder) {
+        const auto it = m_plugins.find(id);
+        if (it == m_plugins.end())
+            continue;
+        for (const plugins::LanguageServer &server : it->second->manifest.languageServers)
+            out.push_back({id, qs(it->second->manifest.name), server, it->second->serversRevision});
+    }
+    return out;
+}
+
+std::expected<backends::ProgramProcess::Options, QString> PluginRuntime::languageServerStart(const std::string &plugin,
+                                                                                           const std::string &server) const
+{
+    const QString off = QCoreApplication::translate("HikariSub.Plugins", "The plugin isn’t on.");
+    const auto it = m_plugins.find(plugin);
+    if (it == m_plugins.end() || !m_wiring.programs)
+        return std::unexpected(off);
+    const std::vector<plugins::LanguageServer> &declared = it->second->manifest.languageServers;
+    const auto found = std::ranges::find(declared, server, &plugins::LanguageServer::id);
+    if (found == declared.end())
+        return std::unexpected(off);
+    auto options = m_wiring.programs->options(plugin, found->program);
+    if (!options)
+        return std::unexpected(qs(options.error().message));
+    return std::move(*options);
+}
+
+api::Json PluginRuntime::pluginSettings(const std::string &plugin) const
+{
+    const auto it = m_plugins.find(plugin);
+    if (it == m_plugins.end() || !m_installer)
+        return api::Json::object();
+    return plugins::settingValues(it->second->manifest, storedSettings(plugin));
+}
+
+void PluginRuntime::logProgramLine(const std::string &plugin, const QString &line)
+{
+    if (m_wiring.programs)
+        m_wiring.programs->logLine(plugin, line);
 }
 
 std::vector<PluginRuntime::Format> PluginRuntime::formats() const
@@ -1246,7 +1294,7 @@ void PluginRuntime::settingChanged(const QString &pluginId, const QString &setti
     if (it == m_plugins.end() || !value)
         return;
     m_ui->settingsChanged(it->first);
-    renewMcpServers(*it->second);
+    renewServers(*it->second);
     const api::Json data = api::Json::object({{"id", setting.toStdString()}, {"value", *value}});
     it->second->process->deliver("settings:changed", data.dump(), "settings:changed#" + setting.toStdString());
 }

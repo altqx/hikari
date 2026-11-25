@@ -517,6 +517,24 @@ struct FormatResult {
 
 }
 
+TEST_F(PluginProcessTest, ACommandGivesBackWhatItsHandlerReturns)
+{
+    auto p = process(plugin("result", "hikari.commands.register('greet', function(args) return {hi = args.name} end) "
+                                      "hikari.commands.register('scan', function() end) "
+                                      "hikari.commands.register('crash', function() error('no') end)"));
+    QSignalSpy finished(p.get(), &PluginProcess::finished);
+    FormatResult greeted, scanned, crashed;
+    ASSERT_TRUE(p->run("greet", R"({"args": {"name": "Ana"}})", greeted.done()));
+    ASSERT_TRUE(p->run("scan", "{}", scanned.done()));
+    ASSERT_TRUE(p->run("crash", "{}", crashed.done()));
+    ASSERT_TRUE(waitFor([&] { return greeted.value && scanned.value && crashed.value; }));
+    EXPECT_EQ(greeted.value->value_or(std::string()), R"({"hi":"Ana"})");
+    EXPECT_EQ(scanned.value->value_or(std::string()), "null");
+    ASSERT_FALSE(crashed.value->has_value());
+    EXPECT_TRUE(crashed.value->error().contains(QStringLiteral("no")));
+    EXPECT_EQ(finished.count(), 2);
+}
+
 TEST_F(PluginProcessTest, AnExporterTurnsTheSnapshotIntoTheFilesBytes)
 {
     auto p = process(plugin("formats", R"(

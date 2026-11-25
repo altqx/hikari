@@ -145,7 +145,7 @@ std::vector<const PlanRow *> rowsKeyed(const Plan &plan, std::string_view key)
 
 std::string sampleRaw(const SettingDefinition &def)
 {
-    if (def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON")
+    if (def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON" || def.legacyKey == "GRID_HIDE_TAGS")
         return "true";
     switch (def.type) {
     case SettingType::Bool:
@@ -246,6 +246,8 @@ TEST(SettingsImport, EachAegisubFlavourImportsTheSameWay)
         EXPECT_TRUE(keyframes.proposedImport);
         EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_NEXT_FRAME:V").value, SettingValue(std::string("Right")));
         EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_STOP:A").value, SettingValue(std::string("H")));
+        EXPECT_EQ(rowOf(plan, "shortcut:GRID_MOVE_UP:S").disposition, Disposition::Unchanged);
+        EXPECT_EQ(rowOf(plan, "shortcut:GRID_MOVE_DOWN:S").disposition, Disposition::Unchanged);
         EXPECT_EQ(rowOf(plan, "aegisub:Translation Assistant:tool/translation_assistant/preview:F8").reason,
                   "HikariSub has no Translation Assistant");
     }
@@ -256,7 +258,10 @@ TEST(SettingsImport, AegisubContextsPickThePanel)
     const Plan plan = buildPlan({aegisub(R"({
         "Default": {"video/frame/next": ["Ctrl-KP_6"], "edit/line/copy": ["Ctrl-C"]},
         "Video": {"video/frame/next": ["Right"]},
-        "Subtitle Grid": {"video/frame/next/keyframe": ["Shift-Right"]},
+        "Subtitle Grid": {"video/frame/next/keyframe": ["Shift-Right"], "grid/move/up": ["Alt-KP_8"],
+                          "edit/clear": ["Ctrl-Delete"], "edit/clear/text": ["Ctrl-Shift-Delete"],
+                          "grid/tag/cycle_hiding": ["Ctrl-F8"], "grid/tags/show": ["Ctrl-F9"],
+                          "grid/tags/simplify": ["Ctrl-F10"], "grid/tags/hide": ["Ctrl-F11"]},
         "Subtitle Edit Box": {"edit/color/primary": ["Alt-1"]},
         "Audio": {"time/length/increase": ["KP_Add"]},
         "Always": {"time/next": ["KP_2"]}
@@ -266,9 +271,36 @@ TEST(SettingsImport, AegisubContextsPickThePanel)
     EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_NEXT_FRAME:V").value, SettingValue(std::string("Right")));
     EXPECT_EQ(rowOf(plan, "shortcut:GRID_COPY:S").value, SettingValue(std::string("Ctrl-C")));
     EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_GO_TO_NEXT_KEYFRAME:S").value, SettingValue(std::string("Shift-Right")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GRID_MOVE_UP:S").value, SettingValue(std::string("Alt-Num 8")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_REMOVE_TEXT:S").value, SettingValue(std::string("Ctrl-Delete")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_REMOVE_TEXT_KEEP_TAGS:S").value,
+              SettingValue(std::string("Ctrl-Shift-Delete")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_HIDE_TAGS:S").value, SettingValue(std::string("Ctrl-F8")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_GRID_TAGS_SHOW:S").value, SettingValue(std::string("Ctrl-F9")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_GRID_TAGS_REPLACE:S").value, SettingValue(std::string("Ctrl-F10")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_GRID_TAGS_HIDE:S").value, SettingValue(std::string("Ctrl-F11")));
     EXPECT_EQ(rowOf(plan, "shortcut:EDITBOX_CHANGE_COLOR_PRIMARY:E").value, SettingValue(std::string("Alt-1")));
     EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_END_FRAME_LATER:A").value, SettingValue(std::string("Num +")));
     EXPECT_EQ(rowOf(plan, "shortcut:AUDIO_NEXT:A").value, SettingValue(std::string("Num 2")));
+}
+
+TEST(SettingsImport, AegisubVideoControlsImportToTheirCommands)
+{
+    const Plan plan = buildPlan({aegisub(R"({
+        "Video": {"video/jump": ["Ctrl-J"], "video/zoom/50": ["F5"], "video/zoom/100": ["F6"],
+                  "video/zoom/200": ["F7"], "video/zoom/in": ["Alt-KP_Add"], "video/zoom/out": ["Alt-KP_Subtract"],
+                  "video/frame/next/boundary": ["Alt-Right"], "video/frame/prev/boundary": ["Alt-Left"]}
+    })")},
+                                linuxHost());
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_JUMP_TO:V").value, SettingValue(std::string("Ctrl-J")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_50:V").value, SettingValue(std::string("F5")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_100:V").value, SettingValue(std::string("F6")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_200:V").value, SettingValue(std::string("F7")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_IN:V").value, SettingValue(std::string("Alt-Num +")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_VIDEO_ZOOM_OUT:V").value, SettingValue(std::string("Alt-Num -")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_NEXT_SUBTITLE_BOUNDARY:V").value, SettingValue(std::string("Alt-Right")));
+    EXPECT_EQ(rowOf(plan, "shortcut:GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY:V").value,
+              SettingValue(std::string("Alt-Left")));
 }
 
 TEST(SettingsImport, AegisubCommandsAndKeysHikariSubLacksAreListed)
@@ -434,7 +466,8 @@ TEST(SettingsImport, EveryWorksheetOptionReachesADestinationOrADisposition)
             EXPECT_EQ(it->second, SettingValue(!std::get<bool>(def.defaultValue))) << def.id;
             break;
         case SettingType::Int:
-            EXPECT_EQ(it->second, SettingValue(def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON"
+            EXPECT_EQ(it->second, SettingValue(def.legacyKey == "AUDIO_SPECTRUM_NON_LINEAR_ON" ||
+                                                       def.legacyKey == "GRID_HIDE_TAGS"
                                                    ? std::int64_t{1}
                                                    : std::get<std::int64_t>(def.defaultValue) + 7))
                 << def.id;
@@ -539,7 +572,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 422);
+    EXPECT_EQ(bound, 439);
 }
 
 TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
@@ -654,6 +687,20 @@ TEST(SettingsImport, TheNonLinearSpectrumSwitchBecomesTheSpeechCurve)
     const Plan off =
         buildPlan({config(padding() + "AUDIO_SPECTRUM_NON_LINEAR_ON=false\r\n")}, linuxHost(), readBy(ReadBy::Windows));
     EXPECT_EQ(rowOf(off, "setting:audio.spectrumCurve").value, SettingValue(std::int64_t{0}));
+}
+
+TEST(SettingsImport, TheHideTagsSwitchAndSwapCharacterBecomeTheTagsMode)
+{
+    const auto modeOf = [](const std::string &records) {
+        const Plan plan = buildPlan({config(padding() + records)}, linuxHost(), readBy(ReadBy::Windows));
+        const PlanRow &mode = rowOf(plan, "setting:grid.tagsMode");
+        EXPECT_TRUE(mode.disposition == Disposition::Change || mode.disposition == Disposition::Unchanged);
+        return mode.value;
+    };
+    EXPECT_EQ(modeOf("GRID_HIDE_TAGS=false\r\nGRID_TAGS_SWAP_CHARACTER=\r\n"), SettingValue(std::int64_t{0}));
+    EXPECT_EQ(modeOf("GRID_HIDE_TAGS=true\r\n"), SettingValue(std::int64_t{1}));
+    EXPECT_EQ(modeOf("GRID_HIDE_TAGS=true\r\nGRID_TAGS_SWAP_CHARACTER=*\r\n"), SettingValue(std::int64_t{1}));
+    EXPECT_EQ(modeOf("GRID_TAGS_SWAP_CHARACTER=\r\nGRID_HIDE_TAGS=true\r\n"), SettingValue(std::int64_t{2}));
 }
 
 TEST(SettingsImport, MalformedValuesStayUnresolvedWithLegacysReading)

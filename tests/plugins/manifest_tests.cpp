@@ -770,6 +770,44 @@ TEST(PluginManifest, AnMcpServerNamesADeclaredProgramWithoutTheApi)
     EXPECT_EQ(problem(json).kind, ManifestProblem::Kind::DuplicateId);
 }
 
+TEST(PluginManifest, ALanguageServerNamesADeclaredProgramWithoutTheApiAndKeepsItsDefaults)
+{
+    Json json = minimal();
+    json["permissions"] = *Json::parse(R"({"programs": "Checks prose"})");
+    json["contributes"] = *Json::parse(R"({"programs": [{"id": "core", "title": "Core", "api": true,
+        "platforms": {"linux-x64": {"path": "bin/core"}}}, {"id": "ls", "title": "Server", "platforms": {"linux-x64": {"path": "bin/ls"}}}],
+        "languageServers": [{"id": "prose", "title": "Prose", "program": "ls"},
+            {"id": "lines", "title": "Lines", "program": "ls", "scope": "line", "fields": ["translation"], "tags": "keep",
+             "languageId": "markdown", "initializationOptions": {"level": 2}}]})");
+    const auto parsed = parse(json);
+    ASSERT_TRUE(parsed) << parsed.error().at << " " << parsed.error().detail;
+    ASSERT_EQ(parsed->languageServers.size(), 2u);
+    const LanguageServer &prose = parsed->languageServers[0];
+    EXPECT_EQ(prose.id, "prose");
+    EXPECT_EQ(prose.title, "Prose");
+    EXPECT_EQ(prose.program, "ls");
+    EXPECT_EQ(prose.scope, LanguageServer::Scope::Document);
+    EXPECT_EQ(prose.fields, std::vector<std::string>{"text"});
+    EXPECT_EQ(prose.tags, LanguageServer::Tags::Blank);
+    EXPECT_EQ(prose.languageId, "plaintext");
+    EXPECT_TRUE(prose.initializationOptions.isNull());
+    const LanguageServer &lines = parsed->languageServers[1];
+    EXPECT_EQ(lines.scope, LanguageServer::Scope::Line);
+    EXPECT_EQ(lines.fields, std::vector<std::string>{"translation"});
+    EXPECT_EQ(lines.tags, LanguageServer::Tags::Keep);
+    EXPECT_EQ(lines.languageId, "markdown");
+    EXPECT_EQ(lines.initializationOptions.dump(), R"({"level":2})");
+
+    Json &server = json["contributes"]["languageServers"].asArray()[0];
+    server["program"] = Json(std::string("nope"));
+    EXPECT_EQ(problem(json).at, "/contributes/languageServers/0/program");
+    server["program"] = Json(std::string("core"));
+    EXPECT_EQ(problem(json).detail, "a language server's program can't have \"api\": true");
+    server["program"] = Json(std::string("ls"));
+    json["contributes"]["languageServers"].push(*Json::parse(R"({"id": "prose", "title": "Again", "program": "ls"})"));
+    EXPECT_EQ(problem(json).kind, ManifestProblem::Kind::DuplicateId);
+}
+
 TEST(PluginManifest, AnUpdateAsksAgainForANewMcpServer)
 {
     Manifest current;

@@ -1,5 +1,7 @@
 #include "hikari/application/explorer.h"
 
+#include "hikari/application/video_extensions.h"
+
 #include <algorithm>
 #include <array>
 #include <map>
@@ -39,8 +41,6 @@ template <std::size_t N> bool among(const std::array<std::string_view, N> &list,
 }
 
 constexpr std::array<std::string_view, 6> kSubtitles{"ass", "ssa", "srt", "sub", "txt", "mpl"};
-constexpr std::array<std::string_view, 16> kVideos{"avi", "mp4", "mkv",  "ogm", "wmv", "asf", "rmvb", "rm",
-                                                   "3gp", "ts",  "m2ts", "m4v", "flv", "webm", "mov", "y4m"};
 constexpr std::array<std::string_view, 12> kAudio{"wav", "w64", "flac", "ac3", "eac3", "aac",
                                                   "ogg", "opus", "mp3", "m4a", "mka", "dts"};
 constexpr std::array<std::string_view, 4> kFonts{"ttf", "otf", "ttc", "pfb"};
@@ -128,7 +128,7 @@ FileKind classify(std::string_view name)
         return FileKind::Chapters;
     if (among(kSubtitles, ext))
         return FileKind::Subtitles;
-    if (among(kVideos, ext))
+    if (isVideoExtension(ext))
         return FileKind::Video;
     if (among(kAudio, ext))
         return FileKind::Audio;

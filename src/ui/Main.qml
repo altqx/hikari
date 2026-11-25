@@ -478,7 +478,19 @@ ApplicationWindow {
     }
     function timingLayout() {
         videoDock.close()
-        if (!root.inSideBar(postprocessorDock))
+        dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock,
+                                  Qt.size(0, Math.round(dockingArea.height * 0.36)))
+        const audioShort = Math.round(dockingArea.height * 0.36) - root.workspaceLayout.panelSize(audioDock).height
+        if (audioShort !== 0)
+            Docking.resizeInLayout(root.engineName("Audio"), 0, 0, 0, audioShort)
+        editorColumn.ensurePolished()
+        const editorNow = root.workspaceLayout.panelSize(editorDock).height
+        const editorNatural = Math.max(170, Math.ceil(editorColumn.implicitHeight) + 8 + editorNow - editorPanel.height)
+        if (editorNow !== editorNatural)
+            Docking.resizeInLayout(root.engineName("Editor"), 0, 0, 0, editorNatural - editorNow)
+        if (root.inSideBar(postprocessorDock))
+            root.showInSideBar(postprocessorDock, false)
+        else
             postprocessorDock.open()
     }
     function karaokeLayout() {
@@ -2983,6 +2995,76 @@ ApplicationWindow {
             onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
         }
         Action {
+            id: jumpToAction
+            text: qsTr("Jump to"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_JUMP_TO")) root.editVideoTime()
+        }
+        Action {
+            id: videoZoom50Action
+            text: qsTr("Zoom 50 %"); enabled: root.video.hasVideo
+            checkable: true
+            checked: root.videoView.zoomed && root.videoView.readoutPercent === 50
+            onTriggered: {
+                checked = Qt.binding(() => root.videoView.zoomed && root.videoView.readoutPercent === 50)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_50")) root.videoView.zoomTo(50)
+            }
+        }
+        Action {
+            id: videoZoom100Action
+            text: qsTr("Zoom 100 %"); enabled: root.video.hasVideo
+            checkable: true
+            checked: root.videoView.zoomed && root.videoView.readoutPercent === 100
+            onTriggered: {
+                checked = Qt.binding(() => root.videoView.zoomed && root.videoView.readoutPercent === 100)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_100")) root.videoView.zoomTo(100)
+            }
+        }
+        Action {
+            id: videoZoom200Action
+            text: qsTr("Zoom 200 %"); enabled: root.video.hasVideo
+            checkable: true
+            checked: root.videoView.zoomed && root.videoView.readoutPercent === 200
+            onTriggered: {
+                checked = Qt.binding(() => root.videoView.zoomed && root.videoView.readoutPercent === 200)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_200")) root.videoView.zoomTo(200)
+            }
+        }
+        Action {
+            id: videoZoomInAction
+            text: qsTr("Zoom in"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_IN")) root.videoView.zoomStep(1)
+        }
+        Action {
+            id: videoZoomOutAction
+            text: qsTr("Zoom out"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_OUT")) root.videoView.zoomStep(-1)
+        }
+        Action {
+            id: videoZoomFitAction
+            text: qsTr("Fit to panel"); enabled: root.video.hasVideo
+            checkable: true
+            checked: !root.videoView.zoomed
+            onTriggered: {
+                checked = Qt.binding(() => !root.videoView.zoomed)
+                if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_FIT")) root.videoView.resetZoom()
+            }
+        }
+        Action {
+            id: videoZoomDevicePixelsAction
+            text: qsTr("1:1 device pixels"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS")) root.videoView.zoomToDevicePixels()
+        }
+        Action {
+            id: nextSubtitleBoundaryAction
+            text: qsTr("Next subtitle boundary"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_SUBTITLE_BOUNDARY")) root.stepSubtitleBoundary(1)
+        }
+        Action {
+            id: previousSubtitleBoundaryAction
+            text: qsTr("Previous subtitle boundary"); enabled: root.video.hasVideo
+            onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY")) root.stepSubtitleBoundary(-1)
+        }
+        Action {
             id: renderCostAction
             text: qsTr("Render cost"); enabled: root.video.hasVideo
             checkable: true
@@ -3131,6 +3213,17 @@ ApplicationWindow {
                 if (!root.hotkeyGesture("GLOBAL_EDITOR_HIDE_TAGS"))
                     root.editor.showTags = !checked
                 checked = Qt.binding(() => !root.editor.showTags)
+            }
+        }
+        Action {
+            id: markCurrentFrameAction
+            text: qsTr("Mark lines on the current frame")
+            checkable: true
+            checked: root.app.markCurrentFrame
+            onToggled: {
+                if (!root.hotkeyGesture("GLOBAL_GRID_MARK_CURRENT_FRAME"))
+                    root.app.markCurrentFrame = checked
+                checked = Qt.binding(() => root.app.markCurrentFrame)
             }
         }
         Action {
@@ -3970,6 +4063,20 @@ ApplicationWindow {
                     enabled: root.video.loaded
                     onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
                 }
+                ShellMenuItem {
+                    command: "VIDEO_PREVIOUS_FILE"
+                    iconRole: "media-previous-file"
+                    objectName: "previousVideoFileMenuItem"
+                    text: qsTr("Previous file")
+                    onTriggered: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3)) root.videoHotkey("VIDEO_PREVIOUS_FILE")
+                }
+                ShellMenuItem {
+                    command: "VIDEO_NEXT_FILE"
+                    iconRole: "media-next-file"
+                    objectName: "nextVideoFileMenuItem"
+                    text: qsTr("Next file")
+                    onTriggered: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3)) root.videoHotkey("VIDEO_NEXT_FILE")
+                }
                 MenuSeparator {}
                 ShellMenuItem {
                     command: "GLOBAL_OPEN_KEYFRAMES"
@@ -4074,6 +4181,27 @@ ApplicationWindow {
                     help: qsTr("Moves video to end time")
                     iconRole: "video-to-end-time"
                     action: goToEndAction
+                }
+                ShellMenuItem {
+                    iconRole: "video-to-start-time"
+                    command: "GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY"
+                    objectName: "previousSubtitleBoundaryMenuItem"
+                    help: qsTr("Moves the video to the previous start or end of a line")
+                    action: previousSubtitleBoundaryAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_NEXT_SUBTITLE_BOUNDARY"
+                    iconRole: "video-to-end-time"
+                    objectName: "nextSubtitleBoundaryMenuItem"
+                    help: qsTr("Moves the video to the next start or end of a line")
+                    action: nextSubtitleBoundaryAction
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_JUMP_TO"
+                    iconRole: "video-seek"
+                    objectName: "jumpToMenuItem"
+                    help: qsTr("Types a time or a frame to show")
+                    action: jumpToAction
                 }
                 MenuSeparator {}
                 ShellMenuItem {
@@ -4260,6 +4388,54 @@ ApplicationWindow {
                     iconRole: "zoom-reset"
                     objectName: "resetVideoZoomMenuItem"
                     action: resetVideoZoomAction
+                }
+                ShellMenu {
+                    objectName: "videoZoomLevelMenu"
+                    iconRole: "zoom"
+                    title: qsTr("Zoom level")
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_FIT"
+                        iconRole: "zoom-reset"
+                        objectName: "videoZoomFitMenuItem"
+                        action: videoZoomFitAction
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_50"
+                        iconRole: "zoom"
+                        objectName: "videoZoom50MenuItem"
+                        action: videoZoom50Action
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_100"
+                        iconRole: "zoom"
+                        objectName: "videoZoom100MenuItem"
+                        action: videoZoom100Action
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_200"
+                        iconRole: "zoom"
+                        objectName: "videoZoom200MenuItem"
+                        action: videoZoom200Action
+                    }
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"
+                        iconRole: "preview-resolution"
+                        objectName: "videoZoomDevicePixelsMenuItem"
+                        action: videoZoomDevicePixelsAction
+                    }
+                    MenuSeparator {}
+                    ShellMenuItem {
+                        command: "GLOBAL_VIDEO_ZOOM_IN"
+                        iconRole: "add"
+                        objectName: "videoZoomInMenuItem"
+                        action: videoZoomInAction
+                    }
+                    ShellMenuItem {
+                        iconRole: "remove"
+                        command: "GLOBAL_VIDEO_ZOOM_OUT"
+                        objectName: "videoZoomOutMenuItem"
+                        action: videoZoomOutAction
+                    }
                 }
                 ShellMenuItem {
                     iconRole: "render-cost"
@@ -4697,21 +4873,48 @@ ApplicationWindow {
                     action: fullScreenTypesettingAction
                 }
                 MenuSeparator {}
-                ShellMenuItem {
-                    command: "GLOBAL_HIDE_TAGS"
-                    id: hideTagsItem
-                    help: qsTr("Shows or hides tags in the Grid")
+                ShellMenu {
+                    help: qsTr("Shows, replaces or hides tags in the Grid")
                     iconRole: "hide-tags"
-                    objectName: "hideTagsMenuItem"
-                    text: qsTr("Hide tags in the Grid")
-                    checkable: true
-                    checked: root.shell.hideTags
-                    keepsMenuOpen: false
-                    onTriggered: {
-                        checked = Qt.binding(() => root.shell.hideTags)
-                        if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS"))
-                            root.app.toggleHideTags()
+                    objectName: "gridTagsMenu"
+                    title: qsTr("Tags in the Grid")
+                    component GridTagsItem: MenuRadioItem {
+                        required property int mode
+                        checked: root.shell.tagsMode === mode
+                        onTriggered: {
+                            checked = Qt.binding(() => root.shell.tagsMode === mode)
+                            if (!root.hotkeyGesture(command))
+                                root.app.setGridTagsMode(mode)
+                        }
                     }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_SHOW"
+                        help: qsTr("Shows tags in the Grid as they are")
+                        objectName: "gridTagsShowMenuItem"
+                        text: qsTr("Show")
+                        mode: 0
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_REPLACE"
+                        help: qsTr("Shows each tag block in the Grid as the symbol set in Settings › Grid")
+                        objectName: "gridTagsReplaceMenuItem"
+                        text: qsTr("Replace with symbol")
+                        mode: 1
+                    }
+                    GridTagsItem {
+                        command: "GLOBAL_GRID_TAGS_HIDE"
+                        help: qsTr("Hides tags in the Grid")
+                        objectName: "gridTagsHideMenuItem"
+                        text: qsTr("Hide")
+                        mode: 2
+                    }
+                }
+                ShellMenuItem {
+                    command: "GLOBAL_GRID_MARK_CURRENT_FRAME"
+                    help: qsTr("Tints the lines in the Grid that show on the current video frame")
+                    iconRole: "select-visible"
+                    objectName: "markCurrentFrameMenuItem"
+                    action: markCurrentFrameAction
                 }
                 ShellMenuItem {
                     command: "GLOBAL_EDITOR_HIDE_TAGS"
@@ -5987,6 +6190,7 @@ ApplicationWindow {
                 VisualToolRail {
                     id: visualRail
                     tools: root.visualTools
+                    activeHint: videoToolBar.hintInRail ? videoToolBar.hint : ""
                     keyOf: symbol => root.boundKeys(symbol, 3)
                     anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
                 }
@@ -6111,44 +6315,41 @@ ApplicationWindow {
                         restoreMode: Binding.RestoreNone
                     }
                     enabled: root.video.hasVideo
-                    focusPolicy: Qt.NoFocus
-                    Accessible.name: qsTranslate("HikariSub.Video", "Video position")
+                    focusPolicy: Qt.TabFocus
+                    Accessible.name: qsTranslate("HikariSub.Video", "Seek bar")
+                    Accessible.description: root.video.timecode
                     onMoved: root.video.seekBarMoved(Math.round(value), pressed)
                     onPressedChanged: if (!pressed) root.video.seekBarReleased()
-                }
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.minimumHeight: 24
-                    spacing: 10
-                    Label {
-                        objectName: "videoTimes"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        elide: Text.ElideRight
-                        text: root.video.times
-                        font.features: { "tnum": 1 }
-                        color: root.video.keyframeShown ? Theme.warning : palette.windowText
-                        Accessible.name: qsTranslate("HikariSub.Video", "Video times")
-                        Accessible.description: qsTranslate("HikariSub.Video", "Frame time; frame number; frames from the line’s start frame; "
-                                                     + "milliseconds from the line’s start and end")
-                        HoverHandler { id: timesHover }
-                        ToolTip.visible: timesHover.hovered && text.length > 0
-                        ToolTip.text: Accessible.description
+                    Keys.onPressed: event => {
+                        if (event.modifiers !== Qt.NoModifier && event.modifiers !== Qt.KeypadModifier)
+                            return
+                        switch (event.key) {
+                        case Qt.Key_Left: root.video.stepFrames(-1); break
+                        case Qt.Key_Right: root.video.stepFrames(1); break
+                        case Qt.Key_PageUp: root.video.previousKeyframe(); break
+                        case Qt.Key_PageDown: root.video.nextKeyframe(); break
+                        case Qt.Key_Home: root.video.showFrameAt(0); break
+                        case Qt.Key_End: root.video.showFrameAt(root.video.frameCount - 1); break
+                        default: return
+                        }
+                        event.accepted = true
                     }
-                    VisualPointerReadout {
-                        tools: root.visualTools
-                    }
+                    FocusRing { control: videoSeekBar }
                 }
                 RowLayout {
                     id: videoTransport
+                    objectName: "videoTransport"
                     Layout.fillWidth: true
+                    Layout.minimumHeight: 34
+                    spacing: 2
                     IconToolButton {
-                        objectName: "previousFile"
-                        iconRole: "media-previous-file"
-                        text: qsTranslate("HikariSub.Video", "Previous file")
+                        objectName: "previousFrame"
+                        iconRole: "frame-previous"
+                        text: qsTranslate("HikariSub.Video", "Previous frame")
+                        enabled: root.video.hasVideo && root.video.frame > 0
                         focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Previous file"), "VIDEO_PREVIOUS_FILE", 3)
-                        onClicked: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3, "bitmap")) videoFileQuestion.ask(false)
+                        tip: root.bitmapTip(text, "GLOBAL_PREVIOUS_FRAME", 0)
+                        onClicked: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME", 0, "bitmap")) root.video.stepFrames(-1)
                     }
                     IconToolButton {
                         objectName: "playPause"
@@ -6159,6 +6360,16 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Play or pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
+                    IconToolButton {
+                        objectName: "nextFrame"
+                        iconRole: "frame-next"
+                        text: qsTranslate("HikariSub.Video", "Next frame")
+                        enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
+                        focusPolicy: Qt.NoFocus
+                        tip: root.bitmapTip(text, "GLOBAL_NEXT_FRAME", 0)
+                        onClicked: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME", 0, "bitmap")) root.video.stepFrames(1)
+                    }
+                    ToolSeparator { Layout.fillHeight: true; Layout.maximumHeight: 24 }
                     IconToolButton {
                         objectName: "playActualLine"
                         iconRole: "play-line"
@@ -6183,39 +6394,67 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Stop"), "VIDEO_STOP", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
-                    IconToolButton {
-                        objectName: "nextFile"
-                        iconRole: "media-next-file"
-                        text: qsTranslate("HikariSub.Video", "Next file")
-                        focusPolicy: Qt.NoFocus
-                        tip: root.bitmapTip(qsTranslate("HikariSub.Video", "Next file"), "VIDEO_NEXT_FILE", 3)
-                        onClicked: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) videoFileQuestion.ask(true)
+                    VideoTimeField {
+                        id: videoTimeField
+                        objectName: "videoTimes"
+                        Layout.leftMargin: 4
+                        video: root.video
+                        tip: root.videoTimeTip
                     }
-                    IconToolButton {
-                        objectName: "previousFrame"
-                        iconRole: "frame-previous"
-                        text: qsTranslate("HikariSub.Video", "Previous frame")
-                        enabled: root.video.hasVideo && root.video.frame > 0
-                        focusPolicy: Qt.NoFocus
-                        onClicked: root.video.stepFrames(-1)
-                    }
-                    Label {
-                        objectName: "videoStatus"
-                        text: root.video.status
+                    Item {
+                        id: videoReadouts
                         Layout.fillWidth: true
-                        horizontalAlignment: Text.AlignHCenter
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 0
+                        implicitHeight: Math.max(videoStatus.implicitHeight, videoPointerReadout.implicitHeight)
+                        Label {
+                            id: videoStatus
+                            objectName: "videoStatus"
+                            anchors.left: parent.left
+                            anchors.leftMargin: 8
+                            anchors.right: videoPointerReadout.visible ? videoPointerReadout.left : parent.right
+                            anchors.rightMargin: 4
+                            anchors.verticalCenter: parent.verticalCenter
+                            elide: Text.ElideLeft
+                            //: The video's frame readout: %1 the shown frame, %2 how many frames the video has
+                            text: root.video.loaded && root.video.frame >= 0
+                                  ? qsTranslate("HikariSub.Video", "frame %1 / %2").arg(root.video.frame, root.video.frameCount)
+                                  : root.video.status
+                            color: Theme.muted
+                            font.family: "monospace"
+                            font.features: { "tnum": 1 }
+                        }
+                        VisualPointerReadout {
+                            id: videoPointerReadout
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            tools: root.visualTools
+                            visible: pointer && videoReadouts.width >= implicitWidth + 8
+                        }
                     }
-                    IconToolButton {
-                        objectName: "nextFrame"
-                        iconRole: "frame-next"
-                        text: qsTranslate("HikariSub.Video", "Next frame")
-                        enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
-                        focusPolicy: Qt.NoFocus
-                        onClicked: root.video.stepFrames(1)
+                    VideoZoomReadout {
+                        shell: root
                     }
                     VideoVolumeSlider {
                         view: root.videoView
                         hasVideo: root.video.hasVideo
+                    }
+                }
+                RowLayout {
+                    objectName: "videoJumpError"
+                    visible: videoTimeField.jumpError.length > 0
+                    Layout.fillWidth: true
+                    spacing: 4
+                    Icon {
+                        iconRole: "notice-warning"
+                        color: Theme.danger
+                        accentColor: Theme.danger
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        text: videoTimeField.jumpError
+                        color: Theme.danger
+                        wrapMode: Text.Wrap
                     }
                 }
                 }
@@ -8088,8 +8327,12 @@ ApplicationWindow {
                         readonly property int lineCount: Math.max(1, root.shell.selectedCount)
                         property bool reviewShown: false
                         property bool hasFolds: false
+                        property bool canMoveUp: false
+                        property bool canMoveDown: false
                         onAboutToShow: {
                             canPasteTranslation = root.app.canPasteTranslation()
+                            canMoveUp = root.app.canMoveLines(true)
+                            canMoveDown = root.app.canMoveLines(false)
                             canShiftTranslation = root.app.canShiftTranslation()
                             reviewShown = root.review.on && root.review.current.count !== undefined
                             hasFolds = root.app.canConvertFolds()
@@ -8272,6 +8515,22 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { command: "GRID_SWAP_LINES"; iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "Swap lines"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_UP"
+                            iconRole: "move-up"
+                            objectName: "moveLinesUp"
+                            text: qsTranslate("HikariSub.Grid", "Move lines up")
+                            enabled: gridMenu.canMoveUp
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_UP")) root.app.moveLines(true)
+                        }
+                        ShellMenuItem {
+                            command: "GRID_MOVE_DOWN"
+                            iconRole: "move-down"
+                            objectName: "moveLinesDown"
+                            text: qsTranslate("HikariSub.Grid", "Move lines down")
+                            enabled: gridMenu.canMoveDown
+                            onTriggered: if (!root.gridGesture(this, "GRID_MOVE_DOWN")) root.app.moveLines(false)
+                        }
                         ShellMenu {
                             objectName: "gridContinuousMenu"
                             iconRole: "continuous-next"
@@ -8427,6 +8686,7 @@ ApplicationWindow {
                         }
                         MenuSeparator {}
                         ShellMenuItem { command: "GLOBAL_REMOVE_TEXT"; iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { command: "GLOBAL_REMOVE_TEXT_KEEP_TAGS"; iconRole: "clear"; objectName: "deleteTextKeepTags"; text: qsTranslate("HikariSub.Grid", "Delete text, keep tags"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT_KEEP_TAGS")) root.app.deleteTextKeepTags() }
                         ShellMenuItem {
                             command: "GLOBAL_REMOVE_LINES"
                             iconRole: "delete"
@@ -9798,7 +10058,7 @@ ApplicationWindow {
     FileChooser {
         id: videoDialog
         objectName: "videoOpenDialog"
-        nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)"), qsTranslate("HikariSub.Video", "All files (*)")]
+        nameFilters: [qsTranslate("HikariSub.Video", "Video (%1)").arg(root.app.videoFilePatterns()), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             root.rememberPickerFolder("video", selectedFile)
             if (root.videoFullscreen.active)
@@ -11300,6 +11560,19 @@ ApplicationWindow {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
     }
+    readonly property string videoTimeTip: {
+        const key = root.boundKeys("GLOBAL_JUMP_TO", 0)
+        const jump = key.length ? qsTranslate("HikariSub.Video", "Jump to") + " (" + key + ")" : qsTranslate("HikariSub.Video", "Jump to")
+        const distance = root.video.lineDistance
+        if (distance.frames === undefined || root.shell.activeLineNumber <= 0)
+            return jump
+        const signedFrames = n => (n < 0 ? "−" : "+") + Math.abs(n)
+        const signedMs = n => n < 0 ? "−" + -n : n > 0 ? "+" + n : "0"
+        //: The video time's tooltip: %1 signed frames, %2 the active line's number, %3 and %4 signed milliseconds
+        return qsTranslate("HikariSub.Video", "%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end")
+                   .arg(signedFrames(distance.frames), root.shell.activeLineNumber, signedMs(distance.fromStart),
+                        signedMs(distance.fromEnd)) + "\n" + jump
+    }
     function bitmapTip(text, symbol, window, unboundKey) {
         const key = root.boundKeys(symbol, window) || (unboundKey ?? "")
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTranslate("HikariSub.Hotkeys", "Shift+click to set a shortcut")
@@ -11508,6 +11781,13 @@ ApplicationWindow {
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction,
+        GLOBAL_JUMP_TO: jumpToAction,
+        GLOBAL_VIDEO_ZOOM_50: videoZoom50Action, GLOBAL_VIDEO_ZOOM_100: videoZoom100Action,
+        GLOBAL_VIDEO_ZOOM_200: videoZoom200Action, GLOBAL_VIDEO_ZOOM_IN: videoZoomInAction,
+        GLOBAL_VIDEO_ZOOM_OUT: videoZoomOutAction, GLOBAL_VIDEO_ZOOM_FIT: videoZoomFitAction,
+        GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS: videoZoomDevicePixelsAction,
+        GLOBAL_NEXT_SUBTITLE_BOUNDARY: nextSubtitleBoundaryAction,
+        GLOBAL_PREVIOUS_SUBTITLE_BOUNDARY: previousSubtitleBoundaryAction,
         GLOBAL_VIDEO_RENDER_COST: renderCostAction,
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
         GLOBAL_OPEN_FOLDER: openFolderAction, GLOBAL_CLOSE_PROJECT: closeProjectAction,
@@ -11527,6 +11807,7 @@ ApplicationWindow {
         GLOBAL_VIDEO_DETAILS: videoDetailsAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction,
+        GLOBAL_GRID_MARK_CURRENT_FRAME: markCurrentFrameAction,
         GLOBAL_TRANSLATION_MODE: translationModeAction,
         GLOBAL_NODE_EFFECTS: nodeEffectsAction,
         GLOBAL_INSERT_HARD_SPACE: insertHardSpaceAction,
@@ -11641,6 +11922,25 @@ ApplicationWindow {
     Connections {
         target: root.hotkeys
         function onInstalledChanged() { root.applyMenuShortcuts() }
+    }
+    function editVideoTime() {
+        if (root.videoFullscreen.active)
+            return videoFullscreenWindow.editTime()
+        root.revealPanel(videoDock, false)
+        if (!videoTimeField.edit())
+            return false
+        const w = videoTimeField.Window.window
+        if (w && root.workspaceLayout.focusWindow !== w)
+            w.requestActivate()
+        return true
+    }
+    function stepSubtitleBoundary(direction) {
+        const frame = root.video.boundaryInLine(direction)
+        if (frame >= 0)
+            return root.video.showFrameAt(frame)
+        if (!root.app.editingDocument() || !root.editor.nextLine(direction))
+            return false
+        return direction > 0 ? root.video.goToLineStart() : root.video.goToLineEnd()
     }
     function runGlobalHotkey(symbol) {
         return root.hotkeys.report(symbol, root.hotkeys.rehearsing() || root.byKey(() => root.globalHotkey(symbol)))
@@ -11784,10 +12084,14 @@ ApplicationWindow {
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
-        case "GLOBAL_HIDE_TAGS": root.app.toggleHideTags(); return true
+        case "GLOBAL_HIDE_TAGS": root.app.cycleGridTagsMode(); return true
+        case "GLOBAL_GRID_TAGS_SHOW": root.app.setGridTagsMode(0); return true
+        case "GLOBAL_GRID_TAGS_REPLACE": root.app.setGridTagsMode(1); return true
+        case "GLOBAL_GRID_TAGS_HIDE": root.app.setGridTagsMode(2); return true
         case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
         case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
         case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
+        case "GLOBAL_REMOVE_TEXT_KEEP_TAGS": if (editing) root.app.deleteTextKeepTags(); return true
         case "GLOBAL_TEXT_INSERT_BALANCED_BREAK": if (editing) root.app.textCommand("balancedBreak"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_LEFT": if (editing) root.app.textCommand("breakLeft"); return true
         case "GLOBAL_TEXT_MOVE_BREAK_RIGHT": if (editing) root.app.textCommand("breakRight"); return true
@@ -11927,6 +12231,8 @@ ApplicationWindow {
         case "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME": if (video) root.app.insertLine(true, "frame"); return true
         case "GRID_INSERT_AFTER_WITH_VIDEO_FRAME": if (video) root.app.insertLine(false, "frame"); return true
         case "GRID_SWAP_LINES": root.app.swapLines(); return true
+        case "GRID_MOVE_UP": root.app.moveLines(true); return true
+        case "GRID_MOVE_DOWN": root.app.moveLines(false); return true
         case "GRID_JOIN_LINES": root.app.joinLines("join"); return true
         case "GRID_JOIN_TO_FIRST_LINE": root.app.joinLines("first"); return true
         case "GRID_JOIN_TO_LAST_LINE": root.app.joinLines("last"); return true

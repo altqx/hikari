@@ -58,6 +58,10 @@ Item {
             rows.push({ kind: "bundle", key: b.key, name: b.title, path: b.original || "",
                         when: new Date(b.written),
                         versions: b.generations.map(g => ({ label: whenText(new Date(g.written)), generation: g.generation })) })
+        for (const b of app.earlierSaves())
+            rows.push({ kind: "save", key: b.key, name: b.title, path: b.original,
+                        when: new Date(b.written),
+                        versions: b.generations.map(g => ({ label: whenText(new Date(g.written)), generation: g.generation })) })
         for (const f of app.legacyAutosaves())
             if (f.versions.length > 0)
                 rows.push({ kind: "legacy", key: "", name: f.name, path: "",
@@ -75,17 +79,22 @@ Item {
     }
     function openCopy(entry, version) {
         const v = entry.versions[version]
-        const ok = entry.kind === "bundle" ? app.recoverBundle(entry.key, v.generation) : app.openLegacyAutosave(v.file)
+        const ok = entry.kind === "bundle" ? app.recoverBundle(entry.key, v.generation)
+            : entry.kind === "save" ? app.openEarlierSave(entry.key, v.generation)
+            : app.openLegacyAutosave(v.file)
         if (ok)
             window.accept()
         return ok
     }
     function remove(entry) {
-        if (entry.kind !== "bundle")
-            return
-        app.dismissBundle(entry.key)
-        reload()
-        autosaves.bundlesDeleted()
+        if (entry.kind === "save") {
+            app.deleteEarlierSaves(entry.key)
+            reload()
+        } else if (entry.kind === "bundle") {
+            app.dismissBundle(entry.key)
+            reload()
+            autosaves.bundlesDeleted()
+        }
     }
     function olderCount(cutoff) {
         const c = day(cutoff)
@@ -198,6 +207,7 @@ Item {
                         required property var modelData
                         required property int index
                         readonly property bool legacy: modelData.kind === "legacy"
+                        readonly property bool earlierSave: modelData.kind === "save"
                         objectName: "autosaveRow" + index
                         width: ListView.view.width
                         implicitHeight: 48
@@ -228,10 +238,11 @@ Item {
                                     }
                                     Label {
                                         id: tag
-                                        visible: row.legacy
+                                        objectName: "autosaveTag" + row.index
+                                        visible: row.legacy || row.earlierSave
                                         x: nameLabel.width + 8
                                         anchors.verticalCenter: nameLabel.verticalCenter
-                                        text: qsTr("Previous version")
+                                        text: row.earlierSave ? qsTr("Earlier save") : qsTr("Previous version")
                                         color: Theme.muted
                                         font: autosavesWindow.fontAt(11)
                                         leftPadding: 5
@@ -281,7 +292,7 @@ Item {
                 }
             }
             Label {
-                text: qsTr("Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.")
+                text: qsTr("Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.")
                 color: Theme.muted
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true

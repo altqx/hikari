@@ -7507,6 +7507,33 @@ Failed to copy %2 fonts.</source>
         <source>Filter the Grid</source>
         <translation>กรองตาราง</translation>
     </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>ย้ายบรรทัดขึ้น</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>ย้ายบรรทัดลง</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>ลบข้อความ คงแท็กไว้</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Show</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>แท็กในตาราง: แสดง</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Replace with symbol</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>แท็กในตาราง: แทนที่ด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid: Hide</source>
+        <extracomment>Status bar after the Cycle tags in the Grid shortcut; the mode is View › Tags in the Grid&apos;s row</extracomment>
+        <translation>แท็กในตาราง: ซ่อน</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Home</name>
@@ -9260,6 +9287,46 @@ Failed to copy %2 fonts.</source>
         <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>ซูม 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>ซูม 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>ซูม 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>ซูมเข้า</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>ซูมออก</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>ซูมให้พอดี</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>ซูมเป็นพิกเซลอุปกรณ์ 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
     </message>
@@ -9490,6 +9557,34 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Close keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cycle tags in the Grid</source>
+        <translation>วนรอบการแสดงแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Show tags in the Grid</source>
+        <translation>แสดงแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Replace tags in the Grid with a symbol</source>
+        <translation>แทนที่แท็กในตารางด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Delete text, keep tags</source>
+        <translation>ลบข้อความ คงแท็กไว้</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>ทำเครื่องหมายบรรทัดในเฟรมปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Move lines up</source>
+        <translation>ย้ายบรรทัดขึ้น</translation>
+    </message>
+    <message>
+        <source>Move lines down</source>
+        <translation>ย้ายบรรทัดลง</translation>
     </message>
 </context>
 <context>
@@ -12323,6 +12418,46 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>ซูม 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>ซูม 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>ซูม 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>ซูมเข้า</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>ซูมออก</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>พอดีกับแผง</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>พิกเซลอุปกรณ์ 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
@@ -12515,6 +12650,14 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;เปิดวิดีโอ…</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>ไฟล์ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>ไฟล์ถัดไป</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>เปิดไฟล์คีย์เฟรม</translation>
     </message>
@@ -12539,6 +12682,18 @@ Failed to copy %2 fonts.</source>
         <translation>ไปข้างหน้าหนึ่งเฟรม</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>เลื่อนวิดีโอถอยหลังถึงจุดเริ่มต้นหรือจุดสิ้นสุดของบรรทัดที่ใกล้ที่สุด</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>เลื่อนวิดีโอไปข้างหน้าถึงจุดเริ่มต้นหรือจุดสิ้นสุดของบรรทัดที่ใกล้ที่สุด</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>พิมพ์เวลาหรือเฟรมที่จะแสดง</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>กำหนดเวลาเริ่มต้นของบรรทัดที่เลือกเป็นเวลาของเฟรมวิดีโอ</translation>
     </message>
@@ -12557,6 +12712,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>ระดับการซูม</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -12613,14 +12772,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Open a file first</source>
         <translation>เปิดไฟล์ก่อน</translation>
-    </message>
-    <message>
-        <source>Shows or hides tags in the Grid</source>
-        <translation>แสดงหรือซ่อนแท็กในตาราง</translation>
-    </message>
-    <message>
-        <source>Hide tags in the Grid</source>
-        <translation>ซ่อนแท็กในตาราง</translation>
     </message>
     <message>
         <source>Shows or hides tags in the line editor</source>
@@ -12689,6 +12840,42 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Closes the open keyframes file and goes back to the video’s own keyframes</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows, replaces or hides tags in the Grid</source>
+        <translation>แสดง แทนที่ หรือซ่อนแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Tags in the Grid</source>
+        <translation>แท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Shows tags in the Grid as they are</source>
+        <translation>แสดงแท็กในตารางตามเดิม</translation>
+    </message>
+    <message>
+        <source>Shows each tag block in the Grid as the symbol set in Settings › Grid</source>
+        <translation>แสดงบล็อกแท็กแต่ละบล็อกในตารางเป็นสัญลักษณ์ที่กำหนดไว้ใน การตั้งค่า › ตาราง</translation>
+    </message>
+    <message>
+        <source>Replace with symbol</source>
+        <translation>แทนที่ด้วยสัญลักษณ์</translation>
+    </message>
+    <message>
+        <source>Hides tags in the Grid</source>
+        <translation>ซ่อนแท็กในตาราง</translation>
+    </message>
+    <message>
+        <source>Hide</source>
+        <translation>ซ่อน</translation>
+    </message>
+    <message>
+        <source>Tints the lines in the Grid that show on the current video frame</source>
+        <translation>แต้มสีบรรทัดในตารางที่แสดงบนเฟรมวิดีโอปัจจุบัน</translation>
+    </message>
+    <message>
+        <source>Mark lines on the current frame</source>
+        <translation>ทำเครื่องหมายบรรทัดในเฟรมปัจจุบัน</translation>
     </message>
 </context>
 <context>
@@ -15195,6 +15382,14 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation>ไม่มีการตั้งค่าที่ตรงกับ “%1”</translation>
     </message>
     <message>
+        <source>Backup copies kept</source>
+        <translation>จำนวนสำเนาสำรองที่เก็บไว้</translation>
+    </message>
+    <message>
+        <source>Earlier saves of each file kept in the Recovery folder. Range from 0 to 100</source>
+        <translation>จำนวนการบันทึกก่อนหน้าของแต่ละไฟล์ที่เก็บไว้ในโฟลเดอร์กู้คืน ช่วง 0 ถึง 100</translation>
+    </message>
+    <message>
         <source>The wheel zooms around the pointer. Zoom video shows a frame to drag.</source>
         <translation>ล้อเมาส์ซูมรอบตัวชี้ ซูมวิดีโอจะแสดงกรอบให้ลาก</translation>
     </message>
@@ -15604,7 +15799,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
+        <translation type="vanished">กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16638,7 +16833,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
+        <translation type="vanished">กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -16988,7 +17183,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+        <translation type="vanished">การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17317,10 +17512,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
     </message>
@@ -17453,6 +17644,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่ ซึ่งจะได้มาเมื่อ HikariSub เริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -18805,6 +19000,27 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Its manifest now says the id is “%1”. Unload it and load the folder again.</source>
         <translation>ตอนนี้แมนิเฟสต์ระบุรหัสเป็น “%1” เลิกโหลดปลั๊กอินแล้วโหลดโฟลเดอร์อีกครั้ง</translation>
+    </message>
+    <message>
+        <source>%1 stopped: %2</source>
+        <translation>%1 หยุดทำงาน: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>บันทึกสำเนาเป็นปลั๊กอินธีม…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>เลือกตำแหน่งที่จะบันทึกปลั๊กอินธีม</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>สำเนา %1</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>เขียนปลั๊กอินธีมไปที่ %1 ไม่ได้</translation>
     </message>
 </context>
 <context>
@@ -21277,6 +21493,26 @@ because it was edited.</source>
         <source>Overlapping lines</source>
         <translation>บรรทัดที่ซ้อนกัน</translation>
     </message>
+    <message>
+        <source>Contains</source>
+        <translation>ประกอบด้วย</translation>
+    </message>
+    <message>
+        <source>Exact match</source>
+        <translation>ตรงกันทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Match</source>
+        <translation>การจับคู่</translation>
+    </message>
+    <message>
+        <source>Intersect with selection</source>
+        <translation>หาส่วนร่วมกับส่วนที่เลือก</translation>
+    </message>
+    <message>
+        <source>%1 lines removed from selection.</source>
+        <translation>นำ %1 บรรทัดออกจากส่วนที่เลือกแล้ว</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Session</name>
@@ -21353,6 +21589,10 @@ because it was edited.</source>
         <translation>เวอร์ชันก่อนหน้า</translation>
     </message>
     <message>
+        <source>Earlier save</source>
+        <translation>การบันทึกก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Autosave of the previous version</source>
         <translation>ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้า</translation>
     </message>
@@ -21377,8 +21617,12 @@ because it was edited.</source>
         <translation>ลบ</translation>
     </message>
     <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Earlier saves are the file as it was before a save replaced it. Autosaves of the previous version are read only.</source>
+        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ การบันทึกก่อนหน้าคือไฟล์ในสภาพก่อนที่การบันทึกจะเขียนทับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
+    </message>
+    <message>
         <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
-        <translation>แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
+        <translation type="vanished">แต่ละรายการจะเปิดเป็นสำเนาใหม่ที่ยังไม่ได้บันทึก โดยไม่เปลี่ยนแปลงไฟล์ต้นฉบับ ไฟล์บันทึกอัตโนมัติของเวอร์ชันก่อนหน้าเป็นแบบอ่านอย่างเดียว</translation>
     </message>
     <message>
         <source>Delete older than…</source>
@@ -21532,7 +21776,7 @@ because it was edited.</source>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -21565,6 +21809,10 @@ because it was edited.</source>
     <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation>ไม่สามารถเปิด %1 ได้ ไม่มีสิ่งใดเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>%1 (earlier save)</source>
+        <translation>%1 (การบันทึกก่อนหน้า)</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
@@ -25585,8 +25833,8 @@ Styles deleted:
         <translation>%1 มิลลิวินาที</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>ย้อนกลับ</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -25664,13 +25912,27 @@ Styles deleted:
         <source>Open keyframes…</source>
         <translation>เปิดคีย์เฟรม…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>แสดงการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>kf</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>การเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>ตัวช่วยจัดเวลา</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -26833,15 +27095,15 @@ Styles deleted:
     </message>
     <message>
         <source>Video position</source>
-        <translation>ตำแหน่งวิดีโอ</translation>
+        <translation type="vanished">ตำแหน่งวิดีโอ</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>เวลาของวิดีโอ</translation>
+        <translation type="vanished">เวลาของวิดีโอ</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
+        <translation type="vanished">เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -26868,12 +27130,21 @@ Styles deleted:
         <translation>หยุด</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%1 เฟรมจากจุดเริ่มต้นของบรรทัด %2 · %3 มิลลิวินาทีจากจุดเริ่มต้น · %4 มิลลิวินาทีจากจุดสิ้นสุด</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>ไฟล์ถัดไป</translation>
     </message>
     <message>
         <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</source>
-        <translation>วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
+        <translation type="vanished">วิดีโอ (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv *.y4m)</translation>
     </message>
     <message>
         <source>Choose keyframes file</source>
@@ -26890,6 +27161,15 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>เฟรม %1 / %2</translation>
+    </message>
+    <message>
+        <source>Video (%1)</source>
+        <translation>วิดีโอ (%1)</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -27019,6 +27299,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>ระดับการซูม</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -27767,6 +28051,48 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>ไม่ใช่เวลาหรือเฟรม: %1 ลอง %2 หรือหมายเลขเฟรม</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>เวลาวิดีโอ %1 แก้ไขได้</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>พอดี</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>การซูมวิดีโอ %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>การซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>

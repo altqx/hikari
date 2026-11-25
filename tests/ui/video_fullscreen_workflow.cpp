@@ -93,7 +93,7 @@ protected:
 
     void executeTest() override
     {
-        note(waitFor([&] { return status().rfind("Frame", 0) == 0; }, 200) ? "indexed" : "not indexed");
+        note(waitFor([&] { return status().rfind("frame ", 0) == 0; }, 200) ? "indexed" : "not indexed");
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
         enterKey("mainWindow/videoPanel", Qt::Key_F, spix::KeyModifiers::None);
         note(waitFor([&] { return changes() >= 1; }) ? "entered" : "not entered");
@@ -108,10 +108,10 @@ protected:
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
         note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Play"; })
                                ? "paused" : "not paused");
-        const std::string before = getStringProperty("videoFullscreen/fullscreenTime", "text");
+        const std::string before = getStringProperty("videoFullscreen/fullscreenTime", "time");
         wait(200ms);
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Right, spix::KeyModifiers::None);
-        note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTime", "text") != before; })
+        note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTime", "time") != before; })
                                ? "stepped" : "not stepped");
         const auto mode = [&] {
             const std::string shown = getStringProperty("videoFullscreen/videoFullscreenPanel", "showBar");

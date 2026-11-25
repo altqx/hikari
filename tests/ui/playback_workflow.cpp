@@ -101,10 +101,9 @@ protected:
     }
     std::vector<int> panelFrames()
     {
-        int label = -1, of = 0, times = -1;
-        std::sscanf(status().c_str(), "Frame %d of %d", &label, &of);
-        std::sscanf(getStringProperty("mainWindow/videoTimes", "text").c_str(), "%*[^;];  %d", &times);
-        return {label, times, sliderFrame()};
+        int label = -1, of = 0;
+        std::sscanf(status().c_str(), "frame %d / %d", &label, &of);
+        return {label, sliderFrame()};
     }
     template <typename Pred> bool waitFor(Pred pred)
     {
@@ -173,12 +172,12 @@ protected:
                 const int target = first.to + kLagFrames + 2;
                 waitFor([target](const Shown &s) { return s.lastGeneralBarcode >= target; });
                 const Read second = read();
-                const bool ok = inStep(first) && inStep(second) && second.panel[2] > first.panel[2];
+                const bool ok = inStep(first) && inStep(second) && second.panel[1] > first.panel[1];
                 char text[200];
                 std::snprintf(text, sizeof text,
-                              "status %d, times %d, bar %d at player %d-%d; then %d, %d, %d at %d-%d",
-                              first.panel[0], first.panel[1], first.panel[2], first.from, first.to,
-                              second.panel[0], second.panel[1], second.panel[2], second.from, second.to);
+                              "frame %d, bar %d at player %d-%d; then %d, %d at %d-%d",
+                              first.panel[0], first.panel[1], first.from, first.to,
+                              second.panel[0], second.panel[1], second.from, second.to);
                 follows = ok ? "follows" : text;
             }
             {
@@ -222,7 +221,7 @@ protected:
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 47 && s.accepted; }) ? "frame 47" : "no frame 47");
             enterKey("mainWindow/videoPanel", Qt::Key_Semicolon, spix::KeyModifiers::None);
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0");
-            observed.push_back(getStringProperty("mainWindow/videoTimes", "text"));
+            observed.push_back(getStringProperty("mainWindow/videoTimes", "time"));
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -340,10 +339,10 @@ int main(int argc, char **argv)
         expect(o[6] == "frame 0", "Stop returns to the first frame");
         expect(o[7] == "frame 47", "L seeks 5 s forward, clamped to the last frame");
         expect(o[8] == "frame 0", "; seeks 5 s back, clamped to the first frame");
-        expect(o[9] == "00:00:00,000;  0;  0;  0 ms, -2000 ms", "the times field");
+        expect(o[9] == "0:00:00.00", "the time");
         expect(test.rate, "one notification per frame, the texts at about 10 Hz and the tools and status bar only "
                           "on a change while playing");
-        expect(test.follows == "follows", "the status, the times and the seek bar follow the player's frame");
+        expect(test.follows == "follows", "the frame readout and the seek bar follow the player's frame");
         expect(test.seekBar == "sought", "a click on the seek bar while playing seeks, and playback goes on forward");
     }
     return failures == 0 ? 0 : 1;
