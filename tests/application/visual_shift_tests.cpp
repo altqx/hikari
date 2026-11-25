@@ -1053,6 +1053,27 @@ TEST(VisualShiftDeparture, AVectorClipsScaleIsEachLinesOwn)
     EXPECT_EQ((*shifter.elements()[0].points)[2].y, 100.f);
 }
 
+TEST(VisualShiftHandles, AClipAndADrawingAreNamedApart)
+{
+    TestHost host;
+    setUp(host, departureCase({"{\\clip(m 30 30 l 300 30 300 300)}A", "{\\pos(400,400)\\p1}m 0 0 l 100 0 100 100{\\p0}"}));
+    const auto rows = ids(*host.s);
+    PositionShifterTool shifter;
+    shifter.setToggled(PositionShifterTool::Clip | PositionShifterTool::Drawing);
+    shifter.selected(host);
+    const auto namesOn = [&](core::LineId line) {
+        host.s->setSelection({line, {line}, line, std::nullopt});
+        host.targets = {line};
+        shifter.reset(host);
+        std::set<int> names;
+        for (const NamedHandle &h : shifter.overlay(host).named)
+            names.insert(h.name);
+        return names;
+    };
+    EXPECT_EQ(namesOn(rows[0]), std::set<int>{3}) << "Clip";
+    EXPECT_EQ(namesOn(rows[1]), std::set<int>{4}) << "Drawing";
+}
+
 TEST(VisualShiftDeparture, ADragKeepsTheExactOffset)
 {
     TestHost host;

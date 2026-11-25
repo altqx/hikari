@@ -124,6 +124,14 @@ struct OverlayPolygon {
     std::vector<std::vector<PointF>> more;
     bool above = false;
 };
+// Where a handle the inspector names sits; not drawn. One point is a dot `reach`
+// wide; more points are a path within `reach` of its segments.
+struct NamedHandle {
+    std::vector<PointF> path;
+    float reach = 0;
+    int name = 0; // the handle's row in the tool's list of handle names
+    bool closed = false;
+};
 struct HandleColours {
     std::uint32_t fill = 0xAA121150;
     std::uint32_t selectedFill = 0xAAFCE6B1;
@@ -139,6 +147,7 @@ struct Overlay {
     // Device pixels per HikariSub legacy pixel, so handles keep their on-screen size.
     float unit = 1;
     HandleColours handles;
+    std::vector<NamedHandle> named;
     bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
@@ -558,6 +567,10 @@ public:
     }
 
 };
+
+// The row of the named handle at `pos`: a dot over a path, then the nearest within
+// its reach, then the later one.
+std::optional<int> namedHandleAt(const Overlay &overlay, PointF pos);
 
 // nullptr for a family without a tool.
 std::unique_ptr<VisualTool> makeVisualTool(Family family);

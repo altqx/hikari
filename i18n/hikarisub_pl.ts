@@ -30190,8 +30190,8 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Koniec ruchu</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>Wycinek i rysunek</translation>
+        <source>Clip</source>
+        <translation>Wycinek</translation>
     </message>
     <message>
         <source>Changed line</source>

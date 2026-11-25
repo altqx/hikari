@@ -29674,8 +29674,8 @@ or codecs or a splitter may be missing</source>
         <translation>이동 끝점</translation>
     </message>
     <message>
-        <source>Clip and drawing</source>
-        <translation>클립과 도형</translation>
+        <source>Clip</source>
+        <translation>클립</translation>
     </message>
     <message>
         <source>Changed line</source>
