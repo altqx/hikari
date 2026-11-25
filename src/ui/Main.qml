@@ -6080,6 +6080,15 @@ ApplicationWindow {
                         if (root.videoFullscreen.active)
                             videoFullscreenWindow.pointerMoved(visualOverlay.mapToItem(null, x, y))
                     }
+                    HoverHandler {
+                        id: handleHover
+                    }
+                    VisualHandleTip {
+                        anchors.fill: parent
+                        tools: root.visualTools
+                        hover: handleHover
+                        shown: !root.videoFullscreen.active
+                    }
                 }
                 VideoZoomFrame {
                     anchors.fill: presenter

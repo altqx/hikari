@@ -722,6 +722,7 @@ void PositionShifterTool::drawShape(Overlay &out, const std::vector<ClipPoint> &
     std::vector<ClipPoint> points = shape;
     const auto line = [&out](PointF a, PointF b, std::uint32_t colour) {
         out.lines.push_back({a, b, 2, colour});
+        out.named.push_back({{a, b}, 4 * out.unit, 3});
     };
     const auto polyline = [&line](const std::vector<PointF> &p, std::uint32_t colour) {
         for (std::size_t i = 0; i + 1 < p.size(); ++i)
@@ -829,10 +830,13 @@ Overlay PositionShifterTool::overlay(const VisualHost &host) const
             continue;
         if (type == Position || type == MoveStart) {
             drawRect(out, e.elem);
+            out.named.push_back({{e.elem}, 7 * out.unit, 0});
         } else if (type == MoveEnd) {
             drawCircle(out, e.elem);
+            out.named.push_back({{e.elem}, 8 * out.unit, 1});
         } else if (type == Origin) {
             drawCross(out, e.elem, 0xFF8800FF);
+            out.named.push_back({{e.elem}, 8 * out.unit, 2});
         } else {
             if (e.points && !e.points->empty()) {
                 if (type == Drawing && m_moveValues[6] > 2) {
@@ -847,6 +851,7 @@ Overlay PositionShifterTool::overlay(const VisualHost &host) const
                 drawShape(out, *e.points, drawingPos);
             }
             drawCross(out, e.elem, type == Clip ? 0xFF0000FF : 0xFFFF00FF);
+            out.named.push_back({{e.elem}, 8 * out.unit, 3});
         }
     }
     return out;

@@ -698,6 +698,7 @@ Overlay PositionTool::overlay(const VisualHost &host) const
                 conv = calcMovePosition(conv, pos.move->data(), time);
             drawCross(out, conv);
             drawRect(out, conv);
+            out.named.push_back({{conv}, 7 * out.unit, 0});
             nothingToShow = false;
         }
     }
@@ -1295,7 +1296,10 @@ Overlay MoveTool::overlay(const VisualHost &host) const
             const PointF end = drawArrow(out, m_lineToMoveStart, m_lineToMoveEnd, 6);
             out.lines.push_back({m_lineToMoveStart, end, 2, out.handles.border});
             drawCircle(out, m_lineToMoveEnd);
+            out.named.push_back({{m_lineToMoveStart, m_lineToMoveEnd}, 4 * out.unit, 2});
+            out.named.push_back({{m_lineToMoveEnd}, 8 * out.unit, 1});
         }
+        out.named.push_back({{m_lineToMoveStart}, 7 * out.unit, 0});
     }
     if (m_hasHelperLine)
         drawHelperLine(out, m_helperX, m_helperY, host.view());
@@ -1314,6 +1318,10 @@ Overlay MoveTool::overlay(const VisualHost &host) const
     drawCross(out, dist, out.handles.border);
     drawRect(out, m_from);
     drawCircle(out, m_to);
+    out.named.push_back({{m_from, m_to}, 4 * out.unit, 2});
+    out.named.push_back({{dist}, 8 * out.unit, 3});
+    out.named.push_back({{m_from}, 7 * out.unit, 0});
+    out.named.push_back({{m_to}, 8 * out.unit, 1});
     return out;
 }
 

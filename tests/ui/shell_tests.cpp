@@ -30368,6 +30368,23 @@ private slots:
         QVERIFY2(near(deviceToFrame(*handle()), frameOf({100, 80}), 0.5),
                  qPrintable(QStringLiteral("%1,%2").arg(deviceToFrame(*handle()).x()).arg(deviceToFrame(*handle()).y())));
 
+        {
+            QQuickItem *tip = visualItem("visualHandleTip");
+            QVERIFY(tip);
+            auto *label = tip->findChild<QObject *>(QStringLiteral("visualHandleTipLabel"));
+            QVERIFY(label);
+            QTest::mouseMove(window, videoPoint(*handle()) + QPoint(60, 60));
+            QTRY_COMPARE(tip->property("row").toInt(), -1);
+            QVERIFY(!label->property("visible").toBool());
+            QTest::mouseMove(window, videoPoint(*handle()) + QPoint(2, 1));
+            QTRY_COMPARE(tip->property("name").toString(), QStringLiteral("Position"));
+            QTRY_VERIFY(label->property("visible").toBool());
+            QCOMPARE(label->property("text").toString(), QStringLiteral("Position"));
+            QTest::mouseMove(window, videoPoint(*handle()) + QPoint(60, 60));
+            QTRY_COMPARE(tip->property("row").toInt(), -1);
+            QTRY_VERIFY(!label->property("visible").toBool());
+        }
+
         const std::size_t steps = session->historySize();
         const QPoint start = videoPoint(*handle());
         const QPoint end = start + QPoint(12, 7);
@@ -41341,6 +41358,8 @@ private slots:
         fs.setMode(ui::VideoFullscreenController::Mode::Typesetting);
         QTRY_VERIFY(fullscreenItem("fullscreenTypesetting") && fullscreenItem("fullscreenTypesetting")->isVisible());
         auto *inspector = fullscreenItem("fullscreenInspector");
+        QVERIFY(fullscreenItem("visualHandleTip"));
+        QVERIFY(!fullscreenItem("visualHandleTip")->property("shown").toBool());
         const auto inside = [&](QQuickItem *item, QQuickItem *area) {
             for (; item; item = item->parentItem())
                 if (item == area)

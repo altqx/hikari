@@ -554,10 +554,13 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
         out.lines.push_back({{xx1 - 5.0f * u, yy1}, {xx1 + 5.0f * u, yy1}, 10.f, 0xAAFF0000});
         out.lines.push_back({org, {xx1, yy1}, 2.f, out.handles.border});
         out.lines.push_back({{xx2, yy2}, {xx3, yy3}, 2.f, out.handles.border});
+        out.named.push_back({{org, {xx1, yy1}}, 4 * u, 1});
+        out.named.push_back({{{xx2, yy2}, {xx3, yy3}}, 4 * u, 1});
     }
     out.lines.push_back({{org.x - 10.0f * u, org.y}, {org.x + 10.0f * u, org.y}, 2.f, out.handles.border});
     out.lines.push_back({{org.x, org.y - 10.0f * u}, {org.x, org.y + 10.0f * u}, 2.f, out.handles.border});
     out.lines.push_back({org, m_to, 2.f, out.handles.border});
+    out.named.push_back({{org}, 8 * u, 0});
     return out;
 }
 
@@ -973,12 +976,20 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
     p.org = m_org;
     p.from = m_from;
     p.angle = m_angle;
-    if (p.width > 0 && p.height > 0)
+    if (p.width > 0 && p.height > 0) {
         drawXYGrid(out, p, m_an);
+        NamedHandle grid{{}, 4 * out.unit, 1, true};
+        for (const PointF corner : {PointF{-25, -25}, PointF{25, -25}, PointF{25, 25}, PointF{-25, 25}})
+            if (const auto at = projectXY(p, corner.x, corner.y, 0))
+                grid.path.push_back(*at);
+        if (grid.path.size() == 4)
+            out.named.push_back(std::move(grid));
+    }
     const PointF org = m_org;
     const float arm = 10.0f * unitOf(host);
     out.lines.push_back({{org.x - arm, org.y}, {org.x + arm, org.y}, 2.f, out.handles.border});
     out.lines.push_back({{org.x, org.y - arm}, {org.x, org.y + arm}, 2.f, out.handles.border});
+    out.named.push_back({{org}, 8 * out.unit, 0});
     return out;
 }
 

@@ -1797,6 +1797,7 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
             ++outlined;
             const PointF a = toView(box->first), b = toView(box->second);
             o.overlay.polygons.push_back({{{a.x, a.y}, {b.x, a.y}, {b.x, b.y}, {a.x, b.y}}, 0, kOutline});
+            o.overlay.named.push_back({{{a.x, a.y}, {b.x, a.y}, {b.x, b.y}, {a.x, b.y}}, 4 * out.unit, 0, true});
             if (targets.size() > 1) {
                 const u16 number = ascii(std::to_string(i + 1));
                 const auto [w, h] = host.measureLabel(number);
