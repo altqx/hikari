@@ -4236,6 +4236,22 @@ Output device: %2</source>
         <translation>ไม่ได้เพิ่มคำว่า “%1” ลงในพจนานุกรม</translation>
     </message>
     <message>
+        <source>Split here</source>
+        <translation>แบ่งตรงนี้</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>ประมาณเวลา</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>คงเวลาเดิม</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>ที่เฟรมวิดีโอ</translation>
+    </message>
+    <message>
         <source>Check spelling as you type</source>
         <translation>ตรวจการสะกดขณะพิมพ์</translation>
     </message>
@@ -4430,6 +4446,10 @@ Output device: %2</source>
     <message>
         <source>Save failed; the file on disk is unchanged</source>
         <translation>บันทึกไม่สำเร็จ ไฟล์บนดิสก์ไม่มีการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>ไม่มีอะไรต้องแบ่ง: ทั้งสองส่วนต้องมีข้อความ</translation>
     </message>
     <message>
         <source>End time is before start time.</source>
@@ -7026,6 +7046,10 @@ Failed to copy %2 fonts.</source>
         <translation>คงข้อความของบรรทัดสุดท้าย</translation>
     </message>
     <message>
+        <source>As karaoke</source>
+        <translation>เป็นคาราโอเกะ</translation>
+    </message>
+    <message>
         <source>Split</source>
         <translation>แบ่ง</translation>
     </message>
@@ -7048,6 +7072,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>By wraps</source>
         <translation>ตามจุดแบ่งบรรทัด</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>ตามพยางค์คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>คงเค้าโครง</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -8911,6 +8943,18 @@ Failed to copy %2 fonts.</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
     </message>
     <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>แบ่งที่เคอร์เซอร์ โดยประมาณเวลา</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>แบ่งที่เคอร์เซอร์ โดยคงเวลาเดิม</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>แบ่งที่เคอร์เซอร์ ที่เฟรมวิดีโอ</translation>
+    </message>
+    <message>
         <source>Vector clip: freehand</source>
         <translation>คลิปเวกเตอร์: วาดมือเปล่า</translation>
     </message>
@@ -9281,6 +9325,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>แบ่งตามพยางค์คาราโอเกะ</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>ต่อเป็นคาราโอเกะ</translation>
     </message>
     <message>
         <source>Full screen typesetting</source>
@@ -14853,6 +14905,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>เลื่อนไปยังบรรทัดที่มองเห็นหลังออกจากโหมดเต็มหน้าจอ</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>คงเค้าโครงเมื่อแบ่งตามพยางค์คาราโอเกะ</translation>
     </message>
     <message>
         <source>Styles for new files</source>

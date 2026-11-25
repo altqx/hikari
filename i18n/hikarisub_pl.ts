@@ -4316,6 +4316,22 @@ Urządzenie wyjściowe: %2</translation>
         <translation>Słowo “%1” nie zostało dodane do słownika.</translation>
     </message>
     <message>
+        <source>Split here</source>
+        <translation>Podziel tutaj</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>Oszacuj czasy</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>Zachowaj czasy</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>Na klatce wideo</translation>
+    </message>
+    <message>
         <source>Check spelling as you type</source>
         <translation>Sprawdzaj pisownię podczas pisania</translation>
     </message>
@@ -4510,6 +4526,10 @@ Urządzenie wyjściowe: %2</translation>
     <message>
         <source>Save failed; the file on disk is unchanged</source>
         <translation>Zapis nie powiódł się; plik na dysku pozostał bez zmian</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>Nie ma nic do podzielenia: obie części muszą zawierać tekst.</translation>
     </message>
     <message>
         <source>End time is before start time.</source>
@@ -7152,6 +7172,10 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zostaw ostatnią</translation>
     </message>
     <message>
+        <source>As karaoke</source>
+        <translation>Jako karaoke</translation>
+    </message>
+    <message>
         <source>Split</source>
         <translation>Podziel</translation>
     </message>
@@ -7174,6 +7198,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>By wraps</source>
         <translation>Według łamań wierszy</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>Według sylab karaoke</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>Zachowaj układ</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -9067,6 +9099,18 @@ Nie udało się skopiować czcionek: %2.</translation>
         <translation>Zmień proporcje obrazu…</translation>
     </message>
     <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>Podziel w miejscu kursora, szacując czasy</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>Podziel w miejscu kursora, zachowując czasy</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>Podziel w miejscu kursora, na klatce wideo</translation>
+    </message>
+    <message>
         <source>Vector clip: freehand</source>
         <translation>Wycinek wektorowy: rysuj odręcznie</translation>
     </message>
@@ -9437,6 +9481,14 @@ Nie udało się skopiować czcionek: %2.</translation>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>Podziel według sylab karaoke</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>Złącz jako karaoke</translation>
     </message>
     <message>
         <source>Full screen typesetting</source>
@@ -15107,6 +15159,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>Odszukuj widoczną linijkę po wyjściu z pełnego ekranu</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>Zachowuj układ przy dzieleniu według sylab karaoke</translation>
     </message>
     <message>
         <source>Styles for new files</source>

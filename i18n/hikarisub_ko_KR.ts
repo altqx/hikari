@@ -4236,6 +4236,22 @@ Output device: %2</source>
         <translation>“%1” 단어를 사전에 추가하지 못했습니다.</translation>
     </message>
     <message>
+        <source>Split here</source>
+        <translation>여기서 분할</translation>
+    </message>
+    <message>
+        <source>Estimate times</source>
+        <translation>시간 추정</translation>
+    </message>
+    <message>
+        <source>Keep times</source>
+        <translation>시간 유지</translation>
+    </message>
+    <message>
+        <source>At the video frame</source>
+        <translation>영상 프레임에서</translation>
+    </message>
+    <message>
         <source>Check spelling as you type</source>
         <translation>입력하는 동안 철자 검사</translation>
     </message>
@@ -4430,6 +4446,10 @@ Output device: %2</source>
     <message>
         <source>Save failed; the file on disk is unchanged</source>
         <translation>저장 실패, 디스크의 파일은 변경되지 않음</translation>
+    </message>
+    <message>
+        <source>Nothing to split: both halves need text.</source>
+        <translation>분할할 수 없습니다: 두 부분 모두 글자가 있어야 합니다.</translation>
     </message>
     <message>
         <source>End time is before start time.</source>
@@ -7026,6 +7046,10 @@ Failed to copy %2 fonts.</source>
         <translation>끝 줄 글자 남김</translation>
     </message>
     <message>
+        <source>As karaoke</source>
+        <translation>노래방 줄로</translation>
+    </message>
+    <message>
         <source>Split</source>
         <translation>분할</translation>
     </message>
@@ -7048,6 +7072,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>By wraps</source>
         <translation>줄 바꿈 기준으로</translation>
+    </message>
+    <message>
+        <source>By karaoke syllables</source>
+        <translation>노래방 음절 단위로</translation>
+    </message>
+    <message>
+        <source>Keep layout</source>
+        <translation>레이아웃 유지</translation>
     </message>
     <message>
         <source>Typesetting</source>
@@ -8911,6 +8943,18 @@ Failed to copy %2 fonts.</source>
         <translation>가로 세로 비율 변경…</translation>
     </message>
     <message>
+        <source>Split at the cursor, estimating times</source>
+        <translation>커서 위치에서 분할, 시간 추정</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, keeping times</source>
+        <translation>커서 위치에서 분할, 시간 유지</translation>
+    </message>
+    <message>
+        <source>Split at the cursor, at the video frame</source>
+        <translation>커서 위치에서 분할, 영상 프레임에서</translation>
+    </message>
+    <message>
         <source>Vector clip: freehand</source>
         <translation>벡터 클립: 자유 곡선</translation>
     </message>
@@ -9281,6 +9325,14 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Clear command history</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split by karaoke syllables</source>
+        <translation>노래방 음절 단위로 분할</translation>
+    </message>
+    <message>
+        <source>Join as karaoke</source>
+        <translation>노래방 줄로 병합</translation>
     </message>
     <message>
         <source>Full screen typesetting</source>
@@ -14853,6 +14905,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>Find the visible line after leaving full screen</source>
         <translation>전체 화면 종료 후 보이는 줄 찾기</translation>
+    </message>
+    <message>
+        <source>Keep the layout when splitting by karaoke syllables</source>
+        <translation>노래방 음절 단위로 분할할 때 레이아웃 유지</translation>
     </message>
     <message>
         <source>Styles for new files</source>
