@@ -38,7 +38,6 @@ Item {
     readonly property bool canApply: chosenRow !== null && chosen.length > 0 && editor.editable && editor.assFields
     readonly property bool canChange: !(manager?.editing ?? false)
     readonly property bool canChangeChosen: chosenRow !== null && canChange
-    readonly property int smallSize: Math.max(9, Math.round(Qt.application.font.pointSize * 0.9))
 
     // ListView resets currentIndex when its model is replaced; that move is not a choice.
     property bool reloading: false
@@ -73,6 +72,10 @@ Item {
     }
     onShownRowsChanged: list.currentIndex = shownRows.findIndex(r => r.row === chosenAt)
 
+    readonly property StyleFontCheck fonts: StyleFontCheck {
+        catalogs: panel.catalogs
+        families: panel.live ? panel.rows.map(r => r.font) : []
+    }
     readonly property StyleStepper stepper: StyleStepper {
         app: panel.app
         editor: panel.editor
@@ -128,15 +131,6 @@ Item {
                 onToggled: panel.stepper.on = checked
             }
         }
-        RowLayout {
-            visible: panel.rows.length > 0
-            Layout.fillWidth: true
-            Layout.leftMargin: 6
-            Layout.rightMargin: 10
-            Label { text: qsTr("Style"); color: Theme.muted; font.pointSize: panel.smallSize; Layout.fillWidth: true }
-            Label { text: qsTr("Lines"); color: Theme.muted; font.pointSize: panel.smallSize }
-        }
-        Rectangle { visible: panel.rows.length > 0; Layout.fillWidth: true; implicitHeight: 1; color: Theme.highContrast ? Theme.line : Theme.raised }
         Label {
             objectName: "stylesEmpty"
             visible: panel.shownRows.length === 0
@@ -210,45 +204,29 @@ Item {
                 if (event.key !== Qt.Key_Tab && event.key !== Qt.Key_Backtab)
                     keyboardFocus = true
             }
-            delegate: Item {
+            delegate: StyleRow {
                 id: row
                 required property var modelData
                 required property int index
-                readonly property bool current: ListView.isCurrentItem
-                readonly property bool lineStyle: modelData.name === panel.editor.style
+                namePrefix: "styles"
+                nameIndex: index
                 objectName: "stylesRow" + index
                 width: ListView.view.width
-                implicitHeight: Math.max(sample.height, rowText.implicitHeight) + 12
-                Accessible.role: Accessible.ListItem
-                Accessible.name: modelData.name + ", " + modelData.font + " " + modelData.size + ", "
-                                 + qsTr("Lines: %1").arg(modelData.lines)
-                                 + (lineStyle ? ", " + qsTr("the current line’s style") : "")
-                Accessible.selected: current
-
-                Rectangle {
-                    anchors.fill: parent
-                    color: row.current ? Theme.select : hover.hovered ? Theme.raised : "transparent"
-                }
-                Rectangle {
-                    visible: row.current
-                    width: 3
-                    height: parent.height
-                    color: Theme.accent
-                }
-                Rectangle {
-                    anchors.bottom: parent.bottom
-                    width: parent.width
-                    height: 1
-                    color: Theme.highContrast ? Theme.line : Theme.raised
-                }
-                Rectangle {
-                    anchors.fill: parent
-                    color: "transparent"
-                    border.width: 1
-                    border.color: Theme.focus
-                    visible: row.current && list.activeFocus && list.keyboardFocus
-                }
-                HoverHandler { id: hover }
+                name: modelData.name
+                family: modelData.font
+                size: modelData.size
+                bold: modelData.bold
+                italic: modelData.italic
+                primary: modelData.primary
+                outline: modelData.outline
+                sampleText: panel.catalogs.samplePlain(panel.catalogs.previewText, true)
+                counted: true
+                lines: modelData.lines
+                chosen: ListView.isCurrentItem
+                marked: modelData.name === panel.editor.style
+                focused: chosen && list.activeFocus && list.keyboardFocus
+                fontMissing: panel.fonts.missing(modelData.font)
+                shownIn: panel.fonts.shownIn(modelData.font)
                 TapHandler {
                     acceptedButtons: Qt.LeftButton
                     onTapped: {
@@ -263,95 +241,6 @@ Item {
                         list.currentIndex = row.index
                         list.forceActiveFocus(Qt.MouseFocusReason)
                         rowMenu.show(row.modelData, row, eventPoint.position.x, eventPoint.position.y)
-                    }
-                }
-                RowLayout {
-                    id: rowContent
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 10
-                    spacing: 8
-                    Rectangle {
-                        id: sample
-                        objectName: "stylesSample" + row.index
-                        implicitWidth: 92
-                        implicitHeight: 30
-                        border.width: 1
-                        border.color: Theme.line
-                        color: "#6b6b6b"
-                        clip: true
-                        Grid {
-                            anchors.fill: parent
-                            anchors.margins: 1
-                            columns: 10
-                            Repeater {
-                                model: 30
-                                Rectangle {
-                                    required property int index
-                                    width: 9
-                                    height: 10
-                                    color: (index + Math.floor(index / 10)) % 2 === 0 ? "#6b6b6b" : "#8a8a8a"
-                                }
-                            }
-                        }
-                        Text {
-                            objectName: "stylesSampleText" + row.index
-                            anchors.fill: parent
-                            anchors.margins: 3
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            textFormat: Text.PlainText
-                            text: panel.catalogs.samplePlain(panel.catalogs.previewText, true)
-                            fontSizeMode: Text.HorizontalFit
-                            minimumPixelSize: 9
-                            font.family: row.modelData.font
-                            font.pixelSize: 17
-                            font.bold: row.modelData.bold
-                            font.italic: row.modelData.italic
-                            color: row.modelData.primary
-                            style: Text.Outline
-                            styleColor: row.modelData.outline
-                            Accessible.ignored: true
-                        }
-                    }
-                    ColumnLayout {
-                        id: rowText
-                        spacing: 0
-                        Layout.fillWidth: true
-                        Label {
-                            objectName: "stylesName" + row.index
-                            text: row.modelData.name
-                            textFormat: Text.PlainText
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                        Label {
-                            objectName: "stylesFont" + row.index
-                            text: row.modelData.font + " · " + row.modelData.size
-                            textFormat: Text.PlainText
-                            color: Theme.muted
-                            font.pointSize: panel.smallSize
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                    }
-                    Icon {
-                        objectName: "stylesLineMark" + row.index
-                        visible: row.lineStyle
-                        iconRole: "edit"
-                        ToolTip.visible: markHover.hovered
-                        ToolTip.text: qsTr("Current line’s style")
-                        HoverHandler { id: markHover }
-                    }
-                    Label {
-                        text: row.modelData.lines
-                        textFormat: Text.PlainText
-                        color: Theme.muted
-                        font.pointSize: panel.smallSize
-                        horizontalAlignment: Text.AlignRight
-                        Layout.minimumWidth: 26
                     }
                 }
             }

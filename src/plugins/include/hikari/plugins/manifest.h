@@ -153,6 +153,14 @@ struct McpServer {
     std::string program;
 };
 
+struct AiTool {
+    std::string command;
+    std::string description;
+    api::Json parameters;
+    api::Json result; // null without one
+    bool read = false;
+};
+
 struct LanguageServer {
     enum class Scope { Document, Line };
     enum class Tags { Blank, Keep };
@@ -241,6 +249,7 @@ struct Manifest {
     std::vector<ContentFile> graphs;
     std::vector<ContentFile> layouts;
     std::vector<McpServer> mcpServers;
+    std::vector<AiTool> aiTools;
     std::vector<LanguageServer> languageServers;
     std::vector<ColourTheme> themes;
     std::vector<IconTheme> iconThemes;

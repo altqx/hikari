@@ -443,6 +443,7 @@ constexpr const char *kHotkeyCommands[] = {
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Next subtitle boundary"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Previous subtitle boundary"),
     QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Reopen with encoding…"),
+    QT_TRANSLATE_NOOP("HikariSub.Hotkeys", "Attachments…"),
 };
 
 constexpr const char *kHotkeyWindows[] = {

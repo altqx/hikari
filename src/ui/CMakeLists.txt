@@ -25,7 +25,7 @@ list(APPEND hikari_ui_qml_files ShiftTimesPanel.qml TimingPostprocessorPanel.qml
     ShiftLines.qml ShiftNeed.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 list(APPEND hikari_ui_qml_files HomePage.qml RecentList.qml)
 list(APPEND hikari_ui_qml_files GridFilterField.qml)
-list(APPEND hikari_ui_qml_files StylesPanel.qml StyleStepper.qml StylePickerPopover.qml)
+list(APPEND hikari_ui_qml_files StylesPanel.qml StyleRow.qml StyleFontCheck.qml StyleStepper.qml StylePickerPopover.qml)
 list(APPEND hikari_ui_qml_files QuickPick.qml QuickPickRow.qml QuickOpen.qml InputBox.qml PluginQuickInput.qml AppQuickInput.qml)
 list(APPEND hikari_ui_qml_files ChangeAlignmentMenu.qml AlignDistributeMenu.qml PhantomMenu.qml CycleValuesPage.qml)
 list(APPEND hikari_ui_qml_files TagListPopup.qml EditorTagList.qml)
@@ -185,7 +185,7 @@ list(APPEND hikari_ui_qml_files MessageBox.qml DangerButton.qml Popover.qml Popo
 list(APPEND hikari_ui_qml_files HidableQuestion.qml)
 list(APPEND hikari_ui_qml_files TierChip.qml TierSaveButton.qml TierSaveMenu.qml)
 list(APPEND hikari_ui_qml_files SetNewFpsWindow.qml)
-list(APPEND hikari_ui_qml_files LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
+list(APPEND hikari_ui_qml_files LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml Attachments.qml StartupOffer.qml)
 list(APPEND hikari_ui_qml_files SpellingAddedWords.qml ResampleWindow.qml)
 list(APPEND hikari_ui_qml_files PerspectiveTrackingWindow.qml TrackingDataField.qml MotionDataWindow.qml InterpolateLinesWindow.qml
     ExtendTrackingWindow.qml BlurAndGlowLayersDialog.qml)

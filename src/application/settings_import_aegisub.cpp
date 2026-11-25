@@ -147,7 +147,7 @@ constexpr AegisubCommand kCommands[] = {
     {"recent/subtitle/", "", kMenu},
     {"recent/timecodes/", "", kMenu},
     {"recent/video/", "", kMenu},
-    {"subtitle/attachment", "", kNone},
+    {"subtitle/attachment", "GLOBAL_OPEN_ATTACHMENTS", ""},
     {"subtitle/close", "GLOBAL_CLOSE_PAGE", ""},
     {"subtitle/find", "GLOBAL_SEARCH", ""},
     {"subtitle/find/next", "GLOBAL_FIND_NEXT", ""},
