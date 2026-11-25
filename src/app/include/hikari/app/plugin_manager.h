@@ -96,6 +96,8 @@ public:
     Q_INVOKABLE QString undoRollBack(const QString &id);
     // review() for a folder run in place as a dev plugin. Adds {dev: true, path}.
     Q_INVOKABLE QVariantMap reviewDev(const QUrl &folder);
+    // Writes the theme being shown as a new theme plugin folder in `parent`, then reviewDev() on it.
+    Q_INVOKABLE QVariantMap saveThemeCopy(const QUrl &parent);
     Q_INVOKABLE void cancelReview() { m_review.reset(); }
     // review() for a package that must have the id `id`.
     Q_INVOKABLE QVariantMap reviewUpdate(const QUrl &file, const QString &id);

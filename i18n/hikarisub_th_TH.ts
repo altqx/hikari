@@ -9287,6 +9287,46 @@ Failed to copy %2 fonts.</source>
         <translation>ไทป์เซ็ตเต็มหน้าจอ</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>ซูม 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>ซูม 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>ซูม 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>ซูมเข้า</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>ซูมออก</translation>
+    </message>
+    <message>
+        <source>Zoom to fit</source>
+        <translation>ซูมให้พอดี</translation>
+    </message>
+    <message>
+        <source>Zoom to 1:1 device pixels</source>
+        <translation>ซูมเป็นพิกเซลอุปกรณ์ 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Reopen with encoding…</source>
         <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
     </message>
@@ -12378,6 +12418,46 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดใหม่ด้วยการเข้ารหัสอักขระ…</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>Zoom 50 %</source>
+        <translation>ซูม 50 %</translation>
+    </message>
+    <message>
+        <source>Zoom 100 %</source>
+        <translation>ซูม 100 %</translation>
+    </message>
+    <message>
+        <source>Zoom 200 %</source>
+        <translation>ซูม 200 %</translation>
+    </message>
+    <message>
+        <source>Zoom in</source>
+        <translation>ซูมเข้า</translation>
+    </message>
+    <message>
+        <source>Zoom out</source>
+        <translation>ซูมออก</translation>
+    </message>
+    <message>
+        <source>Fit to panel</source>
+        <translation>พอดีกับแผง</translation>
+    </message>
+    <message>
+        <source>1:1 device pixels</source>
+        <translation>พิกเซลอุปกรณ์ 1:1</translation>
+    </message>
+    <message>
+        <source>Next subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายถัดไป</translation>
+    </message>
+    <message>
+        <source>Previous subtitle boundary</source>
+        <translation>ขอบเขตคำบรรยายก่อนหน้า</translation>
+    </message>
+    <message>
         <source>Opens a video file</source>
         <translation>เปิดไฟล์วิดีโอ</translation>
     </message>
@@ -12570,6 +12650,14 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;เปิดวิดีโอ…</translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation>ไฟล์ก่อนหน้า</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation>ไฟล์ถัดไป</translation>
+    </message>
+    <message>
         <source>Opens a keyframes file</source>
         <translation>เปิดไฟล์คีย์เฟรม</translation>
     </message>
@@ -12594,6 +12682,18 @@ Failed to copy %2 fonts.</source>
         <translation>ไปข้างหน้าหนึ่งเฟรม</translation>
     </message>
     <message>
+        <source>Moves the video to the previous start or end of a line</source>
+        <translation>เลื่อนวิดีโอถอยหลังถึงจุดเริ่มต้นหรือจุดสิ้นสุดของบรรทัดที่ใกล้ที่สุด</translation>
+    </message>
+    <message>
+        <source>Moves the video to the next start or end of a line</source>
+        <translation>เลื่อนวิดีโอไปข้างหน้าถึงจุดเริ่มต้นหรือจุดสิ้นสุดของบรรทัดที่ใกล้ที่สุด</translation>
+    </message>
+    <message>
+        <source>Types a time or a frame to show</source>
+        <translation>พิมพ์เวลาหรือเฟรมที่จะแสดง</translation>
+    </message>
+    <message>
         <source>Sets the selected lines’ start to the video frame’s time</source>
         <translation>กำหนดเวลาเริ่มต้นของบรรทัดที่เลือกเป็นเวลาของเฟรมวิดีโอ</translation>
     </message>
@@ -12612,6 +12712,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Change aspect ratio…</source>
         <translation>เปลี่ยนอัตราส่วนภาพ…</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>ระดับการซูม</translation>
     </message>
     <message>
         <source>Opens an audio file</source>
@@ -15598,7 +15702,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press Apply or Cancel first: the import is added at once</source>
-        <translation>กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
+        <translation type="vanished">กด “นำไปใช้” หรือ “ยกเลิก” ก่อน: การนำเข้าจะเพิ่มทันที</translation>
     </message>
     <message>
         <source>Macro</source>
@@ -16632,7 +16736,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>Press OK or Apply to turn AI back on.</source>
-        <translation>กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
+        <translation type="vanished">กด ตกลง หรือ นำไปใช้ เพื่อเปิด AI อีกครั้ง</translation>
     </message>
     <message>
         <source>Providers</source>
@@ -16982,7 +17086,7 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     </message>
     <message>
         <source>The JSON setup needs the address: press OK or Apply to start listening on 127.0.0.1.</source>
-        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
+        <translation type="vanished">การตั้งค่า JSON ต้องใช้ที่อยู่: กด ตกลง หรือ นำไปใช้ เพื่อเริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
     </message>
     <message>
         <source>The JSON setup is for agents that connect over HTTP, so it needs “Also listen on http://127.0.0.1”.</source>
@@ -17311,10 +17415,6 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Actions save at once. The other settings here save with OK or Apply.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Requests go only to the providers you add and to %1. The AI component runs in a sandbox and reaches the network only through HikariSub.</source>
         <translation>คำขอจะส่งไปยังผู้ให้บริการที่คุณเพิ่มและ %1 เท่านั้น คอมโพเนนต์ AI ทำงานในแซนด์บ็อกซ์และเชื่อมต่อเครือข่ายผ่าน HikariSub เท่านั้น</translation>
     </message>
@@ -17447,6 +17547,10 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>The keychain didn’t take the secrets; nothing was saved.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The JSON setup needs the address, which it gets once HikariSub listens on 127.0.0.1.</source>
+        <translation>การตั้งค่า JSON ต้องใช้ที่อยู่ ซึ่งจะได้มาเมื่อ HikariSub เริ่มรับการเชื่อมต่อที่ 127.0.0.1</translation>
     </message>
     <message>
         <source>MCP servers</source>
@@ -18803,6 +18907,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
     <message>
         <source>%1 stopped: %2</source>
         <translation>%1 หยุดทำงาน: %2</translation>
+    </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>บันทึกสำเนาเป็นปลั๊กอินธีม…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>เลือกตำแหน่งที่จะบันทึกปลั๊กอินธีม</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>สำเนา %1</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>เขียนปลั๊กอินธีมไปที่ %1 ไม่ได้</translation>
     </message>
 </context>
 <context>
@@ -25615,8 +25736,8 @@ Styles deleted:
         <translation>%1 มิลลิวินาที</translation>
     </message>
     <message>
-        <source>Rules: lead-in %1 ms, lead-out %2 ms, gaps %3 ms, keyframes %4/%5 and %6/%7 ms</source>
-        <translation type="unfinished"></translation>
+        <source>Back</source>
+        <translation>ย้อนกลับ</translation>
     </message>
     <message>
         <source>The rules need a video.</source>
@@ -25694,13 +25815,27 @@ Styles deleted:
         <source>Open keyframes…</source>
         <translation>เปิดคีย์เฟรม…</translation>
     </message>
-    <message>
-        <source>Assistant</source>
-        <translation type="unfinished"></translation>
+    <message numerus="yes">
+        <source>%n line(s) change</source>
+        <translation>
+            <numerusform>เปลี่ยน %n บรรทัด</numerusform>
+        </translation>
     </message>
     <message>
-        <source>Mode</source>
-        <translation type="unfinished"></translation>
+        <source>Show changes</source>
+        <translation>แสดงการเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>kf</source>
+        <translation>kf</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation>การเปลี่ยนแปลง</translation>
+    </message>
+    <message>
+        <source>Timing assistant</source>
+        <translation>ตัวช่วยจัดเวลา</translation>
     </message>
     <message>
         <source>Snap to keyframes</source>
@@ -26863,15 +26998,15 @@ Styles deleted:
     </message>
     <message>
         <source>Video position</source>
-        <translation>ตำแหน่งวิดีโอ</translation>
+        <translation type="vanished">ตำแหน่งวิดีโอ</translation>
     </message>
     <message>
         <source>Video times</source>
-        <translation>เวลาของวิดีโอ</translation>
+        <translation type="vanished">เวลาของวิดีโอ</translation>
     </message>
     <message>
         <source>Frame time; frame number; frames from the line’s start frame; milliseconds from the line’s start and end</source>
-        <translation>เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
+        <translation type="vanished">เวลาของเฟรม; หมายเลขเฟรม; จำนวนเฟรมนับจากเฟรมเริ่มต้นของบรรทัด; มิลลิวินาทีนับจากจุดเริ่มต้นและจุดสิ้นสุดของบรรทัด</translation>
     </message>
     <message>
         <source>Previous file</source>
@@ -26898,6 +27033,15 @@ Styles deleted:
         <translation>หยุด</translation>
     </message>
     <message>
+        <source>Jump to</source>
+        <translation>ข้ามไปยัง</translation>
+    </message>
+    <message>
+        <source>%1 frames from line %2’s start · %3 ms from its start · %4 ms from its end</source>
+        <extracomment>The video time&apos;s tooltip: %1 signed frames, %2 the active line&apos;s number, %3 and %4 signed milliseconds</extracomment>
+        <translation>%1 เฟรมจากจุดเริ่มต้นของบรรทัด %2 · %3 มิลลิวินาทีจากจุดเริ่มต้น · %4 มิลลิวินาทีจากจุดสิ้นสุด</translation>
+    </message>
+    <message>
         <source>Next file</source>
         <translation>ไฟล์ถัดไป</translation>
     </message>
@@ -26920,6 +27064,11 @@ Styles deleted:
     <message>
         <source>All files (*)</source>
         <translation>ไฟล์ทั้งหมด (*)</translation>
+    </message>
+    <message>
+        <source>frame %1 / %2</source>
+        <extracomment>The video&apos;s frame readout: %1 the shown frame, %2 how many frames the video has</extracomment>
+        <translation>เฟรม %1 / %2</translation>
     </message>
     <message>
         <source>Video (%1)</source>
@@ -27053,6 +27202,10 @@ Styles deleted:
     <message>
         <source>Reset zoom and pan</source>
         <translation>รีเซ็ตการซูมและการเลื่อนภาพ</translation>
+    </message>
+    <message>
+        <source>Zoom level</source>
+        <translation>ระดับการซูม</translation>
     </message>
     <message>
         <source>Unload video</source>
@@ -27801,6 +27954,48 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Could not save the keyframes file %1</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a time or frame: %1. Try %2 or a frame number.</source>
+        <extracomment>Jump to&apos;s bad input: %1 what was typed, %2 the time shown now</extracomment>
+        <translation>ไม่ใช่เวลาหรือเฟรม: %1 ลอง %2 หรือหมายเลขเฟรม</translation>
+    </message>
+    <message>
+        <source>Video time, %1, editable</source>
+        <translation>เวลาวิดีโอ %1 แก้ไขได้</translation>
+    </message>
+    <message>
+        <source>Fit</source>
+        <extracomment>The video zoom readout while the whole frame fits the panel</extracomment>
+        <translation>พอดี</translation>
+    </message>
+    <message>
+        <source>%1 %</source>
+        <extracomment>The video zoom readout: %1 the zoom as a whole percentage, as in &quot;200 %&quot;</extracomment>
+        <translation>%1 %</translation>
+    </message>
+    <message>
+        <source>Video zoom, %1</source>
+        <translation>การซูมวิดีโอ %1</translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation>การซูมวิดีโอ</translation>
+    </message>
+    <message>
+        <source>50 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>50 %</translation>
+    </message>
+    <message>
+        <source>100 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>100 %</translation>
+    </message>
+    <message>
+        <source>200 %</source>
+        <extracomment>A zoom level in the video zoom readout&apos;s menu</extracomment>
+        <translation>200 %</translation>
     </message>
 </context>
 <context>

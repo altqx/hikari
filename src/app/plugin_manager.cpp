@@ -2,6 +2,7 @@
 
 #include "hikari/app/plugin_content.h"
 #include "hikari/app/plugin_secrets.h"
+#include "hikari/app/plugin_themes.h"
 
 #include "hikari/api/api.h"
 #include "plugin_variant.h"
@@ -750,6 +751,22 @@ QVariantMap PluginManager::reviewDev(const QUrl &folder)
         return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), noUserFolder()}};
     m_reviewedFolder = path(folder.isLocalFile() ? folder.toLocalFile() : folder.toString());
     return reviewed(m_installer->reviewDev(m_reviewedFolder));
+}
+
+QVariantMap PluginManager::saveThemeCopy(const QUrl &parent)
+{
+    m_review.reset();
+    if (!m_installer)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), noUserFolder()}};
+    const ui::theme::Entry *shown = ui::theme::find(ui::theme::current().id);
+    if (!shown)
+        shown = &ui::theme::entries().front();
+    const auto installed = m_installer->registry();
+    const auto folder = writeThemePlugin(*shown, path(parent.isLocalFile() ? parent.toLocalFile() : parent.toString()),
+                                         [&installed](const std::string &id) { return installed && installed->contains(id); });
+    if (!folder)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("message"), folder.error()}};
+    return reviewDev(QUrl::fromLocalFile(QString::fromStdU16String(folder->u16string())));
 }
 
 void PluginManager::watchDevFolders()

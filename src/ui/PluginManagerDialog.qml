@@ -173,6 +173,7 @@ DialogWindow {
     }
     function reviewFile(url) { reviewPackage(url, "") }
     function reviewDev(folderUrl) { confirm(manager.reviewDev(folderUrl)) }
+    function saveThemeCopy(parentUrl) { confirm(manager.saveThemeCopy(parentUrl)) }
     function reviewPackage(url, updating) {
         confirm(updating ? manager.reviewUpdate(url, updating) : manager.review(url))
     }
@@ -338,6 +339,13 @@ DialogWindow {
                 text: qsTr("Install dev plugin…")
                 enabled: dialog.manager && dialog.manager.available
                 onClicked: devPicker.open()
+            }
+            IconToolButton {
+                objectName: "pluginSaveThemeCopy"
+                iconRole: "theme"
+                text: qsTr("Save a copy as a theme plugin…")
+                enabled: dialog.manager && dialog.manager.available
+                onClicked: themeCopyPicker.open()
             }
             IconToolButton {
                 objectName: "pluginCheckUpdates"
@@ -1164,6 +1172,55 @@ DialogWindow {
                 }
             }
         }
+        Repeater {
+            model: {
+                dialog.runtime ? dialog.runtime.languageServersRevision : 0
+                return dialog.runtime ? dialog.runtime.stoppedLanguageServers(details.row.id) : []
+            }
+            Rectangle {
+                id: serverError
+                required property var modelData
+                objectName: "pluginServerStopped_" + modelData.id
+                Layout.fillWidth: true
+                implicitHeight: serverColumn.implicitHeight + 16
+                color: Theme.field
+                border.color: Theme.danger
+                ColumnLayout {
+                    id: serverColumn
+                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 8 }
+                    spacing: 6
+                    Label {
+                        text: qsTr("%1 stopped.").arg(serverError.modelData.title)
+                        textFormat: Text.PlainText
+                        color: Theme.danger
+                        font.bold: true
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                    Label {
+                        text: serverError.modelData.reason
+                        textFormat: Text.PlainText
+                        font.family: "monospace"
+                        wrapMode: Text.WrapAnywhere
+                        Layout.fillWidth: true
+                    }
+                    RowLayout {
+                        spacing: 8
+                        IconTextButton {
+                            objectName: "pluginServerStartAgain_" + serverError.modelData.id
+                            iconRole: "restart"
+                            text: qsTr("Start again")
+                            onClicked: dialog.runtime.startLanguageServerAgain(details.row.id, serverError.modelData.id)
+                        }
+                        IconTextButton {
+                            iconRole: "edit-copy"
+                            text: qsTr("Copy")
+                            onClicked: dialog.copyRequested(serverError.modelData.reason)
+                        }
+                    }
+                }
+            }
+        }
         Heading { text: qsTr("Permissions") }
         Repeater {
             model: details.row.permissions.length > 0 ? details.row.permissions
@@ -1441,5 +1498,11 @@ DialogWindow {
         objectName: "pluginDevPicker"
         title: qsTr("Choose a plugin folder")
         onAccepted: dialog.reviewDev(selectedFolder)
+    }
+    FolderChooser {
+        id: themeCopyPicker
+        objectName: "pluginThemeCopyPicker"
+        title: qsTr("Choose where to save the theme plugin")
+        onAccepted: dialog.saveThemeCopy(selectedFolder)
     }
 }
