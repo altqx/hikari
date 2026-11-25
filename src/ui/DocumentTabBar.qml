@@ -16,8 +16,13 @@ Item {
     signal saveAllRequested()
     signal closeAllRequested()
 
-    readonly property int inset: 4
-    implicitHeight: row.implicitHeight + inset
+    property bool windowActive: true
+    implicitHeight: Theme.titleBarHeight
+    implicitWidth: row.implicitWidth
+    readonly property real minimumWidth: {
+        const current = tabRepeater.itemAt(bar.app.windowCurrentTab(bar.shellWindow))
+        return (current ? current.implicitWidth : 0) + newTab.implicitWidth
+    }
     readonly property bool shown: {
         bar.app.home
         return !bar.app.windowHome(bar.shellWindow)
@@ -25,16 +30,6 @@ Item {
     Accessible.role: Accessible.PageTabList
     Accessible.name: qsTr("Open documents")
     Accessible.ignored: !shown
-
-    TapHandler {
-        enabled: bar.shown
-        onDoubleTapped: bar.app.addPage(true)
-    }
-    TapHandler {
-        enabled: bar.shown
-        acceptedButtons: Qt.RightButton
-        onTapped: eventPoint => bar.openTabMenu(-1, bar, eventPoint.position.x, eventPoint.position.y)
-    }
 
     function openTabMenu(index, item, x, y) {
         tabMenu.openOn(index, item, x, y, firstVisibleTab())
@@ -152,13 +147,30 @@ Item {
     }
     Connections {
         target: bar.app
-        function onTabsChanged() { bar.syncTabs() }
+        function onTabsChanged() {
+            bar.syncTabs()
+            Qt.callLater(bar.keepCurrentInView)
+        }
     }
     Connections {
         target: bar.review
         function onChanged() { bar.syncTabs() }
     }
     Component.onCompleted: syncTabs()
+
+    function keepCurrentInView() {
+        const tab = tabRepeater.itemAt(bar.app.windowCurrentTab(bar.shellWindow))
+        if (!tab)
+            return
+        const max = Math.max(0, flick.contentWidth - flick.width)
+        let x = flick.contentX
+        if (tab.x < x)
+            x = tab.x
+        else if (tab.x + tab.width > x + flick.width)
+            x = tab.x + tab.width - flick.width
+        flick.contentX = Math.max(0, Math.min(max, x))
+    }
+    onWidthChanged: Qt.callLater(keepCurrentInView)
 
     function firstVisibleTab() {
         for (let i = 0; i < tabRepeater.count; ++i) {
@@ -182,211 +194,245 @@ Item {
         return -1
     }
 
-    DragHandler {
-        id: tabDrag
-        objectName: "tabDragHandler"
-        enabled: bar.shown
-        target: null
-        acceptedButtons: Qt.LeftButton
-        property int dragged: -1
-        property bool out: false
-        property point releasedAt
-        readonly property bool wayland: Qt.platform.pluginName.startsWith("wayland")
-        function tabUnder(x) {
-            return bar.tabAt(row.mapFromItem(bar, x, 0).x)
+    Item {
+        id: strip
+        objectName: "documentTabStrip"
+        anchors.left: parent.left
+        width: Math.min(row.implicitWidth, bar.width)
+        height: bar.height
+        TapHandler {
+            enabled: bar.shown
+            acceptedButtons: Qt.RightButton
+            onTapped: eventPoint => bar.openTabMenu(-1, strip, eventPoint.position.x, eventPoint.position.y)
         }
-        onActiveChanged: {
-            if (active) {
-                dragged = tabUnder(centroid.pressPosition.x)
-                if (dragged >= 0) {
-                    bar.app.selectTab(dragged)
-                    if (wayland)
-                        bar.prepareTabDrag(dragged, centroid.pressPosition)
-                }
-                return
+        DragHandler {
+            id: tabDrag
+            objectName: "tabDragHandler"
+            enabled: bar.shown
+            target: null
+            acceptedButtons: Qt.LeftButton
+            property int dragged: -1
+            property bool out: false
+            property point releasedAt
+            readonly property bool wayland: Qt.platform.pluginName.startsWith("wayland")
+            function tabUnder(x) {
+                return bar.tabAt(row.mapFromItem(strip, x, 0).x)
             }
-            const document = out && !wayland && dragged >= 0 ? bar.app.tabDocument(dragged) : 0
-            dragged = -1
-            out = false
-            bar.app.endTabDrag()
-            if (document > 0)
-                bar.app.dropTab(document, releasedAt)
-        }
-        onCentroidChanged: {
-            if (!active || dragged < 0)
-                return
-            releasedAt = bar.mapToGlobal(centroid.position.x, centroid.position.y)
-            const margin = Application.styleHints.startDragDistance
-            out = centroid.position.y < -margin || centroid.position.y > bar.height + margin
-                  || centroid.position.x < -margin || centroid.position.x > bar.width + margin
-            if (out) {
-                if (wayland && !draggedTab.Drag.active) {
-                    bar.app.tabDragging = true
-                    draggedTab.Drag.active = true
-                }
-                return
-            }
-            const over = tabUnder(centroid.position.x)
-            if (over >= 0 && over !== dragged && bar.app.dragTab(dragged, over))
-                dragged = over
-        }
-    }
-
-    Flickable {
-        id: flick
-        anchors.fill: parent
-        anchors.topMargin: bar.inset
-        anchors.leftMargin: bar.inset
-        opacity: bar.shown ? 1 : 0
-        enabled: bar.shown
-        contentWidth: row.implicitWidth
-        clip: true
-        flickableDirection: Flickable.HorizontalFlick
-        boundsBehavior: Flickable.StopAtBounds
-        interactive: false
-
-        WheelHandler {
-            orientation: Qt.Vertical
-            onWheel: event => {
-                const max = Math.max(0, flick.contentWidth - flick.width)
-                flick.contentX = Math.max(0, Math.min(max, flick.contentX - event.angleDelta.y / 2))
-            }
-        }
-
-        RowLayout {
-            id: row
-            spacing: 2
-            Repeater {
-                id: tabRepeater
-                model: tabModel
-                delegate: AbstractButton {
-                    id: tab
-                    required property int index
-                    required property string tabLabel
-                    required property string tabTitle
-                    required property bool tabModified
-                    required property bool tabCurrent
-                    required property string tabTip
-                    required property bool tabReference
-                    required property int tabReview
-                    required property string tabReviewByChild
-                    objectName: "documentTab" + index
-                    checkable: false
-                    checked: tabCurrent
-                    focusPolicy: Qt.TabFocus
-                    activeFocusOnTab: tabCurrent
-                    text: tabLabel
-                    Accessible.role: Accessible.PageTab
-                    Accessible.name: tabTitle
-                    Accessible.checked: tabCurrent
-                    Accessible.description: [tabModified ? qsTr("Modified") : "",
-                                             tabReference ? qsTr("Protected reference") : ""].filter(s => s.length > 0).join(", ")
-                    // MUST KILL: tabLabel packs "<history step>*<name>" and is parsed back here
-                    readonly property int mark: tabModified ? tabLabel.indexOf("*") : -1
-                    readonly property string stepText: mark >= 0 ? tabLabel.slice(0, mark) : ""
-                    implicitHeight: Theme.controlHeight
-                    implicitWidth: label.implicitWidth + 12 + closeMark.implicitWidth
-                                   + (mark >= 0 ? modifiedMark.width + 4 : 0)
-                                   + (reviewBadge.visible ? reviewBadge.implicitWidth + 2 : 0)
-                    ToolTip.visible: hovered
-                    ToolTip.text: [tabTip,
-                                   stepText.length > 0 ? qsTr("Modified (history step %1)").arg(stepText) : "",
-                                   tabReview > 0 ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tabReview) : "",
-                                   tabReview > 0 && tabReviewByChild.length > 0 ? qsTranslate("HikariSub.Review", "Sub-agents: %1").arg(tabReviewByChild) : ""]
-                                  .filter(s => s.length > 0).join("\n")
-                    background: Rectangle {
-                        color: tab.checked ? palette.base : (tab.hovered ? palette.midlight : palette.button)
-                        border.color: tab.checked || tab.visualFocus ? palette.highlight : palette.mid
-                        border.width: tab.visualFocus ? 2 : 1
-                        radius: 2
+            onActiveChanged: {
+                if (active) {
+                    dragged = tabUnder(centroid.pressPosition.x)
+                    if (dragged >= 0) {
+                        bar.app.selectTab(dragged)
+                        if (wayland)
+                            bar.prepareTabDrag(dragged, strip.mapToItem(bar, centroid.pressPosition))
                     }
-                    contentItem: RowLayout {
-                        spacing: 2
-                        Icon {
-                            id: modifiedMark
-                            objectName: "documentTabModified" + tab.index
-                            visible: tab.mark >= 0
-                            iconRole: "document-modified"
-                            Layout.leftMargin: 4
-                        }
-                        Label {
-                            id: label
-                            text: tab.mark >= 0 ? tab.text.slice(tab.mark + 1) : tab.text
-                            leftPadding: tab.mark >= 0 ? 0 : 4
-                        }
-                        Rectangle {
-                            id: reviewBadge
-                            objectName: "documentTabReview" + tab.index
-                            visible: tab.tabReview > 0
-                            implicitWidth: badgeRow.implicitWidth + 8
-                            implicitHeight: badgeRow.implicitHeight + 2
-                            radius: implicitHeight / 2
-                            color: tab.checked ? Theme.accent : "transparent"
-                            border.color: Theme.accent
-                            Accessible.role: Accessible.StaticText
-                            Accessible.name: qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tab.tabReview)
-                            Row {
-                                id: badgeRow
-                                anchors.centerIn: parent
-                                spacing: 2
-                                Icon {
-                                    iconRole: "review-keep"
-                                    size: 12
-                                    color: tab.checked ? Theme.onAccent : IconTheme.normal
-                                    accentColor: tab.checked ? Theme.onAccent : IconTheme.accent
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                Label {
-                                    text: tab.tabReview
-                                    font.pixelSize: 11
-                                    color: tab.checked ? Theme.onAccent : Theme.text
-                                }
+                    return
+                }
+                const document = out && !wayland && dragged >= 0 ? bar.app.tabDocument(dragged) : 0
+                dragged = -1
+                out = false
+                bar.app.endTabDrag()
+                if (document > 0)
+                    bar.app.dropTab(document, releasedAt)
+            }
+            onCentroidChanged: {
+                if (!active || dragged < 0)
+                    return
+                releasedAt = strip.mapToGlobal(centroid.position.x, centroid.position.y)
+                const at = strip.mapToItem(bar, centroid.position)
+                const margin = Application.styleHints.startDragDistance
+                out = at.y < -margin || at.y > bar.height + margin || at.x < -margin || at.x > bar.width + margin
+                if (out) {
+                    if (wayland && !draggedTab.Drag.active) {
+                        bar.app.tabDragging = true
+                        draggedTab.Drag.active = true
+                    }
+                    return
+                }
+                const over = tabUnder(centroid.position.x)
+                if (over >= 0 && over !== dragged && bar.app.dragTab(dragged, over))
+                    dragged = over
+            }
+        }
+
+        Flickable {
+            id: flick
+            objectName: "documentTabScroll"
+            anchors.fill: parent
+            opacity: bar.shown ? 1 : 0
+            enabled: bar.shown
+            contentWidth: row.implicitWidth
+            clip: true
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            interactive: false
+
+            WheelHandler {
+                orientation: Qt.Vertical
+                onWheel: event => {
+                    const max = Math.max(0, flick.contentWidth - flick.width)
+                    flick.contentX = Math.max(0, Math.min(max, flick.contentX - event.angleDelta.y / 2))
+                }
+            }
+
+            RowLayout {
+                id: row
+                height: flick.height
+                spacing: 0
+                Repeater {
+                    id: tabRepeater
+                    model: tabModel
+                    delegate: AbstractButton {
+                        id: tab
+                        required property int index
+                        required property string tabLabel
+                        required property string tabTitle
+                        required property bool tabModified
+                        required property bool tabCurrent
+                        required property string tabTip
+                        required property bool tabReference
+                        required property int tabReview
+                        required property string tabReviewByChild
+                        objectName: "documentTab" + index
+                        checkable: false
+                        checked: tabCurrent
+                        focusPolicy: Qt.TabFocus
+                        activeFocusOnTab: tabCurrent
+                        text: tabLabel
+                        Accessible.role: Accessible.PageTab
+                        Accessible.name: tabTitle
+                        Accessible.checked: tabCurrent
+                        Accessible.description: [tabModified ? qsTr("Modified") : "",
+                                                 tabReference ? qsTr("Protected reference") : ""].filter(s => s.length > 0).join(", ")
+                        // MUST KILL: tabLabel packs "<history step>*<name>" and is parsed back here
+                        readonly property int mark: tabModified ? tabLabel.indexOf("*") : -1
+                        readonly property string stepText: mark >= 0 ? tabLabel.slice(0, mark) : ""
+                        readonly property color ink: !bar.windowActive ? Theme.disabled : checked ? Theme.text : Theme.muted
+                        Layout.fillHeight: true
+                        leftPadding: 12
+                        rightPadding: 4
+                        implicitWidth: leftPadding + rightPadding + contentItem.implicitWidth
+                        ToolTip.visible: hovered
+                        ToolTip.text: [tabTip,
+                                       stepText.length > 0 ? qsTr("Modified (history step %1)").arg(stepText) : "",
+                                       tabReview > 0 ? qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tabReview) : "",
+                                       tabReview > 0 && tabReviewByChild.length > 0 ? qsTranslate("HikariSub.Review", "Sub-agents: %1").arg(tabReviewByChild) : ""]
+                                      .filter(s => s.length > 0).join("\n")
+                        background: Rectangle {
+                            color: tab.checked ? Theme.panel : "transparent"
+                            border.width: tab.checked && Theme.highContrast ? 1 : 0
+                            border.color: Theme.line
+                            Rectangle {
+                                anchors.fill: parent
+                                visible: tab.hovered && !tab.checked
+                                color: tab.down ? Theme.pressed : Theme.hover
+                            }
+                            Rectangle {
+                                objectName: "documentTabAccent"
+                                visible: tab.checked
+                                width: parent.width
+                                height: 2
+                                color: bar.windowActive ? Theme.accent : Theme.disabled
+                            }
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: 1
+                                visible: tab.visualFocus
+                                color: "transparent"
+                                border.width: 1
+                                border.color: Theme.focus
                             }
                         }
-                        IconToolButton {
-                            id: closeMark
-                            objectName: "documentTabClose" + tab.index
-                            visible: true
-                            opacity: tab.checked ? 1 : 0
-                            enabled: tab.checked
-                            Accessible.ignored: !tab.checked
-                            iconRole: "tab-close"
-                            text: qsTr("Close %1").arg(tab.tabTitle)
-                            focusPolicy: Qt.NoFocus
-                            padding: 1
-                            implicitWidth: 18
-                            implicitHeight: 18
-                            onClicked: bar.closeRequested(tab.index)
+                        contentItem: RowLayout {
+                            spacing: 4
+                            Icon {
+                                id: modifiedMark
+                                objectName: "documentTabModified" + tab.index
+                                visible: tab.mark >= 0
+                                iconRole: "document-modified"
+                                color: tab.ink
+                            }
+                            Label {
+                                id: label
+                                text: tab.mark >= 0 ? tab.text.slice(tab.mark + 1) : tab.text
+                                color: tab.ink
+                            }
+                            Rectangle {
+                                id: reviewBadge
+                                objectName: "documentTabReview" + tab.index
+                                visible: tab.tabReview > 0
+                                implicitWidth: badgeRow.implicitWidth + 8
+                                implicitHeight: badgeRow.implicitHeight + 2
+                                radius: implicitHeight / 2
+                                color: tab.checked ? Theme.accent : "transparent"
+                                border.color: Theme.accent
+                                Accessible.role: Accessible.StaticText
+                                Accessible.name: qsTranslate("HikariSub.Review", "%n AI change(s) to review", "", tab.tabReview)
+                                Row {
+                                    id: badgeRow
+                                    anchors.centerIn: parent
+                                    spacing: 2
+                                    Icon {
+                                        iconRole: "review-keep"
+                                        size: 12
+                                        color: tab.checked ? Theme.onAccent : IconTheme.normal
+                                        accentColor: tab.checked ? Theme.onAccent : IconTheme.accent
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Label {
+                                        text: tab.tabReview
+                                        font: TypeRoles.sized(label.font, 11, Font.Normal)
+                                        color: tab.checked ? Theme.onAccent : Theme.text
+                                    }
+                                }
+                            }
+                            IconToolButton {
+                                id: closeMark
+                                objectName: "documentTabClose" + tab.index
+                                visible: true
+                                opacity: tab.checked ? 1 : 0
+                                enabled: tab.checked
+                                Accessible.ignored: !tab.checked
+                                iconRole: "tab-close"
+                                text: qsTr("Close %1").arg(tab.tabTitle)
+                                focusPolicy: Qt.NoFocus
+                                implicitWidth: Theme.smallControlHeight
+                                implicitHeight: Theme.smallControlHeight
+                                onClicked: bar.closeRequested(tab.index)
+                            }
+                        }
+                        onClicked: bar.app.selectTab(index)
+                        function focusTab(step) {
+                            const next = tabRepeater.itemAt(index + step)
+                            if (next)
+                                next.forceActiveFocus(Qt.TabFocusReason)
+                        }
+                        Keys.onShortcutOverride: event => event.accepted = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
+                                                                     && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Space, Qt.Key_Menu].includes(event.key)
+                        Keys.onLeftPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1)
+                        Keys.onRightPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? -1 : 1)
+                        MenuKey.onRequested: bar.openTabMenu(tab.index, tab, 0, tab.height)
+                        TapHandler {
+                            acceptedButtons: Qt.MiddleButton
+                            onTapped: bar.closeRequested(tab.index)
+                        }
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            gesturePolicy: TapHandler.WithinBounds
+                            onTapped: eventPoint => bar.openTabMenu(tab.index, tab, eventPoint.position.x, eventPoint.position.y)
                         }
                     }
-                    onClicked: bar.app.selectTab(index)
-                    function focusTab(step) {
-                        const next = tabRepeater.itemAt(index + step)
-                        if (next)
-                            next.forceActiveFocus(Qt.TabFocusReason)
-                    }
-                    Keys.onShortcutOverride: event => event.accepted = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
-                                                                 && [Qt.Key_Left, Qt.Key_Right, Qt.Key_Space, Qt.Key_Menu].includes(event.key)
-                    Keys.onLeftPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1)
-                    Keys.onRightPressed: focusTab(Qt.application.layoutDirection === Qt.RightToLeft ? -1 : 1)
-                    MenuKey.onRequested: bar.openTabMenu(tab.index, tab, 0, tab.height)
-                    TapHandler {
-                        acceptedButtons: Qt.MiddleButton
-                        onTapped: bar.closeRequested(tab.index)
-                    }
-                    TapHandler {
-                        acceptedButtons: Qt.RightButton
-                        gesturePolicy: TapHandler.WithinBounds
-                        onTapped: eventPoint => bar.openTabMenu(tab.index, tab, eventPoint.position.x, eventPoint.position.y)
-                    }
                 }
-            }
-            IconToolButton {
-                objectName: "newTabButton"
-                iconRole: "tab-new"
-                text: qsTr("Open new tab")
-                focusPolicy: Qt.NoFocus
-                onClicked: bar.app.addPage(true)
+                IconToolButton {
+                    id: newTab
+                    objectName: "newTabButton"
+                    iconRole: "tab-new"
+                    text: qsTr("Open new tab")
+                    focusPolicy: Qt.NoFocus
+                    Layout.leftMargin: 4
+                    Layout.alignment: Qt.AlignVCenter
+                    onClicked: bar.app.addPage(true)
+                }
             }
         }
     }

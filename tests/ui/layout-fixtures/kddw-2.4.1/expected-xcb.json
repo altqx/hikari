@@ -27,53 +27,57 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
                     "rect": {
-                        "height": 213,
+                        "height": 222,
                         "width": 640,
                         "x": 640,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 205,
+                        "height": 214,
                         "width": 640,
                         "x": 640,
-                        "y": 273
+                        "y": 253
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 },
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 639,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 }
             ],
@@ -135,27 +139,29 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 1280,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 },
                 {
@@ -217,54 +223,58 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
                     "rect": {
-                        "height": 181,
+                        "height": 189,
                         "width": 1280,
                         "x": 0,
-                        "y": 372
+                        "y": 357
                     }
                 },
                 {
                     "current": "Template",
                     "floating": false,
+                    "minimumHeight": 298,
                     "panels": [
                         "Editor",
                         "Template"
                     ],
                     "rect": {
-                        "height": 312,
+                        "height": 326,
                         "width": 640,
                         "x": 640,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 219,
+                        "height": 229,
                         "width": 1280,
                         "x": 0,
-                        "y": 554
+                        "y": 547
                     }
                 },
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
                     "rect": {
-                        "height": 312,
+                        "height": 326,
                         "width": 639,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 }
             ],
@@ -299,42 +309,45 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 640,
                         "x": 640,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 158,
                     "panels": [
                         "Grid",
                         "Search",
                         "Styles"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 },
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 639,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 }
             ],
@@ -371,40 +384,43 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
                     "rect": {
-                        "height": 213,
+                        "height": 222,
                         "width": 1280,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 205,
+                        "height": 214,
                         "width": 1280,
                         "x": 0,
-                        "y": 273
+                        "y": 253
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 }
             ],
@@ -441,40 +457,43 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 640,
                         "x": 640,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 },
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 639,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 }
             ],
@@ -510,53 +529,57 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 171,
+                        "height": 179,
                         "width": 609,
                         "x": 0,
-                        "y": 602
+                        "y": 597
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 171,
+                        "height": 179,
                         "width": 670,
                         "x": 610,
-                        "y": 602
+                        "y": 597
                     }
                 },
                 {
                     "current": "Styles",
                     "floating": false,
+                    "minimumHeight": 158,
                     "panels": [
                         "Styles"
                     ],
                     "rect": {
-                        "height": 542,
+                        "height": 566,
                         "width": 319,
                         "x": 961,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
                     "rect": {
-                        "height": 542,
+                        "height": 566,
                         "width": 960,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 }
             ],
@@ -620,27 +643,29 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 1280,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 },
                 {
@@ -702,42 +727,45 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 640,
                         "x": 640,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 158,
                     "panels": [
                         "Grid",
                         "Search",
                         "Styles"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 },
                 {
                     "current": "Video",
                     "floating": false,
+                    "minimumHeight": 210,
                     "panels": [
                         "Video"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 639,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 }
             ],
@@ -780,29 +808,31 @@
             {
                 "current": "Editor",
                 "floating": false,
+                "minimumHeight": 170,
                 "panels": [
                     "Editor"
                 ],
                 "rect": {
-                    "height": 419,
+                    "height": 437,
                     "width": 1280,
                     "x": 0,
-                    "y": 59
+                    "y": 30
                 }
             },
             {
                 "current": "Grid",
                 "floating": false,
+                "minimumHeight": 158,
                 "panels": [
                     "Grid",
                     "Search",
                     "Styles"
                 ],
                 "rect": {
-                    "height": 294,
+                    "height": 308,
                     "width": 1280,
                     "x": 0,
-                    "y": 479
+                    "y": 468
                 }
             },
             {
@@ -853,40 +883,43 @@
                 {
                     "current": "Audio",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Audio"
                     ],
                     "rect": {
-                        "height": 213,
+                        "height": 222,
                         "width": 1280,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 205,
+                        "height": 214,
                         "width": 1280,
                         "x": 0,
-                        "y": 273
+                        "y": 253
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 }
             ],
@@ -948,27 +981,29 @@
                 {
                     "current": "Editor",
                     "floating": false,
+                    "minimumHeight": 170,
                     "panels": [
                         "Editor"
                     ],
                     "rect": {
-                        "height": 419,
+                        "height": 437,
                         "width": 1280,
                         "x": 0,
-                        "y": 59
+                        "y": 30
                     }
                 },
                 {
                     "current": "Grid",
                     "floating": false,
+                    "minimumHeight": 120,
                     "panels": [
                         "Grid"
                     ],
                     "rect": {
-                        "height": 294,
+                        "height": 308,
                         "width": 1280,
                         "x": 0,
-                        "y": 479
+                        "y": 468
                     }
                 },
                 {

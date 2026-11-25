@@ -163,6 +163,22 @@ QHash<QString, int> liveMinimumHeights()
     return out;
 }
 
+QJsonObject withMinimumHeights(QJsonObject docking)
+{
+    const QHash<QString, int> minimums = liveMinimumHeights();
+    QJsonArray groups = docking.value(QStringLiteral("groups")).toArray();
+    for (auto &&value : groups) {
+        QJsonObject group = value.toObject();
+        if (!group.value(QStringLiteral("floating")).toBool())
+            group.insert(QStringLiteral("minimumHeight"),
+                         minimums.value(QString::fromUtf8(QJsonDocument(group.value(QStringLiteral("panels")).toArray())
+                                                              .toJson(QJsonDocument::Compact))));
+        value = group;
+    }
+    docking.insert(QStringLiteral("groups"), groups);
+    return docking;
+}
+
 int edgeOf(const QJsonObject &group, bool top)
 {
     const QJsonObject r = group.value(QStringLiteral("rect")).toObject();
@@ -193,23 +209,28 @@ QString expectHeightsAllowingTheLiveMinimum(QJsonObject &expected, const QJsonOb
         return QJsonObject();
     };
     for (qsizetype i = 0; i < groups.size(); ++i) {
-        const QJsonObject group = groups.at(i).toObject();
+        QJsonObject group = groups.at(i).toObject();
+        const int recordedMinimum = group.take(QStringLiteral("minimumHeight")).toInt(0);
+        groups.replace(i, group);
         const int recorded = group.value(QStringLiteral("rect")).toObject().value(QStringLiteral("height")).toInt();
         const int liveMinimum = liveMinimums.value(key(group), 0);
-        const int allowedHeight = std::max(recorded, liveMinimum);
+        const int allowedHeight = recordedMinimum > 0 ? std::max(recorded + liveMinimum - recordedMinimum, liveMinimum)
+                                                      : std::max(recorded, liveMinimum);
         const int delta = allowedHeight - recorded;
-        if (group.value(QStringLiteral("floating")).toBool() || delta <= kSlack)
-            continue;
         const QJsonObject restored = liveOf(group);
+        const int restoredHeight = restored.value(QStringLiteral("rect")).toObject().value(QStringLiteral("height")).toInt();
+        const bool keptItsHeight = recordedMinimum > 0 && recorded >= liveMinimum && std::abs(restoredHeight - recorded) <= kSlack;
+        if (group.value(QStringLiteral("floating")).toBool() || std::abs(delta) <= kSlack || keptItsHeight)
+            continue;
         const bool dockedBelow = std::any_of(groups.begin(), groups.end(), [&](const QJsonValue &o) {
             const QJsonObject other = o.toObject();
             return !other.value(QStringLiteral("floating")).toBool()
                 && std::abs(edgeOf(other, true) - edgeOf(group, false)) <= kSlack + 1;
         });
-        const bool top = edgeOf(restored, true) < edgeOf(group, true) - kSlack || !dockedBelow;
+        const bool top = std::abs(edgeOf(restored, true) - edgeOf(group, true)) > kSlack || !dockedBelow;
         const int edge = edgeOf(group, top);
-        QString why = QStringLiteral("%1 recorded %2 below its live minimum %3, so it restores %4 taller; across its %5 edge:")
-                          .arg(group.value(QStringLiteral("current")).toString()).arg(recorded).arg(liveMinimum).arg(delta)
+        QString why = QStringLiteral("%1 recorded %2 with minimum %3, its live minimum is %4, so it restores %5 px off; across its %6 edge:")
+                          .arg(group.value(QStringLiteral("current")).toString()).arg(recorded).arg(recordedMinimum).arg(liveMinimum).arg(delta)
                           .arg(top ? QStringLiteral("top") : QStringLiteral("bottom"));
         int given = 0;
         for (qsizetype j = 0; j < groups.size(); ++j) {
@@ -224,7 +245,7 @@ QString expectHeightsAllowingTheLiveMinimum(QJsonObject &expected, const QJsonOb
                 why += QStringLiteral(" %1 %2").arg(other.value(QStringLiteral("current")).toString()).arg(now - was);
                 if (std::abs(now - was + delta) > kSlack)
                     return why + QStringLiteral(" (each must give up %1)").arg(delta);
-                given = std::max(given, was - now);
+                given = std::max(given, std::abs(was - now));
                 groups.replace(j, top ? moved(other, 0, -delta) : moved(other, delta, -delta));
             }
         }
@@ -357,7 +378,7 @@ private slots:
         QJsonObject files, saved;
         start();
         const auto record = [&](const QString &name) {
-            files.insert(name, settled());
+            files.insert(name, withMinimumHeights(settled()));
             layouts().save();
             return writeAll(out + QStringLiteral("/layout-%1.json").arg(name), readAll(path(QStringLiteral("layout.json"))));
         };
@@ -380,11 +401,11 @@ private slots:
         QJsonArray tabs;
         QVERIFY(application->openFile(writeSubtitles(path(QStringLiteral("first.ass")))));
         applyPreset(QStringLiteral("Timing"));
-        tabs.append(settled());
+        tabs.append(withMinimumHeights(settled()));
         application->addPage();
         QVERIFY(application->openFile(writeSubtitles(path(QStringLiteral("second.ass")))));
         arrangeFloating();
-        tabs.append(settled());
+        tabs.append(withMinimumHeights(settled()));
         QVERIFY(application->saveLastSession());
         QByteArray session = readAll(application->lastSessionPath());
         session.replace(dir.path().toUtf8(), kDirMark);
@@ -396,7 +417,7 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles(path(QStringLiteral("section.ass")))));
         arrangeTabs();
         QVERIFY(panel("Video")->setFloating(true));
-        const QJsonObject section = settled();
+        const QJsonObject section = withMinimumHeights(settled());
         QVERIFY(application->saveDocument(0));
         QTRY_VERIFY(readAll(path(QStringLiteral("section.ass"))).contains("[Hikari]"));
         QVERIFY(writeAll(out + QStringLiteral("/section.ass"), readAll(path(QStringLiteral("section.ass")))));
