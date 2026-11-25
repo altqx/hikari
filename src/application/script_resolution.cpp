@@ -1,5 +1,6 @@
 #include "hikari/application/script_resolution.h"
 
+#include <algorithm>
 #include <cstdlib>
 
 namespace hikari::application {
@@ -54,6 +55,44 @@ Resolution legacyScriptResolution(Resolution written)
     else if (y < 1)
         y = static_cast<int>(static_cast<float>(x) * (9.0 / 16.0));
     return {x, y};
+}
+
+Resolution playersScriptResolution(Resolution written)
+{
+    int x = written.width, y = written.height;
+    if (x < 1 && y < 1)
+        return {384, 288};
+    if (x < 1)
+        x = y == 1024 ? 1280 : std::max(1, static_cast<int>(static_cast<long long>(y) * 4 / 3));
+    else if (y < 1)
+        y = x == 1280 ? 1024 : std::max(1, static_cast<int>(static_cast<long long>(x) * 3 / 4));
+    return {x, y};
+}
+
+Resolution layoutResolution(const core::Document &document, std::optional<Resolution> video)
+{
+    const bool dialogue = std::ranges::any_of(document.lines(), [](const core::LineRecord *l) { return !l->comment; });
+    const Resolution written = writtenScriptResolution(document);
+    if (!lacksScriptResolution(written))
+        return written;
+    return dialogue ? playersScriptResolution(written) : suggestedScriptResolution(written, video);
+}
+
+Resolution layoutResolution(const std::vector<MacroInfoLine> &info, bool hasDialogue, std::optional<Resolution> video)
+{
+    const Resolution written = writtenScriptResolution(info);
+    if (!lacksScriptResolution(written))
+        return written;
+    return hasDialogue ? playersScriptResolution(written) : suggestedScriptResolution(written, video);
+}
+
+bool stampScriptResolution(core::Document &document, Resolution resolution)
+{
+    if (document.format() != core::SubtitleFormat::Ass || resolution.width < 1 || resolution.height < 1 ||
+        !lacksScriptResolution(writtenScriptResolution(document)))
+        return false;
+    return document.setScriptInfo(u8"PlayResX", wide(std::to_string(resolution.width))) &&
+           document.setScriptInfo(u8"PlayResY", wide(std::to_string(resolution.height)));
 }
 
 Resolution suggestedScriptResolution(Resolution written, std::optional<Resolution> video)

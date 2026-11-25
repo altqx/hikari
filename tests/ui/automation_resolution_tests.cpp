@@ -146,7 +146,7 @@ private slots:
             QFile::remove(dir.filePath(QLatin1String(name)));
     }
 
-    void aMissingResolutionIsAskedForWithTheVideosSize()
+    void aMissingResolutionIsAskedForWithThePlayersSize()
     {
         QVERIFY(open(""));
         QVERIFY(openVideo());
@@ -157,8 +157,8 @@ private slots:
         QVERIFY(prompt().hasVideo());
         QCOMPARE(prompt().videoWidth(), 320);
         QCOMPARE(prompt().videoHeight(), 240);
-        QCOMPARE(prompt().width(), 320);
-        QCOMPARE(prompt().height(), 240);
+        QCOMPARE(prompt().width(), 384);
+        QCOMPARE(prompt().height(), 288);
         QVERIFY(app->automation().running());
         prompt().accept(320, 240, false);
         QVERIFY(ended());
@@ -168,7 +168,7 @@ private slots:
         QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("320"));
         QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("240"));
         auto after = before;
-        after.push_back(std::string(application::kScriptResolutionStep));
+        after.push_back("Automation: Read resolution");
         QCOMPARE(steps(), after);
         QVERIFY(app->automation().lastMessage().isEmpty());
         QVERIFY(!app->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
@@ -177,14 +177,14 @@ private slots:
         QVERIFY(!document().scriptInfo(u8"PlayResY"));
     }
 
-    void withoutAVideoItStartsFromLegacysValues()
+    void withoutAVideoItStartsFromThePlayersSize()
     {
         QVERIFY(open(""));
         QVERIFY(run("Read resolution"));
         QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
         QVERIFY(!prompt().hasVideo());
-        QCOMPARE(prompt().width(), 1280);
-        QCOMPARE(prompt().height(), 720);
+        QCOMPARE(prompt().width(), 384);
+        QCOMPARE(prompt().height(), 288);
         prompt().accept(1280, 720, true);
         QVERIFY(ended());
         QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("1280"));
@@ -193,7 +193,7 @@ private slots:
         QVERIFY(open("PlayResY: 480\n"));
         QVERIFY(run("Karaskel head"));
         QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
-        QCOMPARE(prompt().width(), 853);
+        QCOMPARE(prompt().width(), 640);
         QCOMPARE(prompt().height(), 480);
         prompt().accept(1024, 576, false);
         QVERIFY(ended());
@@ -218,7 +218,7 @@ private slots:
         QVERIFY(!session().isReadOnly());
     }
 
-    void theResolutionAndTheMacrosEditsAreTwoSteps()
+    void theResolutionGoesInWithTheMacrosEdits()
     {
         QVERIFY(open(""));
         QVERIFY(openVideo());
@@ -229,15 +229,14 @@ private slots:
         QVERIFY(ended());
         QVERIFY2(app->automation().log().contains(QStringLiteral("640 x 480")), qPrintable(app->automation().log()));
         QCOMPARE(firstText(), std::string("edited"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
         auto after = before;
-        after.push_back(std::string(application::kScriptResolutionStep));
         after.push_back("Automation: Edit and read");
         QCOMPARE(steps(), after);
         QVERIFY(session().undo());
         QCOMPARE(firstText(), std::string("first"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
-        QVERIFY(session().undo());
         QVERIFY(!document().scriptInfo(u8"PlayResX"));
+        QVERIFY(!document().scriptInfo(u8"PlayResY"));
     }
 
     void alwaysFromTheVideoSkipsTheQuestion()
@@ -262,7 +261,7 @@ private slots:
         QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("320"));
         QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("240"));
         auto after = before;
-        after.push_back(std::string(application::kScriptResolutionStep));
+        after.push_back("Automation: Read resolution");
         QCOMPARE(steps(), after);
 
         QVERIFY(open(""));
@@ -273,14 +272,14 @@ private slots:
         QVERIFY(ended());
     }
 
-    void aWrittenValueIsReplacedByTheVideosSuggestion()
+    void aHalfWrittenValueSuggestsItsPlayersPartner()
     {
         QVERIFY(open("PlayResY: 480\n"));
         QVERIFY(openVideo());
         QVERIFY(run("Read resolution"));
         QTRY_VERIFY_WITH_TIMEOUT(prompt().isOpen(), 30'000);
-        QCOMPARE(prompt().width(), 320);
-        QCOMPARE(prompt().height(), 240);
+        QCOMPARE(prompt().width(), 640);
+        QCOMPARE(prompt().height(), 480);
         QCOMPARE(prompt().videoWidth(), 320);
         QCOMPARE(prompt().videoHeight(), 240);
         prompt().accept(320, 240, false);
@@ -304,8 +303,8 @@ private slots:
         QCOMPARE(asked, 1);
         QVERIFY2(app->automation().log().contains(QStringLiteral("run 640 x 480")), qPrintable(app->automation().log()));
         QCOMPARE(firstText(), std::string("edited"));
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
         auto after = before;
-        after.push_back(std::string(application::kScriptResolutionStep));
         after.push_back("Automation: Validate and read");
         QCOMPARE(steps(), after);
     }
@@ -325,7 +324,7 @@ private slots:
         QVERIFY(!session().isReadOnly());
     }
 
-    void aRefusingValidationKeepsTheResolutionSet()
+    void aRefusingValidationSetsNothing()
     {
         QVERIFY(open(""));
         const auto before = steps();
@@ -334,14 +333,12 @@ private slots:
         prompt().accept(1280, 720, false);
         QVERIFY(ended());
         QCOMPARE(firstText(), std::string("first"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("1280"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("720"));
-        auto after = before;
-        after.push_back(std::string(application::kScriptResolutionStep));
-        QCOMPARE(steps(), after);
+        QVERIFY(!document().scriptInfo(u8"PlayResX"));
+        QVERIFY(!document().scriptInfo(u8"PlayResY"));
+        QCOMPARE(steps(), before);
     }
 
-    void aDocumentChangedUnderTheRunKeepsTheResolution()
+    void aDocumentChangedUnderTheRunSetsNothing()
     {
         QVERIFY(open(""));
         const auto before = steps();
@@ -354,11 +351,9 @@ private slots:
         prompt().accept(640, 480, false);
         QVERIFY(ended());
         QCOMPARE(firstText(), std::string("first"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
+        QVERIFY(!document().scriptInfo(u8"PlayResX"));
         auto after = before;
         after.push_back("Outside");
-        after.push_back(std::string(application::kScriptResolutionStep));
         QCOMPARE(steps(), after);
         QCOMPARE(app->automation().lastMessage(),
                  QStringLiteral("The document changed while the macro ran; nothing was changed."));
@@ -381,7 +376,7 @@ private slots:
         QCOMPARE(asked.count(), 0);
     }
 
-    void withoutAWindowNothingWaits()
+    void withoutAWindowThePlayersSizeIsUsed()
     {
         prompt().setView(nullptr);
         QVERIFY(!prompt().asking());
@@ -391,10 +386,12 @@ private slots:
         QVERIFY(run("Read resolution"));
         QVERIFY(ended());
         QCOMPARE(asked.count(), 0);
-        QVERIFY2(app->automation().log().contains(QStringLiteral("853 x 480, 853 x 480, PlayResY=480")),
+        QVERIFY2(app->automation().log().contains(QStringLiteral("640 x 480, 640 x 480, PlayResY=480;PlayResX=640")),
                  qPrintable(app->automation().log()));
-        QVERIFY(!document().scriptInfo(u8"PlayResX"));
-        QCOMPARE(steps(), before);
+        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
+        auto after = before;
+        after.push_back("Automation: Read resolution");
+        QCOMPARE(steps(), after);
     }
 
     void cancellingTheRunWithdrawsTheQuestion()
@@ -410,7 +407,7 @@ private slots:
         QCOMPARE(app->automation().lastMessage(), QStringLiteral("The macro was cancelled; nothing was changed."));
     }
 
-    void cancellingAfterSetKeepsTheResolution()
+    void cancellingAfterSetSetsNothing()
     {
         QVERIFY(open(""));
         const auto before = steps();
@@ -420,13 +417,9 @@ private slots:
         QTRY_VERIFY(!prompt().isOpen());
         app->automation().cancelRun();
         QVERIFY(ended());
-        QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
-        QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
-        auto after = before;
-        after.push_back(std::string(application::kScriptResolutionStep));
-        QCOMPARE(steps(), after);
-        QCOMPARE(app->automation().lastMessage(),
-                 QStringLiteral("The macro was cancelled; only the script resolution was set."));
+        QVERIFY(!document().scriptInfo(u8"PlayResX"));
+        QCOMPARE(steps(), before);
+        QCOMPARE(app->automation().lastMessage(), QStringLiteral("The macro was cancelled; nothing was changed."));
     }
 
     void aDependencyAsksOnceForTheRun()
@@ -463,7 +456,7 @@ private slots:
         QCOMPARE(str(document().scriptInfo(u8"PlayResX")), std::string("640"));
         QCOMPARE(str(document().scriptInfo(u8"PlayResY")), std::string("480"));
         auto after = before;
-        after.push_back(std::string(application::kScriptResolutionStep));
+        after.push_back("Automation: Main");
         QCOMPARE(steps(), after);
     }
 };

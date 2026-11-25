@@ -511,6 +511,14 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%1 of %n line(s) translated</source>
+        <extracomment>%1 is the translated lines; %n all the lines that aren&apos;t comments.</extracomment>
+        <translation>
+            <numerusform>%1 of %n line translated</numerusform>
+            <numerusform>%1 of %n lines translated</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>This file has %n Aegisub folds.</source>
         <translation>
             <numerusform>This file has %n Aegisub fold.</numerusform>
@@ -1427,6 +1435,29 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>%n word(s) replaced</source>
+        <translation>
+            <numerusform>%n word replaced</numerusform>
+            <numerusform>%n words replaced</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n ignored</source>
+        <extracomment>After &quot;3 words replaced, &quot;: how many misspelled words were ignored.</extracomment>
+        <translation>
+            <numerusform>%n ignored</numerusform>
+            <numerusform>%n ignored</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n added to the dictionary</source>
+        <extracomment>How many words were added to the dictionary.</extracomment>
+        <translation>
+            <numerusform>%n added to the dictionary</numerusform>
+            <numerusform>%n added to the dictionary</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n lines checked</source>
         <translation>
             <numerusform>%n line checked</numerusform>
@@ -1434,10 +1465,10 @@
         </translation>
     </message>
     <message numerus="yes">
-        <source>%n lines checked.</source>
+        <source>Line %1 of %2 · %n found so far</source>
         <translation>
-            <numerusform>%n line checked.</numerusform>
-            <numerusform>%n lines checked.</numerusform>
+            <numerusform>Line %1 of %2 · %n found so far</numerusform>
+            <numerusform>Line %1 of %2 · %n found so far</numerusform>
         </translation>
     </message>
 </context>
@@ -1501,6 +1532,13 @@
         <translation>
             <numerusform>%n line uses it</numerusform>
             <numerusform>%n lines use it</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>Finding fonts · reading %n font file · %1&#xa0;%</numerusform>
+            <numerusform>Finding fonts · reading %n font files · %1&#xa0;%</numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -1805,6 +1843,16 @@
         <translation>
             <numerusform>Fits position, scale and rotation over the %n selected line (degree %1, error %2 px).</numerusform>
             <numerusform>Fits position, scale and rotation over the %n selected lines (degree %1, error %2 px).</numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Translation</name>
+    <message numerus="yes">
+        <source>AI translation · %1 of %n line(s)</source>
+        <translation>
+            <numerusform>AI translation · %1 of %n line</numerusform>
+            <numerusform>AI translation · %1 of %n lines</numerusform>
         </translation>
     </message>
 </context>

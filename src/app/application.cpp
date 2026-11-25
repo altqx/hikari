@@ -942,7 +942,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hideAiCommands();
         refreshViews();
     });
+    m_pluginSecrets = std::make_unique<PluginSecrets>(options.pluginKeychain ? options.pluginKeychain() : systemKeyStore(m_userFolder));
     m_pluginManager = std::make_unique<PluginManager>(options.plugins);
+    m_pluginManager->setSecrets(m_pluginSecrets.get());
     m_pluginMarketplace = std::make_unique<PluginMarketplace>(
         *m_pluginManager, m_settings.get(), options.marketplace,
         options.plugins.registry.isEmpty() ? QString()
@@ -954,6 +956,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     pluginWiring.networkAllowed = [this] { return m_settings->boolean("plugins.network"); };
     pluginWiring.project = [this] { return activeProject(); };
     pluginWiring.sandbox = true;
+    pluginWiring.secrets = m_pluginSecrets.get();
     pluginWiring.setSetting = [this](const QString &id, const QString &setting, const QString &json) {
         return m_pluginManager->setSetting(id, setting, json);
     };
@@ -5644,6 +5647,7 @@ application::SpellChecker *Application::spellChecker(int shellWindow)
                 slot->started = false;
                 m_spellingWaitsForPlugins = true;
             } else if (status != application::SpellChecker::Status::Ready) {
+                slot->failed = true;
                 if (!views(shellWindow).settings->overridden("editor.dictionaryLanguage"))
                     m_settings->set("editor.spellchecker", false);
                 const bool noDictionary = status == application::SpellChecker::Status::NoDictionary;
@@ -5654,9 +5658,9 @@ application::SpellChecker *Application::spellChecker(int shellWindow)
                               .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absoluteFilePath()))
                         : QCoreApplication::translate("HikariSub.Spelling", "Failed to initialise the spellchecker.");
                 QMetaObject::invokeMethod(this, [this, message, noDictionary] {
-                    m_log->notice(noDictionary ? ui::LogController::Warning : ui::LogController::Error,
-                                  QCoreApplication::translate("HikariSub.Spelling", "Spellchecker"),
-                                  QString(message).replace(QLatin1Char('\n'), QLatin1Char(' ')));
+                    m_log->log(QString(message).replace(QLatin1Char('\n'), QLatin1Char(' ')),
+                               noDictionary ? ui::LogController::Warning : ui::LogController::Error,
+                               QCoreApplication::translate("HikariSub.Spelling", "Spellchecker"));
                     emit spellingChanged();
                 }, Qt::QueuedConnection);
             }
@@ -5918,6 +5922,58 @@ bool Application::addEditorWord(const QString &word, bool project)
     return true;
 }
 
+namespace {
+
+QString languageName(const QString &tag);
+QString qs(std::u8string_view s);
+
+QString dictionaryName(const QString &symbol)
+{
+    const QString region = symbol.section(u'_', 1, 1).section(u'-', 0, 0);
+    const QString language = languageName(symbol.section(u'_', 0, 0));
+    //: A dictionary's language and region code, as in English (US).
+    return region.isEmpty() ? language : QCoreApplication::translate("HikariSub.Spelling", "%1 (%2)").arg(language, region);
+}
+
+}
+
+QVariantList Application::dictionaryChoices() const
+{
+    QVariantList choices;
+    std::vector<std::filesystem::path> folders;
+    for (const QString &folder : std::as_const(m_dictionaryDirs))
+        folders.emplace_back(folder.toStdU16String());
+    QStringList symbols;
+    for (const auto &symbol : application::availableDictionaries(folders)) {
+        symbols << qstr(symbol);
+        choices << QVariantMap{{QStringLiteral("symbol"), symbols.back()}, {QStringLiteral("name"), dictionaryName(symbols.back())}};
+    }
+    for (const auto &dictionary : m_pluginDictionaries) {
+        const QString symbol = qstr(dictionary.language);
+        if (symbols.contains(symbol))
+            continue;
+        symbols << symbol;
+        choices << QVariantMap{{QStringLiteral("symbol"), symbol},
+                               {QStringLiteral("name"), QCoreApplication::translate("HikariSub.Options", "%1 (%2)")
+                                                            .arg(qs(dictionary.title), qs(dictionary.pluginName))}};
+    }
+    return choices;
+}
+
+void Application::chooseDictionaryLanguage(const QString &symbol, int shellWindow)
+{
+    auto &window = *views(shellWindow).settings;
+    if (!window.overridden("editor.dictionaryLanguage")) {
+        setDictionaryLanguage(symbol);
+        return;
+    }
+    application::Settings(window.projectWrites()).set("editor.dictionaryLanguage", symbol.toStdString());
+    applyWindowProject(shellWindow);
+    emit projectsChanged();
+    restartSpellChecker();
+    spellingRefresh();
+}
+
 QVariantMap Application::spellCheckState(int shellWindow, bool changed, const QString &problem)
 {
     const auto &walk = views(shellWindow).spellWalk;
@@ -5931,7 +5987,15 @@ QVariantMap Application::spellCheckState(int shellWindow, bool changed, const QS
         for (const auto &s : current->suggestions)
             suggestions << qstr(s);
     int row = 0;
+    int linesInWalk = 0;
+    int checked = 0;
+    const application::SpellCheckWalk::Tally tally = walk ? walk->tally() : application::SpellCheckWalk::Tally{};
+    if (const auto *session = walk ? windowSession(shellWindow) : nullptr) {
+        linesInWalk = static_cast<int>(session->document().lines().size());
+        checked = static_cast<int>(walk->linesChecked(session->document()));
+    }
     QString before, after;
+    int wordFrom = -1, wordTo = -1;
     if (const auto *session = current ? windowSession(shellWindow) : nullptr) {
         const auto lines = session->document().lines();
         for (std::size_t i = 0; i < lines.size(); ++i)
@@ -5951,6 +6015,8 @@ QVariantMap Application::spellCheckState(int shellWindow, bool changed, const QS
                 }
             }
             if (from >= 0 && to <= text.size() && from <= to) {
+                wordFrom = from;
+                wordTo = to;
                 constexpr std::size_t kContext = 40;
                 const auto plain = [](QString s) {
                     return s.replace(QLatin1String("\\N"), QLatin1String(" ")).replace(QLatin1String("\\n"), QLatin1String(" "));
@@ -5965,11 +6031,33 @@ QVariantMap Application::spellCheckState(int shellWindow, bool changed, const QS
             {QStringLiteral("line"), row},
             {QStringLiteral("before"), before},
             {QStringLiteral("after"), after},
+            {QStringLiteral("from"), wordFrom},
+            {QStringLiteral("to"), wordTo},
             {QStringLiteral("word"), current ? qstr(current->word) : QString()},
             {QStringLiteral("suggestions"), suggestions},
             {QStringLiteral("replacement"), suggestions.isEmpty() ? QString() : suggestions.front()},
             {QStringLiteral("changed"), changed},
-            {QStringLiteral("problem"), problem}};
+            {QStringLiteral("problem"), problem},
+            {QStringLiteral("lines"), linesInWalk},
+            {QStringLiteral("checked"), checked},
+            {QStringLiteral("tally"), QVariantMap{{QStringLiteral("found"), tally.found},
+                                                  {QStringLiteral("replaced"), tally.replaced},
+                                                  {QStringLiteral("ignored"), tally.ignored},
+                                                  {QStringLiteral("added"), tally.added}}},
+            {QStringLiteral("language"), dictionaryName(QString::fromStdString(
+                                             windowSettings(shellWindow).text("editor.dictionaryLanguage")))},
+            {QStringLiteral("folder"), QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absoluteFilePath())},
+            {QStringLiteral("off"), spellingTurnedOff(shellWindow)}};
+}
+
+bool Application::spellingTurnedOff(int shellWindow) const
+{
+    if (windowSettings(shellWindow).boolean("editor.spellchecker"))
+        return false;
+    const auto slot =
+        m_spellCheckers.find(QString::fromStdString(windowSettings(shellWindow).text("editor.dictionaryLanguage")) +
+                             u'\n' + views(shellWindow).settings->root());
+    return slot == m_spellCheckers.end() || !slot->second.failed;
 }
 
 void Application::showSpellCheckWord(int shellWindow)
@@ -5977,6 +6065,9 @@ void Application::showSpellCheckWord(int shellWindow)
     auto &v = views(shellWindow);
     v.editor->reloadFromSession();
     const auto *current = v.spellWalk ? &v.spellWalk->current() : nullptr;
+    v.shell->setCurrentMisspell(current && *current ? std::optional(ui::LineTableModel::CurrentMisspell{
+                                                          (*current)->line, (*current)->start, (*current)->end})
+                                                    : std::nullopt);
     if (current && *current) {
         v.editor->showLine((*current)->line.value);
         int from = (*current)->start, to = (*current)->end + 1;
@@ -5998,6 +6089,7 @@ QVariantMap Application::openSpellChecker(const QVariantMap &options, int shellW
     auto *session = windowSession(shellWindow);
     auto *checker = spellChecker();
     v.spellWalk.reset();
+    v.shell->setCurrentMisspell(std::nullopt);
     if (!session || !checker)
         return spellCheckState(shellWindow, false);
     v.editor->commit();
@@ -6159,6 +6251,7 @@ void Application::closeSpellChecker(int shellWindow)
     auto &v = views(shellWindow);
     v.spellWalk.reset();
     v.spellWalkDocument.reset();
+    v.shell->setCurrentMisspell(std::nullopt);
 }
 
 QStringList Application::addedDictionaryWords() const

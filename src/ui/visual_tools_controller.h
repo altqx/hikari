@@ -36,6 +36,7 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(int activeFamily READ activeFamily NOTIFY changed)
     Q_PROPERTY(bool railEnabled READ railEnabled NOTIFY changed)
     Q_PROPERTY(QVariantList overlay READ overlay NOTIFY overlayChanged)
+    Q_PROPERTY(QVariantList handleRows READ handleRows NOTIFY overlayChanged)
     Q_PROPERTY(QString labelFamily READ labelFamily CONSTANT)
     Q_PROPERTY(int labelPixelSize READ labelPixelSize NOTIFY geometryChanged)
     Q_PROPERTY(bool hideCursor READ hideCursor NOTIFY changed)
@@ -102,6 +103,7 @@ public:
     int activeFamily() const { return static_cast<int>(m_family); }
     bool railEnabled() const { return m_railEnabled; }
     QVariantList overlay() const;
+    QVariantList handleRows() const;
     QString labelFamily() const;
     int labelPixelSize() const;
     bool hideCursor() const;
@@ -145,6 +147,8 @@ public:
     Q_INVOKABLE bool setOption(const QString &name, int value);
     // The segment under a right-click at (x, y): {index, curve}, or an empty map.
     Q_INVOKABLE QVariantMap segmentAt(qreal x, qreal y) const;
+    // The row of the named handle under (x, y) in VisualToolTexts.handles(activeFamily), or -1.
+    Q_INVOKABLE int handleAt(qreal x, qreal y) const;
     Q_INVOKABLE bool editSegment(int index, bool curve, SegmentEditKind edit, qreal x, qreal y);
     Q_INVOKABLE void previewOption(const QString &name, int index);
 
@@ -218,6 +222,7 @@ private:
     application::visual::LineWarning currentWarning() const;
     void updatePreview();
     void refreshOptions();
+    void followSmoothing();
     void openShapeEditor();
     void saveShapes() const;
     void openTagsEditor();

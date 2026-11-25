@@ -117,6 +117,13 @@ Pane {
                     text: root.controller.source === 0 || !root.controller.trusted ? qsTr("Preview") : qsTr("Preview on line %1").arg(root.controller.sourceNumber)
                     font.bold: true
                 }
+                LinkButton {
+                    objectName: "nodeSetScriptResolution"
+                    visible: root.controller.previewResolution.width > 0
+                    //: Writes the PlayRes the preview uses into a file that has none; %1×%2 is the size
+                    text: qsTr("Set to %1×%2").arg(root.controller.previewResolution.width, root.controller.previewResolution.height)
+                    onClicked: root.controller.setScriptResolution()
+                }
                 Item {
                     Layout.fillWidth: true
                 }

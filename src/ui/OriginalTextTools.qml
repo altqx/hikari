@@ -36,7 +36,7 @@ Item {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         visible: !tools.folded
-        spacing: 2
+        spacing: 4
         IconToolButton {
             objectName: "originalPasteAll"
             iconRole: "paste-translation"
@@ -64,11 +64,9 @@ Item {
             enabled: tools.editor.editable
             onClicked: tools.commentOut()
         }
-        ToolSeparator {
-            Layout.preferredHeight: 18
-        }
         IconToolButton {
             objectName: "originalNotConfirmed"
+            Layout.leftMargin: 4
             iconRole: "unconfirmed"
             text: qsTr("Unconfirmed")
             tip: qsTr("Unconfirmed: marks the selected lines for review")

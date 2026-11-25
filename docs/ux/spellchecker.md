@@ -16,7 +16,7 @@ Along the bottom, about 200 high, the full width.
 
 ## Marks
 
-Q741. While the panel is checking, words the dictionary doesn't know have a 2-unit dotted `danger` underline in the Grid's Text column and in the Line editor. The current word is also tinted `danger` at 18 %, radius 2. The marks go when the check ends or the panel closes.
+Q741. Words the dictionary doesn't know keep their red wavy underline (GRID_SPELLCHECKER in the Grid's Text column, EDITOR_SPELLCHECKER in the Line editor), whether or not the panel is open (owner decision 8 on [#531](https://github.com/altqx/hikari/issues/531), [visual language](visual-language.md)). While the panel is checking, the current word is also tinted `danger` at 18 %, radius 2, in both ([`dangerFill`](visual-language.md#semantic-appearance-tokens); in high contrast a 1-unit `danger` ring instead). The tint goes when the check ends or the panel closes.
 
 ## Panel states
 
@@ -39,7 +39,7 @@ The owner said "Lgtm" to the mode gate board on 2026-11-17 ([#1209](https://gith
 | Q | Decision |
 | --- | --- |
 | Q740 | The header holds Spelling \| Grammar, the language picker and where the check is |
-| Q741 | While checking, unknown words are underlined in the Grid and the Line editor; the current one is tinted |
+| Q741 | While checking, unknown words are underlined in the Grid and the Line editor; the current one is tinted. Changed on 2026-11-24 during the build: the always-on wavy marks stay, and only the current-word tint is added. |
 | Q742 | Replace (primary), Replace all, Ignore and Ignore all in two columns, Add to dictionary under them |
 | Q743 | No dictionary is the panel's error state with Choose a language… and Details, not a toast |
 | Q744 | The end of a check is the panel's done state with a summary and Check again, not a toast |

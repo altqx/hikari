@@ -1649,10 +1649,16 @@ DialogWindow {
                 Layout.margins: 24
                 Layout.topMargin: 12
                 Layout.bottomMargin: 12
+                Item {
+                    readonly property int percent: manager.catalogs.scanPercent
+                    Layout.fillWidth: true
+                    implicitHeight: header.implicitHeight
+                    implicitWidth: header.implicitWidth
                 RowLayout {
+                    id: header
                     objectName: "styleEditorHeader"
                     spacing: 8
-                    Layout.fillWidth: true
+                    anchors.fill: parent
                     Label {
                         objectName: "styleEditorTitle"
                         text: manager.multi ? qsTr("%n styles", "", manager.editedRows.length)
@@ -1670,7 +1676,19 @@ DialogWindow {
                         color: Theme.muted
                         font: manager.fontAt(12)
                     }
-                    Item { Layout.fillWidth: true }
+                    Label {
+                        objectName: "styleFindingFonts"
+                        text: !manager.catalogs.scanning ? ""
+                            : header.parent.percent < 0 ? qsTr("Finding fonts")
+                            : qsTr("Finding fonts · reading %n font file(s) · %1 %", "", manager.catalogs.scanFiles)
+                                  .arg(header.parent.percent)
+                        color: Theme.muted
+                        font: manager.fontAt(12)
+                        elide: Text.ElideRight
+                        horizontalAlignment: Text.AlignRight
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 0
+                    }
                     IconTextButton {
                         objectName: "styleEditorRevert"
                         flat: true
@@ -1679,6 +1697,24 @@ DialogWindow {
                         enabled: manager.dirty
                         onClicked: manager.revert()
                     }
+                }
+                Rectangle {
+                    objectName: "styleFindingFontsLine"
+                    visible: manager.catalogs.scanning
+                    color: Theme.highContrast ? Theme.line : Theme.raised
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.bottom
+                    anchors.topMargin: 3
+                    height: 2
+                    Rectangle {
+                        objectName: "styleFindingFontsDone"
+                        visible: parent.parent.percent >= 0
+                        color: Theme.accent
+                        height: parent.height
+                        width: parent.width * Math.max(0, parent.parent.percent) / 100
+                    }
+                }
                 }
                 Image {
                     id: preview

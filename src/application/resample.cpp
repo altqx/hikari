@@ -180,7 +180,7 @@ u16 trimmed(u16v s)
 
 Resolution scriptResolution(const core::Document &document)
 {
-    return legacyScriptResolution(writtenScriptResolution(document));
+    return playersScriptResolution(writtenScriptResolution(document));
 }
 
 Edges fittingEdges(Resolution from, Resolution to, bool crop)

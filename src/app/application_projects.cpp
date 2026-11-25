@@ -4,6 +4,7 @@
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/project.h"
 #include "log_controller.h"
+#include "plugin_variant.h"
 #include "project_file.h"
 
 #include <QCoreApplication>
@@ -175,6 +176,84 @@ std::map<int, std::optional<plugins::ProjectPlugins>> Application::windowPlugins
         entry = std::move(plugins);
     }
     return windows;
+}
+
+QVariantList Application::projectPluginSettings(int shellWindow) const
+{
+    QVariantList out;
+    if (!m_pluginManager)
+        return out;
+    const auto windows = windowPlugins();
+    const auto found = windows.find(shellWindow);
+    const plugins::ProjectPlugins *project = found == windows.end() || !found->second ? nullptr : &*found->second;
+    for (const QVariant &entry : m_pluginManager->plugins()) {
+        QVariantMap plugin = entry.toMap();
+        if (!plugin.value(QStringLiteral("enabled")).toBool())
+            continue;
+        const api::Json *own = nullptr;
+        if (project)
+            if (const auto found = project->settings.find(plugin.value(QStringLiteral("id")).toString().toStdString());
+                found != project->settings.end())
+                own = &found->second;
+        QVariantList settings;
+        for (const QVariant &row : plugin.value(QStringLiteral("settings")).toList()) {
+            QVariantMap setting = row.toMap();
+            if (!setting.value(QStringLiteral("projectable")).toBool())
+                continue;
+            if (const api::Json *value = own ? own->find(setting.value(QStringLiteral("id")).toString().toStdString()) : nullptr)
+                setting.insert(QStringLiteral("project"), toVariant(*value));
+            settings << setting;
+        }
+        if (settings.isEmpty())
+            continue;
+        plugin.insert(QStringLiteral("settings"), settings);
+        out << plugin;
+    }
+    return out;
+}
+
+namespace {
+
+std::unique_ptr<toml::node> tomlOf(const api::Json &value)
+{
+    if (value.isBool())
+        return std::make_unique<toml::value<bool>>(value.asBool());
+    if (value.isInt())
+        return std::make_unique<toml::value<std::int64_t>>(value.asInt());
+    if (value.isNumber())
+        return std::make_unique<toml::value<double>>(value.asNumber());
+    if (value.isString())
+        return std::make_unique<toml::value<std::string>>(value.asString());
+    auto list = std::make_unique<toml::array>();
+    for (const api::Json &item : value.asArray())
+        list->push_back(item.asString());
+    return list;
+}
+
+}
+
+QString Application::setProjectPluginSetting(int shellWindow, const QString &plugin, const QString &setting, const QString &json)
+{
+    const auto value = api::Json::parse(json.toStdString());
+    auto &settings = *views(shellWindow).settings;
+    ui::ProjectFile *project = settings.trusted() ? settings.project() : nullptr;
+    const auto manifest = m_pluginManager ? m_pluginManager->manifest(plugin.toStdString()) : std::nullopt;
+    if (!value || !project || !manifest)
+        return QCoreApplication::translate("HikariSub.Options", "This window has no trusted project to keep it in.");
+    const auto declared = std::ranges::find(manifest->settings, setting.toStdString(), &plugins::Setting::id);
+    if (declared == manifest->settings.end() || !plugins::projectable(*declared))
+        return QCoreApplication::translate("HikariSub.Options", "A project can’t set “%1”.")
+            .arg(declared == manifest->settings.end() ? setting : QString::fromStdString(declared->title));
+    if (!value->isNull())
+        if (const auto refused = plugins::settingRefusal(*declared, *value))
+            return QString::fromStdString(*refused);
+    const auto node = value->isNull() ? nullptr : tomlOf(*value);
+    if (!project->setPluginSetting(manifest->id, declared->id, node.get()))
+        return QCoreApplication::translate("HikariSub.Options", "project.toml can’t be written.");
+    projectScriptsAndPluginsChanged();
+    if (m_pluginRuntime)
+        m_pluginRuntime->resendSetting(*manifest, declared->id);
+    return {};
 }
 
 void Application::projectScriptsAndPluginsChanged()

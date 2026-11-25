@@ -26,6 +26,7 @@
 
 #include "hikari/application/grid_split.h"
 #include "hikari/application/resample.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/visual_transform.h"
 
 #include "hikari/core/extradata.h"
@@ -505,6 +506,7 @@ std::expected<void, CommandRefusal> applyTracking(EditSession &session, const Le
         touched.insert(plan.id);
     Selection selection;
     const auto ran = session.run(Command{"Perspective tracking", session.revision(), touched, [&](core::Document &d) {
+        stampScriptResolution(d, scriptResolution(d));
         selection = {};
         for (const auto &plan : plans) {
             if (plan.parts.empty())

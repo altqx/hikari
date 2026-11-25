@@ -611,10 +611,12 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case HiddenBlockRowRole: return run.blockRow;
         case CpsSeverityRole: return 0.0;
         case CommentRole:
+        case UntranslatedRole:
         case BadWrapsRole:
         case DraftRole:
         case UnplacedRunsRole: return false;
         case SpellMarksRole:
+        case CurrentSpellMarkRole:
         case ComparisonMarksRole: return QVariantList();
         case ComparisonRole:
         case ReviewRole:
@@ -678,6 +680,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return measuresOf(r).badWraps;
     case SpellMarksRole:
         return spellMarksOf(r);
+    case CurrentSpellMarkRole:
+        return currentSpellMarkOf(r);
     case ComparisonRole:
         return r.comparison;
     case ComparisonMarksRole:
@@ -702,6 +706,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return m_qcCurrent == line.id;
     case OnFrameRole:
         return m_onFrame.contains(line.id.value);
+    case UntranslatedRole:
+        return m_translationMode && !m_showOriginal && !line.comment && line.translation.empty();
     case RowMarkColoursRole:
     case RowMarkNotesRole: {
         const auto it = m_rowMarks.find(line.id.value);
@@ -731,6 +737,37 @@ void LineTableModel::setQcMarks(QcMarks marks, std::optional<core::LineId> curre
         emit headerDataChanged(Qt::Horizontal, NumberColumn, NumberColumn);
     if (!m_rows.empty())
         emit dataChanged(index(0, NumberColumn), index(rowCount() - 1, NumberColumn), {QcNotesRole, QcCurrentRole});
+}
+
+void LineTableModel::setCurrentMisspell(std::optional<CurrentMisspell> misspell)
+{
+    if (misspell == m_currentMisspell)
+        return;
+    std::vector<core::LineId> rows;
+    for (const auto &m : {m_currentMisspell, misspell})
+        if (m)
+            rows.push_back(m->line);
+    m_currentMisspell = misspell;
+    for (const core::LineId id : rows)
+        if (const auto row = rowOf(id))
+            emit dataChanged(index(*row, TextColumn), index(*row, TextColumn), {CurrentSpellMarkRole});
+}
+
+QVariantList LineTableModel::currentSpellMarkOf(const Row &row) const
+{
+    if (!m_currentMisspell || row.line.id != m_currentMisspell->line)
+        return {};
+    const QString raw = qs(row.line.text);
+    const auto shown = [&](int rawOffset) {
+        return tagsSwapped() ? int(swapTags(raw.left(rawOffset), m_format, tagSwap()).size()) : rawOffset;
+    };
+    const int start = shown(m_currentMisspell->start);
+    const int end = shown(m_currentMisspell->end + 1) - 1;
+    const QVariantList &marks = spellMarksOf(row);
+    for (qsizetype m = 0; m + 1 < marks.size(); m += 2)
+        if (marks[m].toInt() <= end && marks[m + 1].toInt() >= start)
+            return {marks[m], marks[m + 1]};
+    return {};
 }
 
 void LineTableModel::setLinesOnFrame(const std::vector<core::LineId> &lines)
@@ -946,7 +983,9 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {QcCurrentRole, "qcCurrent"},
                   {RowMarkColoursRole, "rowMarkColours"},
                   {RowMarkNotesRole, "rowMarkNotes"},
-                  {OnFrameRole, "onFrame"}});
+                  {OnFrameRole, "onFrame"},
+                  {CurrentSpellMarkRole, "currentSpellMark"},
+                  {UntranslatedRole, "untranslated"}});
     return roles;
 }
 
@@ -1005,7 +1044,7 @@ QSortFilterProxyModel::DataChangeRelevanceFlags LineFilterModel::dataChangeRelev
     static constexpr std::array kMarksOnly{int(LineTableModel::ActiveRole), int(LineTableModel::SelectedRole),
                                            int(LineTableModel::AnchorRole), int(LineTableModel::SpellMarksRole),
                                            int(LineTableModel::ComparisonRole), int(LineTableModel::UnplacedRunsRole),
-                                           int(LineTableModel::OnFrameRole)};
+                                           int(LineTableModel::OnFrameRole), int(LineTableModel::CurrentSpellMarkRole)};
     const bool activeMatters = !m_text.isEmpty() && roles.contains(int(LineTableModel::ActiveRole));
     if (!activeMatters && !roles.isEmpty() &&
         std::ranges::all_of(roles, [](int role) { return std::ranges::contains(kMarksOnly, role); }))

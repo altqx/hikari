@@ -268,6 +268,31 @@ private slots:
         }
     }
 
+    void tintFillsAreTheRoleAtTheirAlphaExceptInHighContrast()
+    {
+        const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });
+        const auto state = [&](Code code) {
+            ui::theme::State s;
+            s.id = ui::theme::codeName(code);
+            s.type = ui::theme::typeOf(s.id);
+            s.roles = roles(code, defaults);
+            return s;
+        };
+        const auto dark = state(Code::Dark);
+        QColor tint = dark.roles.danger;
+        tint.setAlphaF(0.18F);
+        QCOMPARE(ui::theme::tintFill(dark, dark.roles.danger, 0.18F), tint);
+        const auto light = state(Code::Light);
+        tint = light.roles.success;
+        tint.setAlphaF(0.14F);
+        QCOMPARE(ui::theme::tintFill(light, light.roles.success, 0.14F), tint);
+        for (const Code code : {Code::HighContrastBlack, Code::HighContrastWhite}) {
+            const auto contrast = state(code);
+            QCOMPARE(ui::theme::tintFill(contrast, contrast.roles.danger, 0.18F), contrast.roles.panel);
+            QCOMPARE(ui::theme::tintFill(contrast, contrast.roles.success, 0.14F), contrast.roles.panel);
+        }
+    }
+
     void rolesMeetContrast()
     {
         const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });

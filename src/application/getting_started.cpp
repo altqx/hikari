@@ -9,16 +9,17 @@ namespace hikari::application {
 
 namespace {
 
-constexpr std::array<std::string_view, 19> kSettings{
+constexpr std::array<std::string_view, 22> kSettings{
     "program.language",
     "appearance.theme", "appearance.followSystem", "appearance.accents",
     "appearance.lightTheme", "appearance.darkTheme", "appearance.highContrastLightTheme",
     "appearance.highContrastDarkTheme", "appearance.colours",
-    "appearance.titleBar",
+    "appearance.iconTheme", "appearance.titleBar",
     "video.subtitleProvider", "audio.outputDevice",
     "autosave.maxFiles", "editor.spellchecker", "editor.dictionaryLanguage",
     "grammar.language",
-    "updater.checkForStable", "updater.autoCheck", "privacy.usageData",
+    "ai.off",
+    "updater.checkForStable", "updater.autoCheck", "privacy.usageData", "privacy.discordPresence",
 };
 
 }
@@ -59,6 +60,8 @@ std::string_view gettingStartedPageOf(std::string_view setting)
         return "look";
     if (setting.starts_with("video.") || setting.starts_with("audio."))
         return "media";
+    if (setting.starts_with("ai."))
+        return "ai";
     if (setting.starts_with("updater.") || setting.starts_with("privacy."))
         return "updates";
     return "editing";

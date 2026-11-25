@@ -1716,11 +1716,14 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
         m_run->resolution = *video;
         return reply(*video);
     }
-    if (!m_resolutionPrompt.asking())
-        return reply(std::nullopt);
+    const application::Resolution layout = application::layoutResolution(s->document(), video);
+    if (!m_resolutionPrompt.asking()) {
+        m_run->resolution = layout;
+        return reply(layout);
+    }
     ui::ScriptResolutionPromptController::Question question;
     question.script = prettyName(request.script.empty() ? m_run->path : request.script);
-    question.suggested = application::suggestedScriptResolution(request.written, video);
+    question.suggested = layout;
     question.video = video;
     m_resolutionPrompt.ask(std::move(question), [this, reply](std::optional<ui::ScriptResolutionPromptController::Answer> answer) {
         if (!m_run)
@@ -1786,16 +1789,8 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         s = nullptr;
     m_router.withdraw();
     m_dialogs.withdraw();
-    bool resolutionSet = false;
-    if (s && run.resolution) {
-        const bool current = s->revision() == run.snapshot.revision;
-        resolutionSet = application::setScriptResolution(*s, *run.resolution).has_value();
-        // MUST KILL: bumps the snapshot revision so the macro's result still applies
-        if (resolutionSet && current) {
-            application::setStagedScriptResolution(run.snapshot.info, *run.resolution);
-            run.snapshot.revision = s->revision();
-        }
-    }
+    if (s && run.resolution && s->revision() == run.snapshot.revision)
+        run.snapshot.info = application::macroSnapshotOf(s->document(), s->selection()).info;
     bool ok = false;
     QString text;
     QString ended;
@@ -1829,11 +1824,8 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         ended = QStringLiteral("failed");
         break;
     case Outcome::Cancelled:
-        ended = run.declined && !resolutionSet ? QStringLiteral("declined") : QStringLiteral("cancelled");
-        if (resolutionSet)
-            text = QCoreApplication::translate("HikariSub.Automation",
-                                               "The macro was cancelled; only the script resolution was set.");
-        else if (!run.declined)
+        ended = run.declined ? QStringLiteral("declined") : QStringLiteral("cancelled");
+        if (!run.declined)
             text = QCoreApplication::translate("HikariSub.Automation", "The macro was cancelled; nothing was changed.");
         break;
     case Outcome::HelperLost:

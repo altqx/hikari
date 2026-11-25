@@ -45,17 +45,27 @@ TEST(ProjectPlugins, APluginRunsWhenAnyWindowHasItOn)
     EXPECT_FALSE(pluginRunsAnywhere("x", installed(false), {}));
 }
 
-TEST(ProjectPlugins, ProjectSettingsOverrideKeyByKey)
+TEST(ProjectPlugins, ProjectSettingsOverrideTheProjectableKeysOnly)
 {
-    const Json stored = Json::object({{"size", Json(12)}, {"name", Json("mine")}});
+    Manifest x;
+    x.id = "x";
+    x.settings = {{"size", "Size", Json::object({{"type", Json("integer")}}), SettingType::Integer},
+                  {"name", "Name", Json::object({{"type", Json("string")}}), SettingType::String},
+                  {"host", "Host", Json::object({{"type", Json("string")}, {"projectable", Json(false)}}), SettingType::String},
+                  {"token", "Token", Json::object({{"type", Json("secret")}}), SettingType::Secret}};
+    const Json stored = Json::object({{"size", Json(12)}, {"name", Json("mine")}, {"host", Json("a.example")}});
     ProjectPlugins project;
-    project.settings.emplace("x", Json::object({{"size", Json(20)}, {"extra", Json(true)}}));
-    const Json merged = projectSettings("x", stored, &project);
-    EXPECT_EQ(*merged.find("size"), Json(20));
-    EXPECT_EQ(*merged.find("name"), Json("mine"));
-    EXPECT_EQ(*merged.find("extra"), Json(true));
-    EXPECT_EQ(projectSettings("y", stored, &project), stored);
-    EXPECT_EQ(projectSettings("x", stored, nullptr), stored);
+    project.settings.emplace("x", Json::object({{"size", Json(20)}, {"extra", Json(true)}, {"host", Json("b.example")},
+                                                {"token", Json("from the project")}}));
+    const Json merged = projectSettings(x, stored, &project);
+    EXPECT_EQ(merged, Json::object({{"size", Json(20)}, {"name", Json("mine")}, {"host", Json("a.example")}}));
+    EXPECT_TRUE(projectable(x.settings[0]));
+    EXPECT_FALSE(projectable(x.settings[2]));
+    EXPECT_FALSE(projectable(x.settings[3]));
+    Manifest y = x;
+    y.id = "y";
+    EXPECT_EQ(projectSettings(y, stored, &project), stored);
+    EXPECT_EQ(projectSettings(x, stored, nullptr), stored);
 }
 
 TEST(ProjectPlugins, EnabledIdsThatArentInstalledAreMissing)

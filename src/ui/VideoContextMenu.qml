@@ -392,7 +392,7 @@ ShellMenu {
         ShellMenuItem {
             objectName: videoMenu.itemPrefix + "ZoomDevicePixels"
             command: "GLOBAL_VIDEO_ZOOM_DEVICE_PIXELS"
-            iconRole: "preview-resolution"
+            iconRole: "zoom"
             action: videoMenu.shell.globalActions()[command]
         }
         MenuSeparator {}

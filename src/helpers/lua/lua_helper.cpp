@@ -1843,12 +1843,12 @@ int subsScriptResolutionAsked(lua_State *L)
         const auto reply = callHost(L, "script_resolution", HostService::ScriptResolution, {r.width, r.height});
         const Resolution chosen{reply ? static_cast<int>(integerAt(*reply, 0)) : 0,
                                 reply ? static_cast<int>(integerAt(*reply, 1)) : 0};
-        if (!hikari::application::lacksScriptResolution(chosen)) {
-            hikari::application::setStagedScriptResolution(info, chosen);
-            r = chosen;
-        } else {
-            r = hikari::application::legacyScriptResolution(r);
-        }
+        const bool dialogue = std::ranges::any_of(g_subs->lists.dialogues,
+                                                  [](const hikari::application::MacroDialogueLine &d) { return !d.comment; });
+        r = hikari::application::lacksScriptResolution(chosen)
+                ? hikari::application::layoutResolution(info, dialogue, std::nullopt)
+                : chosen;
+        hikari::application::setStagedScriptResolution(info, r);
     }
     lua_pushinteger(L, r.width);
     lua_pushinteger(L, r.height);

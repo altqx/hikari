@@ -89,7 +89,7 @@ The 14 Settings pages keep their names and order. Their sections become tree chi
 | Line editor | Display, Editing, Translation mode, Tag buttons | Line editor | Translation mode: source and target language, the glossary, tags from original (from Project › Translation) |
 | Editing | Cycle values | Editing | — |
 | Spelling and grammar | Spelling, Grammar, Rule groups | Spelling and grammar | Spelling, Grammar, Rule groups (from Project › Spelling and grammar) |
-| Grid | Active line, Columns, Counting, Splitting, New lines | Grid | — |
+| Grid | Active line, Columns, Display, Counting, Splitting, New lines | Grid | — |
 | Video | Playback, Subtitles on video, Decoding, View, Visual tools, Script resolution | Video | — |
 | Audio | Output, Playback, Display, Snapping, Karaoke, Cache | Audio | — |
 | Conversion | Style, Timing, ASS, **Export** (new) | Conversion | Export: the export format (from Project › Export) |

@@ -14,7 +14,7 @@ struct Resolution {
     bool operator==(const Resolution &) const = default;
 };
 
-// PlayResX/Y; 1280x720 when both are missing, a 16:9 partner when one is.
+// PlayResX/Y as the players render them; see playersScriptResolution.
 Resolution scriptResolution(const core::Document &document);
 
 // Pixels added to (+) or cut from (−) each edge of the subtitles' picture before it is scaled.

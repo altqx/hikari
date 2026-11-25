@@ -57,7 +57,7 @@ Today's language list and its live preview (`program.language`). The list is in 
 
 ### 2 · Bring over
 
-Unchanged in what it does: Import my old settings (Recommended) or Set up from scratch, the review table, Read again, and the encoding choice. Aegisub shortcuts are part of the import ([#1338](https://github.com/altqx/hikari/pull/1338)), so the card's description reads "Shortcuts, fonts, audio and video options and your dictionary words." as today. Later: Settings › General › Import settings… (`GLOBAL_IMPORT_LEGACY_SETTINGS`).
+Unchanged in what it does: Import my old settings (Recommended) or Set up from scratch, the review table, Read again, and the encoding choice. Aegisub shortcuts are part of the import ([#1338](https://github.com/altqx/hikari/pull/1338)), so the card's description reads "Shortcuts, fonts, audio and video options and your dictionary words." as today. The explanation names where the settings came from: "Aegisub’s settings were found on this computer. Nothing in them is changed." for one source, "Settings from Aegisub and Kainote were found on this computer. Nothing in them is changed." for two, and "Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed." for three. An old HikariSub is named "HikariSub 0.0.x". Later: Settings › General › Import settings… (`GLOBAL_IMPORT_LEGACY_SETTINGS`).
 
 ### 3 · Look
 
@@ -85,7 +85,7 @@ Explanation: "This sets the layout your first tab opens with. Leave it on Editin
 | **Time** | Audio across the top for timing lines by ear. | `Timing` |
 | **Typeset** | A large video with the visual tools and the Styles panel. | `Typesetting` |
 | **Karaoke** | The Template editor beside the video, the audio in Karaoke mode. | `Karaoke` |
-| **Full screen** | Just the picture and a line box. View › Full screen typesetting any time. | `Typesetting`, and the first tab opens in [full-screen typesetting](full-screen-typesetting.md) |
+| **Full screen** | Just the picture and a line box. View › Full screen typesetting any time. | `Typesetting` now; the first video opened afterwards enters [full-screen typesetting](full-screen-typesetting.md) once. The flag lasts this session only. The Ready Layout row reads "Full screen, once a video is open". |
 
 The chosen card has a 2-unit `accent` boundary and the `select` fill. Later: the layout switcher in the title bar.
 
@@ -140,7 +140,7 @@ Title "You're set", with the explanation "Finish saves these choices. Everything
 
 - **Good to know**: two `raised` rows, radius 6. Each has a glyph, a sentence and a key cap at the trailing end. They aren't buttons.
   - `search` · "Open anything, or run any command" · **Ctrl+P**;
-  - `plugins` · "Formats, presets and themes from the marketplace" · **Automation › Plugins…**.
+  - `plugins` · "Formats, presets and themes from the marketplace" · **Automation › Plugins**.
 
 Your files' page is gone. Its explanation ("Everything of yours is in one folder. Copy it to move your setup to another computer.") becomes the Your files row's tooltip.
 
@@ -161,12 +161,13 @@ In the `HikariSub.GettingStarted` context. New strings:
 | Steps · Step %1 of %2, %3 · current · done | Step list (accessible) |
 | Welcome · Bring over · How you work · Ready | Short step names (the others reuse page titles) |
 | Skip setup keeps HikariSub's defaults. | Step list note |
+| %1’s settings were found on this computer. Nothing in them is changed. · Settings from %1 and %2 were found on this computer. Nothing in them is changed. · Settings from %1, %2 and %3 were found on this computer. Nothing in them is changed. | Bring over (replaces today's "HikariSub 0.0.x is installed on this computer. Nothing in it is changed.") |
 | This window changes as you choose. · Built in · From plugins · More themes… · Marketplace · Icons · HikariSub (built in) | Look |
 | How do you mostly work? · This sets the layout your first tab opens with. Leave it on Editing for a bit of everything. · Editing · Full screen · Video, audio, the line editor and the grid. · Just the picture and a line box. View › Full screen typesetting any time. | How you work |
 | AI · HikariSub can help with translation, review and an agent that edits with you. It stays off unless you turn it on. · Keep AI off · No AI menus, panels or downloads. Nothing about your subtitles leaves this computer. · Turn AI on · HikariSub downloads the AI component once, after Finish. You add a provider or sign in to an agent in Settings › AI. · Later: Settings › AI | AI |
 | At most once a day, when HikariSub starts. | Updates hint (replaces today's) |
 | Your Discord status shows the mode you're in. Never folders, your subtitles or the video. | Updates and privacy |
-| You're set · Finish saves these choices. Everything is in Settings. · Language · Look · Layout · Updates · Your files · Good to know · Open anything, or run any command · Formats, presets and themes from the marketplace · Off · On, downloads after Finish | Ready |
+| You're set · Finish saves these choices. Everything is in Settings. · Language · Look · Layout · Updates · Your files · Good to know · Open anything, or run any command · Formats, presets and themes from the marketplace · Off · On · On, downloads after Finish · Full screen, once a video is open · %1 accent · %1 icons · HikariSub icons · Stable only, automatically · Stable only, not automatically · Pre-releases, automatically · Pre-releases, not automatically · Automation › Plugins | Ready |
 
 Changed: "What do you mostly do?" becomes "How do you mostly work?", and its explanation changes as above. The Translate and Karaoke descriptions are kept. Removed: "Your files" as a page title (it stays as a row name), and "At most once a day, when HikariSub starts. What’s New on Home needs it too." Discord's row reuses `HikariSub.Options`' "Show what I am doing in Discord".
 

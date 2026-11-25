@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <set>
 #include <absl/container/flat_hash_set.h>
 
 extern "C" {
@@ -417,7 +418,20 @@ std::wstring onDiskPath(const std::wstring &path)
 
 std::vector<SystemFace> LibassFontService::systemFaces()
 {
+    return listSystemFaces({});
+}
+
+std::vector<SystemFace> LibassFontService::listSystemFaces(const application::FaceListProgress &progress)
+{
     std::vector<SystemFace> out;
+    int reported = -1;
+    auto keepGoing = [&](std::size_t files, std::size_t done, std::size_t total) {
+        const int percent = total == 0 ? 100 : int(done * 100 / total);
+        if (!progress || percent == reported)
+            return true;
+        reported = percent;
+        return progress(files, percent);
+    };
 #ifdef _WIN32
     std::map<std::wstring, std::string> spelt; // DirectWrite's path -> the file system's, per file
     IDWriteFactory *factory = nullptr;
@@ -528,6 +542,8 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                 font->Release();
             }
             family->Release();
+            if (!keepGoing(spelt.size(), f + 1, collection->GetFontFamilyCount()))
+                break;
         }
         collection->Release();
     }
@@ -539,6 +555,7 @@ std::vector<SystemFace> LibassFontService::systemFaces()
     FcObjectSet *objects = FcObjectSetBuild(FC_FAMILY, FC_STYLE, FC_FILE, FC_INDEX, FC_WEIGHT, FC_SLANT,
                                             FC_POSTSCRIPT_NAME, nullptr);
     if (FcFontSet *set = FcFontList(nullptr, pattern, objects)) {
+        std::set<std::string> files;
         for (int i = 0; i < set->nfont; ++i) {
             FcPattern *p = set->fonts[i];
             SystemFace face;
@@ -559,7 +576,10 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                 face.weight = int(FcWeightToOpenTypeDouble(weight));
             if (FcPatternGetInteger(p, FC_SLANT, 0, &value) == FcResultMatch)
                 face.italic = value != FC_SLANT_ROMAN;
+            files.insert(face.path);
             out.push_back(std::move(face));
+            if (!keepGoing(files.size(), std::size_t(i) + 1, std::size_t(set->nfont)))
+                break;
         }
         FcFontSetDestroy(set);
     }

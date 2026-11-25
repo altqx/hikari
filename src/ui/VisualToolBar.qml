@@ -296,6 +296,7 @@ Control {
             objectName: "visualInspector"
             visible: bar.column
             width: parent.width
+            height: Math.max(implicitHeight, parent.height)
             spacing: 12
             Accessible.role: Accessible.Pane
             Accessible.name: texts.shortName(bar.family)
@@ -361,7 +362,7 @@ Control {
                 }
                 Repeater {
                     id: handleList
-                    model: bar.column ? texts.handles(bar.family) : []
+                    model: bar.column ? texts.handles(bar.family).filter((_, row) => bar.tools.handleRows.includes(row)) : []
                     delegate: RowLayout {
                         id: handle
                         required property var modelData
@@ -405,6 +406,10 @@ Control {
                         }
                     }
                 }
+            }
+            Item {
+                Layout.fillHeight: true
+                Layout.topMargin: -inspector.spacing
             }
             ColumnLayout {
                 objectName: "visualApplyTo"
