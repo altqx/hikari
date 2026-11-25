@@ -23572,6 +23572,10 @@ because it was edited.</source>
         <translation>내 항목으로 이동</translation>
     </message>
     <message>
+        <source>Finding fonts</source>
+        <translation>글꼴 찾는 중</translation>
+    </message>
+    <message>
         <source>No style chosen</source>
         <translation>선택한 스타일 없음</translation>
     </message>
@@ -23589,6 +23593,12 @@ because it was edited.</source>
         <source>%n line(s) use it</source>
         <translation>
             <numerusform>%n줄에서 사용</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>글꼴 찾는 중 · 글꼴 파일 %n개 읽는 중 · %1&#xa0;%</numerusform>
         </translation>
     </message>
     <message>

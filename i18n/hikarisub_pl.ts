@@ -23980,6 +23980,10 @@ ponieważ została zmieniona.</translation>
         <translation>Przenieś do Twoich</translation>
     </message>
     <message>
+        <source>Finding fonts</source>
+        <translation>Wyszukiwanie czcionek</translation>
+    </message>
+    <message>
         <source>No style chosen</source>
         <translation>Nie wybrano stylu</translation>
     </message>
@@ -24001,6 +24005,14 @@ ponieważ została zmieniona.</translation>
             <numerusform>Używa go %n linijka</numerusform>
             <numerusform>Używają go %n linijki</numerusform>
             <numerusform>Używa go %n linijek</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1&#xa0;%</numerusform>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1&#xa0;%</numerusform>
+            <numerusform>Wyszukiwanie czcionek · odczytane pliki czcionek: %n · %1&#xa0;%</numerusform>
         </translation>
     </message>
     <message>

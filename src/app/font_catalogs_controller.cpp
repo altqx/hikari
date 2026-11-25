@@ -20,6 +20,7 @@
 #include <QRegularExpression>
 
 #include <algorithm>
+#include <utility>
 
 namespace hikari::app {
 
@@ -98,6 +99,7 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
       m_catalogs(kLower), m_project(kLower), m_visible(kLower), m_service(std::make_shared<backends::LibassFontService>()),
       m_families(std::make_unique<application::FontFamilies>(*m_service, kLower))
 {
+    m_families->setSystemFaces(m_systemFaces);
     const ui::ListFile::Report report{m_hooks.fileConverted, m_hooks.fileProblem, m_hooks.fileReplaced};
     const auto convert = [](const std::filesystem::path &legacy) -> std::optional<toml::array> {
         if (const auto catalogs = ui::readLegacyFontCatalogs(legacy))
@@ -145,6 +147,9 @@ FontCatalogsController::~FontCatalogsController()
     if (m_windowMade || m_unsaved)
         save();
     stopResolver();
+    m_scanStop = true;
+    if (m_scanner.joinable())
+        m_scanner.join();
 }
 
 void FontCatalogsController::stopResolver()
@@ -166,9 +171,80 @@ void FontCatalogsController::setFontService(std::unique_ptr<application::FontSer
     m_service = std::shared_ptr<application::FontServicePort>(std::move(service));
     m_families = std::make_unique<application::FontFamilies>(*m_service, kLower);
     m_families->setEnvironment(std::move(environment));
+    m_systemFaces = std::make_shared<const std::vector<application::SystemFace>>();
+    m_families->setSystemFaces(m_systemFaces);
+    m_scanned = false;
+    ++m_scanSerial;
+    m_scanAgain = m_scanning;
     m_windowFamilies.clear();
     watchFolders();
     emit fontsChanged();
+}
+
+void FontCatalogsController::startScan(bool reread)
+{
+    if (m_scanning) {
+        m_scanAgain = true;
+        return;
+    }
+    if (m_scanner.joinable())
+        m_scanner.join();
+    m_scanning = true;
+    m_scanFiles = 0;
+    m_scanPercent = -1;
+    emit scanChanged();
+    const int serial = ++m_scanSerial;
+    m_scanner = std::thread([this, serial, reread, service = m_service] {
+        if (reread)
+            service->refresh();
+        auto faces = std::make_shared<std::vector<application::SystemFace>>(
+            service->listSystemFaces([this, serial](std::size_t files, int percent) {
+                if (m_scanStop)
+                    return false;
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, serial, files, percent] {
+                        if (serial != m_scanSerial)
+                            return;
+                        m_scanFiles = int(files);
+                        m_scanPercent = percent;
+                        emit scanChanged();
+                    },
+                    Qt::QueuedConnection);
+                return true;
+            }));
+        QMetaObject::invokeMethod(
+            this, [this, serial, faces] { scanned(serial, std::move(*faces)); }, Qt::QueuedConnection);
+    });
+}
+
+void FontCatalogsController::scanned(int serial, std::vector<application::SystemFace> faces)
+{
+    m_scanning = false;
+    const bool current = serial == m_scanSerial;
+    if (current) {
+        m_scanned = true;
+        m_systemFaces = std::make_shared<const std::vector<application::SystemFace>>(std::move(faces));
+        m_families->setSystemFaces(m_systemFaces);
+        m_families->enumerate();
+        m_windowFamilies.clear();
+        watchFolders();
+    }
+    if (std::exchange(m_scanAgain, false))
+        startScan(true);
+    else
+        emit scanChanged();
+    if (current)
+        emit fontsChanged();
+}
+
+bool FontCatalogsController::waitScanned(int ms)
+{
+    QElapsedTimer t;
+    t.start();
+    while (m_scanning && t.elapsed() < ms)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    return !m_scanning;
 }
 
 void FontCatalogsController::ensureLoaded()
@@ -369,6 +445,8 @@ QStringList FontCatalogsController::fontList(int selection, const QString &value
 
 application::FontFamilies &FontCatalogsController::familiesFor(int shellWindow)
 {
+    if (!m_scanned && !m_scanning)
+        startScan(false);
     auto project = shellWindow >= 0 && m_hooks.projectFonts ? m_hooks.projectFonts(shellWindow)
                                                             : std::vector<application::FontLease>();
     if (project.empty()) {
@@ -388,6 +466,7 @@ application::FontFamilies &FontCatalogsController::familiesFor(int shellWindow)
         environment.externalFonts = std::move(fonts);
         window.families = std::make_unique<application::FontFamilies>(*m_service, kLower);
         window.families->setEnvironment(std::move(environment));
+        window.families->setSystemFaces(m_systemFaces);
         window.projectFonts = std::move(bytes);
     }
     return *window.families;
@@ -871,7 +950,6 @@ void FontCatalogsController::loadExternalFonts()
 
 void FontCatalogsController::relist()
 {
-    m_service->refresh();
     application::FontEnvironment environment = m_families->environment();
     environment.generation = ++m_generation;
     m_families->setEnvironment(std::move(environment));
@@ -879,6 +957,7 @@ void FontCatalogsController::relist()
     m_windowFamilies.clear();
     watchFolders();
     emit fontsChanged();
+    startScan(true);
 }
 
 void FontCatalogsController::refreshFonts()
@@ -897,7 +976,12 @@ void FontCatalogsController::watchFolders()
     const QString external = m_settings.text("fonts.externalDirectory");
     if (!external.isEmpty() && QFileInfo(external).isDir())
         folders << external;
-    const QStringList watched = m_watcher.directories();
+    QStringList watched = m_watcher.directories();
+    folders.removeDuplicates();
+    folders.sort();
+    watched.sort();
+    if (watched == folders)
+        return;
     if (!watched.isEmpty())
         m_watcher.removePaths(watched);
     if (!folders.isEmpty())

@@ -20,6 +20,7 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <atomic>
 #include <condition_variable>
 #include <filesystem>
 #include <functional>
@@ -59,6 +60,10 @@ class FontCatalogsController : public QObject {
     Q_PROPERTY(bool previewAtScreenSize READ previewAtScreenSize NOTIFY previewAtScreenSizeChanged)
     // The font picker's preview is "image://fontcatalogpreview/sample/<key>".
     Q_PROPERTY(int sampleKey READ sampleKey NOTIFY sampleChanged)
+    // While the system's fonts are read. scanPercent is -1 until the listing's size is known.
+    Q_PROPERTY(bool scanning READ scanning NOTIFY scanChanged)
+    Q_PROPERTY(int scanFiles READ scanFiles NOTIFY scanChanged)
+    Q_PROPERTY(int scanPercent READ scanPercent NOTIFY scanChanged)
 public:
     struct Hooks {
         // Every tab's Documents when `all`, else the active tab's.
@@ -98,6 +103,9 @@ public:
     QImage preview() const { return m_preview; }
     int sampleKey() const { return m_sampleKey; }
     QImage sample() const { return m_sample; }
+    bool scanning() const { return m_scanning; }
+    int scanFiles() const { return m_scanFiles; }
+    int scanPercent() const { return m_scanPercent; }
 
     // "All fonts" and "Without catalogue" at 0 and 1, then the catalogs.
     Q_INVOKABLE QStringList catalogChoices() const;
@@ -196,6 +204,7 @@ public:
 
     void setFontService(std::unique_ptr<application::FontServicePort> service);
     bool waitResolved(int ms = 30000);
+    bool waitScanned(int ms = 30000);
     std::filesystem::path catalogDir() const { return m_dir; }
     // Converts HikariSub legacy catalog files, once.
     void convertFiles();
@@ -214,6 +223,7 @@ signals:
     void previewAtScreenSizeChanged();
     void resolutionReady(int requestId, const QVariantMap &result);
     void familiesChecked(int requestId, const QVariantMap &byFamily);
+    void scanChanged();
 
 private:
     void ensureLoaded();
@@ -240,6 +250,8 @@ private:
     void wakeResolver();
     application::FontEnvironment documentEnvironment(bool documentFonts) const;
     void stopResolver();
+    void startScan(bool reread);
+    void scanned(int serial, std::vector<application::SystemFace> faces);
     application::FontFamilies &familiesFor(int shellWindow);
     struct WindowFamilies {
         std::vector<std::shared_ptr<const std::vector<std::byte>>> projectFonts;
@@ -280,6 +292,16 @@ private:
     int m_resolveRequest = 0;
     int m_resolveAnswered = 0;
     int m_checkRequest = 0;
+    std::thread m_scanner;
+    std::atomic<bool> m_scanStop{false};
+    std::shared_ptr<const std::vector<application::SystemFace>> m_systemFaces =
+        std::make_shared<const std::vector<application::SystemFace>>();
+    bool m_scanned = false;
+    bool m_scanning = false;
+    bool m_scanAgain = false;
+    int m_scanSerial = 0;
+    int m_scanFiles = 0;
+    int m_scanPercent = -1;
     bool m_windowMade = false;
     bool m_unsaved = false;
     std::shared_ptr<ui::ListFile> m_file;

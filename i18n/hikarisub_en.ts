@@ -1512,6 +1512,13 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>Finding fonts · reading %n font file · %1&#xa0;%</numerusform>
+            <numerusform>Finding fonts · reading %n font files · %1&#xa0;%</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>%n styles: the preview shows %1</source>
         <translation>
             <numerusform>%n style: the preview shows %1</numerusform>

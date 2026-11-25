@@ -513,8 +513,9 @@ QString text(const core::LineRecord *line)
 class PickerFonts final : public application::FontServicePort {
 public:
     std::vector<std::pair<std::string, std::u32string>> families;
-    int refreshes = 0;
+    std::atomic<int> refreshes = 0;
     std::function<void()> onResolve;
+    std::function<void()> onScanStep;
     std::expected<application::FontReport, application::FontError>
     resolve(const application::FontEnvironment &, const std::vector<application::FontRequest> &requests) override
     {
@@ -548,6 +549,17 @@ public:
             out.push_back(face);
         }
         return out;
+    }
+    std::vector<application::SystemFace> listSystemFaces(const application::FaceListProgress &progress) override
+    {
+        auto faces = systemFaces();
+        for (std::size_t i = 0; i < faces.size(); ++i) {
+            if (onScanStep)
+                onScanStep();
+            if (!progress(i + 1, int((i + 1) * 100 / faces.size())))
+                break;
+        }
+        return faces;
     }
     std::vector<application::SystemFace> pickerFaces(const application::FontEnvironment &env) override
     {
@@ -4241,6 +4253,8 @@ private slots:
         application->fontCatalogs().setFontService(std::move(service));
         application->settingsStore()->set("styles.editFilterText", QStringLiteral("ą"));
         application->settingsStore()->set("styles.editFilterTextOn", false);
+        application->fontCatalogs().allFonts();
+        application->fontCatalogs().waitScanned();
         return raw;
     }
     QString fontAss(const char *name, const char *events)
@@ -4536,6 +4550,85 @@ private slots:
         QCOMPARE(missing.value(QStringLiteral("shownIn")).toString(), QStringLiteral("DejaVu Sans"));
         catalogs.waitResolved();
         service->onResolve = nullptr;
+    }
+
+    void findingFontsShowsWhileTheFontsAreRead()
+    {
+        auto *service = usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        std::atomic<int> steps = 0;
+        std::atomic<int> allowed = 0;
+        service->onScanStep = [&] {
+            const int step = ++steps;
+            while (step > allowed)
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        };
+        const auto release = qScopeGuard([&] {
+            allowed = 1000;
+            catalogs.waitScanned();
+            service->onScanStep = nullptr;
+        });
+        QVERIFY(application->openFile(fontAss("style-scan.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        auto *manager = lazyWindow("styleManager");
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem")->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *text = findItem(manager->contentItem(), QStringLiteral("styleFindingFonts"));
+        auto *done = findItem(manager->contentItem(), QStringLiteral("styleFindingFontsDone"));
+        auto *line = findItem(manager->contentItem(), QStringLiteral("styleFindingFontsLine"));
+        auto *preview = findItem(manager->contentItem(), QStringLiteral("stylePreview"));
+        QVERIFY(text && done && line && preview);
+        QTRY_VERIFY(preview->isVisible() && preview->height() > 0);
+        QCOMPARE(text->property("text").toString(), QString());
+        QVERIFY(!line->isVisible());
+        const QPointF previewAt = preview->mapToScene(QPointF(0, 0));
+
+        catalogs.refreshFonts();
+        QTRY_VERIFY(line->isVisible());
+        QCOMPARE(text->property("text").toString(), QStringLiteral("Finding fonts"));
+        QVERIFY(!done->isVisible());
+        allowed = 2;
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("Finding fonts · reading 2 font file(s) · 40\u00a0%"));
+        QVERIFY(done->isVisible());
+        QCOMPARE(preview->mapToScene(QPointF(0, 0)), previewAt);
+        QCOMPARE(done->width(), line->width() * 0.4);
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            auto restoreTheme = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            app::attachStylePreview(*engine, application->styleManager());
+            const int key = application->styleManager().previewKey();
+            QVERIFY(QMetaObject::invokeMethod(manager, "updatePreview"));
+            QTRY_VERIFY(application->styleManager().previewKey() > key);
+            auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
+            for (const auto code : ui::theme::kCodes) {
+                const QString theme = ui::theme::codeName(code);
+                settings.setValue(QStringLiteral("appearance.theme"), theme);
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                // MUST KILL: fixed 250 ms wait before the grab
+                QTest::qWait(250);
+                QVERIFY(manager->grabWindow().save(out + QStringLiteral("/sy1-finding-") + theme + QStringLiteral(".png")));
+            }
+        }
+
+        auto *font = findItem(manager->contentItem(), QStringLiteral("styleFont"));
+        QTRY_VERIFY(font->isVisible() && font->width() > 0);
+        typeIntoFontBox(manager, font);
+        if (QTest::currentTestFailed())
+            return;
+        QVERIFY(manager->property("changedKeys").toMap().value(QStringLiteral("fontname")).toBool());
+        QVERIFY(catalogs.scanning());
+
+        allowed = 1000;
+        QTRY_VERIFY(!line->isVisible());
+        QCOMPARE(text->property("text").toString(), QString());
+        QVERIFY(!catalogs.scanning());
+        QVERIFY(QMetaObject::invokeMethod(manager, "commit", Q_ARG(QVariant, false)));
+        QCOMPARE(application->styleManager().beginEdit(false, 0).value(QStringLiteral("fontname")).toString(),
+                 QStringLiteral("Verdana"));
     }
 
     void fontPopupsResolveThePreviewTextsCharacters()
@@ -6167,7 +6260,7 @@ private slots:
         const int refreshes = service->refreshes;
         catalogs.refreshFonts();
         QCOMPARE(catalogs.generation(), before + 2);
-        QCOMPARE(service->refreshes, refreshes + 1);
+        QTRY_COMPARE(service->refreshes.load(), refreshes + 1);
         {
             QFile c(fonts.filePath(QStringLiteral("more.otf")));
             c.open(QIODevice::WriteOnly);

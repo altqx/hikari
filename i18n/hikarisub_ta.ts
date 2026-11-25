@@ -23776,6 +23776,10 @@ because it was edited.</source>
         <translation>உங்களுடையவற்றுக்கு நகர்த்து</translation>
     </message>
     <message>
+        <source>Finding fonts</source>
+        <translation>எழுத்துருக்களைத் தேடுகிறது</translation>
+    </message>
+    <message>
         <source>No style chosen</source>
         <translation>பாணி எதுவும் தேர்ந்தெடுக்கப்படவில்லை</translation>
     </message>
@@ -23795,6 +23799,13 @@ because it was edited.</source>
         <translation>
             <numerusform>%n வரி இதைப் பயன்படுத்துகிறது</numerusform>
             <numerusform>%n வரிகள் இதைப் பயன்படுத்துகின்றன</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Finding fonts · reading %n font file(s) · %1&#xa0;%</source>
+        <translation>
+            <numerusform>எழுத்துருக்களைத் தேடுகிறது · %n எழுத்துருக் கோப்பைப் படிக்கிறது · %1&#xa0;%</numerusform>
+            <numerusform>எழுத்துருக்களைத் தேடுகிறது · %n எழுத்துருக் கோப்புகளைப் படிக்கிறது · %1&#xa0;%</numerusform>
         </translation>
     </message>
     <message>
