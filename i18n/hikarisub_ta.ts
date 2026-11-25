@@ -18952,6 +18952,23 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 stopped: %2</source>
         <translation>%1 நின்றது: %2</translation>
     </message>
+    <message>
+        <source>Save a copy as a theme plugin…</source>
+        <translation>கருப்பொருள் செருகுநிரலாக ஒரு நகலைச் சேமி…</translation>
+    </message>
+    <message>
+        <source>Choose where to save the theme plugin</source>
+        <translation>கருப்பொருள் செருகுநிரலைச் சேமிக்கும் இடத்தைத் தேர்வுசெய்</translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <comment>a theme plugin saved from a theme</comment>
+        <translation>%1 நகல்</translation>
+    </message>
+    <message>
+        <source>Can’t write the theme plugin to %1.</source>
+        <translation>கருப்பொருள் செருகுநிரலை %1 இல் எழுத முடியவில்லை.</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Position</name>
