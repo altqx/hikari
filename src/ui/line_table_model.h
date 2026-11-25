@@ -95,6 +95,7 @@ public:
         OnFrameRole,
         // MUST KILL: CurrentSpellMarkRole is one inclusive [start, end] pair from SpellMarksRole, or empty
         CurrentSpellMarkRole,
+        UntranslatedRole,
     };
     enum class ReviewState { None, Waiting, EditedSince };
     // An AI change waiting on the Line; `before` is absent for an inserted Line.

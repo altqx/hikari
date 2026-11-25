@@ -323,6 +323,35 @@ private slots:
         }));
     }
 
+    void undoTakesBackTheTemplateJustTyped()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(!editor().text().isEmpty(), 20'000);
+        editor().setDelays(150, 60'000);
+        const core::LineId id{editor().current()};
+        const auto stored = [&] {
+            for (const auto *l : session()->document().lines())
+                if (l->id == id)
+                    return std::u8string(l->text);
+            return std::u8string();
+        };
+        const std::u8string before = stored();
+        const QString shown = editor().text();
+        editor().setText(shown + QStringLiteral("{\\bord7}"));
+        QVERIFY(application->editor().undo());
+        QVERIFY(stored() == before);
+        QVERIFY(session()->canRedo());
+        QTRY_COMPARE(editor().text(), shown);
+        QVERIFY(application->editor().redo());
+        QVERIFY(std::u8string_view(stored()).ends_with(u8"{\\bord7}"));
+        QVERIFY(application->editor().undo());
+        QVERIFY(stored() == before);
+        QTest::qWait(300);
+        QCOMPARE(editor().text(), shown);
+        QVERIFY(session()->canRedo());
+    }
+
     void aSaveWritesTheTemplateJustTyped()
     {
         QVERIFY(openSong("stock-tutorials.ass", false));

@@ -14,6 +14,7 @@ Window {
     readonly property Item keyTarget: keyScope
     readonly property alias contextMenu: fullscreenMenu
     readonly property bool cursorHidden: controller.cursorHidden
+    property var cancelPick: () => false
     readonly property real pinnedPanelHeight: controller.stripReserved ? strip.height : 0
     readonly property bool typesetting: controller.mode === VideoFullscreenController.Mode.Typesetting
     readonly property color ink: "#EEF0F2"
@@ -122,7 +123,9 @@ Window {
         Keys.onPressed: event => {
             const action = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers)
             const back = (event.modifiers & Qt.ShiftModifier) !== 0
-            if (event.key === Qt.Key_F6 && action === "" && typesetting.item) {
+            if (event.key === Qt.Key_Escape && fs.cancelPick()) {
+                event.accepted = true
+            } else if (event.key === Qt.Key_F6 && action === "" && typesetting.item) {
                 typesetting.item.nextRegion(fs.activeFocusItem, back)
                 event.accepted = true
             } else if (event.key === Qt.Key_F6 && action === "" && fs.controller.barShown) {
