@@ -1082,6 +1082,31 @@ private slots:
                                       {QStringLiteral("widget"), QStringLiteral("unbreak")}});
             QTRY_COMPARE(session(a).document().lines().front()->text, std::u8string(u8"one two"));
         }
+
+        QVERIFY(step(4));
+        m_registry[id] = QJsonObject{{QStringLiteral("version"), QStringLiteral("0.4.0")},
+                                     {QStringLiteral("enabled"), true},
+                                     {QStringLiteral("trustToolMarks"), true}};
+        write(folders().registry,
+              QJsonDocument(QJsonObject{{QStringLiteral("format"), 1}, {QStringLiteral("plugins"), m_registry}}).toJson());
+        {
+            app::PluginRuntime runtime(wiring(a));
+            runtime.sync();
+            const auto tools = runtime.aiTools();
+            QCOMPARE(tools.size(), std::size_t(2));
+            const auto tool = [&](const char *command) {
+                return *std::ranges::find(tools, std::string(command), &backends::ai::PluginToolEntry::command);
+            };
+            QVERIFY(tool("count").readOnly());
+            QVERIFY(!tool("unbreak").readOnly());
+            const qsizetype before = said().size();
+            std::optional<std::expected<api::Json, api::Error>> answer;
+            runtime.runAiTool(tool("count"), api::Json::object(), [&](auto result) { answer = std::move(result); });
+            QTRY_VERIFY(answer.has_value());
+            QVERIFY2(answer->has_value(), answer->has_value() ? "" : answer->error().message.c_str());
+            QCOMPARE((*answer)->find("lineCount")->asInt(), 2);
+            QCOMPARE(said().size(), before);
+        }
         for (const Notice &notice : said())
             QVERIFY2(notice.severity != ui::LogController::Error, qPrintable(notice.text));
     }
