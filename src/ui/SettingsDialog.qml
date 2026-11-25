@@ -2966,7 +2966,7 @@ DialogWindow {
                             objectName: "settingListItem" + item.index
                             text: item.modelData
                             Layout.fillWidth: true
-                            Accessible.name: qsTr("%1, item %2").arg(pluginRow.text).arg(item.index + 1)
+                            Accessible.name: qsTr("%1, item %2").arg(pluginRow.text, item.index + 1)
                             onEditingFinished: if (text !== item.modelData) pluginRow.keep(list.replaced(item.index, text))
                         }
                         IconButton {
