@@ -1157,6 +1157,84 @@ std::u8string effectiveText(u16v firstBlock, u16v effective, long karaokeBefore,
     return core::tagcleanup::dropRedundant(merged) + core::toUtf8(u16(text));
 }
 
+bool breakEscapeAt(u16v text, std::size_t at)
+{
+    return at + 1 < text.size() && text[at] == u'\\' &&
+           (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h');
+}
+
+std::size_t outsideBlocksAndEscapes(u16v text, std::size_t at)
+{
+    at = std::min(at, text.size());
+    if (at == 0)
+        return at;
+    if (const auto open = text.rfind(u'{', at - 1); open != u16v::npos) {
+        const auto close = text.find(u'}', open);
+        if (close == u16v::npos)
+            return text.size();
+        if (close >= at)
+            return close + 1;
+    }
+    return breakEscapeAt(text, at - 1) ? at + 1 : at;
+}
+
+u16v trimmedEnd(u16v text)
+{
+    while (!text.empty()) {
+        if (isSpace16(text.back()))
+            text.remove_suffix(1);
+        else if (text.size() >= 2 && breakEscapeAt(text, text.size() - 2))
+            text.remove_suffix(2);
+        else
+            break;
+    }
+    return text;
+}
+
+u16v trimmedStart(u16v text)
+{
+    while (!text.empty()) {
+        if (isSpace16(text.front()))
+            text.remove_prefix(1);
+        else if (breakEscapeAt(text, 0))
+            text.remove_prefix(2);
+        else
+            break;
+    }
+    return text;
+}
+
+void absorbBlock(u16 &effective, u16 &karaoke, u16v block)
+{
+    const auto firstTag = block.find(u'\\');
+    if (firstTag == u16v::npos)
+        return;
+    const BlockTags own = leadingTags(u16(1, u'{') + u16(block.substr(firstTag)));
+    absorb(effective, own.tags);
+    karaoke += own.karaoke;
+}
+
+struct VisibleCount {
+    std::size_t characters = 0;
+    bool hasText = false;
+};
+
+VisibleCount countVisible(u16v text)
+{
+    VisibleCount count;
+    std::size_t next = 0;
+    for (const auto &span : core::project(text).spans) {
+        if (span.kind == core::SpanKind::HardSpace)
+            ++count.characters;
+        if (span.kind != core::SpanKind::Text || span.rawStart < next)
+            continue;
+        ++count.characters;
+        count.hasText = count.hasText || !isSpace16(text[span.rawStart]);
+        next = core::graphemeEnd(text, span.rawStart);
+    }
+    return count;
+}
+
 bool rotates(const std::vector<Tag> &tags, const std::string &styleAngle)
 {
     if (std::strtod(styleAngle.c_str(), nullptr) != 0)
@@ -1449,6 +1527,73 @@ std::expected<void, CommandRefusal> splitByText(EditSession &session, SplitText 
                                                  }
                                              }
                                              return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    return {};
+}
+
+std::optional<CursorSplit> splitTextAt(std::u16string_view text, std::size_t cursor)
+{
+    const std::size_t at = outsideBlocksAndEscapes(text, cursor);
+    const u16 leading = text.starts_with(u'{') ? firstTagsBlock(text) : u16();
+    u16 effective, karaoke;
+    for (auto open = text.find(u'{', leading.size()); open < at; open = text.find(u'{', open + 1)) {
+        const auto close = text.find(u'}', open);
+        u16 dropped;
+        absorbBlock(effective, dropped, text.substr(open, close == u16v::npos ? u16v::npos : close - open + 1));
+    }
+    u16v rest = trimmedStart(text.substr(at));
+    while (!rest.empty() && rest.front() == u'{') {
+        const auto close = rest.find(u'}');
+        const std::size_t end = close == u16v::npos ? rest.size() : close + 1;
+        absorbBlock(effective, karaoke, rest.substr(0, end));
+        rest = trimmedStart(rest.substr(end));
+    }
+    const u16v first = trimmedEnd(text.substr(0, at));
+    const u16 second = core::toUtf16(effectiveText(withoutKaraoke(leading), effective, 0, karaoke, rest));
+    const VisibleCount firstCount = countVisible(first), secondCount = countVisible(second);
+    if (!firstCount.hasText || !secondCount.hasText)
+        return std::nullopt;
+    return CursorSplit{core::toUtf8(first), core::toUtf8(second), firstCount.characters, secondCount.characters};
+}
+
+std::expected<void, CommandRefusal> splitAtCursor(EditSession &session, core::LineId id, std::size_t cursor,
+                                                  SplitTimes times, const LegacyTimebase &timebase, std::int64_t videoMs)
+{
+    const auto lines = session.document().lines();
+    const auto found = std::ranges::find(lines, id, &core::LineRecord::id);
+    if (found == lines.end() || (times == SplitTimes::Video && timebase.empty()))
+        return std::unexpected(CommandRefusal::Invalid);
+    const core::LineRecord &line = **found;
+    const auto split = splitTextAt(core::toUtf16(line.text), cursor);
+    if (!split)
+        return std::unexpected(CommandRefusal::Invalid);
+    const std::int64_t startMs = msOf(line.start.value), endMs = msOf(line.end.value);
+    std::optional<std::int64_t> cutMs;
+    if (times == SplitTimes::Estimate) {
+        const double share = static_cast<double>(split->firstCharacters) /
+                             static_cast<double>(split->firstCharacters + split->secondCharacters);
+        const std::int64_t ms = startMs + static_cast<std::int64_t>(static_cast<double>(endMs - startMs) * share);
+        cutMs = (ms + 5) / 10 * 10;
+    } else if (times == SplitTimes::Video) {
+        const int firstFrame = timebase.frameAt(static_cast<int>(startMs));
+        const int lastFrame = std::max(firstFrame, timebase.frameAt(static_cast<int>(endMs)) - 1);
+        const int frame = std::clamp(timebase.frameAt(static_cast<int>(videoMs)), firstFrame, lastFrame);
+        cutMs = zeroIt(timebase.endTimeFor(frame));
+    }
+    core::LineRecord second = line;
+    second.text = split->second;
+    if (cutMs)
+        second.start.value = core::DocumentTime(*cutMs * kUsPerMs);
+    const auto ran = session.run(Command{"Splitting lines", session.revision(), {id}, [&](core::Document &d) {
+                                             if (!d.editLine(id, [&](core::LineRecord &l) {
+                                                     l.text = split->first;
+                                                     if (cutMs)
+                                                         l.end.value = core::DocumentTime(*cutMs * kUsPerMs);
+                                                 }))
+                                                 return false;
+                                             return d.insertLineAfter(id, second).has_value();
                                          }});
     if (!ran)
         return std::unexpected(ran.error());

@@ -5524,6 +5524,42 @@ ApplicationWindow {
                 prefix: field.objectName
                 enabled: !field.readOnly && root.editor.hasLine
             }
+            ShellMenu {
+                id: splitHereMenu
+                property bool canSplit: false
+                objectName: field.objectName + "SplitHereMenu"
+                iconRole: "split-lines"
+                title: qsTranslate("HikariSub.Editor", "Split here")
+                shown: field.role === 0
+                enabled: !field.readOnly && root.editor.hasLine
+                onAboutToShow: canSplit = root.app.canSplitAtCursor(field.role, field.selectionStart)
+                function run(symbol, times) {
+                    if (!root.hotkeyGesture(symbol))
+                        root.app.splitAtCursor(times, field.role, field.selectionStart)
+                }
+                ShellMenuItem {
+                    command: "EDITBOX_SPLIT_AT_CURSOR_ESTIMATE"
+                    objectName: field.objectName + "SplitEstimate"
+                    text: qsTranslate("HikariSub.Editor", "Estimate times")
+                    enabled: splitHereMenu.canSplit
+                    onTriggered: splitHereMenu.run(command, "estimate")
+                }
+                ShellMenuItem {
+                    command: "EDITBOX_SPLIT_AT_CURSOR_KEEP"
+                    objectName: field.objectName + "SplitKeep"
+                    text: qsTranslate("HikariSub.Editor", "Keep times")
+                    enabled: splitHereMenu.canSplit
+                    onTriggered: splitHereMenu.run(command, "keep")
+                }
+                ShellMenuItem {
+                    command: "EDITBOX_SPLIT_AT_CURSOR_VIDEO"
+                    iconRole: "split-at-video"
+                    objectName: field.objectName + "SplitVideo"
+                    text: qsTranslate("HikariSub.Editor", "At the video frame")
+                    enabled: splitHereMenu.canSplit && root.video.hasVideo
+                    onTriggered: splitHereMenu.run(command, "video")
+                }
+            }
             ChangeCaseMenu {
                 shellRoot: root
                 prefix: field.objectName
@@ -11899,6 +11935,9 @@ ApplicationWindow {
         case "EDITBOX_COMMIT_GO_NEXT_LINE": root.app.commitAndAdvance(); return true
         case "EDITBOX_COMMIT": root.editor.applyChanges(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
+        case "EDITBOX_SPLIT_AT_CURSOR_ESTIMATE": root.app.splitAtCursor("estimate", field.role, field.selectionStart); return true
+        case "EDITBOX_SPLIT_AT_CURSOR_KEEP": root.app.splitAtCursor("keep", field.role, field.selectionStart); return true
+        case "EDITBOX_SPLIT_AT_CURSOR_VIDEO": if (root.video.hasVideo) root.app.splitAtCursor("video", field.role, field.selectionStart); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
         case "EDITBOX_TRIGGER_COMPLETION":
             root.editor.tagList.trigger(field.text, field.cursorPosition, field.role)

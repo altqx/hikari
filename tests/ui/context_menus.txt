@@ -21,6 +21,10 @@ Line editor text > Line breaks > Move break right [GLOBAL_TEXT_MOVE_BREAK_RIGHT]
 Line editor text > Line breaks > Remove breaks [GLOBAL_TEXT_REMOVE_BREAKS]
 Line editor text > Line breaks > -
 Line editor text > Line breaks > Wrap only at \N (\q2) [GLOBAL_TEXT_WRAP_AT_BREAKS_ONLY]
+Line editor text > Split here >
+Line editor text > Split here > Estimate times [EDITBOX_SPLIT_AT_CURSOR_ESTIMATE]
+Line editor text > Split here > Keep times [EDITBOX_SPLIT_AT_CURSOR_KEEP]
+Line editor text > Split here > At the video frame [EDITBOX_SPLIT_AT_CURSOR_VIDEO]
 Line editor text > Change case >
 Line editor text > Change case > lowercase [GLOBAL_TEXT_LOWERCASE]
 Line editor text > Change case > UPPERCASE [GLOBAL_TEXT_UPPERCASE]

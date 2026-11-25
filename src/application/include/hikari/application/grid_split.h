@@ -8,6 +8,7 @@
 
 #include <expected>
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -18,6 +19,26 @@ namespace hikari::application {
 // time is not checked against the Line.
 std::expected<void, CommandRefusal> splitAtVideoTime(EditSession &session, const LegacyTimebase &timebase,
                                                      std::int64_t videoMs, const LineVisible &visible = {});
+
+// A raw ASS text split at `cursor` (UTF-16; inside a tag block or a \N, \n or \h it moves past
+// it): the first half is the text before, the second the text after with a block of every tag
+// in effect there first, as the tag-block split carries them. Spaces, \N, \n and \h at the cut
+// are trimmed. The characters are the visible ones: graphemes outside tag blocks and drawings,
+// \h counting one and \N and \n none. Nothing when either half has no visible text but spaces.
+struct CursorSplit {
+    std::u8string first, second;
+    std::size_t firstCharacters = 0, secondCharacters = 0;
+};
+std::optional<CursorSplit> splitTextAt(std::u16string_view text, std::size_t cursor);
+// The Line keeps the first half of its text and a copy after it gets the second (splitTextAt),
+// in one step; the selection stays. Estimate ends the Line and starts the copy at the share of
+// its duration its visible characters have (to the nearest centisecond); Keep leaves both with
+// the Line's times; Video uses the end time of the frame at `videoMs`, clamped to the Line's
+// first and last frame (to centiseconds), and needs a timebase.
+enum class SplitTimes { Estimate, Keep, Video };
+std::expected<void, CommandRefusal> splitAtCursor(EditSession &session, core::LineId line, std::size_t cursor,
+                                                  SplitTimes times, const LegacyTimebase &timebase = {},
+                                                  std::int64_t videoMs = 0);
 // Each shown selected Line becomes one Line per frame from the frame at its
 // Start to the one before the frame at its End (to centiseconds); a \move
 // becomes the \pos it has at each frame's time. Needs an exact (indexed)

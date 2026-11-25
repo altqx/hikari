@@ -99,12 +99,22 @@ The named G45 obligations transferred from [Painted-Grid accessibility and perfo
 - **When:** at once on a seek, a step or a pause, and at most every 100 ms while playing (the video's status timer); after every edit, tab change and when the setting changes. With no video or the toggle off, nothing is computed and the marks are cleared.
 - **Toggle:** View › "Mark lines on the current frame" (5358, no default shortcut, as Aegisub has no command for it).
 
+## Split at the cursor
+
+[#1213](https://github.com/altqx/hikari/issues/1213), Aegisub 3.5's `split_lines`. Line editor right click › **Split here** › Estimate times / Keep times / At the video frame, and 3120–3122.
+
+- **Where:** the active Line's Original text at the caret (the selection's start). The draft is applied first. A caret inside a tag block, `\N`, `\n` or `\h` moves past it.
+- **Text:** the Line keeps the text before the caret, right-trimmed (spaces and `\N` `\n` `\h`); a copy after it gets the text after, left-trimmed, starting with one block of every tag in effect at the caret: the Line's first block (with its `\pos`, `\move`, `\org`, `\fad`, `\clip`) plus the later blocks before the caret, as **Split lines at tag blocks** carries them (`\r` resets and redundant tags dropped; only karaoke tags right after the caret stay). The first Line keeps its LineId; the selection and active Line stay, as in Aegisub.
+- **Times:** Estimate gives each half its share of the duration by visible characters (graphemes outside tag blocks and drawings; `\h` is one, `\N` and `\n` none), to the nearest centisecond. Keep leaves both halves the Line's times. At the video frame uses the end time of the shown frame, clamped to the Line's first and last frame.
+- **Refused:** when either half has no visible text but spaces; the status bar says "Nothing to split: both halves need text." One undo step, "Splitting lines".
+
 ## Commands
 
 The Aegisub keys come from Aegisub 3.5's `default_hotkey.json`; Import settings maps the Aegisub ids from a `hotkey.json` (`settings_import_aegisub.cpp`).
 
 | Command | Id | Aegisub id | Aegisub default | HikariSub default | Note |
 | --- | --- | --- | --- | --- | --- |
+| Split at the cursor: estimate / keep / at the video frame | 3120, 3121, 3122 (Editor) | `edit/line/split/estimate`, `edit/line/split/preserve`, `edit/line/split/video` | none | Ctrl+Alt+Enter / none / none | Line editor right click › Split here. `edit/line/split/before` and `after` stay unmapped: they split every selected Line and handle a frame outside it, which Split at video time (4521) does not |
 | Move lines up / down | 4559, 4560 (Grid) | `grid/move/up`, `grid/move/down` | Alt+Up / Alt+Down | Alt+Up / Alt+Down | Each run of selected lines passes its neighbour; groups move as a unit; one undo step |
 | Delete text, keep tags | 5357 | `edit/clear/text` | none | none | Grid row after Delete text; `edit/clear` imports to Delete text (5157) |
 | Cycle tags in the Grid | 5029 (`GLOBAL_HIDE_TAGS`) | `grid/tag/cycle_hiding` | none | none | Q765; status message names the mode |

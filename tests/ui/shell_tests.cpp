@@ -19774,6 +19774,56 @@ private slots:
         application->settingsStore()->setValue(QStringLiteral("editor.softLineBreak"), false);
     }
 
+    void splitHereSplitsTheLineAtTheCaret()
+    {
+        application->editor().setShowTags(true);
+        QVERIFY(application->openFile(writeStyled("split-here.ass",
+                                                  "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\b1}one {\\i1}two\n"
+                                                  "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,three four\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\b1}one {\\i1}two"));
+        auto *session = targetSession();
+        auto *splitHere = text->findChild<QObject *>(QStringLiteral("lineTextSplitHereMenu"));
+        auto *estimate = text->findChild<QObject *>(QStringLiteral("lineTextSplitEstimate"));
+        QVERIFY(splitHere && estimate);
+
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 2);
+        QVERIFY(QMetaObject::invokeMethod(splitHere, "aboutToShow"));
+        QVERIFY(!estimate->property("enabled").toBool());
+        text->setProperty("cursorPosition", 9);
+        QVERIFY(QMetaObject::invokeMethod(splitHere, "aboutToShow"));
+        QVERIFY(estimate->property("enabled").toBool());
+        QVERIFY(!text->findChild<QObject *>(QStringLiteral("lineTextSplitVideo"))->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(estimate, "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        auto lines = session->document().lines();
+        QCOMPARE(lines[0]->text, std::u8string(u8"{\\b1}one"));
+        QCOMPARE(lines[1]->text, std::u8string(u8"{\\b1\\i1}two"));
+        QCOMPARE(lines[0]->end.value.microseconds(), 500'000);
+        QCOMPARE(lines[1]->start.value.microseconds(), 500'000);
+        QCOMPARE(session->history().back().name, std::string("Splitting lines"));
+        QCOMPARE(*session->selection().active, lines[0]->id);
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("three four"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        press(Qt::Key_Return, Qt::ControlModifier | Qt::AltModifier);
+        QCOMPARE(session->document().lines().size(), std::size_t(3));
+        QCOMPARE(application->shell().statusText(), QStringLiteral("Nothing to split: both halves need text."));
+        text->setProperty("cursorPosition", 6);
+        press(Qt::Key_Return, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(4));
+        lines = session->document().lines();
+        QCOMPARE(lines[2]->text, std::u8string(u8"three"));
+        QCOMPARE(lines[3]->text, std::u8string(u8"four"));
+        QCOMPARE(lines[2]->end.value.microseconds(), 2'560'000);
+    }
+
     void enterOnTheLastMicroDvdLineCountsFrames()
     {
         for (const bool withRate : {true, false}) {
