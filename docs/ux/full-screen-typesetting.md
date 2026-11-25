@@ -59,7 +59,7 @@ A column with the tool's name as its header and a **?** button at the trailing e
 
 1. **The hint**: one line saying what dragging does, on a `select`-tinted strip with the information icon. In high contrast it has a `line` boundary instead of the tint.
 2. **The fields**: the tool's options and values in plain words ("Start X", "Ends after"), each under its 12-unit `muted` label, units inside the field. These are VT1's options and values, laid out as a column. Labels scrub sideways as in VT1.
-3. **On the frame**: each handle the tool draws, named, with a small swatch of its mark ("Start point · filled circle").
+3. **On the frame**: each handle the tool draws now, named, with a small swatch of its mark ("Start point · filled circle"). A handle is anything on the frame that reacts to the pointer; guides that don't react have no name.
 4. **Apply to** at the foot: This line / Picked lines (N). This is VT1's batch picker as a segmented group.
 
 The windowed panel keeps VT1's one-line inspector bar. It is the same component, laid out as a row: the hint becomes the **?** button's tooltip, and the handle names show when the pointer is over a handle. When the row is short, the **?** gives way first, before any field folds (#1414): once groups fold it sits in More's header, and while they still fit without it the active tool's rail button carries the hint in its tooltip and accessible description.
@@ -138,17 +138,17 @@ The hints and handle names below were checked against each tool's code, modifier
 | Today (menus, commands) | Rail name | One-line hint | Handles named in the inspector |
 | --- | --- | --- | --- |
 | Position pointer | Pointer | Point at the picture to read a position. Ctrl-click puts the line there. | — |
-| Text positioning | Position | Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer. | Position · square |
-| Text moving | Move | Drag the start or end point; right-drag sets the end. The line travels between them. | Start point · square, End point · circle, Path · arrow, Current position · cross |
-| Text scaling | Scale | Drag to stretch across, right-drag to stretch up. Shift-drag scales both. | Width, Height, Both · arrow |
-| Text Z rotation | Rotate | Drag round the origin to turn the text. Drag the origin to move it. | Origin · cross, Angle · line |
+| Text positioning | Position | Drag to place the line. Shift-drag locks to one axis. Right-click places it at the pointer. | Position · square, Helper cross · square |
+| Text moving | Move | Drag the start or end point; right-drag sets the end. The line travels between them. | Start point · square, End point · circle, Path · arrow, Current position · cross; with Two points: First point · square, Second point · circle; Helper cross · square |
+| Text scaling | Scale | Drag to stretch across, right-drag to stretch up. Shift-drag scales both. | Width, Height, Both · arrow; by rectangle: Target rectangle, Original rectangle · outline |
+| Text Z rotation | Rotate | Drag round the origin to turn the text. Drag the origin to move it. | Origin · cross, Angle · line and ring; with Two points: First point, Second point · square |
 | Text X / Y rotation | Tilt X / Y | Drag sideways to turn round Y, right-drag up or down to turn round X. Drag the origin to move it. | Origin · cross, Tilt grid · outline |
-| Perspective | Perspective | Drag the corners to lay the text on a surface. Drag inside to move it. | Corners · square, Plane corners · circle, Origin · cross |
+| Perspective | Perspective | Drag the corners to lay the text on a surface. Drag inside to move it. | Corners · square, Plane corners · circle, Origin · cross, Text · outline, Plane · outline |
 | Rectangle clipping | Rectangle clip | Drag a box. Only what is inside shows. Drag its edges to resize, inside to move. | Edges and corners · outline |
 | Vector clipping | Vector clip | Click to add points, drag them to reshape. Only what is inside shows. Freehand: hold and draw. | Point · square, Curve handle · circle |
-| Vector drawing | Drawing | Click to add points, drag them to reshape. Or pick a shape and drag a box. Freehand: hold and draw. | Point · square, Curve handle · circle |
+| Vector drawing | Drawing | Click to add points, drag them to reshape. Or pick a shape and drag a box. Freehand: hold and draw. | Point · square, Curve handle · circle, Shape rectangle · outline |
 | Position shifter | Shift positions | Drag to move the positions, clips and origins of the picked lines together. Shift locks an axis. | Position and move start · square, Move end · circle, Origin · cross, Clip · outline, Drawing · outline |
-| Hydra | All tags | Choose a tag, then drag sideways on the picture to change it. Shift for small steps. | Changed line · outline |
+| Hydra | All tags | Choose a tag, then drag sideways on the picture to change it. Shift for small steps. | Changed line · outline; sliders: Slider knob · square, Slider track · line |
 | Gradient | Gradient | Drag across the text to set the gradient’s direction. Drag the ends to adjust; Enter applies. | Start and end, Skew, P1, P2 and P3 · square |
 | Text on path | Text on path | Click to add path points, drag them to shape the path. The text follows; Enter applies. | Point · square, Curve handle · circle |
 

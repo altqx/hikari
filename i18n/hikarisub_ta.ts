@@ -29370,6 +29370,38 @@ or codecs or a splitter may be missing</source>
         <translation>கிளிப்</translation>
     </message>
     <message>
+        <source>Target rectangle</source>
+        <translation>இலக்குச் செவ்வகம்</translation>
+    </message>
+    <message>
+        <source>Original rectangle</source>
+        <translation>மூலச் செவ்வகம்</translation>
+    </message>
+    <message>
+        <source>First point</source>
+        <translation>முதல் புள்ளி</translation>
+    </message>
+    <message>
+        <source>Second point</source>
+        <translation>இரண்டாவது புள்ளி</translation>
+    </message>
+    <message>
+        <source>Shape rectangle</source>
+        <translation>வடிவச் செவ்வகம்</translation>
+    </message>
+    <message>
+        <source>Slider knob</source>
+        <translation>நகர்த்தியின் குமிழ்</translation>
+    </message>
+    <message>
+        <source>Slider track</source>
+        <translation>நகர்த்தியின் தடம்</translation>
+    </message>
+    <message>
+        <source>Helper cross</source>
+        <translation>உதவிக் குறுக்குக்குறி</translation>
+    </message>
+    <message>
         <source>Changed line</source>
         <translation>மாற்றப்பட்ட வரி</translation>
     </message>

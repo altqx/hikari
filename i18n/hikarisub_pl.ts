@@ -29623,6 +29623,38 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation>Wycinek</translation>
     </message>
     <message>
+        <source>Target rectangle</source>
+        <translation>Prostokąt docelowy</translation>
+    </message>
+    <message>
+        <source>Original rectangle</source>
+        <translation>Prostokąt oryginalny</translation>
+    </message>
+    <message>
+        <source>First point</source>
+        <translation>Pierwszy punkt</translation>
+    </message>
+    <message>
+        <source>Second point</source>
+        <translation>Drugi punkt</translation>
+    </message>
+    <message>
+        <source>Shape rectangle</source>
+        <translation>Prostokąt kształtu</translation>
+    </message>
+    <message>
+        <source>Slider knob</source>
+        <translation>Gałka suwaka</translation>
+    </message>
+    <message>
+        <source>Slider track</source>
+        <translation>Tor suwaka</translation>
+    </message>
+    <message>
+        <source>Helper cross</source>
+        <translation>Krzyż pomocniczy</translation>
+    </message>
+    <message>
         <source>Changed line</source>
         <translation>Zmieniona linijka</translation>
     </message>

@@ -125,12 +125,14 @@ struct OverlayPolygon {
     bool above = false;
 };
 // Where a handle the inspector names sits; not drawn. One point is a dot `reach`
-// wide; more points are a path within `reach` of its segments.
+// wide; more points are a path within `reach` of its segments. A `filled` path is
+// closed and its inside counts too.
 struct NamedHandle {
     std::vector<PointF> path;
     float reach = 0;
     int name = 0; // the handle's row in the tool's list of handle names
     bool closed = false;
+    bool filled = false;
 };
 struct HandleColours {
     std::uint32_t fill = 0xAA121150;

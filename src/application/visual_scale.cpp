@@ -796,11 +796,18 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
             const PointF v[5] = {p1, {p2.x, p1.y}, p2, {p1.x, p2.y}, p1};
             for (int i = 0; i < 4; ++i)
                 out.lines.push_back({v[i], v[i + 1], 2, colour});
+            return NamedHandle{{v[0], v[1], v[2], v[3]}, 5 * out.unit, 0, true, true};
         };
-        if (m_rectangleVisible)
-            rect(m_sizingRectangle[0], m_sizingRectangle[1], 0xFFBB0000);
-        if (m_originalRectangleVisible)
-            rect(m_sizingRectangle[2], m_sizingRectangle[3], 0xFF0000BB);
+        std::vector<NamedHandle> named;
+        if (m_rectangleVisible) {
+            named.push_back(rect(m_sizingRectangle[0], m_sizingRectangle[1], 0xFFBB0000));
+            named.back().name = 3;
+        }
+        if (m_originalRectangleVisible) {
+            named.insert(named.begin(), rect(m_sizingRectangle[2], m_sizingRectangle[3], 0xFF0000BB));
+            named.front().name = 4;
+        }
+        out.named = std::move(named);
         return out;
     }
     const int time = static_cast<int>(host.videoTimeMs());

@@ -29117,6 +29117,38 @@ or codecs or a splitter may be missing</source>
         <translation>클립</translation>
     </message>
     <message>
+        <source>Target rectangle</source>
+        <translation>대상 사각형</translation>
+    </message>
+    <message>
+        <source>Original rectangle</source>
+        <translation>원래 사각형</translation>
+    </message>
+    <message>
+        <source>First point</source>
+        <translation>첫 번째 점</translation>
+    </message>
+    <message>
+        <source>Second point</source>
+        <translation>두 번째 점</translation>
+    </message>
+    <message>
+        <source>Shape rectangle</source>
+        <translation>도형 사각형</translation>
+    </message>
+    <message>
+        <source>Slider knob</source>
+        <translation>슬라이더 손잡이</translation>
+    </message>
+    <message>
+        <source>Slider track</source>
+        <translation>슬라이더 트랙</translation>
+    </message>
+    <message>
+        <source>Helper cross</source>
+        <translation>보조 십자선</translation>
+    </message>
+    <message>
         <source>Changed line</source>
         <translation>바뀐 줄</translation>
     </message>

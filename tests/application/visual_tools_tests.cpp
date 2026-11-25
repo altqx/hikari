@@ -316,6 +316,20 @@ TEST(VisualNamedHandles, ADotBeatsAPathThenTheNearestWins)
     EXPECT_EQ(namedHandleAt(overlay, {2, 50}), std::nullopt);
 }
 
+TEST(VisualNamedHandles, AFilledPathTakesItsInside)
+{
+    Overlay overlay;
+    overlay.named.push_back({{{0, 0}, {100, 0}, {100, 100}, {0, 100}}, 4, 3, true, true});
+    overlay.named.push_back({{{200, 0}, {300, 0}, {300, 100}, {200, 100}}, 4, 1, true});
+    overlay.named.push_back({{{50, 50}}, 6, 0});
+
+    EXPECT_EQ(namedHandleAt(overlay, {20, 30}), 3);
+    EXPECT_EQ(namedHandleAt(overlay, {98, 50}), 3);
+    EXPECT_EQ(namedHandleAt(overlay, {52, 50}), 0) << "a dot inside still wins";
+    EXPECT_EQ(namedHandleAt(overlay, {250, 50}), std::nullopt) << "an outline's inside is not the handle";
+    EXPECT_EQ(namedHandleAt(overlay, {202, 50}), 1);
+}
+
 TEST(VisualNamedHandles, ALaterHandleWinsATie)
 {
     Overlay overlay;
