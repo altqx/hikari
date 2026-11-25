@@ -2524,7 +2524,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>The macro was cancelled; only the script resolution was set.</source>
-        <translation>குறுநிரல் ரத்துசெய்யப்பட்டது; ச்கிரிப்ட் தெளிவுத்திறன் மட்டுமே அமைக்கப்பட்டது.</translation>
+        <translation type="vanished">குறுநிரல் ரத்துசெய்யப்பட்டது; ச்கிரிப்ட் தெளிவுத்திறன் மட்டுமே அமைக்கப்பட்டது.</translation>
     </message>
     <message>
         <source>“%1” can’t run on this document: it needs %2 MB, and a macro can use at most %3 MB.</source>
@@ -13533,6 +13533,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <translation type="unfinished">வரி %1 இல் முன்னோட்டம்</translation>
     </message>
     <message>
+        <source>Set to %1×%2</source>
+        <extracomment>Writes the PlayRes the preview uses into a file that has none; %1×%2 is the size</extracomment>
+        <translation>%1×%2 ஆக அமை</translation>
+    </message>
+    <message>
         <source>Kept from the last run that worked</source>
         <translation type="unfinished">வேலை செய்த கடைசி இயக்கத்திலிருந்து வைக்கப்பட்டது</translation>
     </message>
@@ -13749,6 +13754,11 @@ The preview&apos;s Lines and the run&apos;s time: &quot;6 lines · 3.8 ms&quot;<
         <source>%1 · fix the problems to see it</source>
         <extracomment>Over the video: the graph has problems and no earlier run worked; %1 is &quot;Preview&quot;</extracomment>
         <translation>%1 · அதைப் பார்க்க சிக்கல்களைச் சரிசெய்யவும்</translation>
+    </message>
+    <message>
+        <source>%1 · no script resolution · Apply sets %2×%3</source>
+        <extracomment>Over the video: the file has no PlayRes, and Apply writes this size with the lines; %1 is &quot;Preview&quot;, %2×%3 the size</extracomment>
+        <translation>%1 · ச்கிரிப்ட் தெளிவுத்திறன் இல்லை · பயன்படுத்து %2×%3 ஆக அமைக்கும்</translation>
     </message>
     <message>
         <source>%1 · line %2 · %3</source>

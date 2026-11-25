@@ -6,6 +6,7 @@
 #include "hikari/application/node_graph_editing.h"
 #include "hikari/application/node_graph_library.h"
 #include "hikari/application/plugin_content.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/application/typesetting_graphs.h"
 
@@ -1117,6 +1118,24 @@ bool NodeEffectsController::videoPreview() const
     return m_shown && m_previewOnVideo && m_preview && m_source && trusted();
 }
 
+QSize NodeEffectsController::previewResolution() const
+{
+    if (!m_preview || !m_preview->resolution || !trusted())
+        return {};
+    return {m_preview->resolution->width, m_preview->resolution->height};
+}
+
+void NodeEffectsController::setScriptResolution()
+{
+    auto *s = session();
+    const QSize size = previewResolution();
+    if (!s || size.isEmpty())
+        return;
+    commit();
+    (void)application::setScriptResolution(*s, {size.width(), size.height()});
+    refresh();
+}
+
 QString NodeEffectsController::previewBlocked() const
 {
     if (!m_shown || !m_previewOnVideo || !m_graph)
@@ -1152,6 +1171,8 @@ std::optional<core::Document> NodeEffectsController::videoDocument(const core::D
     });
     for (const core::LineId id : m_preview->applied)
         out.editLine(id, [](core::LineRecord &line) { line.comment = true; });
+    if (m_preview->resolution)
+        application::stampScriptResolution(out, *m_preview->resolution);
     for (const auto &fields : m_preview->styles)
         out.appendStyle(fields);
     for (core::LineRecord l : m_preview->lines)
