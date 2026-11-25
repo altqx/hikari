@@ -30380,6 +30380,10 @@ private slots:
             QTRY_COMPARE(tip->property("name").toString(), QStringLiteral("Position"));
             QTRY_VERIFY(label->property("visible").toBool());
             QCOMPARE(label->property("text").toString(), QStringLiteral("Position"));
+            if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+                QVERIFY(QDir().mkpath(out));
+                QVERIFY(window->grabWindow().save(QDir(out).filePath(QStringLiteral("vt8e-handle-tip.png"))));
+            }
             QTest::mouseMove(window, videoPoint(*handle()) + QPoint(60, 60));
             QTRY_COMPARE(tip->property("row").toInt(), -1);
             QTRY_VERIFY(!label->property("visible").toBool());
