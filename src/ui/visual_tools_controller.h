@@ -132,6 +132,8 @@ public:
     Q_INVOKABLE bool runHotkey(const QString &action);
     Q_INVOKABLE QString copyCoordinates(qreal x, qreal y);
     Q_INVOKABLE QString copyCoordinatesAtCursor(QQuickItem *area);
+    // {x, y} in script coordinates, as Copy coordinates reads them; empty without video.
+    Q_INVOKABLE QVariantMap scriptPointAt(qreal x, qreal y) const;
     Q_INVOKABLE bool setValue(const QString &name, const QString &text);
     Q_INVOKABLE bool scrubValue(const QString &name, const QString &text);
     Q_INVOKABLE void pickBatch();
