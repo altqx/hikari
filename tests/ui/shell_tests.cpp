@@ -30469,6 +30469,80 @@ private slots:
         QCOMPARE(textOfLine(*setup->session, setup->sign), signBefore);
     }
 
+    void nodePanelScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QStringList size = qEnvironmentVariable("HIKARI_SURFACE_SHOT_SIZE", QStringLiteral("1366x768")).split(QLatin1Char('x'));
+        auto *menuItem = item<QObject>("nodeEffectsMenuItem");
+        QVERIFY(menuItem);
+        auto *action = menuItem->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        QVERIFY(application->openFile(visualDocument("nodes.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an5\\pos(100,80)}Sign\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(action->property("enabled").toBool() && !application->visualTools().videoRect().isEmpty(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(item("nodeModeBar")->isVisible());
+        window->resize(size.value(0).toInt(), size.value(1).toInt());
+        auto &effects = application->nodeEffects();
+        QVERIFY(effects.newGraph());
+        const QString number = effects.addNode(QStringLiteral("values.number"), 0, 0);
+        const QString random = effects.addNode(QStringLiteral("math.random"), 220, 0);
+        const QString fades[] = {effects.addNode(QStringLiteral("tags.fade"), 0, 160), effects.addNode(QStringLiteral("tags.fade"), 220, 160),
+                                 effects.addNode(QStringLiteral("tags.fade"), 440, 160)};
+        effects.setField(fades[0], QStringLiteral("fade_in"), 150);
+        effects.setField(random, QStringLiteral("step"), 1);
+        effects.commit();
+
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        const std::function<QQuickItem *(QQuickItem *, const QString &)> named = [&](QQuickItem *from, const QString &name) -> QQuickItem * {
+            if (!from || from->objectName() == name)
+                return from;
+            for (QQuickItem *child : from->childItems())
+                if (QQuickItem *found = named(child, name))
+                    return found;
+            return nullptr;
+        };
+        const auto shoot = [&](const QString &state, const QStringList &selection, const std::function<void()> &prepare = {}) {
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                QTRY_COMPARE(root->property("palette").value<QObject *>()->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                effects.setSelection(selection);
+                QTRY_VERIFY(item("nodeInspector")->isVisible());
+                if (prepare)
+                    prepare();
+                QQuickTest::qWaitForPolish(window);
+                QTest::qWait(200);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/node-%1-%2x%3-%4.png").arg(state, size.value(0), size.value(1),
+                                                                                                   ui::theme::codeName(code))));
+            }
+        };
+        shoot(QStringLiteral("one"), {random});
+        shoot(QStringLiteral("three"), {fades[0], fades[1], fades[2]});
+        shoot(QStringLiteral("mixed"), {number, random, fades[0]});
+        if (named(window->contentItem(), QStringLiteral("nodeFieldValue_stepInput")))
+            shoot(QStringLiteral("refusal"), {random}, [&] {
+                QQuickItem *input = named(window->contentItem(), QStringLiteral("nodeFieldValue_stepInput"));
+                QTest::mouseClick(window, Qt::LeftButton, {}, input->mapToScene(QPointF(input->width() / 2, input->height() / 2)).toPoint());
+                QTRY_VERIFY(input->hasActiveFocus());
+                QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+                QTest::keyClick(window, '-');
+                QTest::keyClick(window, '3');
+                QTest::keyClick(window, Qt::Key_Return);
+                QTRY_VERIFY(named(window->contentItem(), QStringLiteral("nodeField_stepRefusal"))->isVisible());
+            });
+        effects.setSelection({});
+        QVERIFY(effects.connectPorts(number, QStringLiteral("value"), random, QStringLiteral("max")).isEmpty());
+        effects.commit();
+        shoot(QStringLiteral("wired"), {random});
+    }
+
     void vectorClipCommandsChooseTheRowsButtons()
     {
         const QString path = dir.filePath(QStringLiteral("vclipkeys.ass"));
