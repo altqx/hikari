@@ -14225,6 +14225,10 @@ private slots:
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QCOMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
         QCOMPARE(spellItem("spellReplacement")->property("text").toString(), QStringLiteral("world"));
+        auto *chosen = spellItem("spellSuggestions")->property("currentItem").value<QQuickItem *>();
+        QVERIFY(chosen && chosen->property("highlighted").toBool());
+        QCOMPARE(chosen->property("contentItem").value<QQuickItem *>()->property("color").value<QColor>(),
+                 ui::theme::current().roles.text);
         QCOMPARE(application->editor().selectionStart(), 6);
         QCOMPARE(application->editor().selectionEnd(), 11);
         const auto currentMark = [&](int row) { return grid->index(row, 0).data(ui::LineTableModel::CurrentSpellMarkRole).toList(); };
@@ -14443,7 +14447,7 @@ private slots:
             QTRY_VERIFY(!item<QObject>(dock)->property("isOpen").toBool());
         };
         const QList<QSize> sizes{{1366, 768}, {1280, 800}};
-        const std::initializer_list<const char *> themes{"light", "dark", "highContrastBlack"};
+        const std::initializer_list<const char *> themes{"light", "dark", "highContrastBlack", "highContrastWhite"};
 
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());

@@ -555,6 +555,14 @@ FocusScope {
                             visible: suggestion.hovered || suggestion.down
                             color: suggestion.down ? Theme.pressed : Theme.hover
                         }
+                        Rectangle { visible: suggestion.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                    }
+                    contentItem: Label {
+                        text: suggestion.text
+                        font: suggestion.font
+                        color: Theme.text
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
                     }
                     onClicked: {
                         suggestionList.currentIndex = index
