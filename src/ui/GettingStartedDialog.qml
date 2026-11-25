@@ -551,7 +551,7 @@ DialogWindow {
                         focusPolicy: Qt.NoFocus
                         onClicked: setup.goTo(index)
                         Accessible.role: Accessible.ListItem
-                        Accessible.name: qsTr("Step %1 of %2, %3").arg(index + 1).arg(setup.pages.length).arg(setup.stepNames[modelData])
+                        Accessible.name: qsTr("Step %1 of %2, %3").arg(String(index + 1), String(setup.pages.length), setup.stepNames[modelData])
                                          + (current ? ", " + qsTr("current") : done ? ", " + qsTr("done") : "")
                         Accessible.selected: current
                         background: Rectangle {
