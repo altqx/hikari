@@ -1351,7 +1351,7 @@ DialogWindow {
                     Label {
                         text: qsTr("This file")
                         font: manager.fontAt(13, Font.DemiBold)
-                        Layout.rightMargin: 6
+                        Layout.rightMargin: 8
                     }
                     ListTools { objectName: "assCommands"; store: false; enabled: manager.styles.available; Layout.fillWidth: true }
                 }
@@ -1381,7 +1381,7 @@ DialogWindow {
                             : qsTr("No styles in this file. Make one with + or copy one from the catalogue.")
                     }
                 }
-                Flow {
+                RowLayout {
                     id: copyRow
                     spacing: 4
                     Layout.fillWidth: true
@@ -1392,7 +1392,9 @@ DialogWindow {
                         text: qsTr("Copy to catalogue")
                         tip: qsTr("Copy the selected file styles into the catalogue")
                         font: manager.fontAt(12)
-                        implicitHeight: Theme.smallControlHeight
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
+                        Layout.minimumWidth: leftPadding + icon.width + rightPadding
                         enabled: manager.assSelected.length > 0 && !manager.styles.catalogReadOnly
                         onClicked: manager.copyToCatalog()
                     }
@@ -1403,10 +1405,13 @@ DialogWindow {
                         text: qsTr("Copy to this file")
                         tip: qsTr("Copy the selected catalogue styles into this file")
                         font: manager.fontAt(12)
-                        implicitHeight: Theme.smallControlHeight
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: implicitWidth
+                        Layout.minimumWidth: leftPadding + icon.width + rightPadding
                         enabled: manager.storeSelected.length > 0 && manager.styles.available
                         onClicked: manager.copyToFile(false)
                     }
+                    Item { Layout.fillWidth: true }
                     IconToolButton {
                         objectName: "addToAllAss"
                         iconRole: "copy-to-all-ass"
@@ -1419,11 +1424,11 @@ DialogWindow {
                 RowLayout {
                     id: catalogLine
                     spacing: 4
-                    Layout.topMargin: 6
+                    Layout.topMargin: 8
                     Label {
                         text: qsTr("Catalogue")
                         font: manager.fontAt(13, Font.DemiBold)
-                        Layout.rightMargin: 6
+                        Layout.rightMargin: 8
                     }
                     ComboBox {
                         id: catalogBox
@@ -1674,7 +1679,7 @@ DialogWindow {
             }
             ColumnLayout {
                 visible: manager.editing
-                spacing: 6
+                spacing: 8
                 Layout.fillWidth: true
                 Layout.margins: 24
                 Layout.topMargin: 12
@@ -1706,7 +1711,6 @@ DialogWindow {
                         flat: true
                         iconRole: "undo"
                         text: qsTr("Revert style")
-                        implicitHeight: Theme.smallControlHeight
                         enabled: manager.dirty
                         onClicked: manager.revert()
                     }

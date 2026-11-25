@@ -202,6 +202,23 @@ public:
     bool provide(const std::string &plugin, const std::string &provider, const api::Json &request,
                  backends::PluginProcess::FormatDone done);
 
+    struct LanguageServer {
+        std::string plugin;
+        QString pluginName;
+        plugins::LanguageServer server;
+        // Grows when the plugin starts again, its settings change or a program download changes.
+        std::int64_t revision = 0;
+    };
+    // The language servers of the plugins that are on, in the order the plugins were installed.
+    std::vector<LanguageServer> languageServers() const;
+    // How a language server starts in its plugin's sandbox, or why it can't.
+    std::expected<backends::ProgramProcess::Options, QString> languageServerStart(const std::string &plugin,
+                                                                                const std::string &server) const;
+    // The plugin's settings, as workspace/configuration answers them; an empty object for a plugin that isn't on.
+    api::Json pluginSettings(const std::string &plugin) const;
+    // A line in the Log panel under the plugin's name, at most 20 lines a minute.
+    void logProgramLine(const std::string &plugin, const QString &line);
+
 signals:
     void commandsChanged();
     void statusItemsChanged();
@@ -214,6 +231,7 @@ signals:
     // The plugin finished a command or an event, or stopped.
     void idle(const QString &pluginId);
     void mcpServersChanged();
+    void languageServersChanged();
 
 private:
     struct Running;
@@ -269,8 +287,8 @@ private:
     int m_marksRevision = 0;
     int m_programsRevision = 0;
     void endJob(const std::string &plugin);
-    void renewMcpServers(Running &plugin);
-    std::int64_t m_mcpRevision = 0;
+    void renewServers(Running &plugin);
+    std::int64_t m_serversRevision = 0;
     std::optional<std::set<std::string>> m_installed;
     std::set<std::string> m_reloading;
     void rework();

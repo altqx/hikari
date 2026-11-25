@@ -27,9 +27,14 @@ Item {
     property int nameIndex: 0
     property alias trailing: trail.data
     readonly property bool hovered: hover.hovered
-    readonly property font smallFont: TypeRoles.sized(Qt.application.font, 12, Font.Normal)
+    readonly property font smallFont: TypeRoles.sized(fontSource.font, 12, Font.Normal)
+    readonly property font countFont: {
+        const f = TypeRoles.sized(fontSource.font, 12, Font.Normal)
+        f.features = { "tnum": 1 }
+        return f
+    }
     readonly property font nameFont: {
-        const f = TypeRoles.sized(Qt.application.font, 13, Font.DemiBold)
+        const f = TypeRoles.sized(fontSource.font, 13, Font.DemiBold)
         f.italic = pending
         return f
     }
@@ -42,6 +47,7 @@ Item {
                      + (fontMissing ? ", " + missingText.text : "")
     Accessible.selected: chosen
 
+    Label { id: fontSource; visible: false }
     HoverHandler { id: hover }
     Rectangle {
         anchors.fill: parent
@@ -57,7 +63,7 @@ Item {
         anchors.bottom: parent.bottom
         width: parent.width
         height: 1
-        color: Theme.highContrast ? Theme.line : Theme.raised
+        color: Theme.line
     }
     Rectangle {
         anchors.fill: parent
@@ -124,7 +130,7 @@ Item {
                 Label {
                     id: nameLabel
                     objectName: row.namePrefix + "Name" + row.nameIndex
-                    width: Math.min(implicitWidth, parent.width - (row.marked ? 12 : 0))
+                    width: Math.min(implicitWidth, parent.width - (row.marked ? 10 : 0))
                     text: row.name
                     textFormat: Text.PlainText
                     font: row.nameFont
@@ -133,7 +139,7 @@ Item {
                 Rectangle {
                     objectName: row.namePrefix + "LineMark" + row.nameIndex
                     visible: row.marked
-                    x: nameLabel.width + 6
+                    x: nameLabel.width + 4
                     anchors.verticalCenter: nameLabel.verticalCenter
                     width: 6
                     height: 6
@@ -170,21 +176,22 @@ Item {
                     font: row.smallFont
                     elide: Text.ElideRight
                     Layout.fillWidth: true
+                    ToolTip.text: text
+                    ToolTip.visible: truncated && hover.hovered
+                    ToolTip.delay: 600
                 }
             }
         }
         RowLayout {
             id: trail
-            spacing: 6
+            spacing: 8
         }
         Label {
             objectName: row.namePrefix + "Lines" + row.nameIndex
             visible: row.counted && row.linesTrailing && !row.pending
             text: row.lines
             color: row.lines > 0 ? Theme.muted : Theme.disabled
-            font.family: row.smallFont.family
-            font.pointSize: row.smallFont.pointSize
-            font.features: { "tnum": 1 }
+            font: row.countFont
             horizontalAlignment: Text.AlignRight
         }
     }
