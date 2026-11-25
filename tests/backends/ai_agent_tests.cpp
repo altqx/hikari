@@ -271,7 +271,7 @@ TEST(AgentPolicy, EveryWriteOperationIsClassified)
 TEST(AgentPolicy, EveryAutomationOrDeleteCommandIsClassified)
 {
     const std::set<std::string_view> reviewedSafe{"GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW", "VIDEO_DELETE_FILE",
-                                                  "VIDEO_VECTOR_CLIP_DELETE"};
+                                                  "VIDEO_VECTOR_CLIP_DELETE", "NODE_GRAPH_DELETE"};
     for (const hikari::application::HotkeyAction &action : hikari::application::hotkeyActions()) {
         const std::string_view symbol = action.symbol;
         if (symbol.find("AUTOMATION") == std::string_view::npos && symbol.find("DELETE") == std::string_view::npos)
