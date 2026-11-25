@@ -60,8 +60,8 @@ The Inline actions section of [Settings › AI](ai-settings.md):
 | Setting | Default | Saved |
 | --- | --- | --- |
 | `ai.inline.actions`: your actions, each `{name, instruction, role, ask}` | none | At once |
-| `ai.inline.translateTo` | English | On OK or Apply |
-| `ai.inline.contextLines` (0–5) | 2 | On OK or Apply |
+| `ai.inline.translateTo` | English | At once |
+| `ai.inline.contextLines` (0–5) | 2 | At once |
 | `ai.inline.recentInstructions` | none | After each Rewrite |
 
 ## Usage data

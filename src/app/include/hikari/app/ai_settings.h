@@ -30,8 +30,7 @@ class AiFeatures;
 class AiMcp;
 class AiMcpServers;
 
-/// Settings › AI: the providers, their keys and catalogues, and the role models. Providers and keys are saved at
-/// once; role models wait for OK or Apply (applyRoles).
+/// Settings › AI: the providers, their keys and catalogues, and the role models (applyRoles). All are saved at once.
 class AiSettings final : public QObject {
     Q_OBJECT
     Q_PROPERTY(bool on READ on NOTIFY switched)

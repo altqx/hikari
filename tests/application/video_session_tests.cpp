@@ -761,6 +761,18 @@ TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
     EXPECT_TRUE(lands(4));
 }
 
+TEST_F(VideoTest, TheLastFrameBeforeAnEndIsTheOneSeekToEndShows)
+{
+    EXPECT_EQ(video.lastFrameBefore(core::DocumentTime(200'000)), std::nullopt);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    EXPECT_EQ(video.lastFrameBefore(core::DocumentTime(200'000)), 4);
+    EXPECT_EQ(video.lastFrameBefore(core::DocumentTime(201'000)), 5);
+    EXPECT_EQ(video.lastFrameBefore(core::DocumentTime(0)), 0);
+    EXPECT_EQ(video.lastFrameBefore(core::DocumentTime(60'000'000)), 9);
+}
+
 TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
 {
     FakePlayer player;

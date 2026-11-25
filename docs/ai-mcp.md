@@ -23,7 +23,7 @@ Qt never parses MCP. It passes each message to `_hikari/mcp.message`, and writes
 
 ## Settings › AI
 
-The MCP section sits between External agents and Privacy, as the [Settings › AI mockup](https://github.com/altqx/hikari/issues/649#issuecomment-6612977714) draws it. Both check boxes take effect on OK or Apply, like every other setting.
+The MCP section sits between External agents and Privacy, as the [Settings › AI mockup](https://github.com/altqx/hikari/issues/649#issuecomment-6612977714) draws it. Both check boxes take effect at once, like every other setting.
 
 - **Let agents outside HikariSub edit through MCP** (`ai.mcp.server`) turns the server on.
   - When the AI component isn't installed, checking it offers the component's one-time download first, with its size, as the provider form does. The box stays clear until the download finishes. **Download** installs the component with no provider (`AiSettings::installComponent`), then checks the box.
@@ -38,7 +38,7 @@ The MCP section sits between External agents and Privacy, as the [Settings › A
 | Codex config.toml | `[mcp_servers.hikari]` with `command = "<program>"` and `args = ["--mcp"]` |
 | JSON with the address and token | `{"mcpServers": {"hikari": {"type": "http", "url": "http://127.0.0.1:<port>/mcp", "headers": {"Authorization": "Bearer <token>"}}}}`. Under the entry: "Holds your token; keep it private." |
 
-`<program>` is `$APPIMAGE` when HikariSub runs from an AppImage, and the executable otherwise (`AiMcp::program`). The JSON entry is disabled until HikariSub listens on 127.0.0.1, and a line under the button says why: the HTTP box is off, or it waits for OK or Apply.
+`<program>` is `$APPIMAGE` when HikariSub runs from an AppImage, and the executable otherwise (`AiMcp::program`). The JSON entry is disabled until HikariSub listens on 127.0.0.1, and a line under the button says why: the HTTP box is off, or HikariSub hasn’t started listening yet.
 
 **Reset token**, next to Copy setup, acts at once (`AiMcp::resetToken`). It makes a new token, saves it, and drops every connected agent. A request with the old token gets 401, and a bridge that sends it is closed. Agents started with `hikarisub --mcp` read the new token when they start again. Agents set up with the JSON stop working until the user copies the setup again, and the line under the button says so.
 
@@ -71,6 +71,8 @@ Replies are `application/json`, never SSE. A notification gets 202. The sidecar 
 - **Not supported:** batches, prompts, subscriptions and list-change notifications. The server never sends requests. `notifications/cancelled` drops the reply.
 
 **Tools.** `tools/list` gives every tool, the searchable groups' too, in one page. `tools/call` runs a tool through the connection's own `ToolSet` and answers its `CallToolResult`. An unknown tool name gets -32602.
+
+**Plugins' tools.** `tools/list` also gives the `read` [AI tools](plugins.md#ai-tools-and-mcp-servers) of each plugin whose marks the user trusts, with `readOnlyHint`, and no `write` tool, since every write but `document.apply` is refused here. A call goes to Qt as `_hikari/pluginTools.call` without a session; Qt runs only a trusted `read` tool, as the plugin ([#1228](https://github.com/altqx/hikari/issues/1228)).
 
 **Resources.** Each is JSON (`application/json`):
 

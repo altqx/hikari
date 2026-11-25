@@ -36,6 +36,7 @@ struct InstalledPlugin {
     api::Json settings = api::Json::object(); // values set, by the manifest's setting id
     Source source = Source::File;
     bool autoUpdate = true;
+    bool trustToolMarks = false; // its aiTools' read marks count
     std::string skip;     // a version automatic updates pass over
     std::string previous; // the version kept in plugins/.previous/<id> for roll back
     std::string held;     // a newer version that asks for more, waiting for the user

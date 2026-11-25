@@ -137,7 +137,7 @@ threshold = 0.4
 Automation > Plugins… (`GLOBAL_PLUGINS`, 5231) opens one resizable window with two views, Installed and Marketplace: the plugins on the left, the chosen one's details on the right. It also opens at a plugin from About <plugin> in that plugin's panel menu. Installed counts the updates that wait for the user, and the newer versions that won't install automatically. The tool strip holds Install from file…, Check for updates and Plugin updates, whose popover has "Check for plugin updates" and "Install updates automatically".
 
 - **The list.** Each row shows the package icon, name, version and signer (From the marketplace for a marketplace install). HikariSub's own plugins carry the By HikariSub icon, named on hover. It shows a state only when the plugin isn't simply running: Revoked, <version> waits for you, Turned off, Didn't start, Stopped or Full trust. The filter matches name, author and description. Space turns the chosen plugin on or off, and Delete asks to uninstall it.
-- **The details.** What the plugin is and who made it, with the By HikariSub badge for HikariSub's own plugins, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off. A marketplace plugin has its own "Install updates automatically", and Roll back to <version> sits beside the version when a replaced copy is kept. A held update shows a bar with Review…; a revoked plugin shows a red bar with Install <last good> and Uninstall….
+- **The details.** What the plugin is and who made it, with the By HikariSub badge for HikariSub's own plugins, its trust, its permissions with their reasons, and what it adds (commands and panels). On turns it on or off. A marketplace plugin has its own "Install updates automatically". A plugin with [AI tools](#ai-tools-and-mcp-servers) has "Trust tool marks from <plugin>", off by default and kept across updates. Roll back to <version> sits beside the version when a replaced copy is kept. A held update shows a bar with Review…; a revoked plugin shows a red bar with Install <last good> and Uninstall….
 - **Remembered folders.** Each folder the user let the plugin keep, with Forget. A forgotten folder is asked for again, and the plugin's open files in it close.
 - **Settings.** Open in Settings… shows the plugin's section under Settings › Plugins, where its settings are kept ([Settings, grown](#settings-grown)).
 - **Errors.** A plugin that didn't start, crashed or was stopped shows the error and its traceback, with Start again and Copy.
@@ -922,19 +922,19 @@ end)
 
 ### AI tools and MCP servers
 
-#1228.
+[#1228](https://github.com/altqx/hikari/issues/1228).
 
 **AI tools.** Each `contributes.aiTools` entry is `{command, description, parameters, result, mark}`.
 
 - **What the AI sees.** The tool's name is `p_<the first 8 hex digits of the SHA-256 of "<plugin id>/<command>">_<command>`, with `-` as `_` and cut to 64 characters, so it fits every provider. Its description starts with the plugin's name, then `description`, and its input is `parameters`.
 - **A call** runs the command through a tool gate of its own, not `plugins.run`, with `args` checked against `parameters` and `context.via = "ai"`. The handler's return value, checked against `result` when given, is the tool's answer.
-- **Trust.** Like an MCP server's, a plugin's marks count only once the user turns on "Trust <plugin>'s tool marks" in its details, off by default. Until then every tool of the plugin counts as a write.
+- **Trust.** Like an MCP server's, a plugin's marks count only once the user turns on "Trust tool marks from <plugin>" in its details, off by default. Until then every tool of the plugin counts as a write.
 - **Approval.** A trusted `read` tool runs without asking, like HikariSub's own reads. A `write` tool asks or runs by the thread's mode, like other writes.
 - **The read mark is enforced.** While a `read` tool runs, every write operation the plugin makes, and `net.fetch`, `files.write`, `hikari/settings.set` and `programs.*`, answer `refused` with reason `read_tool`.
 - **Who runs it.** The command runs as the plugin, with the plugin's grants, never the AI's.
 - **What stays always-ask.** `plugins.run`, `commands.run` of a `plugin.` command, and plugin commands without an `aiTools` entry stay on the always-ask list.
 - **Over MCP.** HikariSub's MCP server lists a plugin's trusted `read` tools with `readOnlyHint`. It lists no `write` tool, as it refuses every write but `document.apply`.
-- **Docs.** #1228 amends [ai-agent.md](ai-agent.md)'s always-ask list and classification, [ai-mcp.md](ai-mcp.md) and [ai-mcp-clients.md](ai-mcp-clients.md) to match. `problems.fix` is a write that asks by the thread's mode.
+- **How HikariSub does it.** [ai-agent.md](ai-agent.md) has the gate, [ai-mcp-clients.md](ai-mcp-clients.md#plugins-ai-tools) the link and the checks, and [ai-mcp.md](ai-mcp.md) the MCP listing. `problems.fix` is a write that asks by the thread's mode.
 
 **MCP servers.** Each `contributes.mcpServers` entry is `{id, title, description, program}`.
 
@@ -1030,18 +1030,32 @@ end)
 - **Permissions.** A dev plugin gets the install question once. A reload that asks for more than the user said yes to waits for them: its details offer Review…, which asks again.
 - **Errors.** A reload that breaks a rule keeps the last good files running. Why shows in its details and the Log panel; a plugin that doesn't start shows as any plugin's does.
 
-**Save a copy as a theme plugin…** (Q681). In the dev tools, this writes the theme being shown, built-in or a plugin's, as a new plugin folder: a `hikari-plugin.json` with one `contributes.themes` entry and the theme file with every key set, worked-out colours included. The folder is then loaded as a dev plugin.
+**Save a copy as a theme plugin…** (Q681). In the plugin manager's tool strip, this writes the theme being shown, built-in or a plugin's, as a new plugin folder in the folder you pick, then loads it as a dev plugin.
 
-**The test harness.** `hikarisub --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>]` runs headless, prints each failed step, and exits with 0 when every step passed and 1 otherwise. Each line of the script is one step:
+- **The folder.** `<theme>-copy/` holds a `hikari-plugin.json` with the id `local.<theme>-copy`, version `1.0.0` and one `contributes.themes` entry titled "<title> copy", and `themes/<theme>.json`. When that folder or id is taken, `-2`, `-3` and so on are added.
+- **The theme file.** Every key is set, worked-out colours included, and each accent choice has its `onAccent`. A colour worked out from a role in `userColours` or from the accent choice stays left out, so it keeps following the user's pick: the content colours worked out from `accent` when the theme has accent choices, and in the high-contrast themes also `focus`, `hover`, `pressed`, `control`, `onAccent` and the default line editor colour.
 
-- `{"run": "<command>", "args": {…}, "expect": …}`
-- `{"event": "<name>", "data": {…}}`
-- `{"call": "<operation>", "params": {…}, "expect": …}`
-- `{"complete": {…}, "expect": …}`
-- `{"export": "<format>", "expectFile": "<path>"}`
-- `{"expectDocument": "<fixture.ass>"}`
+**The test harness.** `hikarisub --test-plugin <folder> <tests.jsonl> [--document <fixture.ass>] [--timeout <ms>] [--json]` runs a plugin's tests headless, with the offscreen platform, on Linux and Windows.
 
-It builds on `tests/api/scripts/`. Dialogs answer from `{"answer": {…}}` steps.
+- **Where it runs.** In a temporary user folder that is removed when it ends, with the fixture Document copied there. It never reads or writes the real user folder, settings, keychain or marketplace cache.
+- **The plugin.** It loads the folder as a dev plugin, granted every permission its manifest asks for without asking, and prints that list first. So the network is open only to the hosts the manifest names.
+- **Exit code.** 0 when every step passed, 1 when one failed, 2 when the tests couldn't run: a bad command line or script line, a missing folder or fixture, or a plugin that doesn't load.
+- **Output.** One line for each failed step: `<tests.jsonl>:<line>: <step>: <why>`, with what came back and what was expected. `--json` prints one JSON report instead: `{ok, plugin, granted, steps, failed: [{line, step, message}]}`, or `{ok: false, error}` when the tests couldn't run.
+- **Timeouts.** Each step gets `--timeout` milliseconds, 10000 by default. A step that takes longer fails, and the plugin is force-stopped; the next step starts it again.
+
+Each line of the script is one step. `expect` matches as the API scripts in `tests/api/scripts/` do: an object by the keys it names, an array item by item, anything else by equality. Paths are relative to the script.
+
+| Step | What it does |
+| --- | --- |
+| `{"run": "<command>", "args": {…}, "expect": …}` | Runs one of the plugin's commands with `context.via = "palette"`, and checks what its handler returns. |
+| `{"event": "<name>", "data": {…}}` | Sends the plugin an event it listens for, and waits for its handlers. |
+| `{"call": "<operation>", "params": {…}, "expect": …}` | Calls a Hikari API operation as the plugin. |
+| `{"complete": {…}, "expect": …}`, `{"hover": {…}, "expect": …}` | Asks the plugin's provider. The request is `{document, line, field, text, offset, trigger}`, and the step's object sets any of them; the editing target's first Line, `"text"`, `""`, `0` and `null` otherwise. |
+| `{"export": "<format>", "expectFile": "<path>"}` | Exports the Document with one of the plugin's formats and compares the file byte for byte. |
+| `{"expectDocument": "<fixture.ass>"}` | Compares the Document, saved as ASS, with the fixture, line endings and a BOM aside. |
+| `{"answer": {…}}` | Answers the next dialog, quick pick or input box: `{"button", "values"}` for a dialog, `{"pick": [ids]}`, `{"text"}`, `{"button"}` or `{"back": true}` for a quick pick or input box, or `{"dismiss": true}`. A prompt with no answer waiting is dismissed and fails its step. |
+
+`run`, `call`, `complete` and `hover` may expect an error instead with `"error": "<text>"`: the step passes when it fails with that text in its message, or with that error code for `call`.
 
 **Type hints.** `hikarisub --export-docs <dir>` also writes `hikari.lua`, LuaLS `---@meta` annotations for the `hikari` global and every operation, and `hikari.d.ts`, TypeScript types for every operation, event and protocol message, both generated from `api.json`. [docs/types/](types/) holds both for this version.
 

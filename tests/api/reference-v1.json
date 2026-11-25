@@ -7,6 +7,12 @@
       "minimum": 1,
       "description": "An open Document, as documents.list gives it."
     },
+    "SkillName": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "A skill's name, which is its folder's."
+    },
     "LineId": {
       "type": "integer",
       "minimum": 1,
@@ -156,7 +162,8 @@
         "borderStyle": {
           "enum": [
             1,
-            3
+            3,
+            4
           ]
         },
         "outline": {
@@ -284,7 +291,8 @@
         "borderStyle": {
           "enum": [
             1,
-            3
+            3,
+            4
           ]
         },
         "outline": {
@@ -473,6 +481,9 @@
           "type": "integer"
         },
         {
+          "type": "number"
+        },
+        {
           "type": "string"
         },
         {
@@ -520,6 +531,173 @@
         "file",
         "name",
         "access"
+      ],
+      "additionalProperties": false
+    },
+    "GrantedFolder": {
+      "type": "object",
+      "properties": {
+        "folder": {
+          "type": "string",
+          "description": "The handle files.list, files.read and files.write take with a path."
+        },
+        "name": {
+          "type": "string"
+        },
+        "access": {
+          "enum": [
+            "read",
+            "write"
+          ]
+        }
+      },
+      "required": [
+        "folder",
+        "name",
+        "access"
+      ],
+      "additionalProperties": false
+    },
+    "FolderEntry": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative to the granted folder, with / between its parts."
+        },
+        "folder": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "folder"
+      ],
+      "additionalProperties": false
+    },
+    "Project": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The Project folder's name."
+            },
+            "trusted": {
+              "type": "boolean",
+              "description": "Whether the folder is in Trusted folders."
+            }
+          },
+          "required": [
+            "name",
+            "trusted"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "The Project of the window the user works in; null without one."
+    },
+    "DialogControl": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "edit",
+            "textbox",
+            "intedit",
+            "floatedit",
+            "dropdown",
+            "checkbox",
+            "color",
+            "coloralpha",
+            "alpha"
+          ],
+          "description": "The control's Lua class, lowercased."
+        },
+        "label": {
+          "type": "string",
+          "description": "A checkbox's text."
+        },
+        "hint": {
+          "type": "string"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A dropdown's choices."
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number",
+          "description": "A floatedit's step; 0 for none."
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "DialogAnswer": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$",
+          "description": "The dialog's key: its script and its controls' kinds and names, as Automation remembers answers by. When given, the key alone decides which dialog the answer fills."
+        },
+        "controls": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "$ref": "#/$defs/DialogControl"
+          },
+          "description": "The dialog's value-bearing controls, in order. Without a key, the answer fills the dialog of the script being run whose controls have these kinds and names; the other fields don't count."
+        },
+        "values": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          },
+          "description": "The answered values by control name."
+        },
+        "button": {
+          "type": "string",
+          "description": "The pressed button's label; empty when the dialog was closed."
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "key"
+          ]
+        },
+        {
+          "required": [
+            "controls"
+          ]
+        }
       ],
       "additionalProperties": false
     },
@@ -659,6 +837,21 @@
         "message"
       ],
       "additionalProperties": false
+    },
+    "MarkColour": {
+      "enum": [
+        "accent",
+        "warning",
+        "danger",
+        "success",
+        "muted"
+      ],
+      "description": "A theme role, so the mark follows the theme and high contrast."
+    },
+    "ProgramProcess": {
+      "type": "string",
+      "pattern": "^p[0-9]{1,9}$",
+      "description": "A started program, such as p1."
     }
   },
   "operations": [
@@ -1222,6 +1415,22 @@
                   "items": {
                     "type": "string"
                   }
+                },
+                "kind": {
+                  "enum": [
+                    "hotkey",
+                    "macro",
+                    "plugin"
+                  ],
+                  "description": "Always given: a HikariSub command, an Automation macro (macro:<file>:<ordinal>) or a plugin's (plugin.<id>.<command>)."
+                },
+                "file": {
+                  "type": "string",
+                  "description": "A macro's script file name."
+                },
+                "macro": {
+                  "type": "string",
+                  "description": "A macro's name."
                 }
               },
               "required": [
@@ -1294,7 +1503,7 @@
     {
       "name": "settings.list",
       "access": "read",
-      "summary": "Settings with their type, scope, default and current value.",
+      "summary": "Settings with their type, scope, default and current value, plugins' settings as plugin.<plugin id>.<setting id>.",
       "since": 1,
       "params": {
         "type": "object",
@@ -1338,6 +1547,18 @@
                 },
                 "value": {
                   "$ref": "#/$defs/SettingValue"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The name the Settings window shows, in the UI language."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "app, or the id of the plugin whose setting it is."
+                },
+                "projectable": {
+                  "type": "boolean",
+                  "description": "Whether a Project can override it on the Project tab."
                 }
               },
               "required": [
@@ -1572,6 +1793,42 @@
       }
     },
     {
+      "name": "settings.open",
+      "access": "write",
+      "summary": "Opens the Settings window at a setting, on the Yours or Project tab; it changes no setting.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "setting": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,200}$",
+            "description": "A setting id from settings.list, such as appearance.theme or plugin.<plugin id>.<setting id>."
+          },
+          "scope": {
+            "enum": [
+              "yours",
+              "project"
+            ],
+            "description": "The tab; yours when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "opened": {
+            "const": true
+          }
+        },
+        "required": [
+          "opened"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "settings.set",
       "access": "write",
       "summary": "Changes a setting; the value must have the setting's type.",
@@ -1629,7 +1886,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "Names the undo step, after the caller's name."
+            "description": "A few words naming the change, as the user reads it in the review and in History after the caller's name."
           },
           "edits": {
             "type": "array",
@@ -1740,6 +1997,63 @@
           "revision",
           "active",
           "selected"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "document.group_begin",
+      "access": "write",
+      "summary": "Groups the steps the caller commits on the editing target from now on, by any write, into one undo step named after the caller and `name`. The group ends at document.group_end, when the plugin's command or event handler returns, when the plugin stops, or at the first step someone else makes. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "A few words naming the grouped step, as the user reads it in History after the caller's name."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "document.group_end",
+      "access": "write",
+      "summary": "Ends the caller's group: its steps become one undo step.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many steps became one; 0 when the group made none. A group someone else's step ended earlier is no longer open."
+          }
+        },
+        "required": [
+          "steps"
         ],
         "additionalProperties": false
       }
@@ -1861,7 +2175,7 @@
     {
       "name": "video.frame",
       "access": "read",
-      "summary": "One video frame as BGRA pixels in base64, optionally cropped, scaled to fit maxEdge.",
+      "summary": "One video frame as BGRA pixels in base64, with every Line, one Line or none drawn on it, optionally cropped, scaled to fit maxEdge and maxPixels.",
       "since": 1,
       "params": {
         "type": "object",
@@ -1869,11 +2183,19 @@
           "frame": {
             "type": "integer",
             "minimum": 0,
-            "description": "Default: the frame shown."
+            "description": "Default: the frame shown, or with line the Line's first frame when it is not on the frame shown."
           },
           "subtitles": {
             "type": "boolean",
             "description": "Render the subtitles on it. Default true."
+          },
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "line's Document. Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "Draw this Line alone."
           },
           "crop": {
             "type": "object",
@@ -1908,6 +2230,12 @@
             "minimum": 16,
             "maximum": 4096,
             "description": "Default 1024."
+          },
+          "maxPixels": {
+            "type": "integer",
+            "minimum": 256,
+            "maximum": 16777216,
+            "description": "The most pixels the image may have. No limit when omitted."
           }
         },
         "additionalProperties": false
@@ -1927,6 +2255,34 @@
             "type": "integer",
             "minimum": 1
           },
+          "crop": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "y": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
+          },
           "format": {
             "const": "bgra"
           },
@@ -1939,8 +2295,369 @@
           "frame",
           "width",
           "height",
+          "crop",
           "format",
           "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.ink_bounds",
+      "access": "read",
+      "summary": "Where one Line's ink, or every Line's, lies on a video frame, in video pixels.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default: the frame shown, or with line the Line's first frame when it is not on the frame shown."
+          },
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "This Line alone. Every Line when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "bounds": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "y": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "width": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "height": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when nothing is drawn."
+          }
+        },
+        "required": [
+          "frame",
+          "bounds"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.colours",
+      "access": "read",
+      "summary": "The colours of a video frame at points, as ASS &HBBGGRR&, each the mean of the square radius pixels around it.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default: the frame shown."
+          },
+          "points": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "y": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "radius": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 32,
+            "description": "Default 0, the pixel alone."
+          },
+          "subtitles": {
+            "type": "boolean",
+            "description": "Sample with the subtitles drawn. Default false."
+          }
+        },
+        "required": [
+          "points"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "frame": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "colours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "integer"
+                },
+                "y": {
+                  "type": "integer"
+                },
+                "colour": {
+                  "type": "string",
+                  "pattern": "^&H[0-9A-F]{6}&$"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "colour"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "frame",
+          "colours"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.keyframes",
+      "access": "read",
+      "summary": "The keyframes from one time to another, each with its start time.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Milliseconds. Default 0."
+          },
+          "to": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Milliseconds. Default: the end."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "keyframes": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "object",
+              "properties": {
+                "frame": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "time": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "frame",
+                "time"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Every keyframe in the range; the first 500 are listed."
+          }
+        },
+        "required": [
+          "keyframes",
+          "total"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.frames",
+      "access": "read",
+      "summary": "Video frames from one to another, every stride-th, scaled to fit maxEdge, as luma or BGRA in base64. At most 256 frames and 16 MiB of pixels come in one call.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "to": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stride": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Default 1, every frame."
+          },
+          "maxEdge": {
+            "type": "integer",
+            "minimum": 16,
+            "maximum": 512,
+            "description": "Default 64."
+          },
+          "format": {
+            "enum": [
+              "luma",
+              "bgra"
+            ],
+            "description": "Default luma, one byte per pixel."
+          },
+          "subtitles": {
+            "type": "boolean",
+            "description": "Render the subtitles on them. Default false."
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "format": {
+            "enum": [
+              "luma",
+              "bgra"
+            ]
+          },
+          "frames": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "frame": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "data": {
+                  "type": "string",
+                  "description": "width bytes per row for luma, width * 4 for bgra; top row first; base64."
+                }
+              },
+              "required": [
+                "frame",
+                "data"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "width",
+          "height",
+          "format",
+          "frames"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "video.set_keyframes",
+      "access": "write",
+      "summary": "Replaces the video's keyframes as Open keyframes does. With file, writes them there as an Aegisub keyframes file first and opens it. Not an undo step.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "frames": {
+            "type": "array",
+            "maxItems": 100000,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "file": {
+            "type": "string",
+            "description": "A writable file handle, from files.pick or files.open."
+          }
+        },
+        "required": [
+          "frames"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "count"
         ],
         "additionalProperties": false
       }
@@ -2049,10 +2766,20 @@
     {
       "name": "files.list",
       "access": "read",
-      "summary": "The files the user granted this caller, with read or write access.",
+      "summary": "The files and folders the user granted this caller; with folder, also what that folder holds.",
       "since": 1,
       "params": {
         "type": "object",
+        "properties": {
+          "folder": {
+            "type": "string",
+            "description": "A folder handle to list."
+          },
+          "path": {
+            "type": "string",
+            "description": "A folder inside it; default the folder itself."
+          }
+        },
         "additionalProperties": false
       },
       "result": {
@@ -2063,6 +2790,23 @@
             "items": {
               "$ref": "#/$defs/GrantedFile"
             }
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/GrantedFolder"
+            }
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/FolderEntry"
+            },
+            "description": "With folder: in name order, at most 4096, without links that lead outside it."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "Present when the folder holds more than 4096 entries."
           }
         },
         "required": [
@@ -2083,6 +2827,14 @@
             "type": "string",
             "description": "A handle from files.list."
           },
+          "folder": {
+            "type": "string",
+            "description": "Instead of file, a folder handle from files.list."
+          },
+          "path": {
+            "type": "string",
+            "description": "With folder, the file's path inside it, with / between its parts."
+          },
           "encoding": {
             "enum": [
               "utf8",
@@ -2091,9 +2843,6 @@
             "description": "Default utf8."
           }
         },
-        "required": [
-          "file"
-        ],
         "additionalProperties": false
       },
       "result": {
@@ -2128,7 +2877,7 @@
     {
       "name": "files.write",
       "access": "write",
-      "summary": "Replaces a file granted for writing with new content.",
+      "summary": "Replaces a file granted for writing with new content; in a writable folder, makes it and its folders. An AI caller's write is staged for the user to review and reaches the disk only when kept.",
       "since": 1,
       "params": {
         "type": "object",
@@ -2137,12 +2886,435 @@
             "type": "string",
             "description": "A handle from files.list."
           },
+          "folder": {
+            "type": "string",
+            "description": "Instead of file, a folder handle from files.list."
+          },
+          "path": {
+            "type": "string",
+            "description": "With folder, the file's path inside it, with / between its parts."
+          },
           "encoding": {
             "enum": [
               "utf8",
               "base64"
             ],
             "description": "Default utf8."
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "staged": {
+            "type": "boolean",
+            "description": "True: waiting in the review, not on the disk yet."
+          }
+        },
+        "required": [
+          "file",
+          "size"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "skills.list",
+      "access": "read",
+      "summary": "The caller's skills: each skill folder's name, whether it is the Project's or the user's, and its files, SKILL.md among them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "skill": {
+                  "$ref": "#/$defs/SkillName"
+                },
+                "origin": {
+                  "enum": [
+                    "project",
+                    "yours"
+                  ]
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "skill",
+                "origin",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "skills"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "skills.read",
+      "access": "read",
+      "summary": "One file of a skill skills.list gives, as UTF-8 text; at most 256 KiB.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/$defs/SkillName"
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512,
+            "description": "A path skills.list gives, such as SKILL.md or references/tags.md."
+          }
+        },
+        "required": [
+          "skill",
+          "file"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "skill": {
+            "$ref": "#/$defs/SkillName"
+          },
+          "file": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "data": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "skill",
+          "file",
+          "size",
+          "data"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "automation.macros",
+      "access": "read",
+      "summary": "The loaded Automation macros, as the Automation menu lists them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Keep macros whose name, script or file name holds this, ignoring case."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "macros": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "script": {
+                  "type": "string",
+                  "description": "The script's name."
+                },
+                "file": {
+                  "type": "string",
+                  "description": "The script's file name."
+                },
+                "macro": {
+                  "type": "string"
+                },
+                "ordinal": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The macro's place among the script's, from 0."
+                },
+                "description": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "The script is loaded and shown in the user's window."
+                },
+                "disabledReason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "script",
+                "file",
+                "macro",
+                "ordinal",
+                "description",
+                "enabled"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "macros"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "automation.run_macro",
+      "access": "write",
+      "summary": "Runs a loaded Automation macro on the active tab's selection, as the menu would, as one undo step. Answers fill its dialogs. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The script's file name."
+          },
+          "macro": {
+            "type": "string",
+            "minLength": 1
+          },
+          "answers": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "$ref": "#/$defs/DialogAnswer"
+            },
+            "description": "One per dialog, in order, as macro.ran gives them."
+          },
+          "show": {
+            "enum": [
+              "never",
+              "prefilled"
+            ],
+            "description": "never (the default) answers a dialog whose key matches without showing it; prefilled shows it filled in. A dialog without a matching answer, and a question, is always shown."
+          }
+        },
+        "required": [
+          "file",
+          "macro"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "enum": [
+              "applied",
+              "refused",
+              "failed",
+              "cancelled",
+              "declined",
+              "stopped",
+              "lost"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "log": {
+            "type": "string"
+          },
+          "dialogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DialogAnswer"
+            },
+            "description": "The answers its dialogs got, as macro.ran gives them; only when the caller sees the Document it ran on."
+          }
+        },
+        "required": [
+          "outcome",
+          "message",
+          "log"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "automation.run",
+      "access": "write",
+      "summary": "Saves a Lua Automation script to the AI scripts folder and runs one of its macros on the active tab's selection, once the user approves the script. The run is one undo step.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]*$",
+            "maxLength": 64,
+            "description": "The script's file name without .lua; an earlier script of that name is replaced."
+          },
+          "script": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 262144,
+            "description": "The whole Lua script, registering its macro with aegisub.register_macro."
+          },
+          "macro": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The macro to run, by its registered name; default the first."
+          }
+        },
+        "required": [
+          "name",
+          "script"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "The saved script's file name."
+          },
+          "outcome": {
+            "enum": [
+              "applied",
+              "refused",
+              "failed",
+              "cancelled",
+              "declined",
+              "stopped",
+              "lost",
+              "invalid"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "log": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "outcome",
+          "message",
+          "log"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "translation.project",
+      "access": "read",
+      "summary": "The Document's Honya project files: PROJECT.md, GLOSSARY.md, CHARACTERS.md and STYLE.md, those that exist. folder is null when the Document has no project folder.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "enum": [
+                    "PROJECT.md",
+                    "GLOSSARY.md",
+                    "CHARACTERS.md",
+                    "STYLE.md"
+                  ]
+                },
+                "data": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "data"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "folder",
+          "files"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "translation.project_write",
+      "access": "write",
+      "summary": "Replaces one of the Document's Honya project files, keeping Honya's Markdown and honya:data format.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "file": {
+            "enum": [
+              "PROJECT.md",
+              "GLOSSARY.md",
+              "CHARACTERS.md",
+              "STYLE.md"
+            ]
           },
           "data": {
             "type": "string"
@@ -2158,7 +3330,12 @@
         "type": "object",
         "properties": {
           "file": {
-            "type": "string"
+            "enum": [
+              "PROJECT.md",
+              "GLOSSARY.md",
+              "CHARACTERS.md",
+              "STYLE.md"
+            ]
           },
           "size": {
             "type": "integer",
@@ -2238,6 +3415,3134 @@
         },
         "required": [
           "nodes"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "nodes.validate",
+      "access": "read",
+      "summary": "Checks a node-effect graph; each problem names its node and port or field.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "graph"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.graphs",
+      "access": "read",
+      "summary": "The Document's node-effect graphs, one per graph Line.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "graphs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "style": {
+                  "type": "string",
+                  "description": "The Style whose karaoke Lines it runs on."
+                },
+                "valid": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "line",
+                "name",
+                "style",
+                "valid"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "document",
+          "revision",
+          "graphs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.graph",
+      "access": "read",
+      "summary": "One graph Line's graph, with what keeps it from running.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "name": {
+            "type": "string"
+          },
+          "style": {
+            "type": "string"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "graph": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Null when the Line's text is no graph."
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "name",
+          "style",
+          "revision",
+          "graph",
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.edit",
+      "access": "read",
+      "summary": "Edits a graph in steps (add, connect, disconnect, remove, set) and gives the new graph with its problems; nothing in the Document changes.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object",
+            "description": "A graph as effects.graph gives it; {\"format\": 1, \"nodes\": [], \"wires\": []} starts an empty one."
+          },
+          "steps": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "description": "Applied in order; a refused step changes nothing.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "op": {
+                  "enum": [
+                    "add",
+                    "connect",
+                    "disconnect",
+                    "remove",
+                    "set"
+                  ]
+                },
+                "type": {
+                  "type": "string",
+                  "description": "add: a node type from nodes.catalogue."
+                },
+                "node": {
+                  "type": "string",
+                  "description": "add: the new node's id, made from its type when omitted; remove, set: the node."
+                },
+                "fields": {
+                  "type": "object",
+                  "description": "add: the node's fields."
+                },
+                "from": {
+                  "type": "string",
+                  "description": "connect: an output, \"node.port\"."
+                },
+                "to": {
+                  "type": "string",
+                  "description": "connect, disconnect: an input, \"node.port\"; connect replaces a wire already there."
+                },
+                "field": {
+                  "type": "string",
+                  "description": "set: the field."
+                },
+                "value": {
+                  "description": "set: the field's value; null restores its default."
+                }
+              },
+              "required": [
+                "op"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "graph",
+          "steps"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object"
+          },
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ids of the nodes added, in step order."
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "graph",
+          "added",
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.preview",
+      "access": "read",
+      "summary": "Runs a graph on the Document's karaoke Lines and gives the Lines it would write; nothing is applied. Lua nodes don't run.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "A graph Line: its graph, name and Style."
+          },
+          "graph": {
+            "type": "object",
+            "description": "A graph to run in place of the Line's."
+          },
+          "style": {
+            "type": "string",
+            "description": "The Style whose karaoke Lines it runs on; needed without line."
+          },
+          "name": {
+            "type": "string",
+            "description": "The graph's name, which the Lines' Effect \"fx <name>\" carries."
+          },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Only these karaoke Lines; all of them when omitted."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 500,
+            "description": "How many generated Lines to give; default 20."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ran": {
+            "type": "boolean",
+            "description": "False when a problem stopped the run; applying it would change nothing."
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "sources": {
+            "type": "integer",
+            "description": "How many karaoke Lines ran."
+          },
+          "generated": {
+            "type": "integer",
+            "description": "How many Lines the run made."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The first generated Lines, as ASS Dialogue lines."
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "ran",
+          "complete",
+          "sources",
+          "generated",
+          "lines",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.save",
+      "access": "write",
+      "summary": "Writes a graph to the Document as one undo step: into a new graph Line, or in place of a graph Line's.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "graph": {
+            "type": "object"
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "The graph Line to replace; omit it to add a graph."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "A new graph's name."
+          },
+          "style": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A new graph's Style: whose karaoke Lines it runs on."
+          }
+        },
+        "required": [
+          "graph"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "graph": {
+            "type": "object"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "node": {
+                  "type": "string"
+                },
+                "port": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "message"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "revision",
+          "graph",
+          "valid",
+          "problems"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "effects.apply",
+      "access": "write",
+      "summary": "Runs a graph Line and writes its Lines as one undo step, replacing those it wrote before; the karaoke Lines it ran on become Comments. Lua nodes don't run, so a graph with one applies from the node-effect editor.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId",
+            "description": "The graph Line."
+          },
+          "sources": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Only these karaoke Lines; all of them when omitted."
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "generated": {
+            "type": "integer"
+          },
+          "sources": {
+            "type": "integer",
+            "description": "How many karaoke Lines got Lines."
+          },
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "revision",
+          "generated",
+          "sources",
+          "changed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.list",
+      "access": "read",
+      "summary": "The installed plugins with their state, trust tier and commands.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "source": {
+                  "enum": [
+                    "file",
+                    "marketplace"
+                  ]
+                },
+                "signed": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "tier": {
+                  "enum": [
+                    "restricted",
+                    "unrestricted"
+                  ]
+                },
+                "revoked": {
+                  "type": "boolean"
+                },
+                "commands": {
+                  "type": "array",
+                  "description": "While the plugin runs.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "command": {
+                        "type": "string",
+                        "description": "plugin.<plugin id>.<command id>"
+                      },
+                      "title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "command",
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "version",
+                "description",
+                "source",
+                "signed",
+                "enabled",
+                "tier",
+                "revoked",
+                "commands"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "plugins"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.manifest",
+      "access": "read",
+      "summary": "An installed plugin's hikari-plugin.json.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "plugin"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "manifest": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plugin",
+          "manifest"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.scaffold",
+      "access": "write",
+      "summary": "Writes a plugin from the authoring guide's template into the AI plugins folder and packs it; nothing is installed.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "maxLength": 100,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*(\\.[a-z0-9]+(-[a-z0-9]+)*)+$",
+            "description": "Reverse-DNS, lowercase: com.example.sign-counter. An earlier scaffold of that id is replaced."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "version": {
+            "type": "string",
+            "maxLength": 64,
+            "description": "Semantic version; default 0.1.0."
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "tier": {
+            "enum": [
+              "restricted",
+              "unrestricted"
+            ],
+            "description": "restricted (default) runs in the sandbox without ffi, io, os and debug; unrestricted needs the user's full trust at install."
+          },
+          "permissions": {
+            "type": "object",
+            "description": "The manifest's permissions: documents.all, network {hosts, reason}, files, vcs.read."
+          },
+          "commands": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 256,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                }
+              },
+              "required": [
+                "id",
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 1048576,
+            "description": "main.lua, registering each command with hikari.commands.register; the guide's first plugin when omitted."
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "maxLength": 200,
+                  "pattern": "^([A-Za-z0-9_][A-Za-z0-9_.-]*/)*[A-Za-z0-9_][A-Za-z0-9_.-]*\\.(lua|json|md|txt)$"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "More files beside main.lua and hikari-plugin.json."
+          }
+        },
+        "required": [
+          "plugin",
+          "name",
+          "commands"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "folder": {
+            "type": "string"
+          },
+          "package": {
+            "type": "string",
+            "description": "The packed .hikariplugin."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "manifest": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "plugin",
+          "folder",
+          "package",
+          "files",
+          "manifest"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.review",
+      "access": "read",
+      "summary": "What installing a package would do, as the install question shows it: its trust tier, signing, permissions, commands and files.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "description": "A plugin plugins.scaffold made."
+          },
+          "file": {
+            "type": "string",
+            "description": "A .hikariplugin the user granted, by its files.list handle."
+          }
+        },
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "plugin"
+            ]
+          },
+          {
+            "required": [
+              "file"
+            ]
+          }
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "change": {
+            "enum": [
+              "install",
+              "update",
+              "reinstall",
+              "downgrade"
+            ]
+          },
+          "installedVersion": {
+            "type": "string"
+          },
+          "tier": {
+            "enum": [
+              "restricted",
+              "unrestricted"
+            ],
+            "description": "unrestricted runs outside the sandbox and needs the user's full trust."
+          },
+          "needsRetrust": {
+            "type": "boolean",
+            "description": "The signing key changed, or an unsigned package replaces a signed one."
+          },
+          "keyId": {
+            "type": "string",
+            "description": "The signing key; empty when unsigned."
+          },
+          "pinnedKeyId": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The titles of the commands it adds."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "digest": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "plugin",
+          "name",
+          "version",
+          "change",
+          "installedVersion",
+          "tier",
+          "needsRetrust",
+          "keyId",
+          "pinnedKeyId",
+          "permissions",
+          "commands",
+          "files",
+          "digest"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.install",
+      "access": "write",
+      "summary": "Installs a scaffolded or granted plugin package and turns it on, once the user approves it in HikariSub; it asks every time.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string",
+            "description": "A plugin plugins.scaffold made."
+          },
+          "file": {
+            "type": "string",
+            "description": "A .hikariplugin the user granted, by its files.list handle."
+          }
+        },
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "required": [
+              "plugin"
+            ]
+          },
+          {
+            "required": [
+              "file"
+            ]
+          }
+        ]
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "change": {
+            "enum": [
+              "install",
+              "update",
+              "reinstall",
+              "downgrade"
+            ]
+          },
+          "installedVersion": {
+            "type": "string"
+          },
+          "tier": {
+            "enum": [
+              "restricted",
+              "unrestricted"
+            ],
+            "description": "unrestricted runs outside the sandbox and needs the user's full trust."
+          },
+          "needsRetrust": {
+            "type": "boolean",
+            "description": "The signing key changed, or an unsigned package replaces a signed one."
+          },
+          "keyId": {
+            "type": "string",
+            "description": "The signing key; empty when unsigned."
+          },
+          "pinnedKeyId": {
+            "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The titles of the commands it adds."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "digest": {
+            "type": "string"
+          },
+          "installed": {
+            "const": true
+          }
+        },
+        "required": [
+          "plugin",
+          "name",
+          "version",
+          "change",
+          "installedVersion",
+          "tier",
+          "needsRetrust",
+          "keyId",
+          "pinnedKeyId",
+          "permissions",
+          "commands",
+          "files",
+          "digest",
+          "installed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "plugins.run",
+      "access": "write",
+      "summary": "Runs an installed plugin's command as its menu item would.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "plugin": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string",
+            "description": "The command's id within the plugin, as in its manifest."
+          }
+        },
+        "required": [
+          "plugin",
+          "command"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ran": {
+            "const": true
+          }
+        },
+        "required": [
+          "ran"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "status_items.set",
+      "access": "write",
+      "summary": "Changes one of the caller's status bar items. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64,
+            "description": "An id from contributes.statusItems."
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 40,
+            "description": "Empty: icon only."
+          },
+          "icon": {
+            "type": "string",
+            "maxLength": 68,
+            "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$",
+            "description": "An icon role or own:<id>; empty: text only."
+          },
+          "tooltip": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "tone": {
+            "enum": [
+              "normal",
+              "warning",
+              "danger"
+            ]
+          },
+          "visible": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "item"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "formats.list",
+      "access": "read",
+      "summary": "The subtitle formats HikariSub can open and export, built-in and from plugins.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "formats": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "ass, srt, … or plugin:<plugin id>/<format id>."
+                },
+                "title": {
+                  "type": "string"
+                },
+                "extensions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "import": {
+                  "type": "boolean"
+                },
+                "export": {
+                  "type": "boolean"
+                },
+                "plugin": {
+                  "type": "string",
+                  "description": "The plugin's id, for a plugin format."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "extensions",
+                "import",
+                "export"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "formats"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.perspective",
+      "access": "read",
+      "summary": "The Line's text with the tags that render it on a quad (VT3's perspective solver): \\pos, \\org, \\frx, \\fry, \\frz, \\fax, \\fscx and \\fscy.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "quad": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Script coordinates: top left, top right, bottom right, bottom left."
+          },
+          "origin": {
+            "enum": [
+              "center",
+              "nofax",
+              "keep"
+            ],
+            "description": "Where \\org goes: the quad's centre (default), the centre without \\fax, or where the Line has it."
+          }
+        },
+        "required": [
+          "line",
+          "quad"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string"
+          },
+          "transform": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "line",
+          "text",
+          "transform"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.clip",
+      "access": "read",
+      "summary": "The Line's text with its first clip replaced by a rectangle or a vector clip.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "rect": {
+            "type": "object",
+            "properties": {
+              "x1": {
+                "type": "number"
+              },
+              "y1": {
+                "type": "number"
+              },
+              "x2": {
+                "type": "number"
+              },
+              "y2": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x1",
+              "y1",
+              "x2",
+              "y2"
+            ],
+            "additionalProperties": false,
+            "description": "Script coordinates, rounded to whole units."
+          },
+          "vector": {
+            "type": "string",
+            "maxLength": 100000,
+            "description": "ASS drawing commands such as \"m 0 0 l 100 0 100 50 0 50\"; empty removes the vector clip."
+          },
+          "inverse": {
+            "type": "boolean",
+            "description": "\\iclip: draw outside the clip."
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The Line's text with the tags written; nothing is applied."
+          }
+        },
+        "required": [
+          "line",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.drawing",
+      "access": "read",
+      "summary": "The Line's text with its first drawing replaced by a shape (\\p1), placed at a position with an alignment.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "shape": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100000,
+            "description": "ASS drawing commands, in script units from the drawing's origin."
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false
+          },
+          "alignment": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9,
+            "description": "\\an; 7 (top left) with position, else the Line's."
+          }
+        },
+        "required": [
+          "line",
+          "shape"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The Line's text with the tags written; nothing is applied."
+          }
+        },
+        "required": [
+          "line",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.shift",
+      "access": "read",
+      "summary": "Moves the Lines' positions, \\move points, clips, drawings and \\org by an offset, as the Position shifter does.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "dx": {
+            "type": "number",
+            "description": "Script units."
+          },
+          "dy": {
+            "type": "number"
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "position",
+                "move_start",
+                "move_end",
+                "clip",
+                "drawing",
+                "origin"
+              ]
+            },
+            "description": "What moves; every kind but drawing when omitted."
+          }
+        },
+        "required": [
+          "lines",
+          "dx",
+          "dy"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines the change alters, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.hydra",
+      "access": "read",
+      "summary": "Changes one tag across the Lines as the Hydra strip does: set it, add to it, multiply it by line number, or run a gradient across characters or Lines.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Multiply and the line gradients count them in this order."
+          },
+          "tag": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A Hydra tag without the backslash: blur, bord, be, alpha, 1a, 3a, 4a, 1c (or c), 3c, 4c, fad, fax, fay, fs, fsp, shad, xbord, ybord, xshad, yshad, pos or t."
+          },
+          "change": {
+            "enum": [
+              "set",
+              "add",
+              "multiply",
+              "gradient"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "set: the value; add: what to add; multiply: the start; gradient: the first value. Colours are R, G, B."
+          },
+          "perLine": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "multiply: added for each Line."
+          },
+          "byLine": {
+            "enum": [
+              "set",
+              "add"
+            ],
+            "description": "multiply: set each Line's value, or add to it. Default set."
+          },
+          "to": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            },
+            "description": "gradient: the last value."
+          },
+          "across": {
+            "enum": [
+              "characters",
+              "lines"
+            ],
+            "description": "gradient: default characters."
+          },
+          "decreasing": {
+            "type": "boolean",
+            "description": "gradient: run from the end."
+          }
+        },
+        "required": [
+          "lines",
+          "tag",
+          "change",
+          "values"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines the change alters, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.check",
+      "access": "read",
+      "summary": "Renders one Line alone, with a proposed text, on its frame and compares its ink with a target.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The proposed text; the Line's own when omitted."
+          },
+          "target": {
+            "description": "Where the Line's ink should land, in script coordinates: a quad or a box.",
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "quad": {
+                    "type": "array",
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "description": "Script coordinates: top left, top right, bottom right, bottom left."
+                  }
+                },
+                "required": [
+                  "quad"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "box": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "width": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "height": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "box"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "frame": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default: the frame shown when the Line is on it, else the Line's first."
+          },
+          "tolerance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Video pixels; default 4."
+          }
+        },
+        "required": [
+          "line",
+          "target"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "frame": {
+            "type": "integer"
+          },
+          "pass": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn."
+          },
+          "ink": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "width",
+                  "height"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "line",
+          "frame",
+          "pass",
+          "error",
+          "ink",
+          "target"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "typeset.apply",
+      "access": "write",
+      "summary": "Applies typeset Lines as one undo step after every one passes the render check; when one misses its target nothing is applied.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "A few words naming the change, such as \"Typeset the shop sign\"."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "target": {
+                  "description": "Where the Line's ink should land, in script coordinates: a quad or a box.",
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "quad": {
+                          "type": "array",
+                          "minItems": 4,
+                          "maxItems": 4,
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "description": "Script coordinates: top left, top right, bottom right, bottom left."
+                        }
+                      },
+                      "required": [
+                        "quad"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "box": {
+                          "type": "object",
+                          "properties": {
+                            "x": {
+                              "type": "number"
+                            },
+                            "y": {
+                              "type": "number"
+                            },
+                            "width": {
+                              "type": "number",
+                              "minimum": 0
+                            },
+                            "height": {
+                              "type": "number",
+                              "minimum": 0
+                            }
+                          },
+                          "required": [
+                            "x",
+                            "y",
+                            "width",
+                            "height"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "box"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "frame": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "line",
+                "text",
+                "target"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "tolerance": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Video pixels; default 4."
+          }
+        },
+        "required": [
+          "revision",
+          "name",
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "inserted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "frame": {
+                  "type": "integer"
+                },
+                "pass": {
+                  "type": "boolean"
+                },
+                "error": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "description": "The largest distance between an edge of the ink's bounds and the target's, in video pixels; null when nothing is drawn."
+                },
+                "ink": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "width": {
+                          "type": "number"
+                        },
+                        "height": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "target": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y",
+                    "width",
+                    "height"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "line",
+                "frame",
+                "pass",
+                "error",
+                "ink",
+                "target"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "revision",
+          "inserted",
+          "changed",
+          "checks"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "project.info",
+      "access": "read",
+      "summary": "The Project of the window the user works in, or null.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/$defs/Project"
+          }
+        },
+        "required": [
+          "project"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "vcs.refs",
+      "access": "read",
+      "summary": "The branches, tags and recent commits of the git repository holding the Document, or the Project's. Plugins whose manifest asks for vcs.read only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document; an unsaved one gives the Project's repository."
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "How many recent commits; 50 when left out."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "root": {
+            "type": "string",
+            "description": "The repository's work tree."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The Document's path in the repository, '/'-separated; null for the Project's."
+          },
+          "head": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The current branch; null when detached."
+                  },
+                  "commit": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "commit"
+                ],
+                "additionalProperties": false
+              }
+            ],
+            "description": "null before the first commit."
+          },
+          "branches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "commit": {
+                  "type": "string"
+                },
+                "current": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "name",
+                "commit",
+                "current"
+              ],
+              "additionalProperties": false
+            },
+            "description": "At most 500, newest first."
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "commit": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "commit"
+              ],
+              "additionalProperties": false
+            },
+            "description": "At most 500, newest first."
+          },
+          "commits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "commit": {
+                  "type": "string"
+                },
+                "summary": {
+                  "type": "string"
+                },
+                "author": {
+                  "type": "string"
+                },
+                "time": {
+                  "type": "integer",
+                  "description": "Seconds since 1970, when it was committed."
+                }
+              },
+              "required": [
+                "commit",
+                "summary",
+                "author",
+                "time"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The newest from HEAD."
+          }
+        },
+        "required": [
+          "root",
+          "path",
+          "head",
+          "branches",
+          "tags",
+          "commits"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "vcs.show",
+      "access": "read",
+      "summary": "The Document's file as a git branch, tag or commit has it. Plugins whose manifest asks for vcs.read only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[A-Za-z0-9._/@{}~^][A-Za-z0-9._/@{}~^-]*$",
+            "description": "A branch, tag, commit or revision such as HEAD~2."
+          },
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "required": [
+          "ref"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "commit": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "description": "The Document's path in the repository, '/'-separated."
+          },
+          "text": {
+            "type": "string",
+            "description": "The file at that commit, as UTF-8."
+          }
+        },
+        "required": [
+          "ref",
+          "commit",
+          "path",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "presence.set_text",
+      "access": "write",
+      "summary": "Sets or clears the caller's text for {plugin} in the user's Discord status. Plugins whose manifest asks for presence only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[^\\u0000-\\u001F\\u007F]*$",
+            "description": "Plain text; empty clears it."
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.syllables",
+      "access": "read",
+      "summary": "A Line's karaoke syllables as the templater reads them: text, tag, start and end in ms.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "syllables": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "stripped": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "integer"
+                },
+                "end": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "text",
+                "stripped",
+                "tag",
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "syllables"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.split",
+      "access": "read",
+      "summary": "Splits Lines without \\k tags into syllables as the audio editor's karaoke mode does, the time shared by character; Lines that already have \\k tags keep them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "bySyllable": {
+            "type": "boolean",
+            "description": "Default true: by syllable, with the language rules the user set; false: at spaces."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines that change, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.time",
+      "access": "read",
+      "summary": "Times a Line's existing syllables: each syllable's end in ms, in order; the \\k tags are rewritten.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "ends": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4096,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "description": "One per syllable, ascending, in ms from the video's start."
+          }
+        },
+        "required": [
+          "line",
+          "ends"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string",
+            "description": "The Line's text with the \\k tags written; nothing is applied."
+          }
+        },
+        "required": [
+          "line",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.onsets",
+      "access": "read",
+      "summary": "Where sung notes start in the open audio, in ms, within a range.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "onsets": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "required": [
+          "onsets"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.snap",
+      "access": "read",
+      "summary": "Moves each syllable boundary inside the Lines to the nearest vocal onset within the window, keeping every syllable at least 10 ms long.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "window": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "description": "Ms either side; default 100."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "moved": {
+                  "type": "integer",
+                  "description": "Boundaries moved."
+                }
+              },
+              "required": [
+                "line",
+                "text"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The Lines that change, with their new text; nothing is applied."
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.kanji",
+      "access": "read",
+      "summary": "Copies a timed romaji Line's syllables onto its kanji Line as the Kanji timer suggests the groups.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "romaji": {
+            "$ref": "#/$defs/LineId"
+          },
+          "kanji": {
+            "$ref": "#/$defs/LineId"
+          },
+          "multi": {
+            "type": "boolean",
+            "description": "Further syllables of a group become # syllables instead of joining the first."
+          }
+        },
+        "required": [
+          "romaji",
+          "kanji"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "text": {
+            "type": "string"
+          },
+          "clean": {
+            "type": "boolean",
+            "description": "False when a group came out blank or the characters ran out: check it."
+          }
+        },
+        "required": [
+          "line",
+          "text",
+          "clean"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.furigana",
+      "access": "read",
+      "summary": "The readings the dictionary suggests for a Line's kanji runs, in hiragana.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "base": {
+                  "type": "string"
+                },
+                "reading": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "base",
+                "reading"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "runs"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.check",
+      "access": "read",
+      "summary": "The Karaoke check's problems: unclosed tags, totals that differ from the Line, empty syllables and syllables outside the Line.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "kind": {
+                  "enum": [
+                    "unclosed",
+                    "not_for_audio_editor",
+                    "editor_only",
+                    "total_not_duration",
+                    "zero_length",
+                    "outside_line"
+                  ]
+                },
+                "totalMs": {
+                  "type": "integer"
+                },
+                "durationMs": {
+                  "type": "integer"
+                },
+                "syllables": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "description": "Which ones, from 1."
+                }
+              },
+              "required": [
+                "line",
+                "kind"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "unlisted": {
+            "type": "integer",
+            "description": "Problems past the listed ones."
+          }
+        },
+        "required": [
+          "problems",
+          "unlisted"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.template_preview",
+      "access": "read",
+      "summary": "The Lines the karaoke templater generates from one karaoke Line, without applying them.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "line": {
+            "$ref": "#/$defs/LineId"
+          }
+        },
+        "required": [
+          "line"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "$ref": "#/$defs/LineId"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "layer": {
+                  "type": "integer"
+                },
+                "start": {
+                  "type": "integer"
+                },
+                "end": {
+                  "type": "integer"
+                },
+                "style": {
+                  "type": "string"
+                },
+                "effect": {
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "layer",
+                "start",
+                "end",
+                "style",
+                "effect",
+                "text"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "line",
+          "lines"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.apply_template",
+      "access": "write",
+      "summary": "Runs the karaoke templater on the karaoke Lines, or the Lines given, and applies what it generates as one undo step: old generated Lines are replaced.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "Default: every karaoke Line."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Default \"Apply karaoke template\"."
+          }
+        },
+        "required": [
+          "revision"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "$ref": "#/$defs/Revision"
+          },
+          "changed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "revision",
+          "changed"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "karaoke.align",
+      "access": "write",
+      "summary": "Runs the user's own WhisperX or Montreal Forced Aligner on the audio under the Lines and answers each word with its start and end in ms; the user approves every run, and nothing is applied.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/$defs/LineId"
+            }
+          },
+          "program": {
+            "enum": [
+              "whisperx",
+              "mfa"
+            ]
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "WhisperX: a language code such as ja; default: it detects."
+          },
+          "dictionary": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "MFA: the pronunciation dictionary, such as english_mfa."
+          },
+          "acousticModel": {
+            "type": "string",
+            "maxLength": 200,
+            "description": "MFA: the acoustic model, such as english_mfa."
+          }
+        },
+        "required": [
+          "lines",
+          "program"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "integer"
+                },
+                "end": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "text",
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "words"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "marks.set",
+      "access": "write",
+      "summary": "Marks Grid rows with a coloured bar and a tooltip, replacing the caller's marks on those Lines. Marks belong to the plugin, are never saved and go when it stops. Not an undo step. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "marks": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20000,
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "colour": {
+                  "$ref": "#/$defs/MarkColour"
+                },
+                "tooltip": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "What the mark means; shown on hover after the plugin's name and read by screen readers."
+                }
+              },
+              "required": [
+                "line",
+                "colour",
+                "tooltip"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "marks"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "marked": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "document",
+          "marked"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "marks.clear",
+      "access": "write",
+      "summary": "Removes the caller's Grid row marks. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/LineId"
+            },
+            "description": "These Lines only; every mark of the caller when omitted."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "marks.list",
+      "access": "read",
+      "summary": "The caller's Grid row marks on a Document. Plugins only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId",
+            "description": "Defaults to the active Document."
+          }
+        },
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "marks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "line": {
+                  "$ref": "#/$defs/LineId"
+                },
+                "colour": {
+                  "$ref": "#/$defs/MarkColour"
+                },
+                "tooltip": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200,
+                  "description": "What the mark means; shown on hover after the plugin's name and read by screen readers."
+                }
+              },
+              "required": [
+                "line",
+                "colour",
+                "tooltip"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "document",
+          "marks"
         ],
         "additionalProperties": false
       }
@@ -2444,65 +6749,227 @@
       }
     },
     {
-      "name": "status_items.set",
+      "name": "programs.run",
       "access": "write",
-      "summary": "Changes one of the caller's status bar items. Plugins only.",
+      "summary": "Runs one of the plugin's declared programs with its declared arguments, then args, and answers once it ends. Output is capped at 16 MiB per stream. Plugins with the programs permission only.",
       "since": 1,
       "params": {
         "type": "object",
         "properties": {
-          "item": {
+          "program": {
             "type": "string",
             "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-            "maxLength": 64,
-            "description": "An id from contributes.statusItems."
+            "maxLength": 64
           },
-          "text": {
+          "args": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "string",
+              "maxLength": 32768
+            },
+            "description": "${file:N} becomes the path of files[N], which the program may then open."
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string",
+              "description": "A file or folder handle the plugin holds."
+            },
+            "description": "Read-only unless the handle is writable."
+          },
+          "stdin": {
             "type": "string",
-            "maxLength": 40,
-            "description": "Empty: icon only."
+            "maxLength": 16777216
           },
-          "icon": {
-            "type": "string",
-            "maxLength": 68,
-            "pattern": "^((own:)?[a-z0-9]+(-[a-z0-9]+)*)?$",
-            "description": "An icon role or own:<id>; empty: text only."
-          },
-          "tooltip": {
-            "type": "string",
-            "maxLength": 300
-          },
-          "tone": {
+          "encoding": {
             "enum": [
-              "normal",
-              "warning",
-              "danger"
-            ]
+              "utf8",
+              "base64"
+            ],
+            "description": "Of stdin, stdout and stderr; utf8 when omitted."
           },
-          "visible": {
-            "type": "boolean"
+          "timeout": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 86400000,
+            "description": "Milliseconds; 60000 when omitted."
           }
         },
         "required": [
-          "item"
+          "program"
         ],
         "additionalProperties": false
       },
       "result": {
         "type": "object",
         "properties": {
-          "item": {
+          "exitCode": {
+            "type": "integer"
+          },
+          "stdout": {
             "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
           }
         },
         "required": [
-          "item"
+          "exitCode",
+          "stdout",
+          "stderr",
+          "encoding"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.start",
+      "access": "write",
+      "summary": "Starts one of the plugin's declared programs and keeps it running; its output comes as program.output and its end as program.exited. A plugin keeps at most 8 running. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64
+          },
+          "args": {
+            "type": "array",
+            "maxItems": 256,
+            "items": {
+              "type": "string",
+              "maxLength": 32768
+            }
+          },
+          "files": {
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "type": "string"
+            }
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ],
+            "description": "Of what program.output carries and programs.send takes."
+          }
+        },
+        "required": [
+          "program"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.send",
+      "access": "write",
+      "summary": "Writes to a started program's stdin; close: true closes stdin after data. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "data": {
+            "type": "string",
+            "maxLength": 16777216
+          },
+          "close": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "programs.stop",
+      "access": "write",
+      "summary": "Ends a started program and its children. Plugins with the programs permission only.",
+      "since": 1,
+      "params": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
+        ],
+        "additionalProperties": false
+      },
+      "result": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          }
+        },
+        "required": [
+          "process"
         ],
         "additionalProperties": false
       }
     }
   ],
   "events": [
+    {
+      "name": "project.changed",
+      "summary": "The window the user works in opened or closed a Project, or the user moved to a window with another one.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "project": {
+            "$ref": "#/$defs/Project"
+          }
+        },
+        "required": [
+          "project"
+        ],
+        "additionalProperties": false
+      }
+    },
     {
       "name": "document.changed",
       "summary": "A Document's content changed: a commit, Undo or Redo.",
@@ -2550,6 +7017,94 @@
         "required": [
           "document",
           "sources"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "program.output",
+      "summary": "A started program wrote to stdout or stderr. Only its plugin hears it, in order and never merged.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "stream": {
+            "enum": [
+              "stdout",
+              "stderr"
+            ]
+          },
+          "data": {
+            "type": "string"
+          },
+          "encoding": {
+            "enum": [
+              "utf8",
+              "base64"
+            ]
+          }
+        },
+        "required": [
+          "process",
+          "stream",
+          "data",
+          "encoding"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "program.exited",
+      "summary": "A started program ended. Only its plugin hears it.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "process": {
+            "$ref": "#/$defs/ProgramProcess"
+          },
+          "exitCode": {
+            "type": "integer"
+          },
+          "stopped": {
+            "type": "boolean",
+            "description": "true when programs.stop or the plugin's end stopped it."
+          }
+        },
+        "required": [
+          "process",
+          "exitCode",
+          "stopped"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "document.saved",
+      "summary": "A Document was written to a file: Save, Save as, Save all or Save translation. Nothing comes for a save that was cancelled or failed.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "path": {
+            "type": "string",
+            "description": "The file it was written to, as documents.list gives paths."
+          },
+          "revision": {
+            "$ref": "#/$defs/Revision",
+            "description": "The revision that was written."
+          }
+        },
+        "required": [
+          "document",
+          "path",
+          "revision"
         ],
         "additionalProperties": false
       }
@@ -2659,7 +7214,7 @@
     },
     {
       "name": "command.ran",
-      "summary": "A command ran, from a menu, a key, the API or anywhere else.",
+      "summary": "A command was triggered, from a menu, a key, the API or anywhere else. It reports the trigger, not the outcome: a Save that opens a dialog or a question comes before anything is written, and even when it is then cancelled; document.saved reports the write.",
       "since": 1,
       "data": {
         "type": "object",
@@ -2678,7 +7233,2033 @@
         ],
         "additionalProperties": false
       }
+    },
+    {
+      "name": "macro.ran",
+      "summary": "An Automation macro run ended, from the menu, a key, Repeat last run or the API, with the answers its dialogs got, in the form automation.run_macro takes.",
+      "since": 1,
+      "data": {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/$defs/DocumentId"
+          },
+          "file": {
+            "type": "string",
+            "description": "The script's file name."
+          },
+          "macro": {
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "applied",
+              "refused",
+              "failed",
+              "cancelled",
+              "declined",
+              "stopped",
+              "lost"
+            ]
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "True when it applied."
+          },
+          "dialogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/DialogAnswer"
+            }
+          }
+        },
+        "required": [
+          "document",
+          "file",
+          "macro",
+          "outcome",
+          "ok",
+          "dialogs"
+        ],
+        "additionalProperties": false
+      }
     }
   ],
-  "nodes": []
+  "nodes": [
+    {
+      "id": "units.for_each",
+      "category": "units",
+      "summary": "Each unit of every karaoke Line the graph applies to: the Line itself, its syllables, their characters or the furigana. Blank units (no duration or only spaces) can be skipped.",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "enum": [
+              "syl",
+              "line",
+              "char",
+              "furi"
+            ],
+            "description": "What one unit is.",
+            "default": "syl"
+          },
+          "skip_blank": {
+            "type": "boolean",
+            "description": "Leave out units with no duration or only spaces.",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.repeat",
+      "category": "units",
+      "summary": "Each unit `count` times; j runs from 1 to count.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "j",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many times.",
+            "default": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.frames",
+      "category": "units",
+      "summary": "Each unit once per step of time from `start` to `end` (absolute ms); without them, the unit's own span.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "start",
+          "type": "Time"
+        },
+        {
+          "name": "end",
+          "type": "Time"
+        },
+        {
+          "name": "step",
+          "type": "Time"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "start",
+          "type": "Time"
+        },
+        {
+          "name": "end",
+          "type": "Time"
+        },
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        },
+        {
+          "name": "progress",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The first step's start; null: the unit's start."
+          },
+          "end": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The last step's end; null: the unit's end."
+          },
+          "step": {
+            "type": "number",
+            "minimum": 1,
+            "description": "One step, in ms.",
+            "default": 40
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.clip_gradient",
+      "category": "units",
+      "summary": "Each unit once per strip of its box, side by side across or stacked down: the strip's \\clip rectangle (whole pixels, the edges shared) and its colour along the gradient.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "strips",
+          "type": "Number"
+        },
+        {
+          "name": "padding",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        },
+        {
+          "name": "progress",
+          "type": "Number"
+        },
+        {
+          "name": "clip",
+          "type": "Tags"
+        },
+        {
+          "name": "colour",
+          "type": "Colour"
+        },
+        {
+          "name": "from",
+          "type": "Point"
+        },
+        {
+          "name": "to",
+          "type": "Point"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "strips": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many strips.",
+            "default": 8
+          },
+          "direction": {
+            "enum": [
+              "across",
+              "down"
+            ],
+            "description": "Strips side by side from left to right, or stacked from top to bottom.",
+            "default": "across"
+          },
+          "colours": {
+            "type": "array",
+            "description": "The gradient's stops, as #RRGGBB, at least one.",
+            "default": [
+              "#FFFFFF",
+              "#000000"
+            ]
+          },
+          "padding": {
+            "type": "number",
+            "description": "Added to the box on every side, in pixels.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.array",
+      "category": "units",
+      "summary": "Each unit once per copy: on a grid centred on it, on a circle around it, or spread evenly along a path drawn from its position. angle is in degrees, as \\frz takes it.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "path",
+          "type": "Drawing"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        },
+        {
+          "name": "radius",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        },
+        {
+          "name": "offset",
+          "type": "Point"
+        },
+        {
+          "name": "position",
+          "type": "Point"
+        },
+        {
+          "name": "angle",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "shape": {
+            "enum": [
+              "grid",
+              "circle",
+              "path"
+            ],
+            "description": "Where the copies go.",
+            "default": "grid"
+          },
+          "columns": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Grid: copies in a row.",
+            "default": 3
+          },
+          "rows": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Grid: rows.",
+            "default": 1
+          },
+          "spacing": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "Grid: from one copy to the next, as [across, down].",
+            "default": [
+              40,
+              40
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Circle and path: how many copies.",
+            "default": 8
+          },
+          "radius": {
+            "type": "number",
+            "description": "Circle: its radius.",
+            "default": 50
+          },
+          "start_angle": {
+            "type": "number",
+            "description": "Circle: the first copy's angle, in degrees counter-clockwise from the right.",
+            "default": 90
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.particles",
+      "category": "units",
+      "summary": "Each unit once per particle, spread at random over a rectangle or an ellipse centred on it. The same graph seed, node seed and Line give the same particles on every run and platform.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        },
+        {
+          "name": "width",
+          "type": "Number"
+        },
+        {
+          "name": "height",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        },
+        {
+          "name": "offset",
+          "type": "Point"
+        },
+        {
+          "name": "position",
+          "type": "Point"
+        },
+        {
+          "name": "random",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "How many particles.",
+            "default": 20
+          },
+          "area": {
+            "enum": [
+              "rectangle",
+              "ellipse"
+            ],
+            "description": "The area they spread over.",
+            "default": "rectangle"
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The area's width.",
+            "default": 100
+          },
+          "height": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The area's height.",
+            "default": 100
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Added to the graph's seed.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.highlights",
+      "category": "units",
+      "summary": "Each syllable or character once per highlight, as the templater's multi gives it: the highlight's start, end and duration. A furigana or Line unit has one, its own.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "skip_blank": {
+            "type": "boolean",
+            "description": "Leave out highlights with no duration.",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.inline_fx",
+      "category": "units",
+      "summary": "Only the units whose inline-fx ({\\-name}, kept until the next one) is `fx`, as the templater's fx modifier keeps them. Characters have their syllable's; a Line unit has none.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "fx": {
+            "type": "string",
+            "description": "The inline-fx name; empty: units without one.",
+            "default": ""
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "units.info",
+      "category": "units",
+      "summary": "What the karaoke templater's $variables give for the current unit and its Line, rounded as the templater rounds them. Times of a syllable are from its Line's start. line_alignment is the Line's first \\an, or its Style's alignment.",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "Text"
+        },
+        {
+          "name": "i",
+          "type": "Number"
+        },
+        {
+          "name": "n",
+          "type": "Number"
+        },
+        {
+          "name": "start",
+          "type": "Time"
+        },
+        {
+          "name": "end",
+          "type": "Time"
+        },
+        {
+          "name": "duration",
+          "type": "Time"
+        },
+        {
+          "name": "kdur",
+          "type": "Number"
+        },
+        {
+          "name": "mid",
+          "type": "Time"
+        },
+        {
+          "name": "left",
+          "type": "Number"
+        },
+        {
+          "name": "center",
+          "type": "Number"
+        },
+        {
+          "name": "right",
+          "type": "Number"
+        },
+        {
+          "name": "width",
+          "type": "Number"
+        },
+        {
+          "name": "top",
+          "type": "Number"
+        },
+        {
+          "name": "middle",
+          "type": "Number"
+        },
+        {
+          "name": "bottom",
+          "type": "Number"
+        },
+        {
+          "name": "height",
+          "type": "Number"
+        },
+        {
+          "name": "x",
+          "type": "Number"
+        },
+        {
+          "name": "y",
+          "type": "Number"
+        },
+        {
+          "name": "position",
+          "type": "Point"
+        },
+        {
+          "name": "layer",
+          "type": "Number"
+        },
+        {
+          "name": "line_index",
+          "type": "Number"
+        },
+        {
+          "name": "line_start",
+          "type": "Time"
+        },
+        {
+          "name": "line_end",
+          "type": "Time"
+        },
+        {
+          "name": "line_duration",
+          "type": "Time"
+        },
+        {
+          "name": "line_left",
+          "type": "Number"
+        },
+        {
+          "name": "line_center",
+          "type": "Number"
+        },
+        {
+          "name": "line_right",
+          "type": "Number"
+        },
+        {
+          "name": "line_width",
+          "type": "Number"
+        },
+        {
+          "name": "line_top",
+          "type": "Number"
+        },
+        {
+          "name": "line_middle",
+          "type": "Number"
+        },
+        {
+          "name": "line_bottom",
+          "type": "Number"
+        },
+        {
+          "name": "line_height",
+          "type": "Number"
+        },
+        {
+          "name": "style_fontsize",
+          "type": "Number"
+        },
+        {
+          "name": "style_scale_x",
+          "type": "Number"
+        },
+        {
+          "name": "style_scale_y",
+          "type": "Number"
+        },
+        {
+          "name": "style_spacing",
+          "type": "Number"
+        },
+        {
+          "name": "style_angle",
+          "type": "Number"
+        },
+        {
+          "name": "style_outline",
+          "type": "Number"
+        },
+        {
+          "name": "style_shadow",
+          "type": "Number"
+        },
+        {
+          "name": "style_alignment",
+          "type": "Number"
+        },
+        {
+          "name": "style_primary",
+          "type": "Colour"
+        },
+        {
+          "name": "style_secondary",
+          "type": "Colour"
+        },
+        {
+          "name": "style_outline_colour",
+          "type": "Colour"
+        },
+        {
+          "name": "style_back",
+          "type": "Colour"
+        },
+        {
+          "name": "line_alignment",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "values.number",
+      "category": "values",
+      "summary": "A number.",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "The number.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "values.text",
+      "category": "values",
+      "summary": "A text.",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "Text"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "The text.",
+            "default": ""
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "values.colour",
+      "category": "values",
+      "summary": "A colour.",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "Colour"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "description": "The colour, as #RRGGBB.",
+            "default": "#FFFFFF"
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "values.point",
+      "category": "values",
+      "summary": "A point from its coordinates.",
+      "inputs": [
+        {
+          "name": "x",
+          "type": "Number"
+        },
+        {
+          "name": "y",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "point",
+          "type": "Point"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "description": "Across.",
+            "default": 0
+          },
+          "y": {
+            "type": "number",
+            "description": "Down.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "values.choose",
+      "category": "values",
+      "summary": "One of a list of values by its place (from 1); places past the end wrap around.",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "Any"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "number",
+              "text",
+              "colour",
+              "alpha",
+              "time"
+            ],
+            "description": "The values' type.",
+            "default": "number"
+          },
+          "values": {
+            "type": "array",
+            "description": "The values, at least one.",
+            "default": []
+          },
+          "index": {
+            "type": "number",
+            "description": "The place.",
+            "default": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "math.calculate",
+      "category": "math",
+      "summary": "Arithmetic in doubles, as Lua does it. modulo is a - floor(a/b)*b; round is floor(a + 0.5); sine and cosine take a in degrees and round to millionths. One-input operations use a.",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Number"
+        },
+        {
+          "name": "b",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "enum": [
+              "add",
+              "subtract",
+              "multiply",
+              "divide",
+              "modulo",
+              "power",
+              "minimum",
+              "maximum",
+              "floor",
+              "ceil",
+              "round",
+              "absolute",
+              "negate",
+              "sine",
+              "cosine"
+            ],
+            "description": "The operation.",
+            "default": "add"
+          },
+          "a": {
+            "type": "number",
+            "description": "The first operand.",
+            "default": 0
+          },
+          "b": {
+            "type": "number",
+            "description": "The second operand.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "math.compare",
+      "category": "math",
+      "summary": "Whether a stands in that relation to b.",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Number"
+        },
+        {
+          "name": "b",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "result",
+          "type": "Bool"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "enum": [
+              "less",
+              "less_or_equal",
+              "equal",
+              "not_equal",
+              "greater_or_equal",
+              "greater"
+            ],
+            "description": "The relation.",
+            "default": "less"
+          },
+          "a": {
+            "type": "number",
+            "description": "The first operand.",
+            "default": 0
+          },
+          "b": {
+            "type": "number",
+            "description": "The second operand.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "math.progress",
+      "category": "math",
+      "summary": "How far index is through count, from 0 at the first to 1 at the last, eased.",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "progress",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "ease": {
+            "enum": [
+              "linear",
+              "in",
+              "out",
+              "in_out"
+            ],
+            "description": "The easing (quadratic).",
+            "default": "linear"
+          },
+          "index": {
+            "type": "number",
+            "description": "The place, from 1.",
+            "default": 1
+          },
+          "count": {
+            "type": "number",
+            "description": "How many places.",
+            "default": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "math.random",
+      "category": "math",
+      "summary": "A seeded random number from min to max, in multiples of step from min when step is above 0. The same graph seed, node and scope give the same number on every run and platform.",
+      "inputs": [
+        {
+          "name": "min",
+          "type": "Number"
+        },
+        {
+          "name": "max",
+          "type": "Number"
+        },
+        {
+          "name": "step",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "value",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number",
+            "description": "The smallest value.",
+            "default": 0
+          },
+          "max": {
+            "type": "number",
+            "description": "The largest value.",
+            "default": 1
+          },
+          "step": {
+            "type": "number",
+            "minimum": 0,
+            "description": "0: any value.",
+            "default": 0
+          },
+          "scope": {
+            "enum": [
+              "element",
+              "unit",
+              "line"
+            ],
+            "description": "One number per output Line, per unit (the same across repeats and frames) or per Line.",
+            "default": "element"
+          },
+          "seed": {
+            "type": "integer",
+            "description": "Added to the graph's seed.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "time.retime",
+      "category": "time",
+      "summary": "A Line's start and end as the templater's retime(mode, start_offset, end_offset) sets them.",
+      "inputs": [
+        {
+          "name": "start_offset",
+          "type": "Time"
+        },
+        {
+          "name": "end_offset",
+          "type": "Time"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "start",
+          "type": "Time"
+        },
+        {
+          "name": "end",
+          "type": "Time"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "enum": [
+              "line",
+              "syl",
+              "presyl",
+              "postsyl",
+              "preline",
+              "postline",
+              "start2syl",
+              "syl2end",
+              "sylpct",
+              "set"
+            ],
+            "description": "The templater's retime mode.",
+            "default": "line"
+          },
+          "start_offset": {
+            "type": "number",
+            "description": "Added to the start (sylpct: a percentage).",
+            "default": 0
+          },
+          "end_offset": {
+            "type": "number",
+            "description": "Added to the end (sylpct: a percentage).",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "time.stagger",
+      "category": "time",
+      "summary": "step times the place: index - 1 from the start, count - index from the end, or the distance from the middle.",
+      "inputs": [
+        {
+          "name": "index",
+          "type": "Number"
+        },
+        {
+          "name": "count",
+          "type": "Number"
+        },
+        {
+          "name": "step",
+          "type": "Time"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "offset",
+          "type": "Time"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "enum": [
+              "start",
+              "end",
+              "centre"
+            ],
+            "description": "Where the first unit is.",
+            "default": "start"
+          },
+          "index": {
+            "type": "number",
+            "description": "The place, from 1.",
+            "default": 1
+          },
+          "count": {
+            "type": "number",
+            "description": "How many places.",
+            "default": 1
+          },
+          "step": {
+            "type": "number",
+            "description": "The time between places.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "tags.tag",
+      "category": "tags",
+      "summary": "One override tag after `before`. pos and org take point, clip and iclip take point and point2 (or drawing), colours take colour, alpha tags take alpha, fn and r take text, raw writes text as it is, and the others take value.",
+      "inputs": [
+        {
+          "name": "before",
+          "type": "Tags"
+        },
+        {
+          "name": "value",
+          "type": "Number"
+        },
+        {
+          "name": "point",
+          "type": "Point"
+        },
+        {
+          "name": "point2",
+          "type": "Point"
+        },
+        {
+          "name": "colour",
+          "type": "Colour"
+        },
+        {
+          "name": "alpha",
+          "type": "Alpha"
+        },
+        {
+          "name": "drawing",
+          "type": "Drawing"
+        },
+        {
+          "name": "text",
+          "type": "Text"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tags",
+          "type": "Tags"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "enum": [
+              "an",
+              "pos",
+              "org",
+              "clip",
+              "iclip",
+              "1c",
+              "2c",
+              "3c",
+              "4c",
+              "1a",
+              "2a",
+              "3a",
+              "4a",
+              "alpha",
+              "bord",
+              "xbord",
+              "ybord",
+              "shad",
+              "xshad",
+              "yshad",
+              "be",
+              "blur",
+              "fs",
+              "fscx",
+              "fscy",
+              "fsp",
+              "frx",
+              "fry",
+              "frz",
+              "fax",
+              "fay",
+              "b",
+              "i",
+              "u",
+              "s",
+              "q",
+              "p",
+              "k",
+              "kf",
+              "ko",
+              "K",
+              "fn",
+              "r",
+              "raw"
+            ],
+            "description": "The tag, without its backslash.",
+            "default": "an"
+          },
+          "value": {
+            "type": "number",
+            "description": "Its number.",
+            "default": 0
+          },
+          "point": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "Its point, as [x, y].",
+            "default": [
+              0,
+              0
+            ]
+          },
+          "point2": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "Its second point.",
+            "default": [
+              0,
+              0
+            ]
+          },
+          "colour": {
+            "type": "string",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "description": "Its colour, as #RRGGBB.",
+            "default": "#FFFFFF"
+          },
+          "alpha": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255,
+            "description": "Its alpha, 0 (opaque) to 255.",
+            "default": 0
+          },
+          "text": {
+            "type": "string",
+            "description": "Its text.",
+            "default": ""
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "tags.move",
+      "category": "tags",
+      "summary": "\\move after `before`, with its times when timed.",
+      "inputs": [
+        {
+          "name": "before",
+          "type": "Tags"
+        },
+        {
+          "name": "from",
+          "type": "Point"
+        },
+        {
+          "name": "to",
+          "type": "Point"
+        },
+        {
+          "name": "t1",
+          "type": "Time"
+        },
+        {
+          "name": "t2",
+          "type": "Time"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tags",
+          "type": "Tags"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "Where it starts, as [x, y].",
+            "default": [
+              0,
+              0
+            ]
+          },
+          "to": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2,
+            "description": "Where it ends.",
+            "default": [
+              0,
+              0
+            ]
+          },
+          "timed": {
+            "type": "boolean",
+            "description": "Write t1 and t2.",
+            "default": false
+          },
+          "t1": {
+            "type": "number",
+            "description": "When it starts, from the Line's start.",
+            "default": 0
+          },
+          "t2": {
+            "type": "number",
+            "description": "When it ends.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "tags.fade",
+      "category": "tags",
+      "summary": "\\fad after `before`.",
+      "inputs": [
+        {
+          "name": "before",
+          "type": "Tags"
+        },
+        {
+          "name": "fade_in",
+          "type": "Time"
+        },
+        {
+          "name": "fade_out",
+          "type": "Time"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tags",
+          "type": "Tags"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "fade_in": {
+            "type": "number",
+            "description": "The fade in, in ms.",
+            "default": 0
+          },
+          "fade_out": {
+            "type": "number",
+            "description": "The fade out, in ms.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "tags.transform",
+      "category": "tags",
+      "summary": "\\t over `tags` after `before`; t1 and t2 when timed, accel when it is not 1.",
+      "inputs": [
+        {
+          "name": "before",
+          "type": "Tags"
+        },
+        {
+          "name": "tags",
+          "type": "Tags"
+        },
+        {
+          "name": "t1",
+          "type": "Time"
+        },
+        {
+          "name": "t2",
+          "type": "Time"
+        },
+        {
+          "name": "accel",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tags",
+          "type": "Tags"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "timed": {
+            "type": "boolean",
+            "description": "Write t1 and t2.",
+            "default": true
+          },
+          "t1": {
+            "type": "number",
+            "description": "When it starts, from the Line's start.",
+            "default": 0
+          },
+          "t2": {
+            "type": "number",
+            "description": "When it ends.",
+            "default": 0
+          },
+          "accel": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The acceleration.",
+            "default": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "colours.gradient",
+      "category": "colours",
+      "summary": "The colour at progress (0 to 1) along evenly spaced stops.",
+      "inputs": [
+        {
+          "name": "progress",
+          "type": "Number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "colour",
+          "type": "Colour"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "colours": {
+            "type": "array",
+            "description": "The stops, as #RRGGBB, at least one.",
+            "default": [
+              "#FFFFFF",
+              "#000000"
+            ]
+          },
+          "progress": {
+            "type": "number",
+            "description": "How far along.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "audio.peaks",
+      "category": "audio",
+      "summary": "The audio's level over the unit's span, or from start to end (absolute ms), read as the Hikari API's audio.peaks reads it. level is the loudest sample from 0 to 1; low and high are the lowest and highest from -1 to 1. Without audio it gives 0 and the graph shows a problem.",
+      "inputs": [
+        {
+          "name": "start",
+          "type": "Time"
+        },
+        {
+          "name": "end",
+          "type": "Time"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "level",
+          "type": "Number"
+        },
+        {
+          "name": "low",
+          "type": "Number"
+        },
+        {
+          "name": "high",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The span's start; null: the unit's start."
+          },
+          "end": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "The span's end; null: the unit's end."
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "drawings.shape",
+      "category": "drawings",
+      "summary": "A vector drawing.",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "drawing",
+          "type": "Drawing"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "shape": {
+            "type": "string",
+            "description": "The drawing commands.",
+            "default": "m 0 0 l 10 0 10 10 0 10"
+          },
+          "scale": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The \\p scale.",
+            "default": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "drawings.text",
+      "category": "drawings",
+      "summary": "The text (unwired, the unit's own) drawn in its Line's Style font, at \\p1 from the text's top left, as Yutils' text_to_shape draws it. width and height are the text's.",
+      "inputs": [
+        {
+          "name": "text",
+          "type": "Text"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "drawing",
+          "type": "Drawing"
+        },
+        {
+          "name": "width",
+          "type": "Number"
+        },
+        {
+          "name": "height",
+          "type": "Number"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "drawings.combine",
+      "category": "drawings",
+      "summary": "a and b combined, each filled as libass fills it: unite, subtract (b taken away from a), intersect, or exclude (what only one of them covers). Each one's \\p scale is kept; the result is at \\p1.",
+      "inputs": [
+        {
+          "name": "a",
+          "type": "Drawing"
+        },
+        {
+          "name": "b",
+          "type": "Drawing"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "drawing",
+          "type": "Drawing"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "enum": [
+              "unite",
+              "subtract",
+              "intersect",
+              "exclude"
+            ],
+            "description": "How to combine them.",
+            "default": "unite"
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "text.join",
+      "category": "text",
+      "summary": "The units of the current Line joined: each one's tags as an override block, then its text (unwired, the unit's own).",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "tags",
+          "type": "Tags"
+        },
+        {
+          "name": "text",
+          "type": "Text"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "text",
+          "type": "Text"
+        }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "unit_text": {
+            "enum": [
+              "stripped",
+              "raw",
+              "none"
+            ],
+            "description": "The unit's text while no text is wired: without tags, with them, or none.",
+            "default": "stripped"
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "output.emit",
+      "category": "output",
+      "summary": "One Line per unit: the source Line with these times, Layer, tags and text (or drawing), Effect \"fx <graph name>\". Unwired times are the source Line's. Lines come in the templater's order: Line units first, then by syllable, then by `order`.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "Units"
+        },
+        {
+          "name": "when",
+          "type": "Bool"
+        },
+        {
+          "name": "start",
+          "type": "Time"
+        },
+        {
+          "name": "end",
+          "type": "Time"
+        },
+        {
+          "name": "layer",
+          "type": "Number"
+        },
+        {
+          "name": "tags",
+          "type": "Tags"
+        },
+        {
+          "name": "text",
+          "type": "Text"
+        },
+        {
+          "name": "drawing",
+          "type": "Drawing"
+        }
+      ],
+      "outputs": [],
+      "params": {
+        "type": "object",
+        "properties": {
+          "when": {
+            "type": "boolean",
+            "description": "Write the Line.",
+            "default": true
+          },
+          "layer": {
+            "type": "integer",
+            "description": "Its layer.",
+            "default": 0
+          },
+          "order": {
+            "type": "integer",
+            "description": "Its place among the emits for one unit; ties keep graph order.",
+            "default": 0
+          },
+          "unit_text": {
+            "enum": [
+              "stripped",
+              "raw",
+              "none"
+            ],
+            "description": "The unit's text while no text or drawing is wired: without tags, with them, or none.",
+            "default": "stripped"
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "groups.group",
+      "category": "groups",
+      "summary": "A graph inside a node. Its inputs are its Group input's ports, its outputs its Group output's.",
+      "inputs": [],
+      "outputs": [],
+      "params": {
+        "type": "object",
+        "properties": {
+          "graph": {
+            "type": "object",
+            "description": "The inner nodes and wires.",
+            "default": {
+              "nodes": [],
+              "wires": []
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "groups.input",
+      "category": "groups",
+      "summary": "Inside a group: its inputs, as outputs.",
+      "inputs": [],
+      "outputs": [],
+      "params": {
+        "type": "object",
+        "properties": {
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The ports, each a name and a port type.",
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "groups.output",
+      "category": "groups",
+      "summary": "Inside a group: its outputs, as inputs.",
+      "inputs": [],
+      "outputs": [],
+      "params": {
+        "type": "object",
+        "properties": {
+          "ports": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The ports, each a name and a port type.",
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    },
+    {
+      "id": "lua.code",
+      "category": "lua",
+      "summary": "Lua code run in the automation helper once per Line for all its units, only once the user trusts the Document's Lua. Its inputs are globals and it sets its outputs as globals; it gets no random numbers.",
+      "inputs": [],
+      "outputs": [],
+      "params": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The code.",
+            "default": ""
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Its inputs, each a name and a port type.",
+            "default": []
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Its outputs.",
+            "default": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "since": 1
+    }
+  ]
 }

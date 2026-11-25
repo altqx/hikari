@@ -173,6 +173,7 @@ DialogWindow {
     }
     function reviewFile(url) { reviewPackage(url, "") }
     function reviewDev(folderUrl) { confirm(manager.reviewDev(folderUrl)) }
+    function saveThemeCopy(parentUrl) { confirm(manager.saveThemeCopy(parentUrl)) }
     function reviewPackage(url, updating) {
         confirm(updating ? manager.reviewUpdate(url, updating) : manager.review(url))
     }
@@ -338,6 +339,13 @@ DialogWindow {
                 text: qsTr("Install dev plugin…")
                 enabled: dialog.manager && dialog.manager.available
                 onClicked: devPicker.open()
+            }
+            IconToolButton {
+                objectName: "pluginSaveThemeCopy"
+                iconRole: "theme"
+                text: qsTr("Save a copy as a theme plugin…")
+                enabled: dialog.manager && dialog.manager.available
+                onClicked: themeCopyPicker.open()
             }
             IconToolButton {
                 objectName: "pluginCheckUpdates"
@@ -1123,6 +1131,34 @@ DialogWindow {
                 checked = Qt.binding(() => details.row.autoUpdate)
             }
         }
+        ColumnLayout {
+            objectName: "pluginTrustToolMarksRow"
+            visible: details.row.aiTools
+            spacing: 4
+            Layout.topMargin: 2
+            Layout.bottomMargin: 2
+            Layout.fillWidth: true
+            CheckBox {
+                id: trustToolMarks
+                objectName: "pluginTrustToolMarks_" + details.row.id
+                leftPadding: 0
+                text: qsTr("Trust tool marks from %1").arg(details.row.name)
+                checked: details.row.trustToolMarks
+                onToggled: {
+                    const problem = dialog.manager.setTrustToolMarks(details.row.id, checked)
+                    if (problem.length > 0)
+                        dialog.tell(qsTr("Plugin not changed"), problem)
+                    checked = Qt.binding(() => details.row.trustToolMarks)
+                }
+            }
+            Label {
+                text: qsTr("Its tools that only read then run without asking. Until then, every tool it adds asks first, as a change does.")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.leftMargin: trustToolMarks.indicator.width + trustToolMarks.spacing
+                Layout.fillWidth: true
+            }
+        }
         Rectangle {
             objectName: "pluginDetailsError"
             visible: ["failed", "stopped"].includes(details.runState.status)
@@ -1160,6 +1196,55 @@ DialogWindow {
                         iconRole: "edit-copy"
                         text: qsTr("Copy")
                         onClicked: dialog.copyRequested(details.runState.reason)
+                    }
+                }
+            }
+        }
+        Repeater {
+            model: {
+                dialog.runtime ? dialog.runtime.languageServersRevision : 0
+                return dialog.runtime ? dialog.runtime.stoppedLanguageServers(details.row.id) : []
+            }
+            Rectangle {
+                id: serverError
+                required property var modelData
+                objectName: "pluginServerStopped_" + modelData.id
+                Layout.fillWidth: true
+                implicitHeight: serverColumn.implicitHeight + 16
+                color: Theme.field
+                border.color: Theme.danger
+                ColumnLayout {
+                    id: serverColumn
+                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 8 }
+                    spacing: 6
+                    Label {
+                        text: qsTr("%1 stopped.").arg(serverError.modelData.title)
+                        textFormat: Text.PlainText
+                        color: Theme.danger
+                        font.bold: true
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                    }
+                    Label {
+                        text: serverError.modelData.reason
+                        textFormat: Text.PlainText
+                        font.family: "monospace"
+                        wrapMode: Text.WrapAnywhere
+                        Layout.fillWidth: true
+                    }
+                    RowLayout {
+                        spacing: 8
+                        IconTextButton {
+                            objectName: "pluginServerStartAgain_" + serverError.modelData.id
+                            iconRole: "restart"
+                            text: qsTr("Start again")
+                            onClicked: dialog.runtime.startLanguageServerAgain(details.row.id, serverError.modelData.id)
+                        }
+                        IconTextButton {
+                            iconRole: "edit-copy"
+                            text: qsTr("Copy")
+                            onClicked: dialog.copyRequested(serverError.modelData.reason)
+                        }
                     }
                 }
             }
@@ -1441,5 +1526,11 @@ DialogWindow {
         objectName: "pluginDevPicker"
         title: qsTr("Choose a plugin folder")
         onAccepted: dialog.reviewDev(selectedFolder)
+    }
+    FolderChooser {
+        id: themeCopyPicker
+        objectName: "pluginThemeCopyPicker"
+        title: qsTr("Choose where to save the theme plugin")
+        onAccepted: dialog.saveThemeCopy(selectedFolder)
     }
 }

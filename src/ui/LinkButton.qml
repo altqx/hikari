@@ -4,13 +4,14 @@ import Hikari.Ui
 
 AbstractButton {
     id: link
-    required property string iconRole
+    property string iconRole
     focusPolicy: Qt.StrongFocus
     hoverEnabled: true
     padding: 2
     contentItem: Row {
         spacing: 6
         Icon {
+            visible: link.iconRole !== ""
             anchors.verticalCenter: parent.verticalCenter
             iconRole: link.iconRole
             size: 14
